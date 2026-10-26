@@ -1,5 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {isSpan, isTextBlock, isTextBlockNode} from '@portabletext/schema'
 import {
   applyInsertNodeAtPath,
   applyInsertNodeAtPoint,

@@ -13,6 +13,14 @@ jobs:
     name: Browser tests (${{ matrix.browser }})
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
+    # The image ships every browser with its system libraries, so no job
+    # installs browsers or apt packages. Its tag must match the resolved
+    # `playwright` version, or the browser executables are missing and the
+    # tests fail on launch. Renovate bumps the two together.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      # Run as the runner's user, as Playwright's CI guide does.
+      options: --user 1001
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -36,26 +44,6 @@ jobs:
 
       - name: Install project dependencies
         run: pnpm install
-
-      - name: Store Playwright's Version
-        id: playwright-version
-        run: |
-          PLAYWRIGHT_VERSION=$(npx playwright --version | sed 's/Version //')
-          echo "Playwright's Version: $PLAYWRIGHT_VERSION"
-          echo "version=${PLAYWRIGHT_VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Playwright Browsers for Playwright's Version
-        id: cache-playwright-browsers
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ steps.playwright-version.outputs.version }}-${{ matrix.browser }}-playwright-browsers
-
-      - name: Install Playwright Browsers
-        # TODO: Fix webkit caching when downloading from cache
-        # for some reason it doesn't work without installing again
-        if: steps.cache-playwright-browsers.outputs.cache-hit != 'true' || matrix.browser == 'webkit'
-        run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Test
         id: test

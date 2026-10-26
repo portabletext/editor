@@ -7,12 +7,12 @@ import type {CaretContext, CaretCorrection, CaretEntry} from './types'
  * Returns one correction that gives the caret somewhere to go, or `undefined`.
  */
 export function getCaretCorrection(
-  entry: CaretEntry,
   context: CaretContext,
+  entry: CaretEntry,
 ): CaretCorrection | undefined {
   return (
-    getContainerFieldCorrection(entry, context) ??
-    getEmptyChildrenCorrection(entry, context) ??
-    getInlineObjectBracketingCorrection(entry, context)
+    getContainerFieldCorrection(context, entry) ??
+    getEmptyChildrenCorrection(context, entry) ??
+    getInlineObjectBracketingCorrection(context, entry)
   )
 }

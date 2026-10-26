@@ -1,4 +1,4 @@
-import type {Path} from '../types/paths'
+import type {Path} from '@portabletext/patches'
 import type {
   StructuralContext,
   StructuralCorrection,
@@ -11,8 +11,8 @@ import type {
  * one node.
  */
 export function repairDuplicateKey(
-  entry: StructuralEntry,
   context: StructuralContext,
+  entry: StructuralEntry,
 ): StructuralCorrection | undefined {
   const {node, path, parent} = entry
   const key = (node as Record<string, unknown>)['_key']
@@ -55,10 +55,14 @@ export function repairDuplicateKey(
   if (duplicateIndexOfKey !== -1) {
     const numericPath: Path = [...groupPath, duplicateIndexOfKey]
     return {
-      rule: 'duplicate-key',
-      type: 'set',
-      path: [...numericPath, '_key'],
-      value: context.keyGenerator(),
+      type: 'duplicate-key',
+      patches: [
+        {
+          type: 'set',
+          path: [...numericPath, '_key'],
+          value: context.keyGenerator(),
+        },
+      ],
     }
   }
 

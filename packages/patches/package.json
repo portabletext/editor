@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/patches",
-  "version": "3.0.1",
+  "version": "3.0.3",
   "description": "Apply Sanity patches to a value",
   "keywords": [
     "patches",

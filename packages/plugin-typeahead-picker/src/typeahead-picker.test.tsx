@@ -11,6 +11,7 @@ import {Feature} from 'racejar/vitest'
 import {describe, expect, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
+import {getPickerState} from './test-utils'
 import typeaheadPickerFeature from './typeahead-picker.feature?raw'
 import type {AutoCompleteMatch} from './typeahead-picker.types'
 import {useTypeaheadPicker} from './use-typeahead-picker'
@@ -131,24 +132,6 @@ Feature({
   ],
   parameterTypes,
 })
-
-function getPickerState<TMatch extends object>(
-  picker: ReturnType<typeof useTypeaheadPicker<TMatch>>,
-): string {
-  if (picker.snapshot.matches('idle')) {
-    return 'idle'
-  }
-  if (picker.snapshot.matches({active: 'loading'})) {
-    return 'loading'
-  }
-  if (picker.snapshot.matches({active: 'no matches'})) {
-    return 'no matches'
-  }
-  if (picker.snapshot.matches({active: 'showing matches'})) {
-    return 'showing matches'
-  }
-  return 'unknown'
-}
 
 function EmojiPickerPlugin() {
   const picker = useTypeaheadPicker(emojiPicker)

@@ -503,6 +503,57 @@ describe('Serialize/Deserialize', () => {
     expect(dataTransfer.getData('text/plain')).toEqual('foo bar baz')
   })
 
+  test('Scenario: Copying a block object writes no `text/html` without warning', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {_type: 'image', _key: imageKey, src: 'https://example.com/image.jpg'},
+      ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        ],
+      }),
+    })
+
+    const imageSelection = {
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {path: [{_key: imageKey}], offset: 0},
+    }
+
+    await userEvent.click(locator)
+    editor.send({type: 'select', at: imageSelection})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        ...imageSelection,
+        backward: false,
+      })
+    })
+
+    const dataTransfer = new DataTransfer()
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {selection: imageSelection},
+    })
+
+    expect(dataTransfer.getData('application/x-portable-text')).toEqual(
+      safeStringify([
+        {_type: 'image', _key: imageKey, src: 'https://example.com/image.jpg'},
+      ]),
+    )
+    expect(dataTransfer.getData('text/html')).toEqual('')
+
+    // A fragment of only block objects has no HTML form, which is expected
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
+  })
+
   test('Scenario: Round-trip through consumer `text/markdown` Behaviors', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()

@@ -12,6 +12,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import mentionPickerFeature from './mention-picker.feature?raw'
+import {getPickerState} from './test-utils'
 import {useTypeaheadPicker} from './use-typeahead-picker'
 
 type MentionPickerTestContext = Context & {
@@ -123,24 +124,6 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
     ],
   ],
 })
-
-function getPickerState<TMatch extends object>(
-  picker: ReturnType<typeof useTypeaheadPicker<TMatch>>,
-): string {
-  if (picker.snapshot.matches('idle')) {
-    return 'idle'
-  }
-  if (picker.snapshot.matches({active: 'loading'})) {
-    return 'loading'
-  }
-  if (picker.snapshot.matches({active: 'no matches'})) {
-    return 'no matches'
-  }
-  if (picker.snapshot.matches({active: 'showing matches'})) {
-    return 'showing matches'
-  }
-  return 'unknown'
-}
 
 function MentionPickerPlugin() {
   const typeaheadPicker = useTypeaheadPicker(mentionPicker)

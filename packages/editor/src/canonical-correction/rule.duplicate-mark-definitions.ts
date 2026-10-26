@@ -1,11 +1,11 @@
 import {isTextBlock, type PortableTextObject} from '@portabletext/schema'
-import type {CorrectionEntry} from '../structural-correction'
+import type {CorrectionEntry} from '../caret-correction/correction-entry'
 import {setNodePropertyCorrection} from './set-node-property'
 import type {CanonicalContext, CanonicalCorrection} from './types'
 
 export function getDuplicateMarkDefinitionsCorrection(
-  entry: CorrectionEntry,
   context: CanonicalContext,
+  entry: CorrectionEntry,
 ): CanonicalCorrection | undefined {
   if (!isTextBlock({schema: context.schema}, entry.node)) {
     return undefined

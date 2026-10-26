@@ -16,8 +16,8 @@ catalog:
   "@sanity/types": ^6.9.1
   "@xstate/react": ^6.1.0
   obug: ^3.0.0
-  react: ^19.2.8
-  react-dom: ^19.2.8
+  react: ^19.3.1
+  react-dom: ^19.3.1
   xstate: ^5.32.5
 
 catalogs:
@@ -32,8 +32,8 @@ catalogs:
     "@types/react": ^19.2.17
     "@types/react-dom": ^19.2.3
     "@vitejs/plugin-react": ^6.1.0
-    "@vitest/browser": ^5.0.4
-    "@vitest/browser-playwright": ^5.0.4
+    "@vitest/browser": ^5.0.5
+    "@vitest/browser-playwright": ^5.0.5
     jsdom: ^27.2.0
     lucide-react: ^0.562.0
     oxc-transform-react: ^0.145.0
@@ -44,8 +44,8 @@ catalogs:
     tailwind-merge: ^3.3.1
     tailwindcss: ^4.1.18
     typescript: ^7.0.2
-    vite: ^8.2.0
-    vitest: ^5.0.4
+    vite: ^8.3.3
+    vitest: ^5.0.5
     vitest-browser-react: ^2.3.0
 
 minimumReleaseAge: 4320
@@ -65,10 +65,12 @@ minimumReleaseAgeExclude:
   # versions can require a `scheduler` published the same day; without the
   # exclusion a `react-dom` bump fails to resolve inside the age window
   - scheduler
-  - markdown-it@14.1.1
-  # Renovate security update: astro@7.2.8
-  - astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6 || 7.1.0 || 7.2.8
-  - vite@7.3.2 || 7.3.5
+  # Renovate security update: markdown-it@15.0.3
+  - markdown-it@14.1.1 || 15.0.3
+  # Renovate security update: astro@7.2.8 || 7.3.3
+  - astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6 || 7.1.0 || 7.2.8 || 7.3.3
+  # Renovate security update: vite@8.3.3
+  - vite@7.3.2 || 7.3.5 || 8.3.3
   - turbo@2.9.14
   - oxlint
   - "@oxlint/*"
@@ -76,6 +78,17 @@ minimumReleaseAgeExclude:
   - "@oxc-transform-react/*"
   # Renovate security update: sharp@0.35.4 || 0.35.5
   - sharp@0.35.0 || 0.35.4 || 0.35.5
+  # Renovate security update: vitest@5.0.5
+  - vitest@5.0.5
+  - "@vitest/browser@5.0.5"
+  - "@vitest/browser-playwright@5.0.5"
+  - "@vitest/coverage-istanbul@5.0.5"
+  - "@vitest/coverage-v8@5.0.5"
+  - "@vitest/mocker@5.0.5"
+  - "@vitest/pretty-format@5.0.5"
+  - "@vitest/spy@5.0.5"
+  - "@vitest/ui@5.0.5"
+  - "@vitest/utils@5.0.5"
 
 trustPolicy: no-downgrade
 

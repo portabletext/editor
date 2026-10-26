@@ -5,18 +5,8 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {buildIndexMaps} from '../internal-utils/build-index-maps'
+import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
 import {blockOffsetToSpanSelectionPoint} from './util.block-offset'
-
-function buildBlockIndexMap(
-  schema: any,
-  containers: any,
-  value: any,
-): Map<string, number> {
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, value, containers}, {blockIndexMap})
-  return blockIndexMap
-}
 
 const schema = compileSchema(defineSchema({}))
 

@@ -1,20 +1,21 @@
+import type {Patch, Path} from '@portabletext/patches'
 import type {Schema} from '@portabletext/schema'
-import type {Path} from '../types/paths'
 
 /**
- * One structural correction: set `value` at `path`.
+ * One structural correction: the rule that found the flaw and the patches
+ * that fix it. Apply the patches in order.
+ *
+ * @public
  */
 export type StructuralCorrection = {
-  rule: StructuralRule
-  type: 'set'
-  path: Path
-  value: unknown
+  type: StructuralRule
+  patches: Array<Patch>
 }
 
 /**
- * Which rule produced a correction, so the engine can say what it
- * corrected. It isn't part of the operation and is dropped before the
- * correction is applied.
+ * The structural flaw a correction fixes.
+ *
+ * @public
  */
 export type StructuralRule =
   | 'missing-type'
@@ -24,26 +25,33 @@ export type StructuralRule =
   | 'missing-children'
 
 /**
- * `node` is `unknown` because rules run before the node's shape is
- * repaired, and the engine also visits its own root at path `[]`.
- */
-export type CorrectionEntry = {
-  node: unknown
-  path: Path
-  parent: {node: unknown; path: Path} | undefined
-}
-
-/**
+ * A node and where it sits in the value. `node` is `unknown` because rules
+ * run before the node's shape is repaired, and the caller may also visit
+ * the root at path `[]`.
+ *
  * `siblings` is the child array holding the node, as a function so it's
  * only resolved when the duplicate key rule inspects a keyed node. It may
  * return `undefined` when the caller already knows the array holds no
  * duplicate keys, which skips the scan.
+ *
+ * @public
  */
 export type StructuralEntry = CorrectionEntry & {
   siblings: () => ReadonlyArray<{_key?: string}> | undefined
 }
 
+/**
+ * Schema and key generation available to structural rules.
+ *
+ * @public
+ */
 export type StructuralContext = {
   schema: Schema
   keyGenerator: () => string
+}
+
+export type CorrectionEntry = {
+  node: unknown
+  path: Path
+  parent: {node: unknown; path: Path} | undefined
 }

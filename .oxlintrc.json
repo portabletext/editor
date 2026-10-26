@@ -179,11 +179,10 @@
       }
     },
     {
-      // Structural, caret and canonical correction rules are pure functions
+      // Caret and canonical correction rules are pure functions
       // of the node and plain data. Only leaf modules are allowed, so nothing
       // reaches the engine, the editor or React transitively.
       "files": [
-        "packages/editor/src/structural-correction/**",
         "packages/editor/src/caret-correction/**",
         "packages/editor/src/canonical-correction/**"
       ],
@@ -202,12 +201,13 @@
               {
                 "group": [
                   "../**",
-                  "!../structural-correction",
+                  "!../caret-correction/correction-entry",
+                  "!../caret-correction/node-kinds",
                   "!../internal-utils/equality",
                   "!../types/paths",
                   "!../paths/node-segment"
                 ],
-                "message": "Structural, caret and canonical correction rules may only import leaf modules that don't reach the engine, the editor or React."
+                "message": "Caret and canonical correction rules may only import leaf modules that don't reach the engine, the editor or React."
               }
             ]
           }
@@ -265,9 +265,7 @@
         "packages/editor/src/engine/path/parent-path.ts",
         "packages/editor/src/engine/text/text-equals.ts",
         "packages/editor/src/engine/text/get-text-decorations.ts",
-        "packages/editor/src/engine/node/is-text-block-node.ts",
         "packages/editor/src/engine/node/is-object-node.ts",
-        "packages/editor/src/engine/node/is-span-node.ts",
         "packages/editor/src/engine/editor/is-editor.ts",
         "packages/editor/src/engine/editor/start.ts",
         "packages/editor/src/engine/editor/end.ts",

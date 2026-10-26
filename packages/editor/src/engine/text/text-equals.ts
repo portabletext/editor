@@ -1,6 +1,12 @@
 import {isDeepEqual} from '../../internal-utils/equality'
 import type {TextEqualsOptions} from '../interfaces/text'
-import type {SpanNode} from '../node/is-span-node'
+
+type SpanNode = {
+  _type: string
+  _key: string
+  text?: string
+  marks?: Array<string>
+}
 
 export function textEquals(
   text: SpanNode,

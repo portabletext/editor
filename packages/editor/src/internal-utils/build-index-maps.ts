@@ -1,5 +1,4 @@
-import type {PortableTextBlock} from '@portabletext/schema'
-import type {EditorContext, EditorSnapshot} from '../editor/editor-snapshot'
+import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
@@ -77,35 +76,5 @@ export function collectDescendantIndexes(
       result.parent,
       blockIndexMap,
     )
-  }
-}
-
-// Build a complete `EditorSnapshot` for tests. Populates
-// `blockIndexMap` via `buildIndexMaps` so consumers
-// can assume the invariant that production maintains.
-export function createTestSnapshot(input: {
-  value: Array<PortableTextBlock>
-  schema: EditorContext['schema']
-  containers?: EditorContext['containers']
-  selection?: EditorContext['selection']
-}): EditorSnapshot {
-  const blockIndexMap = new Map<string, number>()
-  const containers = input.containers ?? new Map()
-  buildIndexMaps(
-    {schema: input.schema, value: input.value, containers},
-    {blockIndexMap},
-  )
-  return {
-    context: {
-      containers,
-      converters: [],
-      keyGenerator: () => '',
-      readOnly: false,
-      schema: input.schema,
-      selection: input.selection ?? null,
-      value: input.value,
-    },
-    blockIndexMap,
-    decoratorState: {},
   }
 }

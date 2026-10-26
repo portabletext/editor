@@ -1,6 +1,6 @@
+import {isSpanNode} from '@portabletext/schema'
 import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import {isSpanNode} from '../engine/node/is-span-node'
 import {getNode} from './get-node'
 import {isInline} from './is-inline'
 import {isObject} from './is-object'

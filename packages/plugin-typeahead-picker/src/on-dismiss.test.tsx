@@ -12,6 +12,7 @@ import {expect, vi} from 'vitest'
 import {page, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import onDismissFeature from './on-dismiss.feature?raw'
+import {getPickerState} from './test-utils'
 import {useTypeaheadPicker} from './use-typeahead-picker'
 
 type MentionMatch = {
@@ -113,24 +114,6 @@ Feature({
   ],
   parameterTypes,
 })
-
-function getPickerState<TMatch extends object>(
-  picker: ReturnType<typeof useTypeaheadPicker<TMatch>>,
-): string {
-  if (picker.snapshot.matches('idle')) {
-    return 'idle'
-  }
-  if (picker.snapshot.matches({active: 'loading'})) {
-    return 'loading'
-  }
-  if (picker.snapshot.matches({active: 'no matches'})) {
-    return 'no matches'
-  }
-  if (picker.snapshot.matches({active: 'showing matches'})) {
-    return 'showing matches'
-  }
-  return 'unknown'
-}
 
 function MentionPickerWithDismissPlugin() {
   const picker = useTypeaheadPicker(mentionPickerWithDismiss)

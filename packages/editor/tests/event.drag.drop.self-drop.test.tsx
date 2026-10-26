@@ -76,9 +76,6 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    // Wait a tick to let any async drop processing complete
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
@@ -150,7 +147,6 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
@@ -222,7 +218,6 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
@@ -309,7 +304,6 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
@@ -472,8 +466,6 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
@@ -574,8 +566,6 @@ describe('event.drag.drop self-drop semantics', () => {
         selection: dropSelection,
       },
     })
-
-    await new Promise((resolve) => setTimeout(resolve, 50))
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })

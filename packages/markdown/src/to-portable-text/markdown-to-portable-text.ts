@@ -80,6 +80,7 @@ export type DegradationType =
   | 'callout-fallback'
   | 'fields-dropped'
   | 'object-carrier-invalid'
+  | 'object-type-undeclared'
 
 /**
  * Reports a single lossy conversion, in encounter order: as the conversion
@@ -555,10 +556,12 @@ export function markdownToPortableText(
   markdown: string,
   options?: Options,
 ): Array<PortableTextBlock> {
+  const carriedObjectKeys = new Set<string>()
   const consolidatedOptions = {
     schema: options?.schema ?? defaultSchema,
     keyGenerator: uniqueKeyGenerator(
       options?.keyGenerator ?? defaultKeyGenerator,
+      carriedObjectKeys,
     ),
     html: {
       inline: options?.html?.inline ?? 'skip',
@@ -593,6 +596,42 @@ export function markdownToPortableText(
     candidateToken: {map?: [number, number] | null} | null | undefined,
   ): number | undefined =>
     candidateToken?.map ? candidateToken.map[0] + 1 : undefined
+
+  const ensureObjectCarrierKey = (objectValue: Record<string, unknown>) => {
+    if (
+      typeof objectValue['_key'] !== 'string' ||
+      objectValue['_key'].length === 0
+    ) {
+      objectValue['_key'] = consolidatedOptions.keyGenerator()
+    }
+  }
+
+  const reportUndeclaredObjectType = (
+    objectValue: {_type: string},
+    position: 'inline' | 'block',
+    source: {line: number | undefined; snippet: string | undefined},
+  ) => {
+    const declaredObjects =
+      position === 'inline'
+        ? consolidatedOptions.schema.inlineObjects
+        : consolidatedOptions.schema.blockObjects
+    if (
+      declaredObjects.some(
+        (declaredObject) => declaredObject.name === objectValue._type,
+      )
+    ) {
+      return
+    }
+    report({
+      type: 'object-type-undeclared',
+      message: degradationMessage['object-type-undeclared'](
+        objectValue._type,
+        position,
+      ),
+      line: source.line,
+      snippet: source.snippet,
+    })
+  }
 
   const reportStyleFallback = (
     name: string,
@@ -660,6 +699,10 @@ export function markdownToPortableText(
   md.linkify.set({fuzzyLink: true, urlAuth: true})
 
   const tokens = md.parse(markdown, {})
+
+  for (const key of collectCarriedObjectKeys(tokens)) {
+    carriedObjectKeys.add(key)
+  }
 
   // Pre-pass: detect GFM task-list checkbox prefixes (`[ ]`, `[x]`, `[X]`)
   // on the first inline content of each list item. Strip the prefix from the
@@ -795,6 +838,14 @@ export function markdownToPortableText(
   const demotedTableImages = new WeakMap<
     PortableTextObject,
     'table-cell' | 'no-block-image'
+  >()
+  // `json:object` carriers pushed as inline children of a table cell. As
+  // with demoted images, whether the object ends up inline or block is
+  // only known once `td_close`/`th_close` decides the sole-object lift, so
+  // the schema check waits for that verdict.
+  const tableCellObjectCarriers = new WeakMap<
+    PortableTextObject,
+    {line: number | undefined; snippet: string | undefined}
   >()
 
   // List container state. When `types.list` is defined and the parser enters
@@ -1624,6 +1675,11 @@ export function markdownToPortableText(
           const objectValue = parseJsonObjectFence(code)
 
           if (objectValue) {
+            ensureObjectCarrierKey(objectValue)
+            reportUndeclaredObjectType(objectValue, 'block', {
+              line: lineOf(token),
+              snippet: truncateSnippet(code),
+            })
             pushBlock(objectValue as PortableTextObject)
             break
           }
@@ -2072,6 +2128,31 @@ export function markdownToPortableText(
           }
         }
 
+        for (const block of cellBlocks) {
+          if (block === liftedObject) {
+            const carrierSource = tableCellObjectCarriers.get(liftedObject)
+            if (carrierSource) {
+              reportUndeclaredObjectType(liftedObject, 'block', carrierSource)
+            }
+            continue
+          }
+          if (!('children' in block) || !Array.isArray(block.children)) {
+            continue
+          }
+          for (const child of block.children) {
+            const carrierSource = tableCellObjectCarriers.get(
+              child as PortableTextObject,
+            )
+            if (carrierSource) {
+              reportUndeclaredObjectType(
+                child as PortableTextObject,
+                'inline',
+                carrierSource,
+              )
+            }
+          }
+        }
+
         if (currentTableRow !== null) {
           currentTableRow.push({
             _type: 'cell',
@@ -2265,6 +2346,24 @@ export function markdownToPortableText(
 
                   if (prefix.length > 0) {
                     addSpan(prefix)
+                  }
+
+                  ensureObjectCarrierKey(objectValue)
+                  const carrierSource = {
+                    line: inlineLine(),
+                    snippet: truncateSnippet(nextToken.content),
+                  }
+                  if (inTableCell) {
+                    tableCellObjectCarriers.set(
+                      objectValue as PortableTextObject,
+                      carrierSource,
+                    )
+                  } else {
+                    reportUndeclaredObjectType(
+                      objectValue,
+                      'inline',
+                      carrierSource,
+                    )
                   }
 
                   ;(currentBlock as PortableTextTextBlock).children.push(
@@ -2768,6 +2867,41 @@ export function markdownToPortableText(
   }
 
   return portableText
+}
+
+/**
+ * Collected before the walk mints anything, because a carrier can come
+ * after the block or span whose generated key would otherwise repeat
+ * its `_key`. Only the payload object's own `_key` counts: keys nested
+ * inside it are unique among their own siblings, never alongside the
+ * conversion's generated keys.
+ */
+function collectCarriedObjectKeys(tokens: Array<Token>): Array<string> {
+  const carriedKeys: Array<string> = []
+  const collect = (payload: string) => {
+    const key = parseJsonObjectFence(payload)?.['_key']
+    if (typeof key === 'string' && key.length > 0) {
+      carriedKeys.push(key)
+    }
+  }
+  for (const token of tokens) {
+    if (token.type === 'fence' && token.info.trim() === 'json:object') {
+      collect(token.content.replace(/\n$/, ''))
+      continue
+    }
+    const children = token.children ?? []
+    for (let childIndex = 0; childIndex < children.length; childIndex++) {
+      const nextChild = children[childIndex + 1]
+      if (
+        children[childIndex]?.type === 'text' &&
+        children[childIndex]!.content.endsWith('json:object') &&
+        nextChild?.type === 'code_inline'
+      ) {
+        collect(nextChild.content)
+      }
+    }
+  }
+  return carriedKeys
 }
 
 /**

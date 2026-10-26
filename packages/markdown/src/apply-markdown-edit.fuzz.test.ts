@@ -5,6 +5,7 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {mulberry32} from '../test-utils/mulberry32'
 import {
   applyMarkdownEdit,
   type ReconciliationKeyPath,
@@ -38,24 +39,6 @@ const schema = compileSchema(
     ],
   }),
 )
-
-/**
- * A tiny deterministic PRNG (mulberry32): the fuzz corpus is generated
- * from fixed seeds, so a failure is always reproducible by re-running
- * this file, and CI never sees a flake from `Math.random()`.
- *
- * Keep in sync with the verbatim twin in
- * `src/portable-text-to-markdown.fuzz.test.ts`.
- */
-function mulberry32(seed: number): () => number {
-  let state = seed
-  return () => {
-    state = (state + 0x6d2b79f5) | 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 const WORDS = [
   'alpha',
@@ -552,6 +535,7 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
 
   test.each(SEEDS)('seed %i', (seed) => {
     const random = mulberry32(seed)
+    let nonEmptyHiddenLossReports = 0
 
     for (let caseIndex = 0; caseIndex < CASES_PER_SEED; caseIndex++) {
       const storedKeyGenerator = createTestKeyGenerator('stored-')
@@ -650,7 +634,16 @@ describe('applyMarkdownEdit invariants (seeded fuzz)', () => {
         storedKeys,
         storedNodesByKey,
       )
+      assertHiddenLossesMissing(report!, withReport, storedSnapshot)
+      if (report!.hiddenLosses.length > 0) {
+        nonEmptyHiddenLossReports++
+      }
     }
+
+    // Every seed's corpus edits blocks holding `lead` or `highlight`, so
+    // a regression that empties `hiddenLosses` cannot pass the invariant
+    // above vacuously.
+    expect(nonEmptyHiddenLossReports).toBeGreaterThanOrEqual(2)
   })
 })
 
@@ -836,5 +829,63 @@ function assertReconciliationReportConsistency(
         `${JSON.stringify(renamedKey.path)}:${renamedKey.key}`,
       ),
     ).toBe(false)
+  }
+}
+
+/**
+ * Every `hiddenLosses` entry names content the returned value really
+ * lacks: on a performed report, the returned block wearing the stored
+ * block's `_key` (a deleted block is never listed) has another style,
+ * or none of its spans carries the stored span's decorator; on a
+ * skipped report, no returned block or span carries it at all.
+ * `generateStored` emits no annotation markdown drops and only list
+ * kinds markdown expresses, so decorators and styles are the losses
+ * to check.
+ */
+function assertHiddenLossesMissing(
+  report: ReconciliationReport,
+  result: ReadonlyArray<PortableTextBlock>,
+  stored: ReadonlyArray<PortableTextBlock>,
+): void {
+  for (const hiddenLoss of report.hiddenLosses) {
+    const storedNode = resolveReconciliationKeyPath(stored, hiddenLoss.path)
+    const topSegment = hiddenLoss.path[0]!
+    const resultScope =
+      report.keyMatching === 'performed'
+        ? resolveReconciliationKeyPath(result, [topSegment])
+        : result
+    if (resultScope === undefined) {
+      throw new Error(
+        `assertHiddenLossesMissing: hidden loss on deleted block ${JSON.stringify(topSegment)}`,
+      )
+    }
+    const resultBlocks = [resultScope].flat() as Array<Record<string, unknown>>
+    if (hiddenLoss.type === 'style-fallback') {
+      const style = (storedNode as Record<string, unknown>)['style']
+      expect(
+        resultBlocks.some((resultBlock) => resultBlock['style'] === style),
+      ).toBe(false)
+    } else if (hiddenLoss.type === 'decorator-dropped') {
+      const marks = (storedNode as Record<string, unknown>)[
+        'marks'
+      ] as Array<string>
+      expect(
+        resultBlocks.some((resultBlock) =>
+          (
+            (resultBlock['children'] ?? []) as Array<Record<string, unknown>>
+          ).some(
+            (child) =>
+              Array.isArray(child['marks']) &&
+              marks.some((mark) =>
+                (child['marks'] as Array<string>).includes(mark),
+              ),
+          ),
+        ),
+      ).toBe(false)
+    } else {
+      throw new Error(
+        `assertHiddenLossesMissing: unexpected hidden loss type "${hiddenLoss.type}"`,
+      )
+    }
   }
 }

@@ -1,7 +1,6 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, isTextBlockNode} from '@portabletext/schema'
 import {range as editorRange} from '../engine/editor/range'
 import {unhangRange} from '../engine/editor/unhang-range'
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
 import {commonPath} from '../engine/path/common-path'
 import {pathEquals} from '../engine/path/path-equals'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
