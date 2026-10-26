@@ -6591,6 +6591,182 @@ describe(markdownToPortableText.name, () => {
       ])
     })
 
+    test('a generated key never equals a key a later fence carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '```json:object',
+        '{"_type": "bar"}',
+        '```',
+        '',
+        '```json:object',
+        '{"_type": "foo", "_key": "k0"}',
+        '```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {_type: 'bar', _key: 'k1'},
+        {_type: 'foo', _key: 'k0'},
+      ])
+    })
+
+    test('a generated key never equals a key an earlier fence carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '```json:object',
+        '{"_type": "foo", "_key": "k0"}',
+        '```',
+        '',
+        '```json:object',
+        '{"_type": "bar"}',
+        '```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {_type: 'foo', _key: 'k0'},
+        {_type: 'bar', _key: 'k1'},
+      ])
+    })
+
+    test('a generated key never equals a key a later inline sibling carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown =
+        'json:object`{"_type":"bar"}` json:object`{"_type":"foo","_key":"k1"}`'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'bar', _key: 'k2'},
+            {_type: 'span', _key: 'k3', text: ' ', marks: []},
+            {_type: 'foo', _key: 'k1'},
+          ],
+        },
+      ])
+    })
+
+    test('a generated key never equals a key an earlier inline sibling carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown =
+        'json:object`{"_type":"foo","_key":"k1"}` json:object`{"_type":"bar"}`'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'foo', _key: 'k1'},
+            {_type: 'span', _key: 'k2', text: ' ', marks: []},
+            {_type: 'bar', _key: 'k3'},
+          ],
+        },
+      ])
+    })
+
+    test('a text block never gets the key a later fence carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        'foo',
+        '',
+        '```json:object',
+        '{"_type": "product", "_key": "k0"}',
+        '```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+        },
+        {_type: 'product', _key: 'k0'},
+      ])
+    })
+
+    test('a text block never gets the key an earlier fence carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '```json:object',
+        '{"_type": "product", "_key": "k0"}',
+        '```',
+        '',
+        'foo',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {_type: 'product', _key: 'k0'},
+        {
+          _type: 'block',
+          _key: 'k1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+        },
+      ])
+    })
+
+    test('a span never gets the key a later fence carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        'foo',
+        '',
+        '```json:object',
+        '{"_type": "product", "_key": "k1"}',
+        '```',
+      ].join('\n')
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+        },
+        {_type: 'product', _key: 'k1'},
+      ])
+    })
+
+    test('a span never gets the key an earlier inline sibling carries', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = 'json:object`{"_type":"foo","_key":"k1"}` bar'
+      expect(markdownToPortableText(markdown, {keyGenerator})).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'foo', _key: 'k1'},
+            {_type: 'span', _key: 'k2', text: ' bar', marks: []},
+          ],
+        },
+      ])
+    })
+
+    test('a suffixed key from a repeating generator skips a carried key', () => {
+      const markdown = [
+        'foo',
+        '',
+        '```json:object',
+        '{"_type": "product", "_key": "constant-2"}',
+        '```',
+      ].join('\n')
+      expect(
+        markdownToPortableText(markdown, {keyGenerator: () => 'constant'}),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'constant',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'constant-3', text: 'foo', marks: []},
+          ],
+        },
+        {_type: 'product', _key: 'constant-2'},
+      ])
+    })
+
     test('malformed JSON degrades to a code block', () => {
       const keyGenerator = createTestKeyGenerator()
       const markdown = ['```json:object', '{"_type": "product",', '```'].join(

@@ -2430,6 +2430,14 @@ function enforceSiblingKeyUniqueness(
   onKeyRewritten?: (oldKey: string, newKey: string) => void,
 ): void {
   const usedKeys = new Set<string>()
+  // A fresh key must not take a key a later sibling keeps, or that
+  // sibling would be the one renamed when its turn comes.
+  const siblingKeys = new Set(
+    nodes
+      .map((node) => node['_key'])
+      .filter((key): key is string => typeof key === 'string'),
+  )
+  const isTaken = (key: string) => usedKeys.has(key) || siblingKeys.has(key)
 
   const claim = (node: Node): void => {
     const key = node['_key']
@@ -2440,7 +2448,7 @@ function enforceSiblingKeyUniqueness(
       let freshKey: string | undefined
       for (let attempt = 0; attempt < MAX_KEY_GENERATOR_ATTEMPTS; attempt++) {
         const candidate = keyGenerator()
-        if (!usedKeys.has(candidate)) {
+        if (!isTaken(candidate)) {
           freshKey = candidate
           break
         }
@@ -2448,7 +2456,7 @@ function enforceSiblingKeyUniqueness(
       if (freshKey === undefined) {
         let suffix = 1
         let candidate = `${key}_${suffix}`
-        while (usedKeys.has(candidate)) {
+        while (isTaken(candidate)) {
           suffix++
           candidate = `${key}_${suffix}`
         }
