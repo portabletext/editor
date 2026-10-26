@@ -500,9 +500,17 @@ describe('event.unset', () => {
 
     editor.send({type: 'unset', at: []})
 
-    // Normalization re-emits an empty block after the root unset. Wait for the
-    // event chain to settle before triggering undo.
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
 
     editor.send({type: 'history.undo'})
 

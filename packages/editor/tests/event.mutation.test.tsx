@@ -64,8 +64,6 @@ describe('event.mutation', () => {
 
     editor.send({type: 'update readOnly', readOnly: false})
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
-
     await vi.waitFor(() => {
       expect(mutationsAfterFoo).toEqual([
         {
