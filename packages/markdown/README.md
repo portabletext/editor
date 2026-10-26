@@ -863,7 +863,7 @@ Every `key` and `path` in the report matches the returned value exactly, except 
 
 #### Losses the markdown did not show
 
-Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. Losses on a block the edit deleted are not listed. A non-empty list means saving the result drops content the editor never saw, so refuse or retry:
+Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. A stored block whose `_key` is missing from the returned value has all of its losses listed, whether the edit deleted it or rewrote it so far that it came back with a fresh key; whether the removal was intended is yours to decide. A non-empty list means saving the result drops content the editor never saw, so refuse or retry:
 
 ```ts
 import {
