@@ -574,7 +574,6 @@ describe('custom.unset.row — selection recovery', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })
@@ -703,7 +702,6 @@ describe('custom.unset.column — selection recovery', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'c0'}],
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })
@@ -843,7 +841,6 @@ describe('custom.unset.table', () => {
       at: [{_key: 'pre'}],
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(onlyPreValue)
   })
 })
