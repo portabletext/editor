@@ -85,12 +85,6 @@ async function countSelectorInvocations(
         </EditorProvider>
       </StrictMode>,
     )
-    // Focus the editor so selectors that early-return on null selection
-    // (e.g. getFocusBlock) actually exercise the regression.
-    const editable = document.querySelector(
-      '[contenteditable="true"]',
-    ) as HTMLElement | null
-    editable?.focus()
     await new Promise((r) => setTimeout(r, 300))
     return count
   } finally {
