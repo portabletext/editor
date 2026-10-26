@@ -15,7 +15,14 @@ Options Object
 - guard (function or boolean): function accepts `snapshot`, `event`, and `dom`, returns boolean or guard response
 - actions (array): function accepts `snapshot`, `event`, `dom`, and guard response, returns array of actions
 
-The `dom` parameter provides access to DOM-related utilities like `dom.findDOMNode()` for accessing the underlying DOM elements.
+The `dom` parameter provides access to the editor's rendered DOM:
+
+- `dom.getEditorElement()`: the editor's root element
+- `dom.getBlockNodes(snapshot)` and `dom.getChildNodes(snapshot)`: the DOM nodes of the blocks and the children in the selection
+- `dom.getStartBlockElement(snapshot)` and `dom.getEndBlockElement(snapshot)`: the elements of the first and last block in the selection
+- `dom.getSelectionRect(snapshot)`: the bounding rect of the selection
+- `dom.getPointAtCoordinates({x, y})`: the editor point where a click at the viewport coordinates would place the caret
+- `dom.setDragGhost({event, ghost})`: sets the drag image for a `drag.dragstart` event
 
 ### Example
 
@@ -70,7 +77,7 @@ The `execute` action type is used to execute events to resolution.
 Properties:
 
 - type: `execute`
-- event: Native event object
+- event: Synthetic event object
 
 ```tsx
 const executedUppercaseA = defineBehavior({
@@ -89,6 +96,8 @@ When an event is executed, no other Behavior will be triggered.
 The `execute` action also has a handy shorthand function:
 
 ```tsx
+import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+
 const executedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -109,7 +118,11 @@ Properties:
 const forwardedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
-  actions: [({snapshot, event}) => [{type: 'forward', event: {type: 'insert.text', text: 'A'}})]],
+  actions: [
+    ({snapshot, event}) => [
+      {type: 'forward', event: {type: 'insert.text', text: 'A'}},
+    ],
+  ],
 })
 ```
 
@@ -118,6 +131,8 @@ When an event is forwarded, the next Behavior will be triggered.
 The `forward` action also has a handy shorthand function:
 
 ```tsx
+import {defineBehavior, forward} from '@portabletext/editor/behaviors'
+
 const forwardedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -149,6 +164,8 @@ const raisedUppercaseA = defineBehavior({
 The `raise` action also has a handy shorthand function:
 
 ```tsx
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
