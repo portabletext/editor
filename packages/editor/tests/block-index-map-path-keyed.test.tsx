@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
@@ -114,8 +115,3 @@ describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
     expect(blockIndexMap.has('missing')).toBe(false)
   })
 })
-
-function createTestKeyGenerator(): () => string {
-  let counter = 0
-  return () => `k${counter++}`
-}
