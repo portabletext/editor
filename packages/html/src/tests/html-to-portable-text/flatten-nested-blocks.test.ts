@@ -1,11 +1,7 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {flattenNestedBlocks} from '../../deserializer/flatten-nested-blocks'
-
-function createTestKeyGenerator(prefix = 'k') {
-  let counter = 0
-  return () => `${prefix}${counter++}`
-}
 
 describe(flattenNestedBlocks.name, () => {
   test('flattening text blocks', () => {
@@ -117,7 +113,7 @@ describe(flattenNestedBlocks.name, () => {
   })
 
   test('splitting text block', () => {
-    const keyGenerator = createTestKeyGenerator('k')
+    const keyGenerator = createTestKeyGenerator()
     const schema = compileSchema(
       defineSchema({
         styles: [{name: 'h1'}],
@@ -187,7 +183,7 @@ describe(flattenNestedBlocks.name, () => {
   })
 
   test('splitting text block with __block', () => {
-    const keyGenerator = createTestKeyGenerator('k')
+    const keyGenerator = createTestKeyGenerator()
     const schema = compileSchema(
       defineSchema({
         blockObjects: [{name: 'image'}],
