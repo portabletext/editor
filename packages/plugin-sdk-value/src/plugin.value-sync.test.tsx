@@ -169,6 +169,10 @@ function makeBlock(key: string, text: string): PortableTextBlock {
   }
 }
 
+const TIMERS: Array<
+  'setTimeout' | 'clearTimeout' | 'setInterval' | 'clearInterval'
+> = ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']
+
 function getEditorText(editor: Editor): string {
   return toTextspec(editor.getSnapshot().context)
 }
@@ -181,6 +185,7 @@ describe('ValueSyncPlugin', () => {
   afterEach(() => {
     cleanup?.()
     cleanup = undefined
+    vi.useRealTimers()
   })
 
   describe('initial value', () => {
@@ -239,6 +244,7 @@ describe('ValueSyncPlugin', () => {
     // deleted text. This test types in bursts that straddle flush timing
     // and requires the editor, the store, and the expected text to agree.
     test('delete-and-retype bursts converge to exactly what was typed', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
       const store = createMockPatchStore([])
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -253,7 +259,7 @@ describe('ValueSyncPlugin', () => {
       // reproduce the burst.
       await userEvent.click(locator)
 
-      const settle = (ms: number) => new Promise((r) => setTimeout(r, ms))
+      const settle = (ms: number) => vi.advanceTimersByTimeAsync(ms)
       const backspace = async (count: number) => {
         for (let i = 0; i < count; i++) {
           await userEvent.keyboard('{Backspace}')
@@ -279,28 +285,22 @@ describe('ValueSyncPlugin', () => {
       await backspace(3)
       await settle(300)
       await userEvent.type(locator, 'ext')
+      await settle(2000)
 
-      const expectedEditor = 'B: publish editors deadline sources context|'
-      const expectedStore = 'B: publish editors deadline sources context'
-
-      await vi.waitFor(
-        () => {
-          expect(getEditorText(editor)).toEqual(expectedEditor)
-          expect(
-            toTextspec({
-              value: store.getValue(),
-              schema: editor.getSnapshot().context.schema,
-              selection: null,
-            }),
-          ).toEqual(expectedStore)
-        },
-        {timeout: 5000},
+      expect(getEditorText(editor)).toEqual(
+        'B: publish editors deadline sources context|',
       )
+      expect(
+        toTextspec({
+          value: store.getValue(),
+          schema: editor.getSnapshot().context.schema,
+          selection: null,
+        }),
+      ).toEqual('B: publish editors deadline sources context')
       // The explicit test timeout is generous because the bursts above are
       // ~70 real key events, each a round-trip to the browser whose cost
       // scales with machine load: the interaction takes ~3s idle but has
-      // measured ~13s on CI, and vitest's 15s default leaves too little
-      // room for the convergence wait on top of that.
+      // measured ~13s on CI, close to vitest's 15s default.
     }, 60_000)
   })
 
@@ -326,6 +326,7 @@ describe('ValueSyncPlugin', () => {
     // repair must wait out the blink and only act on divergence that
     // persists.
     test('a transiently wrong store value is never copied into the editor', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
       const store = createMockValueStore([makeBlock('b1', 'stable text here')])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -352,11 +353,11 @@ describe('ValueSyncPlugin', () => {
         // The store blinks: a wrong value (own edits double-applied) that
         // self-corrects shortly after, well inside the confirmation window.
         store.setRemoteValue([makeBlock('b1', 'stable tex')])
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await vi.advanceTimersByTimeAsync(50)
         store.setRemoteValue([makeBlock('b1', 'stable text here')])
 
         // Wait past the confirmation window.
-        await new Promise((resolve) => setTimeout(resolve, 400))
+        await vi.advanceTimersByTimeAsync(400)
       } finally {
         editor.send = originalSend
       }
@@ -538,6 +539,7 @@ describe('ValueSyncPlugin', () => {
 
   describe('stale sync prevention', () => {
     test('stale remote value during typing does not revert editor', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
       const store = createMockValueStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -545,10 +547,8 @@ describe('ValueSyncPlugin', () => {
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
 
-      // Wait for first push
-      await vi.waitFor(() => {
-        expect(store.pushValue).toHaveBeenCalled()
-      })
+      await vi.advanceTimersByTimeAsync(250)
+      expect(store.pushValue).toHaveBeenCalledTimes(1)
       store.pushValue.mockClear()
 
       editor.send({type: 'insert.text', text: ' world'})
@@ -558,19 +558,16 @@ describe('ValueSyncPlugin', () => {
       store.setRemoteValue([makeBlock('stale', 'Hello')])
 
       // Editor should NOT revert to "Hello" — it has pending writes.
-      // Wait a bit to make sure no revert happens.
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await vi.advanceTimersByTimeAsync(249)
+      expect(store.pushValue).not.toHaveBeenCalled()
       expect(getEditorText(editor)).toEqual('B: Hello world|')
 
-      // Wait for the second push
-      await vi.waitFor(() => {
-        expect(store.pushValue).toHaveBeenCalled()
-      })
+      await vi.advanceTimersByTimeAsync(1)
+      expect(store.pushValue).toHaveBeenCalledTimes(1)
 
       // After mutation flush, editor should have the full text
-      await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual('B: Hello world|')
-      })
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(getEditorText(editor)).toEqual('B: Hello world|')
     })
 
     test('remote change during local write applies after flush', async () => {
