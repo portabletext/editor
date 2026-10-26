@@ -1934,6 +1934,147 @@ describe('the reconciliation report', () => {
     })
   })
 
+  test('a rewritten block that comes back with a fresh key next to an inserted block reports its dropped annotation as a hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [internalLinkBlock('b1'), block('b2', 's4', 'bar')]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      'See foo for comparison.\n\nqux\n\nbar',
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      block('k0', 'k1', 'See foo for comparison.'),
+      block('k2', 'k3', 'qux'),
+      block('b2', 's4', 'bar'),
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's4',
+          path: [{_key: 'b2'}, 'children', {_key: 's4'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'annotation-dropped',
+          message:
+            'Removed the `internalLink` annotation, kept its text: no `internalLink` mark renderer',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          snippet: 'foo',
+        },
+      ],
+    })
+  })
+
+  test('a deleted block whose stored annotation has no markdown form reports the dropped annotation as a hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [internalLinkBlock('b1'), block('b2', 's4', 'bar')]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, 'bar', {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([block('b2', 's4', 'bar')])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b2',
+          path: [{_key: 'b2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's4',
+          path: [{_key: 'b2'}, 'children', {_key: 's4'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'annotation-dropped',
+          message:
+            'Removed the `internalLink` annotation, kept its text: no `internalLink` mark renderer',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          snippet: 'foo',
+        },
+      ],
+    })
+  })
+
+  test('a deleted block that held nothing markdown cannot show reports no hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [internalLinkBlock('b1'), block('b2', 's4', 'bar')]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, 'Read foo before baz.', {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([internalLinkBlock('b1')])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'm1',
+          path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's2',
+          path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's3',
+          path: [{_key: 'b1'}, 'children', {_key: 's3'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+    })
+  })
+
   test('a whole-document skip of key matching reports every stored loss as a hidden loss', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [

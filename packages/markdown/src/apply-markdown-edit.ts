@@ -70,10 +70,12 @@ export type ApplyMarkdownEditOptions = {
    * invocation, safe to branch on for that invocation, and so is
    * `hiddenLosses`: every entry names content that is missing from the
    * returned value although the markdown never showed it, and content
-   * the edit's restoration put back is not listed. Losses on a stored
-   * block the edit deleted are not listed either. `serialize.onDegradation`
-   * stays excluded: `hiddenLosses` is where serialize losses that
-   * matter to the returned value surface.
+   * the edit's restoration put back is not listed. A stored block
+   * whose `_key` is absent from the returned value has all of its
+   * losses listed, whether the edit deleted it or rewrote it past
+   * recognition: whether that removal was intended is the caller's
+   * call. `serialize.onDegradation` stays excluded: `hiddenLosses` is
+   * where serialize losses that matter to the returned value surface.
    *
    * @beta
    */
@@ -216,9 +218,12 @@ export type ReconciliationReport =
        * decorator when one of its spans carries it; a style or list-item
        * kind when the block's own `style` or `listItem` matches. Only
        * `span` children count: an inline object's own `marks` field
-       * carries nothing. A stored top-level
-       * block whose `_key` is absent from the returned value was deleted
-       * by the edit, and its losses are not listed. A nested node whose
+       * carries nothing. A stored top-level block whose `_key` is absent
+       * from the returned value has every one of its losses listed,
+       * whether the edit deleted it or rewrote it so far that it came
+       * back with a fresh key: the returned value does not carry its
+       * content under that key, and whether the edit meant to remove it
+       * is for the caller to decide. A nested node whose
        * own path no longer resolves inside a surviving top-level block
        * is listed: it came back with a fresh key, and fresh content
        * comes from the markdown alone, which never had it. A keyless
@@ -2770,7 +2775,7 @@ function isHiddenLoss(
   }
   const topLevelBlock = lookup.topLevelByKey.get(topSegment._key)
   if (!topLevelBlock) {
-    return false
+    return true
   }
   if (degradation.ownerPath === undefined) {
     // A renderer rendered a copy of the stored text block, so which
