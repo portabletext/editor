@@ -1,5 +1,49 @@
 # @portabletext/markdown
 
+## 2.7.0
+
+### Minor Changes
+
+- [#3422](https://github.com/portabletext/editor/pull/3422) [`a503975`](https://github.com/portabletext/editor/commit/a503975c5e6b5f94fd06b3fb5ed8e3ce506bd68c) Thanks [@christianhg](https://github.com/christianhg)! - feat: key `json:object` payloads and report types the schema does not declare
+  
+  `markdownToPortableText` (and `applyMarkdownEdit`, through its `deserialize` options) now gives a `json:object` fence or tagged code span a generated `_key` when its payload has none, like every other object it builds. A payload keeps its `_key` when it is a non-empty string, and an empty or non-string `_key` is replaced with a generated one. The payload's other fields are still kept as written, but when the schema does not declare its `_type` at that position (`blockObjects` for a fence, `inlineObjects` for a code span, and `blockObjects` for an object a table cell lifts to block position), `onDegradation` now reports it as `object-type-undeclared`:
+  
+  ```ts
+  import {compileSchema, defineSchema} from '@portabletext/schema'
+  import {markdownToPortableText} from '@portabletext/markdown'
+  
+  markdownToPortableText(
+    'Arranged by json:object`{"_type":"mention","_ref":"person-1"}`.',
+    {
+      schema: compileSchema(defineSchema({})),
+      onDegradation: ({message}) => console.warn(message),
+    },
+  )
+  // Previously: the `mention` child had no `_key` and nothing was reported.
+  // Now: the `mention` child gets a `_key`, and onDegradation reports
+  // "Kept the inline `mention` object as written: the schema has no inline `mention` object"
+  ```
+  
+  Without a `schema` the check runs against the default schema, so a zero-config round trip of a custom type now reports it. Code that switches over `Degradation['type']` gains a case.
+
+### Patch Changes
+
+- [#3422](https://github.com/portabletext/editor/pull/3422) [`a8084cc`](https://github.com/portabletext/editor/commit/a8084cc501ab6cfb431989d34bffa11f301363c8) Thanks [@christianhg](https://github.com/christianhg)! - fix: never generate a key that a `json:object` payload carries
+  
+  `markdownToPortableText` keeps the `_key` a `json:object` fence or tagged code span carries, but the keys it generated for everything else could repeat it, so a payload and a neighbouring block or span could end up with the same key. A carried key now stays as written, and generated keys never repeat it. Keys only have to be unique among siblings, but which nodes end up as siblings is only settled as the conversion runs (a table cell can lift an object to block level, and an undeclared list flattens into paragraphs), so generated keys skip the `_key` on every payload object in the document, whether the payload comes before or after the generated node. Keys nested inside a payload are unaffected. `applyMarkdownEdit` also no longer renames a payload whose key it had just given to a renamed duplicate earlier in the same array:
+  
+  ```ts
+  import {markdownToPortableText} from '@portabletext/markdown'
+  
+  let index = 0
+  markdownToPortableText(
+    'foo\n\n```json:object\n{"_type": "product", "_key": "k0"}\n```',
+    {keyGenerator: () => `k${index++}`},
+  )
+  // Previously: the paragraph and the `product` object were both keyed `k0`.
+  // Now: the paragraph is keyed `k1` and the `product` object keeps `k0`.
+  ```
+
 ## 2.6.0
 
 ### Minor Changes

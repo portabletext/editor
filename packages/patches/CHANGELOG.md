@@ -1,5 +1,52 @@
 # Changelog
 
+## 3.0.3
+
+### Patch Changes
+
+- [#3417](https://github.com/portabletext/editor/pull/3417) [`91e6bcb`](https://github.com/portabletext/editor/commit/91e6bcbe8871bd2af96de15ca6b279895dbdf2ea) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve array indexes in `applyAll` as Sanity does
+  
+  `applyAll` now reads an array index the way Sanity does. A negative index counts from the end, and a patch aimed at an index outside the array leaves the value unchanged:
+  
+  ```ts
+  const value = [{_key: 'a'}, {_key: 'b', style: 'normal'}]
+  
+  applyAll(value, [set('h1', [-1, 'style'])])
+  // [{_key: 'a'}, {_key: 'b', style: 'h1'}]
+  // Previously wrote a `-1` property on the array instead
+  
+  applyAll(value, [unset([-5])])
+  // [{_key: 'a'}, {_key: 'b', style: 'normal'}]
+  // Previously removed the first item
+  ```
+  
+  Every patch type that addresses an item by index is affected:
+  
+  | Patch | Index | Previously | Now |
+  | --- | --- | --- | --- |
+  | `set`, `setIfMissing`, `unset` or `diffMatchPatch` on an item's field | negative | missed the item | changes the item counted from the end |
+  | `set` of a whole item | negative | missed the item | replaces the item counted from the end |
+  | `set` or `setIfMissing` of a whole item | past the end | grew the array, padding any gap with `null` | leaves the value unchanged |
+  | `unset` of a whole item | before the start | removed the first item | leaves the value unchanged |
+  | `insert` `before` or `after` | outside the array | inserted at a wrapped-around position | leaves the value unchanged |
+  | `insert` into an empty array | anything but `[0]` or `[-1]` | inserted the items | leaves the value unchanged |
+  
+  An `insert` into an empty array still lands when it addresses `[0]` or `[-1]`. An `insert` with position `replace`, which `applyAll` does not support, also leaves the value unchanged instead of throwing when its index falls outside the array.
+
+- [#3419](https://github.com/portabletext/editor/pull/3419) [`59d4ee0`](https://github.com/portabletext/editor/commit/59d4ee0cf130ca791a3d4f7474d175b53c7a40a6) Thanks [@christianhg](https://github.com/christianhg)! - fix: apply `insert` with position `replace` in `applyAll`
+  
+  `applyAll` now applies an `insert` patch with position `replace` the way Sanity does: the items take the place of the item at the path. It previously threw `Invalid position "replace"` for every path, even though `InsertPosition` includes `'replace'` and the README documents it.
+  
+  ```ts
+  const value = [{_key: 'a'}, {_key: 'b'}, {_key: 'c'}]
+  
+  applyAll(value, [insert([{_key: 'y'}, {_key: 'z'}], 'replace', [{_key: 'b'}])])
+  // [{_key: 'a'}, {_key: 'y'}, {_key: 'z'}, {_key: 'c'}]
+  // Previously threw: Invalid position "replace", must be either before or after
+  ```
+  
+  An empty list of items removes the item. A path to a missing key or an index outside the array leaves the value unchanged, and in an empty array the items land at `[0]` or `[-1]`.
+
 ## 3.0.2
 
 ### Patch Changes
