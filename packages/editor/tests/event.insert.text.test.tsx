@@ -366,9 +366,6 @@ describe('event.insert.text', () => {
 
     editor.send({type: 'insert.text', text: 'foo'})
 
-    // Give the editor time to process the event
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
     expect(errorSpy).not.toHaveBeenCalled()
     expect(editor.getSnapshot().context.value).toEqual([
       {

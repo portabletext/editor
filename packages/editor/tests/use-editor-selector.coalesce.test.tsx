@@ -67,7 +67,7 @@ describe(useEditorSelector.name, () => {
     await vi.waitFor(() =>
       expect(editor.getSnapshot().context.value.length).toBe(1),
     )
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    await vi.waitFor(() => expect(settledLength).toBe(1))
 
     // Count only the runs the undo itself causes.
     selectorRuns = 0
@@ -75,7 +75,7 @@ describe(useEditorSelector.name, () => {
     await vi.waitFor(() =>
       expect(editor.getSnapshot().context.value.length).toBe(blockCount),
     )
-    await new Promise((resolve) => setTimeout(resolve, 400))
+    await vi.waitFor(() => expect(settledLength).toBe(blockCount))
 
     // Undo emits once per re-inserted block (~blockCount times). `editor.subscribe`
     // coalesces the burst, so the selector re-runs a small constant number of

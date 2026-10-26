@@ -9,12 +9,15 @@ import {
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
-const selectorRuns = {default: 0, registrations: 0}
+const selectorRuns = {default: 0}
+const registrationsSelectorRuns: Array<{lateObjectRegistered: boolean}> = []
 
 // Module-level selectors have stable identities, so they only run on
 // mount and when their channel is notified, never on unrelated renders.
-function registrationsSelector(_engine: Editor) {
-  selectorRuns.registrations++
+function registrationsSelector(engine: Editor) {
+  registrationsSelectorRuns.push({
+    lateObjectRegistered: engine.blockObjects.has('late-object'),
+  })
   return null
 }
 
@@ -46,7 +49,10 @@ function ChannelProbe() {
 
 describe('engine selector channels', () => {
   test('Scenario: Text and selection ops leave channel-scoped selectors alone', async () => {
-    const {editor} = await createTestEditor({children: <ChannelProbe />})
+    registrationsSelectorRuns.length = 0
+    const {editor, locator} = await createTestEditor({
+      children: <ChannelProbe />,
+    })
 
     editor.send({
       type: 'insert.blocks',
@@ -69,7 +75,7 @@ describe('engine selector channels', () => {
         focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
       },
     })
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await expect.element(locator).toHaveFocus()
 
     const afterSetup = {...selectorRuns}
 
@@ -84,20 +90,17 @@ describe('engine selector channels', () => {
         focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
       },
     })
-    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Typing and moving the caret cannot change registration maps, so
-    // the registrations selector must not have run.
-    expect(selectorRuns.registrations).toBe(afterSetup.registrations)
-
-    const afterTyping = {...selectorRuns}
-
-    // Registering a renderer arms the registrations channel.
+    // the registrations selector must not have run. Registering a
+    // renderer arms the registrations channel.
     mountLateNodePlugin?.()
     await vi.waitFor(() => {
-      expect(selectorRuns.registrations).toBeGreaterThan(
-        afterTyping.registrations,
-      )
+      expect(registrationsSelectorRuns).toEqual([
+        {lateObjectRegistered: false},
+        {lateObjectRegistered: false},
+        {lateObjectRegistered: true},
+      ])
     })
   })
 })
