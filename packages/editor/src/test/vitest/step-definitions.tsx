@@ -10,6 +10,7 @@ import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {boundaryEquivalentSelections} from '../../../test-utils/boundary-equivalent'
+import {createTestSnapshot} from '../../../test-utils/create-test-snapshot'
 import {getEditorSelection} from '../../../test-utils/editor-selection'
 import {getSelectionText} from '../../../test-utils/selection-text'
 import {getTextBlockKey} from '../../../test-utils/text-block-key'
@@ -20,7 +21,6 @@ import {
   getTextSelection,
 } from '../../../test-utils/text-selection'
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
-import {createTestSnapshot} from '../../internal-utils/build-index-maps'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
@@ -172,7 +172,7 @@ async function assertEditorState(
     // Accept any boundary-equivalent selection that produces the expected
     // textspec.
     for (const variant of boundaryEquivalentSelections(
-      createTestSnapshot({schema, containers, value}),
+      createTestSnapshot({context: {schema, containers, value}}),
       selection,
     )) {
       if (renderActual(variant) === expected) {

@@ -2,7 +2,7 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
-import {createTestSnapshot} from '../../internal-utils/build-index-maps'
+import {createTestSnapshot} from '../../../test-utils/create-test-snapshot'
 import {defineContainer} from '../../renderers/renderer.types'
 import {resolveContainers} from '../../schema/resolve-containers'
 import type {Node} from '../interfaces/node'
@@ -19,7 +19,9 @@ function buildContext(...value: Array<Node>) {
       blockObjects: [{name: 'image'}],
     }),
   )
-  return createTestSnapshot({schema, value: value as Array<PortableTextBlock>})
+  return createTestSnapshot({
+    context: {schema, value: value as Array<PortableTextBlock>},
+  })
 }
 
 const keyGenerator = createTestKeyGenerator()
@@ -393,9 +395,11 @@ function buildContainerContext(...value: Array<Node>) {
     }),
   ])
   return createTestSnapshot({
-    schema,
-    containers,
-    value: value as Array<PortableTextBlock>,
+    context: {
+      schema,
+      containers,
+      value: value as Array<PortableTextBlock>,
+    },
   })
 }
 
