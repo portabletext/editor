@@ -35,15 +35,14 @@ const users: Record<string, Array<string>> = {
   'Jane Smith': ['jane'],
 }
 
-async function getMatches({
+function getMatches({
   keyword,
 }: {
   keyword: string
 }): Promise<Array<MentionMatch>> {
-  await new Promise((resolve) => setTimeout(resolve, 10))
   const matches: Array<MentionMatch> = []
   if (keyword.length < 1) {
-    return matches
+    return Promise.resolve(matches)
   }
   for (const name in users) {
     const usernames = users[name] ?? []
@@ -53,7 +52,7 @@ async function getMatches({
       }
     }
   }
-  return matches
+  return Promise.resolve(matches)
 }
 
 const mentionPicker = defineTypeaheadPicker<MentionMatch>({
