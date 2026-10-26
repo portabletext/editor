@@ -34,7 +34,7 @@ function resolve(value: unknown[], selection: StoredTextSelection) {
   }).map((anchored) => anchored.selection)
 }
 
-describe('resolveCommentSelections', () => {
+describe(resolveCommentSelections.name, () => {
   test('exact match between the stored text and the block', () => {
     const value = [
       block('6222e4072b6e', [span('9d9c95878a6e0', 'Hello there world')]),
@@ -230,7 +230,7 @@ describe('resolveCommentSelections', () => {
   })
 })
 
-describe('relativeCommentPath', () => {
+describe(relativeCommentPath.name, () => {
   test('reduces a stored field path to a path inside the editor', () => {
     expect(
       relativeCommentPath(['body'], 'body[_key=="callout"].content'),

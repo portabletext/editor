@@ -179,7 +179,7 @@ function getEditorText(editor: Editor): string {
 
 // ---- Tests ----
 
-describe('ValueSyncPlugin', () => {
+describe(ValueSyncPlugin.name, () => {
   let cleanup: (() => void) | undefined
 
   afterEach(() => {
