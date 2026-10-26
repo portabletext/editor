@@ -169,6 +169,16 @@ function makeBlock(key: string, text: string): PortableTextBlock {
   }
 }
 
+function typedBlock(text: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: 'k2',
+    children: [{_type: 'span', _key: 'k3', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
 const TIMERS: Array<
   'setTimeout' | 'clearTimeout' | 'setInterval' | 'clearInterval'
 > = ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']
@@ -231,6 +241,34 @@ describe('ValueSyncPlugin', () => {
           selection: null,
         }),
       ).toEqual('B: Hello')
+    })
+
+    test('a flush landing while a push awaits acknowledgement is pushed', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
+      const store = createMockValueStore()
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: |')
+      })
+      await userEvent.click(locator)
+
+      const pushedValues: Array<PortableTextBlock[]> = []
+      store.pushValue.mockImplementation((value: PortableTextBlock[]) => {
+        pushedValues.push(value)
+      })
+
+      await userEvent.type(locator, 'abc')
+      await userEvent.keyboard('{Backspace}')
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(pushedValues).toEqual([[typedBlock('abc')], [typedBlock('ab')]])
+
+      store.setRemoteValue(pushedValues.at(-1)!)
+      await vi.advanceTimersByTimeAsync(1000)
+
+      expect(getEditorText(editor)).toEqual('B: ab|')
     })
   })
 
