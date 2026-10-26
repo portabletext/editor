@@ -3,7 +3,7 @@ import {describe, it} from 'vitest'
 import {normalizeBlock} from '../../../src/util/normalizeBlock'
 import {createTestKeyGenerator} from '../../test-key-generator'
 
-describe('normalizeBlock', () => {
+describe(normalizeBlock.name, () => {
   it('will normalize a block', () => {
     const block = {
       _type: 'block',
