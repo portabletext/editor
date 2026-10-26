@@ -67,8 +67,8 @@ minimumReleaseAgeExclude:
   - scheduler
   # Renovate security update: markdown-it@15.0.3
   - markdown-it@14.1.1 || 15.0.3
-  # Renovate security update: astro@7.2.8
-  - astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6 || 7.1.0 || 7.2.8
+  # Renovate security update: astro@7.2.8 || 7.3.3
+  - astro@6.1.3 || 6.1.6 || 6.1.10 || 6.4.6 || 7.1.0 || 7.2.8 || 7.3.3
   # Renovate security update: vite@8.3.3
   - vite@7.3.2 || 7.3.5 || 8.3.3
   - turbo@2.9.14
