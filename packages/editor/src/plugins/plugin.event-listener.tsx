@@ -19,18 +19,19 @@ import {useEditor} from '../editor/use-editor'
  * @example
  * Listen and log events.
  * ```tsx
- * import {EditorProvider} from '@portabletext/editor'
+ * import {defineSchema, EditorProvider} from '@portabletext/editor'
  * import {EventListenerPlugin} from '@portabletext/editor/plugins'
+ *
+ * const schemaDefinition = defineSchema({})
  *
  * function MyComponent() {
  *  return (
- *  <EditorProvider>
+ *  <EditorProvider initialConfig={{schemaDefinition}}>
  *   <EventListenerPlugin
  *    on={(event) => {
  *     console.log(event)
  *    }
  *   } />
- *   { ... }
  * </EditorProvider>
  *  )
  * }
@@ -41,7 +42,7 @@ import {useEditor} from '../editor/use-editor'
  * <EventListenerPlugin
  *  on={(event) => {
  *    if (event.type === 'mutation') {
- *      console.log('Value changed:', event.snapshot)
+ *      console.log('Value changed:', event.value)
  *    }
  *  }}
  * />

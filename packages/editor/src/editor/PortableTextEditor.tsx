@@ -391,7 +391,7 @@ export class PortableTextEditor {
    * const editor = useEditor()
    * editor.send({
    *  type: 'select',
-   *  selection: {...},
+   *  at: selection,
    * })
    * ```
    */

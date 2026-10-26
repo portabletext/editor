@@ -75,11 +75,13 @@ export type PortableTextEditableProps = Omit<
  *
  * @example
  * ```tsx
- * import { PortableTextEditable, EditorProvider } from '@portabletext/editor'
+ * import { PortableTextEditable, EditorProvider, defineSchema } from '@portabletext/editor'
+ *
+ * const schemaDefinition = defineSchema({})
  *
  * function MyComponent() {
  *  return (
- *   <EditorProvider>
+ *   <EditorProvider initialConfig={{schemaDefinition}}>
  *    <PortableTextEditable />
  *  </EditorProvider>
  *  )
