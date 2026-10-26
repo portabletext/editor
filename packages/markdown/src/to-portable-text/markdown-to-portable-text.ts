@@ -556,10 +556,12 @@ export function markdownToPortableText(
   markdown: string,
   options?: Options,
 ): Array<PortableTextBlock> {
+  const carriedObjectKeys = new Set<string>()
   const consolidatedOptions = {
     schema: options?.schema ?? defaultSchema,
     keyGenerator: uniqueKeyGenerator(
       options?.keyGenerator ?? defaultKeyGenerator,
+      carriedObjectKeys,
     ),
     html: {
       inline: options?.html?.inline ?? 'skip',
@@ -697,6 +699,10 @@ export function markdownToPortableText(
   md.linkify.set({fuzzyLink: true, urlAuth: true})
 
   const tokens = md.parse(markdown, {})
+
+  for (const key of collectCarriedObjectKeys(tokens)) {
+    carriedObjectKeys.add(key)
+  }
 
   // Pre-pass: detect GFM task-list checkbox prefixes (`[ ]`, `[x]`, `[X]`)
   // on the first inline content of each list item. Strip the prefix from the
@@ -2861,6 +2867,41 @@ export function markdownToPortableText(
   }
 
   return portableText
+}
+
+/**
+ * Collected before the walk mints anything, because a carrier can come
+ * after the block or span whose generated key would otherwise repeat
+ * its `_key`. Only the payload object's own `_key` counts: keys nested
+ * inside it are unique among their own siblings, never alongside the
+ * conversion's generated keys.
+ */
+function collectCarriedObjectKeys(tokens: Array<Token>): Array<string> {
+  const carriedKeys: Array<string> = []
+  const collect = (payload: string) => {
+    const key = parseJsonObjectFence(payload)?.['_key']
+    if (typeof key === 'string' && key.length > 0) {
+      carriedKeys.push(key)
+    }
+  }
+  for (const token of tokens) {
+    if (token.type === 'fence' && token.info.trim() === 'json:object') {
+      collect(token.content.replace(/\n$/, ''))
+      continue
+    }
+    const children = token.children ?? []
+    for (let childIndex = 0; childIndex < children.length; childIndex++) {
+      const nextChild = children[childIndex + 1]
+      if (
+        children[childIndex]?.type === 'text' &&
+        children[childIndex]!.content.endsWith('json:object') &&
+        nextChild?.type === 'code_inline'
+      ) {
+        collect(nextChild.content)
+      }
+    }
+  }
+  return carriedKeys
 }
 
 /**

@@ -2018,6 +2018,23 @@ describe(applyMarkdownEdit.name, () => {
     })
   })
 
+  test('renaming a duplicate carried key never takes a key a later fence carries', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = []
+    const fence = (key: string) =>
+      ['```json:object', `{"_type": "product", "_key": "${key}"}`, '```'].join(
+        '\n',
+      )
+    const markdown = [fence('a'), fence('a'), fence('k0')].join('\n\n')
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {_type: 'product', _key: 'a'},
+      {_type: 'product', _key: 'k1'},
+      {_type: 'product', _key: 'k0'},
+    ])
+  })
+
   test('two fences carrying the same key stay unique against a constant keyGenerator', () => {
     const stored: Array<PortableTextBlock> = []
     const fence = (key: string, sku: string) =>
