@@ -19,7 +19,7 @@ function point(blockKey: string, spanKey: string, offset: number) {
   return {path: [{_key: blockKey}, 'children', {_key: spanKey}], offset}
 }
 
-describe('buildStoredSelection', () => {
+describe(buildStoredSelection.name, () => {
   test('marks the selected run inside a single span', () => {
     const foo = block('b1', [span('s1', 'foo bar baz')])
 

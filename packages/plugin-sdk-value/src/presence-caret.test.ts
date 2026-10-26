@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest'
 import {getCaretColor} from './presence-caret'
 
-describe('getCaretColor', () => {
+describe(getCaretColor.name, () => {
   it('gives the same user the same colour every time', () => {
     expect(getCaretColor('user-abc')).toBe(getCaretColor('user-abc'))
   })
