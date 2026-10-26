@@ -2618,18 +2618,12 @@ export function markdownToPortableText(
             case 'link_close': {
               // remove the last link key
               const markDefKeys = new Set(currentMarkDefs.map((d) => d._key))
-              let lastLinkIndex: number | undefined
 
-              for (const markDefRef of markDefRefs.reverse()) {
-                if (markDefKeys.has(markDefRef)) {
-                  lastLinkIndex = markDefRefs.indexOf(markDefRef)
+              for (let index = markDefRefs.length - 1; index >= 0; index--) {
+                if (markDefKeys.has(markDefRefs[index]!)) {
+                  markDefRefs.splice(index, 1)
                   break
                 }
-              }
-
-              if (lastLinkIndex !== undefined) {
-                const realIndex = markDefRefs.length - 1 - lastLinkIndex
-                markDefRefs.splice(realIndex, 1)
               }
               break
             }
