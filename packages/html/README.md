@@ -109,8 +109,9 @@ const blocks = htmlToPortableText(html, {
       deserialize(el, _next, createBlock) {
         // Convert <aside class="callout"> to a custom callout block type
         if (
-          el.tagName?.toLowerCase() !== 'aside' ||
-          !el.classList?.contains('callout')
+          !isElement(el) ||
+          el.tagName.toLowerCase() !== 'aside' ||
+          !el.classList.contains('callout')
         ) {
           return undefined
         }
@@ -123,6 +124,12 @@ const blocks = htmlToPortableText(html, {
     },
   ],
 })
+
+// `el` is a `Node`: narrow it before reading element APIs. `nodeType` works
+// with any DOM implementation, including one passed through `parseHtml`.
+function isElement(node: Node): node is Element {
+  return node.nodeType === 1
+}
 ```
 
 ### Whitespace handling
