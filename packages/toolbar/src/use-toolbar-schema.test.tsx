@@ -69,7 +69,7 @@ function ApplicableProbe(props: {
   return null
 }
 
-describe('useToolbarSchema', () => {
+describe(useToolbarSchema.name, () => {
   test('returns the union of every name reachable across root and registered containers', async () => {
     const captures: Array<ReturnType<typeof useToolbarSchema>> = []
     const onSchema = (schema: ReturnType<typeof useToolbarSchema>) => {
@@ -210,7 +210,7 @@ describe('useToolbarSchema', () => {
   })
 })
 
-describe('useApplicableSchema', () => {
+describe(useApplicableSchema.name, () => {
   test('returns the focus block sub-schema when the caret is in a single text block', async () => {
     const captures: Array<ApplicableSchema> = []
     const onApplicable = (applicable: ApplicableSchema) => {
