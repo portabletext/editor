@@ -6743,6 +6743,151 @@ describe(markdownToPortableText.name, () => {
       ])
     })
 
+    test('a tagged payload with no open text block is kept as an inline object', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation =
+        vi.fn<(report: {degradations: Array<Degradation>}) => void>()
+      const markdown = [
+        '- foo',
+        '',
+        '  ```json:object',
+        '  {"_type": "product", "_key": "p1"}',
+        '  ```',
+        '',
+        '  json:object`{"_type":"stockTicker","_key":"k0"}` bar',
+      ].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(defineSchema({})),
+          onDegradation,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+        },
+        {_type: 'product', _key: 'p1'},
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'stockTicker', _key: 'k0'},
+            {_type: 'span', _key: 'k4', text: ' bar', marks: []},
+          ],
+        },
+      ])
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'list-flattened',
+          message:
+            'Bullet list became plain paragraphs: the schema has no `bullet` list',
+          line: 1,
+        },
+        {
+          type: 'object-type-undeclared',
+          message:
+            'Kept the block-level `product` object as written: the schema has no block-level `product` object',
+          line: 3,
+          snippet: '{"_type": "product", "_key": "p1"}',
+        },
+        {
+          type: 'object-type-undeclared',
+          message:
+            'Kept the inline `stockTicker` object as written: the schema has no inline `stockTicker` object',
+          line: 7,
+          snippet: '{"_type":"stockTicker","_key":"k0"}',
+        },
+      ])
+    })
+
+    test('a keyless tagged payload with no open text block is keyed after the block it opens', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '- foo',
+        '',
+        '  ```json:object',
+        '  {"_type": "product", "_key": "p1"}',
+        '  ```',
+        '',
+        '  json:object`{"_type":"stockTicker"}` bar',
+      ].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(defineSchema({})),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {_type: 'product', _key: 'p1'},
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'stockTicker', _key: 'k3'},
+            {_type: 'span', _key: 'k4', text: ' bar', marks: []},
+          ],
+        },
+      ])
+    })
+
+    test('text before a tagged payload with no open text block stays a span', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = [
+        '- foo',
+        '',
+        '  ```json:object',
+        '  {"_type": "product", "_key": "p1"}',
+        '  ```',
+        '',
+        '  baz json:object`{"_type":"stockTicker","_key":"k0"}` bar',
+      ].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(defineSchema({})),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+        },
+        {_type: 'product', _key: 'p1'},
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k4', text: 'baz ', marks: []},
+            {_type: 'stockTicker', _key: 'k0'},
+            {_type: 'span', _key: 'k5', text: ' bar', marks: []},
+          ],
+        },
+      ])
+    })
+
     test('a suffixed key from a repeating generator skips a carried key', () => {
       const markdown = [
         'foo',
@@ -9808,6 +9953,82 @@ describe(markdownToPortableText.name, () => {
           message:
             '`json:object`-tagged code span fell back to a plain code span: the payload has no string `_type`',
           line: 1,
+          snippet: '{"symbol":"AAPL"}',
+        },
+      ])
+    })
+
+    test('object carrier invalid: a `json:object`-tagged code span missing `_type` with no open text block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn<(report: DegradationReport) => void>()
+      const markdown = [
+        '- foo',
+        '',
+        '  ```json:object',
+        '  {"_type": "product", "_key": "p1"}',
+        '  ```',
+        '',
+        '  json:object`{"symbol":"AAPL"}` bar',
+      ].join('\n')
+
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator,
+          schema: compileSchema(defineSchema({})),
+          onDegradation,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {_type: 'product', _key: 'p1'},
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: 'json:object{"symbol":"AAPL"} bar',
+              marks: [],
+            },
+          ],
+        },
+      ])
+
+      expect(onDegradation).toHaveBeenCalledTimes(1)
+      expect(onDegradation.mock.calls[0]![0]!.degradations).toEqual([
+        {
+          type: 'list-flattened',
+          message:
+            'Bullet list became plain paragraphs: the schema has no `bullet` list',
+          line: 1,
+        },
+        {
+          type: 'object-type-undeclared',
+          message:
+            'Kept the block-level `product` object as written: the schema has no block-level `product` object',
+          line: 3,
+          snippet: '{"_type": "product", "_key": "p1"}',
+        },
+        {
+          type: 'object-carrier-invalid',
+          message:
+            '`json:object`-tagged code span fell back to a plain code span: the payload has no string `_type`',
+          line: 7,
+          snippet: '{"symbol":"AAPL"}',
+        },
+        {
+          type: 'decorator-dropped',
+          message:
+            'Removed inline-code formatting, kept the text: the schema has no `code` decorator',
+          line: 7,
           snippet: '{"symbol":"AAPL"}',
         },
       ])

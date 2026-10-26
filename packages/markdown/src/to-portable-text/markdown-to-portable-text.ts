@@ -986,11 +986,7 @@ export function markdownToPortableText(
     currentMarkDefs = []
   }
 
-  const addSpan = (text: string) => {
-    if (text.length === 0) {
-      return
-    }
-
+  const ensureTextBlock = (): PortableTextTextBlock => {
     if (!currentBlock) {
       const style =
         currentBlockquoteStyle ??
@@ -1013,7 +1009,17 @@ export function markdownToPortableText(
       throw new Error('Expected current block')
     }
 
-    const lastChild = currentBlock.children.at(-1)
+    return currentBlock
+  }
+
+  const addSpan = (text: string) => {
+    if (text.length === 0) {
+      return
+    }
+
+    const textBlock = ensureTextBlock()
+
+    const lastChild = textBlock.children.at(-1)
 
     if (
       isSpan({schema: consolidatedOptions.schema}, lastChild) &&
@@ -1023,7 +1029,7 @@ export function markdownToPortableText(
       // Merge with previous span if marks match
       lastChild.text += text
     } else {
-      currentBlock.children.push({
+      textBlock.children.push({
         _type: consolidatedOptions.schema.span.name,
         _key: consolidatedOptions.keyGenerator(),
         text: text,
@@ -2332,13 +2338,12 @@ export function markdownToPortableText(
 
               if (
                 childToken.content.endsWith('json:object') &&
-                nextToken?.type === 'code_inline' &&
-                currentBlock &&
-                'children' in currentBlock
+                nextToken?.type === 'code_inline'
               ) {
                 const objectValue = parseJsonObjectFence(nextToken.content)
 
                 if (objectValue) {
+                  const textBlock = ensureTextBlock()
                   const prefix = childToken.content.slice(
                     0,
                     -'json:object'.length,
@@ -2366,9 +2371,7 @@ export function markdownToPortableText(
                     )
                   }
 
-                  ;(currentBlock as PortableTextTextBlock).children.push(
-                    objectValue as PortableTextObject,
-                  )
+                  textBlock.children.push(objectValue as PortableTextObject)
 
                   childIndex++
                   break
