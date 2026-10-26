@@ -143,7 +143,7 @@ const twoTablesValue = [
   },
 ]
 
-describe('getTableSelection', () => {
+describe(getTableSelection.name, () => {
   test('returns undefined when selection is null', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
