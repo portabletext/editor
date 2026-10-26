@@ -92,6 +92,11 @@
       "groupName": "jsdom"
     },
     {
+      "description": "Bump the browser-test container image with Playwright. The image ships browser builds for exactly one Playwright version, so a `@playwright/test` bump without the matching image tag leaves the browser-test jobs without executables",
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "groupName": "playwright"
+    },
+    {
       "description": "Group Vitest packages. Always `chore`: vitest is test tooling (runtime-reachable only as racejar's peer range, which would otherwise make these PRs `fix`), and the changeset workflow only generates release bumps for `fix`/`feat`",
       "matchPackageNames": ["/vitest/"],
       "groupName": "vitest",

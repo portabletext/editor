@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": [".npmrc", ".oxlintrc.json", "pnpm-lock.yaml"],
+  "globalPassThroughEnv": ["PLAYWRIGHT_BROWSERS_PATH"],
   "tasks": {
     "build": {
       "outputs": ["dist/**", "lib/**"],
