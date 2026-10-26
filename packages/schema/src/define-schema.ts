@@ -36,7 +36,7 @@ export type SchemaDefinition = {
  *  lists: [],
  *  inlineObjects: [],
  *  blockObjects: [],
- * }
+ * })
  * ```
  */
 export function defineSchema<const TSchemaDefinition extends SchemaDefinition>(
