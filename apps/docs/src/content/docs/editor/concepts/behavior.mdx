@@ -90,6 +90,8 @@ Passing parameters allows you to reuse conditional behavior, such as selecting p
 Guards are optional. This means it's possible to create an unconditional behavior that always runs when an event occurs. The "soft return" behavior build into the PTE is one example:
 
 ```js
+import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+
 const softReturn = defineBehavior({
   on: 'insert.soft break',
   actions: [() => [execute({type: 'insert.text', text: '\n'})]],
