@@ -368,7 +368,6 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r1'}],
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
@@ -518,7 +517,6 @@ describe('custom.move.column', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 

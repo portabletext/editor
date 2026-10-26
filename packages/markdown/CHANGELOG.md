@@ -1,5 +1,160 @@
 # @portabletext/markdown
 
+## 2.7.1
+
+### Patch Changes
+
+- [#3432](https://github.com/portabletext/editor/pull/3432) [`e150cff`](https://github.com/portabletext/editor/commit/e150cffa703fedf003a9400d09a1b507558f3559) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep a `json:object`-tagged code span with no open text block as an inline object
+  
+  `markdownToPortableText` stored a `json:object`-tagged code span as literal text when no text block was open at that point, for example in a paragraph that follows a fenced block inside the same list item, in a list the schema flattens into paragraphs. It now opens a text block there, as it does for plain text, and keeps the payload as an inline object, with the same keying and `object-type-undeclared` reporting as anywhere else. Text before the tag stays a span. A tagged code span in that position that fails to reconstruct now reports as `object-carrier-invalid`.
+  
+  ```ts
+  import {compileSchema, defineSchema} from '@portabletext/schema'
+  import {markdownToPortableText} from '@portabletext/markdown'
+  
+  const result = markdownToPortableText(
+    '- foo\n\n  ```json:object\n  {"_type": "product"}\n  ```\n\n  json:object`{"_type":"stockTicker","symbol":"AAPL"}`',
+    {schema: compileSchema(defineSchema({}))},
+  )
+  result.at(-1).children
+  // Previously: [{_type: 'span', text: 'json:object{"_type":"stockTicker","symbol":"AAPL"}', ...}]
+  // Now: [{_type: 'stockTicker', symbol: 'AAPL', _key: ...}]
+  ```
+
+## 2.7.0
+
+### Minor Changes
+
+- [#3422](https://github.com/portabletext/editor/pull/3422) [`a503975`](https://github.com/portabletext/editor/commit/a503975c5e6b5f94fd06b3fb5ed8e3ce506bd68c) Thanks [@christianhg](https://github.com/christianhg)! - feat: key `json:object` payloads and report types the schema does not declare
+  
+  `markdownToPortableText` (and `applyMarkdownEdit`, through its `deserialize` options) now gives a `json:object` fence or tagged code span a generated `_key` when its payload has none, like every other object it builds. A payload keeps its `_key` when it is a non-empty string, and an empty or non-string `_key` is replaced with a generated one. The payload's other fields are still kept as written, but when the schema does not declare its `_type` at that position (`blockObjects` for a fence, `inlineObjects` for a code span, and `blockObjects` for an object a table cell lifts to block position), `onDegradation` now reports it as `object-type-undeclared`:
+  
+  ```ts
+  import {compileSchema, defineSchema} from '@portabletext/schema'
+  import {markdownToPortableText} from '@portabletext/markdown'
+  
+  markdownToPortableText(
+    'Arranged by json:object`{"_type":"mention","_ref":"person-1"}`.',
+    {
+      schema: compileSchema(defineSchema({})),
+      onDegradation: ({message}) => console.warn(message),
+    },
+  )
+  // Previously: the `mention` child had no `_key` and nothing was reported.
+  // Now: the `mention` child gets a `_key`, and onDegradation reports
+  // "Kept the inline `mention` object as written: the schema has no inline `mention` object"
+  ```
+  
+  Without a `schema` the check runs against the default schema, so a zero-config round trip of a custom type now reports it. Code that switches over `Degradation['type']` gains a case.
+
+### Patch Changes
+
+- [#3422](https://github.com/portabletext/editor/pull/3422) [`a8084cc`](https://github.com/portabletext/editor/commit/a8084cc501ab6cfb431989d34bffa11f301363c8) Thanks [@christianhg](https://github.com/christianhg)! - fix: never generate a key that a `json:object` payload carries
+  
+  `markdownToPortableText` keeps the `_key` a `json:object` fence or tagged code span carries, but the keys it generated for everything else could repeat it, so a payload and a neighbouring block or span could end up with the same key. A carried key now stays as written, and generated keys never repeat it. Keys only have to be unique among siblings, but which nodes end up as siblings is only settled as the conversion runs (a table cell can lift an object to block level, and an undeclared list flattens into paragraphs), so generated keys skip the `_key` on every payload object in the document, whether the payload comes before or after the generated node. Keys nested inside a payload are unaffected. `applyMarkdownEdit` also no longer renames a payload whose key it had just given to a renamed duplicate earlier in the same array:
+  
+  ```ts
+  import {markdownToPortableText} from '@portabletext/markdown'
+  
+  let index = 0
+  markdownToPortableText(
+    'foo\n\n```json:object\n{"_type": "product", "_key": "k0"}\n```',
+    {keyGenerator: () => `k${index++}`},
+  )
+  // Previously: the paragraph and the `product` object were both keyed `k0`.
+  // Now: the paragraph is keyed `k1` and the `product` object keeps `k0`.
+  ```
+
+## 2.6.0
+
+### Minor Changes
+
+- [#3404](https://github.com/portabletext/editor/pull/3404) [`0339026`](https://github.com/portabletext/editor/commit/03390265bca31e3d7bd415b2a5f9d08c63eab0cd) Thanks [@christianhg](https://github.com/christianhg)! - feat: report content an edit lost without the markdown showing it
+  
+  Every `ReconciliationReport` passed to `applyMarkdownEdit`'s `onReconciliation` now carries `hiddenLosses`: one `SerializeDegradation` per annotation, decorator, block style, or list-item kind the `serialize` options could not express in markdown and that is missing from the returned value. Content `applyMarkdownEdit` restores is not listed, and neither are losses on blocks the edit deleted. A non-empty list means saving the result drops content whoever edited the markdown never saw, so a caller can refuse or retry the write:
+  
+  ```ts
+  import {applyMarkdownEdit} from '@portabletext/markdown'
+  
+  const edited = applyMarkdownEdit(stored, editedMarkdown, {
+    onReconciliation: (report) => {
+      if (report.hiddenLosses.length > 0) {
+        throw new Error(report.hiddenLosses.map((loss) => loss.message).join('; '))
+      }
+    },
+  })
+  ```
+  
+  Code that builds a `ReconciliationReport` by hand needs to add the field.
+
+### Patch Changes
+
+- [#3406](https://github.com/portabletext/editor/pull/3406) [`d3f5b26`](https://github.com/portabletext/editor/commit/d3f5b26f299772ec2df7ba19b1c6e8cfdd2a45af) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update dependency markdown-it to ^15.0.3 [security]
+
+- [#3412](https://github.com/portabletext/editor/pull/3412) [`d1753bc`](https://github.com/portabletext/editor/commit/d1753bc4bdd132f511478c597906cea7f8f65c8c) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep untouched table cells intact when another cell is edited
+  
+  `applyMarkdownEdit` now returns a table cell the edit did not touch exactly as stored, even when a sibling cell in the same table changed, as long as the table's shape survives the markdown round trip. A table whose rows hold different numbers of cells does not, and its untouched cells can still lose what markdown cannot show. Previously the untouched cell was rebuilt from the markdown, so anything markdown cannot show (annotations such as internal links, custom styles and decorators) was dropped from it:
+  
+  ```ts
+  const stored = [
+    {
+      _type: 'table',
+      _key: 't1',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'r1',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'c1',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  style: 'normal',
+                  markDefs: [
+                    {_type: 'internalLink', _key: 'l1', reference: {_ref: 'foo'}},
+                  ],
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'foo', marks: ['l1']},
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'cell',
+              _key: 'c2',
+              value: [
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [{_type: 'span', _key: 's2', text: 'bar', marks: []}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  const markdown = portableTextToMarkdown(stored).replace('bar', 'baz')
+  applyMarkdownEdit(stored, markdown)
+  // Cell `c1` now keeps its `internalLink` definition.
+  // Previously it came back with `markDefs: []`.
+  ```
+  
+  The reconciliation report now lists the untouched cell and everything inside it as `content-unchanged`, the same as an untouched top-level block. Those entries report `valueChanged: false`, except where a stored node had no `_key`: the key it gets is not listed, and the nodes containing it report `valueChanged: true`.
+
+## 2.5.2
+
+### Patch Changes
+
+- Updated dependencies [[`329cd2e`](https://github.com/portabletext/editor/commit/329cd2e27dc27f81ff4577e9d02c95471a56c846)]:
+  - @portabletext/schema@3.1.0
+
 ## 2.5.1
 
 ### Patch Changes

@@ -14,6 +14,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
+import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {editorMachine} from '../editor/editor-machine'
 import {plugins} from '../engine-plugins/engine-plugins'
@@ -27,16 +28,6 @@ import {
   textPatch,
   toKeyedPatchPath,
 } from './operation-to-patches'
-
-function buildBlockIndexMap(
-  schema: any,
-  containers: any,
-  value: any,
-): Map<string, number> {
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, value, containers}, {blockIndexMap})
-  return blockIndexMap
-}
 
 const schemaDefinition = defineSchema({
   inlineObjects: [{name: 'someObject'}],

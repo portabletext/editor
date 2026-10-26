@@ -109,6 +109,14 @@ export const degradationMessage = {
     kind === 'fence'
       ? `\`json:object\` fence fell back to a code block: ${describeObjectCarrierFailure(payload)}`
       : `\`json:object\`-tagged code span fell back to a plain code span: ${describeObjectCarrierFailure(payload)}`,
+
+  'object-type-undeclared': (
+    objectType: string,
+    position: 'inline' | 'block',
+  ): string =>
+    position === 'inline'
+      ? `Kept the inline \`${objectType}\` object as written: the schema has no inline \`${objectType}\` object`
+      : `Kept the block-level \`${objectType}\` object as written: the schema has no block-level \`${objectType}\` object`,
 } satisfies Record<DegradationType, string | ((...args: never[]) => string)>
 
 /**

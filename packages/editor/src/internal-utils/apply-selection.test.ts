@@ -1,9 +1,9 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {createNodeTraversalTestbed} from '../traversal/node-traversal-testbed'
 import {resolveSelection} from './apply-selection'
-import {createTestSnapshot} from './build-index-maps'
 
 describe(resolveSelection.name, () => {
   const schema = compileSchema(
@@ -22,30 +22,32 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema,
-          containers: new Map(),
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: 'foo',
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'stock-ticker',
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: 'bar',
-                },
-              ],
-            },
-          ],
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'foo',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'stock-ticker',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'bar',
+                  },
+                ],
+              },
+            ],
+          },
         }),
       },
       {
@@ -75,30 +77,32 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema,
-          containers: new Map(),
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: "'",
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'stock-ticker',
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: "foo'",
-                },
-              ],
-            },
-          ],
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: "'",
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'stock-ticker',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: "foo'",
+                  },
+                ],
+              },
+            ],
+          },
         }),
       },
       {
@@ -126,14 +130,16 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema,
-          containers: new Map(),
-          value: [
-            {
-              _key: blockObjectKey,
-              _type: 'image',
-            },
-          ],
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockObjectKey,
+                _type: 'image',
+              },
+            ],
+          },
         }),
       },
       {
@@ -163,21 +169,23 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema,
-          containers: new Map(),
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: 'foobar',
-                },
-              ],
-            },
-          ],
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'foobar',
+                  },
+                ],
+              },
+            ],
+          },
         }),
       },
       {
@@ -206,21 +214,23 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema,
-          containers: new Map(),
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: spanKey,
-                  _type: 'span',
-                  text: 'foo',
-                },
-              ],
-            },
-          ],
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {
+                    _key: spanKey,
+                    _type: 'span',
+                    text: 'foo',
+                  },
+                ],
+              },
+            ],
+          },
         }),
       },
       {
@@ -249,27 +259,29 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema,
-          containers: new Map(),
-          value: [
-            {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {_key: keyGenerator(), _type: 'span', text: 'foo'},
-                {
-                  _key: inlineObjectKey,
-                  _type: 'stock-ticker',
-                  symbol: 'AAPL',
-                },
-                {
-                  _key: keyGenerator(),
-                  _type: 'span',
-                  text: 'bar',
-                },
-              ],
-            },
-          ],
+          context: {
+            schema,
+            containers: new Map(),
+            value: [
+              {
+                _key: blockKey,
+                _type: 'block',
+                children: [
+                  {_key: keyGenerator(), _type: 'span', text: 'foo'},
+                  {
+                    _key: inlineObjectKey,
+                    _type: 'stock-ticker',
+                    symbol: 'AAPL',
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'span',
+                    text: 'bar',
+                  },
+                ],
+              },
+            ],
+          },
         }),
       },
       {
@@ -297,9 +309,11 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema: context.schema,
-          containers: context.containers,
-          value: context.value,
+          context: {
+            schema: context.schema,
+            containers: context.containers,
+            value: context.value,
+          },
         }),
       },
       {
@@ -345,9 +359,11 @@ describe(resolveSelection.name, () => {
     const range = resolveSelection(
       {
         snapshot: createTestSnapshot({
-          schema: context.schema,
-          containers: context.containers,
-          value: context.value,
+          context: {
+            schema: context.schema,
+            containers: context.containers,
+            value: context.value,
+          },
         }),
       },
       {

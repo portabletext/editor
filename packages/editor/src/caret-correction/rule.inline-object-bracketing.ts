@@ -1,6 +1,7 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {isObjectNode, type CorrectionEntry} from '../structural-correction'
+import type {CorrectionEntry} from './correction-entry'
 import {createSpan} from './create-nodes'
+import {isObjectNode} from './node-kinds'
 import type {CaretContext, CaretCorrection} from './types'
 
 /**
@@ -8,8 +9,8 @@ import type {CaretContext, CaretCorrection} from './types'
  * then after it when it ends the block.
  */
 export function getInlineObjectBracketingCorrection(
-  entry: CorrectionEntry,
   context: CaretContext,
+  entry: CorrectionEntry,
 ): CaretCorrection | undefined {
   const {node, path} = entry
 

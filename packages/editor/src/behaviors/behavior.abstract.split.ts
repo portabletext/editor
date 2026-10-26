@@ -1,5 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
-import {isTextBlockNode} from '../engine/node/is-text-block-node'
+import {isTextBlock, isTextBlockNode} from '@portabletext/schema'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlockObject} from '../selectors/selector.get-focus-block-object'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'

@@ -99,7 +99,7 @@ Converting Markdown to Portable Text and back isn't a lossless mirror:
 2. The normalized Markdown is a fixpoint for plain text and the [Supported features](#supported-features) table: parsing it and serializing again reproduces it byte-for-byte.
 3. MD→PT survival is schema-driven: a construct whose type the schema doesn't declare keeps its content and drops the structure that named it.
 4. PT structures with no Markdown form degrade predictably on PT→MD (extra table header rows flatten into the body, deep or level-skipping lists collapse to relative nesting, unknown marks pass their text through unformatted). Unknown object types round-trip instead: block-level as a ` ```json:object ` fence, inline as a `json:object`-tagged code span, both carrying the value as JSON. A fence or span whose body isn't a JSON object with a `_type` is ordinary code.
-5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key`. [`applyMarkdownEdit`](#applymarkdownedit) restores stored keys after an edit.
+5. Identity does not round-trip for text blocks: keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key` when it is a non-empty string, and a payload without one, or with an empty or non-string `_key`, gets a generated key. [`applyMarkdownEdit`](#applymarkdownedit) restores stored keys after an edit.
 6. A hard break and a `\n` in a span's text are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
 The named exceptions to the fixpoint claim: an explicit-scheme URL or email keeps its text but gains a `link` mark on reparse, and a fuzzy `www.` form does too unless it carries markdown-significant punctuation; a hard break inside a heading splits into a second block on reparse, since an ATX heading is single-line; leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint; a `code` object with the reserved language `json:object` loses that language on serialization; and span text ending in `json:object` directly before a code-marked span holding a typed JSON object binds into an inline object on reparse.
@@ -429,7 +429,7 @@ markdownToPortableText(markdown, {
 
 #### Reporting degradation
 
-Every construct the schema can't represent (a decorator not in the schema, a table with no `table` block object, a task checkbox with no `task` list, and so on) degrades to a lossier shape rather than throwing. A ` ```json:object ` fence or tagged code span that fails to reconstruct (invalid JSON, or no string `_type`) reports too, as `object-carrier-invalid`, even on a schema that would otherwise accept everything: it's the payload that's unusable, not the schema. `onDegradation` observes both, one callback covering all uses. Left unset, the conversion stays silent and returns the lossiest representation it can build, since a library shouldn't log on its own initiative. Passed a function, observe the losses: it's called once, after the whole document has been walked, only when at least one construct degraded, with a report object holding every `Degradation` in encounter order and a canonical grouped `message`. Enforce against lossy output by throwing your own error from inside that callback; the throw propagates out of `markdownToPortableText`.
+Every construct the schema can't represent (a decorator not in the schema, a table with no `table` block object, a task checkbox with no `task` list, and so on) degrades to a lossier shape rather than throwing. A ` ```json:object ` fence or tagged code span that fails to reconstruct (invalid JSON, or no string `_type`) reports too, as `object-carrier-invalid`, even on a schema that would otherwise accept everything: it's the payload that's unusable, not the schema. A fence or tagged code span that does reconstruct keeps its payload's fields as written (only a missing or unusable `_key` is filled in), even when the schema doesn't declare its `_type` at that position (`blockObjects` for a fence, `inlineObjects` for a code span, and for an object a table cell lifts to block position, `blockObjects`). Such an object reports as `object-type-undeclared`, so the caller learns that the result holds a type its schema doesn't expect. Without a `schema` the check runs against the default schema, like every other construct. `onDegradation` observes all of these, one callback covering all uses. Left unset, the conversion stays silent and returns the lossiest representation it can build, since a library shouldn't log on its own initiative. Passed a function, observe the losses: it's called once, after the whole document has been walked, only when at least one construct degraded, with a report object holding every `Degradation` in encounter order and a canonical grouped `message`. Enforce against lossy output by throwing your own error from inside that callback; the throw propagates out of `markdownToPortableText`.
 
 ```ts
 markdownToPortableText(markdown, {
@@ -810,6 +810,7 @@ Keys follow the edit the way they would in an editor, and when the evidence is u
 - A split keeps the key on the first non-empty fragment, like pressing enter; a merge keeps the first block's key, like pressing backspace. A soft-wrap join is a merge.
 - A typo fix lands as a text change on the same span, and editing a link's URL keeps its annotation key. Two identical annotations in one block (the same link twice, say) pair in order, like any repeated content.
 - A `json:object` payload keeps the `_key` it carries, unless the payload matches stored content, which keeps the stored key: editing markdown cannot re-key existing content.
+- A `json:object` payload without a `_key`, or with an empty or non-string one, gets a generated key, unless it matches stored content, which keeps the stored key.
 
 #### What gets restored
 
@@ -853,11 +854,36 @@ applyMarkdownEdit(stored, editedMarkdown, {
     report.preservedKeys // stored keys that survived, with a basis, a path, and whether the value changed
     report.keyFallbacks // regions that got fresh keys instead of a guess
     report.renamedKeys // keys rewritten to keep siblings unique
+    report.hiddenLosses // stored content the markdown never showed that is missing from the result
   },
 })
 ```
 
-Every `key` and `path` in the report matches the returned value exactly, except `mismatch.storedPath`, the one path that addresses the stored value passed in. A path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, `keyMatching`, and `mismatch.type` are facts of that invocation, safe to branch on. Match on `mismatch.type` (`'type-changed'`, `'text-changed'`, or `'block-count-changed'`), not `mismatch.message`: the message can change between releases. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. `valueChanged`, by contrast, is a stable fact of the invocation, safe to branch on: it is `true` when the node wearing that key differs from its stored counterpart, field order aside but array order significant. Any difference counts, including a descendant key rewritten to keep siblings unique, or a key filled in for a stored node that had none. `false` guarantees the returned node deep-equals the stored one. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload, so a caller who needs to know whether one of those changed has to compare it directly. The next section shows how to check `json:object` payloads that way. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+Every `key` and `path` in the report matches the returned value exactly, except `mismatch.storedPath` and each `hiddenLosses` entry's `path`, which address the stored value passed in. A path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, `keyMatching`, and `mismatch.type` are facts of that invocation, safe to branch on. Match on `mismatch.type` (`'type-changed'`, `'text-changed'`, or `'block-count-changed'`), not `mismatch.message`: the message can change between releases. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. `valueChanged`, by contrast, is a stable fact of the invocation, safe to branch on: it is `true` when the node wearing that key differs from its stored counterpart, field order aside but array order significant. Any difference counts, including a descendant key rewritten to keep siblings unique, or a key filled in for a stored node that had none. `false` guarantees the returned node deep-equals the stored one. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload, so a caller who needs to know whether one of those changed has to compare it directly. The next section shows how to check `json:object` payloads that way. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+
+#### Losses the markdown did not show
+
+Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. Losses on a block the edit deleted are not listed. A non-empty list means saving the result drops content the editor never saw, so refuse or retry:
+
+```ts
+import {
+  applyMarkdownEdit,
+  type SerializeDegradation,
+} from '@portabletext/markdown'
+
+let hiddenLosses: Array<SerializeDegradation> = []
+const edited = applyMarkdownEdit(stored, editedMarkdown, {
+  onReconciliation: (report) => {
+    hiddenLosses = report.hiddenLosses
+  },
+})
+
+if (hiddenLosses.length > 0) {
+  throw new Error(
+    `The edit would drop: ${hiddenLosses.map((loss) => loss.message).join('; ')}`,
+  )
+}
+```
 
 #### Guarding `json:object` payloads
 

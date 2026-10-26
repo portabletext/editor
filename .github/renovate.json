@@ -5,6 +5,10 @@
     ":dependencyDashboardApproval"
   ],
   "ignorePresets": ["github>sanity-io/renovate-config:group-non-major"],
+  "vulnerabilityAlerts": {
+    "description": "Raise the declared range on security updates. Renovate defaults these to `update-lockfile` and forces it over every `packageRules` entry, so a fix inside an existing range only moved the lockfile: no manifest changed, the changeset bot had nothing to release, and consumers kept the vulnerable version. With `bump`, `fix(deps)` security updates in published packages ship as patch releases. The forced strategy also applies to `peerDependencies`, which then narrow instead of widening",
+    "rangeStrategy": "bump"
+  },
   "packageRules": [
     {
       "matchFileNames": ["apps/**/*", "examples/**/*"],
@@ -17,6 +21,7 @@
         "packages/keyboard-shortcuts/package.json",
         "packages/patches/package.json",
         "packages/racejar/package.json",
+        "packages/repair/package.json",
         "packages/sanity-bridge/package.json",
         "packages/schema/package.json",
         "packages/toolbar/package.json"
@@ -85,6 +90,11 @@
       "description": "Group JSDOM packages",
       "matchPackageNames": ["/jsdom/"],
       "groupName": "jsdom"
+    },
+    {
+      "description": "Bump the browser-test container image with Playwright. The image ships browser builds for exactly one Playwright version, so a `@playwright/test` bump without the matching image tag leaves the browser-test jobs without executables",
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "groupName": "playwright"
     },
     {
       "description": "Group Vitest packages. Always `chore`: vitest is test tooling (runtime-reachable only as racejar's peer range, which would otherwise make these PRs `fix`), and the changeset workflow only generates release bumps for `fix`/`feat`",

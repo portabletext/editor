@@ -147,8 +147,6 @@ describe('Render count regression', () => {
       expect(locator.getByText('item 0')).toBeInTheDocument(),
     )
 
-    // Settle: let any pending renders finish before resetting counters.
-    await new Promise((r) => setTimeout(r, 100))
     itemCounter.reset()
 
     // Type a character at the start of item 0's span. Only li0's
@@ -273,9 +271,6 @@ describe('Render count regression', () => {
         {timeout: 10_000},
       )
 
-      // Settle.
-      await new Promise((r) => setTimeout(r, 200))
-
       // Clear any pre-existing console.error calls from setup
       // (testing infra noise).
       errorSpy.mockClear()
@@ -309,8 +304,17 @@ describe('Render count regression', () => {
         {timeout: 10_000},
       )
 
-      // Settle: let all cleanup callbacks run.
-      await new Promise((r) => setTimeout(r, 500))
+      // The editor remains responsive: type into the survivor block.
+      editor.send({
+        type: 'insert.text',
+        at: [{_key: 'after'}, 'children', {_key: 's-after'}] as never,
+        offset: 0,
+        text: 'OK',
+      } as never)
+
+      await vi.waitFor(() =>
+        expect(locator.getByText('OK')).toBeInTheDocument(),
+      )
 
       // CONTRACT: no subscriber/unmount/cleanup errors logged. Filter
       // out unrelated noise so the assertion stays focused on the
@@ -328,18 +332,6 @@ describe('Render count regression', () => {
           .map((c) => c.map(String).join(' '))
           .join('\n---\n')}`,
       ).toHaveLength(0)
-
-      // The editor remains responsive: type into the survivor block.
-      editor.send({
-        type: 'insert.text',
-        at: [{_key: 'after'}, 'children', {_key: 's-after'}] as never,
-        offset: 0,
-        text: 'OK',
-      } as never)
-
-      await vi.waitFor(() =>
-        expect(locator.getByText('OK')).toBeInTheDocument(),
-      )
     } finally {
       errorSpy.mockRestore()
     }
@@ -481,9 +473,14 @@ async function runTypingScenario(options: {
     {timeout: 10_000},
   )
 
-  // Settle: let any pending renders from the click and `select`
-  // finish before resetting counters.
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  await vi.waitFor(() => {
+    const domSelection = window.getSelection()
+    expect({
+      anchorText: domSelection?.anchorNode?.textContent,
+      anchorOffset: domSelection?.anchorOffset,
+      isCollapsed: domSelection?.isCollapsed,
+    }).toEqual({anchorText: 'bar', anchorOffset: 3, isCollapsed: true})
+  })
 
   options.blockRenders.clear()
   options.spanRenders.clear()

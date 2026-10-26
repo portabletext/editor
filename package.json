@@ -92,6 +92,9 @@
       "jsdom": "^27.2.0",
       "sanity>@portabletext/editor": "workspace:*",
       "sanity>@sanity/cli": "8.9.0"
+    },
+    "patchedDependencies": {
+      "@microsoft/api-extractor": "patches/@microsoft__api-extractor.patch"
     }
   }
 }

@@ -11,19 +11,29 @@ export function defaultKeyGenerator() {
  * a way no later pass can repair: two definitions sharing a key leave
  * every referencing span attributable to either. Bounded retries, then
  * deterministic suffixing, mirroring how sibling-uniqueness repair
- * treats a generator that keeps returning claimed keys.
+ * treats a generator that keeps returning claimed keys. `reservedKeys`
+ * holds keys the input itself carries. Keys only need to be unique
+ * among siblings, but a caller may not know the final siblings before
+ * it mints, so a generated key never repeats a reserved one anywhere
+ * in the conversion. It is read on every call, so the caller can fill
+ * it after creating the generator but before the first key is minted.
  */
-export function uniqueKeyGenerator(generator: () => string): () => string {
+export function uniqueKeyGenerator(
+  generator: () => string,
+  reservedKeys: ReadonlySet<string> = new Set(),
+): () => string {
   const mintedKeys = new Set<string>()
+  const isClaimed = (key: string) =>
+    mintedKeys.has(key) || reservedKeys.has(key)
   return () => {
     let candidate = generator()
-    for (let attempt = 0; attempt < 3 && mintedKeys.has(candidate); attempt++) {
+    for (let attempt = 0; attempt < 3 && isClaimed(candidate); attempt++) {
       candidate = generator()
     }
-    if (mintedKeys.has(candidate)) {
+    if (isClaimed(candidate)) {
       const base = candidate
       let suffix = 2
-      while (mintedKeys.has(`${base}-${suffix}`)) {
+      while (isClaimed(`${base}-${suffix}`)) {
         suffix++
       }
       candidate = `${base}-${suffix}`

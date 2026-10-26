@@ -1,5 +1,5 @@
-import {isObjectNode} from '../structural-correction'
 import {createTextBlock} from './create-nodes'
+import {isObjectNode} from './node-kinds'
 import type {
   CaretContext,
   CaretCorrection,
@@ -12,8 +12,8 @@ import type {
  * child.
  */
 export function getContainerFieldCorrection(
-  entry: CaretEntry,
   context: CaretContext,
+  entry: CaretEntry,
 ): CaretCorrection | undefined {
   const {node, path} = entry
 

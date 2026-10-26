@@ -76,10 +76,11 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    // Wait a tick to let any async drop processing complete
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: collapsed drop at start edge of expanded drag origin is suppressed', async () => {
@@ -150,8 +151,11 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: collapsed drop at end edge of expanded drag origin is suppressed', async () => {
@@ -222,8 +226,11 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: drop onto block-object inside drag origin is suppressed', async () => {
@@ -309,8 +316,11 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: drop after the drag origin end is allowed', async () => {
@@ -472,9 +482,11 @@ describe('event.drag.drop self-drop semantics', () => {
       },
     })
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...dragSelection,
+      backward: false,
+    })
   })
 
   test('Scenario: chrome drop inside the dragged container is suppressed', async () => {
@@ -574,8 +586,6 @@ describe('event.drag.drop self-drop semantics', () => {
         selection: dropSelection,
       },
     })
-
-    await new Promise((resolve) => setTimeout(resolve, 50))
 
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })

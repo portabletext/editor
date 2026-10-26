@@ -1,15 +1,16 @@
-import {isTextBlockNode, type CorrectionEntry} from '../structural-correction'
+import {isTextBlockNode} from '@portabletext/schema'
+import type {CorrectionEntry} from './correction-entry'
 import {createSpan} from './create-nodes'
 import type {CaretContext, CaretCorrection} from './types'
 
 export function getEmptyChildrenCorrection(
-  entry: CorrectionEntry,
   context: CaretContext,
+  entry: CorrectionEntry,
 ): CaretCorrection | undefined {
   const {node, path} = entry
 
   if (
-    !isTextBlockNode(context.schema, node) ||
+    !isTextBlockNode({schema: context.schema}, node) ||
     !Array.isArray(node.children) ||
     node.children.length > 0
   ) {

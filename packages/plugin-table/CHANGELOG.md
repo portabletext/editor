@@ -1,5 +1,23 @@
 # @portabletext/plugin-table
 
+## 2.0.21
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.8`
+
+## 2.0.20
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.7`
+
+## 2.0.19
+
+### Patch Changes
+
+- [#3260](https://github.com/portabletext/editor/pull/3260) [`dabaea4`](https://github.com/portabletext/editor/commit/dabaea4a182054032a83324799a1d480cd2b7c9e) Thanks [@renovate](https://github.com/apps/renovate)! - fix(deps): update react to ^19.3.1
+
 ## 2.0.18
 
 ### Patch Changes

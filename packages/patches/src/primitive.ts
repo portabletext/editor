@@ -4,6 +4,12 @@ export function applyPatchToUnknown(
   value: unknown,
   patch: Patch,
 ): JSONValue | undefined {
+  if (patch.path.length > 0 && (value === undefined || value === null)) {
+    // Sanity leaves the value unchanged for a path into a missing value
+    // and records the transaction without failing it.
+    return value as JSONValue | undefined
+  }
+
   if (patch.path.length > 0) {
     throw new Error(
       `Cannot apply deep operations on primitive values. Received patch with type "${

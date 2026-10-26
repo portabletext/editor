@@ -10,8 +10,8 @@ import type {
  * text block type.
  */
 export function repairMissingType(
-  entry: CorrectionEntry,
   context: StructuralContext,
+  entry: CorrectionEntry,
 ): StructuralCorrection | undefined {
   const {node, path, parent} = entry
 
@@ -29,9 +29,7 @@ export function repairMissingType(
       : context.schema.block.name
 
   return {
-    rule: 'missing-type',
-    type: 'set',
-    path: [...path, '_type'],
-    value: typeName,
+    type: 'missing-type',
+    patches: [{type: 'set', path: [...path, '_type'], value: typeName}],
   }
 }
