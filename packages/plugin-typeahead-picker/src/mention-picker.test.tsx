@@ -8,7 +8,7 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import mentionPickerFeature from './mention-picker.feature?raw'
@@ -468,5 +468,87 @@ describe('Debouncing', () => {
     // With 1000ms debouncing, rapid typing should result in fewer calls
     // than the 3 characters typed (a, ab, abc)
     expect(callCount).toBeLessThan(3)
+  })
+
+  test('Scenario: each keystroke restarts the debounce window', async () => {
+    const requestedKeywords: Array<string> = []
+
+    const debouncedPicker = defineTypeaheadPicker<MentionMatch>({
+      mode: 'async',
+      trigger: /@/,
+      keyword: /\w*/,
+      debounceMs: 1000,
+      getMatches: ({keyword}) => {
+        requestedKeywords.push(keyword)
+        return Promise.resolve([
+          {key: '1', name: `Result for ${keyword}`, username: keyword},
+        ])
+      },
+      onSelect: [
+        ({event}) => [
+          raise({type: 'delete', at: event.patternSelection}),
+          raise({type: 'insert.text', text: event.match.name}),
+        ],
+      ],
+    })
+
+    function DebounceRestartTestPlugin() {
+      const picker = useTypeaheadPicker(debouncedPicker)
+
+      return (
+        <>
+          <div data-testid="debounce-restart-matches">
+            {picker.snapshot.context.matches
+              .map((match) => match.name)
+              .join(',')}
+          </div>
+          <div data-testid="debounce-restart-keyword">
+            {picker.snapshot.context.keyword}
+          </div>
+        </>
+      )
+    }
+
+    const {locator} = await createTestEditor({
+      children: <DebounceRestartTestPlugin />,
+      schemaDefinition: defineSchema({}),
+    })
+
+    const matchesLocator = page.getByTestId('debounce-restart-matches')
+    const keywordLocator = page.getByTestId('debounce-restart-keyword')
+
+    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+
+    await userEvent.click(locator)
+
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+    onTestFinished(() => {
+      vi.useRealTimers()
+    })
+
+    await userEvent.type(locator, '@a')
+    await vi.advanceTimersByTimeAsync(400)
+    await userEvent.type(locator, 'b')
+    await vi.advanceTimersByTimeAsync(400)
+    await userEvent.type(locator, 'c')
+    await vi.advanceTimersByTimeAsync(400)
+    await userEvent.type(locator, 'd')
+
+    expect(keywordLocator.element().textContent).toEqual('abcd')
+    expect(requestedKeywords).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(requestedKeywords).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(requestedKeywords).toEqual(['abcd'])
+
+    await vi.waitFor(() => {
+      expect(matchesLocator.element().textContent).toEqual('Result for abcd')
+    })
+    expect(requestedKeywords).toEqual(['abcd'])
+
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(requestedKeywords).toEqual(['abcd'])
   })
 })
