@@ -75,9 +75,14 @@ function* getTextBlockFields(
 ): Generator<RegisteredContainer['field']> {
   let level: Array<RegisteredContainer | RegisteredPositional> =
     Array.from(containers)
+  const visited = new Set<RegisteredContainer | RegisteredPositional>()
   while (level.length > 0) {
     const nextLevel: Array<RegisteredContainer | RegisteredPositional> = []
     for (const entry of level) {
+      if (visited.has(entry)) {
+        continue
+      }
+      visited.add(entry)
       if (!('field' in entry)) {
         continue
       }

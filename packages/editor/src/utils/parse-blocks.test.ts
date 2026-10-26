@@ -1,4 +1,9 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type FieldDefinition,
+  type OfDefinition,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {
@@ -9,6 +14,77 @@ import {
 } from './parse-blocks'
 
 describe(parseBlock.name, () => {
+  test('preserves declared fields through a recursive block object', () => {
+    const container = {
+      name: 'container',
+      fields: [] as Array<FieldDefinition>,
+    }
+    container.fields = [
+      {name: 'label', type: 'string'},
+      {
+        name: 'content',
+        type: 'array',
+        of: [{type: 'block'}, container as unknown as OfDefinition],
+      },
+    ]
+
+    expect(
+      parseBlock({
+        schema: compileSchema({blockObjects: [container]}),
+        keyGenerator: createTestKeyGenerator(),
+        profile: 'strict',
+        block: {
+          _type: 'container',
+          label: 'level 1',
+          content: [
+            {
+              _type: 'container',
+              label: 'level 2',
+              content: [
+                {
+                  _type: 'container',
+                  label: 'level 3',
+                  content: [
+                    {
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [{_type: 'span', text: 'deep', marks: []}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual({
+      _key: 'k0',
+      _type: 'container',
+      label: 'level 1',
+      content: [
+        {
+          _type: 'container',
+          label: 'level 2',
+          content: [
+            {
+              _type: 'container',
+              label: 'level 3',
+              content: [
+                {
+                  _type: 'block',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [{_type: 'span', text: 'deep', marks: []}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
   test('null', () => {
     expect(
       parseBlock({
