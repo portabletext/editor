@@ -62,7 +62,7 @@ function probes(
   )
 }
 
-describe('ListIndexProvider', () => {
+describe(ListIndexProvider.name, () => {
   test('Scenario: Indices are correct on first render', async () => {
     await createTestEditor({
       schemaDefinition,
