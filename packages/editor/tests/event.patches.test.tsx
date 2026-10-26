@@ -6422,7 +6422,9 @@ describe('event.patches', () => {
     // genuine write, and records the placeholder as the last synced
     // value. The editor's own `unset([])` emission must override that:
     // its stream destroyed the field, so the retype must rebuild it.
+    let lastMutationValue: Array<PortableTextBlock> | undefined
     editor.on('mutation', (event) => {
+      lastMutationValue = event.value
       editor.send({type: 'update value', value: event.value})
     })
     let remoteOperations = 0
@@ -6528,6 +6530,14 @@ describe('event.patches', () => {
           children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
         },
       ])
+    })
+
+    // The host mirrors each batched `mutation` back as `update value`, and
+    // those batches trail the typing. Wait until the batch carrying "bar"
+    // has gone out, so no echo of the retype can collapse the selection
+    // made below.
+    await vi.waitFor(() => {
+      expect(lastMutationValue).toEqual(editor.getSnapshot().context.value)
     })
 
     // A second clear must unset the field again: the stale echo recorded
