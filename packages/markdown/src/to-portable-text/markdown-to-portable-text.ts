@@ -80,6 +80,7 @@ export type DegradationType =
   | 'callout-fallback'
   | 'fields-dropped'
   | 'object-carrier-invalid'
+  | 'object-type-undeclared'
 
 /**
  * Reports a single lossy conversion, in encounter order: as the conversion
@@ -594,6 +595,42 @@ export function markdownToPortableText(
   ): number | undefined =>
     candidateToken?.map ? candidateToken.map[0] + 1 : undefined
 
+  const ensureObjectCarrierKey = (objectValue: Record<string, unknown>) => {
+    if (
+      typeof objectValue['_key'] !== 'string' ||
+      objectValue['_key'].length === 0
+    ) {
+      objectValue['_key'] = consolidatedOptions.keyGenerator()
+    }
+  }
+
+  const reportUndeclaredObjectType = (
+    objectValue: {_type: string},
+    position: 'inline' | 'block',
+    source: {line: number | undefined; snippet: string | undefined},
+  ) => {
+    const declaredObjects =
+      position === 'inline'
+        ? consolidatedOptions.schema.inlineObjects
+        : consolidatedOptions.schema.blockObjects
+    if (
+      declaredObjects.some(
+        (declaredObject) => declaredObject.name === objectValue._type,
+      )
+    ) {
+      return
+    }
+    report({
+      type: 'object-type-undeclared',
+      message: degradationMessage['object-type-undeclared'](
+        objectValue._type,
+        position,
+      ),
+      line: source.line,
+      snippet: source.snippet,
+    })
+  }
+
   const reportStyleFallback = (
     name: string,
     line?: number,
@@ -795,6 +832,14 @@ export function markdownToPortableText(
   const demotedTableImages = new WeakMap<
     PortableTextObject,
     'table-cell' | 'no-block-image'
+  >()
+  // `json:object` carriers pushed as inline children of a table cell. As
+  // with demoted images, whether the object ends up inline or block is
+  // only known once `td_close`/`th_close` decides the sole-object lift, so
+  // the schema check waits for that verdict.
+  const tableCellObjectCarriers = new WeakMap<
+    PortableTextObject,
+    {line: number | undefined; snippet: string | undefined}
   >()
 
   // List container state. When `types.list` is defined and the parser enters
@@ -1624,6 +1669,11 @@ export function markdownToPortableText(
           const objectValue = parseJsonObjectFence(code)
 
           if (objectValue) {
+            ensureObjectCarrierKey(objectValue)
+            reportUndeclaredObjectType(objectValue, 'block', {
+              line: lineOf(token),
+              snippet: truncateSnippet(code),
+            })
             pushBlock(objectValue as PortableTextObject)
             break
           }
@@ -2072,6 +2122,31 @@ export function markdownToPortableText(
           }
         }
 
+        for (const block of cellBlocks) {
+          if (block === liftedObject) {
+            const carrierSource = tableCellObjectCarriers.get(liftedObject)
+            if (carrierSource) {
+              reportUndeclaredObjectType(liftedObject, 'block', carrierSource)
+            }
+            continue
+          }
+          if (!('children' in block) || !Array.isArray(block.children)) {
+            continue
+          }
+          for (const child of block.children) {
+            const carrierSource = tableCellObjectCarriers.get(
+              child as PortableTextObject,
+            )
+            if (carrierSource) {
+              reportUndeclaredObjectType(
+                child as PortableTextObject,
+                'inline',
+                carrierSource,
+              )
+            }
+          }
+        }
+
         if (currentTableRow !== null) {
           currentTableRow.push({
             _type: 'cell',
@@ -2265,6 +2340,24 @@ export function markdownToPortableText(
 
                   if (prefix.length > 0) {
                     addSpan(prefix)
+                  }
+
+                  ensureObjectCarrierKey(objectValue)
+                  const carrierSource = {
+                    line: inlineLine(),
+                    snippet: truncateSnippet(nextToken.content),
+                  }
+                  if (inTableCell) {
+                    tableCellObjectCarriers.set(
+                      objectValue as PortableTextObject,
+                      carrierSource,
+                    )
+                  } else {
+                    reportUndeclaredObjectType(
+                      objectValue,
+                      'inline',
+                      carrierSource,
+                    )
                   }
 
                   ;(currentBlock as PortableTextTextBlock).children.push(
