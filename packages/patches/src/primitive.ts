@@ -5,8 +5,8 @@ export function applyPatchToUnknown(
   patch: Patch,
 ): JSONValue | undefined {
   if (patch.path.length > 0 && (value === undefined || value === null)) {
-    // Content Lake selects nothing for a path into a missing value and
-    // applies the patch as a no-op, without failing the transaction.
+    // Sanity leaves the value unchanged for a path into a missing value
+    // and records the transaction without failing it.
     return value as JSONValue | undefined
   }
 
