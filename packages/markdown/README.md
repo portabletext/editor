@@ -728,19 +728,27 @@ portableTextToMarkdown(blocks, {
 
 #### Block spacing
 
-By default, blocks are separated by double newlines (`\n\n`), with special handling for list items (single newline) and consecutive blockquotes. Customize with `blockSpacing`:
+By default, blocks are separated by double newlines (`\n\n`), with special handling for list items (single newline) and consecutive blockquotes. Customize with `blockSpacing`. It replaces the default renderer, and returning `undefined` separates the two blocks with `\n\n`, not with the default spacing. To keep the default spacing for the cases you don't handle, delegate to `DefaultBlockSpacingRenderer`:
 
 ```ts
+import {
+  DefaultBlockSpacingRenderer,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   blockSpacing: ({current, next}) => {
     // Double newline between list items instead of single
-    if (current.listItem && next.listItem) {
+    if (isListItem(current) && isListItem(next)) {
       return '\n\n'
     }
-    // Return undefined to use default spacing
-    return undefined
+    return DefaultBlockSpacingRenderer({current, next})
   },
 })
+
+function isListItem(node: object) {
+  return 'listItem' in node && typeof node.listItem === 'string'
+}
 ```
 
 #### Reporting degradation
