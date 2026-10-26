@@ -846,6 +846,42 @@ describe(markdownToPortableText.name, () => {
   })
 
   describe('link', () => {
+    test('bold that wraps a link and continues after it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('**[x](https://example.com) y** z', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k2',
+              text: 'x',
+              marks: ['strong', 'k1'],
+            },
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: ' y',
+              marks: ['strong'],
+            },
+            {
+              _type: 'span',
+              _key: 'k4',
+              text: ' z',
+              marks: [],
+            },
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+          style: 'normal',
+        },
+      ])
+    })
+
     test('default definition', () => {
       const keyGenerator = createTestKeyGenerator()
       expect(
