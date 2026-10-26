@@ -8,7 +8,7 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import {getPickerState} from './test-utils'
@@ -228,10 +228,7 @@ describe('Error handling in checking complete state', () => {
       trigger: /:/,
       keyword: /\S*/,
       delimiter: ':',
-      getMatches: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        throw testError
-      },
+      getMatches: () => Promise.reject(testError),
       onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
@@ -286,17 +283,19 @@ describe('Error handling in checking complete state', () => {
 })
 
 describe('Sync mode debouncing', () => {
-  test('Scenario: sync mode delays `getMatches` calls when `debounceMs` is configured', async () => {
-    let callCount = 0
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
-    // Use a large debounce window so that even Firefox's slower
-    // character-by-character userEvent.type stays within a single window.
+  test('Scenario: sync mode delays `getMatches` calls when `debounceMs` is configured', async () => {
+    const requestedKeywords: Array<string> = []
+
     const debouncedSyncPicker = defineTypeaheadPicker<SyncMatch>({
       trigger: /:/,
       keyword: /\w*/,
       debounceMs: 3000,
       getMatches: ({keyword}) => {
-        callCount++
+        requestedKeywords.push(keyword)
         return [{key: '1', name: `Result for ${keyword}`}]
       },
       onSelect: [
@@ -335,24 +334,21 @@ describe('Sync mode debouncing', () => {
 
     await userEvent.click(locator)
 
-    // Type rapidly - each character within the debounce window
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+
     await userEvent.type(locator, ':abc')
 
-    // Wait for keyword to update
-    await vi.waitFor(() => {
-      expect(keywordLocator.element().textContent).toEqual('abc')
-    })
+    expect(keywordLocator.element().textContent).toEqual('abc')
 
-    // Wait for debounce time
-    await new Promise((resolve) => setTimeout(resolve, 3500))
+    await vi.advanceTimersByTimeAsync(2999)
+    expect(requestedKeywords).toEqual([])
 
-    // Should have results for the final keyword
+    await vi.advanceTimersByTimeAsync(1)
+    expect(requestedKeywords).toEqual(['abc'])
+
     await vi.waitFor(() => {
       expect(matchesLocator.element().textContent).toEqual('Result for abc')
     })
-
-    // With 1000ms debouncing, rapid typing should result in fewer calls
-    // than the 3 characters typed (a, ab, abc)
-    expect(callCount).toBeLessThan(3)
+    expect(requestedKeywords).toEqual(['abc'])
   })
 })
