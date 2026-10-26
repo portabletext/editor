@@ -45,10 +45,12 @@ export type Behavior<
  * @example
  *
  * ```tsx
+ * import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+ *
  * const noLowerCaseA = defineBehavior({
  *   on: 'insert.text',
  *   guard: ({event, snapshot}) => event.text === 'a',
- *   actions: [({event, snapshot}) => [{type: 'insert.text', text: 'A'}]],
+ *   actions: [({event, snapshot}) => [raise({type: 'insert.text', text: 'A'})]],
  * })
  * ```
  *
