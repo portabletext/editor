@@ -28,7 +28,7 @@ const schema = compileSchema(
   }),
 )
 
-describe('htmlToPortableText', () => {
+describe(htmlToPortableText.name, () => {
   test('list items without parent', () => {
     expect(
       htmlToPortableText(`<li>foo bar</li><li>baz</li>`, {
