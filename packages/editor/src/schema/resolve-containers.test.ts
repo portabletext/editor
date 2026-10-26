@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
-import {buildIndexMaps} from '../internal-utils/build-index-maps'
+import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
 import {
   defineBlockObject,
   defineContainer,
@@ -17,16 +17,6 @@ import {
   resolveNestedContainer,
   type ResolvedContainers,
 } from './resolve-containers'
-
-function buildBlockIndexMap(
-  schema: any,
-  containers: any,
-  value: any,
-): Map<string, number> {
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, value, containers}, {blockIndexMap})
-  return blockIndexMap
-}
 
 const containerRender: Container['render'] = ({children}) => children
 const leafRender: BlockObject['render'] = ({children}) => children
