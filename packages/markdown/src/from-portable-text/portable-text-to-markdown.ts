@@ -175,10 +175,13 @@ function renderMarkdown(
     | undefined,
 ): string {
   const renderers = {
-    block: {
-      ...defaultRenderers.block,
-      ...options.block,
-    },
+    block:
+      typeof options.block === 'function'
+        ? options.block
+        : {
+            ...defaultRenderers.block,
+            ...options.block,
+          },
     listItem: options.listItem ?? defaultRenderers.listItem,
     marks: {
       ...defaultRenderers.marks,

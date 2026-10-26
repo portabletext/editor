@@ -1071,6 +1071,18 @@ describe(portableTextToMarkdown.name, () => {
     })
   })
 
+  describe('block renderer', () => {
+    test('a single function renders every block style', () => {
+      const portableText = markdownToPortableText('# Title\n\npara')
+
+      expect(
+        portableTextToMarkdown(portableText, {
+          block: ({value}) => `[${value.style}]`,
+        }),
+      ).toBe('[h1]\n\n[normal]')
+    })
+  })
+
   describe('link', () => {
     const markdown = 'foo [bar](https://example.com) baz'
     const portableText = markdownToPortableText(markdown)
