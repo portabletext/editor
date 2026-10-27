@@ -7,6 +7,10 @@ import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 
+// Rendering 1000 blocks takes several seconds on WebKit in CI, so the
+// render wait gets a budget that reflects the real cost.
+const RENDER_TIMEOUT = 15_000
+
 describe('Performance', () => {
   describe('Baseline', () => {
     test('Inserting 1000 blocks in an empty editor', async () => {
@@ -29,12 +33,12 @@ describe('Performance', () => {
         expect(editor.getSnapshot().context.value.length).toBe(1000)
 
         expect(locator.getByText('b999')).toBeInTheDocument()
-      })
+      }, RENDER_TIMEOUT)
 
       const duration = performance.now() - start
 
       console.warn(`Inserted 1000 blocks in ${duration.toFixed(2)}ms`)
-    })
+    }, 30_000)
 
     test('Toggling a decorator at the end of a 1000-block document', async () => {
       const {editor, locator} = await createTestEditor({
@@ -114,14 +118,14 @@ describe('Performance', () => {
         expect(editor.getSnapshot().context.value.length).toBe(1001)
 
         expect(locator.getByText('b999')).toBeInTheDocument()
-      })
+      }, RENDER_TIMEOUT)
 
       const duration = performance.now() - start
 
       console.warn(
         `Inserted 1000 blocks before an existing block in ${duration.toFixed(2)}ms`,
       )
-    })
+    }, 30_000)
 
     test('Inserting 1000 blocks after an existing block', async () => {
       const {editor, locator} = await createTestEditor()
@@ -147,14 +151,14 @@ describe('Performance', () => {
         expect(editor.getSnapshot().context.value.length).toBe(1001)
 
         expect(locator.getByText('b999')).toBeInTheDocument()
-      })
+      }, RENDER_TIMEOUT)
 
       const duration = performance.now() - start
 
       console.warn(
         `Inserted 1000 blocks after an existing block in ${duration.toFixed(2)}ms`,
       )
-    })
+    }, 30_000)
   })
 
   describe('Deleting', () => {
