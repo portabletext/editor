@@ -12,6 +12,8 @@ import type {KeyboardEventDefinition} from './keyboard-event-definition'
  *
  * @example
  * ```typescript
+ * import type {KeyboardShortcutDefinition} from '@portabletext/keyboard-shortcuts'
+ *
  * const boldShortcut: KeyboardShortcutDefinition = {
  *   default: [{
  *     key: 'B',
@@ -65,6 +67,8 @@ export type KeyboardShortcut<
  *
  * @example
  * ```typescript
+ * import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+ *
  * const shortcut = createKeyboardShortcut({
  *   default: [{
  *     key: 'B',
