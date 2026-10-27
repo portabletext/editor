@@ -1069,6 +1069,49 @@ describe(portableTextToMarkdown.name, () => {
         expect(portableTextToMarkdown(portableText)).toBe(markdown)
       })
     })
+
+    describe('underline', () => {
+      const markdown = 'foo <u>bar</u> baz'
+      const portableText = markdownToPortableText(markdown)
+
+      test('default renderer', () => {
+        expect(portableTextToMarkdown(portableText)).toBe(markdown)
+      })
+
+      test('round-trips back to portable text with the underline', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const stored = [
+          {
+            _type: 'block',
+            _key: 'b1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+              {_type: 'span', _key: 's2', text: 'bar', marks: ['underline']},
+              {_type: 'span', _key: 's3', text: ' baz', marks: []},
+            ],
+          },
+        ]
+        expect(
+          markdownToPortableText(portableTextToMarkdown(stored), {
+            keyGenerator,
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+              {_type: 'span', _key: 'k2', text: 'bar', marks: ['underline']},
+              {_type: 'span', _key: 'k3', text: ' baz', marks: []},
+            ],
+          },
+        ])
+      })
+    })
   })
 
   describe('block renderer', () => {
