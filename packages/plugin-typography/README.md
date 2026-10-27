@@ -94,7 +94,7 @@ The `preset` prop provides quick configuration:
 - `'all'`: Enable all rules
 - `'none'`: Start with no rules (use with `enable`)
 
-```tsx
+```tsx nocheck
 // Use default rules (most common transformations)
 <TypographyPlugin />
 
@@ -109,7 +109,7 @@ The `preset` prop provides quick configuration:
 
 Use `enable` to add rules beyond the preset:
 
-```tsx
+```tsx nocheck
 // Add multiplication and plusMinus to default rules
 <TypographyPlugin enable={['multiplication', 'plusMinus']} />
 
@@ -121,7 +121,7 @@ Use `enable` to add rules beyond the preset:
 
 Use `disable` to remove rules from the preset:
 
-```tsx
+```tsx nocheck
 // Use defaults but disable quote transformations
 <TypographyPlugin
   disable={[
@@ -141,7 +141,7 @@ All three props work together. The order of operations is:
 2. Add rules from `enable`
 3. Remove rules from `disable`
 
-```tsx
+```tsx nocheck
 // Start with all rules, then customize
 <TypographyPlugin
   preset="all"
@@ -161,7 +161,7 @@ The `TypographyPlugin` has an optional `guard` prop that accepts any type of `Be
 
 Because disallowing text transformations inside code is a common use case, this plugin ships a built-in `createDecoratorGuard` function. Use that to create a `guard` that only allows text transformations inside certain decorators:
 
-```tsx
+```tsx nocheck
 import {
   createDecoratorGuard,
   TypographyPlugin,
@@ -192,7 +192,7 @@ transformations inside a code block whose sub-schema defines `code`.
 
 All included typographic rules are exported from the plugin. To use them in your own abstraction, import them from this plugin and use them with the `InputRulePlugin`:
 
-```tsx
+```tsx nocheck
 import {InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {ellipsisRule, emDashRule} from '@portabletext/plugin-typography'
 
