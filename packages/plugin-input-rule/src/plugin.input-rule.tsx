@@ -290,6 +290,9 @@ type InputRulePluginProps = {
  *
  * @example
  * ```tsx
+ * import {InputRulePlugin} from '@portabletext/plugin-input-rule'
+ * import {smartQuotesRules} from '@portabletext/plugin-typography'
+ *
  * <InputRulePlugin rules={smartQuotesRules} />
  * ```
  *
