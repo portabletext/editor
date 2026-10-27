@@ -10,6 +10,10 @@ import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 Plugins are React components placed inside the `EditorProvider`, and are primarily used to register [Behaviors](/editor/concepts/behavior/) ad-hoc in the Editor using the `editor.registerBehavior(...)` API:
 
 ```tsx
+import {useEditor} from '@portabletext/editor'
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import {useEffect} from 'react'
+
 function LogTextPlugin() {
   const editor = useEditor()
 
@@ -46,6 +50,9 @@ function LogTextPlugin() {
 Plugins that render document nodes register through `editor.registerNode(...)` instead, passing the result of a `defineX` factory (`defineContainer`, `defineTextBlock`, `defineSpan`, `defineBlockObject`, `defineInlineObject`). Like `registerBehavior`, `registerNode` returns an unregister function:
 
 ```tsx
+import {defineBlockObject, useEditor} from '@portabletext/editor'
+import {useEffect} from 'react'
+
 function LogImagesPlugin() {
   const editor = useEditor()
 
