@@ -99,7 +99,7 @@ Pass an optional `containers` map (see `TextspecContainers`) to resolve containe
 
 `toTextspec` is the inverse: serialize Portable Text blocks and a selection back into notation.
 
-```ts
+```ts nocheck
 import {toTextspec} from '@portabletext/test'
 
 const notation = toTextspec({schema, value: blocks, selection})
