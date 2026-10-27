@@ -37,7 +37,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('block selectors (container awareness)', () => {
-  test('getFocusBlock returns the innermost block when focus is inside a container', async () => {
+  test('Scenario: `getFocusBlock` returns the innermost block when focus is inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -116,7 +116,7 @@ describe('block selectors (container awareness)', () => {
     expect(blockObject).toEqual(undefined)
   })
 
-  test('getAnchorBlock and getAnchorTextBlock resolve at depth', async () => {
+  test('Scenario: `getAnchorBlock` and `getAnchorTextBlock` resolve the anchor block inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -182,7 +182,7 @@ describe('block selectors (container awareness)', () => {
     expect(endBlock?.node._key).toEqual(line1Key)
   })
 
-  test('getNextBlock and getPreviousBlock walk container siblings and stay within scope', async () => {
+  test('Scenario: `getNextBlock` and `getPreviousBlock` walk container siblings and stay within scope', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -269,7 +269,7 @@ describe('block selectors (container awareness)', () => {
     ])
   })
 
-  test('getNextBlock returns undefined at the last line of a container (does not cross boundary)', async () => {
+  test('Scenario: `getNextBlock` returns undefined at the last line of a container instead of crossing its boundary', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()
@@ -332,7 +332,7 @@ describe('block selectors (container awareness)', () => {
     expect(getPreviousBlock(snapshot)).toEqual(undefined)
   })
 
-  test('getFirstBlock and getLastBlock return the first/last block of the enclosing container', async () => {
+  test('Scenario: `getFirstBlock` and `getLastBlock` return the first and last block of the enclosing container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -419,7 +419,7 @@ describe('block selectors (container awareness)', () => {
     ])
   })
 
-  test('getFirstBlock and getLastBlock fall back to document scope when focus is at root', async () => {
+  test('Scenario: `getFirstBlock` and `getLastBlock` fall back to document scope when focus is at root', async () => {
     const rootSchemaDefinition = defineSchema({})
     const keyGenerator = createTestKeyGenerator()
     const block1Key = keyGenerator()

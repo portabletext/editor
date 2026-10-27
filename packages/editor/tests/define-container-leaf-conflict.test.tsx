@@ -39,7 +39,7 @@ const factBoxSchemaDefinition = defineSchema({
 })
 
 describe('defineContainer / defineBlockObject conflict resolution', () => {
-  test('Same scope registered twice as container (different field) keeps the first registration', async () => {
+  test('Scenario: Registering the same scope twice as a container with different fields keeps the first registration', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     const {editor} = await createTestEditor({
@@ -79,7 +79,7 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     warnSpy.mockRestore()
   })
 
-  test('Same scope registered twice as container (same field) warns and keeps the first', async () => {
+  test('Scenario: Registering the same scope twice as a container with the same field warns and keeps the first', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     await createTestEditor({
@@ -115,7 +115,7 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     warnSpy.mockRestore()
   })
 
-  test('Same scope registered twice as leaf warns and keeps the first', async () => {
+  test('Scenario: Registering the same scope twice as a leaf warns and keeps the first', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     await createTestEditor({
@@ -151,7 +151,7 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     warnSpy.mockRestore()
   })
 
-  test('Scope registered as container then leaf warns and rejects the leaf', async () => {
+  test('Scenario: Registering a scope as a container then a leaf warns and rejects the leaf', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     const {editor} = await createTestEditor({
@@ -189,7 +189,7 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     warnSpy.mockRestore()
   })
 
-  test('Scope registered as leaf then container warns and rejects the container', async () => {
+  test('Scenario: Registering a scope as a leaf then a container warns and rejects the container', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     const {editor} = await createTestEditor({

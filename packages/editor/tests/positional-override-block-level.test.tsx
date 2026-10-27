@@ -88,7 +88,7 @@ const calloutWithRowSchema = defineSchema({
 })
 
 describe('Block-level positional override: defineContainer', () => {
-  test('1. Global container render fires when no positional override exists', async () => {
+  test('Scenario: A global container render fires when no positional override exists', async () => {
     const keyGenerator = createTestKeyGenerator()
     const callout = defineContainer({
       type: 'callout',
@@ -128,7 +128,7 @@ describe('Block-level positional override: defineContainer', () => {
     })
   })
 
-  test('2. Positional `render: fn` in parent container `of` overrides global', async () => {
+  test('Scenario: A positional `render` in the parent container `of` overrides the global render', async () => {
     // A nested table → row scenario. The `row` container is registered
     // both at top-level (global render) and positionally inside table's
     // `of` (different render). Positional must win.
@@ -199,7 +199,7 @@ describe('Block-level positional override: defineContainer', () => {
     })
   })
 
-  test('3b. Positional `render: (props) => props.renderDefault(props)` renders engine default at this position', async () => {
+  test('Scenario: A positional `render` that calls `renderDefault` renders the engine default for a container at that position', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rowGlobal = defineContainer({
       type: 'row',
@@ -270,7 +270,7 @@ describe('Block-level positional override: defineContainer', () => {
     })
   })
 
-  test('4. Positional `of: [...]` without `render` falls through to global', async () => {
+  test('Scenario: A positional `of` without `render` falls through to the global container render', async () => {
     // The positional defineContainer has no render but does add inner
     // scoping (via `of`). The outer render falls through to the global
     // registration for `row`.
@@ -339,7 +339,7 @@ describe('Block-level positional override: defineContainer', () => {
     })
   })
 
-  test('5. Positional `of: [...]` without `render`, no global → engine default', async () => {
+  test('Scenario: A positional `of` without `render` and no global container render falls back to the engine default', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rowPositionalScopeOnly = defineContainer({
       type: 'row',
@@ -402,7 +402,7 @@ describe('Block-level positional override: defineContainer', () => {
 })
 
 describe('Block-level positional override: defineTextBlock', () => {
-  test('1. Global text-block render fires when no positional override exists', async () => {
+  test('Scenario: A global text-block render fires when no positional override exists', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalBlock = defineTextBlock({
       type: 'block',
@@ -438,7 +438,7 @@ describe('Block-level positional override: defineTextBlock', () => {
     })
   })
 
-  test('2. Positional `render: fn` in container `of` overrides global', async () => {
+  test('Scenario: A positional `render` in the container `of` overrides the global text-block render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalBlock = defineTextBlock({
       type: 'block',
@@ -504,7 +504,7 @@ describe('Block-level positional override: defineTextBlock', () => {
     })
   })
 
-  test('3b. Positional `render: (props) => props.renderDefault(props)` renders engine default at this position', async () => {
+  test('Scenario: A positional `render` that calls `renderDefault` renders the engine default for a text block at that position', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalBlock = defineTextBlock({
       type: 'block',
@@ -567,7 +567,7 @@ describe('Block-level positional override: defineTextBlock', () => {
     })
   })
 
-  test('4. Positional `of: [...]` (no render) falls through to global', async () => {
+  test('Scenario: A positional `of` without `render` falls through to the global text-block render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalBlock = defineTextBlock({
       type: 'block',
@@ -627,7 +627,7 @@ describe('Block-level positional override: defineTextBlock', () => {
     })
   })
 
-  test('5. Positional `of: [...]` no render, no global → engine default', async () => {
+  test('Scenario: A positional `of` without `render` and no global text-block render falls back to the engine default', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutBlockScopeOnly = defineTextBlock({
       type: 'block',
@@ -681,7 +681,7 @@ describe('Block-level positional override: defineTextBlock', () => {
 })
 
 describe('Block-level positional override: defineBlockObject', () => {
-  test('1. Global block-object render fires when no positional override exists', async () => {
+  test('Scenario: A global block-object render fires when no positional override exists', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalImage = defineBlockObject({
       type: 'image',
@@ -708,7 +708,7 @@ describe('Block-level positional override: defineBlockObject', () => {
     })
   })
 
-  test('2. Positional `render: fn` in container `of` overrides global', async () => {
+  test('Scenario: A positional `render` in the container `of` overrides the global block-object render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalImage = defineBlockObject({
       type: 'image',
@@ -760,7 +760,7 @@ describe('Block-level positional override: defineBlockObject', () => {
     })
   })
 
-  test('3b. Positional `render: (props) => props.renderDefault(props)` renders engine default at this position', async () => {
+  test('Scenario: A positional `render` that calls `renderDefault` renders the engine default for a block object at that position', async () => {
     const keyGenerator = createTestKeyGenerator()
     const globalImage = defineBlockObject({
       type: 'image',
@@ -813,7 +813,7 @@ describe('Block-level positional override: defineBlockObject', () => {
     })
   })
 
-  test('4. Positional `render` absent (no `of` to provide) falls through to global', async () => {
+  test('Scenario: A block object without a positional `render` falls through to the global block-object render', async () => {
     // defineBlockObject has no `of` field, so "scope-only" doesn't
     // apply. But `render` absent at the positional level should still
     // fall through. To exercise this, place the positional through
@@ -866,7 +866,7 @@ describe('Block-level positional override: defineBlockObject', () => {
     })
   })
 
-  test('5. Positional no render, no global → engine default', async () => {
+  test('Scenario: A block object without a positional or global render falls back to the engine default', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutImagePassthrough = defineBlockObject({
       type: 'image',

@@ -8,7 +8,7 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('merge blocks + undo emits well-formed patches', () => {
-  test('Backspace merge at root + undo does not emit malformed patches', async () => {
+  test('Scenario: Undoing a Backspace merge at root does not emit malformed patches', async () => {
     const keyGenerator = createTestKeyGenerator()
     const block1Key = keyGenerator()
     const span1Key = keyGenerator()

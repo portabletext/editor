@@ -5,7 +5,7 @@ import {createTestEditor} from '../test/vitest'
 import {AutoCloseBracketsPlugin} from './plugin.internal.auto-close-brackets'
 
 describe(AutoCloseBracketsPlugin.name, () => {
-  test('One-character text insertion', async () => {
+  test('Scenario: Inserting an opening bracket closes it and undo removes the typing, then the closing bracket', async () => {
     const {editor, locator} = await createTestEditor({
       children: <AutoCloseBracketsPlugin />,
     })
@@ -37,7 +37,7 @@ describe(AutoCloseBracketsPlugin.name, () => {
     })
   })
 
-  test('Two-character text insertion', async () => {
+  test('Scenario: Inserting an opening bracket with text closes it and undo removes the typing, then the closing bracket', async () => {
     const {editor, locator} = await createTestEditor({
       children: <AutoCloseBracketsPlugin />,
     })

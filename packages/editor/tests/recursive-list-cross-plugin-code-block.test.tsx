@@ -171,7 +171,7 @@ function initialListValue(keyGenerator: () => string) {
 }
 
 describe('Container API recursive list + cross-plugin code-block', () => {
-  test('C: code-block declared top-level in schema, registered top-level by separate plugin', async () => {
+  test('Scenario: A code-block declared top-level in the schema and registered top-level by a separate plugin normalizes inside a list item', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -205,7 +205,7 @@ describe('Container API recursive list + cross-plugin code-block', () => {
     expect(codeBlock.lines[0]!.children[0]!.text).toEqual('')
   })
 
-  test('D: code-block declared inline-only in schema, still resolves via top-level plugin registration', async () => {
+  test('Scenario: A code-block declared only inline in the schema still normalizes through the top-level plugin registration', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -239,7 +239,7 @@ describe('Container API recursive list + cross-plugin code-block', () => {
     expect(codeBlock.lines[0]!.children[0]!.text).toEqual('')
   })
 
-  test('C: nested list inside list-item resolves via global fallback (recursion)', async () => {
+  test('Scenario: A nested list inside a list item normalizes through the global list registration', async () => {
     const keyGenerator = createTestKeyGenerator()
     const initialValue = [
       {

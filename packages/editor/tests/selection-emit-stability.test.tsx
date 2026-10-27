@@ -6,7 +6,7 @@ import {getActiveDecorators} from '../src/selectors/selector.get-active-decorato
 import {createTestEditor} from '../src/test/vitest'
 
 describe('selection emit stability', () => {
-  test('decorator.add on collapsed caret emits a single selection event', async () => {
+  test('Scenario: `decorator.add` on a collapsed caret emits a single selection event', async () => {
     const onSelection = vi.fn()
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: 'k1', _type: 'span', text: 'foo bar', marks: []}
@@ -58,7 +58,7 @@ describe('selection emit stability', () => {
     expect(onSelection).toHaveBeenCalledTimes(1)
   })
 
-  test('decorator.add on whole-span selection emits a single selection event', async () => {
+  test('Scenario: `decorator.add` on a whole-span selection emits a single selection event', async () => {
     const onSelection = vi.fn()
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: 'k1', _type: 'span', text: 'foo bar', marks: []}
@@ -112,7 +112,7 @@ describe('selection emit stability', () => {
     expect(onSelection).toHaveBeenCalledTimes(1)
   })
 
-  test('remote patches that do not move the caret emit no selection event', async () => {
+  test('Scenario: Remote patches that do not move the caret emit no selection event', async () => {
     const onSelection = vi.fn()
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: 'k1', _type: 'span', text: 'foo bar', marks: []}

@@ -5,7 +5,7 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-test('a block object declared only inside a container renders without a schema error', async () => {
+test('Scenario: A block object declared only inside a container renders without a schema error', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
   await createTestEditor({
