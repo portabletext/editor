@@ -2,6 +2,8 @@
 .turbo
 .vscode
 __screenshots__
+__traces__
+.vitest
 .sanity
 test-results
 playwright-report
