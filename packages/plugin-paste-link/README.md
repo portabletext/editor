@@ -40,7 +40,7 @@ By default, the plugin looks for a `link` annotation with an `href` field of typ
 
 Use the `guard` prop to control when the paste link behavior runs. Return `false` to skip the behavior and fall through to default paste handling:
 
-```tsx
+```tsx nocheck
 import {getActiveStyle} from '@portabletext/editor/selectors'
 ;<PasteLinkPlugin
   guard={({snapshot}) => {
@@ -54,7 +54,7 @@ import {getActiveStyle} from '@portabletext/editor/selectors'
 
 You can customize the link annotation with the `link` prop:
 
-```tsx
+```tsx nocheck
 <PasteLinkPlugin
   link={({context, value}) => {
     const schemaType = context.schema.annotations.find(
@@ -116,6 +116,12 @@ React component that registers paste behaviors for handling URLs.
 ### Types
 
 ```typescript
+import type {EditorContext} from '@portabletext/editor'
+import type {
+  BehaviorGuard,
+  NativeBehaviorEvent,
+} from '@portabletext/editor/behaviors'
+
 type PasteLinkGuard = BehaviorGuard<
   Extract<NativeBehaviorEvent, {type: 'clipboard.paste'}>,
   true
