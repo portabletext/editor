@@ -41,7 +41,7 @@ const stockTickerRule = createStockTickerRule({
 })
 
 describe('stock-ticker rule (container awareness)', () => {
-  test('triggers inside an editable container at depth and lands selection on the inserted ticker', async () => {
+  test('Scenario: the stock-ticker rule triggers inside an editable container at depth and selects the inserted ticker', async () => {
     const calloutKey = 'k0'
     const blockKey = 'k1'
     const spanKey = 'k2'
