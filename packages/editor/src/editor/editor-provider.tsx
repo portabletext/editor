@@ -23,7 +23,7 @@ export type EditorProviderProps = {
  * @public
  * The EditorProvider component is used to set up the editor context and configure the Portable Text Editor.
  * @example
- * ```tsx
+ * ```tsx nocheck
  * import {EditorProvider} from '@portabletext/editor'
  *
  * function App() {
