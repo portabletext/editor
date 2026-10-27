@@ -45,6 +45,8 @@ export type TextTransformRule<TGuardResponse = true> = {
  *
  * @example
  * ```tsx
+ * import {defineTextTransformRule} from '@portabletext/plugin-input-rule'
+ *
  * const transformRule = defineTextTransformRule({
  *   on: /--/,
  *   transform: () => '—',
