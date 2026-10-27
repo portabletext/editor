@@ -14,7 +14,7 @@ The [Render lists](https://www.portabletext.org/editor/guides/render-lists/) gui
 
 Portable Text has no nested list structure: a list is a run of flat sibling blocks carrying `listItem` and `level` properties. That makes the 1-based position of an item within its list a _derived_ value: same-type items count up across consecutive blocks on the same level, deeper levels restart at 1, and non-list blocks break the sequence. This plugin derives it for you and keeps it correct as the value changes.
 
-```tsx
+```tsx nocheck
 import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
 
 function MyEditor() {
@@ -91,6 +91,9 @@ With the attributes in place, a few lines of CSS draw the markers and indent nes
 If you'd rather render the marker yourself, output the index directly:
 
 ```tsx
+import type {TextBlockRenderProps} from '@portabletext/editor'
+import {useListIndex} from '@portabletext/plugin-list-index'
+
 function TextBlock(props: TextBlockRenderProps) {
   const listIndex = useListIndex(props.path)
 
