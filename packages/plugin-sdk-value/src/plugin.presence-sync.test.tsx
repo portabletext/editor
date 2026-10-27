@@ -69,7 +69,7 @@ async function renderEditor(
 }
 
 describe('useRemoteCursors in a real editor', () => {
-  test('draws a caret for a remote participant', async () => {
+  test('Scenario: a remote participant gets a caret', async () => {
     await renderEditor([{sessionId: 'session-a', selection: caretAt(5)}])
 
     await expect
@@ -77,7 +77,7 @@ describe('useRemoteCursors in a real editor', () => {
       .toBeInTheDocument()
   })
 
-  test('draws nothing for a participant with no selection', async () => {
+  test('Scenario: a participant with no selection gets no caret', async () => {
     await renderEditor([{sessionId: 'session-a', selection: null}])
 
     await expect
@@ -85,7 +85,7 @@ describe('useRemoteCursors in a real editor', () => {
       .not.toBeInTheDocument()
   })
 
-  test('draws one caret per session, so two tabs of one person show twice', async () => {
+  test('Scenario: two tabs of one person draw one caret per session', async () => {
     await renderEditor([
       {sessionId: 'session-a', selection: caretAt(2)},
       {sessionId: 'session-b', selection: caretAt(8)},
@@ -121,7 +121,7 @@ function caretColorOf(sessionId: string): string {
 describe('the default caret', () => {
   const cursor = participant('session-a', 'user-abc', 'Ada Lovelace', 5)
 
-  test('draws without the app providing a caret component', async () => {
+  test('Scenario: the default caret draws without the app providing a caret component', async () => {
     await renderEditor([cursor], {useDefaultCaret: true})
 
     await expect
@@ -129,7 +129,7 @@ describe('the default caret', () => {
       .toBeInTheDocument()
   })
 
-  test('is not editable, so the local cursor cannot land inside it', async () => {
+  test('Scenario: the default caret is not editable, so the local cursor cannot land inside it', async () => {
     await renderEditor([cursor], {useDefaultCaret: true})
 
     await expect
@@ -137,7 +137,7 @@ describe('the default caret', () => {
       .toHaveAttribute('contenteditable', 'false')
   })
 
-  test('names the participant on its dot, for hover', async () => {
+  test('Scenario: the default caret names the participant on its dot, for hover', async () => {
     await renderEditor([cursor], {useDefaultCaret: true})
 
     await expect
@@ -147,7 +147,7 @@ describe('the default caret', () => {
 })
 
 describe('the default caret colour', () => {
-  test('matches for one person in two tabs, so they read as the same user', async () => {
+  test('Scenario: one person in two tabs gets matching caret colours, so they read as the same user', async () => {
     await renderEditor(
       [
         participant('session-a', 'user-abc', 'Ada Lovelace', 2),
@@ -163,7 +163,7 @@ describe('the default caret colour', () => {
     expect(caretColorOf('session-a')).toBe(caretColorOf('session-b'))
   })
 
-  test('differs between two people, so they can be told apart', async () => {
+  test('Scenario: two people get different caret colours, so they can be told apart', async () => {
     await renderEditor(
       [
         participant('session-a', 'user-abc', 'Ada Lovelace', 2),
