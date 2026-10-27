@@ -1,5 +1,38 @@
 # @portabletext/markdown
 
+## 2.8.1
+
+### Patch Changes
+
+- [#3466](https://github.com/portabletext/editor/pull/3466) [`5955959`](https://github.com/portabletext/editor/commit/5955959d1951425b3e4261a5ddeeb5a84301125f) Thanks [@christianhg](https://github.com/christianhg)! - fix: leave the blocks passed to `portableTextToMarkdown` unchanged
+  
+  `portableTextToMarkdown` no longer writes a generated `_key` into blocks that are passed in without one. The keys only exist on an internal copy now, so the output is the same, and the caller's value is left exactly as it was.
+  
+  ```ts
+  const blocks = [
+    {
+      _type: 'block',
+      listItem: 'number',
+      level: 1,
+      children: [{_type: 'span', text: 'foo'}],
+    },
+  ]
+  
+  portableTextToMarkdown(blocks)
+  
+  blocks[0]._key
+  // Previously: a random key such as '507fef1a166e'
+  // Now: undefined
+  ```
+
+- [#3473](https://github.com/portabletext/editor/pull/3473) [`2290b7b`](https://github.com/portabletext/editor/commit/2290b7bd8685e146ee7c8e0374a01c6c305d1c6b) Thanks [@christianhg](https://github.com/christianhg)! - fix: check image URLs without a module-level `markdown-it` instance
+  
+  Loading `@portabletext/markdown` no longer builds a `markdown-it` parser up front just to check image URLs in `portableTextToMarkdown`. The check now runs a local copy of `markdown-it`'s default link validator, so images are accepted and rejected exactly as before, and the serializer no longer references `markdown-it` at all.
+
+- [#3473](https://github.com/portabletext/editor/pull/3473) [`6c85529`](https://github.com/portabletext/editor/commit/6c8552974ecb6362dcd595b5dabf0745383841dd) Thanks [@christianhg](https://github.com/christianhg)! - fix: publish one file per source module
+  
+  `@portabletext/markdown` now ships one file per source module instead of a single bundled `dist/index.js`, so bundlers drop the modules your imports don't reach. Code that only serializes no longer ships `markdown-it`: a bare `import {portableTextToMarkdown} from '@portabletext/markdown'` bundles to 12,501 bytes instead of 50,235 (esbuild `--bundle --minify`, gzip -9). Code that imports `markdownToPortableText` still needs `markdown-it` and stays about the same size (50,951 bytes before, 51,283 now). The package's exports and types are unchanged, and the files inside `dist` are not importable on their own.
+
 ## 2.8.0
 
 ### Minor Changes
