@@ -31,7 +31,7 @@ export type BehaviorAction =
          * Send a Behavior Event back into the Editor.
          *
          * @example
-         * ```ts
+         * ```ts nocheck
          * defineBehavior({
          *   on: '...',
          *   actions: [
@@ -61,6 +61,8 @@ export type BehaviorAction =
  *
  * @example
  * ```ts
+ * import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+ *
  * defineBehavior({
  *   on: 'insert.text',
  *   guard: ({event}) => event.text === 'a',
@@ -92,7 +94,9 @@ export function execute(
  * instead.
  *
  * @example
- * ```ts
+ * ```ts nocheck
+ * import {defineBehavior, effect, forward} from '@portabletext/editor/behaviors'
+ *
  * // Intercept and forward same event type
  * defineBehavior({
  *   on: 'insert.text',
@@ -131,6 +135,8 @@ export function forward(
  *
  * @example
  * ```ts
+ * import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+ *
  * // Raise a custom event that triggers other Behaviors
  * defineBehavior({
  *   on: 'insert.text',
@@ -171,7 +177,9 @@ export function raise(
  * events back to the editor asynchronously.
  *
  * @example
- * ```ts
+ * ```ts nocheck
+ * import {defineBehavior, effect, forward} from '@portabletext/editor/behaviors'
+ *
  * // Log events while preserving default Behavior
  * defineBehavior({
  *   on: 'insert.text',
