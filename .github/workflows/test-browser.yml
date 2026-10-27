@@ -50,4 +50,17 @@ jobs:
         run: |
           node -v
           pnpm -v
-          pnpm test:browser:${{ matrix.browser }}
+          pnpm test:browser:${{ matrix.browser }} -- --browser.trace=retain-on-failure
+
+      # Vitest writes each failed test's Playwright trace to a `__traces__`
+      # folder next to its test file. Open one at https://trace.playwright.dev.
+      - name: Upload Playwright traces
+        if: failure() && steps.test.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-traces-${{ matrix.browser }}
+          path: |
+            packages/**/__traces__/
+            !**/node_modules/**
+          if-no-files-found: ignore
+          retention-days: 7
