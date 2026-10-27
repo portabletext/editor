@@ -1,41 +1,51 @@
 ---
 title: Testing behaviors
-description: Test custom behaviors with Gherkin specs or direct Vitest tests.
+description: Test custom behaviors with Vitest tests or Gherkin specs.
 sidebar:
   order: 6
 ---
 
-import {LinkCard, TabItem, Tabs} from '@astrojs/starlight/components'
+import {LinkCard} from '@astrojs/starlight/components'
 import {PackageManagers} from 'starlight-package-managers'
 
-The Portable Text Editor ships with testing infrastructure you can use for your own behaviors. There are two approaches: Gherkin specs with Racejar (the same approach every official plugin uses) and direct Vitest tests for simpler cases.
+You can test your behaviors against a real editor in a real browser. This guide shows two ways to do it: plain Vitest tests for simple cases, and Gherkin specs run with Racejar, which is how many of the official plugins are tested.
 
-Both approaches use Vitest Browser Mode with Playwright, running tests against a real browser.
+Both approaches use Vitest Browser Mode with Playwright.
 
 ## Setup
 
 Install the testing dependencies:
 
 <PackageManagers
-  pkg="vitest @vitest/browser playwright racejar @portabletext/test"
+  pkg="vitest @vitest/browser-playwright playwright vitest-browser-react racejar @portabletext/test"
   type="dev"
 />
+
+Then download the Chromium build that Playwright drives:
+
+```bash
+npx playwright install chromium
+```
 
 Configure Vitest for Browser Mode in your `vitest.config.ts`:
 
 ```ts
+// vitest.config.ts
+import {playwright} from '@vitest/browser-playwright'
 import {defineConfig} from 'vitest/config'
 
 export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: 'playwright',
+      provider: playwright(),
       instances: [{browser: 'chromium'}],
     },
   },
 })
 ```
+
+Vitest opens a browser window unless it detects CI. Add `headless: true` to `browser` to run without one locally.
 
 If you use TypeScript, declare `.feature` file imports:
 
@@ -47,274 +57,277 @@ declare module '*.feature?raw' {
 }
 ```
 
-## Quick start: direct Vitest tests
+## Render an editor in a test
 
-For simple behavior tests, use `createTestEditor` directly. This is the fastest way to verify a behavior works:
+Every test needs an editor on the page and a way to reach the editor instance. Write a small helper for it. It renders `EditorProvider` and `PortableTextEditable` with `render` from `vitest-browser-react`, and `EditorRefPlugin` hands you the editor instance through a ref:
 
 ```tsx
+// test-editor.tsx
+import {
+  EditorProvider,
+  PortableTextEditable,
+  type Editor,
+  type SchemaDefinition,
+} from '@portabletext/editor'
+import {EditorRefPlugin} from '@portabletext/editor/plugins'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {createRef, type ReactNode} from 'react'
+import {expect} from 'vitest'
+import {render} from 'vitest-browser-react'
+
+export async function createTestEditor(options: {
+  schemaDefinition: SchemaDefinition
+  children?: ReactNode
+}) {
+  const editorRef = createRef<Editor>()
+
+  const screen = await render(
+    <EditorProvider
+      initialConfig={{
+        schemaDefinition: options.schemaDefinition,
+        keyGenerator: createTestKeyGenerator(),
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <PortableTextEditable />
+      {options.children}
+    </EditorProvider>,
+  )
+
+  const locator = screen.getByRole('textbox')
+  await expect.element(locator).toBeInTheDocument()
+
+  if (!editorRef.current) {
+    throw new Error('The editor did not render')
+  }
+
+  return {editor: editorRef.current, locator}
+}
+```
+
+The helper returns the editor instance and a locator for the editable element. Pass your behaviors or plugins as `children`. `createTestKeyGenerator` from `@portabletext/test` makes the block and span keys predictable (`k0`, `k1`, and so on).
+
+## Quick start: a Vitest test
+
+For a simple behavior, render the editor, type into it, and assert on the result:
+
+```tsx
+// uppercase-a.test.tsx
 import {defineSchema} from '@portabletext/editor'
 import {defineBehavior, execute} from '@portabletext/editor/behaviors'
 import {BehaviorPlugin} from '@portabletext/editor/plugins'
-import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {getTersePt} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {createTestEditor} from './test-editor'
 
-describe('uppercase A behavior', () => {
-  test('replaces lowercase a with uppercase A', async () => {
-    const {editor, locator} = await createTestEditor({
-      children: (
-        <BehaviorPlugin
-          behaviors={[
-            defineBehavior({
-              on: 'insert.text',
-              guard: ({event}) => event.text === 'a',
-              actions: [() => [execute({type: 'insert.text', text: 'A'})]],
-            }),
-          ]}
-        />
-      ),
-      schemaDefinition: defineSchema({
-        decorators: [{name: 'strong'}],
-      }),
-    })
+test('replaces lowercase a with uppercase A', async () => {
+  const {editor, locator} = await createTestEditor({
+    schemaDefinition: defineSchema({}),
+    children: (
+      <BehaviorPlugin
+        behaviors={[
+          defineBehavior({
+            on: 'insert.text',
+            guard: ({event}) => event.text === 'a',
+            actions: [() => [execute({type: 'insert.text', text: 'A'})]],
+          }),
+        ]}
+      />
+    ),
+  })
 
-    await userEvent.click(locator)
-    await userEvent.type(locator, 'a')
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'a')
 
-    await vi.waitFor(() => {
-      expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
-    })
+  await vi.waitFor(() => {
+    expect(getTersePt(editor.getSnapshot().context)).toEqual(['A'])
   })
 })
 ```
 
 **Key parts:**
 
-- **`createTestEditor`** spins up a real editor in the browser. Returns `{editor, locator}` where `editor` is the editor instance and `locator` is a Playwright locator for user interactions.
-- **`getTersePt`** from `@portabletext/test` gives you a compact representation of the editor content for assertions. `['foo ,bar, baz']` means one block with three spans (commas separate spans).
-- **`editor.getSnapshot().context`** gives you the full editor state including `value` (the Portable Text array) and `selection`.
-- **`vi.waitFor`** is needed because editor updates are asynchronous.
+- **`userEvent`** from `vitest/browser` sends real clicks and key presses to the editable element through Playwright.
+- **`editor.getSnapshot().context`** holds the current editor state, including `value` (the Portable Text array), `selection`, and `schema`.
+- **`getTersePt`** from `@portabletext/test` turns the value into a compact array of strings, one per block. Commas separate spans, so `['foo,bar']` is one block with two spans.
+- **`vi.waitFor`** retries the assertion, because the editor applies typed text asynchronously.
 
 ## Gherkin approach with Racejar
 
-To spec a behavior end to end, write Gherkin feature files and run them with Racejar. This is how every official plugin is tested.
+To spec a behavior end to end, write Gherkin feature files and run them with Racejar. Racejar compiles each scenario into a Vitest test and runs your step definitions for its steps. You write the step definitions yourself, so they can use the same editor API as the quick start.
+
+The example below tests the em dash rule from `@portabletext/plugin-typography`, which turns `--` into `—`. To follow along, install it:
+
+<PackageManagers pkg="@portabletext/plugin-typography" />
 
 ### Step 1: write a feature file
 
-Create a `.feature` file that describes your behavior in plain English:
+Describe the behavior in plain English:
 
 ```gherkin
-# my-behavior.feature
+# em-dash.feature
+Feature: Em dash
 
-Feature: Auto-capitalize after period
-
-  Scenario: Capitalizes first letter after period and space
-    Given the text "hello."
-    When the editor is focused
-    And the caret is put after "hello."
-    And " " is typed
-    And "w" is typed
-    Then the text is "hello. W"
-
-  Scenario: Does not capitalize mid-sentence
-    Given the text "hello"
-    When the editor is focused
-    And the caret is put after "hello"
-    And " w" is typed
-    Then the text is "hello w"
-
-  Scenario: Undo restores original text
-    Given the text "hello."
-    When the editor is focused
-    And the caret is put after "hello."
-    And " " is typed
-    And "w" is typed
-    Then the text is "hello. W"
+  Scenario: Typing a second hyphen inserts an em dash
+    Given the editor state is "B: foo-"
+    When "-" is typed
+    Then the editor state is "B: foo—"
     When undo is performed
-    Then the text is "hello. w"
+    Then the editor state is "B: foo--"
+
+  Scenario: The em dash keeps the decorator of the text it replaces
+    Given the editor state is "B: [strong:foo-]"
+    When "-" is typed
+    Then the editor state is "B: [strong:foo—]"
 ```
 
 Gherkin scenarios follow the Given/When/Then pattern:
 
-- **Given** sets up the editor state (text content, marks, selections)
-- **When** performs actions (typing, key presses, toolbar interactions)
-- **Then** asserts the result (text content, marks, selections)
+- **Given** sets up the editor state.
+- **When** performs actions, like typing or undo.
+- **Then** asserts the result.
 
-### Step 2: wire up the test
+The quoted editor states use textspec notation, which `@portabletext/test` reads and writes. `B: foo-` is one text block with the text `foo-`, and `[strong:foo-]` is text with the `strong` decorator.
 
-Create a test file that connects your feature file to the editor:
+### Step 2: write the step definitions
+
+Each step in the feature file needs a step definition. Define them with `Given`, `When`, and `Then` from `racejar`. The `context` object is shared by the steps of one scenario:
+
+```ts
+// steps.ts
+import type {Editor} from '@portabletext/editor'
+import {fromTextspec, toTextspec} from '@portabletext/test'
+import {Given, Then, When} from 'racejar'
+import {expect, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
+
+export type Context = {
+  editor: Editor
+}
+
+export const stepDefinitions = [
+  Given('the editor state is {string}', (context: Context, state: string) => {
+    const {schema, keyGenerator} = context.editor.getSnapshot().context
+    const {blocks} = fromTextspec({schema, keyGenerator}, state)
+
+    context.editor.send({type: 'focus'})
+    context.editor.send({
+      type: 'insert.blocks',
+      blocks,
+      placement: 'auto',
+      select: 'end',
+    })
+  }),
+  When('{string} is typed', async (_context: Context, text: string) => {
+    await userEvent.keyboard(text)
+  }),
+  When('undo is performed', (context: Context) => {
+    context.editor.send({type: 'history.undo'})
+  }),
+  Then(
+    'the editor state is {string}',
+    async (context: Context, state: string) => {
+      await vi.waitFor(() => {
+        const {schema, value} = context.editor.getSnapshot().context
+
+        expect(
+          toTextspec({schema, value, selection: null}, {singleLine: true}),
+        ).toEqual(state)
+      })
+    },
+  ),
+]
+```
+
+The `Given` step focuses the editor, then inserts the blocks and puts the caret at the end of them. The `When` step types at the caret with `userEvent.keyboard`. Clicking the editable instead would move the caret to where the click lands.
+
+### Step 3: wire up the test
+
+Connect the feature file, the step definitions, and the editor in a test file. A `Before` hook renders a fresh editor for each scenario:
 
 ```tsx
-// my-behavior.test.tsx
+// em-dash.test.tsx
 import {defineSchema} from '@portabletext/editor'
-import {parameterTypes} from '@portabletext/editor/test'
-import {
-  createTestEditor,
-  stepDefinitions,
-  type Context,
-} from '@portabletext/editor/test/vitest'
+import {TypographyPlugin} from '@portabletext/plugin-typography'
 import {Before} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {MyBehaviorPlugin} from './my-behavior-plugin'
-import myFeature from './my-behavior.feature?raw'
+import emDashFeature from './em-dash.feature?raw'
+import {stepDefinitions, type Context} from './steps'
+import {createTestEditor} from './test-editor'
 
 Feature({
+  featureText: emDashFeature,
   hooks: [
     Before(async (context: Context) => {
-      const {editor, locator} = await createTestEditor({
-        children: <MyBehaviorPlugin />,
-        schemaDefinition: defineSchema({
-          decorators: [{name: 'strong'}, {name: 'em'}],
-          annotations: [{name: 'link'}],
-        }),
+      const {editor} = await createTestEditor({
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        children: <TypographyPlugin />,
       })
 
-      context.locator = locator
       context.editor = editor
     }),
   ],
-  featureText: myFeature,
   stepDefinitions,
-  parameterTypes,
 })
 ```
 
-That's it. Racejar compiles the `.feature` file into test cases, and the pre-built step definitions handle the Given/When/Then steps.
-
-### Step 3: run the tests
+### Step 4: run the tests
 
 ```bash
-npx vitest
+npx vitest run
 ```
 
-Each Gherkin scenario becomes a separate test case. Failures show which step failed and what the editor state was at that point.
+Each scenario becomes a separate test case. When a step fails, the error points to the assertion inside that step's definition.
 
-## Pre-built step definitions
+## Adding step definitions
 
-The editor ships with step definitions that cover the most common test scenarios. You get these for free when you import from `@portabletext/editor/test/vitest`:
-
-**Given steps (setup):**
-
-- `Given the text "..."` sets the editor content
-- `Given "strong" around "..."` applies a decorator to text
-- `Given a "link" "l1" around "..."` applies an annotation
-- `Given a global keymap` sets up keyboard shortcut handling
-
-**When steps (actions):**
-
-- `When the editor is focused` focuses the editor
-- `When "..." is typed` types text character by character
-- `When "..." is inserted` inserts text all at once (mimics Android input)
-- `When "{Enter}" is pressed` presses a key
-- `When "{Backspace}" is pressed` presses backspace
-- `When "..." is selected` selects text in the editor
-- `When the caret is put after "..."` positions the cursor
-- `When undo is performed` triggers undo
-- `When redo is performed` triggers redo
-- `When "link" is toggled` toggles an annotation
-- `When "strong" is toggled` toggles a decorator
-
-**Then steps (assertions):**
-
-- `Then the text is "..."` asserts the editor content
-- `Then "..." has marks "..."` asserts marks on text
-- `Then "..." has no marks` asserts no marks on text
-- `Then "..." is selected` asserts the current selection
-
-These steps handle text blocks, marks, selections, undo/redo, and keyboard interactions. For custom block types or inline objects, you can add your own step definitions alongside the pre-built ones.
-
-## Real-world example: em dash input rule
-
-Here's how the official typography plugin tests its em dash behavior (converts `--` to `—`):
-
-**Feature file** (`input-rule.em-dash.feature`):
-
-```gherkin
-Feature: Em Dash Input Rule
-
-  Background:
-    Given a global keymap
-
-  Scenario: Inserting em dash in unformatted text
-    Given the text "-"
-    When "-" is inserted
-    Then the text is "—"
-    When undo is performed
-    Then the text is "--"
-
-  Scenario: Inserting em dash inside a decorator
-    Given the text "foo-"
-    And "strong" around "foo-"
-    When the editor is focused
-    And the caret is put after "foo-"
-    And "-" is typed
-    Then the text is "foo—"
-    And "foo—" has marks "strong"
-```
-
-**Test file** (`input-rule.em-dash.test.tsx`):
+As your features grow, add steps where you need them. A step can live next to the test that uses it and be passed alongside your shared steps. This one inserts several characters in a single event, the way Android keyboards often do:
 
 ```tsx
+// em-dash-insert.test.tsx
 import {defineSchema} from '@portabletext/editor'
-import {parameterTypes} from '@portabletext/editor/test'
-import {
-  createTestEditor,
-  stepDefinitions,
-  type Context,
-} from '@portabletext/editor/test/vitest'
-import {Before} from 'racejar'
+import {TypographyPlugin} from '@portabletext/plugin-typography'
+import {Before, When} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import emDashFeature from './input-rule.em-dash.feature?raw'
-import {TypographyPlugin} from './plugin.typography'
+import emDashInsertFeature from './em-dash-insert.feature?raw'
+import {stepDefinitions, type Context} from './steps'
+import {createTestEditor} from './test-editor'
+
+const insertStep = When(
+  '{string} is inserted',
+  (context: Context, text: string) => {
+    context.editor.send({type: 'insert.text', text})
+  },
+)
 
 Feature({
+  featureText: emDashInsertFeature,
   hooks: [
     Before(async (context: Context) => {
-      const {editor, locator} = await createTestEditor({
+      const {editor} = await createTestEditor({
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
         children: <TypographyPlugin />,
-        schemaDefinition: defineSchema({
-          decorators: [{name: 'strong'}],
-          annotations: [{name: 'link'}],
-        }),
       })
 
-      context.locator = locator
       context.editor = editor
     }),
   ],
-  featureText: emDashFeature,
-  stepDefinitions,
-  parameterTypes,
+  stepDefinitions: [...stepDefinitions, insertStep],
 })
 ```
 
-The test file is 20 lines. The feature file describes the behavior in plain English. The pre-built step definitions do the heavy lifting.
+```gherkin
+# em-dash-insert.feature
+Feature: Em dash on Android
 
-## Adding custom step definitions
-
-If your behavior involves custom block types or domain-specific assertions, add your own step definitions alongside the pre-built ones:
-
-```tsx
-import {stepDefinitions as builtInSteps} from '@portabletext/editor/test/vitest'
-import {Given, Then, When} from 'racejar'
-
-const customSteps = [
-  Given('an image block with src {string}', async (context, src) => {
-    // Set up editor with an image block
-  }),
-  Then('the image src is {string}', async (context, expectedSrc) => {
-    // Assert image block data
-  }),
-]
-
-Feature({
-  // ...
-  stepDefinitions: [...builtInSteps, ...customSteps],
-})
+  Scenario: Inserting two hyphens at once inserts an em dash
+    Given the editor state is "B: foo"
+    When "--" is inserted
+    Then the editor state is "B: foo—"
 ```
 
-Racejar will error if a step definition is missing or if you define duplicates.
+Racejar throws an error if a step in the feature file has no matching definition, or if more than one definition matches it.
 
 ## Next steps
 
