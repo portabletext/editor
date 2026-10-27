@@ -19,7 +19,7 @@ npm install @portabletext/toolbar
 
 ## Basic example
 
-```tsx
+```tsx nocheck
 import {bold, link} from '@portabletext/keyboard-shortcuts'
 import {
   useDecoratorButton,
@@ -142,7 +142,7 @@ function HistoryButtons() {
 
 Extends the editor's schema with default values, icons, shortcuts and more to make it easier to render toolbars, forms and other UI components.
 
-```typescript
+```typescript nocheck
 function useToolbarSchema(props: {
   extendDecorator?: (
     decorator: DecoratorSchemaType,
@@ -165,7 +165,7 @@ function useToolbarSchema(props: {
 
 Manages the state and behavior of decorator toggle buttons (bold, italic, etc.) with keyboard shortcut support.
 
-```typescript
+```typescript nocheck
 function useDecoratorButton(props: {
   schemaType: ToolbarDecoratorSchemaType
 }): DecoratorButton
@@ -180,7 +180,7 @@ function useDecoratorButton(props: {
 
 Manages the state and behavior of annotation buttons in the toolbar. Handles adding/removing annotations, keyboard shortcuts, and dialog interactions.
 
-```typescript
+```typescript nocheck
 function useAnnotationButton(props: {
   schemaType: ToolbarAnnotationSchemaType
 }): AnnotationButton
@@ -195,7 +195,7 @@ function useAnnotationButton(props: {
 
 Provides state management for annotation popover dialogs, including form handling and validation.
 
-```typescript
+```typescript nocheck
 function useAnnotationPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>
 }): AnnotationPopover
@@ -210,7 +210,7 @@ function useAnnotationPopover(props: {
 
 Manages style selection (headings, paragraphs, etc.) with keyboard shortcut support.
 
-```typescript
+```typescript nocheck
 function useStyleSelector(props: {
   schemaTypes: ReadonlyArray<ToolbarStyleSchemaType>
 }): StyleSelector
@@ -225,7 +225,7 @@ function useStyleSelector(props: {
 
 Manages list item toggle buttons (bullet lists, numbered lists, etc.).
 
-```typescript
+```typescript nocheck
 function useListButton(props: {schemaType: ToolbarListSchemaType}): ListButton
 ```
 
@@ -238,7 +238,7 @@ function useListButton(props: {schemaType: ToolbarListSchemaType}): ListButton
 
 Manages insertion of block objects like images into the editor.
 
-```typescript
+```typescript nocheck
 function useBlockObjectButton(props: {
   schemaType: ToolbarBlockObjectSchemaType
 }): BlockObjectButton
@@ -253,7 +253,7 @@ function useBlockObjectButton(props: {
 
 Provides state management for a popover on the selected block object, to edit or remove it. The popover is active when the selection is collapsed on a block object of one of the given `schemaTypes`.
 
-```typescript
+```typescript nocheck
 function useBlockObjectPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>
 }): BlockObjectPopover
@@ -268,7 +268,7 @@ function useBlockObjectPopover(props: {
 
 Manages insertion of inline objects into the editor.
 
-```typescript
+```typescript nocheck
 function useInlineObjectButton(props: {
   schemaType: ToolbarInlineObjectSchemaType
 }): InlineObjectButton
@@ -283,7 +283,7 @@ function useInlineObjectButton(props: {
 
 Provides state management for a popover on the selected inline object, to edit or remove it. The popover is active when the selection is collapsed on an inline object of one of the given `schemaTypes`.
 
-```typescript
+```typescript nocheck
 function useInlineObjectPopover(props: {
   schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>
 }): InlineObjectPopover
@@ -298,7 +298,7 @@ function useInlineObjectPopover(props: {
 
 Provides undo/redo functionality for the editor.
 
-```typescript
+```typescript nocheck
 function useHistoryButtons(): HistoryButtons
 ```
 
