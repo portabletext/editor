@@ -58,7 +58,7 @@ the participant's name on hover. Colours come from a small fixed palette, keyed 
 the user, so one person in two tabs gets one colour. Pass `renderCursor` to
 replace it:
 
-```tsx
+```tsx nocheck
 <SDKPortableTextEditable
   {...documentHandle}
   path="content"
@@ -85,7 +85,7 @@ Sanity Studio stores, so threads round-trip between an SDK app and the Studio.
 the field. Pass it through `rangeDecorations`, which `SDKPortableTextEditable`
 merges with the presence carets:
 
-```tsx
+```tsx nocheck
 const decorations = useSDKCommentDecorations({
   ...documentHandle,
   path: 'content',
@@ -109,7 +109,9 @@ return (
 the current selection can take a comment, and `createInlineComment` starts a
 thread anchored to it:
 
-```tsx
+```tsx nocheck
+import {useSDKCommentAuthoring} from '@portabletext/plugin-sdk-value'
+
 const {commentableSelection, createInlineComment} = useSDKCommentAuthoring({
   ...documentHandle,
   path: 'content',
@@ -129,7 +131,18 @@ wrong words. Resolved threads draw nothing, matching the Studio.
 control of `PortableTextEditable`. Pair it with `SDKPresencePlugin` to report
 presence, and `useSDKPresenceCursors` for remote carets:
 
-```tsx
+```tsx nocheck
+import {
+  defineSchema,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
+import {
+  SDKPresencePlugin,
+  SDKValuePlugin,
+  useSDKPresenceCursors,
+} from '@portabletext/plugin-sdk-value'
+
 function MyEditor(props: DocumentHandle) {
   const cursors = useSDKPresenceCursors({
     ...props,
