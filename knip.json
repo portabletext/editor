@@ -75,7 +75,7 @@
     },
     "examples/*": {},
     ".": {
-      "entry": ["bundle-stats.config.ts"],
+      "entry": ["bundle-stats.config.ts", "build-config/*.d.ts"],
       "ignoreDependencies": ["@playwright/test"]
     }
   }
