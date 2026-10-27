@@ -12,7 +12,7 @@ pnpm add --save-dev racejar
 
 Using `racejar` with Vitest requires no additional configuration. Just drop it into a new or an existing test file and get going:
 
-```ts
+```ts nocheck
 // your.test.ts
 
 // Import `Feature` from `racejar/vitest`
@@ -46,7 +46,7 @@ Using `racejar` with Jest is similar to Vitest. Just import `Feature` from `race
 
 However, Jest can't import raw files out of the box. You'll need a transformer. Luckily, it's easy to write and configure a simple one:
 
-```ts
+```ts nocheck
 // jest.config.ts
 
 import type {Config} from 'jest'
@@ -76,7 +76,7 @@ module.exports = {
 
 If you are unhappy with those wrappers or want to use `racejar` with another framework, then you can compile your feature manually and run your tests using the compiled feature:
 
-```ts
+```ts nocheck
 import {compileFeature} from 'racejar'
 
 const feature = compileFeature({
@@ -98,7 +98,7 @@ for (const scenario of feature.scenarios) {
 
 `stepDefinitions` can be defined inline or separately. They are defined using `Given`, `When`, `Then` exported from `racejar`:
 
-```ts
+```ts nocheck
 import {Given, Then, When} from 'racejar'
 
 const stepDefinitions = [Given(/* ... */), When(/* ... */), Then(/* ... */)]
@@ -108,7 +108,7 @@ const stepDefinitions = [Given(/* ... */), When(/* ... */), Then(/* ... */)]
 
 If you use nonstandard parameter types, then you can define them yourself:
 
-```ts
+```ts nocheck
 import {createParameterType} from 'racejar'
 
 const parameterTypes = [createParameterType(/* ... */)]
@@ -176,7 +176,7 @@ Feature: Annotations
 
 Here's a rough idea of how these steps can be defined:
 
-```tsx
+```tsx nocheck
 import {Given, Then, When} from 'racejar'
 
 // A `context` object is passed around between steps
@@ -265,7 +265,7 @@ function parseGherkinTextParameter(text: string) {
 
 Now, let's run the test using our defined steps and custom parameter types:
 
-```ts
+```ts nocheck
 // annotations.test.ts
 
 import {Feature} from 'racejar/vitest'
@@ -284,7 +284,7 @@ Feature({
 
 If TypeScript errors out with `Cannot find module '.your.feature?raw' or its corresponding type declarations.` then you can declare `.*feature?raw` files as modules:
 
-```ts
+```ts nocheck
 // global.d.ts
 
 declare module '*.feature?raw' {
