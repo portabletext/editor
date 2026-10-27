@@ -17,17 +17,17 @@ import {Table, TableCell, TableRow} from './table-render'
  * @public
  */
 export const referenceContainers: TableContainers = {
-  table: defineContainer({
+  table: /* @__PURE__ */ defineContainer({
     type: 'table',
     arrayField: 'rows',
     render: (props) => <Table {...props} />,
   }),
-  row: defineContainer({
+  row: /* @__PURE__ */ defineContainer({
     type: 'row',
     arrayField: 'cells',
     render: (props) => <TableRow {...props} />,
   }),
-  cell: defineContainer({
+  cell: /* @__PURE__ */ defineContainer({
     type: 'cell',
     arrayField: 'value',
     render: (props) => <TableCell {...props} />,
