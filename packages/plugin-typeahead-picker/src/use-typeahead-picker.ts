@@ -15,7 +15,9 @@ import type {
  * The picker automatically monitors the editor for trigger patterns.
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
+ * import {useTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+ *
  * function MentionPickerUI() {
  *   const picker = useTypeaheadPicker(mentionPickerDefinition)
  *

@@ -163,7 +163,10 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  * Creates a typeahead picker definition to use with {@link useTypeaheadPicker}.
  *
  * @example Emoji picker with auto-complete
- * ```ts
+ * ```ts nocheck
+ * import {raise} from '@portabletext/editor/behaviors'
+ * import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+ *
  * const emojiPicker = defineTypeaheadPicker({
  *   trigger: /:/,
  *   keyword: /[\S]+/,
@@ -179,7 +182,10 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  * ```
  *
  * @example Async mention picker
- * ```ts
+ * ```ts nocheck
+ * import {raise} from '@portabletext/editor/behaviors'
+ * import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+ *
  * const mentionPicker = defineTypeaheadPicker({
  *   mode: 'async',
  *   trigger: /@/,
@@ -196,7 +202,10 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  * ```
  *
  * @example Picker with guard (runs at trigger time)
- * ```ts
+ * ```ts nocheck
+ * import {raise} from '@portabletext/editor/behaviors'
+ * import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+ *
  * const emojiPicker = defineTypeaheadPicker({
  *   trigger: /:/,
  *   keyword: /[\S]+/,
