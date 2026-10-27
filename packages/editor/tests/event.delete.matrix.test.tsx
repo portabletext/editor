@@ -362,7 +362,7 @@ async function setup(value: Array<unknown>) {
     initialValue: value as never,
   })
 
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await expect.element(locator).toBeInTheDocument()
 
   return editor
 }

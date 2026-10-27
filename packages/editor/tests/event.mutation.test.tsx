@@ -565,7 +565,7 @@ describe('event.mutation', () => {
     await render(<App />)
 
     const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo')

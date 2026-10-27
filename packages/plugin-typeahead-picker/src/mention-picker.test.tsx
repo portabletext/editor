@@ -45,12 +45,8 @@ Feature({
       context.stateLocator = page.getByTestId('state')
       context.selectedIndexLocator = page.getByTestId('selectedIndex')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.matchesLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.matchesLocator).toBeInTheDocument()
     }),
   ],
   featureText: mentionPickerFeature,
@@ -224,9 +220,7 @@ describe('Error handling', () => {
     const errorStateLocator = page.getByTestId('error-state')
     const errorMessageLocator = page.getByTestId('error-message')
 
-    await vi.waitFor(() =>
-      expect.element(errorStateLocator).toBeInTheDocument(),
-    )
+    await expect.element(errorStateLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, '@test')
@@ -283,7 +277,7 @@ describe('Error handling', () => {
     const stateLocator = page.getByTestId('error-clear-state')
     const errorMessageLocator = page.getByTestId('error-clear-message')
 
-    await vi.waitFor(() => expect.element(stateLocator).toBeInTheDocument())
+    await expect.element(stateLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, '@test')
@@ -358,7 +352,7 @@ describe('Race condition handling', () => {
     const matchesLocator = page.getByTestId('race-matches')
     const keywordLocator = page.getByTestId('race-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, '@a')
@@ -449,7 +443,7 @@ describe('Debouncing', () => {
     const matchesLocator = page.getByTestId('debounce-matches')
     const keywordLocator = page.getByTestId('debounce-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
@@ -518,7 +512,7 @@ describe('Debouncing', () => {
     const matchesLocator = page.getByTestId('debounce-restart-matches')
     const keywordLocator = page.getByTestId('debounce-restart-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 

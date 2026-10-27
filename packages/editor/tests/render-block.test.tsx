@@ -82,8 +82,8 @@ describe('registered render: blocks', () => {
     })
 
     const barSpanLocator = locator.getByText('bar')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-    await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
+    await expect.element(barSpanLocator).toBeInTheDocument()
 
     expect(renderBlockValues).toEqual([
       {
@@ -410,7 +410,7 @@ describe('registered render: blocks', () => {
     )
 
     const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo')

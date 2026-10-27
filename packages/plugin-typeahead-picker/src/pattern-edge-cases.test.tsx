@@ -98,7 +98,7 @@ async function setupTest(picker: ReturnType<typeof createPicker>) {
   const matchesLocator = page.getByTestId('matches')
   const stateLocator = page.getByTestId('state')
 
-  await vi.waitFor(() => expect.element(keywordLocator).toBeInTheDocument())
+  await expect.element(keywordLocator).toBeInTheDocument()
 
   return {editor, locator, keywordLocator, matchesLocator, stateLocator}
 }

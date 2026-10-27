@@ -89,12 +89,8 @@ Feature({
       context.keywordLocator = page.getByTestId('keyword')
       context.stateLocator = page.getByTestId('state')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.stateLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.stateLocator).toBeInTheDocument()
     }),
   ],
   featureText: triggerGuardFeature,
