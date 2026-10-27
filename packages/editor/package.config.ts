@@ -1,4 +1,5 @@
 import {defineConfig} from '@sanity/pkg-utils'
+import {preserveModules} from '../../build-config/preserve-modules.js'
 import {COMPILED_SOURCES} from './react-compiler-sources.ts'
 
 export default defineConfig({
@@ -14,6 +15,7 @@ export default defineConfig({
     },
   },
   tsconfig: 'tsconfig.dist.json',
+  plugins: [preserveModules()],
   strictOptions: {
     noImplicitBrowsersList: 'off',
     noImplicitSideEffects: 'error',
