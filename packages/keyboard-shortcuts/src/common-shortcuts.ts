@@ -3,7 +3,7 @@ import {createKeyboardShortcut} from './keyboard-shortcuts'
 /**
  * @public
  */
-export const bold = createKeyboardShortcut({
+export const bold = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'B',
@@ -27,7 +27,7 @@ export const bold = createKeyboardShortcut({
 /**
  * @public
  */
-export const italic = createKeyboardShortcut({
+export const italic = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'I',
@@ -51,7 +51,7 @@ export const italic = createKeyboardShortcut({
 /**
  * @public
  */
-export const code = createKeyboardShortcut({
+export const code = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: "'",
@@ -75,7 +75,7 @@ export const code = createKeyboardShortcut({
 /**
  * @public
  */
-export const underline = createKeyboardShortcut({
+export const underline = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'U',
@@ -99,7 +99,7 @@ export const underline = createKeyboardShortcut({
 /**
  * @public
  */
-export const strikeThrough = createKeyboardShortcut({
+export const strikeThrough = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'X',
@@ -123,7 +123,7 @@ export const strikeThrough = createKeyboardShortcut({
 /**
  * @public
  */
-export const link = createKeyboardShortcut({
+export const link = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'K',
@@ -147,7 +147,7 @@ export const link = createKeyboardShortcut({
 /**
  * @public
  */
-export const normal = createKeyboardShortcut({
+export const normal = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '0',
@@ -189,7 +189,7 @@ export const normal = createKeyboardShortcut({
 /**
  * @public
  */
-export const h1 = createKeyboardShortcut({
+export const h1 = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '1',
@@ -231,7 +231,7 @@ export const h1 = createKeyboardShortcut({
 /**
  * @public
  */
-export const h2 = createKeyboardShortcut({
+export const h2 = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '2',
@@ -273,7 +273,7 @@ export const h2 = createKeyboardShortcut({
 /**
  * @public
  */
-export const h3 = createKeyboardShortcut({
+export const h3 = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '3',
@@ -315,7 +315,7 @@ export const h3 = createKeyboardShortcut({
 /**
  * @public
  */
-export const h4 = createKeyboardShortcut({
+export const h4 = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '4',
@@ -357,7 +357,7 @@ export const h4 = createKeyboardShortcut({
 /**
  * @public
  */
-export const h5 = createKeyboardShortcut({
+export const h5 = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '5',
@@ -399,7 +399,7 @@ export const h5 = createKeyboardShortcut({
 /**
  * @public
  */
-export const h6 = createKeyboardShortcut({
+export const h6 = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: '6',
@@ -441,7 +441,7 @@ export const h6 = createKeyboardShortcut({
 /**
  * @public
  */
-export const blockquote = createKeyboardShortcut({
+export const blockquote = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'Q',
@@ -456,7 +456,7 @@ export const blockquote = createKeyboardShortcut({
 /**
  * @public
  */
-export const undo = createKeyboardShortcut({
+export const undo = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'Z',
@@ -480,7 +480,7 @@ export const undo = createKeyboardShortcut({
 /**
  * @public
  */
-export const redo = createKeyboardShortcut({
+export const redo = /* @__PURE__ */ createKeyboardShortcut({
   default: [
     {
       key: 'Y',
