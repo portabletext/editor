@@ -43,7 +43,7 @@ Both packages use the same conversion engine (block-tools delegates to html inte
 
     In the browser, the package uses the built-in `DOMParser`. In Node.js, you need to provide a `parseHtml` function:
 
-    ```ts
+    ```ts nocheck
     import {htmlToPortableText} from '@portabletext/html'
     import {JSDOM} from 'jsdom'
 
@@ -54,7 +54,7 @@ Both packages use the same conversion engine (block-tools delegates to html inte
 
   </TabItem>
   <TabItem label="Sanity">
-    ```ts
+    ```ts nocheck
     import {htmlToBlocks} from '@portabletext/block-tools'
     import {Schema} from '@sanity/schema'
     import {JSDOM} from 'jsdom'
@@ -93,7 +93,7 @@ In the browser, HTML parsing works automatically via `DOMParser`. In Node.js, th
 
 <PackageManagers pkg="jsdom" />
 
-```ts
+```ts nocheck
 import {JSDOM} from 'jsdom'
 
 // Pass to either package
@@ -132,7 +132,7 @@ The default schema includes `strong`, `em`, `code`, and `strike-through` as deco
 
 <Tabs>
   <TabItem label="Standalone">
-    ```ts
+    ```ts nocheck
     import {htmlToPortableText} from '@portabletext/html'
     import {compileSchema, defineSchema} from '@portabletext/schema'
 
@@ -177,7 +177,7 @@ To capture images, provide a matcher:
 
 <Tabs>
   <TabItem label="Standalone">
-    ```ts
+    ```ts nocheck
     import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
     import {compileSchema, defineSchema} from '@portabletext/schema'
 
@@ -208,7 +208,9 @@ To capture images, provide a matcher:
 
   </TabItem>
   <TabItem label="Sanity">
-    ```ts
+    ```ts nocheck
+    import {htmlToBlocks} from '@portabletext/block-tools'
+
     const blocks = htmlToBlocks(html, blockContentType, {
       parseHtml: (html) => new JSDOM(html).window.document,
       matchers: {
@@ -235,7 +237,9 @@ To capture images, provide a matcher:
 
 For migration scripts where you need to upload images to your own CDN or asset pipeline, use a two-phase approach: capture the URLs synchronously, then upload asynchronously:
 
-```ts
+```ts nocheck
+import {htmlToPortableText} from '@portabletext/html'
+
 // Phase 1: capture image URLs as temporary block types
 const blocks = htmlToPortableText(html, {
   rules: [
@@ -246,7 +250,7 @@ const blocks = htmlToPortableText(html, {
           _type: 'externalImage',
           url: el.getAttribute('src') ?? '',
           alt: el.getAttribute('alt') ?? '',
-        }).block
+        })
       },
     },
   ],
@@ -271,7 +275,7 @@ const finalBlocks = await Promise.all(
 
 Tables are skipped by default. The `createFlattenTableRule` function (currently in beta) converts tables into a flat list of text blocks:
 
-```ts
+```ts nocheck
 import {htmlToPortableText} from '@portabletext/html'
 import {createFlattenTableRule} from '@portabletext/html/rules'
 
@@ -299,7 +303,9 @@ Custom rules let you handle HTML elements that the built-in converter doesn't co
 
 The default converter treats `<pre>` as a normal block with code marks. To convert fenced code blocks into a custom `code` block type:
 
-```ts
+```ts nocheck
+import {htmlToPortableText} from '@portabletext/html'
+
 const codeBlockRule = {
   deserialize(el, next, createBlock) {
     if (el.tagName?.toLowerCase() !== 'pre') return undefined
@@ -308,7 +314,7 @@ const codeBlockRule = {
       _type: 'code',
       text: (code ?? el).textContent ?? '',
       language: code?.className?.replace('language-', '') ?? undefined,
-    }).block
+    })
   },
 }
 
@@ -321,7 +327,7 @@ const blocks = htmlToPortableText(html, {
 
 Convert `<div class="callout">` elements into a custom block type:
 
-```ts
+```ts nocheck
 const calloutRule = {
   deserialize(el, next, createBlock) {
     if (
@@ -336,7 +342,7 @@ const calloutRule = {
       _type: 'callout',
       tone,
       content: Array.isArray(children) ? children : children ? [children] : [],
-    }).block
+    })
   },
 }
 ```
@@ -357,7 +363,9 @@ The converter automatically detects and preprocesses content pasted from common 
 :::tip
 For Google Docs content, use `whitespaceMode: 'normalize'` to collapse extra whitespace that Google Docs adds:
 
-```ts
+```ts nocheck
+import {htmlToPortableText} from '@portabletext/html'
+
 const blocks = htmlToPortableText(html, {
   whitespaceMode: 'normalize',
 })

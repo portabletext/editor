@@ -33,7 +33,7 @@ Decorators and annotations sat outside this claiming rule. The engine dispatched
 
 The legacy `renderBlock` handles text blocks and block objects in one callback, branching on `schemaType`:
 
-```tsx
+```tsx nocheck
 const renderBlock: RenderBlockFunction = (props) => {
   if (props.schemaType.name === 'image' && isImage(props.value)) {
     return (
@@ -75,7 +75,9 @@ Four contract differences from the legacy callback: spread `attributes` onto you
 
 If you render every block object the same way, a preview card, say, the catch-all `type: '*'` matches every block object type that has no more specific registration, which is the direct equivalent of the generic legacy callback:
 
-```tsx
+```tsx nocheck
+import {defineBlockObject} from '@portabletext/editor'
+
 const blockObjectFallback = defineBlockObject({
   type: '*',
   render: ({attributes, children, node, readOnly}) => (
@@ -95,7 +97,7 @@ Per-type registrations and the catch-all compose: register `image` specifically 
 
 `renderChild` migrates the same way. Before:
 
-```tsx
+```tsx nocheck
 const renderChild: RenderChildFunction = (props) => {
   if (props.schemaType.name === 'stock-ticker' && isStockTicker(props.value)) {
     return <span className="ticker">{props.value.symbol}</span>
@@ -156,7 +158,7 @@ If the text block is always `block` and the span is always `span`, the parameter
 
 Before:
 
-```tsx
+```tsx nocheck
 const renderStyle: RenderStyleFunction = (props) => {
   if (props.schemaType.value === 'h1') {
     return <h1>{props.children}</h1>
@@ -177,7 +179,7 @@ const renderListItem: RenderListItemFunction = (props) => (
 
 After:
 
-```tsx
+```tsx nocheck
 import {defineTextBlock} from '@portabletext/editor'
 
 const textBlock = defineTextBlock({
@@ -215,7 +217,7 @@ The render props carry `node`, `path`, `focused`, and `selected`, so components 
 
 The legacy `renderDecorator` switches on the decorator name via `props.value`:
 
-```tsx
+```tsx nocheck
 const renderDecorator: RenderDecoratorFunction = (props) => {
   if (props.value === 'strong') {
     return <strong>{props.children}</strong>
@@ -251,7 +253,7 @@ const underline = defineDecorator({
 
 If you'd rather keep one switching function, `type: '*'` matches every decorator that has no more specific registration and hands you the decorator name as `decorator` where the legacy callback gave you `value`:
 
-```tsx
+```tsx continue
 const decoratorFallback = defineDecorator({
   type: '*',
   render: ({children, decorator}) => {
@@ -275,7 +277,7 @@ Per-decorator registrations and the catch-all compose: register `strong` specifi
 
 Before:
 
-```tsx
+```tsx nocheck
 const renderAnnotation: RenderAnnotationFunction = (props) => {
   if (props.schemaType.name === 'link') {
     return <span style={{textDecoration: 'underline'}}>{props.children}</span>
@@ -299,7 +301,7 @@ const link = defineAnnotation({
 
 Or, matching the legacy switching style, `type: '*'` and discriminate on `annotation._type`:
 
-```tsx
+```tsx continue
 const annotationFallback = defineAnnotation({
   type: '*',
   render: ({annotation, children}) =>
@@ -329,7 +331,8 @@ Under the legacy pipeline the engine wrapped list items and numbered ordered lis
 
 Mount every registration through one `NodePlugin` with a stable identity, and drop the migrated render props:
 
-```tsx
+```tsx nocheck
+import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 
 // Plus `span` from step 3, if you needed it.

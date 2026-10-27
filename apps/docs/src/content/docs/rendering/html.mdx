@@ -21,7 +21,7 @@ This guide covers `@portabletext/to-html` **v5.x** ([changelog](https://github.c
 
 `toHTML` takes an array of Portable Text blocks and an options object. It returns an HTML string.
 
-```js
+```js nocheck
 import {toHTML} from '@portabletext/to-html'
 
 const html = toHTML(portableTextBlocks, {
@@ -45,7 +45,7 @@ When rendering links from user-supplied content, you should validate the `href` 
 
 The example below also uses [`htm`](https://github.com/developit/htm) and [`vhtml`](https://github.com/developit/vhtml) to construct HTML safely without string concatenation. See the note on [safe HTML construction](#safe-html-construction) below.
 
-```js
+```js nocheck
 import {toHTML, uriLooksSafe} from '@portabletext/to-html'
 import htm from 'htm'
 import vhtml from 'vhtml'
@@ -91,7 +91,7 @@ Component functions return strings. You can use template literals directly, but 
 
 Bind them once at the top of your file:
 
-```js
+```js nocheck
 import htm from 'htm'
 import vhtml from 'vhtml'
 
@@ -150,7 +150,9 @@ import {
 
 By default, `toHTML` logs a warning to the console when it encounters a type or mark with no registered component. You can route these warnings to your own logger or silence them entirely.
 
-```js
+```js nocheck
+import {toHTML} from '@portabletext/to-html'
+
 toHTML(blocks, {
   onMissingComponent: (message, {type, nodeType}) => {
     myLogger.warn(message, {type, nodeType})

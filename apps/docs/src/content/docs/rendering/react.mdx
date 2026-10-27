@@ -56,7 +56,7 @@ const components = {
 
 Pass the components object to `PortableText`:
 
-```jsx
+```jsx nocheck
 <PortableText value={value} components={components} />
 ```
 
@@ -97,7 +97,7 @@ const SampleImageComponent = ({value, isInline}) => {
 
 Register it under the type name you used in your schema:
 
-```jsx
+```jsx continue
 const components = {
   types: {
     image: SampleImageComponent,
@@ -145,7 +145,7 @@ const components = {
 
 Import `PortableTextComponents` to type your components object. This gives you autocomplete on component keys and typed props for each renderer.
 
-```tsx
+```tsx nocheck
 import {PortableText, PortableTextComponents} from '@portabletext/react'
 
 const components: PortableTextComponents = {

@@ -21,7 +21,7 @@ Looking to convert Markdown into Portable Text? See the [Markdown to Portable Te
 
 `portableTextToMarkdown` takes an array of Portable Text blocks and returns a Markdown string. Standard block styles, decorators, and links are handled automatically.
 
-```ts
+```ts nocheck
 import {portableTextToMarkdown} from '@portabletext/markdown'
 
 const markdown = portableTextToMarkdown(blocks)
@@ -31,7 +31,9 @@ const markdown = portableTextToMarkdown(blocks)
 
 `callout`, `code`, `horizontal-rule`, `html`, `image`, and `table` block objects render as Markdown out of the box. `callout`, `code`, `html`, `image`, and `table` fall back to a `json:object` fence when a value doesn't match the shape its renderer expects (a consumer's own differently-shaped `code` type, say), which [round-trips back into the same object](/conversion/markdown-round-tripping/); `horizontal-rule` always renders `---`. Register a renderer for other custom types you use, or to override one of the defaults.
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   types: {
     chart: ({value}) => `![${value.title}](${value.imageUrl})`,
@@ -41,7 +43,9 @@ portableTextToMarkdown(blocks, {
 
 Type renderers receive `value` (the block object), `index` (position in the array), and `isInline` (whether the object appears inline or as a block). Return an empty string to skip an element entirely.
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   types: {
     image: ({value, isInline}) => {
@@ -56,7 +60,9 @@ portableTextToMarkdown(blocks, {
 
 Override how block styles render by providing a `block` map. Each renderer receives `value` (the block) and `children` (the already-rendered content of the block).
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   block: {
     h1: ({children}) => `# ${children} #`,
@@ -69,7 +75,7 @@ portableTextToMarkdown(blocks, {
 
 `callout`, `code`, `horizontal-rule`, `html`, `image`, and `table` are registered by default. The package also exports `DefaultBlockquoteObjectRenderer` and `DefaultListRenderer` for the structural container shapes the parser produces when `types.blockquote`/`types.list` matchers are registered; those two stay opt-in since the parser only produces that shape when asked to.
 
-```ts
+```ts nocheck
 import {
   DefaultBlockquoteObjectRenderer,
   DefaultListRenderer,

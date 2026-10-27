@@ -72,7 +72,7 @@ Start with a schema that includes some common formatting elements.
 This guide includes a limited set of schema types to get you started. See the [rendering guide](/editor/guides/custom-rendering/) for mark examples, and the [custom blocks guide](/editor/guides/custom-blocks/) for block and inline objects.
 :::
 
-```tsx
+```tsx continue
 // App.tsx
 // ...
 const schemaDefinition = defineSchema({
@@ -175,7 +175,7 @@ If you're maintaining an editor that rendered through the `renderStyle`, `render
 
 Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
-```tsx
+```tsx continue
 const textBlock = defineTextBlock({
   type: 'block',
   render: (props) => {
@@ -206,7 +206,7 @@ With this in mind, continue for the remaining schema types.
 
 Register a decorator with `defineDecorator`, one per decorator name:
 
-```tsx
+```tsx continue
 const strong = defineDecorator({
   type: 'strong',
   render: ({children}) => <strong>{children}</strong>,
@@ -229,7 +229,7 @@ By default, text is rendered as an inline `span` element in the editor. A decora
 
 Mount every registration through one `NodePlugin`, inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke.
 
-```tsx
+```tsx nocheck
 <>
   <NodePlugin nodes={nodes} />
   <PortableTextEditable style={{border: '1px solid black', padding: '0.5em'}} />
@@ -371,6 +371,8 @@ A list in Portable Text is a run of text blocks that each carry a list type (`li
 Add the list types to your schema:
 
 ```tsx
+import {defineSchema} from '@portabletext/editor'
+
 const schemaDefinition = defineSchema({
   // ...
   lists: [
@@ -383,6 +385,7 @@ const schemaDefinition = defineSchema({
 Then update the text block render. It reads the list position with `useListIndex`, which is a React hook, so the render returns a `TextBlock` component that calls it. The component puts the list type, level, and position on the wrapper as `data-*` attributes, and the style element moves inside the wrapper, since a list item can have a style too:
 
 ```tsx
+import {defineTextBlock} from '@portabletext/editor'
 import type {TextBlockRenderProps} from '@portabletext/editor'
 import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
 
@@ -470,7 +473,7 @@ const ListButton = (props: {schemaType: ToolbarListSchemaType}) => {
 
 Render one per list type inside `Toolbar`, next to the other buttons:
 
-```tsx
+```tsx nocheck
 function Toolbar() {
   // ...
   return (
@@ -498,7 +501,16 @@ In the next step, you'll add the toolbar and the list position provider to the e
 
 With the registrations created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`, and wrap `PortableTextEditable` in `ListIndexProvider` so the text block render can read list positions.
 
-```tsx
+```tsx nocheck
+import {
+  EditorProvider,
+  PortableTextEditable,
+  type PortableTextBlock,
+} from '@portabletext/editor'
+import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {ListIndexProvider} from '@portabletext/plugin-list-index'
+import {useState} from 'react'
+
 // App.tsx
 // ...
 function App() {
@@ -541,7 +553,7 @@ You can now enter text and interact with the toolbar buttons to toggle the style
 
 You can preview the Portable Text from the editor by reading the state. Add the following after the `EditorProvider`:
 
-```tsx
+```tsx nocheck
 <pre style={{border: '1px dashed black', padding: '0.5em'}}>
   {JSON.stringify(value, null, 2)}
 </pre>

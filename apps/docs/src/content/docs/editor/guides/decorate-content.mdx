@@ -33,7 +33,7 @@ Use the `rangeDecorations` prop for simple highlights that one editable owns. [C
 
 A decoration has an `id`, a `type` (always `'range'`), the `range` to decorate, and a `render` function that wraps the decorated text. `defineDecoration` types the object for you. Pass an array of decorations to `DecorationsPlugin`, inside the `EditorProvider`:
 
-```tsx
+```tsx nocheck
 import {
   defineDecoration,
   EditorProvider,
@@ -190,7 +190,7 @@ function CommentsSidebar(props: {layer: DecorationLayer}) {
 
 In `CommentsLayer`, keep the handle and render the sidebar with it:
 
-```tsx
+```tsx nocheck
 const layer = useDecorationLayer({
   decorations,
   on: (events) => {
@@ -308,7 +308,7 @@ Follow these rules for widget chrome:
 
 One decoration can render more than once. The editor splits the range into segments where formatting changes and where it overlaps other decorations, and calls `render` for each segment. To draw something once per decoration, such as a comment badge, check `isFirst` (the segment with the start of the range) or `isLast` (the segment with the end):
 
-```tsx
+```tsx continue
 const renderComment = (props: DecorationRenderProps) => (
   <span className="comment-highlight">
     {props.isFirst ? (
