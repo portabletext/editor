@@ -4,7 +4,7 @@ import type {MatchEmojis} from './match-emojis'
  * Proposed, but not required type, to represent an emoji match.
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
  * {
  *   type: 'exact',
  *   key: '😂-joy',
@@ -13,7 +13,7 @@ import type {MatchEmojis} from './match-emojis'
  * }
  * ```
  * @example
- * ```tsx
+ * ```tsx nocheck
  * {
  *   type: 'partial',
  *   key: '😹-joy-_cat',
@@ -47,6 +47,8 @@ export type EmojiMatch =
  *
  * @example
  * ```ts
+ * import {createMatchEmojis} from '@portabletext/plugin-emoji-picker'
+ *
  * const matchEmojis = createMatchEmojis({
  *   emojis: {
  *     '😂': ['joy'],
