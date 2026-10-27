@@ -5,7 +5,6 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import type {ArbitraryTypedObject, TypedObject} from '@portabletext/types'
-import {defaultKeyGenerator} from '../key-generator'
 
 const schema = compileSchema(defineSchema({}))
 
@@ -19,7 +18,7 @@ const schema = compileSchema(defineSchema({}))
  * four spaces or more makes it a code block rather than a list. So each jump to a
  * deeper level counts as a single step of nesting, however many levels it spans.
  *
- * Mutates the blocks in place by adding a `_key` if necessary.
+ * Blocks without a `_key` get no entry in either map.
  */
 export function buildListIndexMap<
   Block extends TypedObject = PortableTextBlock | ArbitraryTypedObject,
@@ -62,10 +61,6 @@ export function buildListIndexMap<
       continue
     }
 
-    if (!block._key) {
-      block._key = defaultKeyGenerator()
-    }
-
     // Clear the state if we encounter a non-text block
     if (!isTextBlock({schema}, block)) {
       levelIndexMaps.clear()
@@ -76,7 +71,11 @@ export function buildListIndexMap<
     }
 
     // Clear the state if we encounter a non-list text block
-    if (block.listItem === undefined || block.level === undefined) {
+    if (
+      !block._key ||
+      block.listItem === undefined ||
+      block.level === undefined
+    ) {
       levelIndexMaps.clear()
       previousListItem = undefined
       levelStack = []

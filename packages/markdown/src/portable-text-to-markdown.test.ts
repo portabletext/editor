@@ -1987,6 +1987,43 @@ describe(portableTextToMarkdown.name, () => {
       const portableText = markdownToPortableText(markdown, {keyGenerator})
       expect(portableTextToMarkdown(portableText)).toBe(markdown)
     })
+
+    test('keyless blocks are numbered without being changed', () => {
+      const portableText = [
+        {
+          _type: 'block',
+          listItem: 'number',
+          level: 1,
+          markDefs: [],
+          children: [{_type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          listItem: 'number',
+          level: 1,
+          markDefs: [],
+          children: [{_type: 'span', text: 'bar', marks: []}],
+        },
+      ]
+
+      expect(portableTextToMarkdown(portableText)).toBe('1. foo\n2. bar')
+      expect(portableText).toEqual([
+        {
+          _type: 'block',
+          listItem: 'number',
+          level: 1,
+          markDefs: [],
+          children: [{_type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          listItem: 'number',
+          level: 1,
+          markDefs: [],
+          children: [{_type: 'span', text: 'bar', marks: []}],
+        },
+      ])
+    })
   })
 
   describe('list as container (`types.list`)', () => {

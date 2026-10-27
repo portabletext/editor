@@ -54,7 +54,7 @@ There are three categories of Behavior Events:
 The Behavior API uses events to trigger actions by listening for a specific event.
 
 :::note
-All events except native events can be executed or raised from within behaviors, but only synthetic events are guaranteed to resolve into a state change.
+Behaviors can raise synthetic and custom events, but they can only execute synthetic events. Only synthetic events are guaranteed to resolve into a state change.
 :::
 
 ## Guards
@@ -113,10 +113,9 @@ So far we've only seen examples that invoke a single action, but you can send mu
 To send an event back into the editor, use the `raise` action type or the `raise` helper. This is useful for chaining behaviors and default events.
 
 ```tsx
-// Approach A: With the type set to 'raise'
-// Approach B: With the raise helper
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 
+// With the type set to 'raise'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -127,7 +126,8 @@ const raisedUppercaseA = defineBehavior({
   ],
 })
 
-const raisedUppercaseA = defineBehavior({
+// With the raise helper
+const raisedUppercaseAWithHelper = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
   actions: [({snapshot, event}) => [raise({type: 'insert.text', text: 'A'})]],

@@ -47,7 +47,7 @@ Read more about using behaviors and building your own with these guides:
 
 ## Log inserted text
 
-Send and `effect` type action along with a `forward` action to perform side effects without altering the chain of events.
+Send an `effect` action along with a `forward` action to perform side effects without altering the chain of events.
 
 ```js
 const logInsertText = defineBehavior({
@@ -89,7 +89,7 @@ const logInsertText = defineBehavior({
 
 ## Auto-close parenthesis
 
-You can write behaviors to auto-close common paired characters. This example closes parenthesis, and then moves the cursor in between the two characters. This logic can expand to cover more sets.
+You can write behaviors to auto-close common paired characters. This example closes parentheses, and then moves the cursor in between the two characters. This logic can expand to cover more sets.
 
 ```js
 const autoCloseParens = defineBehavior({
