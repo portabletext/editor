@@ -105,7 +105,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -162,7 +162,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -241,7 +241,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -290,7 +290,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -359,7 +359,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',

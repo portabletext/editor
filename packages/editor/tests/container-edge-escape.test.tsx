@@ -68,7 +68,7 @@ async function createLonelyContainerEditor() {
     initialValue: [calloutBlock],
     children: <NodePlugin nodes={containers} />,
   })
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await expect.element(locator).toBeInTheDocument()
   editor.send({type: 'focus'})
   return editor
 }
@@ -313,7 +313,7 @@ describe('escaping a container at the document edge', () => {
         />
       ),
     })
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})
     const innerLeaf = {
       path: [
@@ -369,7 +369,7 @@ describe('escaping a container at the document edge', () => {
     // dead end at the nearest container declared every row's first and
     // last cell a dead end and inserted phantom blocks beside the table.
     const {editor, locator} = await createGridEditor()
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})
 
     // The second row's cell: its block is the nearest container's edge
@@ -413,7 +413,7 @@ describe('escaping a container at the document edge', () => {
     // surface beyond the lonely table is a different place: the root
     // accepts text blocks, so that click still escapes.
     const {editor, locator} = await createGridEditor()
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})
 
     const gridSurfacePoint = {path: [{_key: 'g0'}], offset: 0}
@@ -522,7 +522,7 @@ describe('escaping a container at the document edge', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})
     editor.send({
       type: 'select',

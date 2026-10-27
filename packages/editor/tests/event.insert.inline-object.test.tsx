@@ -124,9 +124,7 @@ describe('event.insert.inline object', () => {
     })
 
     const insertStockTickerButton = page.getByTestId('insert-stock-ticker')
-    await vi.waitFor(() =>
-      expect.element(insertStockTickerButton).toBeInTheDocument(),
-    )
+    await expect.element(insertStockTickerButton).toBeInTheDocument()
 
     await userEvent.click(locator)
 

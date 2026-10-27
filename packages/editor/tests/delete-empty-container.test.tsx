@@ -54,7 +54,7 @@ describe('delete on empty container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -115,7 +115,7 @@ describe('delete on empty container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -171,7 +171,7 @@ describe('delete on empty container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -232,7 +232,7 @@ describe('delete on empty container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -482,7 +482,7 @@ describe('delete on empty container - nested cascade', () => {
       children: <NodePlugin nodes={tableContainersPermissive} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -572,7 +572,7 @@ describe('delete on empty container - nested cascade', () => {
       children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -639,7 +639,7 @@ describe('delete on empty container - nested cascade', () => {
       children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -723,7 +723,7 @@ describe('delete on empty container - nested cascade', () => {
       children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     const before = editor.getSnapshot().context.value
 
@@ -821,7 +821,7 @@ describe('delete on empty container - nested block container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -886,7 +886,7 @@ describe('delete on empty container - nested block container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',

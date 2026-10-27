@@ -439,9 +439,7 @@ async function runTypingScenario(options: {
   )
 
   const locator = page.getByRole('textbox')
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument(), {
-    timeout: 10_000,
-  })
+  await expect.element(locator, {timeout: 10_000}).toBeInTheDocument()
   await vi.waitFor(() => expect(locator.getByText('bar')).toBeInTheDocument(), {
     timeout: 10_000,
   })

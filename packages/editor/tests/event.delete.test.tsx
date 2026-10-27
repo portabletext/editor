@@ -53,7 +53,7 @@ describe('event.delete', () => {
       ],
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
@@ -1306,7 +1306,7 @@ describe('event.delete', () => {
       ],
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'delete',
@@ -1353,7 +1353,7 @@ describe('event.delete', () => {
       ],
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'delete',
