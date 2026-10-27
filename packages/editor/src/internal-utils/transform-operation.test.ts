@@ -27,7 +27,7 @@ function createMockEditor(
   } as unknown as PortableTextEditorEngine
 }
 
-describe('transformOperation', () => {
+describe(transformOperation.name, () => {
   describe('insert patch at block level (path.length === 1)', () => {
     test('returns the operation unchanged (keyed paths are stable)', () => {
       const editor = createMockEditor([
