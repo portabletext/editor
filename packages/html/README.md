@@ -80,7 +80,7 @@ const blocks = htmlToPortableText(`
 
 By default, `htmlToPortableText` uses a schema with common styles, decorators, and annotations. You can provide your own schema to control what types are produced:
 
-```ts
+```ts nocheck
 import {htmlToPortableText} from '@portabletext/html'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
@@ -100,7 +100,7 @@ const blocks = htmlToPortableText(html, {schema})
 
 Rules give you full control over how HTML elements are converted to Portable Text. Custom rules are checked before the built-in rules - the first rule that returns a value wins.
 
-```ts
+```ts nocheck
 import {htmlToPortableText} from '@portabletext/html'
 
 const blocks = htmlToPortableText(html, {
@@ -136,7 +136,9 @@ function isElement(node: Node): node is Element {
 
 The `whitespaceMode` option controls how whitespace is handled during deserialization:
 
-```ts
+```ts nocheck
+import {htmlToPortableText} from '@portabletext/html'
+
 const blocks = htmlToPortableText(html, {
   whitespaceMode: 'normalize', // 'preserve' | 'remove' | 'normalize'
 })
@@ -150,7 +152,7 @@ const blocks = htmlToPortableText(html, {
 
 In the browser, `htmlToPortableText` uses the native `DOMParser`. In Node.js, you need to provide a parser:
 
-```ts
+```ts nocheck
 import {htmlToPortableText} from '@portabletext/html'
 import {JSDOM} from 'jsdom'
 
@@ -163,7 +165,7 @@ const blocks = htmlToPortableText(html, {
 
 Images require a custom matcher since there's no universal way to represent them in Portable Text. The `types.image` option receives an `ObjectMatcher` that's called for every `<img>` element:
 
-```ts
+```ts nocheck
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
@@ -208,7 +210,7 @@ The matcher is called with `isInline: false` for block-level images and `isInlin
 
 Consumers with a different shape can pass their own matcher:
 
-```ts
+```ts nocheck
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
@@ -248,7 +250,7 @@ The matcher receives `{language: string | undefined, code: string}` and returns 
 
 The `createFlattenTableRule` helper converts tables into a flat list of blocks:
 
-```ts
+```ts nocheck
 import {htmlToPortableText} from '@portabletext/html'
 import {createFlattenTableRule} from '@portabletext/html/rules'
 
@@ -266,7 +268,7 @@ const blocks = htmlToPortableText(html, {
 
 The `createTableRule` helper converts `<table>` elements into a nested table shape (`table` → `rows` → `cells` → `value`), the shape `@portabletext/plugin-table`'s `defineTable` produces:
 
-```ts
+```ts nocheck
 import {htmlToPortableText} from '@portabletext/html'
 import {createTableRule} from '@portabletext/html/rules'
 
@@ -278,7 +280,9 @@ const blocks = htmlToPortableText(html, {
 
 `headerRows` is set to the count of leading rows inside `<thead>`, or whose cells are all `<th>`, and omitted when there are none. Rows shorter than the widest row are padded with empty cells; `colspan`/`rowspan` are ignored, so a spanning cell contributes one cell and the padding fills the rest. Pass `containers` to match a `defineTable` call whose container names were renamed; it is role-keyed like `defineTable`'s own option, and only `type` and `arrayField` are read, so the container definitions given to `defineTable` can be passed through unchanged:
 
-```ts
+```ts nocheck
+import {createTableRule} from '@portabletext/html/rules'
+
 createTableRule({
   schema,
   containers: {
@@ -295,7 +299,9 @@ Rows are read in the DOM's table row order, which places `<thead>` rows first an
 
 By default, random keys are generated for each block and span. You can provide your own key generator for deterministic output:
 
-```ts
+```ts nocheck
+import {htmlToPortableText} from '@portabletext/html'
+
 let i = 0
 const blocks = htmlToPortableText(html, {
   keyGenerator: () => `key${i++}`,
