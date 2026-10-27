@@ -32,7 +32,7 @@ import type {
  * type by name, use `sanitySchemaDefinitionToPortableTextSchema` instead.
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
  * const schema = sanitySchemaToPortableTextSchema(sanitySchema)
  *
  * return (
@@ -85,7 +85,9 @@ export function sanitySchemaToPortableTextSchema(
  * pass it via `options.types`.``
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
+ * import {sanitySchemaDefinitionToPortableTextSchema} from '@portabletext/sanity-bridge'
+ *
  * const schema = sanitySchemaDefinitionToPortableTextSchema(richTextDefinition, {
  *   types: [customUrl],
  * })
