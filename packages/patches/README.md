@@ -49,6 +49,8 @@ A `path` is an array of segments, where each segment is an object key (`'title'`
 `inc` and `dec` patches (increment or decrement the number at `path` by `value`) have no builder, so pass them as plain objects:
 
 ```ts
+import {applyAll} from '@portabletext/patches'
+
 applyAll({count: 0}, [{type: 'inc', path: ['count'], value: 2}])
 // => {count: 2}
 ```
