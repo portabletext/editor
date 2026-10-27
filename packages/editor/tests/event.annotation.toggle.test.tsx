@@ -5,8 +5,8 @@ import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
 
 describe('event.annotation.toggle', () => {
-  describe('Scenario: Toggling annotation on unannotated text', () => {
-    test('with `at`, without selection', async () => {
+  describe('Toggling annotation on unannotated text', () => {
+    test('Scenario: Toggling an annotation at `at` on unannotated text without a selection annotates the text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -73,7 +73,7 @@ describe('event.annotation.toggle', () => {
       })
     })
 
-    test('with `at`, with selection', async () => {
+    test('Scenario: Toggling an annotation at `at` on unannotated text with a selection annotates the text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -130,7 +130,7 @@ describe('event.annotation.toggle', () => {
       })
     })
 
-    test('without `at`, with selection', async () => {
+    test('Scenario: Toggling an annotation without `at` on unannotated text annotates the selected text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -186,7 +186,7 @@ describe('event.annotation.toggle', () => {
       })
     })
 
-    test('without `at`, without selection', async () => {
+    test('Scenario: Toggling an annotation on unannotated text without `at` or a selection changes nothing', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -236,8 +236,8 @@ describe('event.annotation.toggle', () => {
     })
   })
 
-  describe('Scenario: Toggling annotation on annotated text', () => {
-    test('with `at`, without selection', async () => {
+  describe('Toggling annotation on annotated text', () => {
+    test('Scenario: Toggling an annotation at `at` on annotated text without a selection removes it from the text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -312,7 +312,7 @@ describe('event.annotation.toggle', () => {
       })
     })
 
-    test('with `at`, with selection', async () => {
+    test('Scenario: Toggling an annotation at `at` on annotated text with a selection removes it from the text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -392,7 +392,7 @@ describe('event.annotation.toggle', () => {
       })
     })
 
-    test('without `at`, with selection', async () => {
+    test('Scenario: Toggling an annotation without `at` on annotated text removes it from the selected text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -456,7 +456,7 @@ describe('event.annotation.toggle', () => {
       })
     })
 
-    test('without `at`, without selection', async () => {
+    test('Scenario: Toggling an annotation on annotated text without `at` or a selection changes nothing', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()

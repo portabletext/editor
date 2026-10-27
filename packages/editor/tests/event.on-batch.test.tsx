@@ -45,7 +45,7 @@ async function setupSelectedBlocks() {
 // `editor.on` (the overload and the `create-editor` bridge) against a real
 // operation burst, which the relay unit test cannot exercise.
 describe('editor.on batch option (end to end)', () => {
-  test('coalesces a real operation burst and delivers every event once, in order', async () => {
+  test('Scenario: A batched listener receives a real operation burst coalesced, every event once and in order', async () => {
     const editor = await setupSelectedBlocks()
 
     const syncEvents: Array<EditorEmittedEvent> = []
@@ -86,7 +86,7 @@ describe('editor.on batch option (end to end)', () => {
     expect(batchedEvents).toEqual(syncEvents)
   })
 
-  test('does not deliver when unsubscribed before the microtask', async () => {
+  test('Scenario: A batched listener unsubscribed before the microtask receives nothing', async () => {
     const editor = await setupSelectedBlocks()
 
     let batchCalls = 0

@@ -691,7 +691,7 @@ describe('event.insert.block', () => {
   })
 
   describe('empty list item replacement', () => {
-    test('without selection, without `at` - list properties NOT inherited', async () => {
+    test('Scenario: Inserting a block into an empty list item without a selection or `at` does not inherit list properties', async () => {
       const keyGenerator = createTestKeyGenerator()
       const {editor} = await createTestEditor({
         keyGenerator,
@@ -739,7 +739,7 @@ describe('event.insert.block', () => {
       })
     })
 
-    test('with selection, without `at` - list properties inherited', async () => {
+    test('Scenario: Inserting a block into a selected empty list item without `at` inherits list properties', async () => {
       const keyGenerator = createTestKeyGenerator()
       const listBlockKey = keyGenerator()
       const {editor} = await createTestEditor({
@@ -797,7 +797,7 @@ describe('event.insert.block', () => {
       })
     })
 
-    test('without selection, with `at` - list properties inherited', async () => {
+    test('Scenario: Inserting a block at an empty list item given by `at` without a selection inherits list properties', async () => {
       const keyGenerator = createTestKeyGenerator()
       const listBlockKey = keyGenerator()
       const {editor} = await createTestEditor({
@@ -852,7 +852,7 @@ describe('event.insert.block', () => {
       })
     })
 
-    test('with selection, with `at` - `at` takes precedence', async () => {
+    test('Scenario: Inserting a block with both a selection and `at` lets `at` take precedence', async () => {
       const keyGenerator = createTestKeyGenerator()
       const listBlockKey = keyGenerator()
       const normalBlockKey = keyGenerator()

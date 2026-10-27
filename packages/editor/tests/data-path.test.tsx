@@ -5,7 +5,7 @@ import {createTestEditor} from '../src/test/vitest'
 
 describe('data-pt-path attribute', () => {
   describe('initial rendering', () => {
-    test('editor data-pt-path', async () => {
+    test('Scenario: The editor renders an empty data-pt-path', async () => {
       const {locator} = await createTestEditor()
 
       await vi.waitFor(() => {
@@ -13,7 +13,7 @@ describe('data-pt-path attribute', () => {
       })
     })
 
-    test('text block data-pt-path', async () => {
+    test('Scenario: A text block renders its key as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -38,7 +38,7 @@ describe('data-pt-path attribute', () => {
       })
     })
 
-    test('span data-pt-path', async () => {
+    test('Scenario: A span renders its block and span keys as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -65,7 +65,7 @@ describe('data-pt-path attribute', () => {
       })
     })
 
-    test('block object data-pt-path', async () => {
+    test('Scenario: A block object renders its key as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -98,7 +98,7 @@ describe('data-pt-path attribute', () => {
       })
     })
 
-    test('inline object data-pt-path', async () => {
+    test('Scenario: An inline object renders its block and child keys as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -134,7 +134,7 @@ describe('data-pt-path attribute', () => {
       })
     })
 
-    test('multiple text blocks', async () => {
+    test('Scenario: Multiple text blocks each render their block and span data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKeyA = keyGenerator()
       const spanKeyA = keyGenerator()
@@ -183,7 +183,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('`block.set` text block key', async () => {
+  test('Scenario: `block.set` with a new text block key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -226,7 +226,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('`block.set` block object key', async () => {
+  test('Scenario: `block.set` with a new block object key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 
@@ -276,7 +276,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('remote patch updates text block key', async () => {
+  test('Scenario: A remote patch that sets a new text block key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -323,7 +323,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('remote patch updates block object key', async () => {
+  test('Scenario: A remote patch that sets a new block object key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 

@@ -10,7 +10,7 @@ import {
 } from '../test-utils/text-selection'
 
 describe('event.annotation', () => {
-  test('.add/.remove', async () => {
+  test('Scenario: Adding and removing annotations updates the marks on the affected text', async () => {
     const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({
         decorators: [{name: 'strong'}],
