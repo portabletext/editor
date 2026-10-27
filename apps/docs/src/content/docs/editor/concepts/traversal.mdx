@@ -75,6 +75,9 @@ Reach for a typed lookup like `getSpan` or `getTextBlock` when the node also has
 A behavior guard that only wants to run when the selection sits inside a specific subtree reaches for `rangeIntersects` with the selection on the snapshot:
 
 ```ts
+import {defineBehavior} from '@portabletext/editor/behaviors'
+import * as traversal from '@portabletext/editor/traversal'
+
 defineBehavior({
   on: 'delete.backward',
   guard: ({snapshot}) => {

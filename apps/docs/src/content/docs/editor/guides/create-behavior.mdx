@@ -27,7 +27,7 @@ Behaviors have three parts:
 
 Here's an example behavior:
 
-```tsx
+```tsx continue
 const noLowerCaseA = defineBehavior({
   on: 'insert.text',
   guard: ({event}) => event.text === 'a',
@@ -51,7 +51,7 @@ Let's break it down:
 
 To use the behavior, add it to the `EditorProvider` using the `BehaviorPlugin`.
 
-```tsx
+```tsx nocheck
 import {defineBehavior} from '@portabletext/editor/behaviors'
 import {BehaviorPlugin} from '@portabletext/editor/plugins'
 

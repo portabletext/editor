@@ -29,7 +29,7 @@ Install the serializer for your framework:
     npm install @portabletext/react
     ```
 
-    ```tsx
+    ```tsx nocheck
     import {PortableText} from '@portabletext/react'
 
     function Article({content}) {
@@ -46,7 +46,7 @@ Install the serializer for your framework:
     npm install @portabletext/to-html
     ```
 
-    ```ts
+    ```ts nocheck
     import {toHTML} from '@portabletext/to-html'
 
     const html = toHTML(portableTextContent)
@@ -61,7 +61,7 @@ Install the serializer for your framework:
     npm install @portabletext/markdown
     ```
 
-    ```ts
+    ```ts nocheck
     import {portableTextToMarkdown} from '@portabletext/markdown'
 
     const markdown = portableTextToMarkdown(portableTextContent)
@@ -153,7 +153,7 @@ The `_type` is `"image"`. To render it, add an `image` entry to the `types` comp
 
 <Tabs>
   <TabItem label="React">
-    ```tsx
+    ```tsx nocheck
     import {PortableText} from '@portabletext/react'
 
     const components = {
@@ -175,7 +175,7 @@ The `_type` is `"image"`. To render it, add an `image` entry to the `types` comp
   </TabItem>
 
   <TabItem label="HTML">
-    ```ts
+    ```ts nocheck
     import {toHTML} from '@portabletext/to-html'
 
     const html = toHTML(portableTextContent, {
@@ -195,7 +195,7 @@ The `_type` is `"image"`. To render it, add an `image` entry to the `types` comp
   </TabItem>
 
   <TabItem label="Markdown">
-    ```ts
+    ```ts nocheck
     import {portableTextToMarkdown} from '@portabletext/markdown'
 
     const markdown = portableTextToMarkdown(portableTextContent, {
@@ -247,7 +247,7 @@ The span with `"marks": ["link1"]` references the mark definition with `"_key": 
 
 <Tabs>
   <TabItem label="React">
-    ```tsx
+    ```tsx nocheck
     const components = {
       marks: {
         link: ({children, value}) => {
@@ -270,7 +270,7 @@ The span with `"marks": ["link1"]` references the mark definition with `"_key": 
   </TabItem>
 
   <TabItem label="HTML">
-    ```ts
+    ```ts nocheck
     import {uriLooksSafe} from '@portabletext/to-html'
 
     const components = {
@@ -294,7 +294,7 @@ The span with `"marks": ["link1"]` references the mark definition with `"_key": 
   </TabItem>
 
   <TabItem label="Markdown">
-    ```ts
+    ```ts nocheck
     import {portableTextToMarkdown} from '@portabletext/markdown'
 
     const markdown = portableTextToMarkdown(portableTextContent, {
