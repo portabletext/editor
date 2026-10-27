@@ -1,0 +1,42 @@
+diff --git a/dist/index.js b/dist/index.js
+index 3105ebe97ddd7add6c4257602029ea58e7a11fd0..96c5c7e650ebf927c6a7804eed895001e914a653 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -4,6 +4,7 @@ import { createManualModuleSource } from '@vitest/mocker/node';
+ import c from 'tinyrainbow';
+ import { createDebugger, BrowserConnectionError, isCSSRequest } from 'vitest/node';
+ import { mkdir, unlink } from 'node:fs/promises';
++import { createHash } from 'node:crypto';
+ import { fileURLToPath } from 'node:url';
+ 
+ const _DRIVE_LETTER_START_RE = /^[A-Za-z]:\//;
+@@ -694,18 +695,27 @@ function parseLocation(context, stack) {
+ 	const parsedStacks = context.project.browser.parseStacktrace(stack);
+ 	return parsedStacks[0];
+ }
++// Long test names exceed the 255-byte file name limit (ENAMETOOLONG), which
++// fails a passing test. Drop this once https://github.com/vitest-dev/vitest/issues/9006 is fixed.
++function capTraceName(name) {
++	const max = 100;
++	if (name.length <= max) return name;
++	const counters = name.match(/-\d+-\d+$/)?.[0] ?? "";
++	const hash = createHash("sha1").update(name).digest("hex").slice(0, 8);
++	return `${name.slice(0, max - counters.length - hash.length - 1)}-${hash}${counters}`;
++}
+ function resolveTracesPath({ testPath, project }, name) {
+ 	if (!testPath) {
+ 		throw new Error(`This command can only be called inside a test file.`);
+ 	}
+ 	const options = project.config.browser.trace;
+-	const sanitizedName = `${project.name.replace(/[^a-z0-9]/gi, "-")}-${name}.trace.zip`;
++	const sanitizedName = `${capTraceName(`${project.name.replace(/[^a-z0-9]/gi, "-")}-${name}`)}.trace.zip`;
+ 	if (options.tracesDir) {
+ 		return resolve(options.tracesDir, sanitizedName);
+ 	}
+ 	const dir = dirname(testPath);
+ 	const base = basename(testPath);
+-	return resolve(dir, "__traces__", base, `${project.name.replace(/[^a-z0-9]/gi, "-")}-${name}.trace.zip`);
++	return resolve(dir, "__traces__", base, sanitizedName);
+ }
+ const deleteTracing = async (context, { traces }) => {
+ 	if (!context.testPath) {
