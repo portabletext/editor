@@ -26,7 +26,7 @@ import type {DegradationType} from './markdown-to-portable-text'
  */
 export const degradationMessage = {
   'decorator-dropped': (
-    decorator: 'code' | 'strong' | 'em' | 'strikeThrough',
+    decorator: 'code' | 'strong' | 'em' | 'strikeThrough' | 'underline',
   ): string => {
     switch (decorator) {
       case 'code':
@@ -37,6 +37,8 @@ export const degradationMessage = {
         return 'Removed italic formatting, kept the text: the schema has no `em` decorator'
       case 'strikeThrough':
         return 'Removed strikethrough formatting, kept the text: the schema has no `strike-through` decorator'
+      case 'underline':
+        return 'Removed underline formatting, kept the text: the schema has no `underline` decorator'
     }
   },
 

@@ -12,8 +12,8 @@ import type {
  * - `'exact'` - The keyword matches this item exactly (e.g., keyword `joy` matches emoji `:joy:`)
  * - `'partial'` - The keyword partially matches this item (e.g., keyword `jo` matches `:joy:`)
  *
- * When `delimiter` is configured and there's exactly one `'exact'` match,
- * the picker will auto-insert that match.
+ * When `delimiter` is configured and there's at least one `'exact'` match,
+ * typing the delimiter auto-inserts a match.
  *
  * @example
  * ```ts
@@ -158,7 +158,8 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
 
   /**
    * Character that triggers auto-completion.
-   * Typing this after a keyword with exactly one exact match auto-inserts it.
+   * Typing this after a keyword with at least one exact match auto-inserts a
+   * match.
    *
    * @example `':'` - typing `:joy:` auto-inserts the joy emoji
    */

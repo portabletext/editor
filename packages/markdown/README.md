@@ -199,7 +199,7 @@ The default schema includes the following definitions:
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `styles`        | `'normal'`, `'h1'`, `'h2'`, `'h3'`, `'h4'`, `'h5'`, `'h6'`, `'blockquote'`                                                                                                                                                                                                   |
 | `lists`         | `'number'`, `'bullet'`, `'task'`                                                                                                                                                                                                                                             |
-| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`                                                                                                                                                                                                                             |
+| `decorators`    | `'strong'`, `'em'`, `'code'`, `'strike-through'`, `'underline'`                                                                                                                                                                                                              |
 | `annotations`   | `'link'` (fields: `'href'`, `'title'`)                                                                                                                                                                                                                                       |
 | `blockObjects`  | `'code'` (fields: `'language'`, `'code'`), `'image'` (fields: `'src'`, `'alt'`, `'title'`), `'horizontal-rule'`, `'html'` (fields: `'html'`), `'table'` (the canonical nested shape, see [Default behavior](#default-behavior)), `'callout'` (fields: `'tone'`, `'content'`) |
 | `inlineObjects` | `'image'` (fields: `'src'`, `'alt'`, `'title'`)                                                                                                                                                                                                                              |
@@ -245,6 +245,7 @@ Matchers map Markdown concepts to Portable Text types defined in the Schema. Eac
 |            | `em`             | `*italic*`              | `'em'`              |
 |            | `code`           | `` `inline code` ``     | `'code'`            |
 |            | `strikeThrough`  | `~~strikethrough~~`     | `'strike-through'`  |
+|            | `underline`      | `<u>underline</u>`      | `'underline'`       |
 |            | `link`           | `[text](url "title")`   | `'link'`            |
 | `types`    | `code`           | Fenced code blocks      | `'code'`            |
 |            | `horizontalRule` | `---`                   | `'horizontal-rule'` |
@@ -551,7 +552,7 @@ Unknown types render as JSON code blocks by default; unknown styles, list items,
 
 The default type renderers are collision-safe: because the serializer dispatches on the `_type` name alone, `code`, `html`, `image`, `callout`, and `table` fall back to the `unknownType` renderer (a JSON code block) when a value doesn't match the shape their renderer expects (say, your own differently-shaped `code` type); `horizontal-rule` has no shape to check and always renders `---`. `image` also falls back when `src` is a string a Markdown parser would refuse (a `javascript:`/`vbscript:`/`file:` URI, or a `data:` URI outside `png`/`gif`/`jpeg`/`webp`), so the value survives as a `json:object` fence instead of reparsing as literal text. Register your own `types.<name>` renderer to override how any of them serialize, or to handle a same-named type of a different shape.
 
-> **Note:** The `underline` renderer is included for Portable Text that uses it, but there's no standard Markdown syntax for underline, so it renders as HTML.
+> **Note:** There's no standard Markdown syntax for underline, so the `underline` renderer writes HTML `<u>` tags. `markdownToPortableText` reads a bare `<u>`/`</u>` pair back as the `underline` decorator, so underline round-trips.
 
 #### Configuring renderers
 
@@ -728,19 +729,27 @@ portableTextToMarkdown(blocks, {
 
 #### Block spacing
 
-By default, blocks are separated by double newlines (`\n\n`), with special handling for list items (single newline) and consecutive blockquotes. Customize with `blockSpacing`:
+By default, blocks are separated by double newlines (`\n\n`), with special handling for list items (single newline) and consecutive blockquotes. Customize with `blockSpacing`. It replaces the default renderer, and returning `undefined` separates the two blocks with `\n\n`, not with the default spacing. To keep the default spacing for the cases you don't handle, delegate to `DefaultBlockSpacingRenderer`:
 
 ```ts
+import {
+  DefaultBlockSpacingRenderer,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   blockSpacing: ({current, next}) => {
     // Double newline between list items instead of single
-    if (current.listItem && next.listItem) {
+    if (isListItem(current) && isListItem(next)) {
       return '\n\n'
     }
-    // Return undefined to use default spacing
-    return undefined
+    return DefaultBlockSpacingRenderer({current, next})
   },
 })
+
+function isListItem(node: object) {
+  return 'listItem' in node && typeof node.listItem === 'string'
+}
 ```
 
 #### Reporting degradation
@@ -863,7 +872,7 @@ Every `key` and `path` in the report matches the returned value exactly, except 
 
 #### Losses the markdown did not show
 
-Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. Losses on a block the edit deleted are not listed. A non-empty list means saving the result drops content the editor never saw, so refuse or retry:
+Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. A stored block whose `_key` is missing from the returned value has all of its losses listed, whether the edit deleted it or rewrote it so far that it came back with a fresh key; whether the removal was intended is yours to decide. A non-empty list means saving the result drops content the editor never saw, so refuse or retry:
 
 ```ts
 import {

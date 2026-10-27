@@ -834,10 +834,10 @@ function assertReconciliationReportConsistency(
 
 /**
  * Every `hiddenLosses` entry names content the returned value really
- * lacks: on a performed report, the returned block wearing the stored
- * block's `_key` (a deleted block is never listed) has another style,
- * or none of its spans carries the stored span's decorator; on a
- * skipped report, no returned block or span carries it at all.
+ * lacks: on a performed report, no returned block wears the stored
+ * block's `_key`, or the one that does has another style, or none of
+ * its spans carries the stored span's decorator; on a skipped report,
+ * no returned block or span carries it at all.
  * `generateStored` emits no annotation markdown drops and only list
  * kinds markdown expresses, so decorators and styles are the losses
  * to check.
@@ -855,9 +855,7 @@ function assertHiddenLossesMissing(
         ? resolveReconciliationKeyPath(result, [topSegment])
         : result
     if (resultScope === undefined) {
-      throw new Error(
-        `assertHiddenLossesMissing: hidden loss on deleted block ${JSON.stringify(topSegment)}`,
-      )
+      continue
     }
     const resultBlocks = [resultScope].flat() as Array<Record<string, unknown>>
     if (hiddenLoss.type === 'style-fallback') {

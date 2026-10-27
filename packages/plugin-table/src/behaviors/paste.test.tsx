@@ -143,7 +143,7 @@ function pastedCell(
 }
 
 describe('pasting a table fragment into a table', () => {
-  test('distributes over a target rectangle from its top-left', async () => {
+  test('Scenario: a table fragment distributes over a target rectangle from its top-left', async () => {
     const editor = await createEditor()
     const rightColumn = {
       anchor: {path: spanPath('c01'), offset: 0},
@@ -216,7 +216,7 @@ describe('pasting a table fragment into a table', () => {
     })
   })
 
-  test('distributes from a caret in a cell', async () => {
+  test('Scenario: a table fragment distributes from a caret in a cell', async () => {
     const editor = await createEditor()
     const caret = {
       anchor: {path: spanPath('c00'), offset: 1},
@@ -251,7 +251,7 @@ describe('pasting a table fragment into a table', () => {
     })
   })
 
-  test('grows rows when the fragment extends past the bottom', async () => {
+  test('Scenario: a fragment extending past the bottom grows rows', async () => {
     const editor = await createEditor()
     const caret = {
       anchor: {path: spanPath('c10'), offset: 1},
@@ -293,7 +293,7 @@ describe('pasting a table fragment into a table', () => {
     })
   })
 
-  test('grows columns when the fragment extends past the right edge', async () => {
+  test('Scenario: a fragment extending past the right edge grows columns', async () => {
     const editor = await createEditor()
     const caret = {
       anchor: {path: spanPath('c01'), offset: 1},
@@ -341,7 +341,7 @@ describe('pasting a table fragment into a table', () => {
     })
   })
 
-  test('cell content is validated against the schema', async () => {
+  test('Scenario: pasted cell content is validated against the schema', async () => {
     const editor = await createEditor()
     const caret = {
       anchor: {path: spanPath('c00'), offset: 1},
@@ -384,7 +384,7 @@ describe('pasting a table fragment into a table', () => {
     })
   })
 
-  test('a larger target rectangle only provides the anchor', async () => {
+  test('Scenario: a larger target rectangle only provides the anchor', async () => {
     const editor = await createEditor()
     const wholeTable = {
       anchor: {path: spanPath('c00'), offset: 0},

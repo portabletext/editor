@@ -155,8 +155,8 @@ type SyncMatch = {
   name: string
 }
 
-describe('TypeaheadSelectEvent', () => {
-  test('event.keyword contains the extracted keyword, not the full match', async () => {
+describe('Select event', () => {
+  test('Scenario: `event.keyword` on select holds the extracted keyword, not the full match', async () => {
     let receivedKeyword: string | undefined
 
     const testPicker = defineTypeaheadPicker<SyncMatch>({
@@ -218,7 +218,7 @@ describe('TypeaheadSelectEvent', () => {
 })
 
 describe('Error handling in checking complete state', () => {
-  test('error is visible when getMatches fails during complete keyword check', async () => {
+  test('Scenario: an error from `getMatches` during the complete keyword check stays visible', async () => {
     const testError = new Error('Failed to fetch matches')
     let capturedError: Error | undefined
     let capturedState: string | undefined
@@ -286,7 +286,7 @@ describe('Error handling in checking complete state', () => {
 })
 
 describe('Sync mode debouncing', () => {
-  test('delays getMatches calls when debounceMs is configured in sync mode', async () => {
+  test('Scenario: sync mode delays `getMatches` calls when `debounceMs` is configured', async () => {
     let callCount = 0
 
     // Use a large debounce window so that even Firefox's slower

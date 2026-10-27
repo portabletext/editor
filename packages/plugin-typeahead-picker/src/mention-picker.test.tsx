@@ -183,7 +183,7 @@ function createMatchUsers(config: {
 }
 
 describe('Error handling', () => {
-  test('captures error when getMatches rejects', async () => {
+  test('Scenario: a rejecting `getMatches` surfaces its error in the no matches state', async () => {
     const testError = new Error('API unavailable')
     let capturedError: Error | undefined
 
@@ -245,7 +245,7 @@ describe('Error handling', () => {
     })
   })
 
-  test('clears error when returning to idle', async () => {
+  test('Scenario: returning to idle clears the error', async () => {
     const testError = new Error('API unavailable')
     let capturedError: Error | undefined
 
@@ -313,7 +313,7 @@ describe('Error handling', () => {
 })
 
 describe('Race condition handling', () => {
-  test('ignores stale results from slow requests', async () => {
+  test('Scenario: stale results from a slow request are ignored', async () => {
     const requestOrder: Array<string> = []
     const responseOrder: Array<string> = []
 
@@ -396,7 +396,7 @@ describe('Race condition handling', () => {
 })
 
 describe('Debouncing', () => {
-  test('delays getMatches calls when debounce is configured', async () => {
+  test('Scenario: a configured debounce delays `getMatches` calls', async () => {
     let callCount = 0
     const callTimestamps: number[] = []
     const startTime = Date.now()

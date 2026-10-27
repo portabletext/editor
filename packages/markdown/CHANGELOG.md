@@ -1,5 +1,85 @@
 # @portabletext/markdown
 
+## 2.8.0
+
+### Minor Changes
+
+- [#3462](https://github.com/portabletext/editor/pull/3462) [`a5ab030`](https://github.com/portabletext/editor/commit/a5ab0305644a06e259c7e516ffcdf2c40655423d) Thanks [@christianhg](https://github.com/christianhg)! - feat: parse `<u>` as underline in `markdownToPortableText`
+  
+  `markdownToPortableText` now reads a bare `<u>…</u>` pair as the `underline` decorator, so underline written by `portableTextToMarkdown` survives the round trip. Before, the tags were dropped as inline HTML and the text lost its underline, which also meant `applyMarkdownEdit` stripped underline from every block an edit touched:
+  
+  ```ts
+  markdownToPortableText('Read the <u>safety notice</u> before use.')
+  // The `safety notice` span now has `marks: ['underline']`.
+  // Previously it had `marks: []`, with an `inline-html-dropped` degradation.
+  ```
+  
+  The default schema now includes an `underline` decorator, and `marks.underline` lets you map it to a different decorator name. When the schema has no matching decorator, the text stays and an `underline` `decorator-dropped` degradation is reported. The tags are read as underline in both `html.inline` modes. Tags with attributes (`<u class="x">`) and unpaired tags stay inline HTML, handled as before.
+
+### Patch Changes
+
+- [#3454](https://github.com/portabletext/editor/pull/3454) [`3ac8643`](https://github.com/portabletext/editor/commit/3ac8643ba722ea341ef303ae1334c2f8e85928e1) Thanks [@christianhg](https://github.com/christianhg)! - fix: honor a function `block` renderer in `portableTextToMarkdown`
+  
+  The `block` option accepts either a map of renderers by style or a single function for every block. A single function is now used. Previously it was ignored and every block rendered with the default renderers:
+  
+  ```ts
+  portableTextToMarkdown(blocks, {
+    block: ({value, children}) => `[${value.style}] ${children}`,
+  })
+  // Now:        "[h1] Title\n\n[normal] Body"
+  // Previously: "# Title\n\nBody"
+  ```
+
+- [#3454](https://github.com/portabletext/editor/pull/3454) [`f1849b9`](https://github.com/portabletext/editor/commit/f1849b9c64ce0e5b841701b404660ee7c85e6c80) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove the link, not the surrounding bold, when a link closes in `markdownToPortableText`
+  
+  Text that follows a link inside a bold run now stays bold, and the link ends where the Markdown link ends:
+  
+  ```ts
+  markdownToPortableText('**[x](https://example.com) y** z')
+  // Now:        "x" [strong, link], " y" [strong], " z" []
+  // Previously: "x" [strong, link], " y z" [link]
+  ```
+
+- [#3448](https://github.com/portabletext/editor/pull/3448) [`92e7879`](https://github.com/portabletext/editor/commit/92e7879da46b7b4721acff968b9015e5465e499b) Thanks [@christianhg](https://github.com/christianhg)! - fix: report hidden losses on stored blocks missing from the `applyMarkdownEdit` result
+  
+  `applyMarkdownEdit`'s `hiddenLosses` now lists content the markdown could not show (an annotation, decorator, block style, or list-item kind with no renderer) on every stored block whose `_key` is missing from the returned value. Previously those blocks counted as deleted and their losses went unreported. That included a block the edit only rewrote, when it came back with a fresh key, so the hidden content was dropped silently:
+  
+  ```ts
+  const schema = compileSchema(
+    defineSchema({
+      annotations: [{name: 'internalLink', fields: [{name: 'ref', type: 'string'}]}],
+    }),
+  )
+  const stored = [
+    {
+      _type: 'block',
+      _key: 'a',
+      style: 'normal',
+      markDefs: [{_type: 'internalLink', _key: 'm1', ref: 'doc1'}],
+      children: [
+        {_type: 'span', _key: 'a1', text: 'Compare with ', marks: []},
+        {_type: 'span', _key: 'a2', text: "last year's survey", marks: ['m1']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'b',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'b1', text: 'Unchanged end.', marks: []}],
+    },
+  ]
+  applyMarkdownEdit(
+    stored,
+    "See last year's survey for comparison.\n\nNew paragraph.\n\nUnchanged end.",
+    {schema, onReconciliation: (report) => console.log(report.hiddenLosses)},
+  )
+  // Previously logged: []
+  // Now logs the dropped `internalLink` annotation on block `a`
+  ```
+  
+  A plain delete of a block that held such content is now reported too, so decide whether the removal was intended before refusing the write.
+
 ## 2.7.1
 
 ### Patch Changes

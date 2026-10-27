@@ -109,7 +109,7 @@ async function selectLeftColumn() {
 }
 
 describe('rectangular selection copy/cut', () => {
-  test('copying a column selection writes tab-separated text to `text/plain`', async () => {
+  test('Scenario: copying a column selection writes tab-separated text to `text/plain`', async () => {
     const editor = await selectLeftColumn()
     const dataTransfer = new DataTransfer()
 
@@ -126,7 +126,7 @@ describe('rectangular selection copy/cut', () => {
     })
   })
 
-  test('copying the whole table writes rows of tab-joined cells to `text/plain`', async () => {
+  test('Scenario: copying the whole table writes rows of tab-joined cells to `text/plain`', async () => {
     const wholeTableSelection = {
       anchor: {path: spanPath('c00'), offset: 0},
       focus: {path: spanPath('c11'), offset: 1},
@@ -155,7 +155,7 @@ describe('rectangular selection copy/cut', () => {
     })
   })
 
-  test('copying a column selection serializes only the column', async () => {
+  test('Scenario: copying a column selection serializes only the column', async () => {
     const editor = await selectLeftColumn()
     const dataTransfer = new DataTransfer()
 
@@ -185,7 +185,7 @@ describe('rectangular selection copy/cut', () => {
     })
   })
 
-  test('slicing keeps header rows positional', async () => {
+  test('Scenario: copying a slice of the table keeps header rows positional', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -285,7 +285,7 @@ describe('rectangular selection copy/cut', () => {
     })
   })
 
-  test('cutting a column selection serializes the column and clears it', async () => {
+  test('Scenario: cutting a column selection serializes the column and clears it', async () => {
     const editor = await selectLeftColumn()
     const dataTransfer = new DataTransfer()
 
