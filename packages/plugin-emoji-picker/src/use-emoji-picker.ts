@@ -15,7 +15,7 @@ export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
    * list of matches.
    *
    * @example
-   * ```tsx
+   * ```tsx nocheck
    * if (keyword.length < 1) {
    *   return null
    * }
@@ -36,7 +36,7 @@ export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
    * Can be used to highlight the selected match in the list.
    *
    * @example
-   * ```tsx
+   * ```tsx nocheck
    * <EmojiListItem
    *   key={match.key}
    *   match={match}
@@ -53,7 +53,7 @@ export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
    * `onMouseEnter`.
    *
    * @example
-   * ```tsx
+   * ```tsx nocheck
    * <EmojiListItem
    *   key={match.key}
    *   match={match}
@@ -71,7 +71,7 @@ export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
    *
    *
    * @example
-   * ```tsx
+   * ```tsx nocheck
    * <EmojiListItem
    *   key={match.key}
    *   match={match}
@@ -91,7 +91,7 @@ export type EmojiPicker<TEmojiMatch extends BaseEmojiMatch = BaseEmojiMatch> = {
    * by clicking a button.
    *
    * @example
-   * ```tsx
+   * ```tsx nocheck
    * {matches.length === 0 ? (
    *   <Button onPress={onDismiss}>Dismiss</Button>
    * ) : <EmojiListBox {...props} />}
@@ -124,6 +124,8 @@ export type EmojiPickerProps<
  * @example
  *
  * ```tsx
+ * import {createMatchEmojis, useEmojiPicker} from '@portabletext/plugin-emoji-picker'
+ *
  * const matchEmojis = createMatchEmojis({emojis: {
  *   '😂': ['joy'],
  *   '😹': ['joy_cat'],

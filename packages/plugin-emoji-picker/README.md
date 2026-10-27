@@ -65,6 +65,7 @@ function EmojiPicker() {
 **Tip:** For a bigger emoji library, install [`emojilib`](https://www.npmjs.com/package/emojilib) and use it directly:
 
 ```tsx
+import {createMatchEmojis} from '@portabletext/plugin-emoji-picker'
 import emojilib from 'emojilib'
 
 const matchEmojis = createMatchEmojis({
