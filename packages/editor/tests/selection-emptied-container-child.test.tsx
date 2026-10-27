@@ -228,7 +228,7 @@ async function selectAcrossCellText() {
       </>
     ),
   })
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await expect.element(locator).toBeInTheDocument()
   editor.send({
     type: 'select',
     at: {

@@ -49,7 +49,7 @@ describe('degenerate collapsed DOM carets', () => {
       initialValue,
       children: <NodePlugin nodes={containers} />,
     })
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     const editable = document.querySelector('[contenteditable="true"]')
     const container = editable?.querySelector('[data-pt-block="container"]')
@@ -91,7 +91,7 @@ describe('degenerate collapsed DOM carets', () => {
       initialValue,
       children: <NodePlugin nodes={containers} />,
     })
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     const editable = document.querySelector('[contenteditable="true"]')
     const container = editable?.querySelector('[data-pt-block="container"]')
