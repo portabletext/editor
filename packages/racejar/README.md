@@ -191,7 +191,7 @@ export const stepDefinitions = [
     render(<Editor />)
     const locator = page.getByTestId('<editor test ID>')
     context.locator = locator
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
   }),
   Given('a global keymap', (context: Context) => {
     context.keyMap = new Map()
