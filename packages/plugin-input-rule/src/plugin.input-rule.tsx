@@ -400,7 +400,7 @@ const selectionListenerCallback: CallbackLogicFunction<
   return () => subscription.unsubscribe()
 }
 
-const inputRuleSetup = setup({
+const inputRuleSetup = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor
@@ -415,10 +415,18 @@ const inputRuleSetup = setup({
     events: {} as InputRuleMachineEvent,
   },
   actors: {
-    'delete.backward listener': fromCallback(deleteBackwardListenerCallback),
-    'input rule listener': fromCallback(inputRuleListenerCallback),
-    'operation listener': fromCallback(operationListenerCallback),
-    'selection listener': fromCallback(selectionListenerCallback),
+    'delete.backward listener': /* @__PURE__ */ fromCallback(
+      deleteBackwardListenerCallback,
+    ),
+    'input rule listener': /* @__PURE__ */ fromCallback(
+      inputRuleListenerCallback,
+    ),
+    'operation listener': /* @__PURE__ */ fromCallback(
+      operationListenerCallback,
+    ),
+    'selection listener': /* @__PURE__ */ fromCallback(
+      selectionListenerCallback,
+    ),
   },
   guards: {
     'selection changed': ({context, event}) => {
@@ -463,7 +471,7 @@ const inputRuleSetup = setup({
   },
 })
 
-const assignEndState = inputRuleSetup.assign({
+const assignEndState = /* @__PURE__ */ inputRuleSetup.assign({
   endOffsets: ({context, event}) =>
     event.type === 'input rule raised' ? event.endOffsets : context.endOffsets,
   endSelection: ({context, event}) =>
@@ -472,7 +480,7 @@ const assignEndState = inputRuleSetup.assign({
       : context.endSelection,
 })
 
-const inputRuleMachine = inputRuleSetup.createMachine({
+const inputRuleMachine = /* @__PURE__ */ inputRuleSetup.createMachine({
   id: 'input rule',
   context: ({input}) => ({
     editor: input.editor,

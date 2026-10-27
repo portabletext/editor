@@ -82,6 +82,7 @@ export type InputRule<TGuardResponse = true> = {
 /**
  * @public
  */
+/*#__NO_SIDE_EFFECTS__*/
 export function defineInputRule<TGuardResponse = true>(
   config: InputRule<TGuardResponse>,
 ): InputRule<TGuardResponse> {
