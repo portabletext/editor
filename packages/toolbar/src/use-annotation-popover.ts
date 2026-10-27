@@ -30,7 +30,7 @@ type ActiveListenerEvent =
       type: 'set inactive'
     }
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarAnnotationSchemaType>},
   ActiveListenerEvent
@@ -82,7 +82,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const annotationPopoverMachine = setup({
+const annotationPopoverMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor
@@ -98,9 +98,9 @@ const annotationPopoverMachine = setup({
       | AnnotationPopoverEvent,
   },
   actions: {
-    reset: assign({
+    reset: /* @__PURE__ */ assign({
       annotations: [],
-      elementRef: React.createRef<Element>(),
+      elementRef: /* @__PURE__ */ React.createRef<Element>(),
     }),
     remove: ({context, event}) => {
       if (event.type !== 'remove') {
@@ -140,7 +140,7 @@ const annotationPopoverMachine = setup({
           entry: ['reset'],
           on: {
             'set active': {
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 annotations: ({event}) => event.annotations,
                 elementRef: ({event}) => event.elementRef,
               }),
@@ -180,7 +180,7 @@ const annotationPopoverMachine = setup({
           on: {
             'set active': {
               target: 'active',
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 annotations: ({event}) => event.annotations,
                 elementRef: ({event}) => event.elementRef,
               }),
@@ -199,7 +199,7 @@ const annotationPopoverMachine = setup({
               target: '#annotation popover.disabled.active',
             },
             'set active': {
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 annotations: ({event}) => event.annotations,
                 elementRef: ({event}) => event.elementRef,
               }),

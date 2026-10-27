@@ -5,7 +5,7 @@ import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarListSchemaType} from './use-toolbar-schema'
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ListSchemaType},
   {type: 'set active'} | {type: 'set inactive'}
@@ -36,7 +36,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const listButtonMachine = setup({
+const listButtonMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor

@@ -3,7 +3,7 @@ import {fromCallback, type AnyEventObject} from 'xstate'
 
 export type DisableListenerEvent = {type: 'enable'} | {type: 'disable'}
 
-export const disableListener = fromCallback<
+export const disableListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor},
   DisableListenerEvent

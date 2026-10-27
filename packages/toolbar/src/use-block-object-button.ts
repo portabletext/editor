@@ -9,7 +9,7 @@ import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarBlockObjectSchemaType} from './use-toolbar-schema'
 
-const keyboardShortcutListener = fromCallback<
+const keyboardShortcutListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ToolbarBlockObjectSchemaType},
   BlockObjectButtonEvent
@@ -35,7 +35,7 @@ const keyboardShortcutListener = fromCallback<
   })
 })
 
-const blockObjectButtonMachine = setup({
+const blockObjectButtonMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor

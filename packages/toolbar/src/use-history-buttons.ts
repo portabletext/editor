@@ -3,7 +3,7 @@ import {useActor} from '@xstate/react'
 import {setup} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 
-const historyButtonsMachine = setup({
+const historyButtonsMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor

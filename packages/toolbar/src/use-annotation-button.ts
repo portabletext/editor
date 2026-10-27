@@ -7,7 +7,7 @@ import {disableListener, type DisableListenerEvent} from './disable-listener'
 import {useMutuallyExclusiveAnnotation} from './use-mutually-exclusive-annotation'
 import type {ToolbarAnnotationSchemaType} from './use-toolbar-schema'
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
   {type: 'set active'} | {type: 'set inactive'}
@@ -38,7 +38,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const keyboardShortcutRemove = fromCallback<
+const keyboardShortcutRemove = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ToolbarAnnotationSchemaType}
 >(({input}) => {
@@ -69,7 +69,7 @@ const keyboardShortcutRemove = fromCallback<
   })
 })
 
-const keyboardShortcutShowInsertDialog = fromCallback<
+const keyboardShortcutShowInsertDialog = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ToolbarAnnotationSchemaType},
   {type: 'open dialog'}
@@ -95,7 +95,7 @@ const keyboardShortcutShowInsertDialog = fromCallback<
   })
 })
 
-const annotationButtonMachine = setup({
+const annotationButtonMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor

@@ -11,7 +11,7 @@ import {useDecoratorKeyboardShortcut} from './use-decorator-keyboard-shortcut'
 import {useMutuallyExclusiveDecorator} from './use-mutually-exclusive-decorator'
 import type {ToolbarDecoratorSchemaType} from './use-toolbar-schema'
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: DecoratorSchemaType},
   {type: 'set active'} | {type: 'set inactive'}
@@ -42,7 +42,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const decoratorButtonMachine = setup({
+const decoratorButtonMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor

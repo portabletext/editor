@@ -5,7 +5,7 @@ import {fromCallback, setup, type AnyEventObject} from 'xstate'
 import {disableListener, type DisableListenerEvent} from './disable-listener'
 import type {ToolbarDecoratorSchemaType} from './use-toolbar-schema'
 
-const keyboardShortcutListener = fromCallback<
+const keyboardShortcutListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaType: ToolbarDecoratorSchemaType}
 >(({input}) => {
@@ -31,7 +31,7 @@ const keyboardShortcutListener = fromCallback<
   })
 })
 
-const decoratorKeyboardShortcutMachine = setup({
+const decoratorKeyboardShortcutMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor

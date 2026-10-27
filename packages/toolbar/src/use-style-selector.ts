@@ -15,7 +15,7 @@ type ActiveStyleListenerEvent = {
   style: StyleSchemaType['name'] | undefined
 }
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor},
   ActiveStyleListenerEvent
@@ -36,7 +36,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const styleSelectorMachine = setup({
+const styleSelectorMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor
@@ -77,7 +77,7 @@ const styleSelectorMachine = setup({
   on: {
     'set active style': {
       guard: ({context, event}) => context.activeStyle !== event.style,
-      actions: assign({
+      actions: /* @__PURE__ */ assign({
         activeStyle: ({event}) => event.style,
       }),
     },

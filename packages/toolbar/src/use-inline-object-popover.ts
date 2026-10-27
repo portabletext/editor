@@ -29,7 +29,7 @@ type ActiveListenerEvent =
       type: 'set inactive'
     }
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarInlineObjectSchemaType>},
   ActiveListenerEvent
@@ -87,7 +87,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const inlineObjectPopoverMachine = setup({
+const inlineObjectPopoverMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor
@@ -103,9 +103,9 @@ const inlineObjectPopoverMachine = setup({
       | InlineObjectPopoverEvent,
   },
   actions: {
-    reset: assign({
+    reset: /* @__PURE__ */ assign({
       inlineObjects: [],
-      elementRef: React.createRef<Element>(),
+      elementRef: /* @__PURE__ */ React.createRef<Element>(),
     }),
   },
   actors: {
@@ -139,7 +139,7 @@ const inlineObjectPopoverMachine = setup({
           entry: ['reset'],
           on: {
             'set active': {
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 inlineObjects: ({event}) => event.inlineObjects,
                 elementRef: ({event}) => event.elementRef,
               }),
@@ -170,7 +170,7 @@ const inlineObjectPopoverMachine = setup({
           on: {
             'set active': {
               target: 'active',
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 inlineObjects: ({event}) => event.inlineObjects,
                 elementRef: ({event}) => event.elementRef,
               }),
@@ -189,7 +189,7 @@ const inlineObjectPopoverMachine = setup({
               target: '#inline object popover.disabled.active',
             },
             'set active': {
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 inlineObjects: ({event}) => event.inlineObjects,
                 elementRef: ({event}) => event.elementRef,
               }),

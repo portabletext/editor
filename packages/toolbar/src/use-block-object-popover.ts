@@ -29,7 +29,7 @@ type ActiveListenerEvent =
       type: 'set inactive'
     }
 
-const activeListener = fromCallback<
+const activeListener = /* @__PURE__ */ fromCallback<
   AnyEventObject,
   {editor: Editor; schemaTypes: ReadonlyArray<ToolbarBlockObjectSchemaType>},
   ActiveListenerEvent
@@ -87,7 +87,7 @@ const activeListener = fromCallback<
   ).unsubscribe
 })
 
-const blockObjectPopoverMachine = setup({
+const blockObjectPopoverMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as {
       editor: Editor
@@ -103,9 +103,9 @@ const blockObjectPopoverMachine = setup({
       | BlockObjectPopoverEvent,
   },
   actions: {
-    reset: assign({
+    reset: /* @__PURE__ */ assign({
       blockObjects: [],
-      elementRef: React.createRef<Element>(),
+      elementRef: /* @__PURE__ */ React.createRef<Element>(),
     }),
   },
   actors: {
@@ -139,7 +139,7 @@ const blockObjectPopoverMachine = setup({
           entry: ['reset'],
           on: {
             'set active': {
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 blockObjects: ({event}) => event.blockObjects,
                 elementRef: ({event}) => event.elementRef,
               }),
@@ -170,7 +170,7 @@ const blockObjectPopoverMachine = setup({
           on: {
             'set active': {
               target: 'active',
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 blockObjects: ({event}) => event.blockObjects,
                 elementRef: ({event}) => event.elementRef,
               }),
@@ -189,7 +189,7 @@ const blockObjectPopoverMachine = setup({
               target: '#block object popover.disabled.active',
             },
             'set active': {
-              actions: assign({
+              actions: /* @__PURE__ */ assign({
                 blockObjects: ({event}) => event.blockObjects,
                 elementRef: ({event}) => event.elementRef,
               }),
