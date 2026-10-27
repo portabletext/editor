@@ -81,19 +81,19 @@ function buildCompletePattern<TMatch extends object>(
   )
 }
 
-const arrowUpShortcut = createKeyboardShortcut({
+const arrowUpShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'ArrowUp'}],
 })
-const arrowDownShortcut = createKeyboardShortcut({
+const arrowDownShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'ArrowDown'}],
 })
-const enterShortcut = createKeyboardShortcut({
+const enterShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'Enter'}],
 })
-const tabShortcut = createKeyboardShortcut({
+const tabShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'Tab'}],
 })
-const escapeShortcut = createKeyboardShortcut({
+const escapeShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'Escape'}],
 })
 
@@ -610,6 +610,7 @@ function createTriggerGuard<TMatch extends object>(
   }
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const triggerListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
@@ -661,6 +662,7 @@ const triggerListenerCallback = <
   }
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const escapeListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   {type: 'context changed'; context: TypeaheadPickerMachineContext<TMatch>},
   TypeaheadPickerMachineEvent<TMatch>,
@@ -719,6 +721,7 @@ const escapeListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   }
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const arrowListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   AnyEventObject,
   TypeaheadPickerMachineEvent<TMatch>,
@@ -762,6 +765,7 @@ const arrowListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   }
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const selectionListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
@@ -783,6 +787,7 @@ type DismissEvent = {
   pickerId: string
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const dismissListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
@@ -843,6 +848,7 @@ const dismissListenerCallback = <
   }
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   {type: 'context changed'; context: TypeaheadPickerMachineContext<TMatch>},
   TypeaheadPickerMachineEvent<TMatch>,
@@ -958,6 +964,7 @@ const submitListenerCallback = <TMatch extends object>(): CallbackLogicFunction<
   }
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const textInsertionListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
@@ -1015,6 +1022,7 @@ type InsertMatchEvent<TMatch extends object> = {
   pickerId: string
 }
 
+/*#__NO_SIDE_EFFECTS__*/
 const selectMatchListenerCallback = <
   TMatch extends object,
 >(): CallbackLogicFunction<
@@ -1072,7 +1080,7 @@ const selectMatchListenerCallback = <
   }
 }
 
-export const typeaheadPickerMachine = setup({
+export const typeaheadPickerMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as TypeaheadPickerMachineContext<object>,
     input: {} as {
@@ -1085,19 +1093,31 @@ export const typeaheadPickerMachine = setup({
     DEBOUNCE: ({context}) => context.definition.debounceMs ?? 0,
   },
   actors: {
-    'trigger listener': fromCallback(triggerListenerCallback<object>()),
-    'escape listener': fromCallback(escapeListenerCallback<object>()),
-    'arrow listener': fromCallback(arrowListenerCallback<object>()),
-    'selection listener': fromCallback(selectionListenerCallback<object>()),
-    'submit listener': fromCallback(submitListenerCallback<object>()),
-    'text insertion listener': fromCallback(
+    'trigger listener': /* @__PURE__ */ fromCallback(
+      triggerListenerCallback<object>(),
+    ),
+    'escape listener': /* @__PURE__ */ fromCallback(
+      escapeListenerCallback<object>(),
+    ),
+    'arrow listener': /* @__PURE__ */ fromCallback(
+      arrowListenerCallback<object>(),
+    ),
+    'selection listener': /* @__PURE__ */ fromCallback(
+      selectionListenerCallback<object>(),
+    ),
+    'submit listener': /* @__PURE__ */ fromCallback(
+      submitListenerCallback<object>(),
+    ),
+    'text insertion listener': /* @__PURE__ */ fromCallback(
       textInsertionListenerCallback<object>(),
     ),
-    'select match listener': fromCallback(
+    'select match listener': /* @__PURE__ */ fromCallback(
       selectMatchListenerCallback<object>(),
     ),
-    'dismiss listener': fromCallback(dismissListenerCallback<object>()),
-    'get matches': fromPromise(
+    'dismiss listener': /* @__PURE__ */ fromCallback(
+      dismissListenerCallback<object>(),
+    ),
+    'get matches': /* @__PURE__ */ fromPromise(
       async ({
         input,
       }: {
@@ -1113,7 +1133,7 @@ export const typeaheadPickerMachine = setup({
     ),
   },
   actions: {
-    'handle trigger found': assign(({context, event}) => {
+    'handle trigger found': /* @__PURE__ */ assign(({context, event}) => {
       if (
         event.type !== 'custom.typeahead trigger found' &&
         event.type !== 'custom.typeahead keyword found'
@@ -1152,7 +1172,7 @@ export const typeaheadPickerMachine = setup({
         selectedIndex: 0,
       }
     }),
-    'handle selection changed': assign(({context}) => {
+    'handle selection changed': /* @__PURE__ */ assign(({context}) => {
       if (!context.focusSpan) {
         return {focusSpan: undefined}
       }
@@ -1263,7 +1283,7 @@ export const typeaheadPickerMachine = setup({
         isLoading: false,
       }
     }),
-    'handle async load complete': assign(({context, event}) => {
+    'handle async load complete': /* @__PURE__ */ assign(({context, event}) => {
       const output = (
         event as unknown as {
           output: {keyword: string; matches: ReadonlyArray<object>}
@@ -1279,7 +1299,7 @@ export const typeaheadPickerMachine = setup({
         isLoading: context.keyword !== context.requestedKeyword,
       }
     }),
-    'reset': assign({
+    'reset': /* @__PURE__ */ assign({
       patternText: '',
       keyword: '',
       matches: [],
@@ -1289,7 +1309,7 @@ export const typeaheadPickerMachine = setup({
       focusSpan: undefined,
       error: undefined,
     }),
-    'navigate': assign(({context, event}) => {
+    'navigate': /* @__PURE__ */ assign(({context, event}) => {
       if (context.matches.length === 0) {
         return {selectedIndex: 0}
       }
@@ -1331,23 +1351,23 @@ export const typeaheadPickerMachine = setup({
         pickerId: context.definition._id,
       })
     },
-    'update submit listener context': sendTo(
+    'update submit listener context': /* @__PURE__ */ sendTo(
       'submit listener',
       ({context}) => ({type: 'context changed', context}),
     ),
-    'update text insertion listener context': sendTo(
+    'update text insertion listener context': /* @__PURE__ */ sendTo(
       'text insertion listener',
       ({context}) => ({type: 'context changed', context}),
     ),
-    'update escape listener context': sendTo(
+    'update escape listener context': /* @__PURE__ */ sendTo(
       'escape listener',
       ({context}) => ({type: 'context changed', context}),
     ),
-    'update request dismiss listener context': sendTo(
+    'update request dismiss listener context': /* @__PURE__ */ sendTo(
       'dismiss listener',
       ({context}) => ({type: 'context changed', context}),
     ),
-    'handle error': assign({
+    'handle error': /* @__PURE__ */ assign({
       isLoading: false,
       error: ({event}) => (event as {error: Error}).error,
     }),
@@ -1483,13 +1503,19 @@ export const typeaheadPickerMachine = setup({
               guard: ({event}) => hasAtLeastOneExactMatch(event.output.matches),
               target: 'idle',
               actions: [
-                assign({matches: ({event}) => event.output.matches}),
+                /* @__PURE__ */ assign({
+                  matches: ({event}) => event.output.matches,
+                }),
                 {type: 'select match', params: {exact: true}},
               ],
             },
             {
               target: 'active',
-              actions: [assign({matches: ({event}) => event.output.matches})],
+              actions: [
+                /* @__PURE__ */ assign({
+                  matches: ({event}) => event.output.matches,
+                }),
+              ],
             },
           ],
           onError: {
@@ -1577,7 +1603,11 @@ export const typeaheadPickerMachine = setup({
           ],
         },
         'loading': {
-          entry: [assign({requestedKeyword: ({context}) => context.keyword})],
+          entry: [
+            /* @__PURE__ */ assign({
+              requestedKeyword: ({context}) => context.keyword,
+            }),
+          ],
           initial: 'debouncing',
           states: {
             debouncing: {
@@ -1588,7 +1618,9 @@ export const typeaheadPickerMachine = setup({
                   target: 'debouncing',
                   reenter: true,
                   actions: [
-                    assign({requestedKeyword: ({context}) => context.keyword}),
+                    /* @__PURE__ */ assign({
+                      requestedKeyword: ({context}) => context.keyword,
+                    }),
                   ],
                 },
               ],
@@ -1606,7 +1638,7 @@ export const typeaheadPickerMachine = setup({
                 onDone: {
                   target: '#typeahead picker.active.evaluating',
                   actions: [
-                    assign(({context, event}) => {
+                    /* @__PURE__ */ assign(({context, event}) => {
                       if (event.output.keyword !== context.keyword) {
                         return {
                           isLoading:
@@ -1630,7 +1662,7 @@ export const typeaheadPickerMachine = setup({
           },
         },
         'no matches': {
-          entry: [assign({selectedIndex: 0})],
+          entry: [/* @__PURE__ */ assign({selectedIndex: 0})],
           always: [
             {
               guard: 'has matches',
@@ -1644,7 +1676,7 @@ export const typeaheadPickerMachine = setup({
             },
             loading: {
               entry: [
-                assign({
+                /* @__PURE__ */ assign({
                   requestedKeyword: ({context}) => context.keyword,
                 }),
               ],
@@ -1658,7 +1690,7 @@ export const typeaheadPickerMachine = setup({
                       target: 'debouncing',
                       reenter: true,
                       actions: [
-                        assign({
+                        /* @__PURE__ */ assign({
                           requestedKeyword: ({context}) => context.keyword,
                         }),
                       ],
@@ -1738,7 +1770,7 @@ export const typeaheadPickerMachine = setup({
             },
             loading: {
               entry: [
-                assign({
+                /* @__PURE__ */ assign({
                   requestedKeyword: ({context}) => context.keyword,
                 }),
               ],
@@ -1752,7 +1784,7 @@ export const typeaheadPickerMachine = setup({
                       target: 'debouncing',
                       reenter: true,
                       actions: [
-                        assign({
+                        /* @__PURE__ */ assign({
                           requestedKeyword: ({context}) => context.keyword,
                         }),
                       ],
