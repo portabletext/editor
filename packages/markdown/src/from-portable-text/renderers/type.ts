@@ -1,7 +1,6 @@
 import {isTypedObject} from '@portabletext/schema'
 import {isPortableTextBlock} from '@portabletext/toolkit'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
-import markdownit from 'markdown-it'
 import {
   escapeImageAndLinkText,
   escapeImageAndLinkTitle,
@@ -9,6 +8,7 @@ import {
 } from '../../escape'
 import {markListItemFirstBlock} from '../list-item-first-block'
 import type {PortableTextTypeRenderer} from '../types'
+import {validateLink} from '../validate-link'
 import {wrapInCodeSpan} from './marks'
 
 /**
@@ -83,7 +83,9 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
   alt: string | undefined
   title: string | undefined
 }> = (options) => {
-  if (!isImageShaped(options.value) || !linkValidator(options.value.src)) {
+  if (!isImageShaped(options.value) || !validateLink(options.value.src)) {
+    // A `src` the parse side rejects would reparse as literal text instead
+    // of an image, so it is guarded the same way a malformed shape is
     return DefaultUnknownTypeRenderer(options)
   }
   const alt = escapeImageAndLinkText(options.value.alt ?? '')
@@ -92,16 +94,6 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
     : ''
   return `![${alt}](${options.value.src}${title})`
 }
-
-// The markdown-it instance the parse side builds
-// (`to-portable-text/markdown-to-portable-text.ts`) never overrides
-// `validateLink`, so this default instance's validator is the one that
-// will run on reparse. It rejects `javascript:`/`vbscript:`/`file:` and
-// all `data:` URIs except png/gif/jpeg/webp; a `src` it rejects would
-// reparse as literal text instead of an image, so such a `src` is
-// guarded here the same way a malformed image shape is.
-const md = new markdownit()
-const linkValidator = (url: string) => md.validateLink(url)
 
 function isImageShaped(value: unknown): value is {
   src: string
