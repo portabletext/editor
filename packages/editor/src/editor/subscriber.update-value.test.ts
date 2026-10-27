@@ -33,7 +33,7 @@ function applyInvalidation(
   return groups
 }
 
-describe('invalidateVerifiedGroups', () => {
+describe(invalidateVerifiedGroups.name, () => {
   test('drops the group an insert joins, keeps unrelated groups', () => {
     const groups = withGroups(rootGroupId, aChildrenGroupId, bChildrenGroupId)
     const operation: Invalidatable = {

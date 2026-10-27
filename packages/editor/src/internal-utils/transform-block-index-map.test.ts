@@ -104,7 +104,7 @@ const tableContainers = resolveContainers(tableSchema, [
   }),
 ])
 
-describe('transformBlockIndexMap', () => {
+describe(transformBlockIndexMap.name, () => {
   test('insert root block at end', () => {
     const before: ReadonlyArray<PortableTextBlock> = []
     const after = [

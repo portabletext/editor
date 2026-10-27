@@ -763,7 +763,7 @@ describe(getNodes.name, () => {
     })
   })
 
-  describe('getNodeDescendants', () => {
+  describe(getNodeDescendants.name, () => {
     test('container with value field includes field name in paths', () => {
       const accordionSpan = {_key: 's1', _type: 'span', text: 'details'}
       const accordionBlock = {
