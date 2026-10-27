@@ -92,7 +92,7 @@ const insertedRow = {
 }
 
 describe('custom.insert.row', () => {
-  test('inserts a row after', async () => {
+  test('Scenario: a row inserted after a row lands below it', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -123,7 +123,7 @@ describe('custom.insert.row', () => {
     })
   })
 
-  test('inserts a row before', async () => {
+  test('Scenario: a row inserted before a row lands above it', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -154,7 +154,7 @@ describe('custom.insert.row', () => {
     })
   })
 
-  test('finds the closest row when `at` points to a cell (after)', async () => {
+  test('Scenario: a row inserted after a cell lands below the closest row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -185,7 +185,7 @@ describe('custom.insert.row', () => {
     })
   })
 
-  test('finds the closest row when `at` points to a cell (before)', async () => {
+  test('Scenario: a row inserted before a cell lands above the closest row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -216,7 +216,7 @@ describe('custom.insert.row', () => {
     })
   })
 
-  test('inserts a row at the end when `at` points to the table', async () => {
+  test('Scenario: a row inserted after the table lands at the end', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -247,7 +247,7 @@ describe('custom.insert.row', () => {
     })
   })
 
-  test('inserts a row at the start when `at` points to the table', async () => {
+  test('Scenario: a row inserted before the table lands at the start', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -384,7 +384,7 @@ const insertedCellInR1 = {
 }
 
 describe('custom.insert.column', () => {
-  test('inserts a column after when `at` points to a cell', async () => {
+  test('Scenario: a column inserted after a cell lands to its right', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -425,7 +425,7 @@ describe('custom.insert.column', () => {
     })
   })
 
-  test('inserts a column before when `at` points to a cell', async () => {
+  test('Scenario: a column inserted before a cell lands to its left', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -466,7 +466,7 @@ describe('custom.insert.column', () => {
     })
   })
 
-  test('inserts a column at the end when `at` points to the table', async () => {
+  test('Scenario: a column inserted after the table lands at the end', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -507,7 +507,7 @@ describe('custom.insert.column', () => {
     })
   })
 
-  test('inserts a column at the start when `at` points to the table', async () => {
+  test('Scenario: a column inserted before the table lands at the start', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,

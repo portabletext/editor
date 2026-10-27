@@ -230,7 +230,7 @@ const threeRowValue = [
 ]
 
 describe('custom.move.row', () => {
-  test('moves first row to last position', async () => {
+  test('Scenario: moving the first row to the last position reorders the rows', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -261,7 +261,7 @@ describe('custom.move.row', () => {
     })
   })
 
-  test('moves last row to first position', async () => {
+  test('Scenario: moving the last row to the first position reorders the rows', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -292,7 +292,7 @@ describe('custom.move.row', () => {
     })
   })
 
-  test('moves middle row down', async () => {
+  test('Scenario: moving the middle row down reorders the rows', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -323,7 +323,7 @@ describe('custom.move.row', () => {
     })
   })
 
-  test('moves middle row up', async () => {
+  test('Scenario: moving the middle row up reorders the rows', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -354,7 +354,7 @@ describe('custom.move.row', () => {
     })
   })
 
-  test('is a no-op when at and to point to the same row', async () => {
+  test('Scenario: moving a row onto itself leaves the value unchanged', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -371,7 +371,7 @@ describe('custom.move.row', () => {
     expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
-  test('finds closest row when at points to a cell', async () => {
+  test('Scenario: an `at` pointing to a cell moves the closest row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -402,7 +402,7 @@ describe('custom.move.row', () => {
     })
   })
 
-  test('finds closest row when to points to a cell', async () => {
+  test('Scenario: a `to` pointing to a cell moves the row to the closest row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -435,7 +435,7 @@ describe('custom.move.row', () => {
 })
 
 describe('custom.move.column', () => {
-  test('moves first column to last position', async () => {
+  test('Scenario: moving the first column to the last position reorders the cells', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -469,7 +469,7 @@ describe('custom.move.column', () => {
     })
   })
 
-  test('moves last column to first position', async () => {
+  test('Scenario: moving the last column to the first position reorders the cells', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -503,7 +503,7 @@ describe('custom.move.column', () => {
     })
   })
 
-  test('is a no-op when at and to point to the same column', async () => {
+  test('Scenario: moving a column onto itself leaves the value unchanged', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -520,7 +520,7 @@ describe('custom.move.column', () => {
     expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
-  test('resolves column from cell paths in different rows', async () => {
+  test('Scenario: cell paths in different rows move the columns they belong to', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -554,7 +554,7 @@ describe('custom.move.column', () => {
     })
   })
 
-  test('finds closest cell when at points deeper', async () => {
+  test('Scenario: an `at` pointing inside a cell moves the closest column', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -615,7 +615,7 @@ function pointInSpan(rowKey: string, colKey: string) {
 }
 
 describe('custom.move.row — selection recovery', () => {
-  test('cursor inside the moved row follows it to the new position', async () => {
+  test('Scenario: a cursor inside the moved row follows it to the new position', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -649,7 +649,7 @@ describe('custom.move.row — selection recovery', () => {
     })
   })
 
-  test('cursor outside the moved row is preserved', async () => {
+  test('Scenario: a cursor outside the moved row is preserved', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -685,7 +685,7 @@ describe('custom.move.row — selection recovery', () => {
 })
 
 describe('custom.move.column — selection recovery', () => {
-  test('cursor inside the moved column follows it to the new position', async () => {
+  test('Scenario: a cursor inside the moved column follows it to the new position', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
