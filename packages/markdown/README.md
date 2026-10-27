@@ -58,7 +58,7 @@ const markdown = portableTextToMarkdown([
 
 **Edit through Markdown without losing keys**
 
-```ts
+```ts nocheck
 import {applyMarkdownEdit, portableTextToMarkdown} from '@portabletext/markdown'
 
 const markdown = portableTextToMarkdown(stored)
@@ -206,7 +206,8 @@ The default schema includes the following definitions:
 
 To use a custom Schema, import `compileSchema` and `defineSchema` from `@portabletext/schema`:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
 markdownToPortableText(markdown, {
@@ -220,7 +221,8 @@ markdownToPortableText(markdown, {
 
 To use a Sanity schema, use `@portabletext/sanity-bridge` to convert it to a Portable Text Schema first:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
 import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
 
 // Convert a Sanity block array schema to a Portable Text schema
@@ -293,7 +295,10 @@ You can provide custom matchers to change how Markdown maps to your schema.
 
 **Custom heading style:** If your schema uses `'heading 1'` instead of `'h1'`:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
 markdownToPortableText(markdown, {
   schema: compileSchema(
     defineSchema({
@@ -314,7 +319,9 @@ markdownToPortableText(markdown, {
 
 **Table matcher:** GFM pipe tables convert by default (see [Default behavior](#default-behavior)). Provide your own matcher to map onto a differently-shaped `table` type:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+
 markdownToPortableText(markdown, {
   types: {
     table: ({context, value}) => {
@@ -336,7 +343,9 @@ markdownToPortableText(markdown, {
 
 **List matcher:** By default, lists are emitted as flat text blocks with `listItem` and `level` fields, and adjacent blocks form a list at render time. If your schema models lists as a structural block-object instead (a `list` type with an `items` array holding `list-item` objects, each with a `content` array), provide a `types.list` matcher to opt into that shape:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+
 markdownToPortableText(markdown, {
   schema: schemaWithList,
   types: {
@@ -357,6 +366,9 @@ Without `types.list`, the existing flat-block path runs unchanged.
 **GFM task lists** (`- [ ]` / `- [x]`): Task lists are recognized when the schema declares a `task` list item; the default schema does, so task lists parse zero-config. Without a `task` definition (a custom schema that omits it), the checkbox markers are stripped from the text and the items render as their surrounding list type (bullet or number). With a `task` definition, items carrying a checkbox become text blocks with `listItem: 'task'` and a `checked: boolean` field; items without a checkbox keep their surrounding list type.
 
 ```ts
+import {markdownToPortableText} from '@portabletext/markdown'
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
 markdownToPortableText('- [x] done\n- [ ] todo', {
   schema: compileSchema(
     defineSchema({
@@ -372,7 +384,10 @@ markdownToPortableText('- [x] done\n- [ ] todo', {
 
 If your schema uses a different name for the task list type (e.g. `'todo'`), provide a custom `listItem.task` matcher:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
 markdownToPortableText(markdown, {
   schema: compileSchema(defineSchema({lists: [{name: 'todo'}]})),
   listItem: {
@@ -386,7 +401,9 @@ When emitting Portable Text back to Markdown, blocks with `listItem: 'task'` ren
 
 **Blockquote matcher:** By default, blockquotes are emitted as flat text blocks with `style: 'blockquote'`, and adjacent blocks form a visual blockquote at render time. If your schema models a blockquote as a structural block-object instead (a `blockquote` type with a `content` array), provide a `types.blockquote` matcher to opt into that shape:
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+
 markdownToPortableText(markdown, {
   schema: schemaWithBlockquote,
   types: {
@@ -416,7 +433,9 @@ Return `undefined` to skip the element (e.g., if the type isn't in the schema).
 
 #### Other options
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+
 markdownToPortableText(markdown, {
   // Custom key generator for blocks and spans
   keyGenerator: () => nanoid(),
@@ -432,7 +451,9 @@ markdownToPortableText(markdown, {
 
 Every construct the schema can't represent (a decorator not in the schema, a table with no `table` block object, a task checkbox with no `task` list, and so on) degrades to a lossier shape rather than throwing. A ` ```json:object ` fence or tagged code span that fails to reconstruct (invalid JSON, or no string `_type`) reports too, as `object-carrier-invalid`, even on a schema that would otherwise accept everything: it's the payload that's unusable, not the schema. A fence or tagged code span that does reconstruct keeps its payload's fields as written (only a missing or unusable `_key` is filled in), even when the schema doesn't declare its `_type` at that position (`blockObjects` for a fence, `inlineObjects` for a code span, and for an object a table cell lifts to block position, `blockObjects`). Such an object reports as `object-type-undeclared`, so the caller learns that the result holds a type its schema doesn't expect. Without a `schema` the check runs against the default schema, like every other construct. `onDegradation` observes all of these, one callback covering all uses. Left unset, the conversion stays silent and returns the lossiest representation it can build, since a library shouldn't log on its own initiative. Passed a function, observe the losses: it's called once, after the whole document has been walked, only when at least one construct degraded, with a report object holding every `Degradation` in encounter order and a canonical grouped `message`. Enforce against lossy output by throwing your own error from inside that callback; the throw propagates out of `markdownToPortableText`.
 
-```ts
+```ts nocheck
+import {markdownToPortableText} from '@portabletext/markdown'
+
 markdownToPortableText(markdown, {
   onDegradation: ({degradations, message}) => {
     // degradations: every Degradation, in encounter order
@@ -447,6 +468,9 @@ Each `Degradation` carries `type`, a human-readable `message`, `line` when a sou
 Enforcing means throwing your own error from inside the callback:
 
 ```ts
+import {markdownToPortableText} from '@portabletext/markdown'
+import {compileSchema, defineSchema} from '@portabletext/schema'
+
 markdownToPortableText('# heading\n\n**bold**', {
   schema: compileSchema(defineSchema({})),
   onDegradation: ({message}) => {
@@ -560,7 +584,9 @@ Provide custom renderers to control how Portable Text renders to Markdown.
 
 **Custom type renderers:** Render custom block types (objects in the blocks array). A custom renderer under a default's name (see [Default renderers](#default-renderers)) replaces that default:
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   types: {
     // Render a custom "chart" block object
@@ -571,7 +597,9 @@ portableTextToMarkdown(blocks, {
 
 **Custom block styles:** Override how block styles render:
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   block: {
     // Use ATX-style heading with closing hashes
@@ -584,7 +612,7 @@ portableTextToMarkdown(blocks, {
 
 **Built-in type renderers:** the library exports every built-in type renderer, in case you want to compose one into a different renderer or reuse it under a different type name. Two of them are exported but not registered by default: `DefaultBlockquoteObjectRenderer` and `DefaultListRenderer` render the structural container shapes (`types.blockquote`/`types.list` on the parser side) and stay opt-in, since the parser only produces those shapes when a matcher is registered for them:
 
-```ts
+```ts nocheck
 import {
   DefaultBlockquoteObjectRenderer,
   DefaultListRenderer,
@@ -636,7 +664,9 @@ One question decides which text field a renderer reads: **are you wrapping markd
 
 Use `isInline` to handle block vs inline objects differently:
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   types: {
     image: ({value, isInline}) => {
@@ -663,7 +693,9 @@ Return an empty string to skip rendering an element entirely.
 
 The library provides fallback renderers for unknown content:
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   // Called for block types not in `types`
   unknownType: ({value}) => `<!-- Unknown type: ${value._type} -->`,
@@ -685,7 +717,8 @@ By default, unknown types render as `json:object` fences or tagged code spans th
 
 Going to convert the markdown back with `markdownToPortableText`? Pass the same `schema` to both, and nothing the schema can't rebuild becomes markdown that gets destroyed on the way back: undeclared types travel as `json:object` fences that reparse to the same value.
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
 const schema = compileSchema(
@@ -717,7 +750,9 @@ Without a `schema`, every default renderer stays active.
 
 Customize how a hard break (a `\n` inside a span's text) renders:
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   // Render as HTML break instead of Markdown hard break
   hardBreak: () => '<br />\n',
@@ -731,7 +766,7 @@ portableTextToMarkdown(blocks, {
 
 By default, blocks are separated by double newlines (`\n\n`), with special handling for list items (single newline) and consecutive blockquotes. Customize with `blockSpacing`. It replaces the default renderer, and returning `undefined` separates the two blocks with `\n\n`, not with the default spacing. To keep the default spacing for the cases you don't handle, delegate to `DefaultBlockSpacingRenderer`:
 
-```ts
+```ts nocheck
 import {
   DefaultBlockSpacingRenderer,
   portableTextToMarkdown,
@@ -756,7 +791,9 @@ function isListItem(node: object) {
 
 An annotation or decorator with no mark renderer drops to plain text, a block style with no renderer falls back to a normal paragraph, and a list-item kind with no renderer falls back to a plain bullet item: each degrades rather than throwing. `onDegradation` observes those losses, called once, after the whole document has been walked, only when at least one construct degraded, with a report object holding every `SerializeDegradation` in encounter order and a canonical grouped `message`. Left unset, the conversion stays silent and returns the lossiest representation it can build. Enforce against lossy output by throwing your own error from inside that callback. The throw propagates out of `portableTextToMarkdown`.
 
-```ts
+```ts nocheck
+import {portableTextToMarkdown} from '@portabletext/markdown'
+
 portableTextToMarkdown(blocks, {
   onDegradation: ({degradations, message}) => {
     // degradations: every SerializeDegradation, in encounter order
@@ -845,7 +882,9 @@ The options bag mirrors the two converters, plus a top-level `schema`: `deserial
 
 Pass `onReconciliation` to see what happened to every key. The callback fires exactly once per call, synchronously, right before the function returns:
 
-```ts
+```ts nocheck
+import {applyMarkdownEdit} from '@portabletext/markdown'
+
 applyMarkdownEdit(stored, editedMarkdown, {
   onReconciliation: (report) => {
     if (report.keyMatching === 'skipped') {
@@ -886,7 +925,7 @@ A `json:object` payload whose type the schema does not declare is kept as writte
 
 Together the three lists say whether saving the result loses content or adds content the schema does not allow. Refuse or retry when any of them is non-empty:
 
-```ts
+```ts nocheck
 import {applyMarkdownEdit} from '@portabletext/markdown'
 
 const problems: Array<string> = []
@@ -909,7 +948,7 @@ if (problems.length > 0) {
 
 An edit can change `json:object` payloads like any other content. To keep an agent away from certain objects, check the result before saving it:
 
-```ts
+```ts nocheck
 import {isDeepStrictEqual} from 'node:util'
 import {applyMarkdownEdit} from '@portabletext/markdown'
 
