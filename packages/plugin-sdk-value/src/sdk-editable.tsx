@@ -69,7 +69,7 @@ export interface SplitEditableProps {
  * Nothing else is needed: this replaces a separate `SDKValuePlugin`.
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
  * <EditorProvider initialConfig={{schemaDefinition}}>
  *   <SDKPortableTextEditable
  *     {...documentHandle}
