@@ -36,7 +36,7 @@ const calloutTwoBlocksSchema = defineSchema({
 })
 
 describe('Cross-scope positional override', () => {
-  test('11. Two text blocks side-by-side scope independently', async () => {
+  test('Scenario: Two text blocks side by side scope independently', async () => {
     // Two separate `defineTextBlock` registrations CAN'T coexist
     // type-keyed (same _type 'block' would collide). Instead, the
     // SAME text block type scopes its inlines via the active text
@@ -133,7 +133,7 @@ describe('Cross-scope positional override', () => {
     })
   })
 
-  test('12. Top-level defineTextBlock.of applies globally', async () => {
+  test('Scenario: A top-level defineTextBlock.of applies globally', async () => {
     // A top-level `defineTextBlock({type, of: [...]})` (no container
     // wrapping) registers global inline scoping. Every text block of
     // this type scopes inlines via this `of`, regardless of which
@@ -199,7 +199,7 @@ describe('Cross-scope positional override', () => {
     })
   })
 
-  test('13. Position-level defineTextBlock.of wins over global defineTextBlock.of at that position', async () => {
+  test('Scenario: A position-level defineTextBlock.of wins over a global defineTextBlock.of at that position', async () => {
     const globalScopedMention = defineInlineObject({
       type: 'mention',
       render: ({attributes, children}) => (

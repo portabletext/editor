@@ -11,7 +11,7 @@ function normalizeInnerHTML(html: string): string {
 }
 
 describe('DOM structure', () => {
-  test('1. empty placeholder block', async () => {
+  test('Scenario: An empty placeholder block renders the expected DOM', async () => {
     await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue: [
@@ -50,7 +50,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('2. root text block with spans and inline objects', async () => {
+  test('Scenario: A root text block with spans and inline objects renders the expected DOM', async () => {
     await createTestEditor({
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],
@@ -122,7 +122,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('3. root void block object (image)', async () => {
+  test('Scenario: A root void block object renders the expected DOM', async () => {
     await createTestEditor({
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -181,7 +181,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('4. gallery container with void leaf children', async () => {
+  test('Scenario: A gallery container with void leaf children renders the expected DOM', async () => {
     const gallerySchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -262,7 +262,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('5. deep nesting: table > row > cell > text block > inline', async () => {
+  test('Scenario: A table > row > cell > text block > inline nesting renders the expected DOM', async () => {
     const tableSchemaDefinition = defineSchema({
       inlineObjects: [{name: 'stock-ticker'}],
       blockObjects: [
@@ -421,7 +421,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('6. code block container with text blocks', async () => {
+  test('Scenario: A code block container with text blocks renders the expected DOM', async () => {
     const codeSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -505,7 +505,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('7. container DOM does not contain any legacy attributes', async () => {
+  test('Scenario: Container DOM does not contain any legacy attributes', async () => {
     const calloutSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -586,7 +586,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('8. text block rendered via `defineTextBlock` inside a container emits `data-pt-block="text"`', async () => {
+  test('Scenario: A text block rendered via `defineTextBlock` inside a container emits `data-pt-block="text"`', async () => {
     const calloutSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -646,7 +646,7 @@ describe('DOM structure', () => {
     })
   })
 
-  test('9. root text block rendered via `defineTextBlock` catch-all omits `data-child-*` on spans and inline objects', async () => {
+  test('Scenario: A root text block rendered via a `defineTextBlock` catch-all omits `data-child-*` on spans and inline objects', async () => {
     await createTestEditor({
       schemaDefinition: defineSchema({
         inlineObjects: [{name: 'stock-ticker'}],

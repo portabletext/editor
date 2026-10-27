@@ -4,7 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.decorator.remove', () => {
-  test('without selection, without `at`', async () => {
+  test('Scenario: Removing a decorator without a selection or `at` is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {
       _key: keyGenerator(),
@@ -39,7 +39,7 @@ describe('event.decorator.remove', () => {
     })
   })
 
-  test('with selection, without `at`', async () => {
+  test('Scenario: Removing a decorator without `at` removes it from the selection', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {
       _key: keyGenerator(),
@@ -90,7 +90,7 @@ describe('event.decorator.remove', () => {
     })
   })
 
-  test('without selection, with `at`', async () => {
+  test('Scenario: Removing a decorator with `at` and no selection removes it at `at`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {
       _key: keyGenerator(),
@@ -137,7 +137,7 @@ describe('event.decorator.remove', () => {
     })
   })
 
-  test('with selection, with `at` (at takes precedence)', async () => {
+  test('Scenario: Removing a decorator with both a selection and `at` removes it at `at`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const bar = {
@@ -199,7 +199,7 @@ describe('event.decorator.remove', () => {
     })
   })
 
-  test('partial selection within decorated text', async () => {
+  test('Scenario: Removing a decorator from part of decorated text splits the span', async () => {
     const keyGenerator = createTestKeyGenerator()
     const span = {
       _key: keyGenerator(),
@@ -264,7 +264,7 @@ describe('event.decorator.remove', () => {
     })
   })
 
-  test('collapsed selection on empty span with decorator', async () => {
+  test('Scenario: Removing a decorator at a collapsed selection on an empty decorated span clears its marks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const span = {
       _key: keyGenerator(),

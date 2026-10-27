@@ -20,7 +20,7 @@ import {createTestEditor} from '../src/test/vitest'
  * its next local edit.
  */
 describe('remote patches skip cosmetic normalization', () => {
-  test('a remote marks change does not merge the surrounding spans', async () => {
+  test('Scenario: A remote marks change does not merge the surrounding spans', async () => {
     // The production trigger: a collaborator removes a decorator from the
     // middle span, and the receiver observes the marks change before the
     // collaborator's own merge fallout arrives.
@@ -176,7 +176,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
-  test('adjacent same-mark spans arriving via remote patches are kept', async () => {
+  test('Scenario: Adjacent same-mark spans arriving via remote patches are kept', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -299,7 +299,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
-  test('an empty span arriving via remote patches is kept', async () => {
+  test('Scenario: An empty span arriving via remote patches is kept', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
@@ -415,7 +415,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
-  test('the block re-canonicalizes on its next local edit', async () => {
+  test('Scenario: The block re-canonicalizes on its next local edit', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -498,7 +498,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
-  test('a collaborator removing a decorator does not corrupt the document through a receiver echo', async () => {
+  test('Scenario: A collaborator removing a decorator does not corrupt the document through a receiver echo', async () => {
     // The end-to-end customer symptom. A collaborator un-bolds the middle
     // of "foo|bar|baz": their editor emits `set marks: []` followed by its
     // own local merge fallout (two text `diffMatchPatch`es and two
@@ -679,7 +679,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
-  test('`update value` keeps adjacent same-mark spans as-is', async () => {
+  test('Scenario: `update value` keeps adjacent same-mark spans as-is', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -735,7 +735,7 @@ describe('remote patches skip cosmetic normalization', () => {
  * first local touch canonicalizes it as fallout of the edit.
  */
 describe('adoption and remote patches skip markDef and annotation cleanup', () => {
-  test('a remote marks change does not prune the markDef it leaves unused', async () => {
+  test('Scenario: A remote marks change does not prune the markDef it leaves unused', async () => {
     // The interleave hazard: a collaborator removes an annotation as two
     // patches (clear the mark, unset the definition). Between them the
     // definition is unused, and a receiver pruning it would race the
@@ -848,7 +848,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
   })
 
-  test('`update value` keeps duplicate markDefs as-is', async () => {
+  test('Scenario: `update value` keeps duplicate markDefs as-is', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -878,7 +878,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
   })
 
-  test('an empty annotated span arriving via `initialValue` keeps its marks', async () => {
+  test('Scenario: An empty annotated span arriving via `initialValue` keeps its marks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
@@ -908,7 +908,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
   })
 
-  test('the untidy block re-canonicalizes on its next local edit', async () => {
+  test('Scenario: The untidy block re-canonicalizes on its next local edit', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
@@ -981,7 +981,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
 })
 
 describe('mark state over adopted same-mark siblings', () => {
-  test('caret at the boundary sees the shared decorator and typing continues it', async () => {
+  test('Scenario: A caret at the boundary sees the shared decorator and typing continues it', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
@@ -1051,7 +1051,7 @@ describe('mark state over adopted same-mark siblings', () => {
     })
   })
 
-  test('a selection across the siblings reports the decorator and toggling strips both', async () => {
+  test('Scenario: A selection across the siblings reports the decorator and toggling strips both', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
@@ -1096,7 +1096,7 @@ describe('mark state over adopted same-mark siblings', () => {
     })
   })
 
-  test('siblings sharing an annotation stay one annotation and merge on touch', async () => {
+  test('Scenario: Siblings sharing an annotation stay one annotation and merge on touch', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({

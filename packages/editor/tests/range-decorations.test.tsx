@@ -431,7 +431,7 @@ describe('RangeDecorations', () => {
     })
   })
 
-  it('only render range decorations as necessary', async () => {
+  it('Scenario: Range decorations only render as necessary', async () => {
     const editorRef: RefObject<PortableTextEditor | null> = createRef()
     const onChange = vi.fn()
     const value = [helloBlock]

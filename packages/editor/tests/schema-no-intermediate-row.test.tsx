@@ -24,7 +24,7 @@ import {createTestEditor} from '../src/test/vitest'
  *    and the cell renders as a non-editable block-object placeholder.
  */
 describe('normalisation walks registered container chains to completion', () => {
-  test('table > cell (no row in schema): empty cell.content gets a placeholder text block', async () => {
+  test('Scenario: Empty cell.content gets a placeholder text block in a table > cell schema without a row', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const schemaNoRow = defineSchema({
@@ -118,7 +118,7 @@ describe('normalisation walks registered container chains to completion', () => 
     expect(table.rows[0]!.content[0]!._type).toBe('block')
   })
 
-  test('table > row > cell (schema has row): empty cell.content gets a placeholder text block', async () => {
+  test('Scenario: Empty cell.content gets a placeholder text block in a table > row > cell schema', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const schemaWithRow = defineSchema({
@@ -236,7 +236,7 @@ describe('normalisation walks registered container chains to completion', () => 
     expect(table.rows[0]!.cells[0]!.content[0]!._type).toBe('block')
   })
 
-  test('schema has row, value skips it: cell directly under table.rows is not a registered container at this position', async () => {
+  test('Scenario: A cell directly under table.rows is not a registered container when the schema has a row the value skips', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 

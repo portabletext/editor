@@ -5,7 +5,7 @@ import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.decorator.add', () => {
-  test('without selection, without `at`', async () => {
+  test('Scenario: Adding a decorator without a selection or `at` is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const block = {
@@ -35,7 +35,7 @@ describe('event.decorator.add', () => {
     })
   })
 
-  test('with selection, without `at`', async () => {
+  test('Scenario: Adding a decorator without `at` applies it to the selection', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const block = {
@@ -81,7 +81,7 @@ describe('event.decorator.add', () => {
     })
   })
 
-  test('without selection, with `at`', async () => {
+  test('Scenario: Adding a decorator with `at` and no selection applies it at `at`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const block = {
@@ -123,7 +123,7 @@ describe('event.decorator.add', () => {
     })
   })
 
-  test('with selection, with `at` (at takes precedence)', async () => {
+  test('Scenario: Adding a decorator with both a selection and `at` applies it at `at`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {
       _key: keyGenerator(),

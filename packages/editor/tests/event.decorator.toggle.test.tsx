@@ -4,7 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.decorator.toggle', () => {
-  test('without selection, without `at`', async () => {
+  test('Scenario: Toggling a decorator without a selection or `at` is a noop', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const bar = {
@@ -40,7 +40,7 @@ describe('event.decorator.toggle', () => {
     })
   })
 
-  test('with selection, without `at`', async () => {
+  test('Scenario: Toggling a decorator without `at` toggles it on the selection', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const bar = {
@@ -92,7 +92,7 @@ describe('event.decorator.toggle', () => {
     })
   })
 
-  test('without selection, with `at`', async () => {
+  test('Scenario: Toggling a decorator with `at` and no selection toggles it at `at`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const bar = {
@@ -138,7 +138,7 @@ describe('event.decorator.toggle', () => {
     ])
   })
 
-  test('with selection, with `at` (at takes precedence)', async () => {
+  test('Scenario: Toggling a decorator with both a selection and `at` toggles it at `at`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const foo = {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}
     const bar = {
