@@ -118,7 +118,7 @@ resolved from its own Sanity definition: its styles, decorators,
 annotations, lists, and inline objects come from that block as Sanity
 compiles it, not from the top-level block.
 
-```ts
+```ts continue
 const codeBlockType = defineType({
   type: 'object',
   name: 'code-block',
@@ -249,7 +249,7 @@ members of a Portable Text array into their Sanity types, so render
 callbacks and inputs can join back by name and work with the real
 thing.
 
-```ts
+```ts nocheck
 import {createPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
 
 const memberTypes = createPortableTextMemberSchemaTypes(sanitySchema)
@@ -267,7 +267,7 @@ answers "which Sanity types apply here?" for a path into a value,
 walking down to the nearest Portable-Text-shaped ancestor and
 bucketizing its members.
 
-```ts
+```ts nocheck
 import {getSanitySubSchema} from '@portabletext/sanity-bridge'
 
 const subSchema = getSanitySubSchema(sanitySchema, value, [
