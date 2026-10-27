@@ -13,8 +13,8 @@ catalogs:
       specifier: ^1.8.0
       version: 1.8.0
     '@rexxars/bundle-stats':
-      specifier: ^2.0.0
-      version: 2.0.0
+      specifier: ^2.0.1
+      version: 2.0.1
     '@sanity/diff-match-patch':
       specifier: ^3.2.1
       version: 3.2.1
@@ -145,7 +145,7 @@ importers:
         version: 1.62.1
       '@rexxars/bundle-stats':
         specifier: 'catalog:'
-        version: 2.0.0(rollup@4.62.2)
+        version: 2.0.1(rollup@4.62.2)
       '@sanity/prettier-config':
         specifier: ^3.0.0
         version: 3.0.0(prettier@3.9.6)
@@ -5511,8 +5511,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
 
-  '@rexxars/bundle-stats@2.0.0':
-    resolution: {integrity: sha512-PU7SQQISDdG7hKcAj0DQnvYX7Dk6PVtYGuuPiKYLGy6SIsDLLiZlGQSpp1YDcGwaZx+VXTVTahAJfFddOIf3vg==}
+  '@rexxars/bundle-stats@2.0.1':
+    resolution: {integrity: sha512-M/z63kdVkH5rTvaSR899f5R47/v2vySDfWRXH5lJXMADn8GqjTZlrqQDNG9QflDt08+ovvVnXAsBsOKH0mkYNA==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -16203,10 +16203,10 @@ snapshots:
       '@react-types/shared': 3.32.1(react@19.3.1)
       react: 19.3.1
 
-  '@rexxars/bundle-stats@2.0.0(rollup@4.62.2)':
+  '@rexxars/bundle-stats@2.0.1(rollup@4.62.2)':
     dependencies:
-      rolldown: 1.2.7
-      rollup-plugin-visualizer: 5.14.0(rolldown@1.2.7)(rollup@4.62.2)
+      rolldown: 1.2.14
+      rollup-plugin-visualizer: 5.14.0(rolldown@1.2.14)(rollup@4.62.2)
     transitivePeerDependencies:
       - rollup
 
@@ -22232,14 +22232,14 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.2.7
       '@rolldown/binding-win32-x64-msvc': 1.2.7
 
-  rollup-plugin-visualizer@5.14.0(rolldown@1.2.7)(rollup@4.62.2):
+  rollup-plugin-visualizer@5.14.0(rolldown@1.2.14)(rollup@4.62.2):
     dependencies:
       open: 8.4.2
       picomatch: 4.0.7
       source-map: 0.7.6
       yargs: 17.7.3
     optionalDependencies:
-      rolldown: 1.2.7
+      rolldown: 1.2.14
       rollup: 4.62.2
 
   rollup@4.62.2:

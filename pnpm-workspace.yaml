@@ -8,7 +8,7 @@ packages:
 catalog:
   "@astrojs/check": ^0.9.10
   "@floating-ui/dom": ^1.8.0
-  "@rexxars/bundle-stats": ^2.0.0
+  "@rexxars/bundle-stats": ^2.0.1
   "@sanity/diff-match-patch": ^3.2.1
   "@sanity/diff-patch": ^6.0.0
   "@sanity/json-match": ^1.0.5
