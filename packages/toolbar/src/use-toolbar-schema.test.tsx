@@ -70,7 +70,7 @@ function ApplicableProbe(props: {
 }
 
 describe(useToolbarSchema.name, () => {
-  test('returns the union of every name reachable across root and registered containers', async () => {
+  test('Scenario: the toolbar schema holds the union of every name reachable across root and registered containers', async () => {
     const captures: Array<ReturnType<typeof useToolbarSchema>> = []
     const onSchema = (schema: ReturnType<typeof useToolbarSchema>) => {
       captures.push(schema)
@@ -211,7 +211,7 @@ describe(useToolbarSchema.name, () => {
 })
 
 describe(useApplicableSchema.name, () => {
-  test('returns the focus block sub-schema when the caret is in a single text block', async () => {
+  test('Scenario: a caret in a single text block yields the focus block sub-schema', async () => {
     const captures: Array<ApplicableSchema> = []
     const onApplicable = (applicable: ApplicableSchema) => {
       captures.push(applicable)
@@ -305,7 +305,7 @@ describe(useApplicableSchema.name, () => {
     })
   })
 
-  test('returns the union of sub-schemas across all text blocks the selection covers', async () => {
+  test('Scenario: a selection across text blocks yields the union of their sub-schemas', async () => {
     const captures: Array<ApplicableSchema> = []
     const onApplicable = (applicable: ApplicableSchema) => {
       captures.push(applicable)
@@ -378,7 +378,7 @@ describe(useApplicableSchema.name, () => {
     })
   })
 
-  test('returns empty text-only sets when the selection is on a void block', async () => {
+  test('Scenario: a selection on a void block yields empty text-only sets', async () => {
     const captures: Array<ApplicableSchema> = []
     const onApplicable = (applicable: ApplicableSchema) => {
       captures.push(applicable)
@@ -420,7 +420,7 @@ describe(useApplicableSchema.name, () => {
     })
   })
 
-  test('returns empty sets when there is no selection', async () => {
+  test('Scenario: no selection yields empty sets', async () => {
     const captures: Array<ApplicableSchema> = []
     const onApplicable = (applicable: ApplicableSchema) => {
       captures.push(applicable)
