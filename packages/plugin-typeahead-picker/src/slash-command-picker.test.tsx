@@ -79,12 +79,8 @@ Feature({
       context.selectedIndexLocator = page.getByTestId('selectedIndex')
       context.styleLocator = page.getByTestId('style')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.matchesLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.matchesLocator).toBeInTheDocument()
     }),
   ],
   featureText: slashCommandPickerFeature,

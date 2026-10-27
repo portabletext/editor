@@ -84,12 +84,8 @@ Feature({
       context.stateLocator = page.getByTestId('state')
       context.selectedIndexLocator = page.getByTestId('selectedIndex')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.matchesLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.matchesLocator).toBeInTheDocument()
     }),
   ],
   featureText: typeaheadPickerFeature,
@@ -192,7 +188,7 @@ describe('Select event', () => {
     const matchesLocator = page.getByTestId('event-keyword-matches')
     const stateLocator = page.getByTestId('event-keyword-state')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
@@ -260,7 +256,7 @@ describe('Error handling in checking complete state', () => {
     const stateLocator = page.getByTestId('complete-error-state')
     const errorMessageLocator = page.getByTestId('complete-error-message')
 
-    await vi.waitFor(() => expect.element(stateLocator).toBeInTheDocument())
+    await expect.element(stateLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
@@ -330,7 +326,7 @@ describe('Sync mode debouncing', () => {
     const matchesLocator = page.getByTestId('sync-debounce-matches')
     const keywordLocator = page.getByTestId('sync-debounce-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
