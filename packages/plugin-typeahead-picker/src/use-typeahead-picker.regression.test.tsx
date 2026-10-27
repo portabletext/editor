@@ -69,7 +69,7 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   ],
 })
 
-test('does not infinite-loop when the picker becomes active', async () => {
+test('Scenario: activating the picker does not infinite-loop', async () => {
   const renderCounts: Array<number> = []
 
   function PickerProbe() {

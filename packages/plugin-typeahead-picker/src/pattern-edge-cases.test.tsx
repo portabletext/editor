@@ -104,7 +104,7 @@ async function setupTest(picker: ReturnType<typeof createPicker>) {
 }
 
 describe('Pattern variations', () => {
-  test('^ anchor triggers only at start of block', async () => {
+  test('Scenario: a `^` anchored trigger activates at the start of a block', async () => {
     const picker = createPicker({trigger: /^\//, keyword: /\w*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
@@ -117,7 +117,7 @@ describe('Pattern variations', () => {
     expect(stateLocator.element().textContent).toEqual('active')
   })
 
-  test('^ anchor does not trigger mid-text', async () => {
+  test('Scenario: a `^` anchored trigger does not activate mid-text', async () => {
     const picker = createPicker({trigger: /^\//, keyword: /\w*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
@@ -130,7 +130,7 @@ describe('Pattern variations', () => {
     expect(stateLocator.element().textContent).toEqual('idle')
   })
 
-  test('trigger + keyword extracts keyword correctly', async () => {
+  test('Scenario: a trigger followed by a keyword extracts the keyword', async () => {
     const picker = createPicker({trigger: /:/, keyword: /\w*/})
     const {locator, keywordLocator} = await setupTest(picker)
 
@@ -142,7 +142,7 @@ describe('Pattern variations', () => {
     })
   })
 
-  test('different trigger characters work', async () => {
+  test('Scenario: a trigger character other than `:` activates the picker', async () => {
     const picker = createPicker({trigger: /@/, keyword: /\w*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
@@ -155,7 +155,7 @@ describe('Pattern variations', () => {
     expect(stateLocator.element().textContent).toEqual('active')
   })
 
-  test('multi-character triggers are not supported', async () => {
+  test('Scenario: a multi-character trigger does not activate the picker', async () => {
     // Multi-character triggers don't work reliably because:
     // 1. Typing character-by-character: the trigger rule requires textInserted === lastMatch.text
     // 2. Android composition: partial rule rejects when match starts before insertion point
@@ -173,7 +173,7 @@ describe('Pattern variations', () => {
 })
 
 describe('delimiter edge cases', () => {
-  test('auto-completes with single exact match', async () => {
+  test('Scenario: a delimiter after a single exact match auto-completes it', async () => {
     const picker = createPicker({
       trigger: /:/,
       keyword: /\w*/,
@@ -195,7 +195,7 @@ describe('delimiter edge cases', () => {
     })
   })
 
-  test('auto-completes with first exact match when multiple exact matches exist', async () => {
+  test('Scenario: a delimiter after multiple exact matches auto-completes the first', async () => {
     const picker = createPicker({
       trigger: /:/,
       keyword: /\w*/,
@@ -221,7 +221,7 @@ describe('delimiter edge cases', () => {
     })
   })
 
-  test('does not auto-complete with only partial matches', async () => {
+  test('Scenario: a delimiter after only partial matches does not auto-complete', async () => {
     const picker = createPicker({
       trigger: /:/,
       keyword: /\w*/,
@@ -243,7 +243,7 @@ describe('delimiter edge cases', () => {
     })
   })
 
-  test('delimiter works even when not in keyword character class', async () => {
+  test('Scenario: a delimiter outside the keyword character class still completes or keeps the picker active', async () => {
     // The delimiter does not need to be in the keyword pattern's character class.
     // When the delimiter is typed:
     // - If there's an exact match → auto-complete
@@ -286,7 +286,7 @@ describe('delimiter edge cases', () => {
     })
   })
 
-  test('multi-character delimiter - picker dismisses on first delimiter char', async () => {
+  test('Scenario: the first character of a multi-character delimiter dismisses the picker', async () => {
     // Multi-character delimiter doesn't work when the keyword character
     // class doesn't match the delimiter character.
     //
@@ -327,7 +327,7 @@ describe('delimiter edge cases', () => {
     })
   })
 
-  test('regex special character in delimiter is escaped', async () => {
+  test('Scenario: a regex special character in the delimiter is matched literally', async () => {
     const picker = createPicker({
       trigger: /:/,
       keyword: /\w*/,
@@ -349,7 +349,7 @@ describe('delimiter edge cases', () => {
     })
   })
 
-  test('same character for trigger and delimiter', async () => {
+  test('Scenario: the same character as trigger and delimiter yields an empty keyword', async () => {
     // When trigger and delimiter are the same, typing :: results in
     // an empty keyword (the keyword pattern \w* matches empty string)
     const picker = createPicker({
@@ -372,7 +372,7 @@ describe('delimiter edge cases', () => {
 })
 
 describe('Keyword pattern character class behavior', () => {
-  test('\\w* stops at non-word characters', async () => {
+  test('Scenario: a `\\w*` keyword stops at non-word characters', async () => {
     const picker = createPicker({
       trigger: /:/,
       keyword: /\w*/,
@@ -388,7 +388,7 @@ describe('Keyword pattern character class behavior', () => {
     })
   })
 
-  test('\\S* with delimiter - strips delimiter from keyword', async () => {
+  test('Scenario: a `\\S*` keyword with a delimiter strips the delimiter from the keyword', async () => {
     // \S* includes the delimiter character, but this still works because:
     // extractKeyword strips the delimiter from the end of the pattern text
     // So the keyword is correctly "test", not "test:".
@@ -407,7 +407,7 @@ describe('Keyword pattern character class behavior', () => {
     })
   })
 
-  test('custom character class [a-z] works', async () => {
+  test('Scenario: a custom `[a-z]` character class extracts the keyword', async () => {
     const picker = createPicker({trigger: /:/, keyword: /[a-z]*/})
     const {locator, keywordLocator} = await setupTest(picker)
 
@@ -419,7 +419,7 @@ describe('Keyword pattern character class behavior', () => {
     })
   })
 
-  test('custom character class stops at excluded chars and dismisses', async () => {
+  test('Scenario: a character outside a custom character class dismisses the picker', async () => {
     // When typing characters outside the keyword's character class,
     // the picker dismisses because cursor moves past the match
     const picker = createPicker({trigger: /:/, keyword: /[a-z]*/})
@@ -442,8 +442,8 @@ describe('Keyword pattern character class behavior', () => {
   })
 })
 
-describe('Flags are normalized (ignored)', () => {
-  test('case-insensitive flag has no effect on trigger', async () => {
+describe('Pattern flags', () => {
+  test('Scenario: a case-insensitive flag has no effect on the trigger', async () => {
     const picker = createPicker({trigger: /:/i, keyword: /[A-Z]*/i})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
@@ -456,7 +456,7 @@ describe('Flags are normalized (ignored)', () => {
     expect(keywordLocator.element().textContent).toEqual('')
   })
 
-  test('uppercase keyword pattern requires uppercase input', async () => {
+  test('Scenario: an uppercase keyword pattern requires uppercase input', async () => {
     const picker = createPicker({trigger: /:/, keyword: /[A-Z]*/})
     const {locator, keywordLocator, stateLocator} = await setupTest(picker)
 
