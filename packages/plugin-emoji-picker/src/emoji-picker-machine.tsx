@@ -46,19 +46,19 @@ import type {BaseEmojiMatch, MatchEmojis} from './match-emojis'
 /*******************
  * Keyboard shortcuts
  *******************/
-const arrowUpShortcut = createKeyboardShortcut({
+const arrowUpShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'ArrowUp'}],
 })
-const arrowDownShortcut = createKeyboardShortcut({
+const arrowDownShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'ArrowDown'}],
 })
-const enterShortcut = createKeyboardShortcut({
+const enterShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'Enter'}],
 })
-const tabShortcut = createKeyboardShortcut({
+const tabShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'Tab'}],
 })
-const escapeShortcut = createKeyboardShortcut({
+const escapeShortcut = /* @__PURE__ */ createKeyboardShortcut({
   default: [{key: 'Escape'}],
 })
 
@@ -233,7 +233,7 @@ function createTriggerActions({
 /**
  * Listen for a single colon insertion
  */
-const triggerRule = defineInputRule({
+const triggerRule = /* @__PURE__ */ defineInputRule({
   on: /:/,
   guard: ({snapshot, event}) => {
     const lastMatch = event.matches.at(-1)
@@ -278,7 +278,7 @@ function createTriggerFoundEvent(payload: {
 /**
  * Listen for a partial keyword like ":joy"
  */
-const partialKeywordRule = defineInputRule({
+const partialKeywordRule = /* @__PURE__ */ defineInputRule({
   on: /:[\S]+/,
   guard: ({snapshot, event}) => {
     const lastMatch = event.matches.at(-1)
@@ -311,7 +311,7 @@ const partialKeywordRule = defineInputRule({
 /**
  * Listen for a complete keyword like ":joy:"
  */
-const keywordRule = defineInputRule({
+const keywordRule = /* @__PURE__ */ defineInputRule({
   on: /:[\S]+:/,
   guard: ({snapshot, event}) => {
     const lastMatch = event.matches.at(-1)
@@ -686,7 +686,7 @@ const textInsertionListenerCallback: CallbackLogicFunction<
   })
 }
 
-export const emojiPickerMachine = setup({
+export const emojiPickerMachine = /* @__PURE__ */ setup({
   types: {
     context: {} as EmojiPickerContext,
     input: {} as {
@@ -696,16 +696,20 @@ export const emojiPickerMachine = setup({
     events: {} as EmojiPickerEvent,
   },
   actors: {
-    'emoji insert listener': fromCallback(emojiInsertListener),
-    'submit listener': fromCallback(submitListenerCallback),
-    'arrow listener': fromCallback(arrowListenerCallback),
-    'trigger listener': fromCallback(triggerListenerCallback),
-    'escape listener': fromCallback(escapeListenerCallback),
-    'selection listener': fromCallback(selectionListenerCallback),
-    'text insertion listener': fromCallback(textInsertionListenerCallback),
+    'emoji insert listener': /* @__PURE__ */ fromCallback(emojiInsertListener),
+    'submit listener': /* @__PURE__ */ fromCallback(submitListenerCallback),
+    'arrow listener': /* @__PURE__ */ fromCallback(arrowListenerCallback),
+    'trigger listener': /* @__PURE__ */ fromCallback(triggerListenerCallback),
+    'escape listener': /* @__PURE__ */ fromCallback(escapeListenerCallback),
+    'selection listener': /* @__PURE__ */ fromCallback(
+      selectionListenerCallback,
+    ),
+    'text insertion listener': /* @__PURE__ */ fromCallback(
+      textInsertionListenerCallback,
+    ),
   },
   actions: {
-    'set focus span': assign({
+    'set focus span': /* @__PURE__ */ assign({
       focusSpan: ({context, event}) => {
         if (
           event.type !== 'custom.trigger found' &&
@@ -717,7 +721,7 @@ export const emojiPickerMachine = setup({
         return event.focusSpan
       },
     }),
-    'update focus span': assign({
+    'update focus span': /* @__PURE__ */ assign({
       focusSpan: ({context}) => {
         if (!context.focusSpan) {
           return undefined
@@ -802,7 +806,7 @@ export const emojiPickerMachine = setup({
         }
       },
     }),
-    'update keyword': assign({
+    'update keyword': /* @__PURE__ */ assign({
       keyword: ({context}) => {
         if (!context.focusSpan) {
           return ''
@@ -834,7 +838,7 @@ export const emojiPickerMachine = setup({
         return context.focusSpan.node.text
       },
     }),
-    'update matches': assign({
+    'update matches': /* @__PURE__ */ assign({
       matches: ({context}) => {
         // Strip leading colon
         let rawKeyword = context.keyword.startsWith(':')
@@ -853,10 +857,10 @@ export const emojiPickerMachine = setup({
         return context.matchEmojis({keyword: rawKeyword})
       },
     }),
-    'reset selected index': assign({
+    'reset selected index': /* @__PURE__ */ assign({
       selectedIndex: 0,
     }),
-    'increment selected index': assign({
+    'increment selected index': /* @__PURE__ */ assign({
       selectedIndex: ({context}) => {
         if (context.selectedIndex === context.matches.length - 1) {
           return 0
@@ -864,7 +868,7 @@ export const emojiPickerMachine = setup({
         return context.selectedIndex + 1
       },
     }),
-    'decrement selected index': assign({
+    'decrement selected index': /* @__PURE__ */ assign({
       selectedIndex: ({context}) => {
         if (context.selectedIndex === 0) {
           return context.matches.length - 1
@@ -872,21 +876,21 @@ export const emojiPickerMachine = setup({
         return context.selectedIndex - 1
       },
     }),
-    'set selected index': assign({
+    'set selected index': /* @__PURE__ */ assign({
       selectedIndex: ({event}) => {
         assertEvent(event, 'navigate to')
 
         return event.index
       },
     }),
-    'update submit listener context': sendTo(
+    'update submit listener context': /* @__PURE__ */ sendTo(
       'submit listener',
       ({context}) => ({
         type: 'context changed',
         context,
       }),
     ),
-    'update text insertion listener context': sendTo(
+    'update text insertion listener context': /* @__PURE__ */ sendTo(
       'text insertion listener',
       ({context}) => ({
         type: 'context changed',
@@ -906,7 +910,7 @@ export const emojiPickerMachine = setup({
         focusSpan: context.focusSpan,
       })
     },
-    'reset': assign({
+    'reset': /* @__PURE__ */ assign({
       focusSpan: undefined,
       keyword: '',
       matches: [],
