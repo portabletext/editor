@@ -12,7 +12,7 @@ npm install @portabletext/plugin-typeahead-picker
 
 The `useTypeaheadPicker` hook provides the state and logic needed to build typeahead pickers (emoji pickers, mention pickers, slash commands, etc.) for the Portable Text Editor. It manages keyword matching, keyboard navigation, and triggering of actions, but is not concerned with the UI, how the picker is rendered, or how it's positioned in the document.
 
-```tsx
+```tsx nocheck
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import {raise} from '@portabletext/editor/behaviors'
 import {
@@ -114,7 +114,10 @@ The picker activates when users type the `trigger` pattern (e.g., `:` or `@`). T
 
 ### Emoji picker
 
-```ts
+```ts nocheck
+import {raise} from '@portabletext/editor/behaviors'
+import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   trigger: /:/,
   keyword: /\S*/,
@@ -133,7 +136,10 @@ const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
 
 ### Mention picker (async with debounce)
 
-```ts
+```ts nocheck
+import {raise} from '@portabletext/editor/behaviors'
+import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 // Without `delimiter`, the `type` field is not required on matches.
 // MentionMatch can just be: { id: string; name: string }
 const mentionPicker = defineTypeaheadPicker<MentionMatch>({
@@ -158,7 +164,10 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
 
 ### Slash command picker (start of block only)
 
-```ts
+```ts nocheck
+import {raise} from '@portabletext/editor/behaviors'
+import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 // Without `delimiter`, the `type` field is not required on matches.
 const commandPicker = defineTypeaheadPicker<CommandMatch>({
   trigger: /^\//, // ^ anchors to start of block
@@ -197,7 +206,10 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
 
 Use `guard` to conditionally prevent the picker from activating. The guard runs at trigger time (when the trigger character is typed) and has the same signature as a behavior guard, receiving `snapshot`, `event`, and `dom`.
 
-```ts
+```ts nocheck
+import {raise} from '@portabletext/editor/behaviors'
+import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 const emojiPicker = defineTypeaheadPicker<EmojiMatch>({
   trigger: /:/,
   keyword: /\S*/,
@@ -307,7 +319,9 @@ When `mode: 'async'` is configured, the picker handles asynchronous `getMatches`
 
 Use `snapshot.matches()` to check nested loading states:
 
-```tsx
+```tsx nocheck
+import {useTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 function MentionPicker() {
   const picker = useTypeaheadPicker(mentionPicker)
 
@@ -343,7 +357,9 @@ When users type quickly, earlier slow requests may complete after later fast req
 
 If `getMatches` throws or rejects, the error is captured in `snapshot.context.error`. The picker transitions to `'no matches'` state and continues to function.
 
-```tsx
+```tsx nocheck
+import {useTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 function EmojiPickerPlugin() {
   const picker = useTypeaheadPicker(emojiPicker)
   const {error} = picker.snapshot.context
@@ -380,7 +396,10 @@ For most pickers, you should **not** use `onDismiss` to delete text. If a user t
 
 The `onSelect` callback receives more than just the event. The full payload includes access to the editor snapshot, which is useful for generating keys, accessing the schema, or reading the current editor state.
 
-```tsx
+```tsx nocheck
+import {raise} from '@portabletext/editor/behaviors'
+import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 const commandPicker = defineTypeaheadPicker<CommandMatch>({
   trigger: /^\//,
   keyword: /\w*/,
@@ -425,7 +444,7 @@ Keep your match lists reasonably sized for smooth keyboard navigation:
 - **Large datasets**: Filter on the server or use pagination
 - **Infinite lists**: Consider virtualizing if rendering many items
 
-```tsx
+```tsx nocheck
 getMatches: async ({keyword}) => {
   const results = await api.searchUsers(keyword)
   return results.slice(0, 20) // Limit to 20 matches
@@ -443,7 +462,9 @@ Choose debounce values based on your data source:
 | Fast API endpoint              | `150-200`                |
 | Slow API endpoint              | `200-300`                |
 
-```tsx
+```tsx nocheck
+import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 // Local data - no debounce needed
 const emojiPicker = defineTypeaheadPicker({
   trigger: /:/,
@@ -475,7 +496,9 @@ The picker manages keyboard navigation and selection internally, but you're resp
 
 ### Recommended ARIA attributes
 
-```tsx
+```tsx nocheck
+import {useTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+
 function PickerUI() {
   const picker = useTypeaheadPicker(definition)
   const {matches, selectedIndex} = picker.snapshot.context
@@ -540,7 +563,7 @@ The following keyboard shortcuts are handled automatically by the picker:
 ### Focus issues after selection
 
 - Ensure your onSelect includes focus restoration if needed:
-  ```tsx
+  ```tsx nocheck
   onSelect: [
     ({event}) => [
       raise({type: 'delete', at: event.patternSelection}),
