@@ -34,7 +34,7 @@ const underline = defineDecorator({
 
 Or keep one switching function with `type: '*'`, which matches any decorator that has no more specific registration; see [dispatch precedence](/editor/concepts/rendering/#dispatch-precedence) for how it ranks against an exact `type` match:
 
-```tsx
+```tsx continue
 const decorator = defineDecorator({
   type: '*',
   render: ({children, decorator}) => {
@@ -74,7 +74,10 @@ const link = defineAnnotation({
 
 ```tsx
 import {useState} from 'react'
-import type {AnnotationRenderProps} from '@portabletext/editor'
+import {
+  defineAnnotation,
+  type AnnotationRenderProps,
+} from '@portabletext/editor'
 
 function LinkSpan(props: AnnotationRenderProps) {
   const [hovered, setHovered] = useState(false)
@@ -111,7 +114,7 @@ Lists are a bit unique. A list in Portable Text is flat: a run of sibling text b
 
 Use `renderPlaceholder` to display custom placeholder text when the editor is empty:
 
-```tsx
+```tsx nocheck
 <PortableTextEditable
   renderPlaceholder={() => <span style={{color: '#999'}}>Start typing...</span>}
   // ... other props
@@ -122,7 +125,7 @@ Use `renderPlaceholder` to display custom placeholder text when the editor is em
 
 Use `rangeDecorations` to highlight specific ranges of text. This is useful for features like search highlighting, comments, or collaborative cursors:
 
-```tsx
+```tsx nocheck
 import type {RangeDecoration} from '@portabletext/editor'
 
 const decorations: RangeDecoration[] = [
@@ -152,10 +155,11 @@ To decorate from several independent parts of your app, track decorations by `id
 Edits can move, shrink, or invalidate a decorated range: typing before it shifts its offsets, and deleting it removes it entirely. Pass `onMoved` on a `RangeDecoration` to keep your own state in sync instead of recomputing the selection from scratch:
 
 ```tsx
-import type {
-  EditorSelection,
-  RangeDecoration,
-  RangeDecorationOnMovedDetails,
+import {
+  PortableTextEditable,
+  type EditorSelection,
+  type RangeDecoration,
+  type RangeDecorationOnMovedDetails,
 } from '@portabletext/editor'
 import {useState} from 'react'
 

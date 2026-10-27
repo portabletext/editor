@@ -70,7 +70,7 @@ This is how a code block restricts its lines to a `code` style with no decorator
 
 The schema declares what a container _allows_; a registration tells the editor to _render_ it as one. Create the registration with `defineContainer` and mount it with `NodePlugin`:
 
-```tsx
+```tsx continue
 import {
   defineContainer,
   EditorProvider,
@@ -126,6 +126,7 @@ Inside a container, the editor resolves the schema at the caret, not the top-lev
 Schema-aware plugins get the same gating for free: `MarkdownShortcutsPlugin` passes each callback a `context` object carrying the schema at the caret as `context.schema`. Take a schema whose code block forbids decorators, and a Markdown shortcut configured by schema lookup:
 
 ```tsx
+import {defineSchema} from '@portabletext/editor'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 
 const schemaDefinition = defineSchema({
@@ -146,7 +147,7 @@ const schemaDefinition = defineSchema({
 })
 ```
 
-```tsx
+```tsx nocheck
 <MarkdownShortcutsPlugin
   boldDecorator={({context}) =>
     context.schema.decorators.find((decorator) => decorator.name === 'strong')
@@ -205,6 +206,8 @@ Paragraphs render through the first `defineTextBlock` everywhere else and throug
 Any text block's `of` can scope marks one level deeper, into `defineDecorator` and `defineAnnotation` entries, whether or not that text block sits inside a container; it lives on this page because `of` scoping is this page's subject. Register the same decorator globally and positionally to see the scoping:
 
 ```tsx
+import {defineDecorator, defineTextBlock} from '@portabletext/editor'
+
 defineDecorator({
   type: 'strong',
   render: ({children}) => <strong>{children}</strong>,
@@ -233,6 +236,8 @@ With both registered, `strong` renders as `<mark>` inside these text blocks and 
 Containers nest through the `of` array, which scopes registrations to positions inside the parent. A table is three containers deep:
 
 ```tsx
+import {defineContainer} from '@portabletext/editor'
+
 defineContainer({
   type: 'table',
   arrayField: 'rows',

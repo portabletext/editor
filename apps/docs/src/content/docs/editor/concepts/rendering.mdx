@@ -41,7 +41,7 @@ const schemaDefinition = defineSchema({
 
 Each node kind has a factory: `defineTextBlock`, `defineBlockObject`, `defineInlineObject`, `defineSpan`, `defineDecorator`, `defineAnnotation`, and `defineContainer` (see [Containers](/editor/concepts/containers/) for that one). Every factory returns a plain registration object; mount them together through one `NodePlugin`:
 
-```tsx
+```tsx continue
 import {
   defineAnnotation,
   defineDecorator,
@@ -91,6 +91,8 @@ Keep `nodes` at module scope, as above: a fresh array identity on every render m
 A block-level registration (a text block, block object, or container) owns everything rendered inside it, its rendering subtree. Unregistered node types inside it fall back to the engine defaults: a registered text block holding an unregistered inline object still renders that inline object through the engine's default wrapper, not through markup you control. Register a node type when you need to own its markup, wherever it appears:
 
 ```tsx
+import {defineInlineObject, defineTextBlock} from '@portabletext/editor'
+
 const nodes = [
   defineTextBlock({
     type: 'block',
@@ -118,6 +120,8 @@ const nodes = [
 At a given position, a positional registration (one scoped through a container or text block's own `of`, see [Containers](/editor/concepts/containers/)) beats a global registration, which beats the engine default. Within a level, an exact `type` match beats a `'*'` catch-all:
 
 ```tsx
+import {defineDecorator} from '@portabletext/editor'
+
 const nodes = [
   // `strong` hits the exact match...
   defineDecorator({
@@ -140,13 +144,15 @@ const nodes = [
 
 Every render receives `renderDefault`, a function that renders the engine's minimal wrapper for that position. Call it to fall back, or to wrap the default instead of replacing it:
 
-```tsx
+```tsx nocheck
 render: (props) => props.renderDefault(props)
 ```
 
 Its most common use is the fallback branch of a field-presence check: a document can carry a partially filled value, and the engine default beats rendering nothing:
 
 ```tsx
+import {defineBlockObject} from '@portabletext/editor'
+
 defineBlockObject({
   type: 'image',
   render: (props) =>
@@ -177,6 +183,7 @@ Two rendering concerns ship as plugins instead of registration props:
 Both plugins follow the same pattern: a provider inside `EditorProvider`, and a hook read from a component your `render` returns, not inline in the `render` callback, since hooks can't run there:
 
 ```tsx
+import {defineTextBlock} from '@portabletext/editor'
 import type {TextBlockRenderProps} from '@portabletext/editor'
 import {useListIndex} from '@portabletext/plugin-list-index'
 

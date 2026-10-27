@@ -18,6 +18,8 @@ This guide assumes you have a text block registration, as set up in the [getting
 Declare the list types in your schema:
 
 ```tsx
+import {defineSchema} from '@portabletext/editor'
+
 const schemaDefinition = defineSchema({
   // ...
   lists: [{name: 'bullet'}, {name: 'number'}],
@@ -26,7 +28,9 @@ const schemaDefinition = defineSchema({
 
 Wrap `PortableTextEditable` in `ListIndexProvider`, inside the `EditorProvider`:
 
-```tsx
+```tsx nocheck
+import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
+import {NodePlugin} from '@portabletext/editor/plugins'
 import {ListIndexProvider} from '@portabletext/plugin-list-index'
 
 function MyEditor() {
@@ -155,6 +159,9 @@ The [basic example](https://github.com/portabletext/editor/tree/main/examples/ba
 If you'd rather render the marker yourself, for example as a component, output the position directly. Mark the marker `contentEditable={false}` so the caret can't enter it:
 
 ```tsx
+import type {TextBlockRenderProps} from '@portabletext/editor'
+import {useListIndex} from '@portabletext/plugin-list-index'
+
 function TextBlock(props: TextBlockRenderProps) {
   const listIndex = useListIndex(props.path)
 
