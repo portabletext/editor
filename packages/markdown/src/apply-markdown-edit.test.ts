@@ -1558,6 +1558,167 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
+  test('editing words next to an underlined span keeps the underline', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'before use.',
+      'before first use.',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'safety notice',
+            marks: ['underline'],
+          },
+          {_type: 'span', _key: 's3', text: ' before first use.', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'foo bar', marks: []}],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('rewriting underlined words keeps the underline on the new words', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'safety notice',
+      'safety warning',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'safety warning',
+            marks: ['underline'],
+          },
+          {_type: 'span', _key: 's3', text: ' before use.', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'foo bar', marks: []}],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('underlining a word in another block adds the underline there', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'foo bar',
+      'foo <u>bar</u>',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'safety notice',
+            marks: ['underline'],
+          },
+          {_type: 'span', _key: 's3', text: ' before use.', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k5', text: 'foo ', marks: []},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['underline']},
+        ],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('removing the underline tags removes the underline', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      '<u>safety notice</u>',
+      'safety notice',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 's1',
+            text: 'Read the safety notice before use.',
+            marks: [],
+          },
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'foo bar', marks: []}],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
   test('two links in one block each keep their annotation keys', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
@@ -3059,4 +3220,18 @@ function manyParagraphs(count: number, prefix: string): string {
     {length: count},
     (_, index) => `${prefix} filler text ${index}`,
   ).join('\n\n')
+}
+
+function safetyNoticeBlock(): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: 'b1',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+      {_type: 'span', _key: 's2', text: 'safety notice', marks: ['underline']},
+      {_type: 'span', _key: 's3', text: ' before use.', marks: []},
+    ],
+  }
 }
