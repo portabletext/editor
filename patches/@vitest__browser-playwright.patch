@@ -1,16 +1,48 @@
 diff --git a/dist/index.js b/dist/index.js
-index 3105ebe97ddd7add6c4257602029ea58e7a11fd0..96c5c7e650ebf927c6a7804eed895001e914a653 100644
+index 3105ebe97ddd7add6c4257602029ea58e7a11fd0..708846acd4c4d16ddff7bf0229c2b2356c5ae1b2 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -4,6 +4,7 @@ import { createManualModuleSource } from '@vitest/mocker/node';
+@@ -4,6 +4,8 @@ import { createManualModuleSource } from '@vitest/mocker/node';
  import c from 'tinyrainbow';
  import { createDebugger, BrowserConnectionError, isCSSRequest } from 'vitest/node';
  import { mkdir, unlink } from 'node:fs/promises';
++import { existsSync } from 'node:fs';
 +import { createHash } from 'node:crypto';
  import { fileURLToPath } from 'node:url';
  
  const _DRIVE_LETTER_START_RE = /^[A-Za-z]:\//;
-@@ -694,18 +695,27 @@ function parseLocation(context, stack) {
+@@ -613,10 +615,11 @@ const startChunkTrace = async (command, { name, title }) => {
+ 		}
+ 		const path = resolveTracesPath(command, name);
+ 		provider.pendingTraces.set(path, sessionId);
+-		await context.tracing.startChunk({
+-			name,
+-			title
+-		});
++		// Playwright names a chunk's working files after `name` in a directory shared by every
++		// context of the browser. Test files that run the same test titles side by side then
++		// write into the same files, and `stopChunk` fails. Without a name each context keeps
++		// its own unique working files, and the zip still lands at `path`.
++		await context.tracing.startChunk({ title });
+ 		return;
+ 	}
+ 	throw new TypeError(`The ${provider.name} provider does not support tracing.`);
+@@ -627,7 +630,13 @@ const stopChunkTrace = async (context, { name }) => {
+ 		assertBrowserApiWrite(context.project, path);
+ 		assertBrowserFileAccess(context.project, path);
+ 		context.provider.pendingTraces.delete(path);
+-		await context.context.tracing.stopChunk({ path });
++		// A trace is a debugging aid, so failing to write one must never fail the test.
++		try {
++			await context.context.tracing.stopChunk({ path });
++		} catch (error) {
++			console.warn(`[vitest] Failed to write trace ${path}: ${error instanceof Error ? error.message : error}`);
++			await unlink(path).catch(() => {});
++		}
+ 		return { tracePath: path };
+ 	}
+ 	throw new TypeError(`The ${context.provider.name} provider does not support tracing.`);
+@@ -694,18 +703,27 @@ function parseLocation(context, stack) {
  	const parsedStacks = context.project.browser.parseStacktrace(stack);
  	return parsedStacks[0];
  }
@@ -40,3 +72,12 @@ index 3105ebe97ddd7add6c4257602029ea58e7a11fd0..96c5c7e650ebf927c6a7804eed895001
  }
  const deleteTracing = async (context, { traces }) => {
  	if (!context.testPath) {
+@@ -729,7 +747,7 @@ const deleteTracing = async (context, { traces }) => {
+ };
+ const annotateTraces = async ({ project }, { testId, traces }) => {
+ 	const vitest = project.vitest;
+-	await Promise.all(traces.map((trace) => {
++	await Promise.all(traces.filter((trace) => existsSync(trace)).map((trace) => {
+ 		assertBrowserApiWrite(project, trace);
+ 		assertBrowserFileAccess(project, trace);
+ 		const entity = vitest.state.getReportedEntityById(testId);
