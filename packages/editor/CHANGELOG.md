@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.2.9
+
+### Patch Changes
+
+- [#3471](https://github.com/portabletext/editor/pull/3471) [`4a8c44c`](https://github.com/portabletext/editor/commit/4a8c44ca0366b5b98677c6d9539b82be3ecc5510) Thanks [@christianhg](https://github.com/christianhg)! - fix: classify Hangul syllables with a range check instead of lookup regexes
+  
+  The editor's grapheme segmentation now tells Hangul LV and LVT syllables apart with the Unicode composition formula instead of two lookup tables listing all 11,172 syllables. Cursor movement and deletion over Korean text behave exactly as before, and the main `@portabletext/editor` entry ships 3,468 fewer bytes of gzipped JavaScript.
+
 ## 8.2.8
 
 ### Patch Changes
