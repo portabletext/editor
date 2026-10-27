@@ -8,7 +8,7 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {expect, vi} from 'vitest'
+import {expect} from 'vitest'
 import {page, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import emojiPickerFeature from './emoji-picker.feature?raw'
@@ -35,12 +35,8 @@ Feature({
       context.keywordLocator = page.getByTestId('keyword')
       context.matchesLocator = page.getByTestId('matches')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.matchesLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.matchesLocator).toBeInTheDocument()
     }),
   ],
   featureText: emojiPickerFeature,

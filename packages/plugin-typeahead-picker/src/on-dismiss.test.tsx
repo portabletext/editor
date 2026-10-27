@@ -80,9 +80,7 @@ Feature({
       context.editor = editor
       context.stateLocator = page.getByTestId('state')
 
-      await vi.waitFor(() =>
-        expect.element(context.stateLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.stateLocator).toBeInTheDocument()
     }),
   ],
   featureText: onDismissFeature,

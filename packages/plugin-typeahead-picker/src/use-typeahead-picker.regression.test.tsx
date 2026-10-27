@@ -102,7 +102,7 @@ test('Scenario: activating the picker does not infinite-loop', async () => {
   })
 
   const stateLocator = page.getByTestId('state')
-  await vi.waitFor(() => expect.element(stateLocator).toBeInTheDocument())
+  await expect.element(stateLocator).toBeInTheDocument()
   expect(stateLocator.element().textContent).toEqual('idle')
 
   await userEvent.click(locator)
