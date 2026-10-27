@@ -12,7 +12,7 @@ import type {InputRuleGuard} from '@portabletext/plugin-input-rule'
  * certain decorators.
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
  * const guard = createDecoratorGuard({
  *  decorators: ({context}) => context.schema.decorators.flatMap((decorator) => decorator.name === 'code' ? [] : [decorator.name]),
  * })
