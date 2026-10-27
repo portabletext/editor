@@ -80,6 +80,7 @@ import {InlineObjectsPlugin} from './plugins/plugin.inline-objects'
 import {markdownShortcutsPluginProps} from './plugins/plugin.markdown'
 import {MarkdownDeserializerPlugin} from './plugins/plugin.markdown-deserializer'
 import {PresencePlugin} from './plugins/plugin.presence'
+import {SlackClipboardPlugin} from './plugins/plugin.slack-clipboard'
 import {TablePlugin} from './plugins/plugin.table'
 import {TextFileDeserializerPlugin} from './plugins/plugin.text-file-deserializer'
 import {markdownOptions} from './previews/markdown-options'
@@ -179,6 +180,9 @@ export function Editor(props: {
                   ) : null}
                   {featureFlags.markdownDeserializerPlugin ? (
                     <MarkdownDeserializerPlugin />
+                  ) : null}
+                  {featureFlags.slackClipboardPlugin ? (
+                    <SlackClipboardPlugin />
                   ) : null}
                   {featureFlags.markdownPlugin ? (
                     <MarkdownShortcutsPlugin

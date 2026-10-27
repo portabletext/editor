@@ -142,6 +142,11 @@ export function EditorSettingsPopover(props: {editorRef: EditorActorRef}) {
               isSelected={featureFlags.markdownDeserializerPlugin}
               onChange={() => toggleFlag('markdownDeserializerPlugin')}
             />
+            <FeatureSwitch
+              label="Slack content"
+              isSelected={featureFlags.slackClipboardPlugin}
+              onChange={() => toggleFlag('slackClipboardPlugin')}
+            />
           </Section>
         </div>
       </Popover>
