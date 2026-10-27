@@ -148,7 +148,7 @@ async function createSyncedEditor(options: {
   )
 
   const locator = page.getByRole('textbox')
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await expect.element(locator).toBeInTheDocument()
 
   return {
     editor: editorRef.current!,
