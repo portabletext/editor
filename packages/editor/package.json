@@ -69,7 +69,7 @@
     }
   },
   "scripts": {
-    "build": "pkg-utils build --strict --check",
+    "build": "node ../../build-config/build-split-dts.js lib",
     "check:types": "tsc",
     "check:types:watch": "tsc --watch",
     "clean": "del .turbo && del lib && del node_modules",
