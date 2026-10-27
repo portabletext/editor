@@ -84,7 +84,7 @@ const calloutContainers = [
 ]
 
 describe('container normalization', () => {
-  test('top-level registration is inert at a position where schema declares the type without the registered arrayField', async () => {
+  test('Scenario: A top-level registration stays inert where the schema declares the type without the registered arrayField', async () => {
     // Registration is type-keyed; activation is position-gated.
     // The test schema declares `row` twice:
     //   - root: `{name: 'row'}` (void, no fields)
@@ -136,7 +136,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('container block normalizes to cursor-ready structure', async () => {
+  test('Scenario: A container block normalizes to a cursor-ready structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -277,7 +277,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('callout container normalizes to cursor-ready structure', async () => {
+  test('Scenario: A callout container normalizes to a cursor-ready structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -387,7 +387,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('text block with missing children normalizes to have empty span', async () => {
+  test('Scenario: A text block with missing children normalizes to have an empty span', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
 
@@ -424,7 +424,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('incoming patch unsets container children restores structure', async () => {
+  test('Scenario: An incoming patch that unsets container children has the structure restored', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -584,7 +584,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('container with text block missing children normalizes the block', async () => {
+  test('Scenario: A text block missing children inside a container is normalized', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -722,7 +722,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('duplicate keys in container children are fixed', async () => {
+  test('Scenario: Duplicate keys in container children are fixed', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -821,7 +821,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('three container children sharing a `_key` each end with a distinct key', async () => {
+  test('Scenario: Three container children sharing a `_key` each end with a distinct key', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
@@ -956,7 +956,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('incoming patch unsets container field and normalization restores it', async () => {
+  test('Scenario: An incoming patch that unsets a container field has the field restored by normalization', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1044,7 +1044,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('multiple containers in same document normalize independently', async () => {
+  test('Scenario: Multiple containers in the same document normalize independently', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1129,7 +1129,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('container inserted via incoming patch normalizes', async () => {
+  test('Scenario: A container inserted via an incoming patch is normalized', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1195,7 +1195,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('void container with empty child array is not normalized', async () => {
+  test('Scenario: A void container with an empty child array is not normalized', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1240,7 +1240,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('deeply nested container block with missing children is normalized', async () => {
+  test('Scenario: A deeply nested container block with missing children is normalized', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1333,7 +1333,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('removing last child from container triggers normalization', async () => {
+  test('Scenario: Removing the last child from a container triggers normalization', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1419,7 +1419,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('late container registration normalizes existing void container', async () => {
+  test('Scenario: A late container registration normalizes an existing void container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1496,7 +1496,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('container block with no `_key` gets a key via numeric index', async () => {
+  test('Scenario: A container block with no `_key` gets a key via numeric index', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1597,7 +1597,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('non-block editable field produces warning and is excluded', async () => {
+  test('Scenario: A non-block editable field produces a warning and is excluded', async () => {
     const cardSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -1682,7 +1682,7 @@ describe('container normalization', () => {
     warnSpy.mockRestore()
   })
 
-  test('three independent containers normalize without interference', async () => {
+  test('Scenario: Three independent containers normalize without interference', async () => {
     const multiContainerSchemaDefinition = defineSchema({
       blockObjects: [
         {
@@ -1875,7 +1875,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('full hierarchy normalizes all levels', async () => {
+  test('Scenario: A full container hierarchy normalizes at all levels', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1973,7 +1973,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('shallow table normalizes to full cursor-ready structure', async () => {
+  test('Scenario: A shallow table normalizes to a full cursor-ready structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2067,7 +2067,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('unregistering container reverts container to void', async () => {
+  test('Scenario: Unregistering a container reverts it to void', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2161,7 +2161,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('calling the unregister function returned from editor.registerNode reverts container to void', async () => {
+  test('Scenario: Calling the unregister function returned from editor.registerNode reverts the container to void', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2250,7 +2250,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('unmounting ContainerPlugin reverts container to void', async () => {
+  test('Scenario: Unmounting ContainerPlugin reverts the container to void', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2340,7 +2340,7 @@ describe('container normalization', () => {
       ])
     })
   })
-  test('partial nested subtree inserted via patches normalizes leaves to placeholder blocks', async () => {
+  test('Scenario: A partial nested subtree inserted via patches has its leaves normalized to placeholder blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2448,7 +2448,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('partial nested subtree inserted via insert.block event normalizes leaves to placeholder blocks', async () => {
+  test('Scenario: A partial nested subtree inserted via an insert.block event has its leaves normalized to placeholder blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2545,7 +2545,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('partial row inserted into existing table via patches normalizes cell content', async () => {
+  test('Scenario: A partial row inserted into an existing table via patches has its cell content normalized', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
 
@@ -2661,7 +2661,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('partial row inserted into existing table via insert.block normalizes cell content', async () => {
+  test('Scenario: A partial row inserted into an existing table via insert.block has its cell content normalized', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
 
@@ -2769,7 +2769,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('partial row inserted at nested path with nested-`of` registration normalizes cell content', async () => {
+  test('Scenario: A partial row inserted at a nested path with a nested-`of` registration has its cell content normalized', async () => {
     // Mirrors plugin-table's exact setup: single top-level container with
     // nested-`of` children, partial row inserted at a NESTED path.
     const keyGenerator = createTestKeyGenerator()
@@ -2898,7 +2898,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('emptying a container through an incoming patch inserts a placeholder block', async () => {
+  test('Scenario: Emptying a container through an incoming patch inserts a placeholder block', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3013,7 +3013,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('unsetting a container field through an incoming patch sets the field with a placeholder block', async () => {
+  test('Scenario: Unsetting a container field through an incoming patch sets the field with a placeholder block', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3122,7 +3122,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('a typeless node inserted into a container gets the block type', async () => {
+  test('Scenario: A typeless node inserted into a container gets the block type', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3250,7 +3250,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('a row inserted with a duplicate `_key` is renamed via numeric index', async () => {
+  test('Scenario: A row inserted with a duplicate `_key` is renamed via numeric index', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3358,7 +3358,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('undoing a local unset of a container field unsets the field set with a placeholder block', async () => {
+  test('Scenario: Undoing a local unset of a container field unsets the field set with a placeholder block', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3480,7 +3480,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('undoing a local set of a container field to `null` sets the field back to `null`', async () => {
+  test('Scenario: Undoing a local set of a container field to `null` sets the field back to `null`', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3602,7 +3602,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('undoing a local emptying of a container field removes the inserted placeholder block', async () => {
+  test('Scenario: Undoing a local emptying of a container field removes the inserted placeholder block', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -3730,7 +3730,7 @@ describe('container normalization', () => {
     })
   })
 
-  test('undo keeps the placeholder block an incoming container field unset produced', async () => {
+  test('Scenario: Undo keeps the placeholder block an incoming container field unset produced', async () => {
     const patches: Array<Patch> = []
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()

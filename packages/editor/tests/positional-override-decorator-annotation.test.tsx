@@ -46,7 +46,7 @@ const calloutAnnotationSchema = defineSchema({
 })
 
 describe('positional overrides', () => {
-  test('positional decorator override wins over global inside the parent; global still fires outside', async () => {
+  test('Scenario: A positional decorator override wins over the global render inside the parent while the global render still fires outside', async () => {
     const keyGenerator = createTestKeyGenerator()
     const outsideBlockKey = keyGenerator()
     const outsideSpanKey = keyGenerator()
@@ -113,7 +113,7 @@ describe('positional overrides', () => {
     ).toEqual('foo')
   })
 
-  test('positional decorator with render: undefined falls through to the global render', async () => {
+  test('Scenario: A positional decorator with render: undefined falls through to the global render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const insideBlockKey = keyGenerator()
@@ -164,7 +164,7 @@ describe('positional overrides', () => {
     })
   })
 
-  test("positional '*' decorator beats global exact", async () => {
+  test("Scenario: A positional '*' decorator beats a global exact decorator", async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const insideBlockKey = keyGenerator()
@@ -224,7 +224,7 @@ describe('positional overrides', () => {
     })
   })
 
-  test('positional annotation override wins inside the parent, receives the markDef as `annotation`', async () => {
+  test('Scenario: A positional annotation override wins inside the parent and receives the markDef as `annotation`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const outsideBlockKey = keyGenerator()
     const outsideSpanKey = keyGenerator()
@@ -325,7 +325,7 @@ describe('positional overrides', () => {
     })
   })
 
-  test('positional annotation with render: undefined falls through to the global render', async () => {
+  test('Scenario: A positional annotation with render: undefined falls through to the global render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const insideBlockKey = keyGenerator()
@@ -388,7 +388,7 @@ describe('positional overrides', () => {
     })
   })
 
-  test("positional '*' annotation beats global exact", async () => {
+  test("Scenario: A positional '*' annotation beats a global exact annotation", async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const insideBlockKey = keyGenerator()
@@ -460,7 +460,7 @@ describe('positional overrides', () => {
     })
   })
 
-  test('positional exact decorator with render: undefined falls through to global, ignoring a sibling positional wildcard', async () => {
+  test('Scenario: A positional exact decorator with render: undefined falls through to the global render, ignoring a sibling positional wildcard', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const insideBlockKey = keyGenerator()

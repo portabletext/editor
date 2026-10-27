@@ -81,7 +81,7 @@ const calloutValue = (block: any) => ({
 })
 
 describe('Inline-level positional override: defineInlineObject', () => {
-  test('1. Global render fires when no positional override exists', async () => {
+  test('Scenario: The global render fires when no positional override exists', async () => {
     const globalMention = defineInlineObject({
       type: 'mention',
       render: ({attributes, children}) => (
@@ -105,7 +105,7 @@ describe('Inline-level positional override: defineInlineObject', () => {
     })
   })
 
-  test('2. Positional render in text-block of overrides global', async () => {
+  test("Scenario: A positional render in the text block's of overrides the global render", async () => {
     const globalMention = defineInlineObject({
       type: 'mention',
       render: ({attributes, children}) => (
@@ -156,7 +156,7 @@ describe('Inline-level positional override: defineInlineObject', () => {
     })
   })
 
-  test('3b. Positional render: (props) => props.renderDefault(props) renders engine default at this position', async () => {
+  test('Scenario: A positional render delegating to props.renderDefault(props) renders the engine default at that position', async () => {
     const globalMention = defineInlineObject({
       type: 'mention',
       render: ({attributes, children}) => (
@@ -207,7 +207,7 @@ describe('Inline-level positional override: defineInlineObject', () => {
     })
   })
 
-  test('4. Positional (no render) falls through to global', async () => {
+  test('Scenario: A positional registration without a render falls through to the global render', async () => {
     const globalMention = defineInlineObject({
       type: 'mention',
       render: ({attributes, children}) => (
@@ -248,7 +248,7 @@ describe('Inline-level positional override: defineInlineObject', () => {
     })
   })
 
-  test('5. Positional (no render), no global -> engine default', async () => {
+  test('Scenario: A positional registration without a render and no global render falls back to the engine default', async () => {
     const calloutMention = defineInlineObject({type: 'mention'})
     const calloutBlock = defineTextBlock({
       type: 'block',
@@ -288,7 +288,7 @@ describe('Inline-level positional override: defineInlineObject', () => {
 })
 
 describe('Inline-level positional override: defineSpan', () => {
-  test('1. Global render fires when no positional override exists', async () => {
+  test('Scenario: The global render fires when no positional override exists', async () => {
     const globalSpan = defineSpan({
       type: 'span',
       render: ({attributes, children}) => (
@@ -315,7 +315,7 @@ describe('Inline-level positional override: defineSpan', () => {
     })
   })
 
-  test('2. Positional render in text-block of overrides global', async () => {
+  test("Scenario: A positional render in the text block's of overrides the global render", async () => {
     const globalSpan = defineSpan({
       type: 'span',
       render: ({attributes, children}) => (
@@ -366,7 +366,7 @@ describe('Inline-level positional override: defineSpan', () => {
     })
   })
 
-  test('3b. Positional render: (props) => props.renderDefault(props) renders engine default at this position', async () => {
+  test('Scenario: A positional render delegating to props.renderDefault(props) renders the engine default at that position', async () => {
     const globalSpan = defineSpan({
       type: 'span',
       render: ({attributes, children}) => (
@@ -420,7 +420,7 @@ describe('Inline-level positional override: defineSpan', () => {
     })
   })
 
-  test('4. Positional (no render) falls through to global', async () => {
+  test('Scenario: A positional registration without a render falls through to the global render', async () => {
     const globalSpan = defineSpan({
       type: 'span',
       render: ({attributes, children}) => (
@@ -461,7 +461,7 @@ describe('Inline-level positional override: defineSpan', () => {
     })
   })
 
-  test('5. Positional (no render), no global -> engine default', async () => {
+  test('Scenario: A positional registration without a render and no global render falls back to the engine default', async () => {
     const calloutSpan = defineSpan({type: 'span'})
     const calloutBlock = defineTextBlock({
       type: 'block',

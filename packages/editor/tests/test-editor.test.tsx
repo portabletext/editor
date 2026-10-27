@@ -18,7 +18,7 @@ import {createTestEditor} from '../src/test/vitest'
  * latent in CI; embedders that share a DOM across editors hit it.
  */
 
-test('returns a locator scoped to the rendered editor', async () => {
+test('Scenario: Each test editor gets a locator scoped to its own rendered editor', async () => {
   const first = await createTestEditor()
   const second = await createTestEditor()
 

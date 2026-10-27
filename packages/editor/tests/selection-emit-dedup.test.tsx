@@ -5,7 +5,7 @@ import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('selection emission dedup', () => {
-  test('a remote patch that re-spreads the selection range does not emit a duplicate selection', async () => {
+  test('Scenario: A remote patch that re-spreads the selection range does not emit a duplicate selection', async () => {
     const onSelection = vi.fn()
     const keyGenerator = createTestKeyGenerator()
     const initialValue: Array<PortableTextBlock> = [
@@ -75,7 +75,7 @@ describe('selection emission dedup', () => {
     expect(onSelection).toHaveBeenCalledTimes(1)
   })
 
-  test('a genuine selection move still emits a selection', async () => {
+  test('Scenario: A genuine selection move still emits a selection', async () => {
     const onSelection = vi.fn()
     const keyGenerator = createTestKeyGenerator()
     const initialValue: Array<PortableTextBlock> = [

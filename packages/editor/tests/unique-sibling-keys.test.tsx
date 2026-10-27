@@ -12,7 +12,7 @@ import {getTextSelection} from '../test-utils/text-selection'
  * - markDef `_key`s in individual blocks
  */
 describe('unique sibling `_key`s', () => {
-  test('splitting span with a decorator', async () => {
+  test('Scenario: Splitting a span with a decorator leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -60,7 +60,7 @@ describe('unique sibling `_key`s', () => {
     })
   })
 
-  test('splitting span with an annotation', async () => {
+  test('Scenario: Splitting a span with an annotation leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -108,7 +108,7 @@ describe('unique sibling `_key`s', () => {
     })
   })
 
-  test('splitting a block with Enter', async () => {
+  test('Scenario: Splitting a block with Enter leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -171,7 +171,7 @@ describe('unique sibling `_key`s', () => {
     })
   })
 
-  test('merging blocks with Backspace', async () => {
+  test('Scenario: Merging blocks with Backspace leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKeyA = keyGenerator()
     const spanKey = keyGenerator()
@@ -236,7 +236,7 @@ describe('unique sibling `_key`s', () => {
     })
   })
 
-  test('splitting and merging annotated block', async () => {
+  test('Scenario: Splitting and merging an annotated block leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -326,7 +326,7 @@ describe('unique sibling `_key`s', () => {
     })
   })
 
-  test('moving a block', async () => {
+  test('Scenario: Moving a block leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKeyA = keyGenerator()
     const spanKeyA = keyGenerator()
