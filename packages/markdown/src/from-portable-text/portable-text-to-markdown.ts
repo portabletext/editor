@@ -4,6 +4,7 @@ import type {
   PortableTextBlock,
   TypedObject,
 } from '@portabletext/types'
+import {defaultKeyGenerator} from '../key-generator'
 import {buildListIndexMap} from './build-list-index-map'
 import type {
   SerializeDegradation,
@@ -166,7 +167,7 @@ export function portableTextToMarkdownWithLostContent(
 }
 
 function renderMarkdown(
-  blocks: Array<TypedObject>,
+  inputBlocks: Array<TypedObject>,
   options: Options,
   onLostContent:
     | ((
@@ -207,8 +208,14 @@ function renderMarkdown(
 
   const tracksDegradations = Boolean(options.onDegradation || onLostContent)
   const originalBlockKeys = tracksDegradations
-    ? blocks.map((node) => node._key)
+    ? inputBlocks.map((node) => node._key)
     : undefined
+
+  // List numbering is looked up by `_key`, so keyless blocks get one, on a
+  // copy so the caller's blocks are left as they were passed in.
+  const blocks = inputBlocks.map((block) =>
+    block._key ? block : {...block, _key: defaultKeyGenerator()},
+  )
 
   const {listIndexMap, listDepthMap} = buildListIndexMap(blocks)
 
