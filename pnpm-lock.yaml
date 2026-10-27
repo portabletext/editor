@@ -363,6 +363,9 @@ importers:
       '@portabletext/react':
         specifier: catalog:tooling
         version: 8.0.1(react@19.3.1)
+      '@portabletext/slack':
+        specifier: workspace:*
+        version: link:../../packages/slack
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar

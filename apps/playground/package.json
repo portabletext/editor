@@ -29,6 +29,7 @@
     "@portabletext/plugin-typeahead-picker": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",
     "@portabletext/react": "catalog:tooling",
+    "@portabletext/slack": "workspace:*",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "catalog:",
     "emojilib": "^4.0.2",

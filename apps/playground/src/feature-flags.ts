@@ -19,6 +19,7 @@ export type EditorFeatureFlags = {
   imageDeserializerPlugin: boolean
   htmlDeserializerPlugin: boolean
   markdownDeserializerPlugin: boolean
+  slackClipboardPlugin: boolean
   textFileDeserializerPlugin: boolean
   emojiPickerPlugin: boolean
   mentionPickerPlugin: boolean
@@ -41,6 +42,7 @@ export const defaultEditorFeatureFlags: EditorFeatureFlags = {
   imageDeserializerPlugin: false,
   htmlDeserializerPlugin: true,
   markdownDeserializerPlugin: true,
+  slackClipboardPlugin: true,
   textFileDeserializerPlugin: false,
   emojiPickerPlugin: true,
   mentionPickerPlugin: true,
