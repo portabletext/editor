@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import {playwright} from '@vitest/browser-playwright'
 import {defineConfig} from 'vitest/config'
+import {editorDeps} from '../../build-config/vitest-editor-deps.js'
 
 export default defineConfig({
   test: {
@@ -12,6 +13,7 @@ export default defineConfig({
         },
       },
       {
+        optimizeDeps: {include: editorDeps},
         // Resolves the monorepo-only `@portabletext/editor/test*` specifiers
         // through this package's tsconfig `paths`.
         resolve: {tsconfigPaths: true},
