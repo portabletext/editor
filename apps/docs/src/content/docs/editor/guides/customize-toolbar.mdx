@@ -75,25 +75,32 @@ The toolbar library is more closely linked to parts of the PTE—like decorators
 You can send [synthetic events](/editor/reference/behavior-api/) from within the toolbar using `editor.send`.
 
 ```tsx
-import {useEditor} from '@portabletext/editor'
+import {useEditor, useEditorSelector} from '@portabletext/editor'
 
 function Toolbar() {
   const editor = useEditor()
-  // ...
+  const decorators = useEditorSelector(
+    editor,
+    (snapshot) => snapshot.context.schema.decorators,
+  )
   return (
     <>
-      <button
-        key={decorator.name}
-        onClick={() => {
-          // Send decorator toggle event
-          editor.send({
-            type: 'decorator.toggle',
-            decorator: decorator.name,
-          })
-        }}
-      >
-        {decorator.name}
-      </button>
+      {decorators.map((decorator) => (
+        <button
+          key={decorator.name}
+          onClick={() => {
+            // Send decorator toggle event
+            editor.send({
+              type: 'decorator.toggle',
+              decorator: decorator.name,
+            })
+            // Return focus to the editor
+            editor.send({type: 'focus'})
+          }}
+        >
+          {decorator.name}
+        </button>
+      ))}
     </>
   )
 }
@@ -267,7 +274,7 @@ This approach is specific to accessing state with `useEditor`. While the hooks f
 
 A few useful selectors for using in the toolbar are:
 
-- `getActiveStyle`: Get's the active style of the selection.
+- `getActiveStyle`: Gets the active style of the selection.
 - `isActiveDecorator`: Returns `true` if the active selection matches the decorator.
 - `isActiveAnnotation`: Returns `true` if the active selection matches the annotation.
 - `isActiveStyle`: Returns `true` if the active selection matches the style.
@@ -281,6 +288,13 @@ import * as selectors from '@portabletext/editor/selectors'
 You can then combine these with the `useEditorSelector` hook in your toolbar components. For example, this button will underline if the selected text matches the annotation.
 
 ```tsx
+import {
+  useEditor,
+  useEditorSelector,
+  type AnnotationSchemaType,
+} from '@portabletext/editor'
+import * as selectors from '@portabletext/editor/selectors'
+
 function AnnotationButton(props: {annotation: AnnotationSchemaType}) {
   const editor = useEditor()
   // useEditorSelector takes the editor instance and the selector

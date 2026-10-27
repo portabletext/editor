@@ -279,12 +279,10 @@ function Toolbar() {
 
   return (
     <div>
-      {toolbarSchema.decorators?.map((decorator) => (
+      {toolbarSchema.decorators.map((decorator) => (
         <DecoratorButton key={decorator.name} schemaType={decorator} />
       ))}
-      {toolbarSchema.styles ? (
-        <StyleButtons schemaTypes={toolbarSchema.styles} />
-      ) : null}
+      <StyleButtons schemaTypes={toolbarSchema.styles} />
     </div>
   )
 }
@@ -573,7 +571,7 @@ Learn more about [behaviors](/editor/concepts/behavior/) and how to [create your
 <CardGrid>
   <LinkCard
     title="Customize rendering"
-    description="Span-level render props and additional node registrations."
+    description="Decorator and annotation registrations, placeholder text, and range decorations."
     href="/editor/guides/custom-rendering/"
   />
   <LinkCard

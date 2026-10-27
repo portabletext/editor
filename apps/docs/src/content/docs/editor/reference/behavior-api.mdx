@@ -27,6 +27,8 @@ The `dom` parameter provides access to the editor's rendered DOM:
 ### Example
 
 ```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const noLowerCaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -80,6 +82,8 @@ Properties:
 - event: Synthetic event object
 
 ```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const executedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -115,6 +119,8 @@ Properties:
 - event: Behavior event object
 
 ```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const forwardedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -142,7 +148,7 @@ const forwardedUppercaseA = defineBehavior({
 
 ### `raise`
 
-The `raise` action type is used to sends events back into the editor.
+The `raise` action type is used to send events back into the editor.
 
 Properties:
 
@@ -150,6 +156,8 @@ Properties:
 - event: Behavior event object
 
 ```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
