@@ -52,6 +52,7 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | [`@portabletext/html`](./packages/html/)                             | Convert HTML to Portable Text                                      |
 | [`@portabletext/block-tools`](./packages/block-tools/)               | Sanity-flavored HTML to Portable Text (wraps `@portabletext/html`) |
 | [`@portabletext/markdown`](./packages/markdown/)                     | Convert Portable Text to Markdown and back again                   |
+| [`@portabletext/slack`](./packages/slack/)                           | Convert Portable Text to and from Slack's clipboard format         |
 | [`@portabletext/keyboard-shortcuts`](./packages/keyboard-shortcuts/) | Platform-aware keyboard shortcuts                                  |
 | [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas           |
 | [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                                    |

@@ -24,6 +24,7 @@
         "packages/repair/package.json",
         "packages/sanity-bridge/package.json",
         "packages/schema/package.json",
+        "packages/slack/package.json",
         "packages/toolbar/package.json"
       ],
       "matchDepTypes": ["dependencies", "peerDependencies"],

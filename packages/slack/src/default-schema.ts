@@ -1,0 +1,224 @@
+// Keep in sync with `packages/markdown/src/default-schema.ts`: Slack paste
+// builds the same default schema as `markdownToPortableText` so a host gets
+// the same shapes from either converter.
+
+import {
+  compileSchema,
+  defineSchema,
+  type AnnotationDefinition,
+  type BlockObjectDefinition,
+  type DecoratorDefinition,
+  type ListDefinition,
+  type StyleDefinition,
+} from '@portabletext/schema'
+
+/********************
+ * Default style definitions
+ ********************/
+
+export const normalStyleDefinition = {
+  name: 'normal',
+} as const satisfies StyleDefinition
+
+const h1StyleDefinition = {
+  name: 'h1',
+} as const satisfies StyleDefinition
+
+const h2StyleDefinition = {
+  name: 'h2',
+} as const satisfies StyleDefinition
+
+const h3StyleDefinition = {
+  name: 'h3',
+} as const satisfies StyleDefinition
+
+const h4StyleDefinition = {
+  name: 'h4',
+} as const satisfies StyleDefinition
+
+const h5StyleDefinition = {
+  name: 'h5',
+} as const satisfies StyleDefinition
+
+const h6StyleDefinition = {
+  name: 'h6',
+} as const satisfies StyleDefinition
+
+export const blockquoteStyleDefinition = {
+  name: 'blockquote',
+} as const satisfies StyleDefinition
+
+/********************
+ * Default list definitions
+ ********************/
+
+export const defaultOrderedListItemDefinition = {
+  name: 'number',
+} as const satisfies ListDefinition
+
+export const defaultUnorderedListItemDefinition = {
+  name: 'bullet',
+} as const satisfies ListDefinition
+
+const defaultTaskListItemDefinition = {
+  name: 'task',
+} as const satisfies ListDefinition
+
+/********************
+ * Default decorator definitions
+ ********************/
+
+export const defaultStrongDecoratorDefinition = {
+  name: 'strong',
+} as const satisfies DecoratorDefinition
+
+export const defaultEmDecoratorDefinition = {
+  name: 'em',
+} as const satisfies DecoratorDefinition
+
+export const defaultCodeDecoratorDefinition = {
+  name: 'code',
+} as const satisfies DecoratorDefinition
+
+export const defaultStrikeThroughDecoratorDefinition = {
+  name: 'strike-through',
+} as const satisfies DecoratorDefinition
+
+/********************
+ * Default annotation definitions
+ ********************/
+
+export const defaultLinkObjectDefinition = {
+  name: 'link',
+  fields: [
+    {name: 'href', type: 'string'},
+    {name: 'title', type: 'string'},
+  ],
+} as const satisfies AnnotationDefinition
+
+/********************
+ * Default object definitions
+ ********************/
+
+const defaultCodeObjectDefinition = {
+  name: 'code',
+  fields: [
+    {name: 'language', type: 'string'},
+    {name: 'code', type: 'string'},
+  ],
+} as const satisfies BlockObjectDefinition
+
+const defaultImageObjectDefinition = {
+  name: 'image',
+  fields: [
+    {name: 'src', type: 'string'},
+    {name: 'alt', type: 'string'},
+    {name: 'title', type: 'string'},
+  ],
+} as const satisfies BlockObjectDefinition
+
+const defaultHorizontalRuleObjectDefinition = {
+  name: 'horizontal-rule',
+} as const satisfies BlockObjectDefinition
+
+const defaultHtmlObjectDefinition = {
+  name: 'html',
+  fields: [{name: 'html', type: 'string'}],
+} as const satisfies BlockObjectDefinition
+
+/**
+ * Mirrors the canonical shape `@portabletext/plugin-table` expects: `table`
+ * (`headerRows`, `rows`), `row` (`cells`), `cell` (`value`, text blocks or
+ * standalone `image` objects). `alignment` is a `@portabletext/markdown`
+ * extension field; `@portabletext/plugin-table` ignores it. Keep this in
+ * sync with `packages/plugin-table/src/table-config.ts`'s
+ * `defaultTableConfig`.
+ */
+const defaultTableObjectDefinition = {
+  name: 'table',
+  fields: [
+    {name: 'headerRows', type: 'number'},
+    {name: 'alignment', type: 'array'},
+    {
+      name: 'rows',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          name: 'row',
+          fields: [
+            {
+              name: 'cells',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'cell',
+                  fields: [
+                    {
+                      name: 'value',
+                      type: 'array',
+                      of: [{type: 'block'}, {type: 'image'}],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+} as const satisfies BlockObjectDefinition
+
+const defaultCalloutObjectDefinition = {
+  name: 'callout',
+  fields: [
+    {name: 'tone', type: 'string'},
+    {name: 'content', type: 'array'},
+  ],
+} as const satisfies BlockObjectDefinition
+
+/**
+ * The default schema for converting Slack content to Portable Text.
+ *
+ * @public
+ */
+export const defaultSchema = compileSchema(
+  defineSchema({
+    block: {
+      fields: [{name: 'checked', type: 'boolean'}],
+    },
+    styles: [
+      normalStyleDefinition,
+      h1StyleDefinition,
+      h2StyleDefinition,
+      h3StyleDefinition,
+      h4StyleDefinition,
+      h5StyleDefinition,
+      h6StyleDefinition,
+      blockquoteStyleDefinition,
+    ],
+    lists: [
+      defaultOrderedListItemDefinition,
+      defaultUnorderedListItemDefinition,
+      defaultTaskListItemDefinition,
+    ],
+    decorators: [
+      defaultStrongDecoratorDefinition,
+      defaultEmDecoratorDefinition,
+      defaultCodeDecoratorDefinition,
+      defaultStrikeThroughDecoratorDefinition,
+    ],
+    annotations: [defaultLinkObjectDefinition],
+    blockObjects: [
+      defaultCalloutObjectDefinition,
+      defaultCodeObjectDefinition,
+      defaultHorizontalRuleObjectDefinition,
+      defaultHtmlObjectDefinition,
+      defaultImageObjectDefinition,
+      defaultTableObjectDefinition,
+    ],
+    inlineObjects: [defaultImageObjectDefinition],
+  }),
+)
