@@ -1,4 +1,4 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, isTypedObject} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
@@ -8,7 +8,6 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {isTypedObject} from '../utils/asserters'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getContainerChildren} from './get-container-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
