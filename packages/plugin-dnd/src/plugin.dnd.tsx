@@ -429,7 +429,8 @@ export function useDropPosition(
 /**
  * Serialize a keyed path to a string using Sanity's bracket notation.
  * Duplicated from the editor's internal `serializePath`; see
- * `drag-selection.ts` for the duplication rationale.
+ * `drag-selection.ts` for the duplication rationale. Keep in sync with
+ * `packages/editor/src/paths/serialize-path.ts`.
  */
 function serializePath(path: Path): string {
   return path.reduce<string>((result, segment, index) => {
