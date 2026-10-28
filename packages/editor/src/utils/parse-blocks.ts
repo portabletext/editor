@@ -1,6 +1,7 @@
 import {
   getSubSchema,
   isSpan,
+  isTypedObject,
   type FieldDefinition,
   type OfDefinition,
   type PortableTextBlock,
@@ -10,7 +11,7 @@ import {
   type Schema,
   type TypedObject,
 } from '@portabletext/schema'
-import {isRecord, isTypedObject} from './asserters'
+import {isRecord} from './asserters'
 
 /**
  * `strict` validates and normalizes against the schema; use it at the

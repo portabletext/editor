@@ -1,5 +1,6 @@
 import type {EditorSelection} from '@portabletext/editor'
-import type {Path, PathSegment} from '@portabletext/patches'
+import {isEqualPaths, isKeyedSegment} from '@portabletext/editor/utils'
+import type {Path} from '@portabletext/patches'
 import {
   applyPatches,
   cleanupEfficiency,
@@ -118,10 +119,6 @@ function getValueAtPath(value: unknown, path: Path): unknown {
     }
   }
   return current
-}
-
-function isKeyedSegment(segment: PathSegment): segment is {_key: string} {
-  return typeof segment === 'object' && segment !== null && '_key' in segment
 }
 
 function toPlainTextWithChildSeparators(block: TextBlockLike): string {
@@ -328,17 +325,8 @@ export function relativeCommentPath(
   if (parsed.length < basePath.length) {
     return undefined
   }
-  for (let i = 0; i < basePath.length; i++) {
-    if (!segmentsEqual(basePath[i], parsed[i])) {
-      return undefined
-    }
+  if (!isEqualPaths(basePath, parsed.slice(0, basePath.length))) {
+    return undefined
   }
   return parsed.slice(basePath.length)
-}
-
-function segmentsEqual(a: PathSegment, b: PathSegment): boolean {
-  if (isKeyedSegment(a) && isKeyedSegment(b)) {
-    return a._key === b._key
-  }
-  return a === b
 }
