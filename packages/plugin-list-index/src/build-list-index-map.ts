@@ -12,7 +12,8 @@ import {isKeyedSegment, isTextBlock} from '@portabletext/editor/utils'
  *
  * Duplicated from the editor's internal `serializePath` rather than
  * imported: exporting it from core would add permanent public API for what
- * is an implementation detail of this plugin.
+ * is an implementation detail of this plugin. Keep in sync with
+ * `packages/editor/src/paths/serialize-path.ts`.
  */
 export function serializePath(path: Path): string {
   return path.reduce<string>((result, segment, index) => {
