@@ -897,9 +897,6 @@ export const PortableTextEditable = forwardRef<
         })
 
         mutationObserver.observe(editorElement, {
-          attributeOldValue: false,
-          attributes: false,
-          characterData: false,
           childList: true,
           subtree: true,
         })
