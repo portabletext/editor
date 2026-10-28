@@ -34,3 +34,32 @@ const ATTEMPT_WORST_SECONDS = ATTEMPT_SECONDS + JOIN_GRACE_SECONDS + FAILURE_DUM
 
 /** The longest a `typeOnDevice` call takes: two failed attempts with their dumps, the restart and the cleanup. */
 export const TYPE_ON_DEVICE_WORST_SECONDS = 2 * ATTEMPT_WORST_SECONDS + RESTART_SECONDS + JOIN_GRACE_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
+
+/**
+ * The device test timeout. A test that timed out leaves its cleanup running, and the next test waits for
+ * it before typing, so each test has room for one carried-over cleanup on top of its own worst case.
+ */
+export const DEVICE_TEST_TIMEOUT_SECONDS = TYPE_ON_DEVICE_WORST_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
+
+/** The device tests in one file. `scripts/lib/budget.test.ts` fails when a file declares more. */
+export const DEVICE_TESTS_PER_FILE = 3
+
+/**
+ * The global setup's `adb get-state`, which checks for a device. Stopping it after the timeout takes up to
+ * `JOIN_GRACE_SECONDS` more, after which the setup fails even when the process outlived SIGKILL.
+ */
+export const GLOBAL_SETUP_ADB_SECONDS = 30
+
+/** The global setup's request for the test page. */
+export const GLOBAL_SETUP_PAGE_SECONDS = 5
+
+/** Vitest's start, the collection of the file, the synchronous `afterAll` in `tests/setup.ts` and its exit. */
+export const VITEST_STARTUP_SECONDS = 60
+
+/**
+ * The longest a run of one device test file takes, which `scripts/run-on-device.sh` reads as the test
+ * stage's timeout. Cutting the run off earlier would stop Vitest before its last test times out and
+ * before `afterAll` in `tests/setup.ts` can name a driver fault.
+ */
+export const DEVICE_TEST_FILE_SECONDS =
+  DEVICE_TESTS_PER_FILE * DEVICE_TEST_TIMEOUT_SECONDS + GLOBAL_SETUP_ADB_SECONDS + JOIN_GRACE_SECONDS + GLOBAL_SETUP_PAGE_SECONDS + VITEST_STARTUP_SECONDS

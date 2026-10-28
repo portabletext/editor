@@ -1,5 +1,6 @@
 import {describe, expect, test} from 'vitest'
-import {withDriverRetry} from './driver.ts'
+import {typeOnDevice, withDriverRetry} from './driver.ts'
+import {runSuite} from './fixtures/run-suite.ts'
 
 describe(withDriverRetry.name, () => {
   test('a driver fault restarts and types once more', async () => {
@@ -79,4 +80,254 @@ describe(withDriverRetry.name, () => {
       calls: ['attempt 1'],
     })
   })
+})
+
+describe(typeOnDevice.name, () => {
+  test('stops a hung failure dump before the retry starts', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/retried-typing.ts',
+        setupFiles: ['scripts/fixtures/suites/dump-hangs.ts'],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {name: 'Scenario: Typing kyou after a driver fault', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+})
+
+describe('a digit in the typed text', () => {
+  test('retries an attempt whose text holds a digit the inputs do not, and returns a digit the prefix holds', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/typing-with-long-press-digit.ts',
+        setupFiles: ['scripts/fixtures/suites/device-types-digit-once.ts'],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: A long press types a digit on the first attempt',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A digit the prefix already holds is an editor result',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A digit on both attempts fails the test as a driver fault',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 30_000)
+})
+
+describe('an exception in the page', () => {
+  test('ends the call without a retry and fails the file of a test.fails test with the exception', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/page-throws-in-empty-block.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/page-throws-once.ts',
+          'tests/setup.ts',
+        ],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'The page threw while the driver typed, which can be an editor failure, so it is not retried: "Scenario: The editor throws while kyou is typed into an empty block": Uncaught in `window.__state()`: Error: getSnapshot failed.',
+      ],
+      tests: [
+        {
+          name: 'Scenario: The editor throws while kyou is typed into an empty block',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 30_000)
+})
+
+describe('an adb process that outlives SIGKILL', () => {
+  test('stops the call before the retry when it is left by the Chrome restart, and fails the file', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/chrome-restart-outlives-sigkill.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/adb-outlives-sigkill-once.ts',
+          'tests/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'adb shell am force-stop com.android.chrome (pid 4242) outlived SIGKILL and may still have touched the device during later tests, so no result in this file can be trusted.',
+      ],
+      tests: [
+        {
+          name: 'Scenario: Stopping Chrome for the retry leaves an adb process that outlives SIGKILL',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 30_000)
+
+  test('fails the file of a test.fails test when it is left by the final cleanup, and stops every later call', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/cleanup-outlives-sigkill.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/adb-outlives-sigkill-once.ts',
+          'tests/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'adb shell am force-stop com.android.chrome (pid 4242) outlived SIGKILL and may still have touched the device during later tests, so no result in this file can be trusted.',
+      ],
+      tests: [
+        {
+          name: 'Scenario: Stopping Chrome after typing leaves an adb process that outlives SIGKILL',
+          state: 'passed',
+        },
+        {name: 'Scenario: The next test types nothing', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+})
+
+describe('a test.fails device test with the device setup file', () => {
+  test('fails its file when the test times out while the driver still types', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/typing-hangs.ts',
+          'tests/setup.ts',
+        ],
+        testTimeout: 1_000,
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'The driver never returned a result and cleaned up in "Scenario: Typing kyou into an empty block", the test timed out or its cleanup failed. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.',
+      ],
+      tests: [
+        {name: 'Scenario: Typing kyou into an empty block', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+
+  test('fails its file when stopping Chrome after typing hangs until the test times out', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/chrome-stop-hangs.ts',
+          'tests/setup.ts',
+        ],
+        testTimeout: 1_000,
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'The driver never returned a result and cleaned up in "Scenario: Typing kyou into an empty block", the test timed out or its cleanup failed. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.',
+      ],
+      tests: [
+        {name: 'Scenario: Typing kyou into an empty block', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+
+  test('fails its file when the test times out and Chrome finishes stopping during the next test', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/timeout-then-late-cleanup.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/chrome-stop-finishes-late.ts',
+          'tests/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'The driver never returned a result and cleaned up in "Scenario: Typing kyou into an empty block times out while Chrome stops", the test timed out or its cleanup failed. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.',
+      ],
+      tests: [
+        {
+          name: 'Scenario: Typing kyou into an empty block times out while Chrome stops',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Chrome finishes stopping during the next test',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 30_000)
+
+  test('fails its file when the driver faults on both attempts', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/typing-faults-twice.ts',
+          'tests/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'The driver ended on a driver fault in "Scenario: Typing kyou into an empty block". These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.',
+      ],
+      tests: [
+        {name: 'Scenario: Typing kyou into an empty block', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+
+  test('counts a failed editor assertion after a recovered driver fault as the expected failure', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/typing-faults-once.ts',
+          'tests/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {name: 'Scenario: Typing kyou into an empty block', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+
+  test('counts a failed editor assertion as the expected failure, and fails a plain test with the same result', async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/empty-block-and-existing-text.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/typing-loses-first-character.ts',
+          'tests/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [],
+      tests: [
+        {name: 'Scenario: Typing kyou into an empty block', state: 'passed'},
+        {name: 'Scenario: Typing kyou after existing text', state: 'failed'},
+      ],
+    })
+  }, 30_000)
 })

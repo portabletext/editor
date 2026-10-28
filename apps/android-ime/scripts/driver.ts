@@ -38,6 +38,27 @@ export type {TypeOnDeviceOptions, Typed, Word} from './lib/typing.ts'
 
 const WATCHDOG_SECONDS = ATTEMPT_SECONDS - 15
 
+export type DriverRun = {
+  test: string
+  fails: boolean
+  /**
+   * `driving` until the driver returned a result and cleaned up, `faulted` when it ended on a driver fault,
+   * after one attempt or two.
+   * `aborted` when the test timed out or was cancelled first, and no later cleanup changes it.
+   * `page-exception` when an expression threw in the page, which can be an editor result and is never
+   * retried.
+   */
+  state: 'driving' | 'complete' | 'faulted' | 'aborted' | 'page-exception'
+  /** The page's exception, for a `page-exception` run. */
+  pageException?: string
+}
+
+/**
+ * Every `typeOnDevice` call in the current test file. `test.fails` counts any error, a timeout included, as
+ * its expected failure, so `tests/setup.ts` fails the file for a `test.fails` run that never completed.
+ */
+export const driverRuns: DriverRun[] = []
+
 // The last `typeOnDevice` call, which can still be stopping after its test timed out.
 let previousRun: Promise<void> = Promise.resolve()
 
@@ -50,11 +71,35 @@ export async function typeOnDevice(
 ): Promise<Typed> {
   const currentTest = TestRunner.getCurrentTest<RunnerTestCase | undefined>()
   if (!currentTest) throw new Error('`typeOnDevice` runs inside a test')
+  const run: DriverRun = {
+    test: currentTest.name,
+    fails: Boolean(currentTest.fails),
+    state: 'driving',
+  }
+  driverRuns.push(run)
   const name = `${options.lang}-${slug(currentTest.name)}`
   mkdirSync(OUT, {recursive: true})
   await previousRun
-  assertNoUnstoppedProcess()
+  try {
+    assertNoUnstoppedProcess()
+  } catch (error) {
+    run.state = 'faulted'
+    throw error
+  }
   const testSignal = currentTest.context.signal
+  const settle = (state: 'complete' | 'faulted' | 'page-exception') => {
+    if (run.state === 'driving')
+      run.state = testSignal.aborted ? 'aborted' : state
+  }
+  if (testSignal.aborted) run.state = 'aborted'
+  else
+    testSignal.addEventListener(
+      'abort',
+      () => {
+        if (run.state === 'driving') run.state = 'aborted'
+      },
+      {once: true},
+    )
   // A test that times out aborts its signal, which stops every device call of this run.
   const running = runAbortable(testSignal, async () => {
     let typed: Typed
@@ -70,13 +115,23 @@ export async function typeOnDevice(
           unstoppedProcesses().length === 0,
       })
     } catch (error) {
+      if (error instanceof PageExceptionError) {
+        settle('page-exception')
+        run.pageException = error.message
+      } else settle('faulted')
       await cleanUpChrome().catch((cleanupError: unknown) =>
         phase(`cleanup failed: ${errorRepr(cleanupError)}`),
       )
       throw error
     }
-    await cleanUpChrome()
-    assertNoUnstoppedProcess()
+    try {
+      await cleanUpChrome()
+      assertNoUnstoppedProcess()
+    } catch (error) {
+      settle('faulted')
+      throw error
+    }
+    settle('complete')
     return typed
   })
   previousRun = running.then(
