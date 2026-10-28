@@ -50,6 +50,12 @@ Guidance for coding agents working on the Portable Text Editor monorepo.
 - Use full, easily understood variable names; never one-character names.
 - Type casting is a last resort.
 - Place helper functions below the main functions they serve.
+- Before writing a walk, a node guard, a path or key helper or a plain
+  util, look for the existing one: `src/traversal`, `src/selectors`,
+  `src/utils` and `src/paths` in `packages/editor`, and the exports of
+  `@portabletext/schema` (`getSubSchema`, `isTypedObject`, `isSpan`,
+  `isTextBlock`). A deliberate copy in another package carries a
+  keep-in-sync pointer to its source.
 - Conditional rendering in JSX uses a ternary with an explicit `: null`,
   never `&&`.
 
