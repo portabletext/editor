@@ -58,7 +58,12 @@
       ]
     },
     "apps/android-ime": {
-      "entry": ["scripts/*.ts", "scripts/lib/*.ts", "page/editor.tsx"]
+      "entry": [
+        "scripts/*.ts",
+        "scripts/lib/*.ts",
+        "scripts/fixtures/suites/*.ts",
+        "page/editor.tsx"
+      ]
     },
     "apps/studio": {
       "ignoreDependencies": [
