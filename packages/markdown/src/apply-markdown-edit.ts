@@ -1,5 +1,6 @@
 import type {PortableTextBlock, Schema} from '@portabletext/schema'
 import {cleanupEfficiency, makeDiff} from '@sanity/diff-match-patch'
+import {defaultSchema} from './default-schema'
 import {
   truncateSnippet,
   type SerializeDegradation,
@@ -10,7 +11,11 @@ import {
   portableTextToMarkdownWithLostContent,
 } from './from-portable-text/portable-text-to-markdown'
 import {defaultKeyGenerator} from './key-generator'
-import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
+import {degradationMessage} from './to-portable-text/degradation-messages'
+import {
+  markdownToPortableText,
+  type Degradation,
+} from './to-portable-text/markdown-to-portable-text'
 
 /**
  * @public
@@ -76,6 +81,8 @@ export type ApplyMarkdownEditOptions = {
    * recognition: whether that removal was intended is the caller's
    * call. `serialize.onDegradation` stays excluded: `hiddenLosses` is
    * where serialize losses that matter to the returned value surface.
+   * `markdownLosses` and `undeclaredObjects` are facts of the invocation
+   * too.
    *
    * @beta
    */
@@ -120,8 +127,13 @@ export type ReconciliationKeyPath = Array<{_key: string} | string | number>
  * keys minus the keys `applyMarkdownEdit` returned. Both variants carry
  * `hiddenLosses`: stored content the `serialize` options could not
  * express in markdown that is also missing from the returned value, so
- * whoever edited the markdown never saw it go. Refuse or retry the
- * write when it is non-empty and the loss matters.
+ * whoever edited the markdown never saw it go. Both also carry
+ * `markdownLosses`, what the edited markdown said that the returned
+ * value does not hold, and `undeclaredObjects`, objects the edit added
+ * whose type the schema does not declare. Undeclared objects are kept
+ * as written, so they are not lost: they are content the schema does
+ * not allow. Refuse or retry the write when any of the three lists is
+ * non-empty and what it lists matters.
  *
  * @beta
  */
@@ -234,6 +246,35 @@ export type ReconciliationReport =
        * `_key`, whether or not `preservedKeys` lists it.
        */
       hiddenLosses: Array<SerializeDegradation>
+      /**
+       * One entry per deserialize degradation of `editedMarkdown`, the
+       * same entries `deserialize.onDegradation` receives and in the
+       * same encounter order, except `object-type-undeclared`: the
+       * returned value differs from what the markdown said (a heading
+       * level the schema has no style for, a dropped decorator, a
+       * flattened table, fields dropped from a `json:object` carrier,
+       * an invalid carrier, and the like). An undeclared object is
+       * kept as written, so it is listed in `undeclaredObjects` instead
+       * when the edit introduced it. Only the parse of `editedMarkdown`
+       * counts, never the internal canonicalization of the stored value.
+       */
+      markdownLosses: Array<Degradation>
+      /**
+       * One entry per object in the returned value whose type the
+       * `schema` does not declare and that the stored value did not
+       * already hold, in document order. Declared objects' array fields
+       * are searched too, so an undeclared object inside a table cell
+       * or another declared container is listed, while an object-typed
+       * field, and an array field with no `of` to check its items
+       * against, are not searched. An object counts as already held when
+       * the stored value has one with the same `_type` and `_key`, at
+       * the same position (`block` or `inline`), in the same array: for
+       * an inline object that is the Portable Text array holding its
+       * block, whatever the block's own key, since editing a paragraph
+       * can give its block a fresh key. `path` addresses the returned
+       * value.
+       */
+      undeclaredObjects: Array<UndeclaredObject>
     }
   | {
       keyMatching: 'skipped'
@@ -329,6 +370,35 @@ export type ReconciliationReport =
        * than on a performed one.
        */
       hiddenLosses: Array<SerializeDegradation>
+      /**
+       * One entry per deserialize degradation of `editedMarkdown`, the
+       * same entries `deserialize.onDegradation` receives and in the
+       * same encounter order, except `object-type-undeclared`: the
+       * returned value differs from what the markdown said (a heading
+       * level the schema has no style for, a dropped decorator, a
+       * flattened table, fields dropped from a `json:object` carrier,
+       * an invalid carrier, and the like). An undeclared object is
+       * kept as written, so it is listed in `undeclaredObjects` instead
+       * when the edit introduced it. Only the parse of `editedMarkdown`
+       * counts, never the internal canonicalization of the stored value.
+       */
+      markdownLosses: Array<Degradation>
+      /**
+       * One entry per object in the returned value whose type the
+       * `schema` does not declare and that the stored value did not
+       * already hold, in document order. Declared objects' array fields
+       * are searched too, so an undeclared object inside a table cell
+       * or another declared container is listed, while an object-typed
+       * field, and an array field with no `of` to check its items
+       * against, are not searched. An object counts as already held when
+       * the stored value has one with the same `_type` and `_key`, at
+       * the same position (`block` or `inline`), in the same array: for
+       * an inline object that is the Portable Text array holding its
+       * block, whatever the block's own key, since editing a paragraph
+       * can give its block a fresh key. `path` addresses the returned
+       * value.
+       */
+      undeclaredObjects: Array<UndeclaredObject>
     }
   | {
       keyMatching: 'skipped'
@@ -369,7 +439,58 @@ export type ReconciliationReport =
        * than on a performed one.
        */
       hiddenLosses: Array<SerializeDegradation>
+      /**
+       * One entry per deserialize degradation of `editedMarkdown`, the
+       * same entries `deserialize.onDegradation` receives and in the
+       * same encounter order, except `object-type-undeclared`: the
+       * returned value differs from what the markdown said (a heading
+       * level the schema has no style for, a dropped decorator, a
+       * flattened table, fields dropped from a `json:object` carrier,
+       * an invalid carrier, and the like). An undeclared object is
+       * kept as written, so it is listed in `undeclaredObjects` instead
+       * when the edit introduced it. Only the parse of `editedMarkdown`
+       * counts, never the internal canonicalization of the stored value.
+       */
+      markdownLosses: Array<Degradation>
+      /**
+       * One entry per object in the returned value whose type the
+       * `schema` does not declare and that the stored value did not
+       * already hold, in document order. Declared objects' array fields
+       * are searched too, so an undeclared object inside a table cell
+       * or another declared container is listed, while an object-typed
+       * field, and an array field with no `of` to check its items
+       * against, are not searched. An object counts as already held when
+       * the stored value has one with the same `_type` and `_key`, at
+       * the same position (`block` or `inline`), in the same array: for
+       * an inline object that is the Portable Text array holding its
+       * block, whatever the block's own key, since editing a paragraph
+       * can give its block a fresh key. `path` addresses the returned
+       * value.
+       */
+      undeclaredObjects: Array<UndeclaredObject>
     }
+
+/**
+ * An object of a type the `schema` does not declare, in a
+ * `ReconciliationReport`'s `undeclaredObjects`. `position` is `inline`
+ * for a text block's child and `block` otherwise, including inside a
+ * declared container's array field. `path` addresses the returned
+ * value, like every `ReconciliationKeyPath` in the report: `[{_key}]`
+ * for a top-level block object, `[{_key: <block key>}, 'children',
+ * {_key: <child key>}]` for an inline object. `_key` is absent when the
+ * object has none. `message` is the same text as the
+ * `object-type-undeclared` degradation for the object, for display: it
+ * can change between releases, so do not match on it.
+ *
+ * @beta
+ */
+export type UndeclaredObject = {
+  _type: string
+  _key?: string
+  position: 'block' | 'inline'
+  path: ReconciliationKeyPath
+  message: string
+}
 
 /**
  * Deliberately high pending calibration against real agent edit
@@ -457,10 +578,23 @@ export function applyMarkdownEdit(
         skip: undefined,
       }
     : undefined
+  const markdownLosses: Array<Degradation> = []
+  const callerOnDegradation = options?.deserialize?.onDegradation
   const result = structuredClone(
     markdownToPortableText(editedMarkdown, {
       ...options?.deserialize,
       schema: options?.schema,
+      onDegradation: (report) => {
+        markdownLosses.push(
+          ...report.degradations.filter(
+            // The deserializer keeps an undeclared object as written, so
+            // it is no loss of what the markdown said:
+            // `undeclaredObjects` reports the ones the edit introduces.
+            (degradation) => degradation.type !== 'object-type-undeclared',
+          ),
+        )
+        callerOnDegradation?.(report)
+      },
     }),
   ) as unknown as Array<Node>
   const {canonical, degradations} = canonicalizeStored(
@@ -520,15 +654,19 @@ export function applyMarkdownEdit(
   )
   if (recorder && onReconciliation) {
     onReconciliation(
-      buildReconciliationReport(
-        result,
-        recorder,
-        findHiddenLosses(
+      buildReconciliationReport(result, recorder, {
+        hiddenLosses: findHiddenLosses(
           degradations,
           result,
           recorder.skip ? 'skipped' : 'performed',
         ),
-      ),
+        markdownLosses,
+        undeclaredObjects: findIntroducedUndeclaredObjects(
+          storedPortableText,
+          result,
+          options?.schema ?? defaultSchema,
+        ),
+      }),
     )
   }
   return result as unknown as Array<PortableTextBlock>
@@ -2592,7 +2730,10 @@ function buildMarkDefKeyRewriter(
 function buildReconciliationReport(
   result: Array<Node>,
   recorder: ReconciliationRecorder,
-  hiddenLosses: Array<SerializeDegradation>,
+  losses: Pick<
+    ReconciliationReport,
+    'hiddenLosses' | 'markdownLosses' | 'undeclaredObjects'
+  >,
 ): ReconciliationReport {
   const preservedKeys: Extract<
     ReconciliationReport,
@@ -2666,7 +2807,7 @@ function buildReconciliationReport(
   })
 
   if (recorder.skip) {
-    return {keyMatching: 'skipped', ...recorder.skip, renamedKeys, hiddenLosses}
+    return {keyMatching: 'skipped', ...recorder.skip, renamedKeys, ...losses}
   }
 
   const keyFallbacks: Extract<
@@ -2696,8 +2837,142 @@ function buildReconciliationReport(
     preservedKeys,
     keyFallbacks,
     renamedKeys,
-    hiddenLosses,
+    ...losses,
   }
+}
+
+/**
+ * Undeclared objects the returned value holds that the stored value did
+ * not. A field may already hold such objects from before a schema
+ * change. A result object counts as already held when a stored one in
+ * the same position has the same `_type` and `_key`. A stored
+ * object with no `_key` gets a fresh one from the round trip, so it
+ * counts as held by a result object of the same type and content
+ * instead. Each stored object is held by at most one result object.
+ */
+function findIntroducedUndeclaredObjects(
+  stored: ReadonlyArray<PortableTextBlock>,
+  result: Array<Node>,
+  schema: Schema,
+): Array<UndeclaredObject> {
+  const held = new Map<string, number>()
+  const count = (identity: string, delta: number) =>
+    held.set(identity, (held.get(identity) ?? 0) + delta)
+  for (const object of collectUndeclaredObjects(stored, schema)) {
+    count(keyIdentity(object), 1)
+  }
+  const unheld = collectUndeclaredObjects(result, schema).filter((object) => {
+    const identity = keyIdentity(object)
+    if ((held.get(identity) ?? 0) > 0) {
+      count(identity, -1)
+      return false
+    }
+    return true
+  })
+  return unheld
+    .filter((object) => {
+      const identity = contentIdentity(object)
+      if ((held.get(identity) ?? 0) > 0) {
+        count(identity, -1)
+        return false
+      }
+      return true
+    })
+    .map(({scope: _scope, node: _node, ...object}) => object)
+}
+
+/**
+ * A stored object with no `_key` gets the content identity instead, so
+ * only a result object of the same content can count as holding it.
+ */
+function keyIdentity(object: FoundUndeclaredObject): string {
+  return object._key === undefined
+    ? contentIdentity(object)
+    : JSON.stringify([object.scope, object.position, object._type, object._key])
+}
+
+function contentIdentity(object: FoundUndeclaredObject): string {
+  return JSON.stringify([
+    object.scope,
+    object.position,
+    encodeNeutral(object.node, undefined),
+  ])
+}
+
+type FoundUndeclaredObject = UndeclaredObject & {
+  node: Node
+  /**
+   * Where the object sits, without keys: `[]` for a top-level block
+   * object, `['children']` for an inline object, since editing a
+   * paragraph can give its block a fresh key.
+   */
+  scope: Array<string>
+}
+
+/**
+ * Collects the top-level block objects and the inline objects of
+ * top-level text blocks whose type the schema does not declare. The
+ * fields of a declared object are not searched: what a `json:object`
+ * payload holds inside its own fields is the payload's business, the
+ * same as for any other write of that object.
+ */
+function collectUndeclaredObjects(
+  blocks: ReadonlyArray<unknown>,
+  schema: Schema,
+): Array<FoundUndeclaredObject> {
+  const found: Array<FoundUndeclaredObject> = []
+  const add = (
+    node: Node,
+    position: UndeclaredObject['position'],
+    scope: Array<string>,
+    path: ReconciliationKeyPath,
+  ) =>
+    found.push({
+      _type: String(node['_type']),
+      ...(typeof node['_key'] === 'string' && {_key: node['_key']}),
+      position,
+      path,
+      message: degradationMessage['object-type-undeclared'](
+        String(node['_type']),
+        position,
+      ),
+      scope,
+      node,
+    })
+
+  blocks.forEach((block, index) => {
+    if (!isObjectNode(block)) {
+      return
+    }
+    const blockPath = [pathSegment(block, index)]
+    if (block['_type'] !== schema.block.name) {
+      if (!schema.blockObjects.some(({name}) => name === block['_type'])) {
+        add(block, 'block', [], blockPath)
+      }
+      return
+    }
+    const children = Array.isArray(block['children']) ? block['children'] : []
+    children.forEach((child: unknown, childIndex) => {
+      if (
+        !isObjectNode(child) ||
+        child['_type'] === schema.span.name ||
+        schema.inlineObjects.some(({name}) => name === child['_type'])
+      ) {
+        return
+      }
+      add(
+        child,
+        'inline',
+        ['children'],
+        [...blockPath, 'children', pathSegment(child, childIndex)],
+      )
+    })
+  })
+  return found
+}
+
+function isObjectNode(value: unknown): value is Node {
+  return typeof value === 'object' && value !== null
 }
 
 /**

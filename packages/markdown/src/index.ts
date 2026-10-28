@@ -3,6 +3,7 @@ export {
   type ApplyMarkdownEditOptions,
   type ReconciliationKeyPath,
   type ReconciliationReport,
+  type UndeclaredObject,
 } from './apply-markdown-edit'
 export {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 export type {SerializeDegradation} from './from-portable-text/degradation-report'
