@@ -141,7 +141,7 @@ describe('event.drag', () => {
     expect(ghost?.firstElementChild?.isEqualNode(expectedClone)).toBe(true)
   })
 
-  test('Scenario: a `data-pt-drag-ghost-element` inside a dragged block object becomes the whole ghost, sized to that element', async () => {
+  test('Scenario: a `data-pt-drag-ghost-element` inside a dragged block object does not replace the whole-block ghost', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 
@@ -200,72 +200,17 @@ describe('event.drag', () => {
     })
 
     const ghost = document.body.lastElementChild
-    expect(setDragImage.mock.calls[0]?.[0]).toBe(ghost)
-    expect(ghost?.outerHTML).toEqual(
-      '<div data-dragged="" style="position: absolute; left: -99999px; box-sizing: border-box; width: 60px; height: 30px;"><div data-pt-drag-ghost-element="" style="width: 60px; height: 30px;">bar</div></div>',
+    expect(setDragImage.mock.calls).toEqual([[ghost, 30, 15]])
+    const block = locator.element().querySelector('[data-pt-block="object"]')
+    assert(block)
+    const expectedClone = block.cloneNode(true) as HTMLElement
+    expectedClone.style.position = 'relative'
+    expect(ghost?.getAttribute('style')).toEqual(
+      'position: absolute; left: -99999px; box-sizing: border-box; width: 300px; height: 80px;',
     )
-  })
-
-  test.fails('Scenario: a `data-pt-drag-ghost-element` ghost is offset by the pointer position within that element', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const imageKey = keyGenerator()
-
-    const image = defineBlockObject({
-      type: 'image',
-      render: ({attributes, children}) => (
-        <div {...attributes} style={{width: '300px'}}>
-          {children}
-          <div
-            contentEditable={false}
-            draggable
-            data-testid="image-handle"
-            style={{height: '80px', paddingLeft: '20px', paddingTop: '10px'}}
-          >
-            <div
-              data-pt-drag-ghost-element=""
-              style={{width: '60px', height: '30px'}}
-            >
-              bar
-            </div>
-          </div>
-        </div>
-      ),
-    })
-
-    const {locator} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
-      initialValue: [{_key: imageKey, _type: 'image'}],
-      children: <NodePlugin nodes={[image]} />,
-    })
-
-    await userEvent.click(locator)
-
-    const handle = locator
-      .element()
-      .querySelector('[data-testid="image-handle"]')
-    assert(handle)
-    const handleRect = handle.getBoundingClientRect()
-
-    const dataTransfer = new DataTransfer()
-    const setDragImage = vi.spyOn(dataTransfer, 'setDragImage')
-    handle.dispatchEvent(
-      new DragEvent('dragstart', {
-        bubbles: true,
-        cancelable: true,
-        dataTransfer,
-        clientX: handleRect.left + 30,
-        clientY: handleRect.top + 15,
-      }),
-    )
-
-    await vi.waitFor(() => {
-      expect(setDragImage).toHaveBeenCalledTimes(1)
-    })
-
-    expect(setDragImage.mock.calls).toEqual([
-      [document.body.lastElementChild, 10, 5],
-    ])
+    expect(ghost?.hasAttribute('data-dragged')).toBe(true)
+    expect(ghost?.children).toHaveLength(1)
+    expect(ghost?.firstElementChild?.isEqualNode(expectedClone)).toBe(true)
   })
 
   test('Scenario: dragging an inline object sets a ghost cloned from the inline object only', async () => {
