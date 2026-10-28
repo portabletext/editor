@@ -276,13 +276,6 @@ export const syncMachine = setup({
         event.value,
       )
     },
-    'pending value equals previous value': ({context}) => {
-      return isEqualValues(
-        {schema: context.schema},
-        context.pendingValue,
-        context.previousValue,
-      )
-    },
   },
   actors: {
     'sync value': syncValueLogic,
