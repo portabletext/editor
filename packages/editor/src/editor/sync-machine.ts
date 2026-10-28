@@ -449,7 +449,6 @@ async function updateValue({
   streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
-  let doneSyncing = false
   let isChanged = false
   let isValid = true
 
@@ -465,7 +464,6 @@ async function updateValue({
   if (!value || value.length === 0) {
     clearEditor({
       editorEngine,
-      doneSyncing,
       remoteSource,
     })
 
@@ -475,11 +473,6 @@ async function updateValue({
   if (value && value.length > 0) {
     if (streamBlocks) {
       await new Promise<void>((resolve) => {
-        if (doneSyncing) {
-          resolve()
-          return
-        }
-
         isChanged = removeExtraBlocks({
           editorEngine,
           value,
@@ -517,10 +510,6 @@ async function updateValue({
         processBlocks()
       })
     } else {
-      if (doneSyncing) {
-        return
-      }
-
       isChanged = removeExtraBlocks({
         editorEngine,
         value,
@@ -555,8 +544,6 @@ async function updateValue({
   if (!isValid) {
     debug.syncValue('Invalid value, returning')
 
-    doneSyncing = true
-
     sendBack({type: 'done syncing', value, changed: isChanged})
 
     return
@@ -575,8 +562,6 @@ async function updateValue({
         resolution: null,
         value,
       })
-
-      doneSyncing = true
 
       sendBack({type: 'done syncing', value, changed: isChanged})
 
@@ -597,8 +582,6 @@ async function updateValue({
     debug.syncValue('remote value and local value are equal, no need to sync')
   }
 
-  doneSyncing = true
-
   sendBack({type: 'done syncing', value, changed: isChanged})
 }
 
@@ -618,34 +601,29 @@ async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
  */
 function clearEditor({
   editorEngine,
-  doneSyncing,
   remoteSource,
 }: {
   editorEngine: PortableTextEditorEngine
-  doneSyncing: boolean
   remoteSource: RemoteSyncSource
 }) {
   withRemoteChanges(editorEngine, remoteSource, () => {
     withoutNormalizing(editorEngine, () => {
       pluginWithoutHistory(editorEngine, () => {
         withoutPatching(editorEngine, () => {
-          if (doneSyncing) {
-            return
-          }
-
-          const childrenLength = editorEngine.snapshot.context.value.length
-
-          editorEngine.snapshot.context.value.forEach((_, index) => {
-            const removeNode =
-              editorEngine.snapshot.context.value[childrenLength - 1 - index]
+          for (
+            let index = editorEngine.snapshot.context.value.length - 1;
+            index >= 0;
+            index--
+          ) {
+            const removeNode = editorEngine.snapshot.context.value[index]
             if (!removeNode) {
-              return
+              continue
             }
             editorEngine.apply({
               type: 'unset',
               path: [{_key: removeNode._key}],
             })
-          })
+          }
         })
       })
     })
@@ -715,10 +693,9 @@ function syncBlock({
   value: Array<PortableTextBlock>
   remoteSource: RemoteSyncSource
 }) {
-  const oldEngineBlock = editorEngine.snapshot.context.value.at(index)
   const oldBlock = editorEngine.snapshot.context.value.at(index)
 
-  if (!oldEngineBlock || !oldBlock) {
+  if (!oldBlock) {
     const validation = validateValue(
       [block],
       context.schema,
@@ -827,7 +804,7 @@ function syncBlock({
             updateBlock({
               context,
               editorEngine,
-              oldEngineBlock,
+              oldEngineBlock: oldBlock,
               block: repairedBlock,
               index,
             })
@@ -1138,21 +1115,22 @@ function updateBlock({
                 currentBlockChild,
               )
             }
-          } else if (oldBlockChild) {
-            debug.syncValue('Replacing child', currentBlockChild)
+          } else {
+            if (oldBlockChild) {
+              debug.syncValue('Replacing child', currentBlockChild)
 
-            const oldChild = oldEngineBlock.children[currentBlockChildIndex]
-            if (!oldChild) {
-              return
+              editorEngine.apply({
+                type: 'unset',
+                path: [
+                  {_key: oldEngineBlock._key},
+                  'children',
+                  {_key: oldBlockChild._key},
+                ],
+              })
+            } else {
+              debug.syncValue('Inserting new child', currentBlockChild)
             }
-            editorEngine.apply({
-              type: 'unset',
-              path: [
-                {_key: oldEngineBlock._key},
-                'children',
-                {_key: oldChild._key},
-              ],
-            })
+
             // Anchor on the incoming block's previous child, not the
             // pre-loop engine snapshot: earlier iterations may have unset
             // the snapshot's sibling (e.g. when the engine merged adjacent
@@ -1160,34 +1138,6 @@ function updateBlock({
             // the split shape), while the incoming previous child is
             // guaranteed present, the previous iteration just updated,
             // replaced, or inserted it.
-            const prevSibling =
-              currentBlockChildIndex > 0
-                ? engineBlock.children[currentBlockChildIndex - 1]
-                : undefined
-            if (prevSibling) {
-              editorEngine.apply({
-                type: 'insert',
-                path: [
-                  {_key: oldEngineBlock._key},
-                  'children',
-                  {_key: prevSibling._key},
-                ],
-                node: currentBlockChild,
-                position: 'after',
-              })
-            } else {
-              editorEngine.apply({
-                type: 'insert',
-                path: [{_key: oldEngineBlock._key}, 'children', 0],
-                node: currentBlockChild,
-                position: 'before',
-              })
-            }
-
-            editorEngine.onChange()
-          } else if (!oldBlockChild) {
-            debug.syncValue('Inserting new child', currentBlockChild)
-
             const prevChild =
               currentBlockChildIndex > 0
                 ? engineBlock.children[currentBlockChildIndex - 1]
