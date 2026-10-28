@@ -29,7 +29,7 @@ import {createTestEditor} from '../src/test/vitest'
  */
 
 describe('Context isolation between block-level and inline-level dispatch', () => {
-  test('18. Inline dispatch reads ParentTextBlockContext (not ParentContainerContext)', async () => {
+  test('Scenario: Inline dispatch reads ParentTextBlockContext, not ParentContainerContext', async () => {
     // Register the mention positionally inside the TEXT BLOCK and
     // also as a GLOBAL with a different render. If inline dispatch
     // correctly reads `ParentTextBlockContext`, the positional render
@@ -123,7 +123,7 @@ describe('Context isolation between block-level and inline-level dispatch', () =
     })
   })
 
-  test('19. Block dispatch does not consume ParentTextBlockContext', async () => {
+  test('Scenario: Block dispatch does not consume ParentTextBlockContext', async () => {
     // A text block with `of` overrides for inlines must not affect
     // the block-level dispatch (the container's render fires
     // regardless of whether the text block has `of`).

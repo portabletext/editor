@@ -138,7 +138,7 @@ function initialTableValue() {
 }
 
 describe('code-block resolution through normalisation', () => {
-  test('A: top-level `code-block` registration activates inside cell.content even though no container declares code-block in its `of`', async () => {
+  test('Scenario: A top-level `code-block` registration activates inside cell.content even though no container declares code-block in its `of`', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const initialValue = initialTableValue()
@@ -194,7 +194,7 @@ describe('code-block resolution through normalisation', () => {
     expect(codeBlock.lines!.length).toEqual(1)
   })
 
-  test('B: registering `code-block` with a field the schema does not have warns at register time and the node renders as a non-editable placeholder', async () => {
+  test('Scenario: Registering `code-block` with a field the schema does not have warns at register time and the node renders as a non-editable placeholder', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()

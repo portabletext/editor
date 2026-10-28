@@ -30,7 +30,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('text-edge selectors (container awareness)', () => {
-  test('getBlockTextBefore and getBlockTextAfter read text in the container line', async () => {
+  test('Scenario: getBlockTextBefore and getBlockTextAfter read text in the container line', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()
@@ -82,7 +82,7 @@ describe('text-edge selectors (container awareness)', () => {
     expect(getBlockTextAfter(snapshot)).toEqual('world')
   })
 
-  test('getSelectionText returns text of a selection spanning container lines', async () => {
+  test('Scenario: getSelectionText returns the text of a selection spanning container lines', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -154,7 +154,7 @@ describe('text-edge selectors (container awareness)', () => {
     expect(getSelectionText(snapshot)).toEqual('llowor')
   })
 
-  test('getCaretWordSelection finds the word under the caret inside a container', async () => {
+  test('Scenario: getCaretWordSelection finds the word under the caret inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()

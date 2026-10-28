@@ -42,7 +42,7 @@ const calloutContainer = defineContainer({
 })
 
 describe('container rendering', () => {
-  test('callout renders with correct DOM structure', async () => {
+  test('Scenario: A callout renders with the correct DOM structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -124,7 +124,7 @@ describe('container rendering', () => {
     })
   })
 
-  test('node prop receives the raw node data', async () => {
+  test('Scenario: The node prop receives the raw node data', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -259,7 +259,7 @@ describe('table with nested rows and cells', () => {
     ),
   })
 
-  test('renders three levels of nesting with correct DOM structure', async () => {
+  test('Scenario: A table renders three levels of nesting with the correct DOM structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
 
@@ -375,7 +375,7 @@ describe('container with non-editable fields', () => {
     ),
   })
 
-  test('only editable fields render in the DOM', async () => {
+  test('Scenario: Only editable fields render in the DOM', async () => {
     const keyGenerator = createTestKeyGenerator()
     const cardKey = keyGenerator()
 
@@ -436,7 +436,7 @@ describe('container with non-editable fields', () => {
 })
 
 describe('positional block-leaf override', () => {
-  test('block-leaf override in callout.of applies to text blocks inside the callout', async () => {
+  test('Scenario: A block-leaf override in callout.of applies to text blocks inside the callout', async () => {
     // v2 equivalent of v6's "$..callout.block" scoped override. The
     // outer callout container's `of` array carries a leaf entry for
     // `type: 'block'` whose render replaces the engine default for
@@ -539,7 +539,7 @@ describe('positional block-leaf override', () => {
 })
 
 describe('container and renderer independence', () => {
-  test('container without renderer falls back to default div', async () => {
+  test('Scenario: A container without a renderer falls back to a default div', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
 
@@ -612,7 +612,7 @@ describe('container and renderer independence', () => {
     })
   })
 
-  test('renderer without container renders as void block object', async () => {
+  test('Scenario: A renderer without a container renders as a void block object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
 
@@ -692,7 +692,7 @@ describe('code block container', () => {
     ),
   })
 
-  test('code block renders with correct DOM structure', async () => {
+  test('Scenario: A code block renders with the correct DOM structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
 
@@ -805,7 +805,7 @@ describe('gallery with void block objects', () => {
     ),
   })
 
-  test('gallery renders void block objects with correct DOM structure', async () => {
+  test('Scenario: A gallery renders void block objects with the correct DOM structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const galleryKey = keyGenerator()
 
@@ -956,7 +956,7 @@ describe('cell with mixed content', () => {
     ),
   })
 
-  test('cell renders both text blocks and void block objects', async () => {
+  test('Scenario: A cell renders both text blocks and void block objects', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
 
@@ -1138,7 +1138,7 @@ describe('self-referential containers', () => {
     ),
   })
 
-  test('list nested 3 levels deep renders all levels as containers', async () => {
+  test('Scenario: A list nested 3 levels deep renders all levels as containers', async () => {
     const keyGenerator = createTestKeyGenerator()
     const k = () => keyGenerator()
     const block = (text: string) => ({

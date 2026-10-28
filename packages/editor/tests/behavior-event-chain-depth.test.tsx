@@ -7,7 +7,7 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event chain depth backstop', () => {
-  test('a cyclic Behavior fails loudly instead of overflowing the call stack', async () => {
+  test('Scenario: A cyclic Behavior fails loudly instead of overflowing the call stack', async () => {
     const consoleErrors: Array<string> = []
     const errorSpy = vi
       .spyOn(console, 'error')

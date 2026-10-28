@@ -52,7 +52,7 @@ const imageSchema = defineSchema({
 })
 
 describe('renderDefault prop', () => {
-  test('Container: render receives renderDefault prop', async () => {
+  test('Scenario: A container render receives the renderDefault prop', async () => {
     const renderSpy = vi.fn<(props: Parameters<ContainerRender>[0]) => void>()
     const callout = defineContainer({
       type: 'callout',
@@ -94,7 +94,7 @@ describe('renderDefault prop', () => {
     )
   })
 
-  test('TextBlock: render receives renderDefault prop', async () => {
+  test('Scenario: A text block render receives the renderDefault prop', async () => {
     const renderSpy = vi.fn<(props: Parameters<TextBlockRender>[0]) => void>()
     const block = defineTextBlock({
       type: 'block',
@@ -127,7 +127,7 @@ describe('renderDefault prop', () => {
     expect(document.querySelector('[data-pt-block="text"]')).not.toEqual(null)
   })
 
-  test('BlockObject: render receives renderDefault prop', async () => {
+  test('Scenario: A block object render receives the renderDefault prop', async () => {
     const renderSpy = vi.fn<(props: Parameters<BlockObjectRender>[0]) => void>()
     const image = defineBlockObject({
       type: 'image',
@@ -152,7 +152,7 @@ describe('renderDefault prop', () => {
     expect(document.querySelector('[data-pt-block="object"]')).not.toEqual(null)
   })
 
-  test('InlineObject: render receives renderDefault prop', async () => {
+  test('Scenario: An inline object render receives the renderDefault prop', async () => {
     const renderSpy =
       vi.fn<(props: Parameters<InlineObjectRender>[0]) => void>()
     const mention = defineInlineObject({
@@ -192,7 +192,7 @@ describe('renderDefault prop', () => {
     )
   })
 
-  test('Span: render receives renderDefault prop', async () => {
+  test('Scenario: A span render receives the renderDefault prop', async () => {
     const renderSpy = vi.fn<(props: Parameters<SpanRender>[0]) => void>()
     const span = defineSpan({
       type: 'span',
@@ -226,7 +226,7 @@ describe('renderDefault prop', () => {
 })
 
 describe('renderDefault wraps default', () => {
-  test('Container: caller can wrap renderDefault output', async () => {
+  test('Scenario: A container render can wrap the renderDefault output', async () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
@@ -265,7 +265,7 @@ describe('renderDefault wraps default', () => {
     })
   })
 
-  test('Container: caller can modify props before delegating', async () => {
+  test('Scenario: A container render can modify props before delegating to renderDefault', async () => {
     const callout = defineContainer({
       type: 'callout',
       arrayField: 'content',
@@ -307,7 +307,7 @@ describe('renderDefault wraps default', () => {
 })
 
 describe('renderDefault for void objects renders [_type: _key] placeholder', () => {
-  test('BlockObject: omit render → renders [type: key] placeholder', async () => {
+  test('Scenario: A block object without a render renders the [type: key] placeholder', async () => {
     const image = defineBlockObject({type: 'image'})
 
     await createTestEditor({
@@ -324,7 +324,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('BlockObject: render: (p) => p.renderDefault(p) → same placeholder', async () => {
+  test('Scenario: A block object rendering p.renderDefault(p) renders the same placeholder', async () => {
     const image = defineBlockObject({
       type: 'image',
       render: (props) => props.renderDefault(props),
@@ -344,7 +344,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('BlockObject: placeholder has userSelect: none, contentEditable=false, and draggable matching readOnly', async () => {
+  test('Scenario: The block object placeholder has userSelect: none, contentEditable=false, and draggable matching readOnly', async () => {
     const image = defineBlockObject({type: 'image'})
 
     await createTestEditor({
@@ -370,7 +370,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('InlineObject: omit render → renders [type: key] placeholder', async () => {
+  test('Scenario: An inline object without a render renders the [type: key] placeholder', async () => {
     const mention = defineInlineObject({type: 'mention'})
 
     await createTestEditor({
@@ -399,7 +399,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('InlineObject: render: (p) => p.renderDefault(p) → same placeholder', async () => {
+  test('Scenario: An inline object rendering p.renderDefault(p) renders the same placeholder', async () => {
     const mention = defineInlineObject({
       type: 'mention',
       render: (props) => props.renderDefault(props),
@@ -431,7 +431,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('InlineObject: placeholder asymmetric contract - outer auto-has contentEditable=false, inner has draggable but no contentEditable', async () => {
+  test('Scenario: The inline object placeholder has contentEditable=false on the outer element and draggable without contentEditable on the inner element', async () => {
     const mention = defineInlineObject({type: 'mention'})
 
     await createTestEditor({
@@ -471,7 +471,7 @@ describe('renderDefault for void objects renders [_type: _key] placeholder', () 
     })
   })
 
-  test('BlockObject: consumer can hide placeholder by ignoring renderDefault', async () => {
+  test('Scenario: A block object render that ignores renderDefault hides the placeholder', async () => {
     const image = defineBlockObject({
       type: 'image',
       render: (props) => <div {...props.attributes}>{props.children}</div>,

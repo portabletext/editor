@@ -6,7 +6,7 @@ import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('initial render', () => {
-  test('a type registered as a container via NodePlugin never shows the engine block-object default fallback', async () => {
+  test('Scenario: A type registered as a container via NodePlugin never shows the engine block-object default fallback', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()

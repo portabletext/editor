@@ -35,7 +35,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('code block', () => {
-  test('clicking into a code block and typing a character', async () => {
+  test('Scenario: Clicking into a code block and typing a character', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()

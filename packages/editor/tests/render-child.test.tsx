@@ -14,7 +14,7 @@ import {createTestEditor} from '../src/test/vitest'
 import type {Path} from '../src/types/paths'
 
 describe('registered render: children', () => {
-  test('span focused and selected props', async () => {
+  test('Scenario: A span render receives focused and selected props', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const blockKey = keyGenerator()
@@ -128,7 +128,7 @@ describe('registered render: children', () => {
     })
   })
 
-  test('inline object focused and selected props', async () => {
+  test('Scenario: An inline object render receives focused and selected props', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const blockKey = keyGenerator()
@@ -210,7 +210,7 @@ describe('registered render: children', () => {
     })
   })
 
-  test('children with same keys across blocks', async () => {
+  test('Scenario: Children with the same keys across blocks are focused independently', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     // k0
@@ -359,7 +359,7 @@ describe('registered render: children', () => {
     })
   })
 
-  test('container child paths', async () => {
+  test('Scenario: Children inside a container receive their full paths', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const tableKey = keyGenerator()

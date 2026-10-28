@@ -41,7 +41,7 @@ async function triggerSelectionValidation(editorElement: Element) {
 }
 
 describe('selection validation', () => {
-  test('leaves an equivalent DOM selection representation alone', async () => {
+  test('Scenario: An equivalent DOM selection representation is left alone', async () => {
     const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,
@@ -73,7 +73,7 @@ describe('selection validation', () => {
     expect(editor.getSnapshot().context.selection?.focus).toEqual(focus)
   })
 
-  test('rewrites a DOM selection that means something else', async () => {
+  test('Scenario: A DOM selection that means something else is rewritten', async () => {
     const {editor, locator} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,

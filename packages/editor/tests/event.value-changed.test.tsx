@@ -4,7 +4,7 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.value changed', () => {
-  test('does not emit for "undefined" initial value', async () => {
+  test('Scenario: An "undefined" initial value does not emit value changed', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
     await createTestEditor({
@@ -15,7 +15,7 @@ describe('event.value changed', () => {
     expect(onEvent.mock.calls).toEqual([[{type: 'ready'}]])
   })
 
-  test('emits for "[]" initial value', async () => {
+  test('Scenario: An "[]" initial value emits value changed', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
     await createTestEditor({

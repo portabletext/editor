@@ -21,7 +21,7 @@ describe('overlapping annotations', () => {
     ],
   })
 
-  test('default behavior', async () => {
+  test('Scenario: Adding an annotation over an annotation of the same type replaces it by default', async () => {
     const {keyGenerator, value} = createFixture()
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -70,7 +70,7 @@ describe('overlapping annotations', () => {
     })
   })
 
-  test('allowing overlapping annotations', async () => {
+  test('Scenario: A Behavior that executes `annotation.add` directly allows overlapping annotations', async () => {
     const {keyGenerator, commentKey, value} = createFixture()
     const {editor} = await createTestEditor({
       children: (
@@ -131,7 +131,7 @@ describe('overlapping annotations', () => {
     })
   })
 
-  test('manually configuring mutually exclusive annotations', async () => {
+  test('Scenario: A Behavior can make link annotations mutually exclusive with comments', async () => {
     const {keyGenerator, value} = createFixture()
     const mutuallyExclusives: Record<string, string[]> = {
       link: ['comment'],

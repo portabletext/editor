@@ -9,8 +9,8 @@ import {
 } from '../test-utils/text-selection'
 
 describe('event.annotation.add', () => {
-  describe('Scenario: Adding annotation to part of text', () => {
-    test('with `at`, without selection', async () => {
+  describe('Adding annotation to part of text', () => {
+    test('Scenario: Adding an annotation at `at` without a selection annotates the text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -77,7 +77,7 @@ describe('event.annotation.add', () => {
       })
     })
 
-    test('with `at`, with selection', async () => {
+    test('Scenario: Adding an annotation at `at` with a selection annotates the text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -149,7 +149,7 @@ describe('event.annotation.add', () => {
       })
     })
 
-    test('without `at`, with selection', async () => {
+    test('Scenario: Adding an annotation without `at` annotates the selected text', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -205,7 +205,7 @@ describe('event.annotation.add', () => {
       })
     })
 
-    test('without `at`, without selection', async () => {
+    test('Scenario: Adding an annotation without `at` or a selection changes nothing', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -260,8 +260,8 @@ describe('event.annotation.add', () => {
     })
   })
 
-  describe('Scenario: Adding annotation across multiple blocks', () => {
-    test('with `at` spanning two blocks', async () => {
+  describe('Adding annotation across multiple blocks', () => {
+    test('Scenario: Adding an annotation with `at` spanning two blocks annotates the text in both blocks', async () => {
       const keyGenerator = createTestKeyGenerator()
       const block1Key = keyGenerator()
       const span1Key = keyGenerator()
@@ -343,8 +343,8 @@ describe('event.annotation.add', () => {
     })
   })
 
-  describe('Scenario: Collapsed selection word expansion', () => {
-    test('with collapsed `at` inside word', async () => {
+  describe('Collapsed selection word expansion', () => {
+    test('Scenario: Adding an annotation with a collapsed `at` inside a word annotates the whole word', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -397,8 +397,8 @@ describe('event.annotation.add', () => {
     })
   })
 
-  describe('Scenario: Overlapping annotations', () => {
-    test('with `at`, without selection', async () => {
+  describe('Overlapping annotations', () => {
+    test('Scenario: Adding a link at `at` over an existing link without a selection replaces the existing link', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const span1Key = keyGenerator()
@@ -460,7 +460,7 @@ describe('event.annotation.add', () => {
       })
     })
 
-    test('with `at`, with selection', async () => {
+    test('Scenario: Adding a link at `at` over an existing link with a selection replaces the existing link', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const span1Key = keyGenerator()
@@ -526,7 +526,7 @@ describe('event.annotation.add', () => {
       })
     })
 
-    test('without `at`, with selection', async () => {
+    test('Scenario: Adding a link without `at` over a selected existing link replaces the existing link', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const span1Key = keyGenerator()
@@ -591,7 +591,7 @@ describe('event.annotation.add', () => {
       })
     })
 
-    test('without `at`, without selection', async () => {
+    test('Scenario: Adding a link without `at` or a selection keeps the existing link', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const span1Key = keyGenerator()

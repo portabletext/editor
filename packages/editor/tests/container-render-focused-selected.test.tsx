@@ -55,7 +55,7 @@ const tableSchema = defineSchema({
 })
 
 describe('container render focused, selected, and path', () => {
-  test('Only the innermost container is focused; ancestors are selected', async () => {
+  test('Scenario: Only the innermost container is focused while its ancestors are selected', async () => {
     const calloutValues: Array<{
       focused: boolean
       selected: boolean
@@ -138,7 +138,7 @@ describe('container render focused, selected, and path', () => {
     })
   })
 
-  test('A container is neither focused nor selected when the caret is in a different block', async () => {
+  test('Scenario: A container is neither focused nor selected when the caret is in a different block', async () => {
     const calloutValues: Array<{focused: boolean; selected: boolean}> = []
 
     const {editor} = await createTestEditor({
@@ -197,7 +197,7 @@ describe('container render focused, selected, and path', () => {
     })
   })
 
-  test('selected cascades up nested containers; focused stays on the innermost', async () => {
+  test('Scenario: Selected cascades up nested containers while focused stays on the innermost', async () => {
     const tableValues: Array<{focused: boolean; selected: boolean}> = []
     const rowValues: Array<{focused: boolean; selected: boolean}> = []
     const cellValues: Array<{focused: boolean; selected: boolean}> = []
@@ -305,7 +305,7 @@ describe('container render focused, selected, and path', () => {
     })
   })
 
-  test('An expanded selection across cells marks both as selected and none as focused', async () => {
+  test('Scenario: An expanded selection across cells marks both as selected and none as focused', async () => {
     const cellValues: Array<{
       key: string
       focused: boolean

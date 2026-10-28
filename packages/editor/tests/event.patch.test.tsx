@@ -258,8 +258,8 @@ describe('event.patch', () => {
     })
   })
 
-  describe('Scenario: Setting and unsetting the editor', () => {
-    test('regular text block', async () => {
+  describe('Setting and unsetting the editor', () => {
+    test('Scenario: Setting and unsetting the editor with a regular text block', async () => {
       const keyGenerator = createTestKeyGenerator()
       const patches: Array<Patch> = []
       const {editor, locator} = await createTestEditor({
@@ -377,7 +377,7 @@ describe('event.patch', () => {
       })
     })
 
-    test('text block with custom field', async () => {
+    test('Scenario: Setting and unsetting the editor with a text block with a custom field', async () => {
       const keyGenerator = createTestKeyGenerator()
       const patches: Array<Patch> = []
       const {editor, locator} = await createTestEditor({

@@ -15,7 +15,7 @@ const schemaDefinition = defineSchema({})
  * the render path entirely.
  */
 describe('drop position re-renders', () => {
-  test('a dragover re-renders no block', async () => {
+  test('Scenario: A dragover re-renders no block', async () => {
     const renders: Array<string> = []
 
     const textBlock = defineTextBlock({
