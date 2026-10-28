@@ -34,3 +34,9 @@ const ATTEMPT_WORST_SECONDS = ATTEMPT_SECONDS + JOIN_GRACE_SECONDS + FAILURE_DUM
 
 /** The longest a `typeOnDevice` call takes: two failed attempts with their dumps, the restart and the cleanup. */
 export const TYPE_ON_DEVICE_WORST_SECONDS = 2 * ATTEMPT_WORST_SECONDS + RESTART_SECONDS + JOIN_GRACE_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
+
+/**
+ * The device test timeout. A test that timed out leaves its cleanup running, and the next test waits for
+ * it before typing, so each test has room for one carried-over cleanup on top of its own worst case.
+ */
+export const DEVICE_TEST_TIMEOUT_SECONDS = TYPE_ON_DEVICE_WORST_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
