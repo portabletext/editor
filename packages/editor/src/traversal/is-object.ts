@@ -1,5 +1,5 @@
 import type {PortableTextObject} from '@portabletext/schema'
-import {isTypedObject} from '../utils/asserters'
+import {isTypedObject} from '@portabletext/schema'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
