@@ -389,7 +389,7 @@ export const DOMEditor: DOMEditorInterface = {
 
     // If we're inside an object node, force the offset to 0, otherwise the zero
     // width spacing character will result in an incorrect offset of 1
-    const pointPath = editorPath(editor, point)
+    const pointPath = editorPath(point)
     const pointEntry = getNode(editor.snapshot, pointPath)
     const pointObjectNode =
       pointEntry && isLeafObject(editor.snapshot, pointEntry.node, pointPath)
