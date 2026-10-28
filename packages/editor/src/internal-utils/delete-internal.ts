@@ -210,10 +210,11 @@ function deleteSameBlockRange(
     return null
   }
 
-  const removed = removeTextFromOffset(
+  const removed = removeTextRange(
     editor,
     start.path,
     start.offset,
+    undefined,
     capture,
   )
   removeChildrenBetween(editor, start.path, end.path)
@@ -265,8 +266,8 @@ function deleteSameParentCrossBlockRange(
       // at the block boundary, so every child should be cleared.
       removeAllChildren(editor, startBlockPath)
     } else {
-      removeTextFromOffset(editor, start.path, start.offset, false)
-      removeTrailingChildren(editor, start.path)
+      removeTextRange(editor, start.path, start.offset, undefined, false)
+      removeSiblings(editor, start.path, 'next')
     }
   }
 
@@ -283,13 +284,7 @@ function deleteSameParentCrossBlockRange(
   // Start void, end text: unset the start shell and trim the end block in
   // place. No merge because start no longer exists.
   if (startIsVoid) {
-    if (!pathEquals(end.path, endBlockPath)) {
-      removeLeadingChildrenOf(editor, endBlockPath, end.path)
-      const firstChild = getFirstChild(editor.snapshot, endBlockPath)
-      if (firstChild) {
-        removeTextUpToOffset(editor, firstChild.path, end.offset)
-      }
-    }
+    trimEndBlock(editor, endBlockPath, endBlockPath, end)
     removeNodeAt(editor, startBlockPath)
     return
   }
@@ -307,13 +302,7 @@ function deleteSameParentCrossBlockRange(
   })
   const adjustedEndBlockPath = adjustedEndBlock?.path ?? startBlockPath
 
-  if (!pathEquals(end.path, endBlockPath)) {
-    removeLeadingChildrenOf(editor, adjustedEndBlockPath, end.path)
-    const firstChild = getFirstChild(editor.snapshot, adjustedEndBlockPath)
-    if (firstChild) {
-      removeTextUpToOffset(editor, firstChild.path, end.offset)
-    }
-  }
+  trimEndBlock(editor, endBlockPath, adjustedEndBlockPath, end)
 
   mergeBlock(
     editor,
@@ -357,8 +346,8 @@ function deleteCrossParentRange(
   // 1. Trim the start block: remove text after the offset and any
   //    trailing children inside the same block.
   if (!pathEquals(start.path, startBlockPath)) {
-    removeTextFromOffset(editor, start.path, start.offset, false)
-    removeTrailingChildren(editor, start.path)
+    removeTextRange(editor, start.path, start.offset, undefined, false)
+    removeSiblings(editor, start.path, 'next')
   }
 
   // 2. Walk up the start branch. At every level above the start block
@@ -370,11 +359,12 @@ function deleteCrossParentRange(
   //    clear their contents instead of removing the shells themselves.
   let startLevel = startBlockPath
   while (!pathEquals(startLevel, startBranchRoot)) {
-    if (parentAcceptsTextBlock(editor, startLevel)) {
-      removeTrailingChildren(editor, startLevel)
-    } else {
-      clearTrailingSiblings(editor, startLevel)
-    }
+    removeSiblings(
+      editor,
+      startLevel,
+      'next',
+      !parentAcceptsTextBlock(editor, startLevel),
+    )
     startLevel = parentPath(startLevel)
   }
 
@@ -383,14 +373,7 @@ function deleteCrossParentRange(
   //    between are structural to their parent's shape (e.g. table
   //    cells in a row). Preserve each shell and clear its contents
   //    instead of unsetting it.
-  const lcaContainer = getEnclosingContainer(editor.snapshot, startBranchRoot)
-  const lcaAcceptsTextBlock = lcaContainer
-    ? lcaContainer.of.some(
-        (member) => member.type === editor.snapshot.context.schema.block.name,
-      )
-    : true
-
-  if (lcaAcceptsTextBlock) {
+  if (parentAcceptsTextBlock(editor, startBranchRoot)) {
     removeChildrenBetween(editor, startBranchRoot, endBranchRoot)
   } else {
     let cursor = getSibling(editor.snapshot, startBranchRoot, {
@@ -411,23 +394,18 @@ function deleteCrossParentRange(
   //    removing the shells.
   let endLevel = endBlockPath
   while (!pathEquals(endLevel, endBranchRoot)) {
-    if (parentAcceptsTextBlock(editor, endLevel)) {
-      removePrecedingSiblings(editor, endLevel)
-    } else {
-      clearPrecedingSiblings(editor, endLevel)
-    }
+    removeSiblings(
+      editor,
+      endLevel,
+      'previous',
+      !parentAcceptsTextBlock(editor, endLevel),
+    )
     endLevel = parentPath(endLevel)
   }
 
   // 5. Trim the end block: remove leading children and any text in
   //    the first surviving child that comes before the end offset.
-  if (!pathEquals(end.path, endBlockPath)) {
-    removeLeadingChildrenOf(editor, endBlockPath, end.path)
-    const firstChild = getFirstChild(editor.snapshot, endBlockPath)
-    if (firstChild) {
-      removeTextUpToOffset(editor, firstChild.path, end.offset)
-    }
-  }
+  trimEndBlock(editor, endBlockPath, endBlockPath, end)
 
   // 6. Unset every container the range fully covers. The trim and
   //    walk-up steps above modified content inside fully-covered
@@ -449,12 +427,15 @@ function deleteCrossParentRange(
   }
 }
 
-/** Remove text in `[startOffset, endOffset)` from the span at `path`. */
+/**
+ * Remove text in `[startOffset, endOffset)` from the span at `path`, or to the
+ * end of the span when `endOffset` is `undefined`.
+ */
 function removeTextRange(
   editor: PortableTextEditorEngine,
   path: Path,
   startOffset: number,
-  endOffset: number,
+  endOffset: number | undefined,
   capture: boolean,
 ): string | null {
   const span = getSpan(editor.snapshot, path)
@@ -466,22 +447,6 @@ function removeTextRange(
     return null
   }
   editor.apply({type: 'remove.text', path, offset: startOffset, text})
-  return capture ? text : null
-}
-
-/** Remove text from `offset` to the end of the span at `path`. */
-function removeTextFromOffset(
-  editor: PortableTextEditorEngine,
-  path: Path,
-  offset: number,
-  capture: boolean,
-): string | null {
-  const span = getSpan(editor.snapshot, path)
-  if (!span || offset >= span.node.text.length) {
-    return null
-  }
-  const text = span.node.text.slice(offset)
-  editor.apply({type: 'remove.text', path, offset, text})
   return capture ? text : null
 }
 
@@ -583,59 +548,27 @@ function clearContainerContents(
   }
 }
 
-/** Remove every sibling that comes after `startChildPath`. */
-function removeTrailingChildren(
+/**
+ * Remove every sibling of `startChildPath` in `direction`, or with `clear`,
+ * empty out each one instead.
+ */
+function removeSiblings(
   editor: PortableTextEditorEngine,
   startChildPath: Path,
+  direction: 'next' | 'previous',
+  clear?: boolean,
 ): void {
-  let cursor = getSibling(editor.snapshot, startChildPath, {direction: 'next'})
-  while (cursor) {
-    removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor.snapshot, startChildPath, {direction: 'next'})
-  }
-}
-
-/** Clear contents of every sibling that comes after `startChildPath`. */
-function clearTrailingSiblings(
-  editor: PortableTextEditorEngine,
-  startChildPath: Path,
-): void {
-  let cursor = getSibling(editor.snapshot, startChildPath, {direction: 'next'})
+  let cursor = getSibling(editor.snapshot, startChildPath, {direction})
   while (cursor) {
     const cursorPath = cursor.path
-    clearContainerContents(editor, cursorPath)
-    cursor = getSibling(editor.snapshot, cursorPath, {direction: 'next'})
-  }
-}
-
-/** Remove every sibling that comes before `startChildPath`. */
-function removePrecedingSiblings(
-  editor: PortableTextEditorEngine,
-  startChildPath: Path,
-): void {
-  let cursor = getSibling(editor.snapshot, startChildPath, {
-    direction: 'previous',
-  })
-  while (cursor) {
-    removeNodeAt(editor, cursor.path)
-    cursor = getSibling(editor.snapshot, startChildPath, {
-      direction: 'previous',
+    if (clear) {
+      clearContainerContents(editor, cursorPath)
+    } else {
+      removeNodeAt(editor, cursorPath)
+    }
+    cursor = getSibling(editor.snapshot, clear ? cursorPath : startChildPath, {
+      direction,
     })
-  }
-}
-
-/** Clear contents of every sibling that comes before `startChildPath`. */
-function clearPrecedingSiblings(
-  editor: PortableTextEditorEngine,
-  startChildPath: Path,
-): void {
-  let cursor = getSibling(editor.snapshot, startChildPath, {
-    direction: 'previous',
-  })
-  while (cursor) {
-    const cursorPath = cursor.path
-    clearContainerContents(editor, cursorPath)
-    cursor = getSibling(editor.snapshot, cursorPath, {direction: 'previous'})
   }
 }
 
@@ -810,4 +743,23 @@ function removeNodeAt(editor: PortableTextEditorEngine, path: Path): void {
     return
   }
   editor.apply({type: 'unset', path})
+}
+
+/**
+ * Remove leading children of `blockPath` before `end` and the text before
+ * `end.offset`, unless `end` is block-level.
+ */
+function trimEndBlock(
+  editor: PortableTextEditorEngine,
+  endBlockPath: Path,
+  blockPath: Path,
+  end: Point,
+): void {
+  if (!pathEquals(end.path, endBlockPath)) {
+    removeLeadingChildrenOf(editor, blockPath, end.path)
+    const firstChild = getFirstChild(editor.snapshot, blockPath)
+    if (firstChild) {
+      removeTextUpToOffset(editor, firstChild.path, end.offset)
+    }
+  }
 }
