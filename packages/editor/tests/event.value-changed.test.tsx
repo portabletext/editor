@@ -23,6 +23,9 @@ describe('event.value changed', () => {
       initialValue: [],
     })
 
-    expect(onEvent).toHaveBeenCalledWith({type: 'value changed', value: []})
+    expect(onEvent.mock.calls).toEqual([
+      [{type: 'value changed', value: []}],
+      [{type: 'ready'}],
+    ])
   })
 })
