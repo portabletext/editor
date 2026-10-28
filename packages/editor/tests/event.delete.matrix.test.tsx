@@ -19,7 +19,7 @@ const schemaDefinition = defineSchema({
 })
 
 describe('event.delete | unified primitives matrix', () => {
-  test('collapsed selection with default unit deletes one character forward', async () => {
+  test('Scenario: Deleting a collapsed selection with the default unit removes one character forward', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -37,7 +37,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('collapsed selection with backward direction deletes one character backward', async () => {
+  test('Scenario: Deleting a collapsed selection backward removes one character backward', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -55,7 +55,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('collapsed selection with unit:word deletes the word backward', async () => {
+  test('Scenario: Deleting a collapsed selection with unit:word removes the word backward', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -73,7 +73,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('collapsed selection with unit:block unsets the block', async () => {
+  test('Scenario: Deleting a collapsed selection with unit:block unsets the block', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -96,7 +96,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('collapsed selection on a void block unsets the void', async () => {
+  test('Scenario: Deleting a collapsed selection on a void block unsets the void', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -115,7 +115,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range within a single span trims the text', async () => {
+  test('Scenario: Deleting an expanded range within a single span trims the text', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -137,7 +137,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range across two same-block spans with different marks keeps boundaries', async () => {
+  test('Scenario: Deleting an expanded range across two same-block spans with different marks keeps the span boundaries', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -163,7 +163,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range across two text blocks merges the blocks', async () => {
+  test('Scenario: Deleting an expanded range across two text blocks merges the blocks', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -190,7 +190,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range from offset 0 of start block preserves the end block key', async () => {
+  test('Scenario: Deleting an expanded range from offset 0 of the start block preserves the end block key', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -227,7 +227,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range with a void at the start unsets the void and trims the end', async () => {
+  test('Scenario: Deleting an expanded range with a void at the start unsets the void and trims the end', async () => {
     const editor = await setup([
       {_type: 'image', _key: 'i0'},
       {
@@ -250,7 +250,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range with a void at the end trims the start and unsets the void', async () => {
+  test('Scenario: Deleting an expanded range with a void at the end trims the start and unsets the void', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -272,7 +272,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('expanded range from one void to another removes the entire region between', async () => {
+  test('Scenario: Deleting an expanded range from one void to another removes the entire region between', async () => {
     const editor = await setup([
       {_type: 'image', _key: 'i0'},
       {
@@ -295,7 +295,7 @@ describe('event.delete | unified primitives matrix', () => {
     await assertValue(editor, ['B: |'])
   })
 
-  test('expanded range across more than two blocks removes the middle blocks', async () => {
+  test('Scenario: Deleting an expanded range across more than two blocks removes the middle blocks', async () => {
     const editor = await setup([
       {
         _type: 'block',
@@ -327,7 +327,7 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('inline object inside a span range is removed', async () => {
+  test('Scenario: Deleting a span range removes the inline object inside it', async () => {
     const editor = await setup([
       {
         _type: 'block',
