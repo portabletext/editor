@@ -33,11 +33,6 @@ const blockProfiles: Record<
   },
 }
 
-const fieldProfiles: Record<ParseProfile, {validateFields: boolean}> = {
-  strict: {validateFields: true},
-  lenient: {validateFields: false},
-}
-
 export function parseBlocks({
   schema,
   keyGenerator,
@@ -104,7 +99,7 @@ export function parseSpan({
     schema,
     keyGenerator,
     markDefKeys,
-    options: fieldProfiles[profile],
+    options: blockProfiles[profile],
   })
 }
 
@@ -123,7 +118,7 @@ export function parseInlineObject({
     inlineObject,
     schema,
     keyGenerator,
-    options: fieldProfiles[profile],
+    options: blockProfiles[profile],
   })
 }
 
@@ -145,7 +140,7 @@ export function parseChild({
     schema,
     keyGenerator,
     markDefKeys,
-    options: fieldProfiles[profile],
+    options: blockProfiles[profile],
   })
 }
 
@@ -167,7 +162,7 @@ export function parseMarkDefs({
     schema,
     keyGenerator,
     markDefs,
-    options: fieldProfiles[profile],
+    options: blockProfiles[profile],
   })
 }
 
@@ -304,44 +299,36 @@ function parseTextBlock({
           },
         ]
 
-  const normalizedChildren = options.normalize
-    ? // Ensure that inline objects are surrounded by spans
-      children.reduce<Array<PortableTextObject | PortableTextSpan>>(
-        (normalizedChildren, child, index) => {
-          if (isSpan({schema}, child)) {
-            return [...normalizedChildren, child]
-          }
-
-          const previousChild = normalizedChildren.at(-1)
-
-          if (!previousChild || !isSpan({schema}, previousChild)) {
-            return [
-              ...normalizedChildren,
-              {
-                _key: keyGenerator(),
-                _type: schema.span.name,
-                text: '',
-                marks: [],
-              },
-              child,
-              ...(index === children.length - 1
-                ? [
-                    {
-                      _key: keyGenerator(),
-                      _type: schema.span.name,
-                      text: '',
-                      marks: [],
-                    },
-                  ]
-                : []),
-            ]
-          }
-
-          return [...normalizedChildren, child]
-        },
-        [],
-      )
-    : children
+  let normalizedChildren: Array<PortableTextObject | PortableTextSpan> =
+    children
+  if (options.normalize) {
+    // Ensure that inline objects are surrounded by spans
+    normalizedChildren = []
+    for (const [index, child] of children.entries()) {
+      if (
+        !isSpan({schema}, child) &&
+        !isSpan({schema}, normalizedChildren.at(-1))
+      ) {
+        normalizedChildren.push({
+          _key: keyGenerator(),
+          _type: schema.span.name,
+          text: '',
+          marks: [],
+        })
+        normalizedChildren.push(child)
+        if (index === children.length - 1) {
+          normalizedChildren.push({
+            _key: keyGenerator(),
+            _type: schema.span.name,
+            text: '',
+            marks: [],
+          })
+        }
+      } else {
+        normalizedChildren.push(child)
+      }
+    }
+  }
 
   const parsedBlock: PortableTextTextBlock = {
     _type: schema.block.name,
@@ -513,21 +500,11 @@ function parseSpanInternal({
     return []
   })
 
-  if (typeof span['_type'] === 'string' && span['_type'] !== schema.span.name) {
-    return undefined
-  }
-
-  if (typeof span['_type'] !== 'string') {
-    if (typeof span['text'] === 'string') {
-      return {
-        _type: schema.span.name as 'span',
-        _key: typeof span['_key'] === 'string' ? span['_key'] : keyGenerator(),
-        text: span['text'],
-        marks,
-        ...(options.validateFields ? {} : customFields),
-      }
-    }
-
+  if (
+    typeof span['_type'] === 'string'
+      ? span['_type'] !== schema.span.name
+      : typeof span['text'] !== 'string'
+  ) {
     return undefined
   }
 
@@ -595,7 +572,7 @@ export function parseAnnotation({
     return undefined
   }
 
-  const options = fieldProfiles[profile]
+  const options = blockProfiles[profile]
 
   return parseObject({
     object: annotation,
@@ -789,10 +766,7 @@ function parseContainerFieldValue({
         object: item,
         schema,
         keyGenerator,
-        schemaType: {
-          name: schemaType.name,
-          fields: schemaType.fields,
-        },
+        schemaType,
         ancestorFields,
         options,
       }),
