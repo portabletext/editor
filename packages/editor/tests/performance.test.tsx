@@ -605,7 +605,7 @@ describe('Performance', () => {
     }, 60_000)
   })
 
-  test('onChange is batched', async () => {
+  test('Scenario: Inserting 10 blocks in one event batches the `onChange` calls', async () => {
     const editorEngineRef = React.createRef<PortableTextEditorEngine>()
     let onChangeCount = 0
 

@@ -28,7 +28,7 @@ function createInitialValue(text: string): Array<PortableTextBlock> {
 }
 
 describe('Undo/Redo Collaboration (hand-coded)', () => {
-  test('will let editor A undo their change after B did an unrelated change (multi-line block)', async () => {
+  test('Scenario: Editor A undoes their change after B did an unrelated change (multi-line block)', async () => {
     const {editor, locator, editorB, locatorB} = await createTestEditors({
       initialValue: createInitialValue('First paragraph\n\nSecond paragraph!'),
     })
@@ -88,7 +88,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
   })
 
-  test('undoing in reverse order as applied', async () => {
+  test('Scenario: Undoing in reverse order as applied restores the initial value', async () => {
     const firstParagraph =
       '速ヒマヤレ誌相ルなあね日諸せ変評ホ真攻同潔ク作先た員勝どそ際接レゅ自17浅ッ実情スヤ籍認ス重力務鳥の。8平はートご多乗12青國暮整ル通国うれけこ能新ロコラハ元横ミ休探ミソ梓批ざょにね薬展むい本隣ば禁抗ワアミ部真えくト提知週むすほ。査ル人形ルおじつ政謙減セヲモ読見れレぞえ録精てざ定第ぐゆとス務接産ヤ写馬エモス聞氏サヘマ有午ごね客岡ヘロ修彩枝雨父のけリド。'
     const secondParagraph =
@@ -217,7 +217,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
   })
 
-  test('undoing out-of-order', async () => {
+  test('Scenario: Undoing out of order across editors restores the initial value', async () => {
     const firstParagraph = '速ド。'
     const secondParagraph = '住ぼ。'
     const {editor, editorB, locator, locatorB} = await createTestEditors({
@@ -314,7 +314,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
   })
 
-  test('editor A undo their change after B did an unrelated change (single-line, emoji)', async () => {
+  test('Scenario: Editor A undoes their change after B did an unrelated change (single-line, emoji)', async () => {
     const [beginning, middle, end] = [
       'A curious 🦊 named Felix lived in the 🪄🌲 of Willowwood. One day, he discovered a mysterious 🕳️, which lead to a magical 🌌. ',
       'In the Saturn of Celestia, Fox met a friendly Unicorn named Sparkle. ',
@@ -376,7 +376,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
   })
 
-  test('editor A undo their change after B did an unrelated change (multi-line block, emoji)', async () => {
+  test('Scenario: Editor A undoes their change after B did an unrelated change (multi-line block, emoji)', async () => {
     const initialText = `In the 🪐 of Celestia, 🦊 met a friendly 🌈🦄 named Sparkle.\n\nThey had extraordinary adventures together, befriending a 🧚, who gave them so many 📚 that they never lacked for reading material!`
     const {editor, locator, editorB, locatorB} = await createTestEditors({
       initialValue: createInitialValue(initialText),
@@ -459,7 +459,7 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
     })
   })
 
-  test('editor A undo their change after B did an unrelated change (multi-line block, kanji)', async () => {
+  test('Scenario: Editor A undoes their change after B did an unrelated change (multi-line block, kanji)', async () => {
     const initialText = `彼は、偉大な番兵がまさに尾根の頂上にいて、裸足では地面から最も低い枝にあることを知っていた。 彼は腹ばいになって雪と泥の中に滑り込み、下の何もない空き地を見下ろした。\n\n彼の心臓は胸の中で止まった。 しばらくの間、彼は息をすることさえできなかった。 月明かりは空き地、キャンプファイヤーの灰、雪に覆われた斜面、大きな岩、半分凍った小さな小川を照らしていました。すべては数1時間前とまったく同じでした。`
     const {editor, locator, editorB, locatorB} = await createTestEditors({
       initialValue: createInitialValue(initialText),
