@@ -365,9 +365,7 @@ describe('escaping a container at the document edge', () => {
   test('Scenario: Pressing arrows at a nested inner edge mid-container inserts nothing', async () => {
     // Three levels deep (table -> row -> cell shaped), the first cell of a
     // non-first row is the *nearest* container's start edge but not the
-    // outer container's: native navigation stays inside. Measuring the
-    // dead end at the nearest container declared every row's first and
-    // last cell a dead end and inserted phantom blocks beside the table.
+    // outer container's: native navigation stays inside.
     const {editor, locator} = await createGridEditor()
     await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})

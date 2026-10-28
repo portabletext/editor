@@ -305,8 +305,7 @@ describe('Block-level positional override: defineContainer', () => {
     })
 
     await vi.waitFor(() => {
-      // Global render fires because positional has no render and no
-      // null sentinel.
+      // Global render fires because positional has no render.
       expect(document.querySelector('[data-testid="row-global"]')).not.toEqual(
         null,
       )
@@ -594,7 +593,7 @@ describe('Block-level positional override: defineTextBlock', () => {
       const calloutEl = document.querySelector('[data-testid="callout"]')
       expect(calloutEl).not.toEqual(null)
       // Global text-block render fires inside the callout because the
-      // positional registration has no render and no null sentinel.
+      // positional registration has no render.
       expect(
         calloutEl!.querySelector('[data-testid="block-global"]'),
       ).not.toEqual(null)
@@ -833,7 +832,7 @@ describe('Block-level positional override: defineBlockObject', () => {
       const calloutEl = document.querySelector('[data-testid="callout"]')
       expect(calloutEl).not.toEqual(null)
       // Global render fires inside the callout because positional has
-      // no render and no null sentinel.
+      // no render.
       expect(
         calloutEl!.querySelector('[data-testid="image-global"]'),
       ).not.toEqual(null)
