@@ -416,6 +416,71 @@ describe('event.delete.backward', () => {
     })
   })
 
+  test.fails('Scenario: backspacing at the start of a span after an Indic conjunct cluster keeps the remaining code units in the span they came from', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: fooKey,
+              _type: 'span',
+              text: 'f\u0915\u094d\u0924',
+              marks: ['strong'],
+            },
+            {_key: barKey, _type: 'span', text: 'b', marks: []},
+          ],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: fooKey,
+              _type: 'span',
+              text: 'f\u0915\u094d',
+              marks: ['strong'],
+            },
+            {_key: barKey, _type: 'span', text: 'b', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
   describe('Deleting word', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
