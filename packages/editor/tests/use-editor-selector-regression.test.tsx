@@ -115,13 +115,13 @@ const UNSTABLE_SELECTORS = [
 const BOUND = 50
 
 for (const {name, selector} of UNSTABLE_SELECTORS) {
-  test(`${name} - selector invoked a bounded number of times`, async () => {
+  test(`Scenario: Subscribing to ${name} invokes the selector a bounded number of times`, async () => {
     const calls = await countSelectorInvocations(selector)
     expect(calls).toBeLessThan(BOUND)
   })
 }
 
-test('control: reading a stable context field stays bounded', async () => {
+test('Scenario: Subscribing to a stable context field invokes the selector a bounded number of times', async () => {
   const calls = await countSelectorInvocations((s) => s.context.value)
   expect(calls).toBeLessThan(BOUND)
 })

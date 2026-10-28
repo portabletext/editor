@@ -172,7 +172,7 @@ async function createGridEditor() {
 }
 
 describe('escaping a container at the document edge', () => {
-  test('ArrowDown at the end of a trailing container inserts a block after it', async () => {
+  test('Scenario: Pressing ArrowDown at the end of a trailing container inserts a block after it', async () => {
     const editor = await createLonelyContainerEditor()
     await placeCaret(editor, 2)
 
@@ -190,7 +190,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('ArrowUp at the start of a leading container inserts a block before it', async () => {
+  test('Scenario: Pressing ArrowUp at the start of a leading container inserts a block before it', async () => {
     const editor = await createLonelyContainerEditor()
     await placeCaret(editor, 0)
 
@@ -208,7 +208,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('clicking below a trailing container inserts a block after it', async () => {
+  test('Scenario: Clicking below a trailing container inserts a block after it', async () => {
     const editor = await createLonelyContainerEditor()
     await placeCaret(editor, 1)
 
@@ -234,7 +234,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('clicking above a leading container inserts a block before it', async () => {
+  test('Scenario: Clicking above a leading container inserts a block before it', async () => {
     const editor = await createLonelyContainerEditor()
     await placeCaret(editor, 1)
 
@@ -260,7 +260,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('clicking below a lonely container nested in a container inserts inside the outer one', async () => {
+  test('Scenario: Clicking below a lonely container nested in a container inserts a block inside the outer one', async () => {
     const {editor, locator} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({
@@ -362,7 +362,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('arrows at a nested inner edge mid-container do not insert', async () => {
+  test('Scenario: Pressing arrows at a nested inner edge mid-container inserts nothing', async () => {
     // Three levels deep (table -> row -> cell shaped), the first cell of a
     // non-first row is the *nearest* container's start edge but not the
     // outer container's: native navigation stays inside. Measuring the
@@ -406,7 +406,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('clicking a container whose array rejects text blocks never inserts inside it', async () => {
+  test('Scenario: Clicking a container whose array rejects text blocks never inserts inside it', async () => {
     // A table's rows array only accepts rows, so a click on the table's
     // own surface above or below the grid has no valid place for a
     // placeholder inside it and must leave the value alone. The editor
@@ -484,7 +484,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('modified arrows at a dead end suppress instead of inserting', async () => {
+  test('Scenario: Pressing modified arrows at a dead end suppresses them instead of inserting', async () => {
     // Shift+Arrow extends the selection; at a container dead end the
     // behaviors still match (any modifier state) but only suppress, so no
     // placeholder is inserted.
@@ -506,7 +506,7 @@ describe('escaping a container at the document edge', () => {
     })
   })
 
-  test('ArrowDown does not insert when the container has a next sibling', async () => {
+  test('Scenario: Pressing ArrowDown inserts nothing when the container has a next sibling', async () => {
     const {editor, locator} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,

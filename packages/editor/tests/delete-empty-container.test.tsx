@@ -28,7 +28,7 @@ const containers = [
 ]
 
 describe('delete on empty container', () => {
-  test('Backspace in empty callout with text block before unwraps to root', async () => {
+  test('Scenario: Pressing Backspace in an empty callout with a text block before unwraps it to root', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -89,7 +89,7 @@ describe('delete on empty container', () => {
     })
   })
 
-  test('Backspace in empty callout with text block after unwraps to root', async () => {
+  test('Scenario: Pressing Backspace in an empty callout with a text block after unwraps it to root', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -150,7 +150,7 @@ describe('delete on empty container', () => {
     })
   })
 
-  test('Backspace in empty callout that is the only block leaves a placeholder text block', async () => {
+  test('Scenario: Pressing Backspace in an empty callout that is the only block leaves a placeholder text block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -206,7 +206,7 @@ describe('delete on empty container', () => {
     })
   })
 
-  test('Delete in empty callout with text block after unwraps to root', async () => {
+  test('Scenario: Pressing Delete in an empty callout with a text block after unwraps it to root', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -441,7 +441,7 @@ const calloutInPermissiveCellSelection = {
 }
 
 describe('delete on empty container - nested cascade', () => {
-  test('Backspace in empty callout in permissive cell unwraps only the callout', async () => {
+  test('Scenario: Pressing Backspace in an empty callout in a permissive cell unwraps only the callout', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -531,7 +531,7 @@ describe('delete on empty container - nested cascade', () => {
     })
   })
 
-  test('Backspace in empty callout in lonely structural cell cascades all the way to root', async () => {
+  test('Scenario: Pressing Backspace in an empty callout in a lonely structural cell cascades all the way to root', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -593,7 +593,7 @@ describe('delete on empty container - nested cascade', () => {
     })
   })
 
-  test('Backspace in empty callout in lonely structural cell with text block before lands payload after that text block', async () => {
+  test('Scenario: Pressing Backspace in an empty callout in a lonely structural cell with a text block before lands the payload after that text block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -658,7 +658,7 @@ describe('delete on empty container - nested cascade', () => {
     })
   })
 
-  test('Backspace in empty callout in structural cell with sibling cells is a no-op', async () => {
+  test('Scenario: Pressing Backspace in an empty callout in a structural cell with sibling cells changes nothing', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -798,7 +798,7 @@ describe('delete on empty container - nested block container', () => {
     }),
   ]
 
-  test('Backspace inside empty fact-box with nested block container unwraps the fact-box', async () => {
+  test('Scenario: Pressing Backspace inside an empty fact-box with a nested block container unwraps the fact-box', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -856,7 +856,7 @@ describe('delete on empty container - nested block container', () => {
     })
   })
 
-  test('Backspace at the start of a non-first text block inside fact-box merges with the previous block', async () => {
+  test('Scenario: Pressing Backspace at the start of a non-first text block inside a fact-box merges it with the previous block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,

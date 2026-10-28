@@ -310,7 +310,7 @@ describe('event.delete', () => {
     })
   })
 
-  describe('Scenario: Deleting backwards selection starting on a block object', () => {
+  describe('backwards selection starting on a block object', () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
     const fooBlockKey = keyGenerator()
@@ -346,7 +346,7 @@ describe('event.delete', () => {
     }
 
     describe('with trailing text block', () => {
-      test('without selection', async () => {
+      test('Scenario: Deleting at a location leaves an empty text block and no selection', async () => {
         const {editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({
@@ -379,7 +379,7 @@ describe('event.delete', () => {
         })
       })
 
-      test('with selection', async () => {
+      test('Scenario: Deleting the selection leaves the caret in an empty text block', async () => {
         const {locator, editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({
@@ -429,7 +429,7 @@ describe('event.delete', () => {
       })
     })
 
-    test('without trailing text block', async () => {
+    test('Scenario: Deleting without a trailing text block leaves an empty text block', async () => {
       const {editor} = await createTestEditor({
         keyGenerator,
         schemaDefinition: defineSchema({
@@ -890,7 +890,7 @@ describe('event.delete', () => {
   })
 
   describe('unit: child', () => {
-    describe('Scenario: deleting text block children', () => {
+    describe('text block children', () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const fooKey = keyGenerator()
@@ -910,7 +910,7 @@ describe('event.delete', () => {
         },
       ]
 
-      test('end-to-end selection', async () => {
+      test('Scenario: Deleting an end-to-end selection removes all children', async () => {
         const {editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({
@@ -939,7 +939,7 @@ describe('event.delete', () => {
         })
       })
 
-      test('mid-span to mid-span selection', async () => {
+      test('Scenario: Deleting a mid-span to mid-span selection removes all touched children', async () => {
         const {editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({
@@ -968,7 +968,7 @@ describe('event.delete', () => {
         })
       })
 
-      test('partial span selection', async () => {
+      test('Scenario: Deleting a partial span selection removes the whole span', async () => {
         const {editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({
@@ -999,7 +999,7 @@ describe('event.delete', () => {
         })
       })
 
-      test('inline object selection', async () => {
+      test('Scenario: Deleting an inline object selection removes the inline object', async () => {
         const {editor} = await createTestEditor({
           keyGenerator,
           schemaDefinition: defineSchema({

@@ -165,7 +165,7 @@ const mintedLeafPath = [
 ]
 
 describe('selection on an emptied container child', () => {
-  test('resolves to the leaf of the normalization-minted block', async () => {
+  test('Scenario: Deleting the cell text resolves the selection to the leaf of the normalization-minted block', async () => {
     const editor = await selectAcrossCellText()
 
     editor.send({type: 'delete'})
@@ -181,7 +181,7 @@ describe('selection on an emptied container child', () => {
     })
   })
 
-  test('an expanded selection onto the emptied child resolves both endpoints', async () => {
+  test('Scenario: An expanded selection onto the emptied child resolves both endpoints', async () => {
     const editor = await selectAcrossCellText()
 
     editor.send({type: 'custom.clear and select expanded'})
@@ -197,7 +197,7 @@ describe('selection on an emptied container child', () => {
     })
   })
 
-  test('insert.text following a clearing delete lands in the repaired child', async () => {
+  test('Scenario: Inserting text after a clearing delete lands in the repaired child', async () => {
     const editor = await selectAcrossCellText()
 
     editor.send({type: 'insert.text', text: 'e'})
