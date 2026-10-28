@@ -7,6 +7,7 @@
     "build:page": "vite build",
     "check:types": "tsc --noEmit --pretty --project tsconfig.json && tsc --noEmit --pretty --project tsconfig.page.json",
     "clean": "del .turbo && del .cache && del dist && del out && del node_modules",
+    "test:device": "vitest run --project device",
     "test:unit": "vitest run --project unit"
   },
   "dependencies": {
