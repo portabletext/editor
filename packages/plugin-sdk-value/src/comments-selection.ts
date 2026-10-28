@@ -1,5 +1,6 @@
 import type {EditorSelection} from '@portabletext/editor'
-import type {Path, PathSegment} from '@portabletext/patches'
+import {isEqualPaths, isKeyedSegment} from '@portabletext/editor/utils'
+import type {Path} from '@portabletext/patches'
 import {
   COMMENT_INDICATORS,
   type StoredTextSelection,
@@ -59,7 +60,7 @@ export function buildStoredSelection(options: {
 
   const containerPath = selectedBlocks[0].path.slice(0, -1)
   const sharedContainer = selectedBlocks.every((selected) =>
-    pathsEqual(selected.path.slice(0, -1), containerPath),
+    isEqualPaths(selected.path.slice(0, -1), containerPath),
   )
   if (!sharedContainer) {
     return null
@@ -131,23 +132,4 @@ function plainOffset(
 
 function isSpan(child: SpanLike): boolean {
   return child._type === 'span' && typeof child.text === 'string'
-}
-
-function isKeyedSegment(
-  segment: PathSegment | undefined,
-): segment is {_key: string} {
-  return typeof segment === 'object' && segment !== null && '_key' in segment
-}
-
-function pathsEqual(a: Path, b: Path): boolean {
-  if (a.length !== b.length) {
-    return false
-  }
-  return a.every((segment, index) => {
-    const other = b[index]
-    if (isKeyedSegment(segment) && isKeyedSegment(other)) {
-      return segment._key === other._key
-    }
-    return segment === other
-  })
 }
