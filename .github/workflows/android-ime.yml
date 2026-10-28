@@ -1,0 +1,181 @@
+name: Android IME
+
+# Types on real Gboard in an Android emulator into a test page built from
+# the workspace editor, see `apps/android-ime/README.md`.
+#
+# Each job prepares the emulator and runs the Vitest device tests for its
+# language. A job is red when the device never booted, a prep step failed
+# or a test failed, an editor assertion included. This workflow is not a
+# required check, so a red job blocks nothing.
+
+on:
+  pull_request:
+    paths:
+      - packages/editor/src/engine/react/components/editable.tsx
+      - packages/editor/src/engine/react/hooks/android-input-manager/**
+      - packages/editor/src/engine/react/hooks/use-track-user-input.ts
+      - packages/editor/src/engine/dom/plugin/dom-editor.ts
+      - packages/editor/src/behaviors/behavior.abstract.input.ts
+      - packages/editor/src/editor/Editable.tsx
+      - apps/android-ime/**
+      - .github/workflows/android-ime.yml
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: android-ime-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  emulator:
+    name: Android IME (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    # The sum of the step caps below on the boot retry path, see the budget in
+    # `apps/android-ime/README.md`.
+    timeout-minutes: 145
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [ja, en]
+        api: [36]
+
+    steps:
+      - uses: actions/checkout@v7
+        timeout-minutes: 3
+
+      - name: KVM probe
+        timeout-minutes: 1
+        run: |
+          ls -l /dev/kvm || echo "NO /dev/kvm"
+          grep -cE 'vmx|svm' /proc/cpuinfo || true
+
+      - name: Enable KVM group perms
+        timeout-minutes: 1
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: pnpm/action-setup@v6
+        timeout-minutes: 2
+      - uses: actions/setup-node@v6
+        timeout-minutes: 3
+        with:
+          # The driver runs its `.ts` files with Node 24's type stripping.
+          node-version: 24
+
+      - name: Install project dependencies
+        timeout-minutes: 8
+        run: pnpm install
+
+      - name: Build the test page
+        timeout-minutes: 10
+        run: |
+          pnpm exec turbo build --filter='android-ime^...'
+          pnpm --filter android-ime build:page
+          node -e "console.log('EDITOR_VERSION', require('./packages/editor/package.json').version)"
+
+      - name: Fetch the uiautomator2 server jar
+        timeout-minutes: 2
+        working-directory: apps/android-ime
+        run: node scripts/fetch-u2-jar.ts
+
+      # The emulator steps install the same packages again, which only checks them once they are here.
+      - name: Install the emulator and its system image
+        timeout-minutes: 8
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+
+      - name: Record start
+        timeout-minutes: 1
+        working-directory: apps/android-ime
+        run: mkdir -p out && echo "EMULATOR_START at $(date +%s)" | tee out/timing.txt
+
+      # Boot, device prep and the tests, see the budget in `apps/android-ime/README.md`.
+      - name: Run on emulator
+        id: run1
+        continue-on-error: true
+        timeout-minutes: 48
+        env:
+          IME_LANG: ${{ matrix.lang }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis_playstore
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          ram-size: 4096M
+          cores: 4
+          heap-size: 512M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          emulator-boot-timeout: 360
+          working-directory: apps/android-ime
+          script: scripts/run-on-device.sh
+
+      # The emulator sometimes never comes online. Retry once, but only when it never booted.
+      - name: Check boot
+        id: boot
+        if: steps.run1.outcome == 'failure'
+        timeout-minutes: 1
+        working-directory: apps/android-ime
+        run: |
+          if grep -q BOOTED out/timing.txt; then echo booted=yes >> $GITHUB_OUTPUT; else echo booted=no >> $GITHUB_OUTPUT; echo "BOOT_RETRY"; fi
+
+      - name: Run on emulator (boot retry)
+        id: run2
+        if: steps.run1.outcome == 'failure' && steps.boot.outputs.booted == 'no'
+        continue-on-error: true
+        timeout-minutes: 48
+        env:
+          IME_LANG: ${{ matrix.lang }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis_playstore
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          ram-size: 4096M
+          cores: 4
+          heap-size: 512M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          emulator-boot-timeout: 360
+          working-directory: apps/android-ime
+          script: scripts/run-on-device.sh
+
+      - name: Boot time
+        if: always()
+        timeout-minutes: 1
+        working-directory: apps/android-ime
+        run: |
+          s=$(grep EMULATOR_START out/timing.txt | awk '{print $3}')
+          b=$(grep BOOTED out/timing.txt | awk '{print $3}')
+          [ -n "$s" ] && [ -n "$b" ] && echo "BOOT_SECONDS $((b - s))"
+          cat out/phases.log || true
+
+      # The run steps continue on error so the boot retry can follow. This
+      # step turns the job red when the last run failed.
+      - name: Result
+        if: always()
+        timeout-minutes: 1
+        run: |
+          if [ "${{ steps.run2.outcome }}" != skipped ]; then outcome="${{ steps.run2.outcome }}"; else outcome="${{ steps.run1.outcome }}"; fi
+          echo "run outcome: $outcome"
+          [ "$outcome" = success ]
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        timeout-minutes: 5
+        with:
+          name: android-ime-${{ matrix.lang }}-api${{ matrix.api }}-${{ github.run_attempt }}
+          path: apps/android-ime/out/
