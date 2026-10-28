@@ -135,14 +135,6 @@ export const coreDndBehaviors = [
             dragGhost.appendChild(block)
           }
 
-          // A custom drag ghost element can be configured using this data attribute
-          const customGhost = dragGhost.querySelector(
-            '[data-pt-drag-ghost-element]',
-          )
-          if (customGhost) {
-            dragGhost.replaceChildren(customGhost)
-          }
-
           // Setting the `data-dragged` attribute so the consumer can style the element while it’s dragged
           dragGhost.setAttribute('data-dragged', '')
 
@@ -151,45 +143,23 @@ export const coreDndBehaviors = [
           dragGhost.style.boxSizing = 'border-box'
           document.body.appendChild(dragGhost)
 
-          if (customGhost) {
-            const customGhostRect = customGhost.getBoundingClientRect()
-            const x = event.originEvent.clientX - customGhostRect.left
-            const y = event.originEvent.clientY - customGhostRect.top
-            dragGhost.style.width = `${customGhostRect.width}px`
-            dragGhost.style.height = `${customGhostRect.height}px`
+          const blocksDomRect = getCompoundClientRect(
+            draggedDomNodes.blockNodes,
+          )
+          const x = event.originEvent.clientX - blocksDomRect.left
+          const y = event.originEvent.clientY - blocksDomRect.top
+          dragGhost.style.width = `${blocksDomRect.width}px`
+          dragGhost.style.height = `${blocksDomRect.height}px`
 
-            return [
-              effect(() => {
-                dom.setDragGhost({
-                  event,
-                  ghost: {
-                    element: dragGhost,
-                    x,
-                    y,
-                  },
-                })
-              }),
-              forward(event),
-            ]
-          } else {
-            const blocksDomRect = getCompoundClientRect(
-              draggedDomNodes.blockNodes,
-            )
-            const x = event.originEvent.clientX - blocksDomRect.left
-            const y = event.originEvent.clientY - blocksDomRect.top
-            dragGhost.style.width = `${blocksDomRect.width}px`
-            dragGhost.style.height = `${blocksDomRect.height}px`
-
-            return [
-              effect(() => {
-                dom.setDragGhost({
-                  event,
-                  ghost: {element: dragGhost, x, y},
-                })
-              }),
-              forward(event),
-            ]
-          }
+          return [
+            effect(() => {
+              dom.setDragGhost({
+                event,
+                ghost: {element: dragGhost, x, y},
+              })
+            }),
+            forward(event),
+          ]
         } else {
           const clonedChildNodes = draggedDomNodes.childNodes.map((node) =>
             node.cloneNode(true),
