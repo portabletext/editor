@@ -82,6 +82,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -131,6 +133,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -198,6 +202,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -243,6 +249,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -288,6 +296,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -321,6 +331,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -354,6 +366,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -410,6 +424,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -455,6 +471,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -501,6 +519,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -552,6 +572,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -597,6 +619,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -638,6 +662,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -696,6 +722,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -741,6 +769,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -786,6 +816,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -837,6 +869,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -877,6 +911,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -925,6 +961,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -954,6 +992,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -987,6 +1027,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1022,6 +1064,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1073,6 +1117,8 @@ describe('the reconciliation report', () => {
       },
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1139,6 +1185,8 @@ describe('the reconciliation report', () => {
       ],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1179,6 +1227,8 @@ describe('the reconciliation report', () => {
         {previousKey: 'b1', key: 'fresh5', path: [{_key: 'fresh5'}]},
       ],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1239,6 +1289,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1309,6 +1361,17 @@ describe('the reconciliation report', () => {
         },
       ],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [
+        {
+          _type: 'widget',
+          _key: 'w1',
+          position: 'block',
+          path: [{_key: 'w1'}],
+          message:
+            'Kept the block-level `widget` object as written: the schema has no block-level `widget` object',
+        },
+      ],
     })
   })
 
@@ -1378,6 +1441,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [{previousKey: 'dup', key: 'k4', path: [{_key: 'k4'}]}],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1447,6 +1512,17 @@ describe('the reconciliation report', () => {
         },
       ],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [
+        {
+          _type: 'widget',
+          _key: 'k2',
+          position: 'block',
+          path: [{_key: 'k2'}],
+          message:
+            'Kept the block-level `widget` object as written: the schema has no block-level `widget` object',
+        },
+      ],
     })
   })
 
@@ -1469,6 +1545,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [{type: 'ambiguous-region-too-large', keys: editedKeys}],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1535,6 +1613,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1599,6 +1679,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1675,6 +1757,8 @@ describe('the reconciliation report', () => {
         },
       ],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1742,6 +1826,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1810,6 +1896,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1864,6 +1952,8 @@ describe('the reconciliation report', () => {
           snippet: 'foo',
         },
       ],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1931,6 +2021,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -1980,6 +2072,8 @@ describe('the reconciliation report', () => {
           snippet: 'foo',
         },
       ],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2021,6 +2115,8 @@ describe('the reconciliation report', () => {
           snippet: 'foo',
         },
       ],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2072,6 +2168,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2125,6 +2223,8 @@ describe('the reconciliation report', () => {
           snippet: 'foo',
         },
       ],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2199,6 +2299,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2427,6 +2529,8 @@ describe('the reconciliation report', () => {
           snippet: 'foo',
         },
       ],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2522,6 +2626,8 @@ describe('the reconciliation report', () => {
           snippet: 'foo',
         },
       ],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2677,6 +2783,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -2889,6 +2997,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -3084,6 +3194,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -3316,6 +3428,8 @@ describe('the reconciliation report', () => {
       keyFallbacks: [],
       renamedKeys: [],
       hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
     })
   })
 
@@ -3361,7 +3475,539 @@ describe('the reconciliation report', () => {
     )
     expect(onReconciliation).toHaveBeenCalledTimes(1)
   })
+
+  test('a heading level the schema has no style for is a markdown loss the caller still observes through onDegradation', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const schema = compileSchema(defineSchema({styles: [{name: 'normal'}]}))
+    const stored = [block('b1', 's1', 'foo')]
+    const onDegradation = vi.fn()
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, 'foo\n\n### bar', {
+      schema,
+      deserialize: {keyGenerator, onDegradation},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([block('b1', 's1', 'foo'), block('k2', 'k3', 'bar')])
+    expect(onDegradation.mock.calls).toEqual([
+      [
+        {
+          degradations: [
+            {
+              type: 'style-fallback',
+              message:
+                '`###` heading became a normal paragraph: the schema has no `h3` style',
+              line: 3,
+              snippet: 'bar',
+            },
+          ],
+          message: expect.stringContaining('h3'),
+        },
+      ],
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [
+        {
+          type: 'style-fallback',
+          message:
+            '`###` heading became a normal paragraph: the schema has no `h3` style',
+          line: 3,
+          snippet: 'bar',
+        },
+      ],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('a caller onDegradation that throws still makes applyMarkdownEdit throw', () => {
+    const schema = compileSchema(defineSchema({styles: [{name: 'normal'}]}))
+    const onReconciliation = vi.fn()
+    expect(() =>
+      applyMarkdownEdit([block('b1', 's1', 'foo')], 'foo\n\n### bar', {
+        schema,
+        deserialize: {
+          keyGenerator: createTestKeyGenerator(),
+          onDegradation: ({message}) => {
+            throw new Error(message)
+          },
+        },
+        onReconciliation,
+      }),
+    ).toThrow('the schema has no `h3` style')
+    expect(onReconciliation).not.toHaveBeenCalled()
+  })
+
+  test('a `json:object` fence adding an undeclared block object is an undeclared object, not a markdown loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [block('b1', 's1', 'foo')]
+    const markdown = [
+      'foo',
+      '',
+      '```json:object',
+      '{"_type": "product", "_key": "p1"}',
+      '```',
+    ].join('\n')
+    const onDegradation = vi.fn()
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator, onDegradation},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 's1', 'foo'),
+      {_type: 'product', _key: 'p1'},
+    ])
+    expect(onDegradation.mock.calls).toEqual([
+      [
+        {
+          degradations: [
+            {
+              type: 'object-type-undeclared',
+              message:
+                'Kept the block-level `product` object as written: the schema has no block-level `product` object',
+              line: 3,
+              snippet: '{"_type": "product", "_key": "p1"}',
+            },
+          ],
+          message: expect.stringContaining('product'),
+        },
+      ],
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [
+        {
+          _type: 'product',
+          _key: 'p1',
+          position: 'block',
+          path: [{_key: 'p1'}],
+          message:
+            'Kept the block-level `product` object as written: the schema has no block-level `product` object',
+        },
+      ],
+    })
+  })
+
+  test('a stored undeclared block object the edit keeps is not an undeclared object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'product', _key: 'p1', sku: 'abc'},
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'foo',
+      'bar',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 's1', 'bar'),
+      {_type: 'product', _key: 'p1', sku: 'abc'},
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 'b1',
+          path: [{_key: 'b1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 's1',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'p1',
+          path: [{_key: 'p1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('a stored keyless undeclared object the edit keeps is not an undeclared object, though the round trip gives it a key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'product', sku: 'abc'} as unknown as PortableTextBlock,
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'foo',
+      'bar',
+    )
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report.undeclaredObjects).toEqual([])
+  })
+
+  test('an undeclared object inside a declared container is not checked, stored or added', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const schema = containerSchema()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'container',
+        items: [{_type: 'legacy', _key: 'l1'}],
+      } as unknown as PortableTextBlock,
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored), {
+      schema,
+    }).replace('foo', 'bar')
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      schema,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report.undeclaredObjects).toEqual([])
+  })
+
+  test('a second undeclared object of a stored type is an undeclared object, the stored one is not', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {_type: 'product', sku: 'abc'} as unknown as PortableTextBlock,
+    ]
+    const markdown = [
+      portableTextToMarkdown(structuredClone(stored)),
+      '',
+      '```json:object',
+      JSON.stringify({_type: 'product', _key: 'p2', sku: 'def'}),
+      '```',
+    ].join('\n')
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report.undeclaredObjects).toEqual([
+      {
+        _type: 'product',
+        _key: 'p2',
+        position: 'block',
+        path: [{_key: 'p2'}],
+        message:
+          'Kept the block-level `product` object as written: the schema has no block-level `product` object',
+      },
+    ])
+  })
+
+  test('an undeclared object the edit adds inside a declared container is not an undeclared object, since fields of declared objects are not searched', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const schema = containerSchema()
+    const stored = [
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'container',
+        _key: 'c1',
+        items: [
+          {_type: 'entry', _key: 'e1'},
+          {_type: 'legacy', _key: 'l1'},
+        ],
+      },
+    ]
+    const markdown = [
+      'foo',
+      '',
+      '```json:object',
+      JSON.stringify({
+        _type: 'container',
+        _key: 'c1',
+        items: [
+          {_type: 'entry', _key: 'e1'},
+          {_type: 'legacy', _key: 'l1'},
+          {_type: 'product', _key: 'p1'},
+        ],
+      }),
+      '```',
+    ].join('\n')
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      schema,
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 's1', 'foo'),
+      {
+        _type: 'container',
+        _key: 'c1',
+        items: [
+          {_type: 'entry', _key: 'e1'},
+          {_type: 'legacy', _key: 'l1'},
+          {_type: 'product', _key: 'p1'},
+        ],
+      },
+    ])
+    expect(report.undeclaredObjects).toEqual([])
+  })
+
+  test('an undeclared inline object added to a paragraph is an undeclared object at its inline path', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [block('b1', 's1', 'foo')]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      'foo json:object`{"_type":"mention","_key":"m1"}`',
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+          {_type: 'mention', _key: 'm1'},
+        ],
+      },
+    ])
+    expect(report.markdownLosses).toEqual([])
+    expect(report.undeclaredObjects).toEqual([
+      {
+        _type: 'mention',
+        _key: 'm1',
+        position: 'inline',
+        path: [{_key: 'b1'}, 'children', {_key: 'm1'}],
+        message:
+          'Kept the inline `mention` object as written: the schema has no inline `mention` object',
+      },
+    ])
+  })
+
+  test('a stored undeclared inline object survives an edit that gives its paragraph a fresh key without being an undeclared object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {_type: 'mention', _key: 'm1'},
+          {_type: 'span', _key: 's2', text: ' bar', marks: []},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'foo',
+      'Completely different words',
+    )
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, `baz\n\n${markdown}`, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('k0', 'k1', 'baz'),
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 'k3',
+            text: 'Completely different words ',
+            marks: [],
+          },
+          {_type: 'mention', _key: 'm1'},
+          {_type: 'span', _key: 'k4', text: ' bar', marks: []},
+        ],
+      },
+    ])
+    expect(report.undeclaredObjects).toEqual([])
+  })
+
+  test('a callout the edit adds is not an undeclared object', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [block('b1', 's1', 'foo')]
+    const markdown = ['foo', '', '> [!NOTE]', '> bar'].join('\n')
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(stored, markdown, {
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(result).toEqual([
+      block('b1', 's1', 'foo'),
+      {
+        _key: 'k4',
+        _type: 'callout',
+        tone: 'note',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'blockquote',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+    ])
+    expect(report.markdownLosses).toEqual([])
+    expect(report.undeclaredObjects).toEqual([])
+  })
+
+  test('a skipped report carries markdown losses and undeclared objects', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'h1',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's1', text: 'foo\nbar', marks: []}],
+      },
+    ]
+    const markdown = [
+      portableTextToMarkdown(structuredClone(stored)),
+      '### baz',
+      '```json:object',
+      '{"_type": "product", "_key": "p1"}',
+      '```',
+    ].join('\n\n')
+    let report!: ReconciliationReport
+    applyMarkdownEdit(stored, markdown, {
+      schema: compileSchema(
+        defineSchema({styles: [{name: 'normal'}, {name: 'h1'}]}),
+      ),
+      deserialize: {keyGenerator},
+      onReconciliation: (r) => {
+        report = r
+      },
+    })
+    expect(report).toEqual({
+      keyMatching: 'skipped',
+      reason: 'round-trip-mismatch',
+      mismatch: {
+        type: 'text-changed',
+        storedPath: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        message:
+          "The block's text came back different, starting at the text `\\nbar`",
+      },
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [
+        {
+          type: 'style-fallback',
+          message:
+            '`###` heading became a normal paragraph: the schema has no `h3` style',
+          line: 4,
+          snippet: 'baz',
+        },
+      ],
+      undeclaredObjects: [
+        {
+          _type: 'product',
+          _key: 'p1',
+          position: 'block',
+          path: [{_key: 'p1'}],
+          message:
+            'Kept the block-level `product` object as written: the schema has no block-level `product` object',
+        },
+      ],
+    })
+  })
 })
+
+function containerSchema() {
+  return compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'container',
+          fields: [
+            {
+              name: 'items',
+              type: 'array',
+              of: [
+                {type: 'block'},
+                {type: 'object', name: 'entry', fields: []},
+              ],
+            },
+          ],
+        },
+      ],
+    }),
+  )
+}
 
 function internalLinkBlock(blockKey: string): PortableTextBlock {
   return {

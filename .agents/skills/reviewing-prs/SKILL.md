@@ -54,6 +54,10 @@ evidence or produce it:
 - Spot-check "full value" assertions for smuggled partial matchers.
 - A named behavioral change must have a test proving the _new_ behavior;
   an unnamed one found in the diff is a blocker, not a nit.
+- A new walk, guard, path or key helper or plain util in the diff is a
+  duplicate until shown otherwise: search the editor's `src/traversal`,
+  `src/selectors`, `src/utils`, `src/paths` and `@portabletext/schema`
+  for it. An unmarked copy is a should-fix.
 
 ## Report
 

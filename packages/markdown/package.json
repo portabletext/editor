@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/markdown",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "Convert Portable Text to and from Markdown",
   "keywords": [
     "markdown",
