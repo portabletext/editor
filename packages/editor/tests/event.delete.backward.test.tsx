@@ -416,7 +416,7 @@ describe('event.delete.backward', () => {
     })
   })
 
-  test.fails('Scenario: backspacing at the start of a span after an Indic conjunct cluster keeps the remaining code units in the span they came from', async () => {
+  test('Scenario: backspacing at the start of a span after an Indic conjunct cluster keeps the remaining code units in the span they came from', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
@@ -478,6 +478,17 @@ describe('event.delete.backward', () => {
           style: 'normal',
         },
       ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
     })
   })
 
