@@ -19,6 +19,7 @@ describe('event.ready', () => {
 
     await createTestEditor({
       children: <EventListenerPlugin on={onEvent} />,
+      initialValue: [],
     })
 
     expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
