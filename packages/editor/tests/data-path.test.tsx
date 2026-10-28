@@ -29,11 +29,11 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const blockLocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${blockKey}"]']`)
-
       await vi.waitFor(() => {
+        const blockLocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${blockKey}"]']`)
+
         expect(blockLocator).not.toBeNull()
       })
     })
@@ -54,13 +54,13 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const spanLocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKey}"].children[_key=="${spanKey}"]']`,
-        )
-
       await vi.waitFor(() => {
+        const spanLocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKey}"].children[_key=="${spanKey}"]']`,
+          )
+
         expect(spanLocator).not.toBeNull()
       })
     })
@@ -89,11 +89,11 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const imageLocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
-
       await vi.waitFor(() => {
+        const imageLocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
+
         expect(imageLocator).not.toBeNull()
       })
     })
@@ -123,13 +123,13 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const stockTickerLocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKey}"].children[_key=="${stockTickerKey}"]']`,
-        )
-
       await vi.waitFor(() => {
+        const stockTickerLocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKey}"].children[_key=="${stockTickerKey}"]']`,
+          )
+
         expect(stockTickerLocator).not.toBeNull()
       })
     })
@@ -157,24 +157,24 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const blockALocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${blockKeyA}"]']`)
-      const blockBLocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${blockKeyB}"]']`)
-      const spanALocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKeyA}"].children[_key=="${spanKeyA}"]']`,
-        )
-      const spanBLocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKeyB}"].children[_key=="${spanKeyB}"]']`,
-        )
-
       await vi.waitFor(() => {
+        const blockALocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${blockKeyA}"]']`)
+        const blockBLocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${blockKeyB}"]']`)
+        const spanALocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKeyA}"].children[_key=="${spanKeyA}"]']`,
+          )
+        const spanBLocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKeyB}"].children[_key=="${spanKeyB}"]']`,
+          )
+
         expect(blockALocator).not.toBeNull()
         expect(blockBLocator).not.toBeNull()
         expect(spanALocator).not.toBeNull()
@@ -243,11 +243,11 @@ describe('data-pt-path attribute', () => {
       }),
     })
 
-    const imageLocator = locator
-      .element()
-      .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
-
     await vi.waitFor(() => {
+      const imageLocator = locator
+        .element()
+        .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
+
       expect(
         imageLocator,
         "Unable to find image from it's data-pt-path",
