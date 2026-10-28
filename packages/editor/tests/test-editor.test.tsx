@@ -3,21 +3,6 @@ import {expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 
-/**
- * Regression test for `createTestEditor`'s locator scoping.
- *
- * Each call to `createTestEditor` mounts its own editor into a fresh
- * container via `render()`. The returned locator must target that
- * specific editor instance - not any other `[role="textbox"]` that
- * happens to live in the same document, in document order.
- *
- * Before the fix, the function discarded the scoped locator from
- * `render()` and built a document-wide `page.getByRole('textbox')`
- * lookup, so any second editor in the DOM would be addressed by the
- * first call's locator. Vitest's iframe-per-test isolation kept this
- * latent in CI; embedders that share a DOM across editors hit it.
- */
-
 test('Scenario: Each test editor gets a locator scoped to its own rendered editor', async () => {
   const first = await createTestEditor()
   const second = await createTestEditor()

@@ -9,32 +9,6 @@ import {
 } from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-/**
- * Block-level positional override composition.
- *
- * For each block-level kind (container, textBlock, blockObject), the
- * resolution cases are pinned:
- *
- *   1. Global render at top-level NodePlugin fires when no positional
- *      override exists at the position.
- *   2. Positional `render: fn` in a parent container's `of` overrides
- *      any global registration at that position.
- *   3b. Positional `render: (props) => props.renderDefault(props)`
- *       renders the engine default at this position (canonical way to
- *       opt into the engine default while shadowing global).
- *   4. Positional `of: [...]` with no `render` falls through to the
- *      global render when one is registered.
- *   5. Positional `of: [...]` with no `render` falls through to engine
- *      default when no global render is registered.
- *
- * Three registration-time modes of `render`:
- * - omitted (`undefined`): no positional override registered; falls
- *   through to global.
- * - function: registers an override using the function. The function
- *   receives a `renderDefault` prop that returns the engine default
- *   when called.
- */
-
 const calloutSchema = defineSchema({
   blockObjects: [
     {

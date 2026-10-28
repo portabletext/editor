@@ -2556,13 +2556,6 @@ describe('cross-container range delete: deep structures', () => {
   })
 
   test('Scenario: Delete over a range across nested containers registered only positionally clears the covered cell text', async () => {
-    // Regression: when `row` and `cell` are registered ONLY as nested
-    // positional overrides inside `table.of` (no top-level registration),
-    // a selection range crossing cells should still clear text in covered
-    // cells. The bug: `clearContainerContents` used a bare type-keyed
-    // `editor.containers.get('cell')` which only finds top-level
-    // registrations; positionally-registered cells were silently skipped,
-    // leaving text in covered intermediate cells.
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const row0Key = keyGenerator()

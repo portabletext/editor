@@ -5,30 +5,6 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-/**
- * Worked example from the Container API PR description: a recursive list
- * schema where lists contain list items, list items hold text blocks +
- * nested lists + code blocks, and a separate plugin owns code-block.
- *
- * Two scenarios:
- *
- * C) Code-block is declared at the top-level of the schema AND inline
- *    inside list-item.content.of. ListPlugin owns list + list-item;
- *    CodeBlockPlugin owns code-block. The two plugins do not know
- *    about each other.
- *
- * D) Code-block is declared ONLY inline inside list-item.content.of,
- *    not at the top level of the schema. Plugin still registers
- *    code-block top-level. The locked rule "registration is type-keyed;
- *    activation is position-gated" implies the global registration
- *    activates wherever the schema declares a code-block with the
- *    matching arrayField.
- *
- * Both scenarios assert that normalization walks the full chain (list ->
- * item -> code-block -> lines) and fills an empty code-block's `lines`
- * field with a placeholder text block.
- */
-
 function schemaWithCodeBlockTopLevel() {
   return defineSchema({
     blockObjects: [
