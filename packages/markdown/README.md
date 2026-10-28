@@ -864,33 +864,44 @@ applyMarkdownEdit(stored, editedMarkdown, {
     report.keyFallbacks // regions that got fresh keys instead of a guess
     report.renamedKeys // keys rewritten to keep siblings unique
     report.hiddenLosses // stored content the markdown never showed that is missing from the result
+    report.markdownLosses // what the edited markdown said that the result does not hold
+    report.undeclaredObjects // objects the edit added whose type the schema does not declare
   },
 })
 ```
 
-Every `key` and `path` in the report matches the returned value exactly, except `mismatch.storedPath` and each `hiddenLosses` entry's `path`, which address the stored value passed in. A path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, `keyMatching`, and `mismatch.type` are facts of that invocation, safe to branch on. Match on `mismatch.type` (`'type-changed'`, `'text-changed'`, or `'block-count-changed'`), not `mismatch.message`: the message can change between releases. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. `valueChanged`, by contrast, is a stable fact of the invocation, safe to branch on: it is `true` when the node wearing that key differs from its stored counterpart, field order aside but array order significant. Any difference counts, including a descendant key rewritten to keep siblings unique, or a key filled in for a stored node that had none. `false` guarantees the returned node deep-equals the stored one. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload, so a caller who needs to know whether one of those changed has to compare it directly. The next section shows how to check `json:object` payloads that way. The exported `ReconciliationReport` and `ReconciliationKeyPath` types are `@beta`.
+Every `key` and `path` in the report matches the returned value exactly, except `mismatch.storedPath` and each `hiddenLosses` entry's `path`, which address the stored value passed in. A path segment is a string field name, a number array index, or `{_key}` for a keyed element, the same convention as editor paths. Which keys survived, the paths, `renamedKeys`, `keyMatching`, and `mismatch.type` are facts of that invocation, safe to branch on. Match on `mismatch.type` (`'type-changed'`, `'text-changed'`, or `'block-count-changed'`), not `mismatch.message`: the message can change between releases. A preserved key's `basis` names the matching method (`'content-unchanged'`, `'content-moved'`, `'content-split'`, `'content-merged'`, `'same-position'`, `'similar-content'`) and is advisory: near the evidence caps it can vary with machine speed, so never branch on it. `valueChanged`, by contrast, is a stable fact of the invocation, safe to branch on: it is `true` when the node wearing that key differs from its stored counterpart, field order aside but array order significant. Any difference counts, including a descendant key rewritten to keep siblings unique, or a key filled in for a stored node that had none. `false` guarantees the returned node deep-equals the stored one. A node absent from `preservedKeys` was not restored from the stored value, whether its key is fresh or carried by a `json:object` payload, so a caller who needs to know whether one of those changed has to compare it directly. The next section shows how to check `json:object` payloads that way. The exported `ReconciliationReport`, `ReconciliationKeyPath` and `UndeclaredObject` types are `@beta`.
 
 #### Losses the markdown did not show
 
-Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. A stored block whose `_key` is missing from the returned value has all of its losses listed, whether the edit deleted it or rewrote it so far that it came back with a fresh key; whether the removal was intended is yours to decide. A non-empty list means saving the result drops content the editor never saw, so refuse or retry:
+Content the `serialize` options have no markdown form for (an annotation or decorator with no mark renderer, a block style or list-item kind with no renderer) never reaches whoever edits the markdown. `applyMarkdownEdit` restores it where it can. Both report variants carry `hiddenLosses`: one `SerializeDegradation` per such loss whose content is missing from the returned value, with `path` addressing the stored value. A stored block whose `_key` is missing from the returned value has all of its losses listed, whether the edit deleted it or rewrote it so far that it came back with a fresh key. Whether the removal was intended is yours to decide.
+
+#### Losses in the edited markdown
+
+The edited markdown can also say things the schema cannot hold. Both report variants carry `markdownLosses`: the `Degradation` entries `deserialize.onDegradation` receives for `editedMarkdown`, in the same order, except `object-type-undeclared`. Each one means the result differs from what the markdown said, for example a heading level the schema has no style for, a dropped decorator, a flattened table, or fields dropped from a `json:object` carrier. Your own `deserialize.onDegradation` still receives every entry, and a throw from it still propagates.
+
+#### Objects the schema does not declare
+
+A `json:object` payload whose type the schema does not declare is kept as written, so nothing is lost, but the result holds content the schema does not allow. Both report variants carry `undeclaredObjects`: one `UndeclaredObject` per such object in the returned value that the stored value did not already hold, in document order. Each entry has the object's `_type`, its `_key` when it has one, a `position` of `'block'` or `'inline'`, a `path` into the returned value, and a `message` for display, the same text as the object's `object-type-undeclared` degradation. Only top-level block objects and the inline objects of top-level text blocks are checked. The fields of a declared object, such as a table's cells or a container's own array, are not searched: what a payload holds inside its fields is validated like any other write of that object. An object the stored value already held in the same position, with the same `_type` and `_key`, is not listed, and editing the paragraph around an inline object does not list it even when the paragraph gets a fresh key. A stored object with no `_key` gets a fresh one from the round trip, so it is matched by its `_type` and content instead. Each stored object matches at most one object in the result, so adding a second object of a stored type lists the new one.
+
+Together the three lists say whether saving the result loses content or adds content the schema does not allow. Refuse or retry when any of them is non-empty:
 
 ```ts
-import {
-  applyMarkdownEdit,
-  type SerializeDegradation,
-} from '@portabletext/markdown'
+import {applyMarkdownEdit} from '@portabletext/markdown'
 
-let hiddenLosses: Array<SerializeDegradation> = []
+const problems: Array<string> = []
 const edited = applyMarkdownEdit(stored, editedMarkdown, {
   onReconciliation: (report) => {
-    hiddenLosses = report.hiddenLosses
+    problems.push(
+      ...report.hiddenLosses.map((loss) => loss.message),
+      ...report.markdownLosses.map((loss) => loss.message),
+      ...report.undeclaredObjects.map((object) => object.message),
+    )
   },
 })
 
-if (hiddenLosses.length > 0) {
-  throw new Error(
-    `The edit would drop: ${hiddenLosses.map((loss) => loss.message).join('; ')}`,
-  )
+if (problems.length > 0) {
+  throw new Error(`The edit cannot be saved as is: ${problems.join('\n')}`)
 }
 ```
 
