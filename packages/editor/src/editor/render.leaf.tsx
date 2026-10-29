@@ -64,5 +64,14 @@ export function RenderLeaf(
     }
   }
 
-  return renderedSpan
+  // Same shape as the placeholder branch above, with an empty first slot, so
+  // the first character typed into an empty block updates the span in place
+  // instead of remounting it. On Android a remount takes away the text node
+  // the IME composes in.
+  return (
+    <>
+      {null}
+      {renderedSpan}
+    </>
+  )
 }
