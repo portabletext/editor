@@ -37,6 +37,15 @@ describe('conversion oracle', () => {
     }
     const pick = <T>(items: Array<T>): T =>
       items[Math.floor(random() * items.length)]!
+    // Same-name nesting draws from its own sequence, so the base schema
+    // draws stay stable when same-name coverage changes.
+    let sameNameSeed = 7331
+    const sameNameRandom = () => {
+      sameNameSeed = (sameNameSeed * 16807) % 2147483647
+      return sameNameSeed / 2147483647
+    }
+    const sameNamePick = <T>(items: Array<T>): T =>
+      items[Math.floor(sameNameRandom() * items.length)]!
 
     for (let round = 0; round < 40; round++) {
       // Sized so the recursive reference stays comparable: block <->
@@ -129,6 +138,43 @@ describe('conversion oracle', () => {
         return {name: typeName, type: 'object', fields}
       })
 
+      // Inline declarations nested inside a same-named inline declaration
+      // with different fields, sometimes named like a top-level type and
+      // sometimes reaching named types, so cycles pass through them.
+      const sameNameDeclaration = (
+        name: string,
+        depth: number,
+      ): Record<string, unknown> => {
+        const fields: Array<Record<string, unknown>> = [
+          {name: `label${depth}`, type: 'string'},
+        ]
+        if (sameNameRandom() < 0.5) {
+          fields.push({
+            name: `link${depth}`,
+            type: 'array',
+            of: [{type: sameNamePick(typeNames)}],
+          })
+        }
+        if (depth < 2 && (depth === 0 || sameNameRandom() < 0.5)) {
+          fields.push({
+            name: `nested${depth}`,
+            type: 'array',
+            of: [sameNameDeclaration(name, depth + 1)],
+          })
+        }
+        return {type: 'object', name, fields}
+      }
+      const sameNameMembers =
+        sameNameRandom() < 0.5
+          ? [
+              sameNameDeclaration(
+                sameNameRandom() < 0.5 ? 'card' : sameNamePick(typeNames),
+                0,
+              ),
+            ]
+          : []
+      const sameNameInBlock = sameNameRandom() < 0.5
+
       const blockContent = {
         name: 'blockContent',
         type: 'array',
@@ -147,11 +193,15 @@ describe('conversion oracle', () => {
                 },
               ],
             },
-            of: [{type: pick(typeNames)}],
+            of: [
+              {type: pick(typeNames)},
+              ...(sameNameInBlock ? sameNameMembers : []),
+            ],
           },
           ...typeNames
             .filter(() => random() < 0.5)
             .map((typeName) => ({type: typeName})),
+          ...(sameNameInBlock ? [] : sameNameMembers),
         ],
       }
 
@@ -223,9 +273,10 @@ describe('conversion oracle', () => {
  * same output rules, so it only changes when those rules change, never to
  * match a work-stack detail. Deliberate deviations from the old
  * implementation: the function is renamed, unexported, and inlined here so
- * it can never be mistaken for package surface, and an anonymous object
+ * it can never be mistaken for package surface, an anonymous object
  * member (name `object`) cuts only when the same instance re-enters its
- * own expansion, emitting `fields: []`.
+ * own expansion, emitting `fields: []`, and a named member cuts only when
+ * an ancestor has both its name and its `fields` array.
  */
 /**
  * Compile a Sanity schema to a Portable Text `Schema`.
@@ -347,21 +398,29 @@ function sanitySchemaTypeToSchema(
       name: annotation.name,
       title: annotation.title,
       fields: annotation.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set(), memo),
+        sanityFieldToSchemaField(field, [], memo),
       ),
     })),
     blockObjects: blockObjectTypes.map((blockObject) => ({
       name: blockObject.name,
       title: blockObject.title,
       fields: blockObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([blockObject.name]), memo),
+        sanityFieldToSchemaField(
+          field,
+          [{name: blockObject.name, fields: blockObject.fields}],
+          memo,
+        ),
       ),
     })),
     inlineObjects: inlineObjectTypes.map((inlineObject) => ({
       name: inlineObject.name,
       title: inlineObject.title,
       fields: inlineObject.fields.map((field) =>
-        sanityFieldToSchemaField(field, new Set([inlineObject.name]), memo),
+        sanityFieldToSchemaField(
+          field,
+          [{name: inlineObject.name, fields: inlineObject.fields}],
+          memo,
+        ),
       ),
     })),
   }
@@ -384,7 +443,7 @@ function sanitySchemaTypeToSchema(
  */
 function resolveBlockOfMember(
   blockType: BlockSchemaType,
-  ancestorNames: ReadonlySet<string>,
+  ancestors: Ancestors,
   memo: Map<SchemaType, OfDefinition>,
 ): BlockOfDefinition {
   const styleList = blockType.fields?.find((field) => field.name === 'style')
@@ -439,7 +498,7 @@ function resolveBlockOfMember(
         name: annotation.name,
         title: annotation.title,
         fields: annotation.fields.map((field) =>
-          sanityFieldToSchemaField(field, ancestorNames, memo),
+          sanityFieldToSchemaField(field, ancestors, memo),
         ),
       }),
     ),
@@ -449,13 +508,23 @@ function resolveBlockOfMember(
       fields: (inlineObject.fields ?? []).map((field) =>
         sanityFieldToSchemaField(
           field,
-          new Set([...ancestorNames, inlineObject.name]),
+          [
+            ...ancestors,
+            {name: inlineObject.name, fields: inlineObject.fields},
+          ],
           memo,
         ),
       ),
     })),
   }
 }
+
+/**
+ * Sanity gives every instance of one named type the very same `fields`
+ * array, while two inline declarations sharing a name get different ones,
+ * so an ancestor is identified by both.
+ */
+type Ancestors = ReadonlyArray<{name: string; fields: unknown}>
 
 function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
   try {
@@ -474,7 +543,7 @@ function sanityFieldToSchemaField(
     name: string
     type: SchemaType
   },
-  ancestorNames: ReadonlySet<string>,
+  ancestors: Ancestors,
   memo: Map<SchemaType, OfDefinition>,
 ): FieldDefinition {
   if (field.type.jsonType === 'array') {
@@ -485,7 +554,7 @@ function sanityFieldToSchemaField(
       ...(field.type.title ? {title: field.type.title} : {}),
       of: ofMembers
         ? ofMembers.map((member) =>
-            sanityOfMemberToOfDefinition(member, ancestorNames, memo),
+            sanityOfMemberToOfDefinition(member, ancestors, memo),
           )
         : [],
     }
@@ -500,7 +569,7 @@ function sanityFieldToSchemaField(
 
 function sanityOfMemberToOfDefinition(
   memberType: SchemaType,
-  ancestorNames: ReadonlySet<string>,
+  ancestors: Ancestors,
   memo: Map<SchemaType, OfDefinition>,
 ): OfDefinition {
   // `findBlockType` walks up the `type.type` chain to the base `block`, so
@@ -508,17 +577,15 @@ function sanityOfMemberToOfDefinition(
   // marks/styles/lists live on `memberType`, which `resolveBlockOfMember`
   // reads to emit the member's own resolved sub-schema.
   if (findBlockType(memberType)) {
-    return resolveBlockOfMember(
-      memberType as BlockSchemaType,
-      ancestorNames,
-      memo,
-    )
+    return resolveBlockOfMember(memberType as BlockSchemaType, ancestors, memo)
   }
 
   // A member with fields emits an INLINE declaration (`type: 'object'` +
-  // name + fields). A member without fields, or a named member whose name
-  // is already in the ancestor chain (cycle), emits a bare REFERENCE (just
-  // `type: <name>`). Anonymous members cut on instance identity below.
+  // name + fields). A member without fields, or a named member re-entering
+  // an ancestor with its name and `fields` array (cycle), emits a bare
+  // REFERENCE (just `type: <name>`). A same-named ancestor with other
+  // fields is a different inline declaration, not a cycle. Anonymous
+  // members cut on instance identity below.
   const hasFields =
     memberType.jsonType === 'object' &&
     'fields' in memberType &&
@@ -527,7 +594,12 @@ function sanityOfMemberToOfDefinition(
 
   if (
     !hasFields ||
-    (!isAnonymousObject && ancestorNames.has(memberType.name)) ||
+    (!isAnonymousObject &&
+      ancestors.some(
+        (ancestor) =>
+          ancestor.name === memberType.name &&
+          ancestor.fields === (memberType as ObjectSchemaType).fields,
+      )) ||
     referenceRootBlockObjects.has(memberType)
   ) {
     // Bare reference, mirroring the production emission rule: root block
@@ -556,8 +628,10 @@ function sanityOfMemberToOfDefinition(
     return memoized
   }
 
-  const nextAncestors = new Set(ancestorNames)
-  nextAncestors.add(memberType.name)
+  const nextAncestors = [
+    ...ancestors,
+    {name: memberType.name, fields: (memberType as ObjectSchemaType).fields},
+  ]
   if (isAnonymousObject) {
     referenceActiveAnonymousObjects.add(memberType)
   }
