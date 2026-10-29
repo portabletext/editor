@@ -8,6 +8,11 @@ import {
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
 
+// `createTestEditors` forwards each editor's `mutation` events to the other,
+// and the batcher flushes those on a 500ms interval, which leaves little of
+// `vi.waitFor`'s 1s default on a loaded runner.
+const remoteSyncTimeout = 3_000
+
 function createInitialValue(text: string): Array<PortableTextBlock> {
   return [
     {
@@ -48,11 +53,14 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
 
     await userEvent.type(locator, '?')
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: First paragraph', '', 'Second paragraph!?|'].join('\n'),
-      )
-    })
+    await vi.waitFor(
+      () => {
+        expect(toTextspec(editorB.getSnapshot().context)).toEqual(
+          ['B: First paragraph', '', 'Second paragraph!?'].join('\n'),
+        )
+      },
+      {timeout: remoteSyncTimeout},
+    )
 
     await userEvent.click(locatorB)
 
@@ -74,6 +82,17 @@ describe('Undo/Redo Collaboration (hand-coded)', () => {
 
     await userEvent.keyboard('{Shift>}{Enter}{/Shift}')
     await userEvent.keyboard('{Shift>}{Enter}{/Shift}')
+
+    await vi.waitFor(
+      () => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          ['B: Welcome', '', 'First paragraph', '', 'Second paragraph!?|'].join(
+            '\n',
+          ),
+        )
+      },
+      {timeout: remoteSyncTimeout},
+    )
 
     editor.send({
       type: 'history.undo',
