@@ -18,6 +18,8 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
+import {getEntireSoftLineDeleteEvents} from '../../../internal-utils/entire-soft-line-delete-event'
+import {getHardLineDeleteEvent} from '../../../internal-utils/hard-line-delete-event'
 import {isReplacementDelete} from '../../../internal-utils/is-replacement-delete'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
@@ -870,23 +872,22 @@ export const Editable = forwardRef(
             }
 
             case 'deleteEntireSoftLine': {
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'line'},
+              for (const behaviorEvent of getEntireSoftLineDeleteEvents(
                 editor,
-              })
-              editorActor.send({
-                type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'line'},
-                editor,
-              })
+              )) {
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent,
+                  editor,
+                })
+              }
               break
             }
 
             case 'deleteHardLineBackward': {
               editorActor.send({
                 type: 'behavior event',
-                behaviorEvent: {type: 'delete.backward', unit: 'block'},
+                behaviorEvent: getHardLineDeleteEvent(editor, 'backward'),
                 editor,
               })
               break
@@ -904,7 +905,7 @@ export const Editable = forwardRef(
             case 'deleteHardLineForward': {
               editorActor.send({
                 type: 'behavior event',
-                behaviorEvent: {type: 'delete.forward', unit: 'block'},
+                behaviorEvent: getHardLineDeleteEvent(editor, 'forward'),
                 editor,
               })
               break
