@@ -98,7 +98,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           )
           if (siblingIndex === -1) {
             throw new Error(
-              `Cannot apply an "insert" operation at path [${path}] because the sibling was not found.`,
+              `Cannot apply an "insert" operation at path ${serializePath(path)} because the sibling was not found.`,
             )
           }
           index = op.position === 'after' ? siblingIndex + 1 : siblingIndex
@@ -106,13 +106,13 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           index = op.position === 'after' ? lastSegment + 1 : lastSegment
         } else {
           throw new Error(
-            `Cannot apply an "insert" operation at path [${path}] because the last segment is a field name.`,
+            `Cannot apply an "insert" operation at path ${serializePath(path)} because the last segment is a field name.`,
           )
         }
 
         if (index > children.length) {
           throw new Error(
-            `Cannot apply an "insert" operation at path [${path}] because the destination is past the end of the node.`,
+            `Cannot apply an "insert" operation at path ${serializePath(path)} because the destination is past the end of the node.`,
           )
         }
 
@@ -401,7 +401,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
 
           if (index === -1 || index >= children.length) {
             throw new Error(
-              `Cannot apply an "unset" (node removal) operation at path [${path}] because the node was not found.`,
+              `Cannot apply an "unset" (node removal) operation at path ${serializePath(path)} because the node was not found.`,
             )
           }
 
