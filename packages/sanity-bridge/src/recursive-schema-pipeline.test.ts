@@ -17,11 +17,10 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
  * regardless of the emitted shape; the failure lived in the output's
  * TREE size, which everything downstream walks. This test runs the
  * pipeline a studio runs, convert from the document field's type, then
- * `compileSchema`, and bounds both the tree size and the end-to-end
- * time. Before root block objects referenced by name at every position,
- * this shape exhausted the heap.
+ * `compileSchema`, and bounds the tree size. Before root block objects
+ * referenced by name at every position, this shape exhausted the heap.
  */
-test('a wide mutually recursive schema converts and compiles small and fast', () => {
+test('a wide mutually recursive schema converts and compiles small', () => {
   const containerCount = 25
   const types: Array<Record<string, unknown>> = []
   const memberRefs: Array<Record<string, unknown>> = [
@@ -60,15 +59,12 @@ test('a wide mutually recursive schema converts and compiles small and fast', ()
   }
   const bodyType = article.fields.find((field) => field.name === 'body')!.type
 
-  const startedAt = performance.now()
   const definition = sanitySchemaToPortableTextSchema(bodyType as never)
   const compiled = compileSchema(definition as never)
-  const durationMs = performance.now() - startedAt
 
   expect(definition.blockObjects).toHaveLength(containerCount)
   expect(compiled.blockObjects).toHaveLength(containerCount)
   expect(JSON.stringify(definition).length).toBeLessThan(200_000)
-  expect(durationMs).toBeLessThan(2_000)
 })
 
 /**

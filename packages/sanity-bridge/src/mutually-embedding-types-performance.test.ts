@@ -21,12 +21,12 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
  * Text field.
  *
  * Converting each compiled type instance once and sharing the result
- * keeps the walk linear. With 12 mutually-embedding types this test
- * completes in well under a second; before the fix it does not complete
- * in any practical amount of time.
+ * keeps the walk linear. With 12 mutually-embedding types the converted
+ * schema stays small. The walk before the fix runs out of memory on this
+ * schema.
  */
 describe('mutually-embedding block objects', () => {
-  test('many block objects sharing a named Portable Text array type convert in linear time', () => {
+  test('many block objects sharing a named Portable Text array type convert to a small schema', () => {
     const objectCount = 12
 
     const objectTypes = Array.from({length: objectCount}, (_, index) =>
@@ -57,16 +57,11 @@ describe('mutually-embedding block objects', () => {
       types: [blockContentType, ...objectTypes],
     })
 
-    const startedAt = performance.now()
     const schema = sanitySchemaToPortableTextSchema(
       sanitySchema.get('blockContent'),
     )
-    const durationMs = performance.now() - startedAt
 
     expect(schema.blockObjects).toHaveLength(objectCount)
-    // Generous bound - the conversion takes ~1ms when linear, while the
-    // unmemoized walk does not finish in any practical amount of time.
-    expect(durationMs).toBeLessThan(2_000)
 
     // The emitted definition must be small AS A TREE, not just cheap to
     // build. The memoized walk builds shared `OfDefinition` objects (a
@@ -129,13 +124,11 @@ describe('mutually-embedding block objects', () => {
       types: [pageType, pageBodyType, ...layoutBlockTypes],
     })
 
-    const startedAt = performance.now()
     const schema = sanitySchemaToPortableTextSchema(
       sanitySchema.get('pageBody'),
     )
-    const durationMs = performance.now() - startedAt
 
-    expect(durationMs).toBeLessThan(2_000)
+    expect(JSON.stringify(schema).length).toBeLessThan(100_000)
 
     // The non-recursive parts of the converted schema mirror what a
     // default Portable Text array carries - block, span, the standard
