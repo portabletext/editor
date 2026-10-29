@@ -22,7 +22,27 @@ export const DefaultCodeBlockRenderer: PortableTextTypeRenderer<{
   if (!isCodeShaped(options.value)) {
     return DefaultUnknownTypeRenderer(options)
   }
-  return `\`\`\`${normalizeLanguage(options.value.language)}\n${options.value.code}\n\`\`\``
+  const fence = '`'.repeat(
+    Math.max(3, longestClosingFenceRun(options.value.code) + 1),
+  )
+  return `${fence}${normalizeLanguage(options.value.language)}\n${options.value.code}\n${fence}`
+}
+
+/**
+ * A code line closes the fence early when it is nothing but a backtick run
+ * at least as long as the opening fence (CommonMark allows up to 3 spaces
+ * of indent and trailing spaces or tabs). Backtick runs anywhere else in
+ * the code can't close it, so they don't widen the fence. Lines split on
+ * CommonMark's line endings only: a regex `m` flag would also split on
+ * U+2028 and U+2029, which Markdown reads as ordinary characters.
+ */
+function longestClosingFenceRun(code: string): number {
+  let longest = 0
+  for (const line of code.split(/\r\n|\r|\n/)) {
+    const run = /^ {0,3}(`+)[ \t]*$/.exec(line)?.[1]
+    longest = Math.max(longest, run?.length ?? 0)
+  }
+  return longest
 }
 
 function isCodeShaped(value: unknown): value is {code: string} {

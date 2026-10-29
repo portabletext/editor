@@ -5,7 +5,10 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {applyMarkdownEdit} from './apply-markdown-edit'
+import {
+  applyMarkdownEdit,
+  type ReconciliationReport,
+} from './apply-markdown-edit'
 import {defaultTableObjectDefinition} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 
@@ -1515,6 +1518,49 @@ describe(applyMarkdownEdit.name, () => {
     ).toEqual([
       {_type: 'code', _key: 'code1', language: 'js', code: 'const a = 2'},
     ])
+  })
+
+  test('an unchanged code block holding a line of backticks keeps its key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {_type: 'code', _key: 'code1', code: 'foo\n```\nbar'},
+      {_type: 'code', _key: 'code2', code: '````'},
+    ]
+    let report!: ReconciliationReport
+    expect(
+      applyMarkdownEdit(
+        stored,
+        portableTextToMarkdown(structuredClone(stored)),
+        {
+          deserialize: {keyGenerator},
+          onReconciliation: (reconciliationReport) => {
+            report = reconciliationReport
+          },
+        },
+      ),
+    ).toEqual(stored)
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'code1',
+          path: [{_key: 'code1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'code2',
+          path: [{_key: 'code2'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
   })
 
   test('repeated horizontal rules pair in order around an edit', () => {
