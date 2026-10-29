@@ -855,7 +855,7 @@ describe(applyOperation.name, () => {
           node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
         }),
       ).toThrow(
-        `Cannot apply an "insert" operation at path [[object Object],children,[object Object]] because the sibling was not found.`,
+        `Cannot apply an "insert" operation at path [_key=="k0"].children[_key=="k3"] because the sibling was not found.`,
       )
       expect(editor.snapshot.context.value).toEqual([
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
@@ -878,7 +878,7 @@ describe(applyOperation.name, () => {
           path: [{_key: blockKey}, 'children', {_key: missingKey}],
         }),
       ).toThrow(
-        `Cannot apply an "unset" (node removal) operation at path [[object Object],children,[object Object]] because the node was not found.`,
+        `Cannot apply an "unset" (node removal) operation at path [_key=="k0"].children[_key=="k3"] because the node was not found.`,
       )
       expect(editor.snapshot.context.value).toEqual([
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
