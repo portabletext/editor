@@ -43,11 +43,7 @@ export function validateValue(
         action: 'Unset the value',
         item: value,
 
-        i18n: {
-          description:
-            'inputs.portable-text.invalid-value.not-an-array.description',
-          action: 'inputs.portable-text.invalid-value.not-an-array.action',
-        },
+        i18n: invalidValueI18n('not-an-array'),
       },
       value,
     }
@@ -62,12 +58,7 @@ export function validateValue(
           action: `Unset invalid item`,
           item: blk,
 
-          i18n: {
-            description:
-              'inputs.portable-text.invalid-value.not-an-object.description',
-            action: 'inputs.portable-text.invalid-value.not-an-object.action',
-            values: {index},
-          },
+          i18n: invalidValueI18n('not-an-object', {index}),
         }
         return true
       }
@@ -79,12 +70,7 @@ export function validateValue(
           action: 'Set the block with a random _key value',
           item: blk,
 
-          i18n: {
-            description:
-              'inputs.portable-text.invalid-value.missing-key.description',
-            action: 'inputs.portable-text.invalid-value.missing-key.action',
-            values: {index},
-          },
+          i18n: invalidValueI18n('missing-key', {index}),
         }
         return true
       }
@@ -101,13 +87,10 @@ export function validateValue(
             action: `Use type '${currentBlockTypeName}'`,
             item: blk,
 
-            i18n: {
-              description:
-                'inputs.portable-text.invalid-value.incorrect-block-type.description',
-              action:
-                'inputs.portable-text.invalid-value.incorrect-block-type.action',
-              values: {key: blk._key, expectedTypeName: currentBlockTypeName},
-            },
+            i18n: invalidValueI18n('incorrect-block-type', {
+              key: blk._key,
+              expectedTypeName: currentBlockTypeName,
+            }),
           }
           return true
         }
@@ -125,13 +108,10 @@ export function validateValue(
             action: `Use type '${types.block.name}'`,
             item: blk,
 
-            i18n: {
-              description:
-                'inputs.portable-text.invalid-value.missing-block-type.description',
-              action:
-                'inputs.portable-text.invalid-value.missing-block-type.action',
-              values: {key: blk._key, expectedTypeName: types.block.name},
-            },
+            i18n: invalidValueI18n('missing-block-type', {
+              key: blk._key,
+              expectedTypeName: types.block.name,
+            }),
           }
           return true
         }
@@ -143,12 +123,7 @@ export function validateValue(
             action: 'Remove the block',
             item: blk,
 
-            i18n: {
-              description:
-                'inputs.portable-text.invalid-value.missing-type.description',
-              action: 'inputs.portable-text.invalid-value.missing-type.action',
-              values: {key: blk._key},
-            },
+            i18n: invalidValueI18n('missing-type', {key: blk._key}),
           }
           return true
         }
@@ -159,12 +134,10 @@ export function validateValue(
           action: 'Remove the block',
           item: blk,
 
-          i18n: {
-            description:
-              'inputs.portable-text.invalid-value.disallowed-type.description',
-            action: 'inputs.portable-text.invalid-value.disallowed-type.action',
-            values: {key: blk._key, typeName: blk._type},
-          },
+          i18n: invalidValueI18n('disallowed-type', {
+            key: blk._key,
+            typeName: blk._type,
+          }),
         }
         return true
       }
@@ -180,13 +153,9 @@ export function validateValue(
             action: 'Reset the children property',
             item: textBlock,
 
-            i18n: {
-              description:
-                'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
-              action:
-                'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
-              values: {key: textBlock._key},
-            },
+            i18n: invalidValueI18n('missing-or-invalid-children', {
+              key: textBlock._key,
+            }),
           }
           return true
         }
@@ -211,13 +180,7 @@ export function validateValue(
             action: 'Insert an empty text',
             item: blk,
 
-            i18n: {
-              description:
-                'inputs.portable-text.invalid-value.empty-children.description',
-              action:
-                'inputs.portable-text.invalid-value.empty-children.action',
-              values: {key: blk._key},
-            },
+            i18n: invalidValueI18n('empty-children', {key: blk._key}),
           }
           return true
         }
@@ -250,16 +213,10 @@ export function validateValue(
               )}.`,
               action: 'Remove unused mark definition item',
               item: blk,
-              i18n: {
-                description:
-                  'inputs.portable-text.invalid-value.orphaned-mark-defs.description',
-                action:
-                  'inputs.portable-text.invalid-value.orphaned-mark-defs.action',
-                values: {
-                  key: blk._key,
-                  unusedMarkDefs: unusedMarkDefs.map((m) => m.toString()),
-                },
-              },
+              i18n: invalidValueI18n('orphaned-mark-defs', {
+                key: blk._key,
+                unusedMarkDefs: unusedMarkDefs.map((m) => m.toString()),
+              }),
             }
             return true
           }
@@ -275,13 +232,10 @@ export function validateValue(
                 action: 'Remove the item',
                 item: blk,
 
-                i18n: {
-                  description:
-                    'inputs.portable-text.invalid-value.non-object-child.description',
-                  action:
-                    'inputs.portable-text.invalid-value.non-object-child.action',
-                  values: {key: blk._key, index: cIndex},
-                },
+                i18n: invalidValueI18n('non-object-child', {
+                  key: blk._key,
+                  index: cIndex,
+                }),
               }
               return true
             }
@@ -297,13 +251,10 @@ export function validateValue(
                 action: 'Set a new random _key on the object',
                 item: blk,
 
-                i18n: {
-                  description:
-                    'inputs.portable-text.invalid-value.missing-child-key.description',
-                  action:
-                    'inputs.portable-text.invalid-value.missing-child-key.action',
-                  values: {key: blk._key, index: cIndex},
-                },
+                i18n: invalidValueI18n('missing-child-key', {
+                  key: blk._key,
+                  index: cIndex,
+                }),
               }
               return true
             }
@@ -318,13 +269,10 @@ export function validateValue(
                 action: 'Remove the object',
                 item: blk,
 
-                i18n: {
-                  description:
-                    'inputs.portable-text.invalid-value.missing-child-type.description',
-                  action:
-                    'inputs.portable-text.invalid-value.missing-child-type.action',
-                  values: {key: blk._key, childKey: child._key},
-                },
+                i18n: invalidValueI18n('missing-child-type', {
+                  key: blk._key,
+                  childKey: child._key,
+                }),
               }
               return true
             }
@@ -338,17 +286,11 @@ export function validateValue(
                 action: 'Remove the object',
                 item: blk,
 
-                i18n: {
-                  description:
-                    'inputs.portable-text.invalid-value.disallowed-child-type.description',
-                  action:
-                    'inputs.portable-text.invalid-value.disallowed-child-type.action',
-                  values: {
-                    key: blk._key,
-                    childKey: child._key,
-                    childType: child._type,
-                  },
-                },
+                i18n: invalidValueI18n('disallowed-child-type', {
+                  key: blk._key,
+                  childKey: child._key,
+                  childType: child._type,
+                }),
               }
               return true
             }
@@ -370,13 +312,10 @@ export function validateValue(
                 action: `Write an empty text property to the object`,
                 item: blk,
 
-                i18n: {
-                  description:
-                    'inputs.portable-text.invalid-value.invalid-span-text.description',
-                  action:
-                    'inputs.portable-text.invalid-value.invalid-span-text.action',
-                  values: {key: blk._key, childKey: child._key},
-                },
+                i18n: invalidValueI18n('invalid-span-text', {
+                  key: blk._key,
+                  childKey: child._key,
+                }),
               }
               return true
             }
@@ -392,4 +331,15 @@ export function validateValue(
     valid = false
   }
   return {valid, resolution, value}
+}
+
+function invalidValueI18n(
+  id: Lowercase<string>,
+  values?: InvalidValueResolution['i18n']['values'],
+): InvalidValueResolution['i18n'] {
+  return {
+    description: `inputs.portable-text.invalid-value.${id}.description`,
+    action: `inputs.portable-text.invalid-value.${id}.action`,
+    ...(values ? {values} : {}),
+  }
 }
