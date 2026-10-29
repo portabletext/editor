@@ -1,5 +1,6 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
+import {isReplacementDelete} from '../../../../internal-utils/is-replacement-delete'
 import {getNode} from '../../../../traversal/get-node'
 import {getNodes} from '../../../../traversal/get-nodes'
 import {getSpan} from '../../../../traversal/get-span'
@@ -383,6 +384,10 @@ export function createAndroidInputManager({
 
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
+      const deleteEvent =
+        isReplacementDelete(type) && isExpandedRange(targetRange)
+          ? ({type: 'delete'} as const)
+          : ({type: 'delete', direction} as const)
       let [start, end] = rangeEdges(targetRange, editor.snapshot.context)
       const leafNodeEntry = getNode(editor.snapshot, start.path)
       const leafResult =
@@ -397,7 +402,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: deleteEvent,
               editor,
             }),
           {at: targetRange},
@@ -412,7 +417,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: deleteEvent,
               editor,
             }),
           {at: targetRange},
@@ -495,7 +500,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: deleteEvent,
               editor,
             }),
           {at: targetRange},
