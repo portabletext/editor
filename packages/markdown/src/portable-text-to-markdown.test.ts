@@ -2694,6 +2694,73 @@ describe(portableTextToMarkdown.name, () => {
       })
     })
 
+    test('a code line of backticks widens the fence past it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'code', _key: keyGenerator(), code: 'foo\n```\nbar'},
+        {_type: 'code', _key: keyGenerator(), code: '````'},
+        {_type: 'code', _key: keyGenerator(), code: 'foo ``` bar'},
+      ]
+
+      expect(portableTextToMarkdown(portableText)).toBe(
+        [
+          '````',
+          'foo',
+          '```',
+          'bar',
+          '````',
+          '',
+          '`````',
+          '````',
+          '`````',
+          '',
+          '```',
+          'foo ``` bar',
+          '```',
+        ].join('\n'),
+      )
+    })
+
+    test('a line separator around backticks keeps the three-backtick fence', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'code', _key: keyGenerator(), code: 'foo\u2028```\u2028bar'},
+        {_type: 'code', _key: keyGenerator(), code: 'foo\u2029````'},
+      ]
+
+      expect(portableTextToMarkdown(portableText)).toBe(
+        [
+          '```',
+          'foo\u2028```\u2028bar',
+          '```',
+          '',
+          '```',
+          'foo\u2029````',
+          '```',
+        ].join('\n'),
+      )
+    })
+
+    test('a backtick line after a carriage return widens the fence past it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'code', _key: keyGenerator(), code: 'foo\r```\rbar'},
+        {_type: 'code', _key: keyGenerator(), code: 'foo\r\n```\r\nbar'},
+      ]
+
+      expect(portableTextToMarkdown(portableText)).toBe(
+        [
+          '````',
+          'foo\r```\rbar',
+          '````',
+          '',
+          '````',
+          'foo\r\n```\r\nbar',
+          '````',
+        ].join('\n'),
+      )
+    })
+
     test('malformed code value (no `code` field) falls back to fenced JSON', () => {
       const keyGenerator = createTestKeyGenerator()
       const value = {_type: 'code', _key: keyGenerator(), language: 'js'}
