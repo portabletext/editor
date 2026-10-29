@@ -1,5 +1,5 @@
 import type {RefObject} from 'react'
-import {isTrackedMutation} from '../../../dom/utils/dom'
+import {isDOMElement, isTrackedMutation} from '../../../dom/utils/dom'
 import type {Editor} from '../../../interfaces/editor'
 
 export type RestoreDOMManager = {
@@ -36,6 +36,17 @@ export const createRestoreDomManager = (
         if (mutation.type === 'characterData') {
           // We don't want to restore the DOM for characterData mutations
           // because this interrupts the composition.
+          return
+        }
+
+        // The IME creates the text node it composes in inside an empty line.
+        // Taking it out would restart the composition, and the string element
+        // reconciles its own children against the model.
+        if (
+          editor.composing &&
+          isDOMElement(mutation.target) &&
+          mutation.target.matches('[data-pt-text], [data-pt-line-break]')
+        ) {
           return
         }
 
