@@ -358,7 +358,7 @@ describe('beforeinput delete with an expanded selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteByCut beforeinput deletes the selection without a direction', async () => {
+  test('Scenario: a deleteByCut beforeinput deletes the selection without a direction', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 4, focusOffset: 7})
 
@@ -372,7 +372,7 @@ describe('beforeinput delete with an expanded selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteByDrag beforeinput deletes the selection without a direction', async () => {
+  test('Scenario: a deleteByDrag beforeinput deletes the selection without a direction', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 4, focusOffset: 7})
 
@@ -386,7 +386,7 @@ describe('beforeinput delete with an expanded selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteByComposition beforeinput deletes the selection without a direction', async () => {
+  test('Scenario: a deleteByComposition beforeinput deletes the selection without a direction', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 4, focusOffset: 7})
 

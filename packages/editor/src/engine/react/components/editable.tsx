@@ -18,6 +18,7 @@ import scrollIntoView from 'scroll-into-view-if-needed'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
+import {isReplacementDelete} from '../../../internal-utils/is-replacement-delete'
 import {getAncestor} from '../../../traversal/get-ancestor'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
@@ -822,10 +823,16 @@ export const Editable = forwardRef(
             isExpandedRange(selection) &&
             type.startsWith('delete')
           ) {
-            const direction = type.endsWith('Backward') ? 'backward' : 'forward'
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: isReplacementDelete(type)
+                ? {type: 'delete'}
+                : {
+                    type: 'delete',
+                    direction: type.endsWith('Backward')
+                      ? 'backward'
+                      : 'forward',
+                  },
               editor,
             })
             return
