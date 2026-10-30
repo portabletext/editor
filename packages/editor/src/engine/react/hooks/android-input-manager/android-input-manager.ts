@@ -1,5 +1,7 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
+import {getEntireSoftLineDeleteEvents} from '../../../../internal-utils/entire-soft-line-delete-event'
+import {getHardLineDeleteEvent} from '../../../../internal-utils/hard-line-delete-event'
 import {isReplacementDelete} from '../../../../internal-utils/is-replacement-delete'
 import {getNode} from '../../../../traversal/get-node'
 import {getNodes} from '../../../../traversal/get-nodes'
@@ -589,16 +591,13 @@ export function createAndroidInputManager({
       case 'deleteEntireSoftLine': {
         return scheduleAction(
           () => {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {type: 'delete.backward', unit: 'line'},
-              editor,
-            })
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {type: 'delete.forward', unit: 'line'},
-              editor,
-            })
+            for (const behaviorEvent of getEntireSoftLineDeleteEvents(editor)) {
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent,
+                editor,
+              })
+            }
           },
           {at: targetRange},
         )
@@ -609,7 +608,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete.backward', unit: 'block'},
+              behaviorEvent: getHardLineDeleteEvent(editor, 'backward'),
               editor,
             }),
           {at: targetRange},
@@ -633,7 +632,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete.forward', unit: 'block'},
+              behaviorEvent: getHardLineDeleteEvent(editor, 'forward'),
               editor,
             }),
           {at: targetRange},

@@ -392,4 +392,57 @@ describe('sanitySchemaToPortableTextSchema: same name in multiple positions', ()
       },
     ])
   })
+
+  test('inline declaration nested inside a same-named inline declaration keeps its own fields', () => {
+    const sanitySchema = compile([
+      defineArrayMember({
+        type: 'array',
+        name: 'content',
+        of: [
+          defineField({type: 'block', name: 'block'}),
+          defineArrayMember({
+            type: 'object',
+            name: 'card',
+            fields: [
+              defineField({
+                name: 'cards',
+                type: 'array',
+                of: [
+                  defineArrayMember({
+                    type: 'object',
+                    name: 'card',
+                    fields: [defineField({name: 'label', type: 'string'})],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ])
+
+    const schema = sanitySchemaToPortableTextSchema(sanitySchema)
+
+    expect(schema.blockObjects).toEqual([
+      {
+        name: 'card',
+        title: 'Card',
+        fields: [
+          {
+            name: 'cards',
+            type: 'array',
+            title: 'Cards',
+            of: [
+              {
+                type: 'object',
+                name: 'card',
+                title: 'Card',
+                fields: [{name: 'label', title: 'Label', type: 'string'}],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
 })

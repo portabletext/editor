@@ -69,7 +69,12 @@ export const deleteOperationImplementation: OperationImplementation<
     return
   }
 
-  if (operation.direction === 'backward' && operation.unit === 'line') {
+  if (
+    operation.unit === 'line' &&
+    (operation.direction === 'backward' || isCollapsedRange(at))
+  ) {
+    const lineDirection =
+      operation.direction === 'backward' ? 'backward' : 'forward'
     const parentBlockEntry = pathEquals(at.anchor.path, at.focus.path)
       ? getParent(operation.editor.snapshot, at.anchor.path, {
           match: (node) =>
@@ -100,14 +105,14 @@ export const deleteOperationImplementation: OperationImplementation<
         })()
 
     if (parentBlockEntry) {
-      const parentElementRange = editorRange(
-        operation.editor,
-        parentBlockEntry.path,
-        at.anchor,
-      )
+      const parentElementRange =
+        lineDirection === 'backward'
+          ? editorRange(operation.editor, parentBlockEntry.path, at.anchor)
+          : editorRange(operation.editor, at.anchor, parentBlockEntry.path)
       const currentLineRange = findCurrentLineRange(
         operation.editor,
         parentElementRange,
+        lineDirection,
       )
       if (!isCollapsedRange(currentLineRange)) {
         deleteRange(operation.editor, currentLineRange, {

@@ -1,7 +1,7 @@
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {defineSchema, type PortableTextEditableProps} from '../src'
 import type {BehaviorEvent} from '../src/behaviors'
 import {effect, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -153,7 +153,7 @@ describe('beforeinput delete with a collapsed selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteSoftLineForward beforeinput deletes the line after the caret', async () => {
+  test('Scenario: a deleteSoftLineForward beforeinput deletes the line after the caret', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 7, focusOffset: 7})
 
@@ -170,7 +170,7 @@ describe('beforeinput delete with a collapsed selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteEntireSoftLine beforeinput deletes the whole line', async () => {
+  test('Scenario: a deleteEntireSoftLine beforeinput deletes the whole line', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 7, focusOffset: 7})
 
@@ -181,15 +181,268 @@ describe('beforeinput delete with a collapsed selection', () => {
         'B: foo\nB: |\nB: baz',
       )
       expect(behaviorEvents).toEqual([
-        {type: 'delete.backward', unit: 'line'},
-        {type: 'delete', direction: 'backward', unit: 'line'},
-        {type: 'delete.forward', unit: 'line'},
-        {type: 'delete', direction: 'forward', unit: 'line'},
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 15},
+          },
+        },
       ])
     })
   })
 
-  test.fails('Scenario: a deleteHardLineBackward beforeinput deletes to the start of the block', async () => {
+  test('Scenario: a deleteEntireSoftLine beforeinput in a wrapped block deletes only the visual line around the caret', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 5,
+        focusOffset: 5,
+        middleText: 'foobarbaz',
+        editableProps: {
+          style: {
+            width: '4ch',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+          },
+        },
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: foob|z\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 4},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 8},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput at a soft wrap deletes the line after the wrap', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 4,
+        focusOffset: 4,
+        middleText: 'foobarbaz',
+        editableProps: {
+          style: {
+            width: '4ch',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+          },
+        },
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: foob|z\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 4},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 8},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput before the last character of a wrapped block deletes only the last line', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 8,
+        focusOffset: 8,
+        middleText: 'foobarbaz',
+        editableProps: {
+          style: {
+            width: '4ch',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+          },
+        },
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: foobarba|\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 8},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 9},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput at the end of a span that ends at a soft wrap deletes the line after the wrap', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 4,
+        focusOffset: 4,
+        middleSpans: [
+          {text: 'foob', marks: ['strong']},
+          {text: 'arbaz', marks: []},
+        ],
+        editableProps: {
+          style: {
+            width: '4ch',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+          },
+        },
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: [strong:foob|]z\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k4'}], offset: 0},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k4'}], offset: 4},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput at the start of a span that starts at a soft wrap deletes the line after the wrap', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 0,
+        focusOffset: 0,
+        spanIndex: 1,
+        middleSpans: [
+          {text: 'foob', marks: ['strong']},
+          {text: 'arbaz', marks: []},
+        ],
+        editableProps: {
+          style: {
+            width: '4ch',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+          },
+        },
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: [strong:foob]|z\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k4'}], offset: 0},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k4'}], offset: 4},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput directly before a newline deletes the line before the newline', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 3,
+        focusOffset: 3,
+        middleText: 'foo\nbar',
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: |\nbar\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 3},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput directly after a newline deletes the line after the newline', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 4,
+        focusOffset: 4,
+        middleText: 'foo\nbar',
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: foo\n|\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 4},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 7},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteEntireSoftLine beforeinput inside the line after a newline deletes that line', async () => {
+    const {editor, behaviorEvents, dispatchBeforeInput} =
+      await createEditorWithDomSelection({
+        anchorOffset: 5,
+        focusOffset: 5,
+        middleText: 'foo\nbar',
+      })
+
+    dispatchBeforeInput('deleteEntireSoftLine')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo\nB: foo\n|\nB: baz',
+      )
+      expect(behaviorEvents).toEqual([
+        {
+          type: 'delete',
+          at: {
+            anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 4},
+            focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 7},
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a deleteHardLineBackward beforeinput deletes to the start of the block', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 7, focusOffset: 7})
 
@@ -212,7 +465,7 @@ describe('beforeinput delete with a collapsed selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteHardLineBackward beforeinput at the start of the block merges it into the block before', async () => {
+  test('Scenario: a deleteHardLineBackward beforeinput at the start of the block merges it into the block before', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 0, focusOffset: 0})
 
@@ -264,7 +517,7 @@ describe('beforeinput delete with a collapsed selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteHardLineForward beforeinput deletes to the end of the block', async () => {
+  test('Scenario: a deleteHardLineForward beforeinput deletes to the end of the block', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 7, focusOffset: 7})
 
@@ -290,7 +543,7 @@ describe('beforeinput delete with a collapsed selection', () => {
     })
   })
 
-  test.fails('Scenario: a deleteHardLineForward beforeinput at the end of the block merges the block after into it', async () => {
+  test('Scenario: a deleteHardLineForward beforeinput at the end of the block merges the block after into it', async () => {
     const {editor, behaviorEvents, dispatchBeforeInput} =
       await createEditorWithDomSelection({anchorOffset: 15, focusOffset: 15})
 
@@ -404,20 +657,29 @@ describe('beforeinput delete with an expanded selection', () => {
 async function createEditorWithDomSelection({
   anchorOffset,
   focusOffset,
+  middleText = 'foo bar baz qux',
+  middleSpans = [{text: middleText, marks: []}],
+  spanIndex = 0,
+  editableProps,
 }: {
   anchorOffset: number
   focusOffset: number
+  middleText?: string
+  middleSpans?: Array<{text: string; marks: Array<string>}>
+  spanIndex?: number
+  editableProps?: PortableTextEditableProps
 }) {
   const keyGenerator = createTestKeyGenerator()
   const behaviorEvents: Array<BehaviorEvent> = []
 
   const {editor, locator} = await createTestEditor({
     keyGenerator,
-    schemaDefinition: defineSchema({}),
+    schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+    editableProps,
     initialValue: [
-      textBlock(keyGenerator, 'foo'),
-      textBlock(keyGenerator, 'foo bar baz qux'),
-      textBlock(keyGenerator, 'baz'),
+      textBlock(keyGenerator, [{text: 'foo', marks: []}]),
+      textBlock(keyGenerator, middleSpans),
+      textBlock(keyGenerator, [{text: 'baz', marks: []}]),
     ],
     children: (
       <BehaviorPlugin
@@ -442,10 +704,11 @@ async function createEditorWithDomSelection({
 
   const editableElement = locator.element()
   const textNode =
-    editableElement.querySelectorAll('[data-pt-text]')[1]?.firstChild
+    editableElement.querySelectorAll('[data-pt-text]')[1 + spanIndex]
+      ?.firstChild
 
   if (!textNode) {
-    throw new Error('Could not find the middle text node')
+    throw new Error('Could not find the middle block text node')
   }
 
   const range = document.createRange()
@@ -485,11 +748,19 @@ async function createEditorWithDomSelection({
   return {editor, behaviorEvents, dispatchBeforeInput}
 }
 
-function textBlock(keyGenerator: () => string, text: string) {
+function textBlock(
+  keyGenerator: () => string,
+  spans: Array<{text: string; marks: Array<string>}>,
+) {
   return {
     _type: 'block',
     _key: keyGenerator(),
-    children: [{_type: 'span', _key: keyGenerator(), text, marks: []}],
+    children: spans.map((span) => ({
+      _type: 'span',
+      _key: keyGenerator(),
+      text: span.text,
+      marks: span.marks,
+    })),
     markDefs: [],
     style: 'normal',
   }
