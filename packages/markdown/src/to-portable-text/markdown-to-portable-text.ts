@@ -618,6 +618,23 @@ export function markdownToPortableText(
   markdown: string,
   options?: Options,
 ): Array<PortableTextBlock> {
+  return convertMarkdown(markdown, options, undefined)
+}
+
+export function markdownToPortableTextWithBlockLines(
+  markdown: string,
+  options: Pick<Options, 'schema'>,
+): {portableText: Array<PortableTextBlock>; blockStartLines: Array<number>} {
+  const blockStartLines: Array<number> = []
+  const portableText = convertMarkdown(markdown, options, blockStartLines)
+  return {portableText, blockStartLines}
+}
+
+function convertMarkdown(
+  markdown: string,
+  options: Options | undefined,
+  blockStartLines: Array<number> | undefined,
+): Array<PortableTextBlock> {
   const carriedObjectKeys = new Set<string>()
   const consolidatedOptions = {
     schema: options?.schema ?? defaultSchema,
@@ -1139,11 +1156,37 @@ export function markdownToPortableText(
     }
   }
 
+  // Every top-level node is pushed while a token from inside its own
+  // construct is being walked (an opener, its content, or its closer), and
+  // closers and inline tokens carry no `map`, so the last `map` seen is a
+  // line of the construct that produced whatever lands on top level next.
+  // Nodes only ever leave the top level from its end, replaced by a node of
+  // the same construct (a container's `splice(startIndex)` before its
+  // wrapper is pushed, a table cell's `pop()`), so a line recorded for a
+  // removed node is still a line of whatever replaces it.
+  let lastMappedLine = 0
+  const recordBlockStartLines = () => {
+    if (blockStartLines === undefined) {
+      return
+    }
+    blockStartLines.length = Math.min(
+      blockStartLines.length,
+      portableText.length,
+    )
+    while (blockStartLines.length < portableText.length) {
+      blockStartLines.push(lastMappedLine)
+    }
+  }
+
   // Walk tokens
   for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+    recordBlockStartLines()
     const token = tokens[tokenIndex]
     if (!token) {
       continue
+    }
+    if (blockStartLines !== undefined && token.map) {
+      lastMappedLine = token.map[0]
     }
 
     switch (token.type) {
@@ -2968,6 +3011,7 @@ export function markdownToPortableText(
   }
 
   flushBlock()
+  recordBlockStartLines()
 
   if (degradationEvents.length > 0) {
     options?.onDegradation?.({
