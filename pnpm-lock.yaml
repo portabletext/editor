@@ -403,8 +403,8 @@ importers:
         specifier: 'catalog:'
         version: 5.33.2
       zod:
-        specifier: ^4.1.12
-        version: 4.5.4
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@tailwindcss/vite':
         specifier: catalog:tooling
@@ -12126,7 +12126,7 @@ snapshots:
     dependencies:
       sitemap: 9.0.1
       stream-replace-string: 2.0.0
-      zod: 4.5.4
+      zod: 4.6.7
 
   '@astrojs/starlight-tailwind@5.0.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(tailwindcss@4.3.3)':
     dependencies:
@@ -16496,7 +16496,7 @@ snapshots:
       react-is: 19.3.0
       semver: 7.8.5
       vite: 8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
-      zod: 4.5.4
+      zod: 4.6.7
     optionalDependencies:
       babel-plugin-react-compiler: 1.0.0
       oxc-transform-react: 0.145.0
@@ -16548,7 +16548,7 @@ snapshots:
       vite: 8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
       vite-node: 6.0.0(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
       wrap-ansi: 9.0.2
-      zod: 4.5.4
+      zod: 4.6.7
     optionalDependencies:
       babel-plugin-react-compiler: 1.0.0
     transitivePeerDependencies:
@@ -16586,7 +16586,7 @@ snapshots:
       rxjs: 7.8.2
       vite: 8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
       wrap-ansi: 9.0.2
-      zod: 4.5.4
+      zod: 4.6.7
     optionalDependencies:
       babel-plugin-react-compiler: 1.0.0
       oxc-transform-react: 0.145.0
@@ -16671,7 +16671,7 @@ snapshots:
       which: 6.0.1
       wrap-ansi: 9.0.2
       yaml: 2.9.1
-      zod: 4.5.4
+      zod: 4.6.7
     optionalDependencies:
       babel-plugin-react-compiler: 1.0.0
       oxc-transform-react: 0.145.0
@@ -16914,7 +16914,7 @@ snapshots:
 
   '@sanity/parse-package-json@2.3.2':
     dependencies:
-      zod: 4.5.4
+      zod: 4.6.7
 
   '@sanity/pkg-utils@12.3.0(@babel/runtime@7.29.7)(@tsdown/css@0.22.14)(@types/node@24.12.2)(@volar/typescript@2.4.28)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(oxc-transform-react@0.145.0)(typescript@7.0.2)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))':
     dependencies:
@@ -16942,8 +16942,8 @@ snapshots:
       tsdown: 0.22.14(@tsdown/css@0.22.14)(@volar/typescript@2.4.28)(oxc-resolver@11.19.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(publint@0.3.23)(tsx@4.23.12)(typescript@7.0.2)
       tsx: 4.23.12
       typescript: 7.0.2
-      zod: 4.5.4
-      zod-validation-error: 5.0.0(zod@4.5.4)
+      zod: 4.6.7
+      zod-validation-error: 5.0.0(zod@4.6.7)
     optionalDependencies:
       '@tsdown/css': 0.22.14(jiti@2.7.0)(postcss@8.5.30)(tsdown@0.22.14)(tsx@4.23.12)(yaml@2.9.1)
       babel-plugin-react-compiler: 1.0.0
@@ -17408,7 +17408,7 @@ snapshots:
       rxjs: 7.8.2
       tar: 7.5.22
       vite: 8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
-      zod: 4.5.4
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@rolldown/plugin-babel'
       - '@types/node'
@@ -17443,7 +17443,7 @@ snapshots:
       rxjs: 7.8.2
       semver: 7.8.5
       xstate: 5.33.2
-      zod: 4.5.4
+      zod: 4.6.7
     transitivePeerDependencies:
       - react
 
@@ -17456,7 +17456,7 @@ snapshots:
       rxjs: 7.8.2
       semver: 7.8.5
       xstate: 5.33.2
-      zod: 4.5.4
+      zod: 4.6.7
     transitivePeerDependencies:
       - react
 
@@ -17471,7 +17471,7 @@ snapshots:
       rxjs: 7.8.2
       verkit: 0.4.1
       xstate: 5.33.2
-      zod: 4.5.4
+      zod: 4.6.7
     transitivePeerDependencies:
       - react
       - vitest
@@ -23719,9 +23719,9 @@ snapshots:
       '@yuku-parser/binding-win32-arm64': 0.8.7
       '@yuku-parser/binding-win32-x64': 0.8.7
 
-  zod-validation-error@5.0.0(zod@4.5.4):
+  zod-validation-error@5.0.0(zod@4.6.7):
     dependencies:
-      zod: 4.5.4
+      zod: 4.6.7
 
   zod@4.5.4: {}
 
