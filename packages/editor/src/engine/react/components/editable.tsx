@@ -28,7 +28,6 @@ import {getText} from '../../../traversal/get-text'
 import {isLeafObject} from '../../../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../../../types/editor-engine'
 import {collapse} from '../../core/collapse'
-import {deselect} from '../../core/deselect'
 import {move} from '../../core/move'
 import {subscribeToOperations} from '../../core/operation-channel'
 import {DOMEditor} from '../../dom/plugin/dom-editor'
@@ -270,7 +269,7 @@ export const Editable = forwardRef(
             if (active) {
               document.execCommand('indent')
             } else {
-              deselect(editor)
+              deselect(editor, editorActor)
             }
 
             processing.current = false
@@ -308,7 +307,7 @@ export const Editable = forwardRef(
             }
 
             if (!domSelection) {
-              return deselect(editor)
+              return deselect(editor, editorActor)
             }
 
             const {anchorNode, focusNode} = domSelection
@@ -369,11 +368,11 @@ export const Editable = forwardRef(
 
             // Deselect the editor if the dom selection is not selectable in readonly mode
             if (readOnly && (!anchorNodeSelectable || !focusNodeInEditor)) {
-              deselect(editor)
+              deselect(editor, editorActor)
             }
           }
         }, 100),
-      [editor, readOnly, state],
+      [editor, editorActor, readOnly, state],
     )
 
     const scheduleOnDOMSelectionChange = useMemo(
@@ -2081,4 +2080,20 @@ const handleNativeHistoryEvents = (
     })
     return
   }
+}
+
+/**
+ * Deselects through a `select` Behavior event, like every other DOM
+ * selection sync, so the deselect is a user action with a change of its own.
+ */
+function deselect(editor: Editor, editorActor: EditorActor): void {
+  if (!editor.snapshot.context.selection) {
+    return
+  }
+
+  editorActor.send({
+    type: 'behavior event',
+    behaviorEvent: {type: 'select', at: null},
+    editor,
+  })
 }

@@ -20,6 +20,12 @@ import {
   hasRemoteFrame,
   type ApplyContextFrame,
 } from '../engine/core/apply-context'
+import {
+  commitChange,
+  createChange,
+  resumeChange,
+  type Change,
+} from '../engine/core/change'
 import {start} from '../engine/editor/start'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
@@ -77,12 +83,35 @@ const syncValueCallback: CallbackLogicFunction<
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
-  updateValue({
-    context: input.context,
-    sendBack,
-    editorEngine: input.editorEngine,
-    value: input.value,
-    streamBlocks: input.streamBlocks,
+  // One change for the whole value sync. A streamed first load syncs its
+  // blocks across ticks, so the change is resumed for each tick's work and
+  // commits once the sync is done.
+  const change = createChange({
+    type: 'value sync',
+    initial: input.streamBlocks,
+  })
+
+  resumeChange(input.editorEngine, change, () =>
+    updateValue({
+      context: input.context,
+      sendBack: (event) => {
+        // Committed before `done syncing` is announced: that ends the
+        // editor's setup, drains the remote patches buffered during the
+        // load and starts a pending value's sync, all of which must come
+        // after this change's events.
+        if (event.type === 'done syncing') {
+          commitChange(input.editorEngine, change)
+        }
+
+        sendBack(event)
+      },
+      editorEngine: input.editorEngine,
+      change,
+      value: input.value,
+      streamBlocks: input.streamBlocks,
+    }),
+  ).finally(() => {
+    commitChange(input.editorEngine, change)
   })
 }
 
@@ -435,6 +464,7 @@ async function updateValue({
   context,
   sendBack,
   editorEngine,
+  change,
   streamBlocks,
   value,
 }: {
@@ -446,6 +476,7 @@ async function updateValue({
   }
   sendBack: (event: SyncValueEvent) => void
   editorEngine: PortableTextEditorEngine
+  change: Change
   streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
@@ -486,15 +517,20 @@ async function updateValue({
           ] of getStreamedBlocks({
             value,
           })) {
-            const {blockChanged, blockValid} = syncBlock({
-              context,
-              sendBack,
-              block: currentBlock,
-              index: currentBlockIndex,
+            const {blockChanged, blockValid} = resumeChange(
               editorEngine,
-              value,
-              remoteSource,
-            })
+              change,
+              () =>
+                syncBlock({
+                  context,
+                  sendBack,
+                  block: currentBlock,
+                  index: currentBlockIndex,
+                  editorEngine,
+                  value,
+                  remoteSource,
+                }),
+            )
 
             isChanged = blockChanged || isChanged
             isValid = isValid && blockValid
@@ -573,7 +609,9 @@ async function updateValue({
       !editorEngine.snapshot.context.selection &&
       editorEngine.snapshot.context.value.length > 0
     ) {
-      applySelect(editorEngine, start(editorEngine, []))
+      resumeChange(editorEngine, change, () => {
+        applySelect(editorEngine, start(editorEngine, []))
+      })
       editorEngine.onChange()
     }
 

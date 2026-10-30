@@ -1,3 +1,4 @@
+import {setChangeEntryPatches} from '../engine/core/change'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {addFieldLifecyclePatches} from '../internal-utils/field-lifecycle-patches'
 import {operationToPatches} from '../internal-utils/operation-to-patches'
@@ -5,8 +6,9 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
 /**
- * Converts every applied operation into `@portabletext/patches` and sends
- * them to the editor actor as `internal.patch` events.
+ * Converts every applied operation into `@portabletext/patches`, sends them
+ * to the editor actor as `internal.patch` events and sets them on the
+ * change recording the operation.
  */
 export function subscribePatchGeneration({
   editorActor,
@@ -46,10 +48,17 @@ export function subscribePatchGeneration({
     editor.lastSyncedValue = state.lastSyncedValue
     editor.valueUnsetEmitted = state.valueUnsetEmitted
 
-    for (const patch of patches) {
+    const localPatches = patches.map((patch) => ({
+      ...patch,
+      origin: 'local' as const,
+    }))
+
+    setChangeEntryPatches(editor, event, localPatches)
+
+    for (const patch of localPatches) {
       editorActor.send({
         type: 'internal.patch',
-        patch: {...patch, origin: 'local'},
+        patch,
         operationId: event.undoStepId,
         value: editor.snapshot.context.value,
       })

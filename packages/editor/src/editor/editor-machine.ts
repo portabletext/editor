@@ -17,6 +17,7 @@ import type {
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
 import {isInNormalization} from '../engine/core/apply-context'
+import {withChange} from '../engine/core/change'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {normalize} from '../engine/editor/normalize'
 import {debug} from '../internal-utils/debug'
@@ -244,7 +245,10 @@ export const editorMachine = setup({
         context.pendingRegistrations.push(event.node)
         return
       }
-      registerNodeOnEngine(context.editorEngine, event.node)
+      const engine = context.editorEngine
+      withChange(engine, {type: 'registration'}, () => {
+        registerNodeOnEngine(engine, event.node)
+      })
     },
     'unregister': ({context, event}) => {
       assertEvent(event, 'unregister')
@@ -257,7 +261,10 @@ export const editorMachine = setup({
         }
         return
       }
-      unregisterNodeOnEngine(context.editorEngine, event.node)
+      const engine = context.editorEngine
+      withChange(engine, {type: 'registration'}, () => {
+        unregisterNodeOnEngine(engine, event.node)
+      })
     },
     'attach maps to editor engine': ({context}) => {
       // After the editor engine is constructed, drain any registrations
@@ -268,11 +275,13 @@ export const editorMachine = setup({
         return
       }
       const engine = context.editorEngine
-      for (const node of context.pendingRegistrations) {
-        registerNodeOnEngine(engine, node)
-      }
-      context.pendingRegistrations.length = 0
-      normalize(engine, {force: true})
+      withChange(engine, {type: 'registration'}, () => {
+        for (const node of context.pendingRegistrations) {
+          registerNodeOnEngine(engine, node)
+        }
+        context.pendingRegistrations.length = 0
+        normalize(engine, {force: true})
+      })
       engine.onChange()
     },
     'emit patch event': emit(({event}) => {
@@ -403,32 +412,34 @@ export const editorMachine = setup({
           (config) => config.behavior,
         )
 
-        performEvent({
-          mode: 'send',
-          depth: 0,
-          behaviors,
-          remainingEventBehaviors: behaviors,
-          event: event.behaviorEvent,
-          editor: event.editor,
-          converters: event.editor.snapshot.context.converters,
-          keyGenerator: event.editor.snapshot.context.keyGenerator,
-          schema: event.editor.snapshot.context.schema,
-          readOnly: event.editor.snapshot.context.readOnly,
-          nativeEvent: event.nativeEvent,
-          sendBack: (eventSentBack) => {
-            if (eventSentBack.type === 'set drag ghost') {
-              self.send(eventSentBack)
-              return
-            }
+        withChange(event.editor, {type: 'behavior event'}, () =>
+          performEvent({
+            mode: 'send',
+            depth: 0,
+            behaviors,
+            remainingEventBehaviors: behaviors,
+            event: event.behaviorEvent,
+            editor: event.editor,
+            converters: event.editor.snapshot.context.converters,
+            keyGenerator: event.editor.snapshot.context.keyGenerator,
+            schema: event.editor.snapshot.context.schema,
+            readOnly: event.editor.snapshot.context.readOnly,
+            nativeEvent: event.nativeEvent,
+            sendBack: (eventSentBack) => {
+              if (eventSentBack.type === 'set drag ghost') {
+                self.send(eventSentBack)
+                return
+              }
 
-            self.send(
-              rerouteExternalBehaviorEvent({
-                event: eventSentBack,
-                editorEngine: event.editor,
-              }),
-            )
-          },
-        })
+              self.send(
+                rerouteExternalBehaviorEvent({
+                  event: eventSentBack,
+                  editorEngine: event.editor,
+                }),
+              )
+            },
+          }),
+        )
       } catch (error) {
         console.error(
           new Error(

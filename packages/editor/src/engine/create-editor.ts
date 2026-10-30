@@ -22,6 +22,8 @@ export const createEditor = (): Editor => {
     applyContext: [],
     operations: [],
     operationListeners: {before: [], after: []},
+    change: undefined,
+    changeListeners: [],
     marks: null,
     dirtyPaths: [],
     dirtyPathKeys: new Set(),
