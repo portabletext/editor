@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
+import {withChange} from '../engine/core/change'
 import {normalize} from '../engine/editor/normalize'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {createApplyPatch} from '../internal-utils/applyPatch'
@@ -36,34 +37,36 @@ export function setupRemotePatches({
     bufferedPatches = []
     let changed = false
 
-    withRemoteChanges(editor, 'patches', () => {
-      withoutNormalizing(editor, () => {
-        withoutPatching(editor, () => {
-          pluginWithoutHistory(editor, () => {
-            for (const patch of patches) {
-              try {
-                changed = applyPatch(editor, patch)
+    withChange(editor, {type: 'remote patches'}, () => {
+      withRemoteChanges(editor, 'patches', () => {
+        withoutNormalizing(editor, () => {
+          withoutPatching(editor, () => {
+            pluginWithoutHistory(editor, () => {
+              for (const patch of patches) {
+                try {
+                  changed = applyPatch(editor, patch)
 
-                if (debug.syncPatch.enabled) {
-                  if (changed) {
-                    debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
-                  } else {
-                    debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
+                  if (debug.syncPatch.enabled) {
+                    if (changed) {
+                      debug.syncPatch(`(applied) ${safeStringify(patch, 2)}`)
+                    } else {
+                      debug.syncPatch(`(ignored) ${safeStringify(patch, 2)}`)
+                    }
                   }
+                } catch (error) {
+                  console.error(
+                    `Applying patch ${safeStringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
+                  )
                 }
-              } catch (error) {
-                console.error(
-                  `Applying patch ${safeStringify(patch)} failed due to: ${error instanceof Error ? error.message : error}`,
-                )
               }
-            }
+            })
           })
         })
+        if (changed) {
+          normalize(editor)
+          editor.onChange()
+        }
       })
-      if (changed) {
-        normalize(editor)
-        editor.onChange()
-      }
     })
   }
 

@@ -59,6 +59,27 @@ describe('relay', () => {
     expect(deliveries).toEqual(['ready-first', 'ready-second', 'editable'])
   })
 
+  test('events sent during dispatch of a `sendAll` are queued after every event of it', () => {
+    const relay = createRelay()
+    relay.start()
+    const deliveries: Array<string> = []
+
+    relay.on('ready', () => {
+      deliveries.push('ready')
+      relay.send({type: 'read only'})
+    })
+    relay.on('editable', () => {
+      deliveries.push('editable')
+    })
+    relay.on('read only', () => {
+      deliveries.push('read only')
+    })
+
+    relay.sendAll([{type: 'ready'}, {type: 'editable'}])
+
+    expect(deliveries).toEqual(['ready', 'editable', 'read only'])
+  })
+
   test('deduplicates consecutive selection events carrying the same reference', () => {
     const relay = createRelay()
     relay.start()

@@ -665,6 +665,23 @@ describe('event.update value', () => {
           origin: 'remote',
         },
         {
+          type: 'change',
+          origin: 'remote',
+          operations: [
+            {type: 'unset', path: [{_key: 'k0'}]},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              node: {
+                _type: 'block',
+                _key: 'k2',
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+            },
+          ],
+        },
+        {
           type: 'invalid value',
           resolution: {
             action: 'Remove the block',
@@ -750,6 +767,59 @@ describe('event.update value', () => {
             inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
           },
           origin: 'local',
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+              offset: 3,
+              text: '!',
+            },
+          ],
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+          ],
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'k2'}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k2'}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'style'],
+              value: 'normal',
+            },
+          ],
+          correction: true,
         },
         {
           type: 'patch',
@@ -3723,6 +3793,102 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     consoleWarn.mockRestore()
   })
 
+  test('Scenario: a repeated block key with a keyless child in the later block repairs the later block', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const keylessBar = {
+      _type: 'block',
+      _key: fooKey,
+      children: [{_type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [textBlock(fooKey, fooSpanKey, 'baz'), keylessBar],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock(fooKey, fooSpanKey, 'baz'),
+        textBlock('k7', 'k6', 'bar'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const duplicateKeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: fooKey}, 'children', 0],
+      value: {_type: 'span', text: 'bar', marks: [], _key: 'k6'},
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([duplicateKeyPatch, repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [duplicateKeyPatch, repairPatch, sentinelPatch],
+      ])
+    })
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${fooKey}'. Child at index 0 is missing required _key in block with _key ${fooKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
   test('Scenario: a startup value with a keyless child is repaired in the engine without emitting patches', async () => {
     const patches: Array<Patch> = []
     const mutations: Array<MutationEvent> = []
@@ -3791,6 +3957,433 @@ describe('event.update value: auto-resolved invalid blocks', () => {
         [sentinelPatch],
       ])
     })
+  })
+
+  test('Scenario: a mid-session update with an empty keyless child before another keyless child emits only the repair patches', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_type: 'span', text: '', marks: []},
+            {_type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: 'k2', text: '', marks: []},
+            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Causal sentinel: the edit makes a pristine editor flush its pending
+    // patches, so the `mutation` shows every patch the sync emitted.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'baz'})
+
+    const expectedPatches = [
+      {
+        type: 'set',
+        path: [{_key: 'b0'}, 'children', 1, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'b0'}, 'children', 0],
+        value: {_type: 'span', _key: 'k2', text: '', marks: []},
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('', 'baz'))),
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('baz', 'bazbar'))),
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b0'}, 'children', {_key: 'k3'}],
+        origin: 'local',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual(expectedPatches)
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        expectedPatches,
+      ])
+    })
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a mid-session update replacing a block with one that has an empty keyless child before another keyless child emits only the repair patches', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [
+            {_type: 'span', text: '', marks: []},
+            {_type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b1',
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: 'k2', text: '', marks: []},
+            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Causal sentinel: the edit makes a pristine editor flush its pending
+    // patches, so the `mutation` shows every patch the sync emitted.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'baz'})
+
+    const expectedPatches = [
+      {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', 1, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', 0],
+        value: {_type: 'span', _key: 'k2', text: '', marks: []},
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b1'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('', 'baz'))),
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b1'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('baz', 'bazbar'))),
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b1'}, 'children', {_key: 'k3'}],
+        origin: 'local',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual(expectedPatches)
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        expectedPatches,
+      ])
+    })
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a startup value with an empty keyless child before another keyless child emits only the minted key patch', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_type: 'span', text: '', marks: []},
+            {_type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: 'k2', text: '', marks: []},
+            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // Causal sentinel: the edit makes a pristine editor flush its pending
+    // patches, so the `mutation` shows every patch the sync emitted.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'baz'})
+
+    const expectedPatches = [
+      {
+        type: 'set',
+        path: [{_key: 'b0'}, 'children', 1, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('', 'baz'))),
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('baz', 'bazbar'))),
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b0'}, 'children', {_key: 'k3'}],
+        origin: 'local',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual(expectedPatches)
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        expectedPatches,
+      ])
+    })
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a read-only update with an empty keyless child before another keyless child emits only the minted key patch', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update readOnly', readOnly: true})
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_type: 'span', text: '', marks: []},
+            {_type: 'span', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [
+            {_type: 'span', _key: 'k2', text: '', marks: []},
+            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'update readOnly', readOnly: false})
+    // Causal sentinel: the edit makes a pristine editor flush its pending
+    // patches, so the `mutation` shows every patch the sync emitted.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'baz'})
+
+    const expectedPatches = [
+      {
+        type: 'set',
+        path: [{_key: 'b0'}, 'children', 1, '_key'],
+        value: 'k3',
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('', 'baz'))),
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('baz', 'bazbar'))),
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b0'}, 'children', {_key: 'k3'}],
+        origin: 'local',
+      },
+    ]
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual(expectedPatches)
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        expectedPatches,
+      ])
+    })
+    consoleWarn.mockRestore()
   })
 
   test('Scenario: replacing a whole value with the same block/span keys emits no patches', async () => {

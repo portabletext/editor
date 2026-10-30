@@ -22,6 +22,7 @@ import {createEditor} from '../create-editor'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
 import {isInNormalization} from './apply-context'
+import {inTestChange} from './change.test-utils'
 import {subscribeToOperations, type OperationEvent} from './operation-channel'
 
 const schema = compileSchema(defineSchema({}))
@@ -108,7 +109,7 @@ describe('operation channel', () => {
       })
     })
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
 
     expect(
       observations.map(({phase, liveText, beforeText}) => ({
@@ -139,7 +140,7 @@ describe('operation channel', () => {
       callOrder.push('third')
     })
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
 
     expect(callOrder).toEqual(['first', 'second', 'third'])
   })
@@ -152,9 +153,11 @@ describe('operation channel', () => {
       callCount++
     })
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
     unsubscribe()
-    editor.apply({...insertTextOperation, offset: 0})
+    inTestChange(editor, () =>
+      editor.apply({...insertTextOperation, offset: 0}),
+    )
 
     expect(callCount).toBe(1)
   })
@@ -167,8 +170,10 @@ describe('operation channel', () => {
       inProgressFlags.push(event.operationsInProgress)
     })
 
-    editor.apply(insertTextOperation)
-    editor.apply({...insertTextOperation, offset: 0})
+    inTestChange(editor, () => editor.apply(insertTextOperation))
+    inTestChange(editor, () =>
+      editor.apply({...insertTextOperation, offset: 0}),
+    )
 
     expect(inProgressFlags).toEqual([false, true])
   })
@@ -186,11 +191,13 @@ describe('operation channel', () => {
       focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
     }
 
-    editor.apply({
-      type: 'set.selection',
-      properties: null,
-      newProperties: range,
-    })
+    inTestChange(editor, () =>
+      editor.apply({
+        type: 'set.selection',
+        properties: null,
+        newProperties: range,
+      }),
+    )
 
     expect(beforeSelections).toEqual([null])
     expect(editor.snapshot.context.selection).toEqual({
@@ -265,7 +272,7 @@ describe('operation channel', () => {
         capturedEvent = capturedEvent ?? event
       })
 
-      editor.apply(operationCase.operation)
+      inTestChange(editor, () => editor.apply(operationCase.operation))
 
       expect(
         capturedEvent?.beforeValue,
@@ -292,7 +299,9 @@ describe('operation channel', () => {
       capturedEvent = capturedEvent ?? event
     })
 
-    editor.apply({...insertTextOperation, offset: 0})
+    inTestChange(editor, () =>
+      editor.apply({...insertTextOperation, offset: 0}),
+    )
 
     expect(capturedEvent?.beforeSelection).toBe(preApplySelection)
     expect(editor.snapshot.context.selection).not.toBe(preApplySelection)
@@ -308,15 +317,19 @@ describe('operation channel', () => {
       origins.push(event.origin)
     })
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
 
-    withRemoteChanges(editor, 'patches', () => {
-      editor.apply({...insertTextOperation, offset: 0})
-    })
+    inTestChange(editor, () =>
+      withRemoteChanges(editor, 'patches', () => {
+        editor.apply({...insertTextOperation, offset: 0})
+      }),
+    )
 
-    pluginUndoing(editor, () => {
-      editor.apply({...insertTextOperation, offset: 0})
-    })
+    inTestChange(editor, () =>
+      pluginUndoing(editor, () => {
+        editor.apply({...insertTextOperation, offset: 0})
+      }),
+    )
 
     expect(origins).toEqual(['local', 'remote', 'undo'])
   })
@@ -344,11 +357,13 @@ describe('operation channel', () => {
       eventLog.push(`after:${event.operation.type}:${event.origin}`)
     })
 
-    editor.apply({
-      type: 'set',
-      path: [{_key: 'b1'}, 'style'],
-      value: 'h1',
-    })
+    inTestChange(editor, () =>
+      editor.apply({
+        type: 'set',
+        path: [{_key: 'b1'}, 'style'],
+        value: 'h1',
+      }),
+    )
 
     // The fix operation’s `after` event fires before the triggering
     // operation’s.
@@ -394,11 +409,13 @@ describe('operation channel', () => {
       })
     })
 
-    editor.apply({
-      type: 'set',
-      path: [{_key: 'b1'}, 'style'],
-      value: 'h1',
-    })
+    inTestChange(editor, () =>
+      editor.apply({
+        type: 'set',
+        path: [{_key: 'b1'}, 'style'],
+        value: 'h1',
+      }),
+    )
 
     expect(events).toEqual([
       {origin: 'normalization', isInNormalization: true},
@@ -486,11 +503,13 @@ describe('operation channel', () => {
       editor.apply(insertTextOperation)
     }
 
-    editor.apply({
-      type: 'set',
-      path: [{_key: 'b1'}, 'style'],
-      value: 'h1',
-    })
+    inTestChange(editor, () =>
+      editor.apply({
+        type: 'set',
+        path: [{_key: 'b1'}, 'style'],
+        value: 'h1',
+      }),
+    )
 
     const insertTextEvent = events.find(
       (event) => event.operationType === 'insert.text',
@@ -527,17 +546,21 @@ describe('operation channel', () => {
       value,
     })
 
-    editor.apply(setStyle('h1'))
+    inTestChange(editor, () => editor.apply(setStyle('h1')))
 
     fixApplied = false
-    withRemoteChanges(editor, 'patches', () => {
-      editor.apply(setStyle('normal'))
-    })
+    inTestChange(editor, () =>
+      withRemoteChanges(editor, 'patches', () => {
+        editor.apply(setStyle('normal'))
+      }),
+    )
 
     fixApplied = false
-    pluginUndoing(editor, () => {
-      editor.apply(setStyle('h1'))
-    })
+    inTestChange(editor, () =>
+      pluginUndoing(editor, () => {
+        editor.apply(setStyle('h1'))
+      }),
+    )
 
     expect(events).toEqual([
       {origin: 'normalization', context: [{kind: 'normalization'}]},
@@ -571,7 +594,7 @@ describe('operation channel', () => {
 
     expect(editor.applyContext).toEqual([])
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
 
     expect(origins).toEqual(['local'])
   })
@@ -593,7 +616,7 @@ describe('operation channel', () => {
 
     expect(editor.isPatching).toEqual(true)
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
 
     expect(isPatchingFlags).toEqual([true])
   })
@@ -615,7 +638,7 @@ describe('operation channel', () => {
 
     expect(editor.withHistory).toEqual(true)
 
-    editor.apply(insertTextOperation)
+    inTestChange(editor, () => editor.apply(insertTextOperation))
 
     expect(withHistoryFlags).toEqual([true])
   })
@@ -638,11 +661,13 @@ describe('operation channel', () => {
     }
 
     expect(() =>
-      editor.apply({
-        type: 'set',
-        path: [{_key: 'b1'}, 'style'],
-        value: 'h1',
-      }),
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: 'b1'}, 'style'],
+          value: 'h1',
+        }),
+      ),
     ).toThrow('boom')
 
     expect(editor.applyContext).toEqual([])

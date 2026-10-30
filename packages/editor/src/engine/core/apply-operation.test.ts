@@ -12,6 +12,7 @@ import {resolveContainers} from '../../schema/resolve-containers-batch'
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import {createEditor} from '../create-editor'
 import {applyOperation} from './apply-operation'
+import {inTestChange} from './change.test-utils'
 
 describe(applyOperation.name, () => {
   describe('set on a node property', () => {
@@ -22,11 +23,13 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', alt: 'foo'},
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}],
-        value: {_key: imageKey, _type: 'image', title: 'bar'},
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}],
+          value: {_key: imageKey, _type: 'image', title: 'bar'},
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', title: 'bar'},
@@ -40,8 +43,12 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', alt: 'foo'},
       ])
 
-      editor.apply({type: 'set', path: [{_key: imageKey}], value: 'bar'})
-      editor.apply({type: 'set', path: [{_key: imageKey}], value: ['bar']})
+      inTestChange(editor, () =>
+        editor.apply({type: 'set', path: [{_key: imageKey}], value: 'bar'}),
+      )
+      inTestChange(editor, () =>
+        editor.apply({type: 'set', path: [{_key: imageKey}], value: ['bar']}),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', alt: 'foo'},
@@ -55,7 +62,13 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', alt: 'foo'},
       ])
 
-      editor.apply({type: 'set', path: [{_key: imageKey}, 'alt'], value: 'bar'})
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'alt'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', alt: 'bar'},
@@ -69,11 +82,13 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', asset: {ref: 'foo', title: 'baz'}},
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'asset', 'ref'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'asset', 'ref'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {ref: 'bar', title: 'baz'}},
@@ -91,11 +106,13 @@ describe(applyOperation.name, () => {
         },
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'asset', 'crop', 'top'],
-        value: 3,
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'asset', 'crop', 'top'],
+          value: 3,
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -115,7 +132,9 @@ describe(applyOperation.name, () => {
         {_key: otherImageKey, _type: 'image', asset: {ref: 'foo'}},
       ])
 
-      editor.apply({type: 'set', path: [1, 'asset', 'ref'], value: 'bar'})
+      inTestChange(editor, () =>
+        editor.apply({type: 'set', path: [1, 'asset', 'ref'], value: 'bar'}),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image'},
@@ -128,11 +147,13 @@ describe(applyOperation.name, () => {
       const imageKey = keyGenerator()
       const editor = createBareEditor([{_key: imageKey, _type: 'image'}])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'asset', 'crop', 'top'],
-        value: 3,
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'asset', 'crop', 'top'],
+          value: 3,
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {crop: {top: 3}}},
@@ -146,16 +167,20 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', asset: 'foo', meta: {crop: null}},
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'asset', 'ref'],
-        value: 'bar',
-      })
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'meta', 'crop', 'top'],
-        value: 3,
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'asset', 'ref'],
+          value: 'bar',
+        }),
+      )
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'meta', 'crop', 'top'],
+          value: 3,
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -174,11 +199,13 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', meta: {tags: ['foo', 'bar']}},
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'meta', 'tags', 'baz'],
-        value: true,
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'meta', 'tags', 'baz'],
+          value: true,
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -200,11 +227,13 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         textBlock({blockKey, spanKey, markDefKey, href: 'bar'}),
@@ -218,11 +247,13 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', hotspots: [{x: 1}, {x: 2}]},
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: imageKey}, 'hotspots', 1, 'x'],
-        value: 3,
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: imageKey}, 'hotspots', 1, 'x'],
+          value: 3,
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', hotspots: [{x: 1}, {x: 3}]},
@@ -238,17 +269,19 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [
-          {_key: blockKey},
-          'markDefs',
-          {_key: markDefKey},
-          'meta',
-          'title',
-        ],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [
+            {_key: blockKey},
+            'markDefs',
+            {_key: markDefKey},
+            'meta',
+            'title',
+          ],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
@@ -266,11 +299,13 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({
-        type: 'set',
-        path: ['markDefs', {_key: markDefKey}, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: ['markDefs', {_key: markDefKey}, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -290,11 +325,13 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -313,11 +350,13 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({
-        type: 'set',
-        path: [1, 'markDefs', 0, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [1, 'markDefs', 0, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -336,11 +375,13 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({
-        type: 'set',
-        path: [-2, 'markDefs', 0, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [-2, 'markDefs', 0, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -357,7 +398,9 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', alt: 'foo', title: 'bar'},
       ])
 
-      editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']})
+      inTestChange(editor, () =>
+        editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']}),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', title: 'bar'},
@@ -371,7 +414,9 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', asset: {ref: 'foo', title: 'baz'}},
       ])
 
-      editor.apply({type: 'unset', path: [{_key: imageKey}, 'asset', 'ref']})
+      inTestChange(editor, () =>
+        editor.apply({type: 'unset', path: [{_key: imageKey}, 'asset', 'ref']}),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {title: 'baz'}},
@@ -389,10 +434,12 @@ describe(applyOperation.name, () => {
         },
       ])
 
-      editor.apply({
-        type: 'unset',
-        path: [{_key: imageKey}, 'asset', 'crop', 'top'],
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: imageKey}, 'asset', 'crop', 'top'],
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {ref: 'foo', crop: {left: 2}}},
@@ -408,7 +455,9 @@ describe(applyOperation.name, () => {
         {_key: otherImageKey, _type: 'image', asset: {ref: 'foo'}},
       ])
 
-      editor.apply({type: 'unset', path: [1, 'asset', 'ref']})
+      inTestChange(editor, () =>
+        editor.apply({type: 'unset', path: [1, 'asset', 'ref']}),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {ref: 'foo'}},
@@ -423,11 +472,15 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', asset: {ref: 'foo'}},
       ])
 
-      editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']})
-      editor.apply({
-        type: 'unset',
-        path: [{_key: imageKey}, 'asset', 'crop', 'top'],
-      })
+      inTestChange(editor, () =>
+        editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']}),
+      )
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: imageKey}, 'asset', 'crop', 'top'],
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {ref: 'foo'}},
@@ -441,25 +494,27 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', asset: {ref: 'foo', crop: 'bar'}},
       ])
 
-      withRemoteChanges(editor, 'patches', () => {
-        editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']})
-        editor.apply({
-          type: 'unset',
-          path: [{_key: imageKey}, 'asset', 'title'],
-        })
-        editor.apply({
-          type: 'unset',
-          path: [{_key: imageKey}, 'meta', 'title'],
-        })
-        editor.apply({
-          type: 'unset',
-          path: [{_key: imageKey}, 'asset', 'crop', 'top'],
-        })
-        editor.apply({
-          type: 'unset',
-          path: [{_key: imageKey}, 'asset', 'meta', 'title'],
-        })
-      })
+      inTestChange(editor, () =>
+        withRemoteChanges(editor, 'patches', () => {
+          editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']})
+          editor.apply({
+            type: 'unset',
+            path: [{_key: imageKey}, 'asset', 'title'],
+          })
+          editor.apply({
+            type: 'unset',
+            path: [{_key: imageKey}, 'meta', 'title'],
+          })
+          editor.apply({
+            type: 'unset',
+            path: [{_key: imageKey}, 'asset', 'crop', 'top'],
+          })
+          editor.apply({
+            type: 'unset',
+            path: [{_key: imageKey}, 'asset', 'meta', 'title'],
+          })
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', asset: {ref: 'foo', crop: 'bar'}},
@@ -473,12 +528,14 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', meta: {tags: ['foo', 'bar']}},
       ])
 
-      withRemoteChanges(editor, 'patches', () => {
-        editor.apply({
-          type: 'unset',
-          path: [{_key: imageKey}, 'meta', 'tags', 'baz'],
-        })
-      })
+      inTestChange(editor, () =>
+        withRemoteChanges(editor, 'patches', () => {
+          editor.apply({
+            type: 'unset',
+            path: [{_key: imageKey}, 'meta', 'tags', 'baz'],
+          })
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', meta: {tags: {0: 'foo', 1: 'bar'}}},
@@ -496,10 +553,12 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'unset',
-        path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -516,10 +575,12 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image', hotspots: [{x: 1}, {x: 2, y: 3}]},
       ])
 
-      editor.apply({
-        type: 'unset',
-        path: [{_key: imageKey}, 'hotspots', 1, 'x'],
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: imageKey}, 'hotspots', 1, 'x'],
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image', hotspots: [{x: 1}, {y: 3}]},
@@ -537,12 +598,14 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      withRemoteChanges(editor, 'patches', () => {
-        editor.apply({
-          type: 'unset',
-          path: ['markDefs', {_key: markDefKey}, 'href'],
-        })
-      })
+      inTestChange(editor, () =>
+        withRemoteChanges(editor, 'patches', () => {
+          editor.apply({
+            type: 'unset',
+            path: ['markDefs', {_key: markDefKey}, 'href'],
+          })
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -562,12 +625,14 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      withRemoteChanges(editor, 'patches', () => {
-        editor.apply({
-          type: 'unset',
-          path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}, 'href'],
-        })
-      })
+      inTestChange(editor, () =>
+        withRemoteChanges(editor, 'patches', () => {
+          editor.apply({
+            type: 'unset',
+            path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}, 'href'],
+          })
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -586,9 +651,11 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      withRemoteChanges(editor, 'patches', () => {
-        editor.apply({type: 'unset', path: [-2, 'markDefs', 0, 'href']})
-      })
+      inTestChange(editor, () =>
+        withRemoteChanges(editor, 'patches', () => {
+          editor.apply({type: 'unset', path: [-2, 'markDefs', 0, 'href']})
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -618,12 +685,14 @@ describe(applyOperation.name, () => {
         },
       ])
 
-      editor.apply({
-        type: 'insert',
-        path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}],
-        position: 'after',
-        node: {_key: newMarkDefKey, _type: 'link', href: 'bar'},
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'insert',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}],
+          position: 'after',
+          node: {_key: newMarkDefKey, _type: 'link', href: 'bar'},
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -665,11 +734,13 @@ describe(applyOperation.name, () => {
         },
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks', 1],
-        value: 'strong',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks', 1],
+          value: 'strong',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -695,10 +766,12 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'unset',
-        path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}],
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}],
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -719,7 +792,9 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({type: 'unset', path: ['markDefs', {_key: markDefKey}]})
+      inTestChange(editor, () =>
+        editor.apply({type: 'unset', path: ['markDefs', {_key: markDefKey}]}),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -739,10 +814,12 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({
-        type: 'unset',
-        path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}],
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}],
+        }),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -761,7 +838,9 @@ describe(applyOperation.name, () => {
 
       const value = editor.snapshot.context.value
 
-      editor.apply({type: 'unset', path: [-2, 'markDefs', 0]})
+      inTestChange(editor, () =>
+        editor.apply({type: 'unset', path: [-2, 'markDefs', 0]}),
+      )
 
       expect(editor.snapshot.context.value).toBe(value)
       expect(editor.snapshot.context.value).toEqual([
@@ -781,12 +860,14 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'insert',
-        path: [{_key: blockKey}, 'children', {_key: spanKey}],
-        position: 'before',
-        node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'before',
+          node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -819,12 +900,14 @@ describe(applyOperation.name, () => {
         0,
       )
 
-      withRemoteChanges(editor, 'patches', () => {
-        editor.apply({
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}],
-        })
-      })
+      inTestChange(editor, () =>
+        withRemoteChanges(editor, 'patches', () => {
+          editor.apply({
+            type: 'unset',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          })
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {
@@ -848,12 +931,14 @@ describe(applyOperation.name, () => {
       ])
 
       expect(() =>
-        editor.apply({
-          type: 'insert',
-          path: [{_key: blockKey}, 'children', {_key: missingKey}],
-          position: 'after',
-          node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
-        }),
+        inTestChange(editor, () =>
+          editor.apply({
+            type: 'insert',
+            path: [{_key: blockKey}, 'children', {_key: missingKey}],
+            position: 'after',
+            node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
+          }),
+        ),
       ).toThrow(
         `Cannot apply an "insert" operation at path [_key=="k0"].children[_key=="k3"] because the sibling was not found.`,
       )
@@ -873,10 +958,12 @@ describe(applyOperation.name, () => {
       ])
 
       expect(() =>
-        editor.apply({
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: missingKey}],
-        }),
+        inTestChange(editor, () =>
+          editor.apply({
+            type: 'unset',
+            path: [{_key: blockKey}, 'children', {_key: missingKey}],
+          }),
+        ),
       ).toThrow(
         `Cannot apply an "unset" (node removal) operation at path [_key=="k0"].children[_key=="k3"] because the node was not found.`,
       )
@@ -898,11 +985,13 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [1, 'markDefs', 0, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [1, 'markDefs', 0, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image'},
@@ -921,11 +1010,13 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image'},
@@ -945,11 +1036,13 @@ describe(applyOperation.name, () => {
       ])
       editor.blockIndexMap.set(serializePath([{_key: blockKey}]), 0)
 
-      editor.apply({
-        type: 'set',
-        path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
-        value: 'bar',
-      })
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'set',
+          path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
+          value: 'bar',
+        }),
+      )
 
       expect(editor.snapshot.context.value).toEqual([
         {_key: imageKey, _type: 'image'},

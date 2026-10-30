@@ -3,15 +3,16 @@ import {createActor} from 'xstate'
 import {coreConverters} from '../converters/converters.core'
 import type {Editor, EditorConfig} from '../editor'
 import {hasRemoteFrame} from '../engine/core/apply-context'
+import {subscribeToChanges} from '../engine/core/change'
 import {subscribeToOperations} from '../engine/core/operation-channel'
-import type {EngineOperation} from '../engine/interfaces/operation'
 import {debug} from '../internal-utils/debug'
 import {corePriority} from '../priority/priority.core'
 import {createEditorPriority} from '../priority/priority.types'
 import type {EditableAPI} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
-import type {Operation} from '../types/operation'
+import {isPublicOperation} from '../types/operation'
 import {defaultKeyGenerator} from '../utils/key-generator'
+import {toChangeEvents} from './change-events'
 import {createEditableAPI} from './create-editable-api'
 import {createEditorEngine} from './create-editor-engine'
 import {createEditorDom} from './editor-dom'
@@ -198,28 +199,6 @@ function editorConfigToMachineInput(config: EditorConfig) {
   } as const
 }
 
-/**
- * The public operation types. The `Record` keying makes completeness
- * compile-checked: adding a variant to the public `Operation` union in
- * `types/operation.ts` (which carries the tripwire that fires when the
- * engine vocabulary grows) errors here until the allowlist catches up.
- */
-const publicOperationTypeRecord: Record<Operation['type'], true> = {
-  'insert': true,
-  'insert.text': true,
-  'remove.text': true,
-  'set': true,
-  'unset': true,
-}
-
-const publicOperationTypes: ReadonlySet<string> = new Set(
-  Object.keys(publicOperationTypeRecord),
-)
-
-function isPublicOperation(operation: EngineOperation): operation is Operation {
-  return publicOperationTypes.has(operation.type)
-}
-
 function createActors(config: {
   editorActor: EditorActor
   rangeDecorationsActor: RangeDecorationsActor
@@ -248,6 +227,12 @@ function createActors(config: {
       editorEngine: config.editorEngine,
     },
   })
+
+  config.subscriptions.push(() =>
+    subscribeToChanges(config.editorEngine, (change) => {
+      config.relay.sendAll(toChangeEvents(config.editorEngine, change))
+    }),
+  )
 
   config.subscriptions.push(mutationBatcher.subscribe)
 

@@ -1910,6 +1910,14 @@ describe('Collaborative editing', () => {
           },
           origin: 'local',
         },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {type: 'insert.text', path: spanPath, offset: 3, text: 'a'},
+          ],
+          patches: [patchA],
+        },
         {type: 'patch', patch: patchA},
         {type: 'selection', selection: caret(4)},
         {
@@ -1921,6 +1929,14 @@ describe('Collaborative editing', () => {
             text: 'b',
           },
           origin: 'local',
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {type: 'insert.text', path: spanPath, offset: 4, text: 'b'},
+          ],
+          patches: [patchB],
         },
         {type: 'patch', patch: patchB},
         {type: 'selection', selection: caret(5)},

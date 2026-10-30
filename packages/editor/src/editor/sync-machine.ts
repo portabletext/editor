@@ -1,4 +1,4 @@
-import {applyAll, type Patch} from '@portabletext/patches'
+import {applyAll, set, type Patch} from '@portabletext/patches'
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
@@ -15,14 +15,24 @@ import {
 } from 'xstate'
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
-import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
+import {
+  withPatching,
+  withoutPatching,
+} from '../engine-plugins/engine-plugin.without-patching'
 import {
   hasRemoteFrame,
   type ApplyContextFrame,
 } from '../engine/core/apply-context'
+import {
+  commitChange,
+  createChange,
+  resumeChange,
+  type Change,
+} from '../engine/core/change'
 import {start} from '../engine/editor/start'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
@@ -41,6 +51,7 @@ import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {KeyedSegment} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
 
@@ -79,12 +90,35 @@ const syncValueCallback: CallbackLogicFunction<
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
-  updateValue({
-    context: input.context,
-    sendBack,
-    editorEngine: input.editorEngine,
-    value: input.value,
-    streamBlocks: input.streamBlocks,
+  // One change for the whole value sync. A streamed first load syncs its
+  // blocks across ticks, so the change is resumed for each tick's work and
+  // commits once the sync is done.
+  const change = createChange({
+    type: 'value sync',
+    initial: input.streamBlocks,
+  })
+
+  resumeChange(input.editorEngine, change, () =>
+    updateValue({
+      context: input.context,
+      sendBack: (event) => {
+        // Committed before `done syncing` is announced: that ends the
+        // editor's setup, drains the remote patches buffered during the
+        // load and starts a pending value's sync, all of which must come
+        // after this change's events.
+        if (event.type === 'done syncing') {
+          commitChange(input.editorEngine, change)
+        }
+
+        sendBack(event)
+      },
+      editorEngine: input.editorEngine,
+      change,
+      value: input.value,
+      streamBlocks: input.streamBlocks,
+    }),
+  ).finally(() => {
+    commitChange(input.editorEngine, change)
   })
 }
 
@@ -437,6 +471,7 @@ async function updateValue({
   context,
   sendBack,
   editorEngine,
+  change,
   streamBlocks,
   value,
 }: {
@@ -448,6 +483,7 @@ async function updateValue({
   }
   sendBack: (event: SyncValueEvent) => void
   editorEngine: PortableTextEditorEngine
+  change: Change
   streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
@@ -495,16 +531,21 @@ async function updateValue({
           ] of getStreamedBlocks({
             value,
           })) {
-            const {blockChanged, blockValid} = syncBlock({
-              context,
-              sendBack,
-              block: currentBlock,
-              index: currentBlockIndex,
+            const {blockChanged, blockValid} = resumeChange(
               editorEngine,
-              value,
-              incomingKeys: keyedIncomingKeys,
-              remoteSource,
-            })
+              change,
+              () =>
+                syncBlock({
+                  context,
+                  sendBack,
+                  block: currentBlock,
+                  index: currentBlockIndex,
+                  editorEngine,
+                  value,
+                  incomingKeys: keyedIncomingKeys,
+                  remoteSource,
+                }),
+            )
 
             isChanged = blockChanged || isChanged
             isValid = isValid && blockValid
@@ -585,7 +626,9 @@ async function updateValue({
       !editorEngine.snapshot.context.selection &&
       editorEngine.snapshot.context.value.length > 0
     ) {
-      applySelect(editorEngine, start(editorEngine, []))
+      resumeChange(editorEngine, change, () => {
+        applySelect(editorEngine, start(editorEngine, []))
+      })
       editorEngine.onChange()
     }
 
@@ -755,6 +798,11 @@ function syncBlock({
     }
   }
 
+  const sendsResolutionPatches =
+    !context.readOnly &&
+    context.previousValue !== undefined &&
+    context.previousValue !== value
+
   // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
   if (
     !validation.valid &&
@@ -762,11 +810,7 @@ function syncBlock({
     validation.resolution?.patches.length > 0
   ) {
     // Only apply auto resolution if the value has been populated before and is different from the last one.
-    if (
-      !context.readOnly &&
-      context.previousValue &&
-      context.previousValue !== value
-    ) {
+    if (sendsResolutionPatches) {
       console.warn(
         `${validation.resolution.action} for block with _key '${block._key}'. ${validation.resolution?.description}`,
       )
@@ -776,8 +820,15 @@ function syncBlock({
     }
   }
 
-  const repairedBlock = applyAutoResolution(validation, validationValue, block)
-  const engineBlock = toEngineBlock(repairedBlock, {
+  const autoResolution = splitAutoResolution(
+    context,
+    validation,
+    validationValue,
+    block,
+    incomingKeys ? {_key: block._key} : index,
+    sendsResolutionPatches,
+  )
+  const engineBlock = toEngineBlock(autoResolution.remoteBlock, {
     schemaTypes: context.schema,
   })
   // In a keyed sync, the block at the index can only lack an incoming key if
@@ -796,7 +847,7 @@ function syncBlock({
     withoutNormalizing(editorEngine, () => {
       withoutPatching(editorEngine, () => {
         if (!replacedBlock) {
-          debug.syncValue('Inserting new block', repairedBlock)
+          debug.syncValue('Inserting new block', autoResolution.remoteBlock)
 
           editorEngine.apply({
             type: 'insert',
@@ -808,17 +859,25 @@ function syncBlock({
           replacedBlock._key === block._key &&
           replacedBlock._type === block._type
         ) {
-          debug.syncValue('Updating block', replacedBlock, repairedBlock)
+          debug.syncValue(
+            'Updating block',
+            replacedBlock,
+            autoResolution.remoteBlock,
+          )
 
           updateBlock({
             context,
             editorEngine,
             oldEngineBlock: replacedBlock,
-            block: repairedBlock,
+            block: autoResolution.remoteBlock,
             index,
           })
         } else {
-          debug.syncValue('Replacing block', replacedBlock, repairedBlock)
+          debug.syncValue(
+            'Replacing block',
+            replacedBlock,
+            autoResolution.remoteBlock,
+          )
 
           const replace = () =>
             replaceBlock({
@@ -838,6 +897,8 @@ function syncBlock({
             replace()
           }
         }
+
+        applyRepairs(editorEngine, autoResolution.repairs)
       })
     })
   })
@@ -942,24 +1003,200 @@ function withMovedBlockSelection({
   }
 }
 
+type Repair = {
+  operation: EngineOperation
+  patches: Array<Patch>
+  /**
+   * The patches go out like a normalization fix's, through patch
+   * generation, instead of through the sync's own `patch` events.
+   */
+  asNormalization: boolean
+  /**
+   * The sync sends the patches as its own `patch` events, which go out
+   * once the change is committed.
+   */
+  sentBySync: boolean
+}
+
 /**
  * `validateValue` auto-resolutions must reach the engine as state, not
  * only the document as patches. Applying them only outbound forks the
  * repair: the document receives the resolution (e.g. a minted child
  * `_key`) while the engine holds the un-repaired shape its addressing
  * model cannot represent, and normalization then mints a different key
- * for the same node. The resolution patches were built from
- * `validationValue` itself, so they always apply; the fallback only
- * covers the impossible empty result.
+ * for the same node.
+ *
+ * The block is split into the part the editor received, applied as
+ * remote, and the repairs, applied as their own operations so the
+ * `change` reports them as a correction carrying their patches. A keyless
+ * child is the one shape the engine cannot hold, so the received part
+ * leaves out every keyless child and a repair inserts each with a key.
+ * `validateValue` reports only the first; the others keep the keys and
+ * the `set` patches normalization gave them, minted last to first and
+ * sent as normalization fixes, so the host receives what it always did.
+ * The resolution patches were built from `validationValue` itself, so
+ * they always apply; the fallback only covers the impossible empty
+ * result.
  */
-function applyAutoResolution(
+function splitAutoResolution(
+  context: {keyGenerator: () => string; schema: EditorSchema},
   validation: ReturnType<typeof validateValue>,
   validationValue: Array<PortableTextBlock>,
   block: PortableTextBlock,
-): PortableTextBlock {
-  return !validation.valid && validation.resolution?.autoResolve
-    ? (applyAll(validationValue, validation.resolution.patches).at(0) ?? block)
-    : block
+  blockSegment: KeyedSegment | number,
+  sendsResolutionPatches: boolean,
+): {remoteBlock: PortableTextBlock; repairs: Array<Repair>} {
+  const resolution = validation.resolution
+
+  if (validation.valid || !resolution?.autoResolve) {
+    return {remoteBlock: block, repairs: []}
+  }
+
+  const repairedBlock =
+    applyAll(validationValue, resolution.patches).at(0) ?? block
+
+  switch (resolution.i18n.action) {
+    case 'inputs.portable-text.invalid-value.missing-child-key.action':
+    case 'inputs.portable-text.invalid-value.empty-children.action': {
+      const reportedIndex = resolution.i18n.values?.['index'] ?? 0
+      const repairedEngineBlock = toEngineBlock(repairedBlock, {
+        schemaTypes: context.schema,
+      })
+
+      if (
+        typeof reportedIndex !== 'number' ||
+        !isTextBlock({schema: context.schema}, repairedBlock) ||
+        !isTextBlock({schema: context.schema}, repairedEngineBlock) ||
+        !repairedEngineBlock.children.at(reportedIndex)
+      ) {
+        break
+      }
+
+      const keylessIndexes = repairedEngineBlock.children.flatMap(
+        (child, index) => (child._key === undefined ? [index] : []),
+      )
+      const mintedKeys = new Map(
+        keylessIndexes
+          .toReversed()
+          .map((index) => [index, context.keyGenerator()]),
+      )
+      const repairedIndexes = new Set([reportedIndex, ...keylessIndexes])
+      const blockPath = [{_key: repairedBlock._key}]
+
+      return {
+        remoteBlock: {
+          ...repairedBlock,
+          children: repairedBlock.children.filter(
+            (_child, index) => !repairedIndexes.has(index),
+          ),
+        },
+        repairs: repairedEngineBlock.children.flatMap(
+          (child, index): Array<Repair> => {
+            if (index === reportedIndex) {
+              return [
+                {
+                  operation: {
+                    type: 'insert',
+                    path: [blockSegment, 'children', index],
+                    node: child,
+                    position: 'before',
+                  },
+                  patches: resolution.patches,
+                  asNormalization: false,
+                  sentBySync: sendsResolutionPatches,
+                },
+              ]
+            }
+
+            const mintedKey = mintedKeys.get(index)
+
+            if (mintedKey === undefined) {
+              return []
+            }
+
+            return [
+              {
+                operation: {
+                  type: 'insert',
+                  path: [blockSegment, 'children', index],
+                  node: {...child, _key: mintedKey},
+                  position: 'before',
+                },
+                patches: [
+                  set(mintedKey, [...blockPath, 'children', index, '_key']),
+                ],
+                asNormalization: true,
+                sentBySync: false,
+              },
+            ]
+          },
+        ),
+      }
+    }
+
+    case 'inputs.portable-text.invalid-value.orphaned-mark-defs.action': {
+      return {
+        remoteBlock: block,
+        repairs: resolution.patches.map((patch) => ({
+          operation: {
+            type: 'unset',
+            path: [blockSegment, ...patch.path.slice(1)],
+          },
+          patches: [patch],
+          asNormalization: false,
+          sentBySync: sendsResolutionPatches,
+        })),
+      }
+    }
+  }
+
+  return {remoteBlock: repairedBlock, repairs: []}
+}
+
+/**
+ * Applies the repairs in index order, with the received part already in
+ * place. A repair sent as a normalization fix applies while patching, in
+ * a `normalization` frame, so its patches reach the host when a
+ * normalization fix's do. The others leave sending to the sync's `patch`
+ * events, and their frame holds the very patches those events carry, or,
+ * when the sync sends none (the first load, a read-only editor), the
+ * patches the `change` alone delivers.
+ */
+function applyRepairs(
+  editorEngine: PortableTextEditorEngine,
+  repairs: Array<Repair>,
+) {
+  for (const repair of repairs) {
+    const frames = [
+      ...(repair.asNormalization
+        ? [Object.freeze({kind: 'normalization' as const})]
+        : []),
+      Object.freeze({
+        kind: 'repair' as const,
+        patches: repair.sentBySync
+          ? repair.patches
+          : repair.patches.map((patch) => ({
+              ...patch,
+              origin: 'local' as const,
+            })),
+        sentAfterChange: repair.sentBySync,
+      }),
+    ]
+
+    editorEngine.applyContext.push(...frames)
+
+    try {
+      if (repair.asNormalization) {
+        withPatching(editorEngine, () => {
+          editorEngine.apply(repair.operation)
+        })
+      } else {
+        editorEngine.apply(repair.operation)
+      }
+    } finally {
+      editorEngine.applyContext.length -= frames.length
+    }
+  }
 }
 
 function replaceBlock({
@@ -1079,7 +1316,7 @@ function updateBlock({
       oldKeys.some((key, i) => key !== newKeys[i]) &&
       newKeys.every((key) => oldKeySet.has(key))
 
-    if (isPureReorder || (newKeys.length > 0 && !hasSharedKeys)) {
+    if (isPureReorder || !hasSharedKeys) {
       debug.syncValue('Replacing children via set')
       applyNodeProperties(editorEngine, {children: engineBlock.children}, [
         {_key: oldEngineBlock._key},
