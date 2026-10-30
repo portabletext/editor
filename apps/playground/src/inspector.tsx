@@ -6,14 +6,18 @@ import {useActorRef, useSelector} from '@xstate/react'
 import {
   CheckIcon,
   CopyIcon,
+  GitCommitHorizontalIcon,
   HistoryIcon,
   LayersIcon,
   MessageSquareTextIcon,
+  PauseIcon,
+  PlayIcon,
   TrashIcon,
 } from 'lucide-react'
 import {useEffect, useState} from 'react'
 import {TooltipTrigger, type Key} from 'react-aria-components'
 import {tv} from 'tailwind-variants'
+import {ChangesList} from './changes-list'
 import {highlightMachine} from './highlight-json-machine'
 import {MarkdownLogo, PortableTextLogo, ReactLogo} from './logos'
 import {PatchesList} from './patches-list'
@@ -29,11 +33,13 @@ import {Button} from './primitives/button'
 import {Container} from './primitives/container'
 import {Spinner} from './primitives/spinner'
 import {Tab, TabList, TabPanel, Tabs} from './primitives/tabs'
+import {ToggleButton} from './primitives/toggle-button'
 import {Tooltip} from './primitives/tooltip'
 
 type TabId =
   | 'output'
   | 'patches'
+  | 'changes'
   | 'react-preview'
   | 'markdown-preview'
   | 'comments'
@@ -64,6 +70,12 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
             <span className="flex items-center gap-1.5">
               <HistoryIcon className="size-3" />
               <span className="hidden sm:inline">Patches</span>
+            </span>
+          </Tab>
+          <Tab id="changes">
+            <span className="flex items-center gap-1.5">
+              <GitCommitHorizontalIcon className="size-3" />
+              <span className="hidden sm:inline">Changes</span>
             </span>
           </Tab>
           <Tab id="react-preview">
@@ -106,6 +118,12 @@ export function Inspector(props: {playgroundRef: PlaygroundActorRef}) {
         </Container>
       </TabPanel>
 
+      <TabPanel id="changes" className="flex-1 min-h-0">
+        <Container className="h-full overflow-clip">
+          <ChangesPanel playgroundRef={props.playgroundRef} />
+        </Container>
+      </TabPanel>
+
       <TabPanel id="react-preview" className="flex-1 min-h-0">
         <Container className="h-full overflow-clip">
           <ReactPreview playgroundRef={props.playgroundRef} />
@@ -143,6 +161,12 @@ function TabActions(props: {
   )
   const isCopyingPatches = useSelector(playgroundRef, (s) =>
     s.matches({'copying patches': 'copied'}),
+  )
+  const isCopyingChanges = useSelector(playgroundRef, (s) =>
+    s.matches({'copying changes': 'copied'}),
+  )
+  const isRecordingChanges = useSelector(playgroundRef, (s) =>
+    s.matches({'change recording': 'recording'}),
   )
   const isCopyingMarkdown = useSelector(playgroundRef, (s) =>
     s.matches({'copying markdown': 'copied'}),
@@ -193,6 +217,56 @@ function TabActions(props: {
             <TrashIcon className="size-3" />
           </Button>
           <Tooltip>Clear patches</Tooltip>
+        </TooltipTrigger>
+      </div>
+    )
+  }
+
+  if (activeTab === 'changes') {
+    return (
+      <div className="flex items-center gap-1">
+        <TooltipTrigger>
+          <ToggleButton
+            variant="ghost"
+            size="sm"
+            isSelected={!isRecordingChanges}
+            onChange={() =>
+              playgroundRef.send({type: 'toggle change recording'})
+            }
+          >
+            {isRecordingChanges ? (
+              <PauseIcon className="size-3" />
+            ) : (
+              <PlayIcon className="size-3" />
+            )}
+          </ToggleButton>
+          <Tooltip>
+            {isRecordingChanges ? 'Pause changes' : 'Resume changes'}
+          </Tooltip>
+        </TooltipTrigger>
+        <TooltipTrigger>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => playgroundRef.send({type: 'copy changes'})}
+          >
+            {isCopyingChanges ? (
+              <CheckIcon className="size-3 text-green-600 dark:text-green-400" />
+            ) : (
+              <CopyIcon className="size-3" />
+            )}
+          </Button>
+          <Tooltip>{isCopyingChanges ? 'Copied!' : 'Copy changes'}</Tooltip>
+        </TooltipTrigger>
+        <TooltipTrigger>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => playgroundRef.send({type: 'clear changes'})}
+          >
+            <TrashIcon className="size-3" />
+          </Button>
+          <Tooltip>Clear changes</Tooltip>
         </TooltipTrigger>
       </div>
     )
@@ -460,4 +534,17 @@ function PatchesPanel(props: {playgroundRef: PlaygroundActorRef}) {
   )
 
   return <PatchesList entries={patchFeed} showEditorLabel={editorCount > 1} />
+}
+
+function ChangesPanel(props: {playgroundRef: PlaygroundActorRef}) {
+  const changeFeed = useSelector(
+    props.playgroundRef,
+    (s) => s.context.changeFeed,
+  )
+  const editorCount = useSelector(
+    props.playgroundRef,
+    (s) => s.context.editors.length,
+  )
+
+  return <ChangesList entries={changeFeed} showEditorLabel={editorCount > 1} />
 }

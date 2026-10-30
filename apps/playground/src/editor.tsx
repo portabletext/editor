@@ -316,6 +316,16 @@ function EditorEventListener(props: {
   }, [props.editorRef, editor, patchSubscriptionActive])
 
   useEffect(() => {
+    const subscription = editor.on('change', (event) => {
+      props.editorRef.send(event)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [editor, props.editorRef])
+
+  useEffect(() => {
     const subscription = editor.on('*', props.on)
 
     return () => {
