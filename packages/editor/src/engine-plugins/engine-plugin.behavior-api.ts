@@ -49,53 +49,25 @@ export function createBehaviorApiPlugin(editorActor: EditorActor) {
         return
       }
 
-      const anchor = partialRange.anchor
-      const focus = partialRange.focus
-
-      const backward = editor.snapshot.context.selection
-        ? isBackwardRange(
-            {
-              anchor:
-                partialRange.anchor ?? editor.snapshot.context.selection.anchor,
-              focus:
-                partialRange.focus ?? editor.snapshot.context.selection.focus,
-            },
-            editor.snapshot.context,
-          )
-        : partialRange.anchor && partialRange.focus
-          ? isBackwardRange(
-              {
-                anchor: partialRange.anchor,
-                focus: partialRange.focus,
-              },
-              editor.snapshot.context,
-            )
-          : undefined
-
-      if (editor.snapshot.context.selection) {
-        const newAnchor =
-          partialRange.anchor ?? editor.snapshot.context.selection.anchor
-        const newFocus =
-          partialRange.focus ?? editor.snapshot.context.selection.focus
-
-        if (
-          pointEquals(newAnchor, editor.snapshot.context.selection.anchor) &&
-          pointEquals(newFocus, editor.snapshot.context.selection.focus)
-        ) {
-          // To avoid double `select` events, we call `setSelection` directly
-          // if the selection wouldn't actually change.
-          setSelection(partialRange)
-          return
-        }
-      }
+      const selection = editor.snapshot.context.selection
+      const anchor = partialRange.anchor ?? selection?.anchor
+      const focus = partialRange.focus ?? selection?.focus
 
       if (!anchor || !focus) {
-        // In the unlikely event that either the anchor or the focus is
-        // undefined, we call `setSelection` directly. This is because the
-        // `select` event expects a complete selection.
-        setSelection(partialRange)
+        // Without a current selection a partial range can't be completed,
+        // and core `setSelection` would ignore it too.
         return
       }
+
+      if (
+        selection &&
+        pointEquals(anchor, selection.anchor) &&
+        pointEquals(focus, selection.focus)
+      ) {
+        return
+      }
+
+      const backward = isBackwardRange({anchor, focus}, editor.snapshot.context)
 
       editorActor.send({
         type: 'behavior event',
