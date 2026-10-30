@@ -39,7 +39,7 @@
     "react-dom": "catalog:",
     "react-is": "^19.2.7",
     "remeda": "catalog:tooling",
-    "shiki": "^3.17.0",
+    "shiki": "^3.23.0",
     "xstate": "catalog:",
     "zod": "^4.1.12"
   },
