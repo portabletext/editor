@@ -32,7 +32,7 @@
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "catalog:",
     "emojilib": "^4.0.2",
-    "fuse.js": "^7.1.0",
+    "fuse.js": "^7.5.0",
     "lucide-react": "catalog:tooling",
     "react": "catalog:",
     "react-aria-components": "^1.11.0",
