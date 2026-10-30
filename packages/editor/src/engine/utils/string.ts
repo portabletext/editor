@@ -290,11 +290,13 @@ const getCodepointType = (char: string, code: number): CodepointType => {
   if (char.search(reT) !== -1) {
     type |= CodepointType.T
   }
-  if (isHangulLV(code)) {
-    type |= CodepointType.LV
-  }
-  if (isHangulLVT(code)) {
-    type |= CodepointType.LVT
+  if (code >= hangulSyllableFirst && code <= hangulSyllableLast) {
+    // Unicode composes each precomposed syllable as `0xAC00 + (L * 21 + V) * 28 + T`,
+    // so the syllables with no trailing consonant (`T = 0`) are the LV ones.
+    type |=
+      (code - hangulSyllableFirst) % hangulTrailingConsonantCount === 0
+        ? CodepointType.LV
+        : CodepointType.LVT
   }
   if (char.search(reExtPict) !== -1) {
     type |= CodepointType.ExtPict
@@ -315,24 +317,6 @@ const getCodepointType = (char: string, code: number): CodepointType => {
 const hangulSyllableFirst = 0xac00
 const hangulSyllableLast = 0xd7a3
 const hangulTrailingConsonantCount = 28
-
-// Unicode composes each precomposed syllable as `0xAC00 + (L * 21 + V) * 28 + T`,
-// so the syllables with no trailing consonant (`T = 0`) are the LV ones.
-function isHangulLV(code: number) {
-  return (
-    code >= hangulSyllableFirst &&
-    code <= hangulSyllableLast &&
-    (code - hangulSyllableFirst) % hangulTrailingConsonantCount === 0
-  )
-}
-
-function isHangulLVT(code: number) {
-  return (
-    code >= hangulSyllableFirst &&
-    code <= hangulSyllableLast &&
-    (code - hangulSyllableFirst) % hangulTrailingConsonantCount !== 0
-  )
-}
 
 function intersects(x: CodepointType, y: CodepointType) {
   return (x & y) !== 0

@@ -154,41 +154,10 @@ export function createInternalEditor(config: EditorConfig): {
         eventOrEvents: EditorEmittedEvent | Array<EditorEmittedEvent>,
       ) => void,
       options?: EditorEventListenerOptions,
-    ) => {
-      // Batched delivery hands the listener the whole coalesced burst as an
-      // array. The per-event `switch` below applies only to unbatched (sync)
-      // delivery; its sole filtering effect is dropping the deprecated
-      // `'error'` event, which is no longer emitted, so batched and sync
-      // delivery agree on every event type that actually occurs. A future
-      // non-public `EditorEmittedEvent` type would need gating in both paths.
-      if (options?.batch) {
-        return relay.on(
-          type,
-          (events) => {
-            listener(events)
-          },
-          {batch: true},
-        )
-      }
-
-      return relay.on(type, (event) => {
-        switch (event.type) {
-          case 'blurred':
-          case 'editable':
-          case 'focused':
-          case 'invalid value':
-          case 'mutation':
-          case 'operation':
-          case 'patch':
-          case 'read only':
-          case 'ready':
-          case 'selection':
-          case 'value changed':
-            listener(event)
-            break
-        }
-      })
-    }) as Editor['on'],
+    ) =>
+      options?.batch
+        ? relay.on(type, (events) => listener(events), {batch: true})
+        : relay.on(type, (event) => listener(event))) as Editor['on'],
     subscribe(observer) {
       // Coalesce the actor's per-operation emissions to one settled-state
       // notification per microtask burst (see `subscribeCoalesced`). A single
