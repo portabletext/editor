@@ -1,5 +1,51 @@
 # Changelog
 
+## 8.2.10
+
+### Patch Changes
+
+- [#3527](https://github.com/portabletext/editor/pull/3527) [`a8f8546`](https://github.com/portabletext/editor/commit/a8f854624d7db00dc2561709952701756ce06f22) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep the Android IME's text node when composing into an empty block
+  
+  On Android, composing with a Japanese IME in an empty block no longer commits the first character on its own. Typing きょう and picking 今日 now gives 今日 instead of き今日, both in an empty editor and on a new line after pressing Enter.
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`7585238`](https://github.com/portabletext/editor/commit/7585238cfdff20ce57803facb36c87df6c885e6f) Thanks [@christianhg](https://github.com/christianhg)! - fix: build each parsed span and padded child list once
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`c69b53a`](https://github.com/portabletext/editor/commit/c69b53a6936cee69efc81019967ee1261fd902ce) Thanks [@christianhg](https://github.com/christianhg)! - fix: classify Hangul syllables with one range check
+
+- [#3506](https://github.com/portabletext/editor/pull/3506) [`1d600f8`](https://github.com/portabletext/editor/commit/1d600f8334afab00fc4fca9680cf29b85d6a2c31) Thanks [@christianhg](https://github.com/christianhg)! - fix: share one sibling walker across range delete steps
+
+- [#3517](https://github.com/portabletext/editor/pull/3517) [`023e0cb`](https://github.com/portabletext/editor/commit/023e0cb71b565c74ed1d696ce2ea02132a33c035) Thanks [@christianhg](https://github.com/christianhg)! - fix: build the drag ghost through one path for blocks and inline content
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`4d3a848`](https://github.com/portabletext/editor/commit/4d3a8484860edf49b90d8a00b915249f4b73ce12) Thanks [@christianhg](https://github.com/christianhg)! - fix: drop dead `doneSyncing` checks and merge the child insert paths in value sync
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`12bad2d`](https://github.com/portabletext/editor/commit/12bad2d9becbdf5ae93cde2dd8555bfcbeecca42) Thanks [@christianhg](https://github.com/christianhg)! - fix: drop `MutationObserver` options that repeat the DOM defaults
+
+- [#3498](https://github.com/portabletext/editor/pull/3498) [`849e589`](https://github.com/portabletext/editor/commit/849e5893ddf4f01b83f2f3e3137bfb4884a84915) Thanks [@christianhg](https://github.com/christianhg)! - fix: drop internal code no caller reaches
+
+- [#3513](https://github.com/portabletext/editor/pull/3513) [`0b342eb`](https://github.com/portabletext/editor/commit/0b342eb908503d23c818df4ffc8ac720b337f0ff) Thanks [@christianhg](https://github.com/christianhg)! - fix: delete to the line or paragraph edge on line delete input
+  
+  Deleting to the start or end of a paragraph (the `deleteHardLineBackward` and `deleteHardLineForward` input types) now deletes from the caret to the paragraph edge instead of removing the whole block, and merges with the neighbouring block when the caret is already at that edge. Deleting forward to the end of a line (`deleteSoftLineForward`) now deletes to the end of the visual line instead of a single character. Deleting the entire line (`deleteEntireSoftLine`) on a line with content now deletes only that visual line, and never deletes an explicit `\n` before or after it. Deleting to the start or end of a paragraph from inside it now raises a `delete` event with a range instead of `delete.backward` or `delete.forward`. Deleting an entire line that has content does the same. Behaviors that intercept those keys should listen for `delete`. Deleting an empty line still raises `delete.backward` and `delete.forward`, as before, which can join it with the lines around it. A forward line delete can stop before an inline object at the end of the line and leave it behind, when the object is taller than the text, and in Safari when the line wraps.
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`08d8506`](https://github.com/portabletext/editor/commit/08d8506da4220d250ab0bca46c8172c2db5e463b) Thanks [@christianhg](https://github.com/christianhg)! - fix: pass the editor context to schema guards in `insert.block`
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`283f9a1`](https://github.com/portabletext/editor/commit/283f9a107d12d1c730d1c8d8bc1da3bc7b8dc9f6) Thanks [@christianhg](https://github.com/christianhg)! - fix: pass the structural context to every normalization rule
+
+- [#3522](https://github.com/portabletext/editor/pull/3522) [`d4636fc`](https://github.com/portabletext/editor/commit/d4636fc2304036a8d6bbf7a046caa0716de68006) Thanks [@christianhg](https://github.com/christianhg)! - fix: show keyed paths in `insert` and `unset` operation errors
+
+- [#3508](https://github.com/portabletext/editor/pull/3508) [`b04fd7f`](https://github.com/portabletext/editor/commit/b04fd7fefc474dc97b6d12b1d32ca200dcd51439) Thanks [@christianhg](https://github.com/christianhg)! - fix: drag the whole block when it contains `data-pt-drag-ghost-element`
+  
+  A block with an element marked `data-pt-drag-ghost-element` used to replace the drag image with that element, but the image was placed far away from the pointer and never showed. The attribute is no longer read, so these blocks get the same drag image as any other block.
+
+- [#3514](https://github.com/portabletext/editor/pull/3514) [`eaa7571`](https://github.com/portabletext/editor/commit/eaa757136cddcd2d0b735cb93d28eaab8bdddcda) Thanks [@christianhg](https://github.com/christianhg)! - fix: raise `delete` without a direction when cut, drag or composition replaces a selection
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`0dae947`](https://github.com/portabletext/editor/commit/0dae947b435d82adcbb5f26839e7f15c3a3ca99c) Thanks [@christianhg](https://github.com/christianhg)! - fix: share the sequential `insert.block` loop between `insert.blocks` placements
+
+- [#3504](https://github.com/portabletext/editor/pull/3504) [`5a59670`](https://github.com/portabletext/editor/commit/5a596701e488e53c82be209d7c87d468c1e7925c) Thanks [@christianhg](https://github.com/christianhg)! - fix: pass `editor.on` listeners to the relay without a type switch
+
+- [#3510](https://github.com/portabletext/editor/pull/3510) [`3e87ae4`](https://github.com/portabletext/editor/commit/3e87ae498ce1795a7ed4481c11c5b6b2b49d453b) Thanks [@christianhg](https://github.com/christianhg)! - fix: reinsert the rest of a backspaced Indic cluster where it was removed
+  
+  Backspacing at the start of a span that follows an Indic conjunct cluster in the previous span no longer moves the rest of the cluster into the caret's span. With bold "fक्त" followed by plain "b" and the caret before "b", Backspace now leaves bold "fक्" and plain "b". Previously the editor produced bold "f" and plain "क्b", so the remaining characters lost their formatting.
+
 ## 8.2.9
 
 ### Patch Changes
