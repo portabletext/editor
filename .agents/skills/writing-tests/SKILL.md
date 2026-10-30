@@ -38,6 +38,7 @@ When scaffolding a new package, mirror `plugin-sdk-value`'s vitest config: a `br
 - To order async responses (a stale result arriving after a newer one), use promises the test resolves itself, then assert once the resolution is observable.
 - A timer boundary (a debounce or throttle window) is the one thing to test on fake timers, with explicit `vi.advanceTimersByTime`. Never mix real waits and fake timers in one test, and note that `vi.waitFor` and `expect.poll` advance fake time while fake timers are on.
 - Contract tests never assert on wall-clock duration or log timings. Pin complexity structurally (call counts, render counts) and keep any genuinely needed time ceiling in its own clearly named test.
+- The timed tests in `packages/editor/tests/performance.test.tsx` are benchmarks. Each prints its duration with `console.warn` so whoever works on a feature, human or agent, can run the file and compare. The print is the point of those tests, so keep it, and never turn it into a duration assert. The `console.warn` summaries in `render-count-regression.test.tsx`, median commit time included, are the same kind of feedback and the one exception to the logging rule above. That suite's contract stays in its render-count asserts.
 
 ## Assertion style: no indirection, full values
 

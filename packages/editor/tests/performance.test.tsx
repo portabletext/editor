@@ -11,6 +11,9 @@ import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 // render wait gets a budget that reflects the real cost.
 const RENDER_TIMEOUT = 15_000
 
+// Each timed test prints its duration with `console.warn` as feedback for
+// whoever works on the editor. The print is what the test is for, so keep it,
+// and keep durations out of the asserts, since CI runner speed varies.
 describe('Performance', () => {
   describe('Baseline', () => {
     test('Inserting 1000 blocks in an empty editor', async () => {
