@@ -208,13 +208,13 @@ describe('event.operation', () => {
     expect(patches).toEqual([])
   })
 
-  test('Scenario: Auto-resolved blocks arrive repaired in their own insert operation', async () => {
+  test('Scenario: An auto-resolved block arrives as received, then its repair arrives as its own insert operation', async () => {
     const {editor} = await createTestEditor()
     const operations = collectOperations(editor)
 
     // A text block with no children is auto-resolved by `validateValue` at
-    // sync ingress: the placeholder span is part of the inserted node
-    // itself, not a separate normalization fix operation.
+    // sync ingress: the block is inserted as received, and the span the
+    // editor adds is a separate operation.
     editor.send({type: 'update value', value: [emptyBlock('b1')]})
 
     await vi.waitFor(() => {
@@ -227,10 +227,13 @@ describe('event.operation', () => {
           type: 'insert',
           path: [0],
           position: 'before',
-          node: {
-            ...emptyBlock('b1'),
-            children: [{_type: 'span', _key: 'k2', text: '', marks: []}],
-          },
+          node: emptyBlock('b1'),
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}, 'children', 0],
+          position: 'before',
+          node: {_type: 'span', _key: 'k2', text: '', marks: []},
         },
       ])
     })

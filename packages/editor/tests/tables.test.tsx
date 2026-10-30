@@ -4,6 +4,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {withoutPatching} from '../src/engine-plugins/engine-plugin.without-patching'
+import {withChange} from '../src/engine/core/change'
 import {normalize} from '../src/engine/editor/normalize'
 import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {defineContainer, type Container} from '../src/renderers/renderer.types'
@@ -464,8 +465,10 @@ describe('tables', () => {
         buildPublicContainers(_resolvedContainers)
 
       // Force normalization with containers set
-      withoutPatching(editorEngineRef.current!, () => {
-        normalize(editorEngineRef.current!, {force: true})
+      withChange(editorEngineRef.current!, {type: 'registration'}, () => {
+        withoutPatching(editorEngineRef.current!, () => {
+          normalize(editorEngineRef.current!, {force: true})
+        })
       })
       editorEngineRef.current!.onChange()
 
@@ -532,8 +535,10 @@ describe('tables', () => {
       editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(editorEngineRef.current!, () => {
-        normalize(editorEngineRef.current!, {force: true})
+      withChange(editorEngineRef.current!, {type: 'registration'}, () => {
+        withoutPatching(editorEngineRef.current!, () => {
+          normalize(editorEngineRef.current!, {force: true})
+        })
       })
       editorEngineRef.current!.onChange()
 
@@ -600,8 +605,10 @@ describe('tables', () => {
       editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(editorEngineRef.current!, () => {
-        normalize(editorEngineRef.current!, {force: true})
+      withChange(editorEngineRef.current!, {type: 'registration'}, () => {
+        withoutPatching(editorEngineRef.current!, () => {
+          normalize(editorEngineRef.current!, {force: true})
+        })
       })
       editorEngineRef.current!.onChange()
 
@@ -686,8 +693,10 @@ describe('tables', () => {
       editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(editorEngineRef.current!, () => {
-        normalize(editorEngineRef.current!, {force: true})
+      withChange(editorEngineRef.current!, {type: 'registration'}, () => {
+        withoutPatching(editorEngineRef.current!, () => {
+          normalize(editorEngineRef.current!, {force: true})
+        })
       })
       editorEngineRef.current!.onChange()
 
@@ -762,8 +771,10 @@ describe('tables', () => {
       editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(editorEngineRef.current!, () => {
-        normalize(editorEngineRef.current!, {force: true})
+      withChange(editorEngineRef.current!, {type: 'registration'}, () => {
+        withoutPatching(editorEngineRef.current!, () => {
+          normalize(editorEngineRef.current!, {force: true})
+        })
       })
       editorEngineRef.current!.onChange()
 
@@ -825,8 +836,10 @@ describe('tables', () => {
       editorEngineRef.current!.snapshot.context.containers =
         buildPublicContainers(_resolvedContainers)
 
-      withoutPatching(editorEngineRef.current!, () => {
-        normalize(editorEngineRef.current!, {force: true})
+      withChange(editorEngineRef.current!, {type: 'registration'}, () => {
+        withoutPatching(editorEngineRef.current!, () => {
+          normalize(editorEngineRef.current!, {force: true})
+        })
       })
       editorEngineRef.current!.onChange()
 

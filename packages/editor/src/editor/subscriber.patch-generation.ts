@@ -1,12 +1,19 @@
-import {subscribeToOperations} from '../engine/core/operation-channel'
+import type {Patch} from '@portabletext/patches'
+import {getRepairPatches} from '../engine/core/apply-context'
+import {setChangeEntryPatches} from '../engine/core/change'
+import {
+  subscribeToOperations,
+  type OperationEvent,
+} from '../engine/core/operation-channel'
 import {addFieldLifecyclePatches} from '../internal-utils/field-lifecycle-patches'
 import {operationToPatches} from '../internal-utils/operation-to-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
 /**
- * Converts every applied operation into `@portabletext/patches` and sends
- * them to the editor actor as `internal.patch` events.
+ * Converts every applied operation into `@portabletext/patches`, sends them
+ * to the editor actor as `internal.patch` events and sets them on the
+ * change recording the operation.
  */
 export function subscribePatchGeneration({
   editorActor,
@@ -23,35 +30,59 @@ export function subscribePatchGeneration({
       return
     }
 
-    const {initialValue, schema} = editorActor.getSnapshot().context
-    const {operation, beforeValue} = event
+    // A repair of a received value carries the patches the host receives
+    // for it, which describe the repair, not the operation. The host
+    // already holds the block under repair, so the field lifecycle has
+    // nothing to add and must not read the block's shape mid-repair as an
+    // unpersisted placeholder.
+    const patches =
+      getRepairPatches(event.context) ??
+      addFieldLifecyclePatchesToEngine(editorActor, editor, event)
 
-    const {patches, state} = addFieldLifecyclePatches(
-      {
-        lastSyncedValue: editor.lastSyncedValue,
-        valueUnsetEmitted: editor.valueUnsetEmitted,
-      },
-      {
-        operation,
-        beforeValue,
-        afterValue: editor.snapshot.context.value,
-        patches: operationToPatches(operation, {
-          beforeValue,
-          afterSnapshot: editor.snapshot,
-        }),
-      },
-      {schema, initialValue},
-    )
+    const localPatches = patches.map((patch) => ({
+      ...patch,
+      origin: 'local' as const,
+    }))
 
-    editor.lastSyncedValue = state.lastSyncedValue
-    editor.valueUnsetEmitted = state.valueUnsetEmitted
+    setChangeEntryPatches(editor, event, localPatches)
 
-    for (const patch of patches) {
+    for (const patch of localPatches) {
       editorActor.send({
         type: 'internal.patch',
-        patch: {...patch, origin: 'local'},
+        patch,
         operationId: event.undoStepId,
       })
     }
   })
+}
+
+function addFieldLifecyclePatchesToEngine(
+  editorActor: EditorActor,
+  editor: PortableTextEditorEngine,
+  event: OperationEvent,
+): Array<Patch> {
+  const {initialValue, schema} = editorActor.getSnapshot().context
+  const {operation, beforeValue} = event
+
+  const {patches, state} = addFieldLifecyclePatches(
+    {
+      lastSyncedValue: editor.lastSyncedValue,
+      valueUnsetEmitted: editor.valueUnsetEmitted,
+    },
+    {
+      operation,
+      beforeValue,
+      afterValue: editor.snapshot.context.value,
+      patches: operationToPatches(operation, {
+        beforeValue,
+        afterSnapshot: editor.snapshot,
+      }),
+    },
+    {schema, initialValue},
+  )
+
+  editor.lastSyncedValue = state.lastSyncedValue
+  editor.valueUnsetEmitted = state.valueUnsetEmitted
+
+  return patches
 }

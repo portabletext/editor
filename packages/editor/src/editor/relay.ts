@@ -12,6 +12,7 @@ export type EditorEmittedEvent =
       type: 'blurred'
       event: FocusEvent<HTMLDivElement, Element>
     }
+  | ChangeEvent
   | {
       type: 'editable'
     }
@@ -74,6 +75,66 @@ export type EditorEmittedEvent =
     }
 
 /**
+ * Emitted once for every change to the editor's content, synchronously, in
+ * the order the changes were applied:
+ *
+ * - `origin: 'local'`: what a user action did, the outermost Behavior
+ *   event and everything it raised. Undo and redo are one action each.
+ *   Local changes arrive in application order, and one user action can
+ *   produce several when the editor fixes something mid-action. `patches`
+ *   are the change as Sanity patches, the same patches the `patch` event
+ *   emits for the action, available as soon as the action finishes
+ *   instead of on the `mutation` event's debounced schedule.
+ * - `origin: 'local'` with `correction: true`: the editor's own fixes to
+ *   the content (normalization, such as merging adjacent spans with the
+ *   same marks or replacing a duplicate `_key`), emitted right after the
+ *   change that caused them, with their own operations and patches. A fix
+ *   to content the editor received (remote patches or `update value`) is
+ *   a correction too. A host that persists patches saves corrections like
+ *   any other local change. A repair of a received value (a missing
+ *   child `_key`, an empty `children` array, an unused mark definition)
+ *   is a correction too, and the remote change holds the value as
+ *   received. Corrections are not held back: one to the initial value,
+ *   or to a value received while the editor is read-only, carries
+ *   `patches` that no `patch` or `mutation` event emits.
+ * - `origin: 'remote'`: one event per applied `patches` message and per
+ *   `update value` that changed the content. When an `operation` listener
+ *   sends a Behavior event or registers a node while an `update value` is
+ *   applied, that change is emitted in between, so the `update value`
+ *   arrives as a remote event before it and another after it. Remote
+ *   changes carry no `patches`: there is nothing to save.
+ *
+ * Every `change` of one unit of work is delivered before any `change`
+ * a listener sets off while receiving them.
+ *
+ * `operations` are the {@link Operation}s the editor applied to its
+ * content, never the inputs it received. The first load of the initial
+ * value emits no `change`, except a `correction` when the editor fixes
+ * the loaded value. A `change` never has an empty `operations` array.
+ *
+ * The empty block an empty editor shows is part of the snapshot and
+ * never reported. One the editor inserts later, after the last block is
+ * deleted or the field is unset remotely, is an insert in the change that
+ * emptied the field: the local change's own `operations`, or a
+ * `correction` without `patches` after a remote change.
+ *
+ * @beta
+ */
+export type ChangeEvent =
+  | {
+      type: 'change'
+      origin: 'local'
+      operations: Array<Operation>
+      patches: Array<Patch>
+      correction?: true
+    }
+  | {
+      type: 'change'
+      origin: 'remote'
+      operations: Array<Operation>
+    }
+
+/**
  * @public
  */
 export type MutationEvent = {
@@ -119,6 +180,8 @@ export type EditorEventListenerOptions = {
  *   after type-specific ones.
  * - Events sent by a listener during dispatch are queued and dispatched once
  *   the current event has been delivered to every listener.
+ * - Events passed to one `sendAll` are queued together, so an event a
+ *   listener sends while they are delivered comes after all of them.
  * - Events sent before `start()` are buffered and dispatched on start;
  *   events sent after `stop()` are dropped.
  * - Consecutive `selection` events carrying the same selection reference are
@@ -128,6 +191,7 @@ export type EditorEventListenerOptions = {
  */
 export type Relay = {
   send: (event: EditorEmittedEvent) => void
+  sendAll: (events: Array<EditorEmittedEvent>) => void
   on: {
     <TType extends EditorEmittedEvent['type'] | '*'>(
       type: TType,
@@ -312,18 +376,23 @@ export function createRelay(): Relay {
     }
   }
 
+  function sendAll(events: Array<EditorEmittedEvent>) {
+    if (status === 'stopped') {
+      return
+    }
+
+    mailbox.push(...events)
+
+    if (status === 'started') {
+      drainMailbox()
+    }
+  }
+
   return {
     send: (event) => {
-      if (status === 'stopped') {
-        return
-      }
-
-      mailbox.push(event)
-
-      if (status === 'started') {
-        drainMailbox()
-      }
+      sendAll([event])
     },
+    sendAll,
     on: on as Relay['on'],
     start: () => {
       status = 'started'

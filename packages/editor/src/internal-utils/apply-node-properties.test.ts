@@ -6,6 +6,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {expect, test} from 'vitest'
 import type {EditorSchema} from '../editor/editor-schema'
+import {inTestChange} from '../engine/core/change.test-utils'
 import {createEditor} from '../engine/create-editor'
 import type {Editor} from '../engine/interfaces/editor'
 import {defineContainer, type Container} from '../renderers/renderer.types'
@@ -44,11 +45,13 @@ test('throws when the path is structurally unreachable', () => {
   const editor = createBareEditor(schema, [], value)
 
   expect(() =>
-    applyNodeProperties(editor, {_key: newKey}, [
-      {_key: blockKey},
-      'markDefs',
-      {_key: markDefKey},
-    ]),
+    inTestChange(editor, () =>
+      applyNodeProperties(editor, {_key: newKey}, [
+        {_key: blockKey},
+        'markDefs',
+        {_key: markDefKey},
+      ]),
+    ),
   ).toThrow('Unable to apply properties at structurally unreachable path')
 })
 
@@ -70,7 +73,9 @@ test('skips silently when the node is missing', () => {
   const editor = createBareEditor(schema, [], value)
 
   expect(() =>
-    applyNodeProperties(editor, {level: 1}, [{_key: 'nonexistent'}]),
+    inTestChange(editor, () =>
+      applyNodeProperties(editor, {level: 1}, [{_key: 'nonexistent'}]),
+    ),
   ).not.toThrow()
   expect(editor.snapshot.context.value).toEqual([
     {
@@ -122,11 +127,13 @@ test('applies the change through a container whose array field is named markDefs
   ]
   const editor = createBareEditor(schema, publicContainers, value)
 
-  applyNodeProperties(editor, {title: 'baz'}, [
-    {_key: containerKey},
-    'markDefs',
-    {_key: childKey},
-  ])
+  inTestChange(editor, () =>
+    applyNodeProperties(editor, {title: 'baz'}, [
+      {_key: containerKey},
+      'markDefs',
+      {_key: childKey},
+    ]),
+  )
 
   expect(editor.snapshot.context.value).toEqual([
     {
