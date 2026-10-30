@@ -93,6 +93,13 @@ export function applyDelete(
       ? pointRef(editor, range.focus, {affinity: 'backward'})
       : null
 
+  const reinsertRef =
+    reverse && unit === 'character' && collapsedInput
+      ? pointRef(editor, rangeEdges(range, editor.snapshot.context)[0], {
+          affinity: 'backward',
+        })
+      : null
+
   const removedText = mutateRange(editor, range, {
     capture,
     removeEmptyStartBlock,
@@ -108,19 +115,21 @@ export function applyDelete(
     endRef?.unref()
   }
 
+  const reinsertAt = reinsertRef?.unref() ?? null
+
   if (
-    reverse &&
-    unit === 'character' &&
-    collapsedInput &&
+    reinsertAt &&
     removedText &&
     removedText.length > 1 &&
     COMPOUND_SCRIPT_REGEX.test(removedText)
   ) {
     const reinsert = removedText.slice(0, removedText.length - 1)
-    if (editor.snapshot.context.selection) {
-      const {path, offset} = editor.snapshot.context.selection.anchor
-      editor.apply({type: 'insert.text', path, offset, text: reinsert})
-    }
+    editor.apply({
+      type: 'insert.text',
+      path: reinsertAt.path,
+      offset: reinsertAt.offset,
+      text: reinsert,
+    })
   }
 }
 
