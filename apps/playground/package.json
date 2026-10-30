@@ -12,7 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.6",
+    "@floating-ui/react-dom": "^2.1.9",
     "@portabletext/editor": "workspace:*",
     "@portabletext/html": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
