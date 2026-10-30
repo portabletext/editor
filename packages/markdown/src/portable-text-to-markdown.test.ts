@@ -1515,6 +1515,816 @@ describe(portableTextToMarkdown.name, () => {
       ]
       expect(portableTextToMarkdown(portableText)).toBe('- foo  \nbar')
     })
+
+    test('an empty line between hard breaks uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('foo  \n\\\nbar')
+    })
+
+    test('two empty lines between hard breaks use a backslash break each', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('foo  \n\\\n\\\nbar')
+    })
+
+    test('an empty line between hard breaks in a blockquote uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('> foo  \n> \\\n> bar')
+    })
+
+    test('an empty line between hard breaks in a list item uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('- foo  \n\\\nbar')
+    })
+
+    test('an empty line between hard breaks in a nested list item keeps the default break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'bullet',
+          level: 2,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('- foo  \n  \nbar')
+    })
+
+    test('an empty line between hard breaks in a heading keeps the default break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('# foo  \n  \nbar')
+    })
+
+    test('an empty line between hard breaks keeps a custom hard break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {hardBreak: () => '  \n'}),
+      ).toBe('foo  \n  \nbar')
+    })
+
+    test('an empty line between hard breaks keeps the default break with a custom block spacing', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {blockSpacing: () => ''}),
+      ).toBe('foo  \n  \nbarbaz')
+    })
+
+    test('an empty line between hard breaks keeps the default break when strong delimiters turn the lines into thematic breaks', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '**\n\n**',
+              marks: ['strong'],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('****  \n  \n****')
+    })
+
+    test('an empty line between hard breaks keeps the default break when a closing strong delimiter turns the last line into a thematic break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\n**',
+              marks: ['strong'],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('**foo  \n  \n****')
+    })
+
+    test('an empty line between hard breaks keeps the default break when an empty strike-through span opens a fence', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\n\n', marks: []},
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '',
+              marks: ['strike-through'],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('foo  \n  \n~~~~')
+    })
+
+    test('an empty line between hard breaks keeps the default break when a leading underline tag opens an HTML block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '\nfoo\n\nbar',
+              marks: ['underline'],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '<u>  \nfoo  \n  \nbar</u>',
+      )
+    })
+
+    test('an empty line between hard breaks keeps the default break when a leading empty strike-through span opens a fence', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '',
+              marks: ['strike-through'],
+            },
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('~~~~foo  \n  \nbar')
+    })
+
+    test('an empty line between hard breaks keeps the default break inside an HTML block the previous block leaves open', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'html', _key: keyGenerator(), html: '<pre>'},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '<pre>\n\nfoo  \n  \nbar',
+      )
+    })
+
+    test('an empty line between hard breaks keeps the default break inside an HTML comment the previous block leaves open', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'html', _key: keyGenerator(), html: '<!--'},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '<!--\n\nfoo  \n  \nbar',
+      )
+    })
+
+    test('an empty line between hard breaks keeps the default break inside an HTML block opened two blocks earlier', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'html', _key: keyGenerator(), html: '<pre>'},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '<pre>\n\nbaz\n\nfoo  \n  \nbar',
+      )
+    })
+
+    test('an empty line between hard breaks keeps the default break inside an HTML comment opened three blocks earlier', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'html', _key: keyGenerator(), html: '<!--'},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'qux', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '<!--\n\nbaz\n\nqux\n\nfoo  \n  \nbar',
+      )
+    })
+
+    test('an empty line between hard breaks keeps the default break inside a fence a custom renderer leaves open', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'opener', _key: keyGenerator()},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {opener: () => '```'},
+        }),
+      ).toBe('```\n\nfoo  \n  \nbar')
+    })
+
+    test('an empty line between hard breaks keeps the default break when the backslash form would pull the next block into the list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {_type: 'indented', _key: keyGenerator()},
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          types: {indented: () => '  baz'},
+        }),
+      ).toBe('- foo  \n  \nbar\n\n  baz')
+    })
+
+    test('an empty line between hard breaks in the first block uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('foo  \n\\\nbar\n\nbaz')
+    })
+
+    test('an empty line between hard breaks after a dropped empty block uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: '', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('foo  \n\\\nbar')
+    })
+
+    test('an empty line between hard breaks in two adjacent blocks uses a backslash break in each', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'baz\n\nqux',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo  \n\\\nbar\n\nbaz  \n\\\nqux',
+      )
+    })
+
+    test('an empty line between hard breaks in two adjacent list items uses a backslash break in each', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'baz\n\nqux',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '- foo  \n\\\nbar\n- baz  \n\\\nqux',
+      )
+    })
+
+    test('an empty line between hard breaks in a list item followed by a paragraph uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '- foo  \n\\\nbar\n\nbaz',
+      )
+    })
+
+    test('an empty line between hard breaks in a blockquote followed by a blockquote uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'blockquote',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'blockquote',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '> foo  \n> \\\n> bar\n>\n> baz',
+      )
+    })
+
+    test('an empty line between hard breaks keeps a backslash break in a block whose neighbour keeps the default break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '**\n\n**',
+              marks: ['strong'],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'baz\n\nqux',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo  \n\\\nbar\n\n****  \n  \n****\n\nbaz  \n\\\nqux',
+      )
+    })
+
+    test("an empty line between hard breaks keeps the default break when dropping the previous list item's backslash break turns this item into a continuation", () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\n',
+              marks: ['em'],
+            },
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'bar\n\nbaz',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '1. _foo  \n  \n_\n2. bar  \n  \nbaz',
+      )
+    })
+
+    test('an empty line between hard breaks before an HTML block left open uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+        {_type: 'html', _key: keyGenerator(), html: '<pre>'},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'baz\n\nqux',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        'foo  \n\\\nbar\n\n<pre>\n\nbaz  \n  \nqux',
+      )
+    })
   })
 
   describe('paragraphs', () => {
