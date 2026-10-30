@@ -31,6 +31,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
-    "@sanity/client": "^8.6.2"
+    "@sanity/client": "^8.14.1"
   }
 }
