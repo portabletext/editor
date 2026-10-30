@@ -276,8 +276,8 @@ importers:
         specifier: ^0.35.0
         version: 0.35.5(@types/node@24.12.2)
       starlight-links-validator:
-        specifier: ^0.25.2
-        version: 0.25.2(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+        specifier: ^0.27.0
+        version: 0.27.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       starlight-package-managers:
         specifier: ^0.12.0
         version: 0.12.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))
@@ -6714,9 +6714,6 @@ packages:
   '@types/node@24.12.2':
     resolution: {integrity: sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==}
 
-  '@types/picomatch@4.0.3':
-    resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
-
   '@types/prismjs@1.26.6':
     resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
 
@@ -10653,12 +10650,11 @@ packages:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
 
-  starlight-links-validator@0.25.2:
-    resolution: {integrity: sha512-RQiHkM8FHKermsjMkSb+uS/q50Dv5P0O0ECWKxJyTv4stuO8QTorIEKnITDDLEf9/xyg7M69arxiK2ola3OMqA==}
-    engines: {node: '>=22.12.0'}
+  starlight-links-validator@0.27.0:
+    resolution: {integrity: sha512-UvPl8L9hfWR+yWbLOEtljLmpJCGcM6AVseVy5IO9dmqdOjW4R+Y8FaYyVA5axCC8RvxM5xU7M1WTerpwU8rYbw==}
     peerDependencies:
-      '@astrojs/starlight': '>=0.41.0'
-      astro: '>=7.0.2'
+      '@astrojs/starlight': '>=0.42.0'
+      astro: '>=7.2.10'
 
   starlight-llms-txt@0.11.0:
     resolution: {integrity: sha512-83TU5zPgJhL9fXIWAOWjQjyQ6EKocshEjJyA4zOJjOqu/oxQsrTpYGYxjHLyfZe4LRD52N9eCuykSkaIYwUyDw==}
@@ -13142,7 +13138,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
-      '@napi-rs/wasm-runtime': 1.2.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
+      '@napi-rs/wasm-runtime': 1.2.5(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
     optional: true
 
   '@bruits/satteri-wasm32-wasi@0.9.5':
@@ -14391,6 +14387,13 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.3
       '@emnapi/runtime': 1.11.3
+      '@tybys/wasm-util': 0.10.3
+    optional: true
+
+  '@napi-rs/wasm-runtime@1.2.5(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
+    dependencies:
+      '@emnapi/core': 1.11.1
+      '@emnapi/runtime': 1.11.1
       '@tybys/wasm-util': 0.10.3
     optional: true
 
@@ -17885,8 +17888,6 @@ snapshots:
   '@types/node@24.12.2':
     dependencies:
       undici-types: 7.16.0
-
-  '@types/picomatch@4.0.3': {}
 
   '@types/prismjs@1.26.6': {}
 
@@ -22643,11 +22644,10 @@ snapshots:
     dependencies:
       escape-string-regexp: 2.0.0
 
-  starlight-links-validator@0.25.2(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)):
+  starlight-links-validator@0.27.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)):
     dependencies:
-      '@astrojs/markdown-satteri': 0.3.8
+      '@astrojs/markdown-satteri': 0.4.5
       '@astrojs/starlight': 0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-      '@types/picomatch': 4.0.3
       astro: 7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
       github-slugger: 2.0.0
       hast-util-from-html: 2.0.3
@@ -22655,7 +22655,7 @@ snapshots:
       mdast-util-mdx-jsx: 3.2.0
       mdast-util-to-hast: 13.2.1
       picomatch: 4.0.7
-      satteri: 0.9.5
+      satteri: 0.10.5
       terminal-link: 5.0.0
       unist-util-visit: 5.1.0
       yaml: 2.9.1
