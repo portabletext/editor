@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`a7b6ff9`](https://github.com/portabletext/editor/commit/a7b6ff92357df76f67e29a6464ba986d93a30ec0)]:
+  - @portabletext/sanity-bridge@4.1.5
+
 ## 6.0.5
 
 ### Patch Changes
