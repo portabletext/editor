@@ -1,6 +1,4 @@
 {
-  // The driver runs as `.ts` files with Node's type stripping, so only
-  // erasable syntax compiles.
   "compilerOptions": {
     "target": "esnext",
     "module": "nodenext",
@@ -20,5 +18,6 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["scripts/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "exclude": ["src/page.ts"]
 }

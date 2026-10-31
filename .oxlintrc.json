@@ -33,6 +33,8 @@
         "apps/racetrack/**",
         "examples/basic/**"
       ],
+      // thumbjar is private Node tooling that follows the `apps/` rules, not the published packages' ones.
+      "excludeFiles": ["packages/thumbjar/**"],
       "rules": {
         "jsx-a11y/no-access-key": "error",
         "jsx-a11y/no-aria-hidden-on-focusable": "error",

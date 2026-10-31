@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-vi.mock(import('../../lib/typing.ts'), async (importOriginal) => {
+vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
   let attempts = 0
   return {
     ...(await importOriginal()),

@@ -1,6 +1,6 @@
 import {afterAll} from 'vitest'
-import {driverRuns} from '../scripts/driver.ts'
-import {unstoppedProcesses} from '../scripts/lib/adb.ts'
+import {unstoppedProcesses} from '../device/adb.ts'
+import {driverRuns} from '../driver.ts'
 
 afterAll(() => {
   const unstopped = unstoppedProcesses()

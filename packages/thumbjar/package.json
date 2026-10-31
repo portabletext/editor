@@ -1,27 +1,70 @@
 {
-  "name": "android-ime",
+  "name": "thumbjar",
   "version": "0.0.0",
   "private": true,
+  "description": "Types on real Gboard on an Android emulator and reports what a web page ended up with",
+  "license": "MIT",
+  "bin": {
+    "thumbjar": "./bin/thumbjar.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./page": {
+      "source": "./src/page.ts",
+      "default": "./dist/page.js"
+    },
+    "./testing": {
+      "source": "./src/testing.ts",
+      "default": "./dist/testing.js"
+    },
+    "./vitest": {
+      "source": "./src/vitest/index.ts",
+      "default": "./dist/vitest/index.js"
+    },
+    "./vitest/global-setup": {
+      "source": "./src/vitest/global-setup.ts",
+      "default": "./dist/vitest/global-setup.js"
+    },
+    "./vitest/setup": {
+      "source": "./src/vitest/setup.ts",
+      "default": "./dist/vitest/setup.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.js",
+      "./page": "./dist/page.js",
+      "./testing": "./dist/testing.js",
+      "./vitest": "./dist/vitest/index.js",
+      "./vitest/global-setup": "./dist/vitest/global-setup.js",
+      "./vitest/setup": "./dist/vitest/setup.js",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
-    "build:page": "vite build",
+    "build": "pkg-utils build --strict --check",
     "check:types": "tsc --noEmit --pretty --project tsconfig.json && tsc --noEmit --pretty --project tsconfig.page.json",
     "clean": "del .turbo && del .cache && del dist && del out && del node_modules",
-    "test:device": "vitest run --project device",
-    "test:unit": "vitest run --project unit"
-  },
-  "dependencies": {
-    "@portabletext/editor": "workspace:*",
-    "@portabletext/test": "workspace:*",
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "test:unit": "vitest run"
   },
   "devDependencies": {
+    "@sanity/pkg-utils": "catalog:tooling",
     "@types/node": "catalog:tooling",
-    "@vitejs/plugin-react": "catalog:tooling",
     "typescript": "catalog:tooling",
-    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
+  },
+  "peerDependencies": {
+    "vitest": "^5.0.5"
   },
   "engines": {
     "node": ">=24"
