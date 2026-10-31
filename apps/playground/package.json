@@ -31,7 +31,7 @@
     "@portabletext/react": "catalog:tooling",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "catalog:",
-    "emojilib": "^4.0.2",
+    "emojilib": "^4.0.3",
     "fuse.js": "^7.5.0",
     "lucide-react": "catalog:tooling",
     "react": "catalog:",

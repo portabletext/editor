@@ -373,8 +373,8 @@ importers:
         specifier: 'catalog:'
         version: 6.1.0(@types/react@19.2.17)(react@19.3.1)(xstate@5.33.2)
       emojilib:
-        specifier: ^4.0.2
-        version: 4.0.2
+        specifier: ^4.0.3
+        version: 4.0.3
       fuse.js:
         specifier: ^7.5.0
         version: 7.5.0
@@ -8016,8 +8016,8 @@ packages:
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
-  emojilib@4.0.2:
-    resolution: {integrity: sha512-8sP3sfAi861cNaFFp7RmyKi4S26K34ZKy4si75ojUW627AIVBHhMSu2SFJo3YRoK66YWnbysIbOk/d48uEqtKQ==}
+  emojilib@4.0.3:
+    resolution: {integrity: sha512-KbWiYre9aRSaPbHrHZIz9zmoM+21LAsK1VFJtnTh1VCtWE/rNMDviGhQTmselFl95dhqtGlY22iH0leG5BuW0g==}
 
   empathic@2.0.1:
     resolution: {integrity: sha512-YGRs8knHhKHVShLkFET/rWAU8kmHbOV5LwN938RHI0pljAJ1Gf6SzXsSmRaEzcXTtOOmVqJ5+WtQPL5uigY50Q==}
@@ -19155,7 +19155,7 @@ snapshots:
 
   emoji-regex@8.0.0: {}
 
-  emojilib@4.0.2: {}
+  emojilib@4.0.3: {}
 
   empathic@2.0.1: {}
 
