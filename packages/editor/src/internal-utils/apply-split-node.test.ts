@@ -5,6 +5,7 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {inTestChange} from '../engine/core/change.test-utils'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {createEditor} from '../engine/create-editor'
 import {pointRef} from '../engine/editor/point-ref'
@@ -32,13 +33,19 @@ describe(applySplitNode.name, () => {
     ])
     const operations: Array<EngineOperation> = []
 
-    withoutNormalizing(editor, () => {
-      const unsubscribe = subscribeToOperations(editor, (event) => {
-        operations.push(event.operation)
-      })
-      applySplitNode(editor, [{_key: blockKey}, 'children', {_key: spanKey}], 3)
-      unsubscribe()
-    })
+    inTestChange(editor, () =>
+      withoutNormalizing(editor, () => {
+        const unsubscribe = subscribeToOperations(editor, (event) => {
+          operations.push(event.operation)
+        })
+        applySplitNode(
+          editor,
+          [{_key: blockKey}, 'children', {_key: spanKey}],
+          3,
+        )
+        unsubscribe()
+      }),
+    )
 
     expect(operations).toEqual([
       {
@@ -75,13 +82,19 @@ describe(applySplitNode.name, () => {
     ])
     const operations: Array<EngineOperation> = []
 
-    withoutNormalizing(editor, () => {
-      const unsubscribe = subscribeToOperations(editor, (event) => {
-        operations.push(event.operation)
-      })
-      applySplitNode(editor, [{_key: blockKey}, 'children', {_key: spanKey}], 3)
-      unsubscribe()
-    })
+    inTestChange(editor, () =>
+      withoutNormalizing(editor, () => {
+        const unsubscribe = subscribeToOperations(editor, (event) => {
+          operations.push(event.operation)
+        })
+        applySplitNode(
+          editor,
+          [{_key: blockKey}, 'children', {_key: spanKey}],
+          3,
+        )
+        unsubscribe()
+      }),
+    )
 
     expect(operations).toEqual([
       {
@@ -117,7 +130,7 @@ describe(applySplitNode.name, () => {
     const fooSpanPath = [{_key: blockKey}, 'children', {_key: fooSpanKey}]
     const ref = pointRef(editor, {path: fooSpanPath, offset: 3})
 
-    applySplitNode(editor, fooSpanPath, 3)
+    inTestChange(editor, () => applySplitNode(editor, fooSpanPath, 3))
 
     expect(ref.current).toEqual({
       path: [{_key: blockKey}, 'children', {_key: 'k3'}],
@@ -149,7 +162,7 @@ describe(applySplitNode.name, () => {
       focus: {path: barSpanPath, offset: 1},
     })
 
-    applySplitNode(editor, fooSpanPath, 3)
+    inTestChange(editor, () => applySplitNode(editor, fooSpanPath, 3))
 
     expect(ref.current).toEqual({
       anchor: {path: fooSpanPath, offset: 1},
@@ -182,7 +195,7 @@ describe(applySplitNode.name, () => {
       backward: false,
     }
 
-    applySplitNode(editor, fooSpanPath, 3)
+    inTestChange(editor, () => applySplitNode(editor, fooSpanPath, 3))
 
     expect(editor.snapshot.context.selection).toEqual({
       anchor: {path: fooSpanPath, offset: 1},
@@ -216,7 +229,7 @@ describe(applySplitNode.name, () => {
       backward: true,
     }
 
-    applySplitNode(editor, fooSpanPath, 3)
+    inTestChange(editor, () => applySplitNode(editor, fooSpanPath, 3))
 
     expect(editor.snapshot.context.selection).toEqual({
       anchor: {path: barSpanPath, offset: 1},
@@ -258,7 +271,7 @@ describe(applySplitNode.name, () => {
       {phase: 'before'},
     )
 
-    applySplitNode(editor, spanPath, 3)
+    inTestChange(editor, () => applySplitNode(editor, spanPath, 3))
 
     expect(editor.snapshot.context.selection).toEqual({
       anchor: {path: [{_key: blockKey}, 'children', {_key: 'k2'}], offset: 2},

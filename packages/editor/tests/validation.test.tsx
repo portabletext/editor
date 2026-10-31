@@ -191,6 +191,59 @@ describe('Value validation', () => {
           origin: 'local',
         },
         {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+              offset: 3,
+              text: '!',
+            },
+          ],
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+          ],
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'k0'}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k0'}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k0'}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k0'}, 'style'],
+              value: 'normal',
+            },
+          ],
+          correction: true,
+        },
+        {
           type: 'patch',
           patch: {
             type: 'diffMatchPatch',
@@ -469,6 +522,59 @@ describe('Value validation', () => {
           origin: 'local',
         },
         {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: blockKey}, 'children', {_key: fooKey}],
+              offset: 3,
+              text: '!',
+            },
+          ],
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+          ],
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: blockKey}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: blockKey}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: blockKey}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: blockKey}, 'style']},
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: blockKey}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: blockKey}, 'style'],
+              value: 'normal',
+            },
+          ],
+          correction: true,
+        },
+        {
           type: 'patch',
           patch: {
             type: 'diffMatchPatch',
@@ -622,6 +728,23 @@ describe('Value validation', () => {
           origin: 'remote',
         },
         {
+          type: 'change',
+          origin: 'remote',
+          operations: [
+            {type: 'unset', path: [{_key: 'k0'}]},
+            {
+              type: 'insert',
+              path: [0],
+              position: 'before',
+              node: {
+                _type: 'block',
+                _key: 'k2',
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+            },
+          ],
+        },
+        {
           type: 'invalid value',
           resolution: {
             action: 'Remove the item',
@@ -702,6 +825,59 @@ describe('Value validation', () => {
             inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
           },
           origin: 'local',
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+              offset: 3,
+              text: '!',
+            },
+          ],
+          patches: [
+            {
+              type: 'diffMatchPatch',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'children', {_key: 'k3'}, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+            },
+          ],
+        },
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'k2'}, 'markDefs'],
+              value: [],
+              inverse: {type: 'unset', path: [{_key: 'k2'}, 'markDefs']},
+            },
+            {
+              type: 'set',
+              path: [{_key: 'k2'}, 'style'],
+              value: 'normal',
+              inverse: {type: 'unset', path: [{_key: 'k2'}, 'style']},
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'markDefs'],
+              value: [],
+            },
+            {
+              type: 'set',
+              origin: 'local',
+              path: [{_key: 'k2'}, 'style'],
+              value: 'normal',
+            },
+          ],
+          correction: true,
         },
         {
           type: 'patch',

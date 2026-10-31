@@ -1,4 +1,5 @@
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
+import type {Change, ChangeListener} from '../core/change'
 import type {OperationListener} from '../core/operation-channel'
 import type {DOMEditor} from '../dom/plugin/dom-editor'
 import type {Location} from './location'
@@ -22,6 +23,12 @@ export interface BaseEditor {
     before: Array<OperationListener>
     after: Array<OperationListener>
   }
+  /**
+   * The change recording the current unit of work, `undefined` between
+   * units. See `engine/core/change.ts`.
+   */
+  change: Change | undefined
+  changeListeners: Array<ChangeListener>
   dirtyPaths: Path[]
   dirtyPathKeys: Set<string>
   flushing: boolean

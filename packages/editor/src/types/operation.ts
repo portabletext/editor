@@ -1,4 +1,5 @@
 import type {
+  EngineOperation,
   InsertOperation,
   InsertTextOperation,
   RemoveTextOperation,
@@ -44,3 +45,29 @@ export type Operation =
   | RemoveTextOperation
   | SetOperation
   | UnsetOperation
+
+/**
+ * The `Record` keying makes completeness compile-checked: adding a variant
+ * to {@link Operation} errors here until the allowlist catches up.
+ */
+const publicOperationTypeRecord: Record<Operation['type'], true> = {
+  'insert': true,
+  'insert.text': true,
+  'remove.text': true,
+  'set': true,
+  'unset': true,
+}
+
+const publicOperationTypes: ReadonlySet<string> = new Set(
+  Object.keys(publicOperationTypeRecord),
+)
+
+/**
+ * Narrows an engine operation to the public vocabulary, excluding
+ * `set.selection`.
+ */
+export function isPublicOperation(
+  operation: EngineOperation,
+): operation is Operation {
+  return publicOperationTypes.has(operation.type)
+}
