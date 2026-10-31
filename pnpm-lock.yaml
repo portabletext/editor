@@ -279,8 +279,8 @@ importers:
         specifier: ^0.27.0
         version: 0.27.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       starlight-package-managers:
-        specifier: ^0.12.0
-        version: 0.12.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))
+        specifier: ^0.13.0
+        version: 0.13.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))
       starlight-typedoc:
         specifier: ^0.23.0
         version: 0.23.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(typedoc-plugin-markdown@4.14.1(typedoc@0.28.20(@typescript/typescript6@6.0.2)))(typedoc@0.28.20(@typescript/typescript6@6.0.2))
@@ -10041,11 +10041,10 @@ packages:
       '@astrojs/starlight': '>=0.41.0'
       astro: ^7.0.0
 
-  starlight-package-managers@0.12.0:
-    resolution: {integrity: sha512-hAIVzOT0/Git+T2Uwckh2rs51fYiDM6/X+Z2f3LtKMSwOwm+nSUAX2Ilp7k+07LDtxYjmvfTCxhfIBt0PgOF5g==}
-    engines: {node: '>=18.17.1'}
+  starlight-package-managers@0.13.0:
+    resolution: {integrity: sha512-Jcvx7oLA2hWlNMsYI42Ny5vZ0lZov18M/0+aiXmY59Wo+GmhTjJPRpGEbIN0yJsGLoJPFTegcMArjNVU0SvROQ==}
     peerDependencies:
-      '@astrojs/starlight': '>=0.22.0'
+      '@astrojs/starlight': '>=0.32.0'
 
   starlight-typedoc@0.23.0:
     resolution: {integrity: sha512-GB0tB/15nL3l9tt1aGpkV8EixnSXbApZNZaSBRt8KfIsDAJet7pRiyItk5dxBSbDTXilF2whOMXPqqkbm8dNWA==}
@@ -20886,7 +20885,7 @@ snapshots:
       - '@astrojs/markdown-satteri'
       - supports-color
 
-  starlight-package-managers@0.12.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))):
+  starlight-package-managers@0.13.0(@astrojs/starlight@0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))):
     dependencies:
       '@astrojs/starlight': 0.41.3(@typescript/typescript6@6.0.2)(astro@7.4.2(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
 
