@@ -57,6 +57,14 @@
         "sharp"
       ]
     },
+    "apps/android-ime": {
+      "entry": [
+        "scripts/*.ts",
+        "scripts/lib/*.ts",
+        "scripts/fixtures/suites/*.ts",
+        "page/editor.tsx"
+      ]
+    },
     "apps/studio": {
       "ignoreDependencies": [
         "@portabletext/block-tools",
