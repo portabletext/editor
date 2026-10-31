@@ -1,0 +1,19 @@
+CAPTURE boot_id=5f0c4c2e-9a1b-4c0e-8d3f-2b7a6e1d9c40 btime=1793453503
+CAPTURE_SEGMENT seed
+--------- beginning of main
+         1793453504.000   237   237 I vold    : Vold 3.0 (the awakening) firing up
+         1793453504.000   237   237 D vold    : Detected support for: ext4 f2fs vfat
+         1793453620.349  1749  4776 E native  : E0000 00:00:1793453620.349674    4776 mozcjni.cc:114] j_data_file_path is null.  Fallback to minimal engine.
+         1793453620.775  1749  2181 I DownloadManager: DownloadManager.downloadInternal():412 Download for __MOZCPACK_mozcmain_ja_JP scheduled with params DownloadParams{allowMetered=true, requireCharging=false, foreground=true, immediately=true, priority=0}
+         1793453651.042  1749  2004 I DownloadManager: DownloadManager$4.onFailure():573 download for __MOZCPACK_mozcmain_ja_JP is cancelled
+CAPTURE_STATS main total=2/2 now=2/2
+CAPTURE_SEGMENT start 1793453549
+--------- beginning of main
+         1793453651.042  1749  2004 I DownloadManager: DownloadManager$4.onFailure():573 download for __MOZCPACK_mozcmain_ja_JP is cancelled
+         1793453651.470  1749  1749 I SystemSubtypesReportModule: SystemSubtypesReportModule$3.onCurrentInputMethodEntryChanged():149 entry: en-US, source: UNSPECIFIED
+         1793453657.613  1749  2108 E DownloadManager: DownloadManager.startDownload():531 error downloading __KLP_manifest_delight__en-US
+         1793453688.038  1749  4776 I native  : I0000 00:00:1793453688.036280    4776 data_loader.cc:89] New request is registered: id=8162791524001069179 priority=10 sequence_id=1 file_path=/data/user/0/com.google.android.inputmethod.latin/files/datadownload/shared/public/datadownloadfile_1793453548902/mozcdata-24.20241006.9.data
+         1793453688.051  1749  5830 I native  : I0000 00:00:1793453688.051561    5830 data_loader.cc:186] Building a new module: id=8162791524001069179 priority=10 sequence_id=1 file_path=/data/user/0/com.google.android.inputmethod.latin/files/datadownload/shared/public/datadownloadfile_1793453548902/mozcdata-24.20241006.9.data
+         1793453688.106  1749  5830 I native  : I0000 00:00:1793453688.106571    5830 data_loader.cc:121] New data is loaded: id=8162791524001069179 priority=10 sequence_id=1 file_path=/data/user/0/com.google.android.inputmethod.latin/files/datadownload/shared/public/datadownloadfile_1793453548902/mozcdata-24.20241006.9.data
+         1793453689.294  1749  1749 I SystemSubtypesReportModule: SystemSubtypesReportModule$3.onCurrentInputMethodEntryChanged():149 entry: ja-JP, source: GLOBE_KEY
+         1793453690.133  1749  4776 I SessionExecutor: SessionExecutor$ExecutorMainCallback.ensureSession():515 Mozc engine reload status: RELOADED

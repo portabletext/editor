@@ -1,8 +1,31 @@
+import {appendFileSync} from 'node:fs'
 import {afterAll} from 'vitest'
-import {driverRuns} from '../scripts/driver.ts'
+import {driverRuns, type DriverRun} from '../scripts/driver.ts'
 import {unstoppedProcesses} from '../scripts/lib/adb.ts'
+import {
+  DEVICE_ANSWERED_NOTE,
+  DEVICE_UNCONFIRMED_NOTE,
+  summaryLine,
+  type Outcome,
+} from '../scripts/lib/summary.ts'
 
-afterAll(() => {
+afterAll(({}, file) => {
+  // `scripts/run-on-device.sh` names the file and adds it to the job summary.
+  const summaryFile = process.env.IME_SUMMARY_FILE
+  if (summaryFile)
+    appendFileSync(
+      summaryFile,
+      `${summaryLine(
+        file.name,
+        file.tasks.map((task) => ({
+          name: task.name,
+          outcome: outcome({
+            passed: task.result?.state === 'pass',
+            run: driverRuns.findLast((run) => run.test === task.name),
+          }),
+        })),
+      )}\n${driverRuns.some((run) => run.deviceAnswered) ? `\n${DEVICE_ANSWERED_NOTE}\n` : ''}${driverRuns.some((run) => run.deviceUnconfirmed) ? `\n${DEVICE_UNCONFIRMED_NOTE}\n` : ''}`,
+    )
   const unstopped = unstoppedProcesses()
   if (unstopped.length > 0) {
     throw new Error(
@@ -20,6 +43,12 @@ afterAll(() => {
   const faulted = driverRuns
     .filter((run) => run.fails && run.state === 'faulted')
     .map((run) => `"${run.test}"`)
+  const faultedWithPageErrors = driverRuns
+    .filter((run) => run.fails && run.state === 'faulted-with-page-errors')
+    .map((run) => `"${run.test}": ${run.faultWithPageErrors}`)
+  const inconclusive = driverRuns
+    .filter((run) => run.fails && run.state === 'inconclusive')
+    .map((run) => `In "${run.test}": ${run.inconclusive}.`)
   const incomplete = driverRuns
     .filter(
       (run) =>
@@ -27,8 +56,14 @@ afterAll(() => {
     )
     .map((run) => `"${run.test}"`)
   const problems = [
+    ...inconclusive,
     ...(faulted.length > 0
       ? [`The driver ended on a driver fault in ${faulted.join(', ')}.`]
+      : []),
+    ...(faultedWithPageErrors.length > 0
+      ? [
+          `The driver ended on a driver fault after the page recorded errors, or on errors other than the case's crash, in ${faultedWithPageErrors.join(', ')}.`,
+        ]
       : []),
     ...(incomplete.length > 0
       ? [
@@ -42,3 +77,34 @@ afterAll(() => {
     )
   }
 })
+
+/**
+ * Each test's outcome for the job summary. An inconclusive call and a driver fault are counted apart from a
+ * failure, since neither says anything about the editor, and an inconclusive call whose device went offline
+ * apart from the other inconclusive ones.
+ */
+function outcome({
+  passed,
+  run,
+}: {
+  passed: boolean
+  run: DriverRun | undefined
+}): Outcome {
+  if (run?.state === 'inconclusive')
+    return run.deviceOffline ? 'device offline' : 'inconclusive'
+  // A call that timed out or never cleaned up reproduced nothing, and failed no assertion either.
+  if (
+    run?.state === 'faulted' ||
+    run?.state === 'faulted-with-page-errors' ||
+    run?.state === 'aborted' ||
+    run?.state === 'driving'
+  )
+    return 'driver fault'
+  if (!passed || run?.state === 'page-exception') return 'failed'
+  if (!run?.fails) return 'passed'
+  // A completed call with a `crash` returns errors only when each matches it, and a `test.fails` test
+  // without errors failed on something else.
+  return run.crash && (run.errors ?? []).length > 0
+    ? 'expected crash reproduced'
+    : 'expected failure'
+}

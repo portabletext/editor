@@ -1,0 +1,176 @@
+--------- beginning of main
+1793490993.099  4321  4321 I ime-driver: ime-space-0f6c0b1e-5a8e-4d43-9a63-1f0e7c2b5d21
+1793490993.099  2058  2415 I Finsky  : [61] agey.b(1482): Device not eligible for Cubes or not an active user. Skipping cubes cleanup hygiene job.
+1793490993.099  2058  2415 I Finsky  : [61] agai.kh(269): Finished cubes cleanup hygeine job.
+1793490993.099  2058  2415 I Finsky  : [61] ahev.q(56): SCH: jobFinished: 10-152. TimeElapsed: 8ms.
+1793490993.102  2058  4830 I android.vending: AssetManager2(0x76eba42555f8) locale list changing from [] to [en-US]
+1793490993.105  2058  4830 I android.vending: AssetManager2(0x76eba425cfd8) locale list changing from [] to [en-US]
+1793490993.115  2058  4830 I android.vending: AssetManager2(0x76eba425d938) locale list changing from [] to [en-US]
+1793490993.144  1406  1406 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.time.trustedtime.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentApiService }
+1793490993.156  2058  2058 I Finsky  : [2] aheo.accept(94): SCH: Job 10-162 starting
+1793490993.157  2058  2058 I Finsky  : [2] SetupMaintenanceJob.a(14): IQ::HLD: Check if we have an active install holdoff we should resolve.
+1793490993.157  2058  2058 I Finsky  : [2] aqvc.g(42): IQ::HLD: Get the following profiles from PauseUpdatesProfilesValueStore [].
+1793490993.158  2058  2058 I Finsky  : [2] SetupMaintenanceJob.a(34): IQ::HLD: No holdoff check needed - no pausing profiles on device.
+1793490993.169  4214  5149 D UIAutomatorStub: URI: /jsonrpc/0, Method: POST, params, {NanoHttpd.QUERY_STRING=null}, files: {postData={"jsonrpc":"2.0","id":1,"method":"click","params":[593,1477]}}
+1793490993.183  2058  4830 I android.vending: AssetManager2(0x76eba42601d8) locale list changing from [] to [en-US]
+1793490993.186  2058  4830 I android.vending: AssetManager2(0x76eba42539d8) locale list changing from [] to [en-US]
+1793490993.191  2058  4830 I android.vending: AssetManager2(0x76eba425aa58) locale list changing from [] to [en-US]
+1793490993.195   670   783 I input_interaction: Interaction with: 9fdcac3 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity, [Gesture Monitor] swipe-up, [Gesture Monitor] edge-swipe, PointerEventDispatcher0,
+1793490993.221  1406  2671 I NetworkScheduler.Stats: (REDACTED) Task %s/%s started execution. cause:%s exec_start_elapsed_seconds: %s
+1793490993.255  1406  2294 I NetworkScheduler.Stats: (REDACTED) Task %s/%s finished executing. cause:%s result: %s elapsed_millis: %s uptime_millis: %s exec_start_elapsed_seconds: %s
+1793490993.260  1963  2314 D PhFileGroupPop: Added file groups tapas_cortex
+1793490993.288  2761  2761 W JobService: onNetworkChanged() not implemented in com.google.android.finsky.scheduler.process.backgroundimpl.PhoneskyJobServiceBackground. Must override in a subclass.
+1793490993.288  1963  1963 W JobService: onNetworkChanged() not implemented in com.google.android.apps.gsa.tasks.BackgroundTasksJobService. Must override in a subclass.
+1793490993.288  2058  2058 W JobService: onNetworkChanged() not implemented in com.google.android.finsky.scheduler.process.mainimpl.PhoneskyJobServiceMain. Must override in a subclass.
+1793490993.294  1963  1963 W JobService: onNetworkChanged() not implemented in androidx.work.impl.background.systemjob.SystemJobService. Must override in a subclass.
+1793490993.306  1766  4955 I SpellCheckerSession: SpellCheckerSession.onClose():690 com.google.android.keyboard.client.delight5.LanguageIdentifier@b65e4e4 is closed
+1793490993.308  4322  4322 I ImeTracker: com.android.chrome:90f0f536: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false
+1793490993.308  4322  4322 D InsetsController: hide(ime(), fromIme=false)
+1793490993.308  4322  4322 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@5d6d043
+1793490993.308  4322  4322 D InsetsController: Setting requestedVisibleTypes to -9 (was -1)
+1793490993.313  1766  1766 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1293 onStartInput(EditorInfo{EditorInfo{packageName=com.android.chrome, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=12000000, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+1793490993.313  1766  1766 W SessionManager: SessionManager.beginSession():53 Try to begin an already begun session [INPUT_SESSION], end it first
+1793490993.314  1766  1766 W SessionManager: SessionManager.endSession():96 Child session [INPUT_VIEW_SESSION] is not ended while ending session [{INPUT_SESSION=1793490963990, TRAINING_CACHE_SESSION=1793490968094, IME_SESSION=1793490968044, INPUT_VIEW_SESSION=1793490968029}], ending it now.
+1793490993.314  1766  1766 W SessionManager: SessionManager.endSession():96 Child session [IME_SESSION] is not ended while ending session [{INPUT_SESSION=1793490963990, TRAINING_CACHE_SESSION=1793490968094, IME_SESSION=1793490968044, INPUT_VIEW_SESSION=1793490968029}], ending it now.
+1793490993.315  1766  1766 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():100 repeatCheckTimes = 1, locked = false
+1793490993.315   670   755 D CoreBackPreview: Window{9fdcac3 u0 com.android.chrome/org.chromium.chrome.browser.ChromeTabbedActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@bba8565, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+1793490993.315   670  2035 W PackageConfigPersister: App-specific configuration not found for packageName: com.android.chrome and userId: 0
+1793490993.316  1766  1766 I GoogleInputMethodService: GoogleInputMethodService.onStartInputView():1392 onStartInputView(EditorInfo{EditorInfo{packageName=com.android.chrome, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=12000000, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+1793490993.317  1766  1766 I KeyboardHeightUtil: KeyboardHeightUtil.getOemKeyboardHeightRatio():161 systemKeyboardHeightRatio:1.000000.
+1793490993.326  4322  4819 I jank_cuj_events_begin_request: [81,1793490993323604000,120060739168,120060739388,1@1@com.android.chrome]
+1793490993.341  4322  4819 I jank_cuj_events_end_request: [81,1793490993339975000,120077110332,120077110472]
+1793490993.353   670   755 I ImeTracker: system_server:9105195d: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+1793490993.353  1766  1766 I InputContextChangeTracker: InputContextChangeTracker.fixLyingSelectionRangeFromSurroundingText():1665 fixLyingSelectionRangeFromSurroundingText(): [-1, -1]([-1, -1]) -> [0, 0]([0, 0])
+1793490993.365  1766  1766 I InputBundle: InputBundle.consumeEvent():949 Skip consuming an event as keyboard status is 0
+1793490993.367  1089  1170 D WindowManagerShell: onKeepClearAreasChanged: restricted={}, unrestricted={}
+1793490993.367  1903  1903 W AiAiVC  : Unexpected capture event type: 11
+1793490993.368  1766  1766 I AndroidIME: AbstractIme.onDeactivate():203 LatinIme.onDeactivate()
+1793490993.369  1766  1766 W SessionManager: SessionManager.endSession():88 Try to end a not begun session [IME_SESSION].
+1793490993.369  1766  1766 I AndroidIME: InputBundleManager.loadActiveInputBundleId():483 loadActiveInputBundleId: und-Latn-x-password, password
+1793490993.369  1766  1766 I AndroidIME: AbstractIme.onActivate():90 PasswordIme.onActivate() : EditorInfo = EditorInfo{packageName=com.android.chrome, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=12000000, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}, IncognitoMode = false, DeviceLocked = false
+1793490993.370  1766  1766 I KeyboardWrapper: KeyboardWrapper.activateKeyboard():562 activateKeyboard(): type=prime, status=0, imeDef=kyj{stringId=password, language=und-Latn-x-password, languageTag=und-Latn-x-password, processedConditions={variant=qwerty, enable_access_points_in_password_number=false, enable_number_row=false, device=phone}, className=com.google.android.libraries.inputmethod.ime.password.PasswordIme, label=2132019061, keyEventInterpreter=null, inlineComposing=true, autoCapital=true, announceAutoSelectedCandidate=true, statusIcon=0, primeKeyboardType=SOFT, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=kyb{}, processors=lac@748057f, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, secondaryIme=null, keyboardGroupDef=kzl@b38e460, phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}
+1793490993.370  1766  1766 I KeyboardManager: KeyboardManager.requestKeyboard():248 Creating keyboard prime, imeId=password, cacheKey=theme_400_border_bottom4dp_display_size_adaptive_400_gsans_keyboard_mode_screen_size_5_5_light_noshadow_overlay_builtin_dynamic_color_light_base.binarypb:gm3-light-fffaf8ff-ff475d92-6dac7c28fa7faa76f8370bbfdbc77981_phone_port_silkpopup_stylesheet
+1793490993.376  1766  2033 W Delight5Decoder: Delight5DecoderWrapper.shouldAbandonMessage():2263 Detected old [FetchSuggestions] request in background: 14<15
+1793490993.383  1766  1766 I KeyboardWrapper: KeyboardWrapper.activateKeyboard():562 activateKeyboard(): type=prime, status=1, imeDef=kyj{stringId=password, language=und-Latn-x-password, languageTag=und-Latn-x-password, processedConditions={variant=qwerty, enable_access_points_in_password_number=false, enable_number_row=false, device=phone}, className=com.google.android.libraries.inputmethod.ime.password.PasswordIme, label=2132019061, keyEventInterpreter=null, inlineComposing=true, autoCapital=true, announceAutoSelectedCandidate=true, statusIcon=0, primeKeyboardType=SOFT, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=kyb{}, processors=lac@748057f, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, secondaryIme=null, keyboardGroupDef=kzl@b38e460, phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}
+1793490993.383  1766  1766 E KeyboardWrapper: KeyboardWrapper.activateKeyboard():573 doesn't allow to activate another keyboard before deactivateKeyboard()
+1793490993.383  1766  1766 E KeyboardWrapper: jtb
+1793490993.383  1766  1766 E KeyboardWrapper: 	at kbh.r(PG:120)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at kbh.q(PG:163)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at kbk.k(PG:197)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at dbj.w(PG:300)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at kgn.onStartInputView(PG:275)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.inputmethodservice.InputMethodService.doStartInput(InputMethodService.java:3527)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.inputmethodservice.InputMethodService$InputMethodImpl.restartInput(InputMethodService.java:891)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.inputmethodservice.InputMethodService$InputMethodImpl.dispatchStartInput(InputMethodService.java:906)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.inputmethodservice.IInputMethodWrapper.executeMessage(IInputMethodWrapper.java:201)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at com.android.internal.os.HandlerCaller$MyHandler.handleMessage(HandlerCaller.java:44)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.os.Looper.loopOnce(Looper.java:248)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.os.Looper.loop(Looper.java:338)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at java.lang.reflect.Method.invoke(Native Method)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+1793490993.383  1766  1766 E KeyboardWrapper: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+1793490993.383  1766  1766 I AndroidIME: InputBundleManager.startInput():361 startInput() with kzp[keyboardType=prime, payload=null]
+1793490993.383  1766  1766 I GlobeKeyExtension: GlobeKeyExtension.onDeactivate():104
+1793490993.397  2058  5150 I Finsky  : [188] nww.a(541): setup::RES: Restore dumpsys cleanup succeeded.
+1793490993.398  2058  5150 I Finsky  : [188] ahev.q(56): SCH: jobFinished: 10-162. TimeElapsed: 242ms.
+1793490993.481  1766  1766 I VoiceInputManagerWrapper: VoiceInputManagerWrapper.shutdown():122 shutdown()
+1793490993.482  1766  1766 I GlobeKeyExtension: GlobeKeyExtension.onActivate():70
+1793490993.482  1766  1766 I NewLanguagePromptExtension: NewLanguagePromptExtension.onActivate():186 Not activated NewLanguagePromptExtension: not a normal text input box.
+1793490993.488  1766  1766 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():182 Unregister key sequence lsr{labelResId=2132020165, callback=cbb@cfd40cb, lastModifier=2, keyCodes=[56], actions=[0]}
+1793490993.488  1766  1766 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():182 Unregister key sequence lsr{labelResId=2132020165, callback=cbb@51d1ea7, lastModifier=0, keyCodes=[317], actions=[0]}
+1793490993.488  1766  1766 I HardKeyTracker: HardKeyTracker.registerKeySequence():138 Register key sequence lsr{labelResId=2132020165, callback=cbb@bb66e8a, lastModifier=2, keyCodes=[56], actions=[0]}
+1793490993.488  1766  1766 I HardKeyTracker: HardKeyTracker.registerKeySequence():138 Register key sequence lsr{labelResId=2132020165, callback=cbb@18fa771, lastModifier=0, keyCodes=[317], actions=[0]}
+1793490993.489  1766  1766 I VoiceInputManagerWrapper: VoiceInputManagerWrapper.cancelShutdown():100 cancelShutdown()
+1793490993.489  1766  1766 I VoiceInputManagerWrapper: VoiceInputManagerWrapper.syncLanguagePacks():112 syncLanguagePacks()
+1793490993.491  1766  4768 I SpeechFactory: SpeechRecognitionFactory.maybeScheduleAutoPackDownloadForFallback():161 maybeScheduleAutoPackDownloadForFallback()
+1793490993.491  1766  4768 I FallbackOnDeviceRecognitionProvider: FallbackOnDeviceRecognitionProvider.maybeScheduleAutoPackDownload():198 maybeScheduleAutoPackDownload() for language tag en-US
+1793490993.492   670   695 I ImeTracker: system_server:a707e3aa: onRequestShow at ORIGIN_SERVER reason CONTROLS_CHANGED fromUser false
+1793490993.498  1766  1766 I AccessoryInputModeManager: AccessoryInputModeManager.onModeStarted():322 Accessory input mode started: null
+1793490993.498  1766  1766 I KeyboardWrapper: KeyboardWrapper.consumeEvent():410 Skip consuming an event as current keyboard is deactivated (state=1, keyboard existence=false)
+1793490993.498  1766  1766 W SupplementaryKeyboardsWrapper: SupplementaryKeyboardsWrapper.deactivateKeyboard():160 keyboard accessory_candidates_consumer is not activated before!
+1793490993.499  1766  1766 I KeyboardModeUtils: KeyboardModeUtils.getKeyboardBottomOffset():437 inch: 0.000000 ydpi: 420.000000 adjustKeyboardBottomByDisplaySize: false currentDensityDpi: 420 defaultDensityDpi: 420 keyboardBottomToScreenPx: 0 keyboardBottomToNavBarPx: -126 navBarHeight: 126
+1793490993.499  1766  1766 I ResizableKeyboardModeController: ResizableKeyboardModeController.getKeyboardBottomOffset():182 currentPrimeKeyboardType:SOFT keyboardBottomOffset:0 navBarHeight:126 isInLandscape:false
+1793490993.499  1766  1766 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793490993.499  1766  1766 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793490993.499  1766  1766 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793490993.500  1766  1766 W ExtensionWrapper: ExtensionWrapper.setExtensionViewVisibility():801 interface koa is not activate
+1793490993.500  1766  1766 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():100 repeatCheckTimes = 1, locked = false
+1793490993.500  1766  1766 I VoiceImeExtension: VoiceImeExtension.shouldStartVoiceInputAutomaticallyInCurrentInputBox():469 No private IME option set to start voice input.
+1793490993.500  1766  1766 I ShortcutsDataManager: AbstractContentDataManager.startImportContentTask():243 startImportContentTask()
+1793490993.509  4322  4322 I ImeTracker: system_server:a707e3aa: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+1793490993.512  1766  1766 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793490993.513  1766  1766 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793490993.513  1766  1766 I WindowMetricsNotification: WindowMetricsNotification.notifyWithWindow():166
+1793490993.513  1766  1766 I WindowMetricsNotification: WindowMetricsNotification.notify():159 mub[bounds=Rect(0, 128 - 1080, 2400), insets=Rect(0, 0 - 0, 126), densityDpi=420, smallestScreenWidthDp=411, displayWidth=1080, displayHeight=2400, xdpi=420.0, ydpi=420.0, isTrustable=true, displayId=0]; DisplayMetrics{density=2.625, width=1080, height=2400, scaledDensity=2.625, xdpi=420.0, ydpi=420.0}
+1793490993.524  1766  1766 I GoogleInputMethodService: GoogleInputMethodService.onFinishInputView():1524
+1793490993.524  1766  1766 I GlobeKeyExtension: GlobeKeyExtension.onDeactivate():104
+1793490993.526  1406  1406 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.time.trustedtime.singleuserapi.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentSingleUserInternalApiService }
+1793490993.546  1963  2211 I enda    : Running throttled refresh
+1793490993.558  1963  2195 W dvjc$a  : (REDACTED) %s: Account was not provided, skipping private sync for corpus: %s, configuration: %s
+1793490993.559  1963  2255 I dmhi    : (REDACTED) Starting batch sync for corpora: %s
+1793490993.607  1766  1766 I VoiceInputManagerWrapper: VoiceInputManagerWrapper.shutdown():122 shutdown()
+1793490993.607  1766  1766 I AndroidIME: AbstractIme.onDeactivate():203 PasswordIme.onDeactivate()
+1793490993.627  1963  2211 I enda    : Running throttled refresh
+1793490993.629  1963  2211 I enda    : Running throttled refresh
+1793490993.630  1963  2211 I enda    : Running throttled refresh
+1793490993.630  1963  2211 I enda    : Running throttled refresh
+1793490993.644  1963  2211 W essj    : No available dsp hotword properties, skip geller sync.
+1793490993.653  1766  1766 W NotificationCenter: NotificationCenter$NotificationQueue.notifyPendingNotificationsOnExecutor():877 Heavy notify work detected on UI thread: [kig->ilu, kig->ilu, kig->jvb, kig->fro, kig->jnx, kig->imt, kig->lux, kig->gkl, kig->ilu, kig->ilu, kig->ilu, kig->ilu, kig->fcb, kig->khc, kig->khg, kig->ilu, kig->ilu, kig->ilu, kig->ilu] takes 37ms
+1793490993.656  1766  1766 W TooltipLifecycleManager: TooltipLifecycleManager.dismissTooltips():154 Tooltip with id undo_access_point_promotion_banner not found in tooltipManager.
+1793490993.664  1766  1766 I ImeTracker: system_server:9105195d: onHidden
+1793490993.693  1963  2211 I LPRequestState: (REDACTED) [%s] #resolveUnusedLanguagePacks
+1793490993.694  1963  2211 I LPRequestState: (REDACTED) [%s] #resolveDesiredLanguagePacks
+1793490993.705  1963  2199 W dvjc$a  : (REDACTED) %s: Account was not provided, skipping private sync for corpus: %s, configuration: %s
+1793490993.720  1963  2211 I dmhi    : (REDACTED) Starting batch sync for corpora: %s
+1793490993.725  1963  2192 I ejnz    : (REDACTED) getting App Capabilities %s
+1793490993.726  2058  2058 I Finsky  : [2] aheo.accept(94): SCH: Job 10-166 starting
+1793490993.735  2058  2058 I Finsky  : [2] CubesEnablementHygieneJob.a(6): Running cubes enablement hygiene job.
+1793490993.736  1963  2185 I ejlc    : Building Device Properties.
+1793490993.740  1963  2322 I dmkr    : The GellerConfig is not present, returning null.
+1793490993.751  1963  2322 I dmkr    : (REDACTED) The GellerConfig is not present, defaulting isUploadEnabled for corpus %s to true.
+1793490993.757   532  2229 W APM::HwModule: getDeviceDescriptor: could not find HW module for device  (AUDIO_DEVICE_OUT_WIRED_HEADSET, 00000004) address
+1793490993.758   532  2229 W APM::HwModule: getDeviceDescriptor: could not find HW module for device  (AUDIO_DEVICE_OUT_WIRED_HEADPHONE, 00000008) address
+1793490993.758   532  2229 W APM::HwModule: getDeviceDescriptor: could not find HW module for device  (AUDIO_DEVICE_OUT_USB_HEADSET, 04000000) address
+1793490993.770  2058  2361 I Finsky  : [53] agai.kh(163): Finished cubes enablement hygiene job.
+1793490993.773  2058  2361 I Finsky  : [53] ahev.q(56): SCH: jobFinished: 10-166. TimeElapsed: 38ms.
+1793490993.782  2058  2204 I Finsky  : [43] nms.apply(447): cubesStatesValueStore = [0, 1]
+1793490993.801  1963  2322 I dmhi    : (REDACTED) The syncToken for corpus %s is %s and the syncRequestReason is %s
+1793490993.835  1963  2195 W dvjc$a  : (REDACTED) %s: Account was not provided, skipping private sync for corpus: %s, configuration: %s
+1793490993.842  1963  2255 I dmhi    : (REDACTED) Starting batch sync for corpora: %s
+1793490993.847  1963  2725 I dmkr    : The GellerConfig is not present, returning null.
+1793490993.854  1963  2725 I dmkr    : (REDACTED) The GellerConfig is not present, defaulting isUploadEnabled for corpus %s to true.
+1793490993.862  2058  2058 I Finsky  : [2] aheo.accept(94): SCH: Job 37-1 starting
+1793490993.913  1766  2043 I ShortcutsDataManager: AbstractContentDataManager$ImportContentTask.doInBackground():258 doInBackground()
+1793490993.913  1766  2043 I PersonalDictionaryDataHandler: PersonalDictionaryDataHandler.beginProcess():114 LanguageTags = [en-US]
+1793490993.937  1963  2185 I ejnz    : (REDACTED) getting App Capabilities %s
+1793490993.938  1963  2185 I ejlc    : Building Device Properties.
+1793490993.960   532  2229 W APM::HwModule: getDeviceDescriptor: could not find HW module for device  (AUDIO_DEVICE_OUT_WIRED_HEADSET, 00000004) address
+1793490993.960   532  2229 W APM::HwModule: getDeviceDescriptor: could not find HW module for device  (AUDIO_DEVICE_OUT_WIRED_HEADPHONE, 00000008) address
+1793490993.961   532  4046 W APM::HwModule: getDeviceDescriptor: could not find HW module for device  (AUDIO_DEVICE_OUT_USB_HEADSET, 04000000) address
+1793490993.970  1963  2199 W dvjc$a  : (REDACTED) %s: Account was not provided, skipping private sync for corpus: %s, configuration: %s
+1793490993.979  1963  2725 I dmhi    : (REDACTED) The syncToken for corpus %s is %s and the syncRequestReason is %s
+1793490993.987  2058  2399 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+1793490993.988  2058  2399 I EGL_emulation: Opening libGLESv2_emulation.so
+1793490993.998  1963  2255 I dmhi    : (REDACTED) Starting batch sync for corpora: %s
+1793490994.028  2761  2768 W ding:background: Suspending all threads took: 102.242ms
+1793490994.068  2058  4831 I android.vending: AssetManager2(0x76eba425aa58) locale list changing from [] to [en-US]
+1793490994.078  1963  2199 I ahbb    : (REDACTED) #getHotwordModelFromMobstore [mobstoreUri: %s]
+1793490994.088  1963  2199 I HotwordModelPopulator: (REDACTED) Updated file group for locale '%s' from location: %s. Download already finished. Version: %d
+1793490994.100  1963  2199 I HotwordModelPopulator: (REDACTED) Updated file group for locale '%s' from location: %s. Download in progress, but older model found. Expected version: %d. Found version: %d
+1793490994.113  1963  2199 I ahbb    : (REDACTED) #getHotwordModelFromMobstore [mobstoreUri: %s]
+1793490994.123  1963  2199 I HotwordModelPopulator: (REDACTED) Updated file group for locale '%s' from location: %s. Download already finished. Version: %d
+1793490994.123  1963  2199 I HotwordModelPopulator: (REDACTED) Updated file group for locale '%s' from location: %s. Download in progress, but older model found. Expected version: %d. Found version: %d
+1793490994.143   670   986 D ActivityManager: sync unfroze 1646 android.process.acore for 7
+1793490994.144   670   775 I am_unfreeze: [1646,android.process.acore,7]
+1793490994.146  1963  2322 I dmkr    : The GellerConfig is not present, returning null.
+1793490994.146  1963  2322 I dmkr    : (REDACTED) The GellerConfig is not present, defaulting isUploadEnabled for corpus %s to true.
+1793490994.152   670   986 W ContentProviderHelper: Slow operation: 226ms so far, now at getContentProviderImpl: after updateOomAdj
+1793490994.152   670   986 W ContentProviderHelper: Slow operation: 226ms so far, now at getContentProviderImpl: done!
+1793490994.172   670   777 I RoleService: Granting default roles...
+1793490994.174  1766  1766 W TooltipLifecycleManager: TooltipLifecycleManager.dismissTooltips():154 Tooltip with id undo_access_point_promotion_banner not found in tooltipManager.
+1793490994.175  1090  5113 I PermissionControllerServiceImpl: Updating user sensitive for uid 10145
+1793490994.179  1089  1089 D ControlsListingControllerImpl: ServiceConfig reloaded, count: 0
+1793490994.188  1243  1469 I SatelliteAppTracker: onPackageModified : com.android.vending
+1793490994.188  4321  4321 I ime-driver: ime-space-0f6c0b1e-5a8e-4d43-9a63-1f0e7c2b5d22

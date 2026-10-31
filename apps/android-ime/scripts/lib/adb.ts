@@ -10,6 +10,11 @@ export class CommandError extends Error {
   override name = 'CommandError'
 }
 
+/** A command that ran past its time bound and was stopped. */
+export class CommandTimeoutError extends CommandError {
+  override name = 'CommandTimeoutError'
+}
+
 /**
  * A process that outlived SIGTERM and SIGKILL. It may still be talking to the device, so the attempt it
  * belongs to must not be retried.
@@ -38,6 +43,11 @@ export function adb(args: string[], timeout = 30): Promise<string> {
 /** Run adb and return stdout whatever its exit code. Still rejects on a timeout. */
 export function adbOutput(args: string[], timeout = 60): Promise<string> {
   return tracked(`adb ${args.join(' ')}`, () => run('adb', args, timeout, false))
+}
+
+/** Run adb and return its exit code, stdout and stderr. Still rejects on a timeout. */
+export function adbExit(args: string[], timeout: number): Promise<{code: number | null; stdout: string; stderr: string}> {
+  return tracked(`adb ${args.join(' ')}`, () => runChild('adb', args, timeout, 'pipe'))
 }
 
 /** Run adb with its output on our stdout. A non-zero exit is ignored, a timeout still throws. */
@@ -98,7 +108,7 @@ function runChild(
       for (const timer of timers) clearTimeout(timer)
       signal?.removeEventListener('abort', onAbort)
     }
-    timers.push(setTimeout(() => stop(new CommandError(`${file} ${args.join(' ')} timed out after ${timeout}s`)), timeout * 1000))
+    timers.push(setTimeout(() => stop(new CommandTimeoutError(`${file} ${args.join(' ')} timed out after ${timeout}s`)), timeout * 1000))
     signal?.addEventListener('abort', onAbort, {once: true})
     child.on('error', (error) => {
       finish()

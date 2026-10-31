@@ -1,0 +1,264 @@
+--------- beginning of main
+1793492004.764  4321  4321 I ime-driver: ime-space-0f6c0b1e-5a8e-4d43-9a63-1f0e7c2b5d11
+1793492004.764  6165  6718 I Finsky:background: [128] DU: Stored data usage stats for package com.google.android.gms; completed bytes: 2736.
+1793492004.773  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492004.780  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT9.455S, attempt=0
+1793492004.786  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492004.799  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492004.799  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <9:RUNNING:5%[5%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492004.799  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492004.799  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=9
+1793492004.799  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=9, pkg_id=com.google.android.gms artifact_id=com.google.android.gms.apk reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 4030173/78736145
+1793492004.799  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492004.799  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492004.799  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <9:RUNNING:5%[5%]>
+1793492004.811  6165  6260 I Finsky:background: [72] RM: getStatus resource_request=1d2770b3-573e-414a-b79f-5c7896fcbeb6 request_id=9 pkg_id=com.google.android.gms artifact_id=com.google.android.gms.apk isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492004.811  6165  6260 I Finsky:background: [72] DSC: reviveDownload(9)
+1793492004.812  6165  6260 I Finsky:background: [72] DS: reviveDownload(request_id=9)
+1793492004.816  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=9, files_to_download=[com.google.android.gms.apk(size:78736145)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=4030173, total_bytes=78736145, retry[count=0, next_retry=n/a])
+1793492004.816  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT9.491S, attempt=0
+1793492004.818  6165  6165 I Finsky:background: [2] RF: onProgress request_id=9, pkg_id=com.google.android.gms artifact_id=com.google.android.gms.apk isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=4030173/78736145 pkg_bytes=3756050/93439552
+1793492004.819  6165  6688 I Finsky:background: [122] CronetDownloader: onRedirectReceived
+1793492004.819  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <17:RUNNING:0%[0%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492004.824  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492004.824  6165  6165 I Finsky:background: [2] Updated time lastBroadcast=2026-11-01T00:13:22.795Z current=2026-11-01T00:13:24.819Z
+1793492004.824  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=17
+1793492004.824  6165  6165 I Finsky:background: [2] bytesCompleted/bytesTotal/ratio = 7786223 / 93439552 / 0.083329
+1793492004.824  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/400669
+1793492004.824  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492004.824  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492004.824  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <17:RUNNING:0%[0%]>
+1793492004.825  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492004.833  6165  6250 I Finsky:background: [65] RM: getStatus resource_request=2f750205-1f49-43bf-b51a-1f789bdd8b7e request_id=17 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492004.833  6165  6250 I Finsky:background: [65] DSC: reviveDownload(17)
+1793492004.833  6165  6250 I Finsky:background: [65] DS: reviveDownload(request_id=17)
+1793492004.834  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=17, files_to_download=[DynamiteModulesA_installtime(size:400669)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=0, total_bytes=400669, retry[count=0, next_retry=n/a])
+1793492004.835  3977  6755 D UIAutomatorStub: URI: /jsonrpc/0, Method: POST, params, {NanoHttpd.QUERY_STRING=null}, files: {postData={"jsonrpc":"2.0","id":1,"method":"click","params":[593,2196]}}
+1793492004.836  6165  6165 I Finsky:background: [2] RF: onProgress request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=0/400669 pkg_bytes=7786223/93439552
+1793492004.836  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492004.836  6165  6261 I Finsky:background: [73] IV2: onTaskProgress com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] status:RESOURCE_FETCH_PROGRESS, size: 7786223/93439552
+1793492004.845  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492004.873  1765  1765 E native  : E0000 00:00:1793492004.873828    1765 key-correction-manager.cc:468] Cannot load the user patterns!
+1793492004.889  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT9.564S, attempt=0
+1793492004.890  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492004.890  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492004.926  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492004.949  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <13:RUNNING:24%[24%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492004.949  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492004.949  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=13
+1793492004.950  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=13, pkg_id=com.google.android.gms artifact_id=CronetDynamite_installtime reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 1514761/6218515
+1793492004.950  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492004.950  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492004.950  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <13:RUNNING:24%[24%]>
+1793492004.954  6165  6641 I Finsky:background: [107] RF::PP-Copy: Finished copying from input stream for com.google.android.gms.dm
+1793492004.969  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492004.969  6165  6259 I Finsky:background: [71] RM: getStatus resource_request=9aabc46d-1ad5-4a69-8ece-f544884fdf28 request_id=13 pkg_id=com.google.android.gms artifact_id=CronetDynamite_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492004.969  6165  6259 I Finsky:background: [71] DSC: reviveDownload(13)
+1793492004.970  6165  6259 I Finsky:background: [71] DS: reviveDownload(request_id=13)
+1793492004.973  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=13, files_to_download=[CronetDynamite_installtime(size:6218515)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=1514761, total_bytes=6218515, retry[count=0, next_retry=n/a])
+1793492004.986  1765  1765 I ProactiveUndoTriggerExtension: ProactiveUndoTriggerExtension.eventConsumer$lambda$0():125 kyp{intention=null, keyCode=62, SPACE, data= }
+1793492004.990  6165  6165 I Finsky:background: [2] RF: onProgress request_id=13, pkg_id=com.google.android.gms artifact_id=CronetDynamite_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=1514761/6218515 pkg_bytes=7786223/93439552
+1793492005.010  6165  6641 I Finsky:background: [107] RF::PP-Copy: Starting copy of CronetDynamite_installtime.dm
+1793492005.010  6165  6641 I Finsky:background: [107] RF::PP-Copy: OutputStream opened for CronetDynamite_installtime.dm
+1793492005.010  6165  6641 I Finsky:background: [107] RF::PP-Copy: Start copying from input stream for CronetDynamite_installtime.dm
+1793492005.011  6165  6641 I Finsky:background: [107] RF::PP-Copy: Finished copying from input stream for CronetDynamite_installtime.dm
+1793492005.018  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492005.046  1765  2045 W InputActionsUserFeatureProcessor: InputActionsUserFeatureProcessor.processInputActions():272 Session not started, ignore the input actions.
+1793492005.047  1765  2045 W InputActionsUserFeatureProcessor: InputActionsUserFeatureProcessor.processInputActions():272 Session not started, ignore the input actions.
+1793492005.064  6165  6641 I Finsky:background: [107] RF::PP-Copy: Starting copy of DynamiteLoader_installtime
+1793492005.064  6165  6641 I Finsky:background: [107] RF::PP-Copy: OutputStream opened for DynamiteLoader_installtime
+1793492005.064  6165  6641 I Finsky:background: [107] RF::PP-Copy: Start copying from input stream for DynamiteLoader_installtime
+1793492005.100  1765  1765 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793492005.100  1765  1765 I KeyboardHeightUtil: KeyboardHeightUtil.calculateMaxKeyboardBodyHeight():46 leave 281 height for app when ime window height:2146, header height:116 and isFullscreenMode:false, so the max keyboard body height is:1749
+1793492005.127  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <17:RUNNING:100%[100%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.127  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.127  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=17
+1793492005.127  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 400669/400669
+1793492005.128  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.128  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.128  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <17:RUNNING:100%[100%]>
+1793492005.131  6165  6250 I Finsky:background: [65] RM: getStatus resource_request=2f750205-1f49-43bf-b51a-1f789bdd8b7e request_id=17 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.131  6165  6250 I Finsky:background: [65] DSC: reviveDownload(17)
+1793492005.131  6165  6250 I Finsky:background: [65] DS: reviveDownload(request_id=17)
+1793492005.133  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=17, files_to_download=[DynamiteModulesA_installtime(size:400669)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=400669, total_bytes=400669, retry[count=0, next_retry=n/a])
+1793492005.143  6165  6570 I Finsky:background: [101] DS: Decremented runningDownloadsCount to: 3
+1793492005.143  6165  6570 I Finsky:background: [101] DS: Current runningDownloadsCount: 3, queuedCount: 10
+1793492005.143  6165  6570 I Finsky:background: [101] DS: Incremented runningDownloadsCount to: 4
+1793492005.143  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <17:SUCCEEDED> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.144  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.144  6165  6570 I Finsky:background: [101] RM: receive resource status onSuccess download_request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_SUCCEEDED, legacy_status_code=200, size: 400669/400669
+1793492005.144  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.144  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.144  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <17:SUCCEEDED>
+1793492005.145  6165  6410 I PlayCommon: [94] Preparing logs for uploading
+1793492005.196  6165  6260 I Finsky:background: [72] RM: getStatus resource_request=2f750205-1f49-43bf-b51a-1f789bdd8b7e request_id=17 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.196  6165  6260 I Finsky:background: [72] DSC: reviveDownload(17)
+1793492005.196  6165  6260 I Finsky:background: [72] DS: reviveDownload(request_id=17)
+1793492005.200  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=17, files_to_download=[DynamiteModulesA_installtime(size:400669)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=400669, total_bytes=400669, retry[count=0, next_retry=n/a])
+1793492005.207  6165  6641 I Finsky:background: [107] RF::PP-Copy: Finished copying from input stream for DynamiteLoader_installtime
+1793492005.216  6165  6410 W PlayCommon: [94] No account for auth token provided
+1793492005.216  6165  6410 I PlayCommon: [94] Connecting to server: https://play.googleapis.com/play/log?format=raw&proto_v2=true
+1793492005.228  6165  6641 I Finsky:background: [107] RF::PP-Copy: Starting copy of DynamiteLoader_installtime.dm
+1793492005.228  6165  6641 I Finsky:background: [107] RF::PP-Copy: OutputStream opened for DynamiteLoader_installtime.dm
+1793492005.228  6165  6641 I Finsky:background: [107] RF::PP-Copy: Start copying from input stream for DynamiteLoader_installtime.dm
+1793492005.252  6165  6718 I Finsky:background: [128] DU: Stored data usage stats for package com.google.android.gms; completed bytes: 400669.
+1793492005.260  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <18:RUNNING:0%[0%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.260  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.260  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=18
+1793492005.260  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/10918
+1793492005.260  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.260  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.260  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <18:RUNNING:0%[0%]>
+1793492005.261  6165  6258 I Finsky:background: [70] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.263  6165  6259 I Finsky:background: [71] RM: getStatus resource_request=9f4654cf-1ba5-4c2a-9401-f94a2b832d31 request_id=18 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.263  6165  6259 I Finsky:background: [71] DSC: reviveDownload(18)
+1793492005.263  6165  6259 I Finsky:background: [71] DS: reviveDownload(request_id=18)
+1793492005.264  6165  6641 I Finsky:background: [107] RF::PP-Copy: Finished copying from input stream for DynamiteLoader_installtime.dm
+1793492005.275  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=18, files_to_download=[DynamiteModulesA_installtime.dm(size:10918)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=10918, total_bytes=10918, retry[count=0, next_retry=n/a])
+1793492005.281  6165  6726 I Finsky:background: [130] CronetDownloader: onRedirectReceived
+1793492005.284  6165  6165 I Finsky:background: [2] RF: onProgress request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=400669/400669 pkg_bytes=9300984/93439552
+1793492005.301  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492005.302  6165  6165 I Finsky:background: [2] RF: onProgress request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=10918/10918 pkg_bytes=9701653/93439552
+1793492005.311  6165  6256 I Finsky:background: [68] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.311  6165  6256 I Finsky:background: [68] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.311  6165  6256 I Finsky:background: [68] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.311  6165  6256 I Finsky:background: [68] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.330  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492005.330  6165  6165 I Finsky:background: [2] RF: onResourceSuccess request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=400669/400669 pkg_bytes=9712571/93439552
+1793492005.330  6165  6165 I Finsky:background: [2] bytesCompleted/bytesTotal/ratio = 9712571 / 93439552 / 0.103945
+1793492005.330  6165  6165 I Finsky:background: [2] RF: onSuccess request_id=17, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=400669/400669 pkg_bytes=9712571/93439552
+1793492005.335  6165  6256 I Finsky:background: [68] RF: starting postprocessing for DynamiteModulesA_installtime
+1793492005.335  6165  6256 I Finsky:background: [68] RF::PP-Decompress: starting to decompress for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.335  6165  6256 I Finsky:background: [68] RF::PP-Copy: starting to copy for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000]
+1793492005.351  6165  6641 I Finsky:background: [107] RF::PP-Copy: Starting copy of DynamiteModulesA_installtime
+1793492005.351  6165  6641 I Finsky:background: [107] RF::PP-Copy: OutputStream opened for DynamiteModulesA_installtime
+1793492005.351  6165  6641 I Finsky:background: [107] RF::PP-Copy: Start copying from input stream for DynamiteModulesA_installtime
+1793492005.368  6165  6410 I PlayCommon: [94] Successfully uploaded logs.
+1793492005.383  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <18:RUNNING:100%[100%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.383  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.383  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=18
+1793492005.383  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 10918/10918
+1793492005.383  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.383  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.383  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <18:RUNNING:100%[100%]>
+1793492005.390  6165  6570 I Finsky:background: [101] DS: Decremented runningDownloadsCount to: 3
+1793492005.390  6165  6570 I Finsky:background: [101] DS: Current runningDownloadsCount: 3, queuedCount: 9
+1793492005.390  6165  6570 I Finsky:background: [101] DS: Incremented runningDownloadsCount to: 4
+1793492005.390  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <18:SUCCEEDED> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.390  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.390  6165  6570 I Finsky:background: [101] RM: receive resource status onSuccess download_request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_SUCCEEDED, legacy_status_code=200, size: 10918/10918
+1793492005.390  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.390  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.390  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <18:SUCCEEDED>
+1793492005.391  6165  6259 I Finsky:background: [71] RM: getStatus resource_request=9f4654cf-1ba5-4c2a-9401-f94a2b832d31 request_id=18 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.391  6165  6259 I Finsky:background: [71] DSC: reviveDownload(18)
+1793492005.395  6165  6259 I Finsky:background: [71] DS: reviveDownload(request_id=18)
+1793492005.412  6165  6250 I Finsky:background: [65] RF::TC: Deleting temp copy: AdsDynamite_installtime
+1793492005.412  6165  6250 I Finsky:background: [65] RM: remove resources for request ae45e744-9567-4fe6-98d2-2d872eb5879c
+1793492005.413  6165  6260 I Finsky:background: [72] RF::TC: Deleting temp copy: com.google.android.gms.dm
+1793492005.413  6165  6260 I Finsky:background: [72] RM: remove resources for request fd8083af-538e-404b-8d1d-4d3f37123a06
+1793492005.413  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=18, files_to_download=[DynamiteModulesA_installtime.dm(size:10918)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=10918, total_bytes=10918, retry[count=0, next_retry=n/a])
+1793492005.417  6165  6250 I Finsky:background: [65] RM: getStatus resource_request=9f4654cf-1ba5-4c2a-9401-f94a2b832d31 request_id=18 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.417  6165  6250 I Finsky:background: [65] DSC: reviveDownload(18)
+1793492005.417  6165  6250 I Finsky:background: [65] RM: remove resource_request=ae45e744-9567-4fe6-98d2-2d872eb5879c request_id=11 pkg_id=com.google.android.gms artifact_id=AdsDynamite_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.417  6165  6250 I Finsky:background: [65] DSC: remove(11)
+1793492005.417  6165  6250 I Finsky:background: [65] DS: reviveDownload(request_id=18)
+1793492005.418  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=18, files_to_download=[DynamiteModulesA_installtime.dm(size:10918)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=10918, total_bytes=10918, retry[count=0, next_retry=n/a])
+1793492005.418  6165  6250 I Finsky:background: [65] DS: remove(request_id=11)
+1793492005.426  6165  6259 I Finsky:background: [71] RM: remove resource_request=fd8083af-538e-404b-8d1d-4d3f37123a06 request_id=10 pkg_id=com.google.android.gms artifact_id=com.google.android.gms.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.426  6165  6259 I Finsky:background: [71] DSC: remove(10)
+1793492005.426  6165  6259 I Finsky:background: [71] DS: remove(request_id=10)
+1793492005.450  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=11, files_to_download=[AdsDynamite_installtime(size:1983653)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=1983653, total_bytes=1983653, retry[count=0, next_retry=n/a])
+1793492005.465  6165  6165 I Finsky:background: [2] RF: onProgress request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=10918/10918 pkg_bytes=9712571/93439552
+1793492005.466  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492005.466  6165  6165 I Finsky:background: [2] RF: onResourceSuccess request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=10918/10918 pkg_bytes=9712571/93439552
+1793492005.467  6165  6165 I Finsky:background: [2] bytesCompleted/bytesTotal/ratio = 9712571 / 93439552 / 0.103945
+1793492005.467  6165  6165 I Finsky:background: [2] RF: onSuccess request_id=18, pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=10918/10918 pkg_bytes=9712571/93439552
+1793492005.467   666   992 I netstats_mobile_sample: [20964,34347,68,119,39338,18171,110,68,1793492005915]
+1793492005.468   666   992 I netstats_wifi_sample: [376841815,3734861,274884,44306,376780736,3725813,274761,44275,1793492005915]
+1793492005.474  6165  6256 I Finsky:background: [68] RF: starting postprocessing for DynamiteModulesA_installtime.dm
+1793492005.474  6165  6256 I Finsky:background: [68] RF::PP-Decompress: starting to decompress for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.474  6165  6256 I Finsky:background: [68] RF::PP-Copy: starting to copy for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000]
+1793492005.480  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=10, files_to_download=[com.google.android.gms.dm(size:1638427)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=1638427, total_bytes=1638427, retry[count=0, next_retry=n/a])
+1793492005.480  6165  6261 I Finsky:background: [73] IV2: onTaskProgress com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] status:RESOURCE_FETCH_PROGRESS, size: 9712571/93439552
+1793492005.482  6165  6261 I Finsky:background: [73] IV2: onTaskProgress com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] status:RESOURCE_FETCH_PROGRESS, size: 9712571/93439552
+1793492005.483  6165  6261 I Finsky:background: [73] IV2: onTaskProgress com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] status:RESOURCE_FETCH_PROGRESS, size: 9712571/93439552
+1793492005.485  6165  6641 I Finsky:background: [107] RF::PP-Copy: Finished copying from input stream for DynamiteModulesA_installtime
+1793492005.487  6165  6261 I Finsky:background: [73] IV2: onTaskProgress com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] status:RESOURCE_FETCH_PROGRESS, size: 9712571/93439552
+1793492005.489  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT10.164S, attempt=0
+1793492005.502  6165  6718 I Finsky:background: [128] DU: Stored data usage stats for package com.google.android.gms; completed bytes: 10918.
+1793492005.516  6165  6641 I Finsky:background: [107] RF::PP-Copy: Starting copy of DynamiteModulesA_installtime.dm
+1793492005.516  6165  6641 I Finsky:background: [107] RF::PP-Copy: OutputStream opened for DynamiteModulesA_installtime.dm
+1793492005.516  6165  6641 I Finsky:background: [107] RF::PP-Copy: Start copying from input stream for DynamiteModulesA_installtime.dm
+1793492005.522  6165  6641 I Finsky:background: [107] RF::PP-Copy: Finished copying from input stream for DynamiteModulesA_installtime.dm
+1793492005.528  6165  6250 I Finsky:background: [65] RF::TC: Deleting temp copy: CronetDynamite_installtime.dm
+1793492005.528  6165  6250 I Finsky:background: [65] RM: remove resources for request a7cb610d-9931-483b-9a74-a7542418e71e
+1793492005.528  6165  6259 I Finsky:background: [71] RM: remove resource_request=a7cb610d-9931-483b-9a74-a7542418e71e request_id=14 pkg_id=com.google.android.gms artifact_id=CronetDynamite_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.528  6165  6259 I Finsky:background: [71] DSC: remove(14)
+1793492005.529  6165  6259 I Finsky:background: [71] DS: remove(request_id=14)
+1793492005.544  6165  6256 I Finsky:background: [68] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.545  6165  6246 I Finsky:background: [63] RF::PP-Verify: starting to verify for com.google.android.gms[iid:0] [isid:-Bd2vwlSTU6HkxwGlcOIxA] [tid: 1000000000].
+1793492005.546  6165  6259 I Finsky:background: [71] RF::TC: Deleting temp copy: DynamiteLoader_installtime
+1793492005.546  6165  6259 I Finsky:background: [71] RM: remove resources for request 77b7ace5-4278-4f40-b559-97e7361df0e6
+1793492005.550  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492005.550  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492005.550  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT10.225S, attempt=0
+1793492005.559  6165  6260 I Finsky:background: [72] RM: remove resource_request=77b7ace5-4278-4f40-b559-97e7361df0e6 request_id=15 pkg_id=com.google.android.gms artifact_id=DynamiteLoader_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.559  6165  6260 I Finsky:background: [72] DSC: remove(15)
+1793492005.559  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=14, files_to_download=[CronetDynamite_installtime.dm(size:5738)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=5738, total_bytes=5738, retry[count=0, next_retry=n/a])
+1793492005.559  6165  6260 I Finsky:background: [72] DS: remove(request_id=15)
+1793492005.560  6165  6260 I Finsky:background: [72] RF::TC: Deleting temp copy: DynamiteLoader_installtime.dm
+1793492005.560  6165  6260 I Finsky:background: [72] RM: remove resources for request 0c4e394a-7c3c-445b-bc4a-622c13d899a5
+1793492005.564  6165  6705 I Finsky:background: [123] CronetDownloader: onRedirectReceived
+1793492005.567  6165  6259 I Finsky:background: [71] RM: remove resource_request=0c4e394a-7c3c-445b-bc4a-622c13d899a5 request_id=16 pkg_id=com.google.android.gms artifact_id=DynamiteLoader_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.567  6165  6259 I Finsky:background: [71] DSC: remove(16)
+1793492005.567  6165  6250 I Finsky:background: [65] DS: remove(request_id=16)
+1793492005.575  6165  6258 I Finsky:background: [70] RF::TC: Deleting temp copy: DynamiteModulesA_installtime
+1793492005.575  6165  6258 I Finsky:background: [70] RM: remove resources for request 2f750205-1f49-43bf-b51a-1f789bdd8b7e
+1793492005.585  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=15, files_to_download=[DynamiteLoader_installtime(size:73540)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=73540, total_bytes=73540, retry[count=0, next_retry=n/a])
+1793492005.591  6165  6259 I Finsky:background: [71] RM: remove resource_request=2f750205-1f49-43bf-b51a-1f789bdd8b7e request_id=17 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.591  6165  6259 I Finsky:background: [71] DSC: remove(17)
+1793492005.591  6165  6259 I Finsky:background: [71] DS: remove(request_id=17)
+1793492005.594  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492005.600  6165  6260 I Finsky:background: [72] RF::TC: Deleting temp copy: DynamiteModulesA_installtime.dm
+1793492005.600  6165  6260 I Finsky:background: [72] RM: remove resources for request 9f4654cf-1ba5-4c2a-9401-f94a2b832d31
+1793492005.611  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492005.611  6165  6259 I Finsky:background: [71] RM: remove resource_request=9f4654cf-1ba5-4c2a-9401-f94a2b832d31 request_id=18 pkg_id=com.google.android.gms artifact_id=DynamiteModulesA_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.611  6165  6259 I Finsky:background: [71] DSC: remove(18)
+1793492005.611  6165  6259 I Finsky:background: [71] DS: remove(request_id=18)
+1793492005.617  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT10.292S, attempt=0
+1793492005.619  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=16, files_to_download=[DynamiteLoader_installtime.dm(size:2736)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=2736, total_bytes=2736, retry[count=0, next_retry=n/a])
+1793492005.693  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <19:RUNNING:0%[0%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.693  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.693  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=19
+1793492005.694  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=19, pkg_id=com.google.android.gms artifact_id=DynamiteModulesC_installtime.dm reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 0/20038
+1793492005.694  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.694  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.694  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <19:RUNNING:0%[0%]>
+1793492005.702  6165  6260 I Finsky:background: [72] RM: getStatus resource_request=9a940a78-a68a-4ca3-97b2-852a095f7667 request_id=19 pkg_id=com.google.android.gms artifact_id=DynamiteModulesC_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.702  6165  6260 I Finsky:background: [72] DSC: reviveDownload(19)
+1793492005.702  6165  6260 I Finsky:background: [72] DS: reviveDownload(request_id=19)
+1793492005.702  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=19, files_to_download=[DynamiteModulesC_installtime.dm(size:20038)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=1220, total_bytes=20038, retry[count=0, next_retry=n/a])
+1793492005.706  6165  6165 I Finsky:background: [2] RF: onProgress request_id=19, pkg_id=com.google.android.gms artifact_id=DynamiteModulesC_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=1220/20038 pkg_bytes=9712571/93439552
+1793492005.717  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492005.758  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492005.767  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492005.776  6165  6266 I Finsky:background: [76] IQ: Notifying installation update. [Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING, status=DOWNLOADING, status_code=0, reason=auto_update, tsc=PT10.451S, attempt=0
+1793492005.781  6165  6570 I Finsky:background: [101] DSC::L: Update all listeners for download <19:RUNNING:6%[6%]> in group com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.781  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::asnl@66faaf8 for download
+1793492005.782  6165  6570 I Finsky:background: [101] DS: Received onProgress request_id=19
+1793492005.787  6165  6570 I Finsky:background: [101] RM: receive resource status onProgress download_request_id=19, pkg_id=com.google.android.gms artifact_id=DynamiteModulesC_installtime.dm reason=auto_update isid=-Bd2vwlSTU6HkxwGlcOIxA, status_code=RESOURCE_STATUS_IN_PROGRESS, legacy_status_code=192, size: 1220/20038
+1793492005.787  6165  6570 I Finsky:background: [101] DSC::L: Updating listener xgl@df4895e for download
+1793492005.787  6165  6570 I Finsky:background: [101] DSC::L: Updating listener DownloadServiceManagerListener::urz@f92299 for download
+1793492005.787  6165  6570 I Finsky:background: [101] DS::IDC: updateWith: <19:RUNNING:6%[6%]>
+1793492005.794  6165  6250 I Finsky:background: [65] RM: getStatus resource_request=9a940a78-a68a-4ca3-97b2-852a095f7667 request_id=19 pkg_id=com.google.android.gms artifact_id=DynamiteModulesC_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA
+1793492005.794  6165  6250 I Finsky:background: [65] DSC: reviveDownload(19)
+1793492005.795  6165  6250 I Finsky:background: [65] DS: reviveDownload(request_id=19)
+1793492005.799  6165  6570 I Finsky:background: [101] DS: DS: onReviveDownload(request_id=19, files_to_download=[DynamiteModulesC_installtime.dm(size:20038)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=running, bytes_downloaded=1220, total_bytes=20038, retry[count=0, next_retry=n/a])
+1793492005.812  6165  6165 I Finsky:background: [2] RF: onProgress request_id=19, pkg_id=com.google.android.gms artifact_id=DynamiteModulesC_installtime.dm isid=-Bd2vwlSTU6HkxwGlcOIxA artifact_bytes=1220/20038 pkg_bytes=9713791/93439552
+1793492005.814  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=17, files_to_download=[DynamiteModulesA_installtime(size:400669)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=400669, total_bytes=400669, retry[count=0, next_retry=n/a])
+1793492005.823  6165  6165 I Finsky:background: [2] RF: Preventing total bytes update to listeners
+1793492005.823  6165  6165 I Finsky:background: [2] PIM: Ignore install package event for: com.google.android.gms, isid: -Bd2vwlSTU6HkxwGlcOIxA
+1793492005.830  6078  6078 I Finsky  : [2] IQ::HLD: if pauseAppUpdates is called now, it must wait for these ongoing installs: [[Package:com.google.android.gms, isid:-Bd2vwlSTU6HkxwGlcOIxA] state:DOWNLOADING]
+1793492005.857  6165  6570 I Finsky:background: [101] DS: DS: onRemove(request_id=18, files_to_download=[DynamiteModulesA_installtime.dm(size:10918)], context[group_id=com.google.android.gms:-Bd2vwlSTU6HkxwGlcOIxA], display_data[invisible=true, title=Play support libraries update], network_restrictions=ANY_NETWORK status=succeeded, bytes_downloaded=10918, total_bytes=10918, retry[count=0, next_retry=n/a])
+1793492005.857  4321  4321 I ime-driver: ime-space-0f6c0b1e-5a8e-4d43-9a63-1f0e7c2b5d12
