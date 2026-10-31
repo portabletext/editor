@@ -1,5 +1,5 @@
 import {isSpan} from '@portabletext/schema'
-import {createContext, useCallback, useContext, useMemo, useRef} from 'react'
+import {createContext, useCallback, useContext, useMemo, useRef, useReducer} from 'react'
 import {
   isElementDecorationsEqual,
   isTextDecorationsEqual,
@@ -57,7 +57,9 @@ export const useDecorations = (
 export const useDecorateContext = (
   decorateProp: (entry: NodeEntry) => DecoratedRange[],
 ) => {
+  const [, forceUpdate] = useReducer((count: number) => count + 1, 0)
   const eventListeners = useRef(new Set<Callback>())
+  const hasMounted = useRef(false)
 
   const latestDecorate = useRef(decorateProp)
 
@@ -66,6 +68,11 @@ export const useDecorateContext = (
     eventListeners.current.forEach((listener) => {
       listener()
     })
+    if (!hasMounted.current) {
+      hasMounted.current = true
+      return
+    }
+    forceUpdate()
   }, [decorateProp])
 
   const decorate = useCallback(
