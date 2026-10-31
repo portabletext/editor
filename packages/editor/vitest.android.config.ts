@@ -1,7 +1,14 @@
+import {fileURLToPath} from 'node:url'
+import {deviceProject} from 'thumbjar/vitest'
 import {defineConfig} from 'vitest/config'
-import {DEVICE_TEST_TIMEOUT_SECONDS} from './scripts/lib/budget.ts'
 
+/**
+ * The Android device tests, kept out of `vitest.config.ts` so `vitest --run`
+ * never needs an emulator. `android/run-on-device.sh` prepares the device and
+ * runs the `device` project.
+ */
 export default defineConfig({
+  root: fileURLToPath(new URL('android', import.meta.url)),
   test: {
     reporters:
       process.env.GITHUB_ACTIONS === 'true'
@@ -10,28 +17,18 @@ export default defineConfig({
     projects: [
       {
         test: {
-          name: 'unit',
+          name: 'android-unit',
           environment: 'node',
           include: ['scripts/**/*.test.ts'],
         },
       },
-      {
-        // Types on the one attached emulator. `scripts/run-on-device.sh` prepares the device and runs this
-        // project, never `test:unit`.
-        test: {
-          name: 'device',
-          environment: 'node',
-          include: ['tests/*.test.ts'],
-          globalSetup: ['tests/global-setup.ts'],
-          setupFiles: ['tests/setup.ts'],
-          fileParallelism: false,
-          // The driver retries its own faults once. A failed assertion is an editor result and never reruns.
-          retry: 0,
-          // A test takes 1 to 2 minutes. The timeout covers the driver's worst case, see `scripts/lib/budget.ts`.
-          testTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
-          hookTimeout: 2 * 60_000,
-        },
-      },
+      deviceProject({
+        include: ['tests/*.test.ts'],
+        outDir: fileURLToPath(new URL('android/out', import.meta.url)),
+        pageUrl: 'http://localhost:8765/editor.html',
+        pageHint:
+          'Build it with `pnpm --filter @portabletext/editor build:android` and serve it with `android/run-on-device.sh`, see `android/README.md`.',
+      }),
     ],
   },
 })
