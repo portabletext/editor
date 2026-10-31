@@ -5,8 +5,8 @@ const page = vi.hoisted(() => ({attempt: 0}))
 
 vi.mock(import('../../device/adb.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  adb: async (args: string[]) =>
-    args.includes('input_method') ? 'mInputShown=true' : '',
+  adb: (args: string[]) =>
+    Promise.resolve(args.includes('input_method') ? 'mInputShown=true' : ''),
 }))
 
 // Keep this fake device in sync with the one in `device-types-digit-once.ts`.
@@ -17,42 +17,46 @@ vi.mock(import('../../device/u2.ts'), async (importOriginal) => {
   )
   const device = {
     waitTimeout: 20,
-    info: async () => ({productName: 'fake'}),
-    windowSize: async () => [1080, 2400] as [number, number],
-    appCurrent: async () => ({
-      package: 'com.android.chrome',
-      activity: 'Main',
-      pid: 1,
-    }),
+    info: () => Promise.resolve({productName: 'fake'}),
+    windowSize: () => Promise.resolve<[number, number]>([1080, 2400]),
+    appCurrent: () =>
+      Promise.resolve({
+        package: 'com.android.chrome',
+        activity: 'Main',
+        pid: 1,
+      }),
     screenshot: async () => {},
-    dumpHierarchy: async () => keyboard,
+    dumpHierarchy: () => Promise.resolve(keyboard),
     click: async () => {},
     swipe: async () => {},
     close: async () => {},
     find: () => ({
-      exists: async () => false,
+      exists: () => Promise.resolve(false),
       click: async () => {},
-      getText: async () => '',
+      getText: () => Promise.resolve(''),
     }),
   }
   return {
     ...(await importOriginal()),
-    Device: {connect: async () => device} as never,
+    Device: {connect: () => Promise.resolve(device)} as never,
   }
 })
 
 // The page's DevTools endpoint. On the first attempt `window.__state()` throws, the way the editor's
 // `getSnapshot` would, and the reply carries `exceptionDetails` instead of a value.
 const url = 'http://localhost:8765/editor.html?prefix='
-vi.stubGlobal('fetch', async () => ({
-  json: async () => [
-    {
-      type: 'page',
-      url,
-      webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1',
-    },
-  ],
-}))
+vi.stubGlobal('fetch', () =>
+  Promise.resolve({
+    json: () =>
+      Promise.resolve([
+        {
+          type: 'page',
+          url,
+          webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1',
+        },
+      ]),
+  }),
+)
 vi.stubGlobal(
   'WebSocket',
   class extends EventTarget {
@@ -81,10 +85,18 @@ vi.stubGlobal(
 )
 
 function evaluate(expression: string): Record<string, unknown> {
-  if (expression === 'document.readyState') return value('complete')
-  if (expression === 'typeof window.__state') return value('function')
-  if (expression === 'location.href') return value(url)
-  if (expression.startsWith('document.activeElement')) return value(true)
+  if (expression === 'document.readyState') {
+    return value('complete')
+  }
+  if (expression === 'typeof window.__state') {
+    return value('function')
+  }
+  if (expression === 'location.href') {
+    return value(url)
+  }
+  if (expression.startsWith('document.activeElement')) {
+    return value(true)
+  }
   if (expression.includes('getBoundingClientRect')) {
     page.attempt += 1
     return value({
@@ -104,8 +116,9 @@ function evaluate(expression: string): Record<string, unknown> {
       },
     }
   }
-  if (expression === 'window.__state()')
+  if (expression === 'window.__state()') {
     return value({text: 'Kyou ', events: []})
+  }
   return {result: {type: 'undefined'}}
 }
 

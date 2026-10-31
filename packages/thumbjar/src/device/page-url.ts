@@ -11,7 +11,11 @@ export function prefixedPageUrl(url: string, prefix: string): string {
 /** The port to reverse to the device for a `localhost` page, the scheme's default when the URL has none. */
 export function localhostPort(url: string): string | undefined {
   const {hostname, port, protocol} = new URL(url)
-  if (hostname !== 'localhost') return undefined
-  if (port !== '') return port
+  if (hostname !== 'localhost') {
+    return undefined
+  }
+  if (port !== '') {
+    return port
+  }
   return protocol === 'https:' ? '443' : '80'
 }

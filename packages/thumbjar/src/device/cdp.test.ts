@@ -39,15 +39,18 @@ describe(cdpEval.name, () => {
 
 function stubPage(reply: Record<string, unknown>): string[] {
   const evaluations: string[] = []
-  vi.stubGlobal('fetch', async () => ({
-    json: async () => [
-      {
-        type: 'page',
-        url: page,
-        webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1',
-      },
-    ],
-  }))
+  vi.stubGlobal('fetch', () =>
+    Promise.resolve({
+      json: () =>
+        Promise.resolve([
+          {
+            type: 'page',
+            url: page,
+            webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1',
+          },
+        ]),
+    }),
+  )
   vi.stubGlobal(
     'WebSocket',
     class extends EventTarget {
