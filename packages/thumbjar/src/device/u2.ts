@@ -6,12 +6,27 @@ import {createHash} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {adb, AdbConnection, AdbError, ConnectionLost, deviceShell, shellQuote} from './adb.ts'
+import {
+  adb,
+  AdbConnection,
+  AdbError,
+  ConnectionLost,
+  deviceShell,
+  shellQuote,
+} from './adb.ts'
 import {sleep, throwIfAborted, tracked} from './util.ts'
 
-const JAR_URL = 'https://github.com/openatx/android-uiautomator-server-jar/releases/download/0.4.1/u2.jar'
-const JAR_SHA256 = '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d'
-const JAR_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.cache', 'u2.jar')
+const JAR_URL =
+  'https://github.com/openatx/android-uiautomator-server-jar/releases/download/0.4.1/u2.jar'
+const JAR_SHA256 =
+  '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d'
+const JAR_PATH = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '.cache',
+  'u2.jar',
+)
 const DEVICE_JAR = '/data/local/tmp/u2.jar'
 const SERVER_PORT = 9008
 // The uiautomator2 client's default HTTP timeout for a JSON-RPC call.
@@ -42,12 +57,17 @@ export class LaunchUiAutomationError extends Error {
 
 /** Download u2.jar into .cache unless it is already there, and check its hash. */
 export async function ensureJar(): Promise<string> {
-  if (existsSync(JAR_PATH) && sha256(readFileSync(JAR_PATH)) === JAR_SHA256) return JAR_PATH
+  if (existsSync(JAR_PATH) && sha256(readFileSync(JAR_PATH)) === JAR_SHA256)
+    return JAR_PATH
   const response = await fetch(JAR_URL, {signal: AbortSignal.timeout(120_000)})
-  if (!response.ok) throw new Error(`u2.jar download failed: ${response.status} ${response.statusText}`)
+  if (!response.ok)
+    throw new Error(
+      `u2.jar download failed: ${response.status} ${response.statusText}`,
+    )
   const data = Buffer.from(await response.arrayBuffer())
   const hash = sha256(data)
-  if (hash !== JAR_SHA256) throw new Error(`u2.jar sha256 ${hash}, expected ${JAR_SHA256}`)
+  if (hash !== JAR_SHA256)
+    throw new Error(`u2.jar sha256 ${hash}, expected ${JAR_SHA256}`)
   mkdirSync(dirname(JAR_PATH), {recursive: true})
   writeFileSync(JAR_PATH, data)
   return JAR_PATH
@@ -55,7 +75,13 @@ export async function ensureJar(): Promise<string> {
 
 export type AppInfo = {package: string; activity: string; pid: number}
 export type Bounds = {left: number; top: number; right: number; bottom: number}
-export type ObjInfo = {bounds?: Bounds; visibleBounds?: Bounds; selected?: boolean; text?: string | null; [key: string]: unknown}
+export type ObjInfo = {
+  bounds?: Bounds
+  visibleBounds?: Bounds
+  selected?: boolean
+  text?: string | null
+  [key: string]: unknown
+}
 
 // UiSelector fields and their mask bits, as the server reads them.
 const SELECTOR_FIELDS = {
@@ -86,7 +112,9 @@ const SELECTOR_FIELDS = {
   instance: 0x01000000,
 } as const
 
-export type SelectorFields = Partial<Record<keyof typeof SELECTOR_FIELDS, string | number | boolean>>
+export type SelectorFields = Partial<
+  Record<keyof typeof SELECTOR_FIELDS, string | number | boolean>
+>
 
 export class Device {
   waitTimeout = 20
@@ -120,14 +148,23 @@ export class Device {
       if (this.#server?.exited) this.#server = undefined
       if (await checkAlive()) return
       throwIfAborted()
-      const connection = await AdbConnection.service(`shell:CLASSPATH=${DEVICE_JAR} app_process / com.wetest.uia2.Main -p ${SERVER_PORT}`, 600)
+      const connection = await AdbConnection.service(
+        `shell:CLASSPATH=${DEVICE_JAR} app_process / com.wetest.uia2.Main -p ${SERVER_PORT}`,
+        600,
+      )
       const server = new ServerProcess(connection)
       this.#server = server
       throwIfAborted()
       const deadline = Date.now() + 30_000
       while (Date.now() < deadline) {
-        if (server.output.includes('already registered')) throw new LaunchUiAutomationError(`accessibility service already registered: ${server.output}`)
-        if (server.exited) throw new LaunchUiAutomationError(`server quit unexpectedly: ${server.output}`)
+        if (server.output.includes('already registered'))
+          throw new LaunchUiAutomationError(
+            `accessibility service already registered: ${server.output}`,
+          )
+        if (server.exited)
+          throw new LaunchUiAutomationError(
+            `server quit unexpectedly: ${server.output}`,
+          )
         if (await checkAlive()) return
         await sleep(0.5)
       }
@@ -154,12 +191,22 @@ export class Device {
    * One JSON-RPC call. A dead server is restarted once and the call repeated. Positional arguments go as a
    * list and a call without any as an empty object.
    */
-  rpc(method: string, params: unknown[] | Record<string, never> = {}, timeout = HTTP_TIMEOUT): Promise<unknown> {
+  rpc(
+    method: string,
+    params: unknown[] | Record<string, never> = {},
+    timeout = HTTP_TIMEOUT,
+  ): Promise<unknown> {
     return tracked(`uiautomator2 ${method}`, async () => {
       try {
         return await jsonrpcOnce(method, params, timeout)
       } catch (error) {
-        if (!(error instanceof HTTPError || error instanceof UiAutomationNotConnectedError)) throw error
+        if (
+          !(
+            error instanceof HTTPError ||
+            error instanceof UiAutomationNotConnectedError
+          )
+        )
+          throw error
         throwIfAborted()
         await this.stopServer()
         await this.startServer()
@@ -177,8 +224,11 @@ export class Device {
     // The server sometimes returns an empty dump. Ask three times, a second apart, then return an empty
     // hierarchy.
     for (let attempt = 0; attempt < 3; attempt++) {
-      const content = String((await this.rpc('dumpWindowHierarchy', [false, 50])) ?? '')
-      if (content !== '' && !content.includes('<hierarchy rotation="0" />')) return content
+      const content = String(
+        (await this.rpc('dumpWindowHierarchy', [false, 50])) ?? '',
+      )
+      if (content !== '' && !content.includes('<hierarchy rotation="0" />'))
+        return content
       if (attempt < 2) await sleep(1)
     }
     return `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\r\n<hierarchy rotation="0" />`
@@ -189,12 +239,25 @@ export class Device {
    * nothing about whether the app under it handled the tap. A rejected injection throws.
    */
   async click(x: number, y: number): Promise<void> {
-    if ((await this.rpc('click', [x, y])) === false) throw new TapNotInjectedError(`tap at ${x},${y} was not injected`)
+    if ((await this.rpc('click', [x, y])) === false)
+      throw new TapNotInjectedError(`tap at ${x},${y} was not injected`)
   }
 
   /** Swipe over `duration` seconds. uiautomator moves one step about every 5ms. */
-  async swipe(fromX: number, fromY: number, toX: number, toY: number, duration: number): Promise<void> {
-    await this.rpc('swipe', [fromX, fromY, toX, toY, Math.max(2, Math.trunc(duration * 200))])
+  async swipe(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    duration: number,
+  ): Promise<void> {
+    await this.rpc('swipe', [
+      fromX,
+      fromY,
+      toX,
+      toY,
+      Math.max(2, Math.trunc(duration * 200)),
+    ])
   }
 
   /**
@@ -208,7 +271,9 @@ export class Device {
       writeFileSync(`${base}.jpg`, Buffer.from(data, 'base64'))
       return
     }
-    const png = await tracked('screencap', () => AdbConnection.service('exec:screencap -p', 60))
+    const png = await tracked('screencap', () =>
+      AdbConnection.service('exec:screencap -p', 60),
+    )
     try {
       writeFileSync(`${base}.png`, await png.readUntil(() => false))
     } finally {
@@ -219,7 +284,9 @@ export class Device {
   /** Screen size in pixels from `wm size`, swapped when the display is rotated. */
   async windowSize(): Promise<[number, number]> {
     const output = await deviceShell('wm size')
-    const match = /Override size: (\d+)x(\d+)/.exec(output) ?? /Physical size: (\d+)x(\d+)/.exec(output)
+    const match =
+      /Override size: (\d+)x(\d+)/.exec(output) ??
+      /Physical size: (\d+)x(\d+)/.exec(output)
     if (!match) throw new AdbError(`wm size output unexpected: ${output}`)
     const width = Number(match[1])
     const height = Number(match[2])
@@ -248,13 +315,24 @@ export class Device {
   }
 
   async #appCurrentOnce(): Promise<AppInfo> {
-    const focused = /mCurrentFocus=Window\{.*\s+([^\s]+)\/([^\s]+)\}/.exec(await deviceShell('dumpsys window windows'))
+    const focused = /mCurrentFocus=Window\{.*\s+([^\s]+)\/([^\s]+)\}/.exec(
+      await deviceShell('dumpsys window windows'),
+    )
     if (focused) return {package: focused[1]!, activity: focused[2]!, pid: 0}
-    const resumed = /mResumedActivity: ActivityRecord\{.*?\s+([^\s]+)\/([^\s]+)\s.*?\}/.exec(await deviceShell('dumpsys activity activities'))
+    const resumed =
+      /mResumedActivity: ActivityRecord\{.*?\s+([^\s]+)\/([^\s]+)\s.*?\}/.exec(
+        await deviceShell('dumpsys activity activities'),
+      )
     const resumedPackage = resumed?.[1]
     let last: AppInfo | undefined
-    for (const activity of (await deviceShell('dumpsys activity top')).matchAll(/ACTIVITY ([^\s]+)\/([^/\s]+) \w+ pid=(\d+)/g)) {
-      last = {package: activity[1]!, activity: activity[2]!, pid: Number(activity[3])}
+    for (const activity of (await deviceShell('dumpsys activity top')).matchAll(
+      /ACTIVITY ([^\s]+)\/([^/\s]+) \w+ pid=(\d+)/g,
+    )) {
+      last = {
+        package: activity[1]!,
+        activity: activity[2]!,
+        pid: Number(activity[3]),
+      }
       if (last.package === resumedPackage) return last
     }
     if (last) return last
@@ -281,7 +359,13 @@ export class UiObject {
 
   async wait(timeout = this.device.waitTimeout): Promise<boolean> {
     try {
-      return Boolean(await this.device.rpc('waitForExists', [this.selector, Math.trunc(timeout * 1000)], timeout + 10))
+      return Boolean(
+        await this.device.rpc(
+          'waitForExists',
+          [this.selector, Math.trunc(timeout * 1000)],
+          timeout + 10,
+        ),
+      )
     } catch (error) {
       // A wait that fails over HTTP falls back to a plain existence check.
       if (!(error instanceof HTTPError)) throw error
@@ -290,7 +374,10 @@ export class UiObject {
   }
 
   async mustWait(timeout?: number): Promise<void> {
-    if (!(await this.wait(timeout))) throw new UiObjectNotFoundError(`-32002 ${JSON.stringify(this.selector)} wait`)
+    if (!(await this.wait(timeout)))
+      throw new UiObjectNotFoundError(
+        `-32002 ${JSON.stringify(this.selector)} wait`,
+      )
   }
 
   async info(): Promise<ObjInfo> {
@@ -301,8 +388,12 @@ export class UiObject {
     await this.mustWait(timeout)
     const info = await this.info()
     const bounds = info.visibleBounds ?? info.bounds
-    if (!bounds) throw new RPCError(`no bounds for ${JSON.stringify(this.selector)}`)
-    await this.device.click(bounds.left + (bounds.right - bounds.left) * 0.5, bounds.top + (bounds.bottom - bounds.top) * 0.5)
+    if (!bounds)
+      throw new RPCError(`no bounds for ${JSON.stringify(this.selector)}`)
+    await this.device.click(
+      bounds.left + (bounds.right - bounds.left) * 0.5,
+      bounds.top + (bounds.bottom - bounds.top) * 0.5,
+    )
   }
 
   async getText(timeout?: number): Promise<string | null> {
@@ -311,13 +402,16 @@ export class UiObject {
   }
 
   async scrollForward(steps = SCROLL_STEPS): Promise<boolean> {
-    return Boolean(await this.device.rpc('scrollForward', [this.selector, true, steps]))
+    return Boolean(
+      await this.device.rpc('scrollForward', [this.selector, true, steps]),
+    )
   }
 }
 
 function selector(fields: SelectorFields): Record<string, unknown> {
   let mask = 0
-  for (const key of Object.keys(fields) as Array<keyof typeof SELECTOR_FIELDS>) mask |= SELECTOR_FIELDS[key]
+  for (const key of Object.keys(fields) as Array<keyof typeof SELECTOR_FIELDS>)
+    mask |= SELECTOR_FIELDS[key]
   return {mask, childOrSibling: [], childOrSiblingSelector: [], ...fields}
 }
 
@@ -328,7 +422,11 @@ function sha256(data: Buffer): string {
 // NanoHTTPD reads a body without a charset as US-ASCII, so every non-ASCII character goes out escaped.
 // Raw UTF-8 would garble patterns like 日本語.
 function asciiJson(value: unknown): string {
-  return JSON.stringify(value).replace(/[\u0080-￿]/g, (character) => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'))
+  return JSON.stringify(value).replace(
+    /[\u0080-￿]/g,
+    (character) =>
+      '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'),
+  )
 }
 
 /** Index of the end of a complete HTTP response in `data`, or -1 while it is incomplete. */
@@ -338,7 +436,10 @@ function responseEnd(data: Buffer): number {
   const head = data.subarray(0, headerEnd).toString('latin1')
   const bodyStart = headerEnd + 4
   const length = /^content-length:\s*(\d+)/im.exec(head)
-  if (length) return data.length >= bodyStart + Number(length[1]) ? bodyStart + Number(length[1]) : -1
+  if (length)
+    return data.length >= bodyStart + Number(length[1])
+      ? bodyStart + Number(length[1])
+      : -1
   if (/^transfer-encoding:\s*chunked/im.test(head)) {
     let at = bodyStart
     for (;;) {
@@ -356,11 +457,18 @@ function responseEnd(data: Buffer): number {
   return -1
 }
 
-function parseResponse(raw: Buffer): {status: number; reason: string; body: Buffer} {
+function parseResponse(raw: Buffer): {
+  status: number
+  reason: string
+  body: Buffer
+} {
   const headerEnd = raw.indexOf('\r\n\r\n')
   const head = raw.subarray(0, headerEnd).toString('latin1')
   const statusLine = /^HTTP\/\d\.\d (\d+) ?(.*)/.exec(head)
-  if (!statusLine) throw new HTTPError(`malformed HTTP response: ${JSON.stringify(head.slice(0, 80))}`)
+  if (!statusLine)
+    throw new HTTPError(
+      `malformed HTTP response: ${JSON.stringify(head.slice(0, 80))}`,
+    )
   let body = raw.subarray(headerEnd + 4)
   if (/^transfer-encoding:\s*chunked/im.test(head)) {
     const parts: Buffer[] = []
@@ -381,12 +489,21 @@ function parseResponse(raw: Buffer): {status: number; reason: string; body: Buff
 }
 
 /** One HTTP request to the on-device server through the adb server, on a fresh connection. */
-async function httpRequest(method: string, path: string, data: unknown, timeout: number): Promise<Buffer> {
+async function httpRequest(
+  method: string,
+  path: string,
+  data: unknown,
+  timeout: number,
+): Promise<Buffer> {
   let connection: AdbConnection
   try {
     connection = await AdbConnection.service(`tcp:${SERVER_PORT}`, timeout)
   } catch (error) {
-    if (error instanceof AdbError) throw new HTTPError(`Unable to connect to uiautomator2 server: ${error.message}`, {cause: error})
+    if (error instanceof AdbError)
+      throw new HTTPError(
+        `Unable to connect to uiautomator2 server: ${error.message}`,
+        {cause: error},
+      )
     throw error
   }
   try {
@@ -404,36 +521,57 @@ async function httpRequest(method: string, path: string, data: unknown, timeout:
     const raw = await connection.readUntil((buffer) => responseEnd(buffer) >= 0)
     let end = responseEnd(raw)
     if (end < 0) {
-      if (raw.length === 0) throw new RemoteDisconnected('Remote end closed connection without response')
+      if (raw.length === 0)
+        throw new RemoteDisconnected(
+          'Remote end closed connection without response',
+        )
       const headerEnd = raw.indexOf('\r\n\r\n')
       const head = raw.subarray(0, Math.max(headerEnd, 0)).toString('latin1')
       // A response without a length or chunking ends when the server closes the connection.
-      if (headerEnd < 0 || /^(content-length|transfer-encoding):/im.test(head)) throw new RemoteDisconnected('connection closed mid-response')
+      if (headerEnd < 0 || /^(content-length|transfer-encoding):/im.test(head))
+        throw new RemoteDisconnected('connection closed mid-response')
       end = raw.length
     }
     const response = parseResponse(raw.subarray(0, end))
-    if (response.status !== 200) throw new HTTPError(`HTTP request failed: ${response.status} ${response.reason}`)
+    if (response.status !== 200)
+      throw new HTTPError(
+        `HTTP request failed: ${response.status} ${response.reason}`,
+      )
     return response.body
   } finally {
     connection.close()
   }
 }
 
-async function jsonrpcOnce(method: string, params: unknown, timeout: number): Promise<unknown> {
+async function jsonrpcOnce(
+  method: string,
+  params: unknown,
+  timeout: number,
+): Promise<unknown> {
   const payload = {jsonrpc: '2.0', id: 1, method, params}
-  const text = (await httpRequest('POST', '/jsonrpc/0', payload, timeout)).toString('utf8')
+  const text = (
+    await httpRequest('POST', '/jsonrpc/0', payload, timeout)
+  ).toString('utf8')
   const data: unknown = JSON.parse(text)
-  if (typeof data !== 'object' || data === null) throw new RPCError('Unknown RPC error: not a dict')
+  if (typeof data !== 'object' || data === null)
+    throw new RPCError('Unknown RPC error: not a dict')
   if ('error' in data) {
     const error = (data.error ?? {}) as {code?: unknown; message?: unknown}
     const message = String(error.message ?? '')
-    if (text.includes('UiAutomation not connected')) throw new UiAutomationNotConnectedError('UiAutomation not connected')
-    if (message.includes('android.os.DeadObjectException')) throw new UiAutomationNotConnectedError('android.os.DeadObjectException')
-    if (message.includes('android.os.DeadSystemRuntimeException')) throw new UiAutomationNotConnectedError('android.os.DeadSystemRuntimeException')
-    if (message.includes('uiautomator.UiObjectNotFoundException')) throw new UiObjectNotFoundError(`${String(error.code)} ${message}`)
+    if (text.includes('UiAutomation not connected'))
+      throw new UiAutomationNotConnectedError('UiAutomation not connected')
+    if (message.includes('android.os.DeadObjectException'))
+      throw new UiAutomationNotConnectedError('android.os.DeadObjectException')
+    if (message.includes('android.os.DeadSystemRuntimeException'))
+      throw new UiAutomationNotConnectedError(
+        'android.os.DeadSystemRuntimeException',
+      )
+    if (message.includes('uiautomator.UiObjectNotFoundException'))
+      throw new UiObjectNotFoundError(`${String(error.code)} ${message}`)
     throw new RPCError(`Unknown RPC error: ${String(error.code)} ${message}`)
   }
-  if (!('result' in data)) throw new RPCError('Unknown RPC error: no result field')
+  if (!('result' in data))
+    throw new RPCError('Unknown RPC error: no result field')
   return data.result
 }
 
@@ -462,9 +600,12 @@ class ServerProcess {
 
 async function checkAlive(): Promise<boolean> {
   try {
-    return (await httpRequest('GET', '/ping', undefined, 10)).toString() === 'pong'
+    return (
+      (await httpRequest('GET', '/ping', undefined, 10)).toString() === 'pong'
+    )
   } catch (error) {
-    if (error instanceof HTTPError || error instanceof ConnectionLost) return false
+    if (error instanceof HTTPError || error instanceof ConnectionLost)
+      return false
     throw error
   }
 }
@@ -474,7 +615,8 @@ async function setupJar(): Promise<void> {
   const md5 = createHash('md5').update(readFileSync(local)).digest('hex')
   let output = await deviceShell(shellQuote(['toybox', 'md5sum', DEVICE_JAR]))
   throwIfAborted()
-  if (output.includes('toybox') && output.includes('not found')) output = await deviceShell(shellQuote(['md5', DEVICE_JAR]))
+  if (output.includes('toybox') && output.includes('not found'))
+    output = await deviceShell(shellQuote(['md5', DEVICE_JAR]))
   throwIfAborted()
   if (!output.includes(md5)) await adb(['push', local, DEVICE_JAR], 120)
 }

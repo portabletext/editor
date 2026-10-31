@@ -27,7 +27,10 @@ export function unstoppedProcesses(): readonly string[] {
 
 /** Throw once any process has outlived SIGKILL. No attempt or call starts and no run completes after one, though bounded failure cleanup still runs. */
 export function assertNoUnstoppedProcess(): void {
-  if (unstopped.length > 0) throw new ProcessNotStoppedError(`not starting device work while ${unstopped.join(', ')} may still run`)
+  if (unstopped.length > 0)
+    throw new ProcessNotStoppedError(
+      `not starting device work while ${unstopped.join(', ')} may still run`,
+    )
 }
 
 /** Run adb and return stdout. Rejects on a non-zero exit or after `timeout` seconds. */
@@ -37,21 +40,36 @@ export function adb(args: string[], timeout = 30): Promise<string> {
 
 /** Run adb and return stdout whatever its exit code. Still rejects on a timeout. */
 export function adbOutput(args: string[], timeout = 60): Promise<string> {
-  return tracked(`adb ${args.join(' ')}`, () => run('adb', args, timeout, false))
+  return tracked(`adb ${args.join(' ')}`, () =>
+    run('adb', args, timeout, false),
+  )
 }
 
 /** Run adb with its output on our stdout. A non-zero exit is ignored, a timeout still throws. */
-export async function adbPassthrough(args: string[], timeout = 60): Promise<void> {
-  await tracked(`adb ${args.join(' ')}`, () => runChild('adb', args, timeout, 'inherit'))
+export async function adbPassthrough(
+  args: string[],
+  timeout = 60,
+): Promise<void> {
+  await tracked(`adb ${args.join(' ')}`, () =>
+    runChild('adb', args, timeout, 'inherit'),
+  )
 }
 
 /**
  * Run `file` and return stdout. A timeout or an abort of the current attempt stops the process, and the
  * promise settles only once it has exited.
  */
-export async function run(file: string, args: string[], timeout: number, check = true): Promise<string> {
+export async function run(
+  file: string,
+  args: string[],
+  timeout: number,
+  check = true,
+): Promise<string> {
   const {code, stdout, stderr} = await runChild(file, args, timeout, 'pipe')
-  if (check && code !== 0) throw new CommandError(`${file} ${args.join(' ')} exited with ${code}: ${stderr.trim()}`)
+  if (check && code !== 0)
+    throw new CommandError(
+      `${file} ${args.join(' ')} exited with ${code}: ${stderr.trim()}`,
+    )
   return stdout
 }
 
@@ -87,7 +105,12 @@ function runChild(
             setTimeout(() => {
               finish()
               unstopped.push(`${file} ${args.join(' ')} (pid ${child.pid})`)
-              reject(new ProcessNotStoppedError(`${file} ${args.join(' ')} (pid ${child.pid}) still runs after SIGKILL`, {cause: reason}))
+              reject(
+                new ProcessNotStoppedError(
+                  `${file} ${args.join(' ')} (pid ${child.pid}) still runs after SIGKILL`,
+                  {cause: reason},
+                ),
+              )
             }, KILL_GRACE_SECONDS * 1000),
           )
         }, KILL_GRACE_SECONDS * 1000),
@@ -98,7 +121,17 @@ function runChild(
       for (const timer of timers) clearTimeout(timer)
       signal?.removeEventListener('abort', onAbort)
     }
-    timers.push(setTimeout(() => stop(new CommandError(`${file} ${args.join(' ')} timed out after ${timeout}s`)), timeout * 1000))
+    timers.push(
+      setTimeout(
+        () =>
+          stop(
+            new CommandError(
+              `${file} ${args.join(' ')} timed out after ${timeout}s`,
+            ),
+          ),
+        timeout * 1000,
+      ),
+    )
     signal?.addEventListener('abort', onAbort, {once: true})
     child.on('error', (error) => {
       finish()
@@ -107,7 +140,12 @@ function runChild(
     child.on('close', (code) => {
       finish()
       if (stopReason !== undefined) reject(stopReason)
-      else resolve({code, stdout: Buffer.concat(stdout).toString('utf8'), stderr: Buffer.concat(stderr).toString('utf8')})
+      else
+        resolve({
+          code,
+          stdout: Buffer.concat(stdout).toString('utf8'),
+          stderr: Buffer.concat(stderr).toString('utf8'),
+        })
     })
   })
 }
@@ -140,7 +178,10 @@ export class AdbConnection {
     // rejects with the abort reason and a server it launched over this shell ends.
     if (signal) {
       const onAbort = () => {
-        this.#error = signal.reason instanceof Error ? signal.reason : new Error(String(signal.reason))
+        this.#error =
+          signal.reason instanceof Error
+            ? signal.reason
+            : new Error(String(signal.reason))
         socket.destroy()
       }
       signal.addEventListener('abort', onAbort, {once: true})
@@ -187,7 +228,13 @@ export class AdbConnection {
         signal?.removeEventListener('abort', onAbort)
         resolve(new AdbConnection(socket, signal))
       })
-      socket.once('error', (error) => reject(new AdbError(`cannot reach the adb server: ${error.message}`, {cause: error})))
+      socket.once('error', (error) =>
+        reject(
+          new AdbError(`cannot reach the adb server: ${error.message}`, {
+            cause: error,
+          }),
+        ),
+      )
       socket.once('timeout', () => {
         socket.destroy()
         reject(new AdbError('timeout connecting to the adb server'))
@@ -196,11 +243,16 @@ export class AdbConnection {
   }
 
   /** Connect to the device's adbd and open `service` on it, e.g. "shell:ls" or "tcp:9008". */
-  static async service(service: string, timeout: number): Promise<AdbConnection> {
+  static async service(
+    service: string,
+    timeout: number,
+  ): Promise<AdbConnection> {
     const connection = await AdbConnection.open(timeout)
     try {
       const serial = process.env.ANDROID_SERIAL
-      await connection.command(serial ? `host:transport:${serial}` : 'host:transport-any')
+      await connection.command(
+        serial ? `host:transport:${serial}` : 'host:transport-any',
+      )
       throwIfAborted()
       await connection.command(service)
       return connection
@@ -224,7 +276,12 @@ export class AdbConnection {
 
   async command(request: string): Promise<void> {
     const body = Buffer.from(request, 'utf8')
-    this.socket.write(Buffer.concat([Buffer.from(body.length.toString(16).padStart(4, '0')), body]))
+    this.socket.write(
+      Buffer.concat([
+        Buffer.from(body.length.toString(16).padStart(4, '0')),
+        body,
+      ]),
+    )
     const status = (await this.readExact(4)).toString()
     if (status === 'OKAY') return
     if (status === 'FAIL') {
@@ -276,11 +333,16 @@ export class AdbConnection {
 }
 
 /** Run a shell command on the device over the socket protocol and return its output. */
-export async function deviceShell(command: string, timeout = 600): Promise<string> {
+export async function deviceShell(
+  command: string,
+  timeout = 600,
+): Promise<string> {
   return tracked(`shell ${command}`, async () => {
     const connection = await AdbConnection.service(`shell:${command}`, timeout)
     try {
-      return (await connection.readUntil(() => false)).toString('utf8').trimEnd()
+      return (await connection.readUntil(() => false))
+        .toString('utf8')
+        .trimEnd()
     } finally {
       connection.close()
     }
@@ -289,5 +351,11 @@ export async function deviceShell(command: string, timeout = 600): Promise<strin
 
 /** Quote arguments for the device shell. */
 export function shellQuote(args: string[]): string {
-  return args.map((argument) => (/^[\w@%+=:,./-]+$/.test(argument) ? argument : `'${argument.replaceAll("'", `'"'"'`)}'`)).join(' ')
+  return args
+    .map((argument) =>
+      /^[\w@%+=:,./-]+$/.test(argument)
+        ? argument
+        : `'${argument.replaceAll("'", `'"'"'`)}'`,
+    )
+    .join(' ')
 }

@@ -33,18 +33,28 @@ export class ReadTimeout extends Error {
   override name = 'ReadTimeout'
 }
 
-export type Target = {type?: string; url?: string; attached?: boolean; webSocketDebuggerUrl?: string}
+export type Target = {
+  type?: string
+  url?: string
+  attached?: boolean
+  webSocketDebuggerUrl?: string
+}
 
 /** The DevTools target list. 127.0.0.1, because adb forward listens on IPv4 only. */
 export async function targets(timeout: number): Promise<Target[]> {
   try {
     const attempt = currentSignal()
     const deadline = AbortSignal.timeout(timeout * 1000)
-    const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json`, {signal: attempt ? AbortSignal.any([attempt, deadline]) : deadline})
+    const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json`, {
+      signal: attempt ? AbortSignal.any([attempt, deadline]) : deadline,
+    })
     return (await response.json()) as Target[]
   } catch (error) {
     currentSignal()?.throwIfAborted()
-    if (error instanceof Error && error.name === 'TimeoutError') throw new ReadTimeout(`no answer from the target list in ${timeout}s`, {cause: error})
+    if (error instanceof Error && error.name === 'TimeoutError')
+      throw new ReadTimeout(`no answer from the target list in ${timeout}s`, {
+        cause: error,
+      })
     throw error
   }
 }
@@ -60,16 +70,27 @@ export async function cdpEval(expression: string): Promise<unknown> {
   let last: unknown
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
-      return await tracked(`cdp ${expression.slice(0, 40)}`, () => cdpEvalOnce(expression))
+      return await tracked(`cdp ${expression.slice(0, 40)}`, () =>
+        cdpEvalOnce(expression),
+      )
     } catch (error) {
       // Timeouts, dropped sockets and a target list that is not JSON are retried. A missing target, a
       // protocol error or an exception in the page fails at once.
-      if (error instanceof NoTargetError || error instanceof ProtocolError || error instanceof PageExceptionError) throw error
+      if (
+        error instanceof NoTargetError ||
+        error instanceof ProtocolError ||
+        error instanceof PageExceptionError
+      )
+        throw error
       last = error
       phase(`cdp dropped (${attempt + 1}): ${errorRepr(error)}, retrying`)
       await sleep(1.5)
       try {
-        await adb(['forward', `tcp:${CDP_PORT}`, 'localabstract:chrome_devtools_remote'])
+        await adb([
+          'forward',
+          `tcp:${CDP_PORT}`,
+          'localabstract:chrome_devtools_remote',
+        ])
       } catch {}
     }
   }
@@ -79,8 +100,11 @@ export async function cdpEval(expression: string): Promise<unknown> {
 async function cdpEvalOnce(expression: string): Promise<unknown> {
   // Match the whole URL. An empty `prefix=` is a prefix of every other prefix, so a tab Chrome restored from an
   // earlier test would otherwise match.
-  const page = (await targets(10)).find((target) => target.type === 'page' && target.url === currentUrl)
-  if (!page?.webSocketDebuggerUrl) throw new NoTargetError(`no page target for ${currentUrl}`)
+  const page = (await targets(10)).find(
+    (target) => target.type === 'page' && target.url === currentUrl,
+  )
+  if (!page?.webSocketDebuggerUrl)
+    throw new NoTargetError(`no page target for ${currentUrl}`)
   // Chrome names itself localhost in the socket URL. Keep the path and talk to the forwarded IPv4 port.
   const url = new URL(page.webSocketDebuggerUrl)
   url.host = `127.0.0.1:${CDP_PORT}`
@@ -100,15 +124,27 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
       if (error) reject(error)
       else resolve(value)
     }
-    const timer = setTimeout(() => finish(new WebSocketError('timed out after 10s')), 10_000)
+    const timer = setTimeout(
+      () => finish(new WebSocketError('timed out after 10s')),
+      10_000,
+    )
     signal?.addEventListener('abort', onAbort, {once: true})
     socket.addEventListener('open', () => {
-      socket.send(JSON.stringify({id: 1, method: 'Runtime.evaluate', params: {expression, returnByValue: true}}))
+      socket.send(
+        JSON.stringify({
+          id: 1,
+          method: 'Runtime.evaluate',
+          params: {expression, returnByValue: true},
+        }),
+      )
     })
     socket.addEventListener('message', (event) => {
       let message: {
         id?: number
-        result?: {result?: {value?: unknown}; exceptionDetails?: {text?: string; exception?: {description?: string}}}
+        result?: {
+          result?: {value?: unknown}
+          exceptionDetails?: {text?: string; exception?: {description?: string}}
+        }
         error?: unknown
       }
       try {
@@ -121,11 +157,20 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
       const exception = message.result?.exceptionDetails
       if (exception) {
         const description = exception.exception?.description ?? 'no description'
-        finish(new PageExceptionError(`${exception.text ?? 'Uncaught'} in \`${expression.slice(0, 60)}\`: ${description}`))
-      } else if (!message.result?.result) finish(new ProtocolError(JSON.stringify(message.error ?? message)))
+        finish(
+          new PageExceptionError(
+            `${exception.text ?? 'Uncaught'} in \`${expression.slice(0, 60)}\`: ${description}`,
+          ),
+        )
+      } else if (!message.result?.result)
+        finish(new ProtocolError(JSON.stringify(message.error ?? message)))
       else finish(undefined, message.result.result.value)
     })
-    socket.addEventListener('error', () => finish(new WebSocketError('connection error')))
-    socket.addEventListener('close', (event) => finish(new WebSocketError(`closed before a reply, code ${event.code}`)))
+    socket.addEventListener('error', () =>
+      finish(new WebSocketError('connection error')),
+    )
+    socket.addEventListener('close', (event) =>
+      finish(new WebSocketError(`closed before a reply, code ${event.code}`)),
+    )
   })
 }
