@@ -5,12 +5,14 @@ import {errorRepr, sleep} from '../device/util.ts'
 
 for (let attempt = 1; ; attempt++) {
   try {
-    console.log(`u2.jar ready at ${await ensureJar()}`)
+    process.stdout.write(`u2.jar ready at ${await ensureJar()}\n`)
     break
   } catch (error) {
-    if (attempt >= 3) throw error
-    console.log(
-      `u2.jar download failed (${attempt}): ${errorRepr(error)}, retrying`,
+    if (attempt >= 3) {
+      throw error
+    }
+    process.stdout.write(
+      `u2.jar download failed (${attempt}): ${errorRepr(error)}, retrying\n`,
     )
     // Backs off before the next download. A failed download leaves nothing to poll.
     await sleep(5)

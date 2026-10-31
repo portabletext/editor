@@ -11,13 +11,16 @@ describe(withDriverRetry.name, () => {
 
     const result = await withDriverRetry({
       name: 'ja-typing',
-      attempt: async (attempt) => {
+      attempt: (attempt) => {
         calls.push(`attempt ${attempt}`)
-        if (attempt === 1) throw new Error('Gboard window did not appear')
-        return 'typed'
+        if (attempt === 1) {
+          return Promise.reject(new Error('Gboard window did not appear'))
+        }
+        return Promise.resolve('typed')
       },
-      restart: async () => {
+      restart: () => {
         calls.push('restart')
+        return Promise.resolve()
       },
     })
 
@@ -33,12 +36,13 @@ describe(withDriverRetry.name, () => {
     await expect(
       withDriverRetry({
         name: 'ja-typing',
-        attempt: async (attempt) => {
+        attempt: (attempt) => {
           calls.push(`attempt ${attempt}`)
-          throw new Error(`mistap ${attempt}`)
+          return Promise.reject(new Error(`mistap ${attempt}`))
         },
-        restart: async () => {
+        restart: () => {
           calls.push('restart')
+          return Promise.resolve()
         },
       }),
     ).rejects.toThrow('mistap 2')
@@ -51,12 +55,15 @@ describe(withDriverRetry.name, () => {
     await expect(
       withDriverRetry({
         name: 'ja-typing',
-        attempt: async (attempt) => {
+        attempt: (attempt) => {
           calls.push(`attempt ${attempt}`)
-          throw new Error('adb shell input text still runs after SIGKILL')
+          return Promise.reject(
+            new Error('adb shell input text still runs after SIGKILL'),
+          )
         },
-        restart: async () => {
+        restart: () => {
           calls.push('restart')
+          return Promise.resolve()
         },
         canRetry: () => false,
       }),
@@ -69,12 +76,13 @@ describe(withDriverRetry.name, () => {
 
     const typed = await withDriverRetry({
       name: 'ja-typing',
-      attempt: async (attempt) => {
+      attempt: (attempt) => {
         calls.push(`attempt ${attempt}`)
-        return {text: 'ｋ用今日', nested: 1}
+        return Promise.resolve({text: 'ｋ用今日', nested: 1})
       },
-      restart: async () => {
+      restart: () => {
         calls.push('restart')
+        return Promise.resolve()
       },
     })
 

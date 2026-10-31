@@ -15,7 +15,7 @@ import {
 
 vi.mock(import('../device/adb.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  adb: vi.fn(async () => ''),
+  adb: vi.fn(() => Promise.resolve('')),
 }))
 
 describe(nestedCompositionstart.name, () => {
