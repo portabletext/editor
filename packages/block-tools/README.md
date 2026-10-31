@@ -13,7 +13,7 @@ This package wraps [`@portabletext/html`](../html) for use with Sanity schemas. 
 
 ## Usage
 
-```ts
+```ts nocheck
 import {htmlToBlocks} from '@portabletext/block-tools'
 import {Schema} from '@sanity/schema'
 
@@ -58,7 +58,8 @@ Internally delegates to `@portabletext/html` after converting the Sanity schema.
 
 **NOTE:** To use in Node.js, you need to provide a `parseHtml` option - generally using `JSDOM`:
 
-```ts
+```ts nocheck
+import {htmlToBlocks} from '@portabletext/block-tools'
 import {JSDOM} from 'jsdom'
 
 const blocks = htmlToBlocks(html, blockContentType, {

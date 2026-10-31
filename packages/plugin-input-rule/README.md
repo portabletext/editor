@@ -83,7 +83,11 @@ A rule looks like a Behavior, but three contracts matter as soon as its actions 
 
 When an action needs the document as it looks after earlier raised events have applied, raise a custom event and let a companion Behavior do the reading; a Behavior handling a raised event sees the document with all previously raised events applied:
 
-```tsx
+```tsx nocheck
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {getFocusTextBlock} from '@portabletext/editor/selectors'
+import {defineInputRule} from '@portabletext/plugin-input-rule'
+
 const bulletListRule = defineInputRule({
   on: /^[-*] $/,
   actions: [
@@ -120,6 +124,8 @@ const convertToList = defineBehavior({
 When a rule needs the location of a _part_ of its match, capture that part in a **named group** and read it back by name from `match.groups`:
 
 ```tsx
+import {defineInputRule} from '@portabletext/plugin-input-rule'
+
 const mentionRule = defineInputRule({
   on: /@(?<handle>\w+)!$/,
   guard: ({event}) => {
@@ -167,7 +173,7 @@ In fact, the production-ready [`@portabletext/plugin-typography`](../plugin-typo
 
 A transform that should replace only _part_ of its match uses the record form of `transform`: keys name the capture groups to replace, each with its own transform:
 
-```tsx
+```tsx continue
 const multiplicationRule = defineTextTransformRule({
   on: /\d+\s?(?<operator>[*x])\s?\d+/,
   // Only the operator's span is replaced; the digits around it stay
@@ -189,6 +195,9 @@ Input Rules can handle more complex transformations. Here are two advanced examp
 This example shows how to convert markdown-style link syntax `[text](url)` into proper link annotations:
 
 ```tsx
+import {raise, type BehaviorAction} from '@portabletext/editor/behaviors'
+import {defineInputRule} from '@portabletext/plugin-input-rule'
+
 const markdownLinkRule = defineInputRule({
   on: /\[(?<text>.+)]\((?<href>.+)\)/,
   actions: [
@@ -276,6 +285,9 @@ const markdownLinkRule = defineInputRule({
 This example demonstrates how to convert text patterns like `{AAPL}` into custom inline objects:
 
 ```tsx
+import {raise} from '@portabletext/editor/behaviors'
+import {defineInputRule} from '@portabletext/plugin-input-rule'
+
 const stockTickerRule = defineInputRule({
   on: /\{(?<symbol>.+)\}/,
   guard: ({snapshot, event}) => {
@@ -343,7 +355,9 @@ Inline objects don't contribute to the text your RegExp matches against, so a pa
 
 Rules whose actions leave part of the matched range in place can grant leniency per named capture group:
 
-```tsx
+```tsx nocheck
+import {defineInputRule} from '@portabletext/plugin-input-rule'
+
 const strongPairRule = defineInputRule({
   on: /\*\*(?<content>[^*\n]+?)\*\*$/,
   // The actions decorate the content and delete only the `**` markers, so

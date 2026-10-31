@@ -49,7 +49,7 @@ Vitest opens a browser window unless it detects CI. Add `headless: true` to `bro
 
 If you use TypeScript, declare `.feature` file imports:
 
-```ts
+```ts nocheck
 // global.d.ts
 declare module '*.feature?raw' {
   const content: string
@@ -61,7 +61,7 @@ declare module '*.feature?raw' {
 
 Every test needs an editor on the page and a way to reach the editor instance. Write a small helper for it. It renders `EditorProvider` and `PortableTextEditable` with `render` from `vitest-browser-react`, and `EditorRefPlugin` hands you the editor instance through a ref:
 
-```tsx
+```tsx nocheck
 // test-editor.tsx
 import {
   EditorProvider,
@@ -111,7 +111,7 @@ The helper returns the editor instance and a locator for the editable element. P
 
 For a simple behavior, render the editor, type into it, and assert on the result:
 
-```tsx
+```tsx nocheck
 // uppercase-a.test.tsx
 import {defineSchema} from '@portabletext/editor'
 import {defineBehavior, execute} from '@portabletext/editor/behaviors'
@@ -246,7 +246,7 @@ The `Given` step focuses the editor, then inserts the blocks and puts the caret 
 
 Connect the feature file, the step definitions, and the editor in a test file. A `Before` hook renders a fresh editor for each scenario:
 
-```tsx
+```tsx nocheck
 // em-dash.test.tsx
 import {defineSchema} from '@portabletext/editor'
 import {TypographyPlugin} from '@portabletext/plugin-typography'
@@ -284,7 +284,7 @@ Each scenario becomes a separate test case. When a step fails, the error points 
 
 As your features grow, add steps where you need them. A step can live next to the test that uses it and be passed alongside your shared steps. This one inserts several characters in a single event, the way Android keyboards often do:
 
-```tsx
+```tsx nocheck
 // em-dash-insert.test.tsx
 import {defineSchema} from '@portabletext/editor'
 import {TypographyPlugin} from '@portabletext/plugin-typography'

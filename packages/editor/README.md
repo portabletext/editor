@@ -60,7 +60,7 @@ We'll start with a schema that includes some common rich text elements.
 > [!NOTE]
 > This guide includes a limited set of schema types, or rich text elements, to get you started. See the [rendering guide](https://www.portabletext.org/editor/guides/custom-rendering/) for additional examples.
 
-```tsx
+```tsx continue
 // App.tsx
 // ...
 const schemaDefinition = defineSchema({
@@ -98,7 +98,7 @@ With a schema defined, you have enough to render the editor. It won't do much ye
 
 Add `useState` from React, then scaffold out a basic application component. For example:
 
-```tsx
+```tsx nocheck
 // app.tsx
 import {
   defineDecorator,
@@ -156,7 +156,7 @@ At this point the editor renders every text block as plain text, whatever its st
 
 Start by registering the text block render with `defineTextBlock`. The editor dispatches every text block to this callback. Your callback owns the block's wrapper element, so spread `props.attributes` on the outermost element you return, and use the block's `style` to pick the element.
 
-```tsx
+```tsx continue
 const textBlock = defineTextBlock({
   type: 'block',
   render: (props) => {
@@ -187,7 +187,7 @@ With this in mind, continue for the remaining schema types.
 
 Register a decorator with `defineDecorator`, one per decorator name.
 
-```tsx
+```tsx continue
 const strong = defineDecorator({
   type: 'strong',
   render: ({children}) => <strong>{children}</strong>,
@@ -209,7 +209,7 @@ const nodes = [textBlock, strong, em, underline]
 
 Mount every registration through one `NodePlugin`, inside the `EditorProvider`. Keep the `nodes` array itself at module scope, as above: a fresh array on every render would make `NodePlugin` unregister and re-register on every keystroke. You can learn more about [customizing the rendering](https://www.portabletext.org/editor/guides/custom-rendering/) in the documentation.
 
-```tsx
+```tsx nocheck
 <>
   <NodePlugin nodes={nodes} />
   <PortableTextEditable style={{border: '1px solid black', padding: '0.5em'}} />
@@ -228,7 +228,7 @@ A toolbar is a collection of UI elements for interacting with the editor. [`@por
 4. Send events to the editor to toggle the styles and decorators whenever the buttons are clicked.
 5. Render the toolbar buttons.
 
-```tsx
+```tsx continue
 // App.tsx
 // ...
 import {useEditor} from '@portabletext/editor'
@@ -291,9 +291,11 @@ The `useEditor` hook gives you access to the active editor. `send` lets you send
 
 With the registrations created and a toolbar in place, you can fully render the editor. Add the `Toolbar` inside the `EditorProvider`.
 
-```tsx
+```tsx continue
 // App.tsx
 // ...
+import {useState} from 'react'
+
 function App() {
   const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
     undefined,
@@ -332,7 +334,7 @@ You can now enter text and interact with the toolbar buttons to toggle the style
 
 You can preview the Portable Text from the editor by reading the state. Add the following after the `EditorProvider`.
 
-```tsx
+```tsx nocheck
 <pre style={{border: '1px dashed black', padding: '0.5em'}}>
   {JSON.stringify(value, null, 2)}
 </pre>

@@ -430,7 +430,9 @@ export type RegistrableNode =
  * The `node` argument of `render` narrows to a portable text object.
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineContainer} from '@portabletext/editor'
+ *
  * defineContainer({
  *   type: 'table',
  *   arrayField: 'rows',
@@ -486,7 +488,9 @@ export function defineContainer<const TType extends string>(config: {
  * a `code-block` container).
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineSpan} from '@portabletext/editor'
+ *
  * defineSpan({
  *   type: 'span',
  *   render: ({attributes, children}) => (
@@ -517,7 +521,9 @@ export function defineSpan<const TType extends string>(config: {
  * `defineSpan`/`defineTextBlock`).
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineDecorator} from '@portabletext/editor'
+ *
  * defineDecorator({
  *   type: 'strong',
  *   render: ({children}) => <strong>{children}</strong>,
@@ -544,7 +550,9 @@ export function defineDecorator(config: {
  * `defineInlineObject`/`defineBlockObject`).
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineAnnotation} from '@portabletext/editor'
+ *
  * defineAnnotation({
  *   type: 'link',
  *   render: ({annotation, children}) => (
@@ -572,7 +580,9 @@ export function defineAnnotation(config: {
  * makes the caret unable to land on the element.
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineBlockObject} from '@portabletext/editor'
+ *
  * defineBlockObject({
  *   type: 'image',
  *   render: ({attributes, children, node}) => (
@@ -607,7 +617,9 @@ export function defineBlockObject<const TType extends string>(config: {
  * makes the caret unable to land on the element.
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineInlineObject} from '@portabletext/editor'
+ *
  * defineInlineObject({
  *   type: 'mention',
  *   render: ({attributes, children, node}) => (
@@ -643,7 +655,9 @@ export function defineInlineObject<const TType extends string>(config: {
  * inside a `code-block` container).
  *
  * @example
- * ```ts
+ * ```tsx
+ * import {defineTextBlock} from '@portabletext/editor'
+ *
  * defineTextBlock({
  *   type: 'block',
  *   render: ({attributes, children}) => (

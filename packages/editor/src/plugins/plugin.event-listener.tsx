@@ -38,7 +38,7 @@ import {useEditor} from '../editor/use-editor'
  * ```
  * @example
  * Handle events when there is a mutation.
- * ```tsx
+ * ```tsx continue
  * <EventListenerPlugin
  *  on={(event) => {
  *    if (event.type === 'mutation') {

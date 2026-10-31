@@ -19,7 +19,7 @@ import {BehaviorPlugin} from '@portabletext/editor/plugins'
 
 Then, register the behavior within the `EditorProvider` using the `BehaviorPlugin`.
 
-```tsx
+```tsx nocheck
 <EditorProvider
   initialConfig={{
     schemaDefinition,
@@ -50,6 +50,8 @@ Read more about using behaviors and building your own with these guides:
 Send an `effect` action along with a `forward` action to perform side effects without altering the chain of events.
 
 ```js
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const logInsertText = defineBehavior({
   on: 'insert.text',
   actions: [
@@ -92,6 +94,8 @@ const logInsertText = defineBehavior({
 You can write behaviors to auto-close common paired characters. This example closes parentheses, and then moves the cursor in between the two characters. This logic can expand to cover more sets.
 
 ```js
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const autoCloseParens = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => {
@@ -196,6 +200,8 @@ function EmojiPickerComponent() {
 Sometimes you want to trigger an event from within an action. This sends the event back to the editor, where the editor treats it like any other event.
 
 ```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',

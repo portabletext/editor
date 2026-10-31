@@ -232,7 +232,7 @@ export interface RangeDecoration {
    * outermost.
    *
    * @example
-   * ```tsx
+   * ```tsx nocheck
    * (rangeComponentProps: PropsWithChildren) => (
    *    <SearchResultHighlight>
    *      {rangeComponentProps.children}

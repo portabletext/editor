@@ -51,7 +51,7 @@ markdownToPortableText('\\*bar\\*')
 
 Constructs whose type the schema doesn't declare degrade predictably: they keep their content and drop the structure that named them. A mark, list, or task checkbox whose type isn't in the schema keeps its text and drops the formatting.
 
-```ts
+```ts continue
 import {compileSchema, defineSchema} from '@portabletext/schema'
 
 const schema = compileSchema(defineSchema({})) // no 'strong' decorator declared
@@ -64,7 +64,7 @@ markdownToPortableText('**bar**', {schema})
 
 Portable Text structures with no Markdown form degrade predictably going back out. GFM tables have one header row, so header rows beyond the first flatten into the body.
 
-```ts
+```ts continue
 portableTextToMarkdown([
   {
     _type: 'table',
@@ -117,7 +117,7 @@ portableTextToMarkdown([
 
 Deep or level-skipping list levels collapse to relative nesting: a list's first item renders at the top level whatever its `level`, and each deeper jump between items indents one step, however many levels it skips.
 
-```ts
+```ts continue
 portableTextToMarkdown([
   {
     _type: 'block',
@@ -143,7 +143,12 @@ portableTextToMarkdown([
 
 Unknown object types are the exception: they round-trip. A block-level object renders as a fence with a `json:object` info string holding the value as JSON, and an inline object as a `json:object`-tagged inline code span. The parser turns both back into the objects they came from, whatever the schema declares.
 
-````ts
+````ts nocheck
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
 portableTextToMarkdown([{_type: 'widget', _key: 'w1', color: 'blue'}])
 // -> '```json:object\n{\n  "_type": "widget",\n  "_key": "w1",\n  "color": "blue"\n}\n```'
 
@@ -158,7 +163,7 @@ A `json:object` fence or tagged span whose body is not a JSON object with a non-
 
 Text block and span keys are regenerated on every parse, and adjacent spans with identical marks merge into one. Unknown objects keep their `_key` through the round trip, since it travels inside the JSON payload.
 
-```ts
+```ts continue
 portableTextToMarkdown([
   {
     _type: 'block',
@@ -179,7 +184,7 @@ markdownToPortableText('**foobar**')
 
 A `\n` inside a span's text and hard-break syntax (two or more trailing spaces, or a backslash, before the newline) are exclusive counterparts in both directions: a `\n` always renders as hard-break syntax on the way out, and hard-break syntax always becomes `\n` on the way in, never the space a soft wrap joins with.
 
-```ts
+```ts continue
 markdownToPortableText('line one\nline two')
 // -> one span, text: 'line one line two' (soft wrap, joined with a space)
 
@@ -205,7 +210,12 @@ Five named exceptions qualify the fixpoint claim in guarantee 2 above.
 
 **Linkified substrings.** An explicit-scheme URL or an email address in a span's text is never escaped: the text stays byte-identical, but it gains a `link` mark on the next parse (autolinking is a parser feature, not a round-trip bug).
 
-```ts
+```ts nocheck
+import {
+  markdownToPortableText,
+  portableTextToMarkdown,
+} from '@portabletext/markdown'
+
 portableTextToMarkdown([
   {
     _type: 'block',
@@ -228,7 +238,7 @@ The next serialization renders the now-marked span as the explicit inline link `
 
 Fuzzy `www.` forms follow the same unescaped-and-linkified path only while they carry no markdown-significant punctuation. Once one does, the punctuation takes normal escaping instead, the same as it would anywhere else in a span's text:
 
-```ts
+```ts continue
 portableTextToMarkdown([
   {
     _type: 'block',
@@ -246,7 +256,7 @@ markdownToPortableText('see www.example.com/\\*x\\* today')
 
 **Heading hard-break structural split.** A hard break inside a heading forces a structural split into a second block on reparse, since an ATX heading is single-line. The text itself still survives, split across the two blocks.
 
-```ts
+```ts continue
 portableTextToMarkdown([
   {
     _type: 'block',
@@ -263,7 +273,7 @@ markdownToPortableText('# foo  \nbar')
 
 **CommonMark-inherent whitespace trimming.** Leading or trailing whitespace that CommonMark's own block parsing trims isn't part of the fixpoint claim.
 
-```ts
+```ts continue
 markdownToPortableText('  hello world  ')
 // -> span text: 'hello world' (no leading or trailing spaces)
 ```

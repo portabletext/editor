@@ -12,7 +12,7 @@ npm install @portabletext/plugin-dnd
 
 The editor never draws a drop indicator: showing where a dragged block would land is left to your render, since drop indication is pointer-driven UI, not document structure. This plugin tracks the position for you, derived from the editor's public `drag.*` behavior events. The [Drag and drop blocks guide](https://www.portabletext.org/editor/guides/drag-and-drop/) walks through drag handles and drop indicators.
 
-```tsx
+```tsx nocheck
 import {DndProvider, useDropPosition} from '@portabletext/plugin-dnd'
 
 function MyEditor() {
@@ -59,7 +59,9 @@ function DropIndicator({edge}: {edge: 'start' | 'end'}) {
 
 Call `useDropPosition` from a component the render returns, not inline in the `render` callback (it is a hook):
 
-```tsx
+```tsx nocheck
+import {defineTextBlock} from '@portabletext/editor'
+
 defineTextBlock({type: '*', render: (props) => <MyTextBlock {...props} />})
 ```
 

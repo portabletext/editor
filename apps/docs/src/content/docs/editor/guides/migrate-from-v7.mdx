@@ -5,7 +5,7 @@ description: Everything v8 of the Portable Text Editor removes or changes, and w
 
 v7 introduced [containers](/editor/concepts/containers/) and, alongside them, a new [rendering API](/editor/concepts/rendering/): node registrations. In v7 you rendered through one callback per node kind, switching on types inside it. With registrations, each node type is defined once, with its own `render`:
 
-```tsx
+```tsx nocheck
 // v7: a render prop on <PortableTextEditable>
 <PortableTextEditable
   renderDecorator={(props) =>

@@ -91,6 +91,8 @@ export type TypographyPluginProps<
    *
    * @example
    * ```tsx
+   * import {TypographyPlugin} from '@portabletext/plugin-typography'
+   *
    * // Enable multiplication and plusMinus in addition to default rules
    * <TypographyPlugin enable={['multiplication', 'plusMinus']} />
    * ```
@@ -103,6 +105,8 @@ export type TypographyPluginProps<
    *
    * @example
    * ```tsx
+   * import {TypographyPlugin} from '@portabletext/plugin-typography'
+   *
    * // Disable em dash from the default rules
    * <TypographyPlugin disable={['emDash']} />
    * ```

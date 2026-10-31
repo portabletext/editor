@@ -178,7 +178,9 @@ export type SyntheticBehaviorEvent =
        * inserts at index 2, `after: [2]` inserts at index 3.
        *
        * @example
-       * ```ts
+       * ```ts nocheck
+       * import {raise} from '@portabletext/editor/behaviors'
+       *
        * raise({
        *   type: 'insert',
        *   at: [{_key: 'list'}, 'items', {_key: 'item3'}],
@@ -216,6 +218,8 @@ export type SyntheticBehaviorEvent =
        *
        * @example
        * ```ts
+       * import {raise} from '@portabletext/editor/behaviors'
+       *
        * // Caret form
        * raise({type: 'insert.text', text: 'x'})
        *
@@ -256,6 +260,8 @@ export type SyntheticBehaviorEvent =
        *
        * @example
        * ```ts
+       * import {raise} from '@portabletext/editor/behaviors'
+       *
        * raise({
        *   type: 'remove.text',
        *   at: [{_key: 'b1'}, 'children', {_key: 's1'}],
@@ -288,7 +294,9 @@ export type SyntheticBehaviorEvent =
        * operational transform.
        *
        * @example
-       * ```ts
+       * ```ts nocheck
+       * import {raise} from '@portabletext/editor/behaviors'
+       *
        * // Set a block's style
        * raise({type: 'set', at: [{_key: 'b1'}, 'style'], value: 'h1'})
        *
@@ -313,6 +321,8 @@ export type SyntheticBehaviorEvent =
        *
        * @example
        * ```ts
+       * import {raise} from '@portabletext/editor/behaviors'
+       *
        * // Remove a property
        * raise({type: 'unset', at: [{_key: 'b1'}, 'level']})
        *

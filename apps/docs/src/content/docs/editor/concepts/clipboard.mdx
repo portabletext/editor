@@ -39,7 +39,9 @@ Within a single `serialize.data` or `deserialize.data` event, the first behavior
 
 That makes the guard the contract. A guard that returns `false` declines cleanly and costs nothing, so a behavior should claim a format only in the situation it actually cares about:
 
-```tsx
+```tsx nocheck
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+
 defineBehavior({
   on: 'serialize.data',
   guard: ({snapshot, event}) => {

@@ -18,19 +18,22 @@ export type EditorSelector<TSelected> = (snapshot: EditorSnapshot) => TSelected
  * @example
  * Pass a selector as the second argument
  * ```tsx
- * import { useEditorSelector } from '@portabletext/editor'
+ * import {useEditor, useEditorSelector} from '@portabletext/editor'
+ * import {getActiveStyle} from '@portabletext/editor/selectors'
  *
- * function MyComponent(editor) {
- *  const value = useEditorSelector(editor, selector)
+ * function MyComponent() {
+ *  const editor = useEditor()
+ *  const activeStyle = useEditorSelector(editor, getActiveStyle)
  * }
  * ```
  * @example
  * Pass an inline selector as the second argument.
  * In this case, use the editor context to obtain the schema.
  * ```tsx
- * import { useEditorSelector } from '@portabletext/editor'
+ * import {useEditor, useEditorSelector} from '@portabletext/editor'
  *
- * function MyComponent(editor) {
+ * function MyComponent() {
+ *  const editor = useEditor()
  *  const schema = useEditorSelector(editor, (snapshot) => snapshot.context.schema)
  * }
  * ```
