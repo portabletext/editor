@@ -138,8 +138,8 @@ export type LogLengths = {decorated: number; committed: number; deletions: numbe
 export type TypeOnDeviceOptions = {
   /** `ja` switches Gboard to its Japanese QWERTY layout before typing. */
   lang: 'ja' | 'en'
-  /** `editor.html` can carry query parameters, for example `editor.html?decorate=you`. */
-  page: 'plain.html' | 'editor.html' | `editor.html?${string}`
+  /** `editor.html` can carry query parameters, for example `editor.html?decorate=you`, and `split.html` needs its `mode` and `word`. */
+  page: 'plain.html' | 'editor.html' | `editor.html?${string}` | `split.html?${string}`
   /** Text the block holds before typing, `''` for an empty block. */
   prefix: string
   words: Word[]

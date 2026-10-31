@@ -62,7 +62,8 @@
         "scripts/*.ts",
         "scripts/lib/*.ts",
         "scripts/fixtures/suites/*.ts",
-        "page/editor.tsx"
+        "page/editor.tsx",
+        "page/split.ts"
       ]
     },
     "apps/studio": {
