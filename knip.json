@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": ["@types/react", "@types/react-dom", "@types/react-is"],
-  "ignore": ["oxlint-plugins/**"],
+  "ignore": ["oxlint-plugins/**", "packages/*/bundle-tests/**"],
   "workspaces": {
     "packages/*": {
       "entry": ["src/index.ts!", "package.config.ts!"],
@@ -75,7 +75,7 @@
     },
     "examples/*": {},
     ".": {
-      "entry": ["bundle-stats.config.ts"],
+      "entry": ["bundle-stats.config.ts", "build-config/*.d.ts"],
       "ignoreDependencies": ["@playwright/test"]
     }
   }

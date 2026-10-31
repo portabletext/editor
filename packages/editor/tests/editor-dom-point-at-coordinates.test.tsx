@@ -36,7 +36,7 @@ function withCaret(
 }
 
 describe('editor.dom.getPointAtCoordinates', () => {
-  test('round-trips with getSelectionRect (pixels back to the same point)', async () => {
+  test('Scenario: getPointAtCoordinates round-trips with getSelectionRect back to the same point', async () => {
     const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,
@@ -57,7 +57,7 @@ describe('editor.dom.getPointAtCoordinates', () => {
     })
   })
 
-  test('returns null for coordinates outside the editor', async () => {
+  test('Scenario: getPointAtCoordinates returns null for coordinates outside the editor', async () => {
     const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,

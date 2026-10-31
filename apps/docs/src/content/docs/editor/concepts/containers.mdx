@@ -117,7 +117,7 @@ Registering a container also normalizes the value: existing blocks of the regist
 
 A container registration that doesn't match the schema is skipped with a `console.warn` naming the actual mismatch: an unknown type, a missing field, a field that isn't an array, or an array of primitives only. The editor keeps working; the type renders as an ordinary block object until the registration and schema agree.
 
-Containers only exist as registrations, there's no legacy render prop to migrate from. If the rest of your editor still renders through the deprecated props, the [migration guide](/editor/guides/migrate-render-props/) covers moving those to registrations too.
+Containers only exist as registrations, there's no legacy render prop to migrate from. If the rest of your editor still renders through the render props removed in this major, the [migration guide](/editor/guides/migrate-render-props/) covers moving those to registrations too.
 
 ## Editing follows the sub-schema
 

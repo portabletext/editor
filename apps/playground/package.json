@@ -12,7 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.6",
+    "@floating-ui/react-dom": "^2.1.9",
     "@portabletext/editor": "workspace:*",
     "@portabletext/html": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
@@ -31,17 +31,17 @@
     "@portabletext/react": "catalog:tooling",
     "@portabletext/toolbar": "workspace:*",
     "@xstate/react": "catalog:",
-    "emojilib": "^4.0.2",
-    "fuse.js": "^7.1.0",
+    "emojilib": "^4.0.3",
+    "fuse.js": "^7.5.0",
     "lucide-react": "catalog:tooling",
     "react": "catalog:",
-    "react-aria-components": "^1.11.0",
+    "react-aria-components": "^1.22.1",
     "react-dom": "catalog:",
     "react-is": "^19.2.7",
     "remeda": "catalog:tooling",
-    "shiki": "^3.17.0",
+    "shiki": "^3.23.0",
     "xstate": "catalog:",
-    "zod": "^4.1.12"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:tooling",

@@ -179,7 +179,7 @@ function resolveTarget(args: {
     return {kind: 'after', blockPath: endBlockPath}
   }
 
-  const schemaContext = {schema: editor.snapshot.context.schema}
+  const schemaContext = editor.snapshot.context
 
   if (!at) {
     if (isEmptyTextBlock(schemaContext, endBlock)) {
@@ -611,13 +611,9 @@ function executeDeleteThenInsert(args: {
   }
 
   const resolvedBlock = getParent(editor.snapshot, collapsedPoint.path, {
-    match: (node) =>
-      isTextBlock({schema: editor.snapshot.context.schema}, node),
+    match: (node) => isTextBlock(editor.snapshot.context, node),
   })
-  const blockIsText = isTextBlock(
-    {schema: editor.snapshot.context.schema},
-    block,
-  )
+  const blockIsText = isTextBlock(editor.snapshot.context, block)
 
   // For `select: 'none'`, the desired restored selection is the collapsed
   // post-delete range (not the original expanded range). Track it through
@@ -742,11 +738,11 @@ function adjustFragmentKeys(args: {
 }): {adjustedBlock: Node; adjustedMarkDefs: Array<{_key: string}> | undefined} {
   const {context, block, endBlock} = args
 
-  if (!isTextBlock({schema: context.schema}, block)) {
+  if (!isTextBlock(context, block)) {
     return {adjustedBlock: block, adjustedMarkDefs: undefined}
   }
 
-  if (!isTextBlock({schema: context.schema}, endBlock)) {
+  if (!isTextBlock(context, endBlock)) {
     return {adjustedBlock: block, adjustedMarkDefs: block.markDefs}
   }
 
@@ -815,7 +811,7 @@ function insertFragmentChildren(
   block: Node,
   at: Point,
 ): string | undefined {
-  if (!isTextBlock({schema: editor.snapshot.context.schema}, block)) {
+  if (!isTextBlock(editor.snapshot.context, block)) {
     return undefined
   }
 
@@ -834,10 +830,7 @@ function insertFragmentChildren(
     const firstChild = block.children[0]!
     const existingEntry = getSpan(editor.snapshot, at.path)
 
-    if (
-      existingEntry &&
-      isSpan({schema: editor.snapshot.context.schema}, firstChild)
-    ) {
+    if (existingEntry && isSpan(editor.snapshot.context, firstChild)) {
       if (firstChild.text.length > 0) {
         editor.apply({
           type: 'insert.text',

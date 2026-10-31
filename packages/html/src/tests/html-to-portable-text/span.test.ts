@@ -6,7 +6,7 @@ import {createTestKeyGenerator} from '../test-key-generator'
 
 const schema = defaultSchema
 
-describe('htmlToPortableText', () => {
+describe(htmlToPortableText.name, () => {
   test('span with space', () => {
     expect(
       htmlToPortableText(`a<span> </span>b`, {

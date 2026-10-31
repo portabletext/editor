@@ -114,7 +114,7 @@ afterEach(() => {
 })
 
 describe('preventOverlappingAnnotations recursion', () => {
-  test('`at` focus pointing at a removed span while a link exists later in the block', async () => {
+  test('Scenario: Adding a link with an `at` focus pointing at a removed span while a link exists later in the block', async () => {
     const {editor, addRaises, consoleErrors, keys} = await runScenario(
       ({blockKey, spanAKey}) => ({
         anchor: {
@@ -137,7 +137,7 @@ describe('preventOverlappingAnnotations recursion', () => {
     ).toEqual([keys.linkKey])
   })
 
-  test('`at` anchor touching the end of an annotated span', async () => {
+  test('Scenario: Adding a link with an `at` anchor touching the end of an annotated span', async () => {
     const {editor, addRaises, consoleErrors, keys} = await runScenario(
       ({blockKey, spanAKey, spanBKey}) => ({
         anchor: {
@@ -175,7 +175,7 @@ describe('preventOverlappingAnnotations recursion', () => {
     ])
   })
 
-  test('`at` focus touching the start of an annotated span', async () => {
+  test('Scenario: Adding a link with an `at` focus touching the start of an annotated span', async () => {
     const {editor, addRaises, consoleErrors, keys} = await runScenario(
       ({blockKey, spanAKey, spanBKey}) => ({
         anchor: {

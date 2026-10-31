@@ -121,107 +121,43 @@ export const coreDndBehaviors = [
     actions: [
       ({dom, event}, {draggedDomNodes, selectingEntireBlocks}) => {
         const dragGhost = document.createElement('div')
+        const nodes = selectingEntireBlocks
+          ? draggedDomNodes.blockNodes
+          : draggedDomNodes.childNodes
+
+        // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
+        for (const clone of nodes.map((node) => node.cloneNode(true))) {
+          if (selectingEntireBlocks && clone instanceof HTMLElement) {
+            clone.style.position = 'relative'
+          }
+          dragGhost.appendChild(clone)
+        }
 
         if (selectingEntireBlocks) {
-          // Clone the DOM Nodes so they won't be visually clipped by scroll-containers etc.
-          const clonedBlockNodes = draggedDomNodes.blockNodes.map((node) =>
-            node.cloneNode(true),
-          )
-
-          for (const block of clonedBlockNodes) {
-            if (block instanceof HTMLElement) {
-              block.style.position = 'relative'
-            }
-            dragGhost.appendChild(block)
-          }
-
-          // A custom drag ghost element can be configured using this data attribute
-          const customGhost = dragGhost.querySelector(
-            '[data-pt-drag-ghost-element]',
-          )
-          if (customGhost) {
-            dragGhost.replaceChildren(customGhost)
-          }
-
           // Setting the `data-dragged` attribute so the consumer can style the element while it’s dragged
           dragGhost.setAttribute('data-dragged', '')
-
-          dragGhost.style.position = 'absolute'
-          dragGhost.style.left = '-99999px'
-          dragGhost.style.boxSizing = 'border-box'
-          document.body.appendChild(dragGhost)
-
-          if (customGhost) {
-            const customGhostRect = customGhost.getBoundingClientRect()
-            const x = event.originEvent.clientX - customGhostRect.left
-            const y = event.originEvent.clientY - customGhostRect.top
-            dragGhost.style.width = `${customGhostRect.width}px`
-            dragGhost.style.height = `${customGhostRect.height}px`
-
-            return [
-              effect(() => {
-                dom.setDragGhost({
-                  event,
-                  ghost: {
-                    element: dragGhost,
-                    x,
-                    y,
-                  },
-                })
-              }),
-              forward(event),
-            ]
-          } else {
-            const blocksDomRect = getCompoundClientRect(
-              draggedDomNodes.blockNodes,
-            )
-            const x = event.originEvent.clientX - blocksDomRect.left
-            const y = event.originEvent.clientY - blocksDomRect.top
-            dragGhost.style.width = `${blocksDomRect.width}px`
-            dragGhost.style.height = `${blocksDomRect.height}px`
-
-            return [
-              effect(() => {
-                dom.setDragGhost({
-                  event,
-                  ghost: {element: dragGhost, x, y},
-                })
-              }),
-              forward(event),
-            ]
-          }
-        } else {
-          const clonedChildNodes = draggedDomNodes.childNodes.map((node) =>
-            node.cloneNode(true),
-          )
-
-          for (const child of clonedChildNodes) {
-            dragGhost.appendChild(child)
-          }
-
-          dragGhost.style.position = 'absolute'
-          dragGhost.style.left = '-99999px'
-          dragGhost.style.boxSizing = 'border-box'
-          document.body.appendChild(dragGhost)
-
-          const childrenDomRect = getCompoundClientRect(
-            draggedDomNodes.childNodes,
-          )
-          const x = event.originEvent.clientX - childrenDomRect.left
-          const y = event.originEvent.clientY - childrenDomRect.top
-          dragGhost.style.width = `${childrenDomRect.width}px`
-          dragGhost.style.height = `${childrenDomRect.height}px`
-
-          return [
-            effect(() => {
-              dom.setDragGhost({
-                event,
-                ghost: {element: dragGhost, x, y},
-              })
-            }),
-            forward(event),
-          ]
         }
+
+        dragGhost.style.position = 'absolute'
+        dragGhost.style.left = '-99999px'
+        dragGhost.style.boxSizing = 'border-box'
+        document.body.appendChild(dragGhost)
+
+        const rect = getCompoundClientRect(nodes)
+        const x = event.originEvent.clientX - rect.left
+        const y = event.originEvent.clientY - rect.top
+        dragGhost.style.width = `${rect.width}px`
+        dragGhost.style.height = `${rect.height}px`
+
+        return [
+          effect(() => {
+            dom.setDragGhost({
+              event,
+              ghost: {element: dragGhost, x, y},
+            })
+          }),
+          forward(event),
+        ]
       },
     ],
   }),

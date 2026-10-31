@@ -767,7 +767,7 @@ describe('collision matrix', () => {
 
   for (const scenario of SCENARIOS) {
     for (const ordering of orderings) {
-      test(`${scenario.id}: ${scenario.title} (${ordering.label})`, async () => {
+      test(`Scenario: ${scenario.title} settles into valid content (${scenario.id}, ${ordering.label})`, async () => {
         const server = createContentLakeServer(scenario.seed())
         const {editorA, editorB, locatorA, locatorB, unmount} =
           await renderTwoClients(server)
@@ -863,7 +863,7 @@ describe('multi-round link overlap', () => {
   }
 
   for (const ordering of orderings) {
-    test(`three rounds of overlapping links without convergence waits (${ordering.label})`, async () => {
+    test(`Scenario: three rounds of overlapping links without convergence waits converge without a stack overflow (${ordering.label})`, async () => {
       const server = createContentLakeServer(seedSingle())
       const {editorA, editorB, locatorA, locatorB, unmount} =
         await renderTwoClients(server)

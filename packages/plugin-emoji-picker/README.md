@@ -104,9 +104,10 @@ The emoji picker activates when users type `:` followed by a keyword (e.g., `:sm
 You can implement a custom search algorithm with your own matching logic and data structures. The only requirement is that your function adheres to the `MatchEmojis` type and returns matches that extend `BaseEmojiMatch`:
 
 ```tsx
-import type {
-  BaseEmojiMatch,
-  MatchEmojis,
+import {
+  useEmojiPicker,
+  type BaseEmojiMatch,
+  type MatchEmojis,
 } from '@portabletext/plugin-emoji-picker'
 
 // Custom emoji match type with relevance scoring

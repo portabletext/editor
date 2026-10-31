@@ -30,7 +30,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('edge selectors (container awareness)', () => {
-  test('comparePoints resolves document order across container lines', async () => {
+  test('Scenario: comparePoints resolves document order across container lines', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -108,7 +108,7 @@ describe('edge selectors (container awareness)', () => {
     expect(comparePoints(snapshot, line1Point, line1PointEnd)).toEqual(-1)
   })
 
-  test('isPointBeforeSelection and isPointAfterSelection work across container lines', async () => {
+  test('Scenario: isPointBeforeSelection and isPointAfterSelection work across container lines', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -205,7 +205,7 @@ describe('edge selectors (container awareness)', () => {
     expect(isPointAfterSelection(line3Point)(snapshot)).toEqual(true)
   })
 
-  test('isOverlappingSelection detects overlap inside a container', async () => {
+  test('Scenario: isOverlappingSelection detects overlap inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()

@@ -191,7 +191,7 @@ export const stepDefinitions = [
     render(<Editor />)
     const locator = page.getByTestId('<editor test ID>')
     context.locator = locator
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
   }),
   Given('a global keymap', (context: Context) => {
     context.keyMap = new Map()
@@ -200,7 +200,7 @@ export const stepDefinitions = [
     await userEvent.click(context.locator)
     await userEvent.type(context.locator, text)
   }),
-  Given('{string} is selected', async (context: Context, text: string) => {
+  When('{string} is selected', async (context: Context, text: string) => {
     // Select `text` in the editor
   }),
   When(
@@ -225,7 +225,7 @@ export const stepDefinitions = [
 ]
 ```
 
-As you can see, the step definitions declare a few custom parameters, `{annotation}`, `{keys}` and `{text}`:
+As you can see, the step definitions declare a few custom parameters, `{annotation}`, `{keys}`, `{marks}` and `{text}`:
 
 ```ts
 import {createParameterType} from 'racejar'
@@ -238,6 +238,12 @@ export const parameterTypes = [
   createParameterType({
     name: 'keys',
     matcher: /"(([a-z]\d)(,([a-z]\d))*)"/,
+    type: Array,
+    transform: (input) => input.split(','),
+  }),
+  createParameterType({
+    name: 'marks',
+    matcher: /"((code|strong|em|[a-z]\d)(,(code|strong|em|[a-z]\d))*)"/,
     type: Array,
     transform: (input) => input.split(','),
   }),
@@ -262,6 +268,7 @@ Now, let's run the test using our defined steps and custom parameter types:
 ```ts
 // annotations.test.ts
 
+import {Feature} from 'racejar/vitest'
 import annotationsFeature from './annotations.feature?raw'
 import {parameterTypes} from './parameter-types'
 import {stepDefinitions} from './step-definitions'

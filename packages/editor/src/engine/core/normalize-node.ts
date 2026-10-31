@@ -59,14 +59,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
   const parent = getParent(editor.snapshot, path)
 
-  const caretContext = {
-    schema: structuralContext.schema,
-    keyGenerator: structuralContext.keyGenerator,
-  }
-  const canonicalContext = {
-    schema: structuralContext.schema,
-  }
-
   const structural = getStructuralCorrection(structuralContext, {
     node,
     path,
@@ -91,7 +83,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 
   const fix =
-    getCaretCorrection(caretContext, {
+    getCaretCorrection(structuralContext, {
       node,
       path,
       parent,
@@ -121,7 +113,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     }) ??
     (hasRemoteFrame(editor.applyContext)
       ? undefined
-      : getCanonicalCorrection(canonicalContext, {
+      : getCanonicalCorrection(structuralContext, {
           node,
           path,
           parent,
@@ -145,7 +137,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         if (!block) {
           return
         }
-        next = getAdjacentSpansCorrection(canonicalContext, {
+        next = getAdjacentSpansCorrection(structuralContext, {
           node: block.node,
           path,
           parent,

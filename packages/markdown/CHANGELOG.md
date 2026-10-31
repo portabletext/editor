@@ -1,5 +1,172 @@
 # @portabletext/markdown
 
+## 2.9.1
+
+### Patch Changes
+
+- [#3530](https://github.com/portabletext/editor/pull/3530) [`b31b8d6`](https://github.com/portabletext/editor/commit/b31b8d60aceca33e425178afef256eaac494f380) Thanks [@christianhg](https://github.com/christianhg)! - fix: render a hard break after an empty line as a backslash break when the document parses back unchanged
+  
+  A paragraph, blockquote or list item with an empty line inside it (two or more consecutive newlines in its text, as typed with Shift+Enter twice) now comes back from Markdown as one block. Previously the empty line rendered as a whitespace-only line, which Markdown reads as a paragraph break, so the block came back as two and `applyMarkdownEdit` skipped key matching:
+  
+  ```ts
+  const blocks = [
+    {
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 's1', text: 'foo\n\nbar', marks: []}],
+    },
+  ]
+  
+  portableTextToMarkdown(blocks)
+  // 'foo  \n\\\nbar', previously 'foo  \n  \nbar'
+  
+  applyMarkdownEdit(blocks, portableTextToMarkdown(blocks))
+  // Keeps `b1` and `s1`. Previously reported `round-trip-mismatch` and minted new keys
+  ```
+  
+  The backslash form is used only when the whole document still parses back with that block exactly as it was and every other block as before. Otherwise the output is unchanged. Headings, nested list items and documents rendered with a custom `hardBreak` or a custom `blockSpacing` keep their current output.
+
+- [#3528](https://github.com/portabletext/editor/pull/3528) [`0f299d8`](https://github.com/portabletext/editor/commit/0f299d8d892c8a627138879bb22e82e3ff353ab1) Thanks [@christianhg](https://github.com/christianhg)! - fix: widen a code block's fence past a code line of backticks
+  
+  A code line made only of backticks no longer closes the code block early when the Markdown is read back.
+
+## 2.9.0
+
+### Minor Changes
+
+- [#3492](https://github.com/portabletext/editor/pull/3492) [`446fc98`](https://github.com/portabletext/editor/commit/446fc9880780ad95c9ad358cb928d17ada176c02) Thanks [@christianhg](https://github.com/christianhg)! - feat: report what an edit loses or adds outside the schema in the reconciliation report
+  
+  The `ReconciliationReport` that `applyMarkdownEdit` passes to `onReconciliation` now carries `markdownLosses` and `undeclaredObjects` next to `hiddenLosses`, on both the performed and the skipped variant. `markdownLosses` lists what the edited markdown said that the result does not hold (the same `Degradation` entries `deserialize.onDegradation` receives, except `object-type-undeclared`). `undeclaredObjects` lists the objects the edit added whose type the schema does not declare, each as an `UndeclaredObject` with its `_type`, `_key`, `position`, `path` into the returned value and a display `message`. An undeclared object is kept as written, so it is not lost, but the schema does not allow it. Together with `hiddenLosses`, the three lists say whether saving the result loses content or adds content the schema does not allow:
+  
+  ```ts
+  applyMarkdownEdit(stored, editedMarkdown, {
+    onReconciliation: (report) => {
+      if (
+        report.hiddenLosses.length > 0 ||
+        report.markdownLosses.length > 0 ||
+        report.undeclaredObjects.length > 0
+      ) {
+        throw new Error('The edit cannot be saved as is')
+      }
+    },
+  })
+  ```
+
+## 2.8.1
+
+### Patch Changes
+
+- [#3466](https://github.com/portabletext/editor/pull/3466) [`5955959`](https://github.com/portabletext/editor/commit/5955959d1951425b3e4261a5ddeeb5a84301125f) Thanks [@christianhg](https://github.com/christianhg)! - fix: leave the blocks passed to `portableTextToMarkdown` unchanged
+  
+  `portableTextToMarkdown` no longer writes a generated `_key` into blocks that are passed in without one. The keys only exist on an internal copy now, so the output is the same, and the caller's value is left exactly as it was.
+  
+  ```ts
+  const blocks = [
+    {
+      _type: 'block',
+      listItem: 'number',
+      level: 1,
+      children: [{_type: 'span', text: 'foo'}],
+    },
+  ]
+  
+  portableTextToMarkdown(blocks)
+  
+  blocks[0]._key
+  // Previously: a random key such as '507fef1a166e'
+  // Now: undefined
+  ```
+
+- [#3473](https://github.com/portabletext/editor/pull/3473) [`2290b7b`](https://github.com/portabletext/editor/commit/2290b7bd8685e146ee7c8e0374a01c6c305d1c6b) Thanks [@christianhg](https://github.com/christianhg)! - fix: check image URLs without a module-level `markdown-it` instance
+  
+  Loading `@portabletext/markdown` no longer builds a `markdown-it` parser up front just to check image URLs in `portableTextToMarkdown`. The check now runs a local copy of `markdown-it`'s default link validator, so images are accepted and rejected exactly as before, and the serializer no longer references `markdown-it` at all.
+
+- [#3473](https://github.com/portabletext/editor/pull/3473) [`6c85529`](https://github.com/portabletext/editor/commit/6c8552974ecb6362dcd595b5dabf0745383841dd) Thanks [@christianhg](https://github.com/christianhg)! - fix: publish one file per source module
+  
+  `@portabletext/markdown` now ships one file per source module instead of a single bundled `dist/index.js`, so bundlers drop the modules your imports don't reach. Code that only serializes no longer ships `markdown-it`: a bare `import {portableTextToMarkdown} from '@portabletext/markdown'` bundles to 12,501 bytes instead of 50,235 (esbuild `--bundle --minify`, gzip -9). Code that imports `markdownToPortableText` still needs `markdown-it` and stays about the same size (50,951 bytes before, 51,283 now). The package's exports and types are unchanged, and the files inside `dist` are not importable on their own.
+
+## 2.8.0
+
+### Minor Changes
+
+- [#3462](https://github.com/portabletext/editor/pull/3462) [`a5ab030`](https://github.com/portabletext/editor/commit/a5ab0305644a06e259c7e516ffcdf2c40655423d) Thanks [@christianhg](https://github.com/christianhg)! - feat: parse `<u>` as underline in `markdownToPortableText`
+  
+  `markdownToPortableText` now reads a bare `<u>…</u>` pair as the `underline` decorator, so underline written by `portableTextToMarkdown` survives the round trip. Before, the tags were dropped as inline HTML and the text lost its underline, which also meant `applyMarkdownEdit` stripped underline from every block an edit touched:
+  
+  ```ts
+  markdownToPortableText('Read the <u>safety notice</u> before use.')
+  // The `safety notice` span now has `marks: ['underline']`.
+  // Previously it had `marks: []`, with an `inline-html-dropped` degradation.
+  ```
+  
+  The default schema now includes an `underline` decorator, and `marks.underline` lets you map it to a different decorator name. When the schema has no matching decorator, the text stays and an `underline` `decorator-dropped` degradation is reported. The tags are read as underline in both `html.inline` modes. Tags with attributes (`<u class="x">`) and unpaired tags stay inline HTML, handled as before.
+
+### Patch Changes
+
+- [#3454](https://github.com/portabletext/editor/pull/3454) [`3ac8643`](https://github.com/portabletext/editor/commit/3ac8643ba722ea341ef303ae1334c2f8e85928e1) Thanks [@christianhg](https://github.com/christianhg)! - fix: honor a function `block` renderer in `portableTextToMarkdown`
+  
+  The `block` option accepts either a map of renderers by style or a single function for every block. A single function is now used. Previously it was ignored and every block rendered with the default renderers:
+  
+  ```ts
+  portableTextToMarkdown(blocks, {
+    block: ({value, children}) => `[${value.style}] ${children}`,
+  })
+  // Now:        "[h1] Title\n\n[normal] Body"
+  // Previously: "# Title\n\nBody"
+  ```
+
+- [#3454](https://github.com/portabletext/editor/pull/3454) [`f1849b9`](https://github.com/portabletext/editor/commit/f1849b9c64ce0e5b841701b404660ee7c85e6c80) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove the link, not the surrounding bold, when a link closes in `markdownToPortableText`
+  
+  Text that follows a link inside a bold run now stays bold, and the link ends where the Markdown link ends:
+  
+  ```ts
+  markdownToPortableText('**[x](https://example.com) y** z')
+  // Now:        "x" [strong, link], " y" [strong], " z" []
+  // Previously: "x" [strong, link], " y z" [link]
+  ```
+
+- [#3448](https://github.com/portabletext/editor/pull/3448) [`92e7879`](https://github.com/portabletext/editor/commit/92e7879da46b7b4721acff968b9015e5465e499b) Thanks [@christianhg](https://github.com/christianhg)! - fix: report hidden losses on stored blocks missing from the `applyMarkdownEdit` result
+  
+  `applyMarkdownEdit`'s `hiddenLosses` now lists content the markdown could not show (an annotation, decorator, block style, or list-item kind with no renderer) on every stored block whose `_key` is missing from the returned value. Previously those blocks counted as deleted and their losses went unreported. That included a block the edit only rewrote, when it came back with a fresh key, so the hidden content was dropped silently:
+  
+  ```ts
+  const schema = compileSchema(
+    defineSchema({
+      annotations: [{name: 'internalLink', fields: [{name: 'ref', type: 'string'}]}],
+    }),
+  )
+  const stored = [
+    {
+      _type: 'block',
+      _key: 'a',
+      style: 'normal',
+      markDefs: [{_type: 'internalLink', _key: 'm1', ref: 'doc1'}],
+      children: [
+        {_type: 'span', _key: 'a1', text: 'Compare with ', marks: []},
+        {_type: 'span', _key: 'a2', text: "last year's survey", marks: ['m1']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'b',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'b1', text: 'Unchanged end.', marks: []}],
+    },
+  ]
+  applyMarkdownEdit(
+    stored,
+    "See last year's survey for comparison.\n\nNew paragraph.\n\nUnchanged end.",
+    {schema, onReconciliation: (report) => console.log(report.hiddenLosses)},
+  )
+  // Previously logged: []
+  // Now logs the dropped `internalLink` annotation on block `a`
+  ```
+  
+  A plain delete of a block that held such content is now reported too, so decide whether the removal was intended before refusing the write.
+
 ## 2.7.1
 
 ### Patch Changes

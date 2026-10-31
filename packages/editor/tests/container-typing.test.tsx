@@ -32,7 +32,7 @@ const calloutContainer = defineContainer({
 })
 
 describe('typing inside containers', () => {
-  test('multi-character keyboard input inside a container', async () => {
+  test('Scenario: Multi-character keyboard input inside a container lands in the container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const blockKey = keyGenerator()

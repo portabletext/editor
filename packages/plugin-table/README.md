@@ -25,9 +25,6 @@ menu), themable with CSS custom properties.
 npm install @portabletext/plugin-table
 ```
 
-Peer dependencies: `@portabletext/editor` (`^7.10.0` or later), `react`
-(`^19.2`), and `react-dom` (`^19.2`).
-
 ## Quick start
 
 Define the table in a module of its own:

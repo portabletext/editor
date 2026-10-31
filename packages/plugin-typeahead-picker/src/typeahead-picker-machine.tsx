@@ -1398,6 +1398,8 @@ export const typeaheadPickerMachine = setup({
     },
     'no debounce': ({context}) =>
       !context.definition.debounceMs || context.definition.debounceMs === 0,
+    'keyword changed since request': ({context}) =>
+      context.keyword !== context.requestedKeyword,
     'is complete keyword': ({context}) => {
       if (!context.completePattern || !context.focusSpan) {
         return false
@@ -1579,7 +1581,17 @@ export const typeaheadPickerMachine = setup({
           initial: 'debouncing',
           states: {
             debouncing: {
-              always: [{guard: 'no debounce', target: 'fetching'}],
+              always: [
+                {guard: 'no debounce', target: 'fetching'},
+                {
+                  guard: 'keyword changed since request',
+                  target: 'debouncing',
+                  reenter: true,
+                  actions: [
+                    assign({requestedKeyword: ({context}) => context.keyword}),
+                  ],
+                },
+              ],
               after: {
                 DEBOUNCE: 'fetching',
               },
@@ -1639,7 +1651,19 @@ export const typeaheadPickerMachine = setup({
               initial: 'debouncing',
               states: {
                 debouncing: {
-                  always: [{guard: 'no debounce', target: 'fetching'}],
+                  always: [
+                    {guard: 'no debounce', target: 'fetching'},
+                    {
+                      guard: 'keyword changed since request',
+                      target: 'debouncing',
+                      reenter: true,
+                      actions: [
+                        assign({
+                          requestedKeyword: ({context}) => context.keyword,
+                        }),
+                      ],
+                    },
+                  ],
                   after: {
                     DEBOUNCE: 'fetching',
                   },
@@ -1721,7 +1745,19 @@ export const typeaheadPickerMachine = setup({
               initial: 'debouncing',
               states: {
                 debouncing: {
-                  always: [{guard: 'no debounce', target: 'fetching'}],
+                  always: [
+                    {guard: 'no debounce', target: 'fetching'},
+                    {
+                      guard: 'keyword changed since request',
+                      target: 'debouncing',
+                      reenter: true,
+                      actions: [
+                        assign({
+                          requestedKeyword: ({context}) => context.keyword,
+                        }),
+                      ],
+                    },
+                  ],
                   after: {
                     DEBOUNCE: 'fetching',
                   },

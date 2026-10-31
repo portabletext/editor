@@ -12,7 +12,7 @@ npm install @portabletext/plugin-one-line
 
 The plugin blocks `insert.break` events and provides smart handling of other `insert.*` events like `insert.block`.
 
-Configure it with as high priority as possible to make sure other plugins don't overwrite `insert.*` events before this plugin gets a chance to do so.
+Mount it before other plugins that handle `insert.*` events: behaviors run in registration order, so whichever plugin registers first claims those events.
 
 Import the `OneLinePlugin` React component and place it inside the `EditorProvider` to automatically register the necessary Behaviors:
 

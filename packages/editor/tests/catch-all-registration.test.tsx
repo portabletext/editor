@@ -37,7 +37,7 @@ const decoratorSchema = defineSchema({
 })
 
 describe('catch-all registration: global blockObject', () => {
-  test('blockObject catch-all catches an unregistered top-level block-object type', async () => {
+  test('Scenario: The blockObject catch-all renders an unregistered top-level block-object type', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -70,7 +70,7 @@ describe('catch-all registration: global blockObject', () => {
     })
   })
 
-  test('specific-type registration wins over blockObject catch-all', async () => {
+  test('Scenario: A specific-type registration wins over the blockObject catch-all', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -116,7 +116,7 @@ describe('catch-all registration: global blockObject', () => {
     })
   })
 
-  test('blockObject catch-all catches unregistered types inside a registered container', async () => {
+  test('Scenario: The blockObject catch-all renders unregistered types inside a registered container', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -163,7 +163,7 @@ describe('catch-all registration: global blockObject', () => {
 })
 
 describe('catch-all registration: decorator', () => {
-  test("'*' registration handles every decorator", async () => {
+  test("Scenario: A '*' registration handles every decorator", async () => {
     const keyGenerator = createTestKeyGenerator()
 
     await createTestEditor({
@@ -205,7 +205,7 @@ describe('catch-all registration: decorator', () => {
     })
   })
 
-  test("global exact beats global '*' for decorators", async () => {
+  test("Scenario: A global exact decorator registration beats a global '*' registration", async () => {
     const keyGenerator = createTestKeyGenerator()
 
     await createTestEditor({
@@ -259,7 +259,7 @@ describe('catch-all registration: decorator', () => {
 })
 
 describe('catch-all registration: global inlineObject', () => {
-  test('inlineObject catch-all catches an unregistered inline-object type', async () => {
+  test('Scenario: The inlineObject catch-all renders an unregistered inline-object type', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -314,7 +314,7 @@ describe('catch-all registration: global inlineObject', () => {
 })
 
 describe('catch-all registration: global textBlock', () => {
-  test('textBlock catch-all renders text blocks inside a container', async () => {
+  test('Scenario: The textBlock catch-all renders text blocks inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -372,7 +372,7 @@ describe('catch-all registration: global textBlock', () => {
 })
 
 describe('catch-all registration: positional', () => {
-  test('positional catch-all inside a container catches unregistered child types', async () => {
+  test('Scenario: A positional catch-all inside a container renders unregistered child types', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -424,7 +424,7 @@ describe('catch-all registration: positional', () => {
     })
   })
 
-  test('positional catch-all beats global specific-type registration', async () => {
+  test('Scenario: A positional catch-all beats a global specific-type registration', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -486,7 +486,7 @@ describe('catch-all registration: positional', () => {
     })
   })
 
-  test('positional specific-type beats positional catch-all', async () => {
+  test('Scenario: A positional specific-type registration beats a positional catch-all', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -559,7 +559,7 @@ describe('catch-all registration: positional', () => {
 })
 
 describe('catch-all registration: cross-rung precedence', () => {
-  test('positional specific beats global catch-all for the same type', async () => {
+  test('Scenario: A positional specific registration beats a global catch-all for the same type', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -621,7 +621,7 @@ describe('catch-all registration: cross-rung precedence', () => {
     })
   })
 
-  test('positional specific beats global specific for the same type', async () => {
+  test('Scenario: A positional specific registration beats a global specific registration for the same type', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -680,7 +680,7 @@ describe('catch-all registration: cross-rung precedence', () => {
     })
   })
 
-  test('all four rungs present: positional specific wins', async () => {
+  test('Scenario: With all four rungs present the positional specific registration wins', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,
@@ -774,7 +774,7 @@ const objectAndInlineSchema = defineSchema({
 })
 
 describe("catch-all registration: cross-kind coexistence at '*'", () => {
-  test('textBlock, blockObject, and inlineObject catch-alls all register and dispatch', async () => {
+  test('Scenario: textBlock, blockObject, and inlineObject catch-alls all register and dispatch', async () => {
     const keyGenerator = createTestKeyGenerator()
     await createTestEditor({
       keyGenerator,

@@ -8,7 +8,10 @@ import {
   getSelectedTextBlocks,
   getSelection,
 } from '@portabletext/editor/selectors'
-import {isEqualSelections} from '@portabletext/editor/utils'
+import {
+  isEqualSelectionPoints,
+  isEqualSelections,
+} from '@portabletext/editor/utils'
 import {stringifyPath} from '@sanity/json-match'
 import {
   useCommentActions,
@@ -50,32 +53,9 @@ function sameAnchors(a: AnchoredComment[], b: AnchoredComment[]): boolean {
     const other = b[index]
     return (
       anchor.commentId === other.commentId &&
-      samePoint(anchor.selection.anchor, other.selection.anchor) &&
-      samePoint(anchor.selection.focus, other.selection.focus)
+      isEqualSelectionPoints(anchor.selection.anchor, other.selection.anchor) &&
+      isEqualSelectionPoints(anchor.selection.focus, other.selection.focus)
     )
-  })
-}
-
-function samePoint(
-  a: {path: unknown[]; offset: number},
-  b: {path: unknown[]; offset: number},
-): boolean {
-  if (a.offset !== b.offset || a.path.length !== b.path.length) {
-    return false
-  }
-  return a.path.every((segment, index) => {
-    const other = b.path[index]
-    if (
-      typeof segment === 'object' &&
-      segment !== null &&
-      typeof other === 'object' &&
-      other !== null
-    ) {
-      return (
-        (segment as {_key?: string})._key === (other as {_key?: string})._key
-      )
-    }
-    return segment === other
   })
 }
 

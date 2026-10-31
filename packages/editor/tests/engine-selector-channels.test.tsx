@@ -67,6 +67,11 @@ describe('engine selector channels', () => {
         style: 'normal',
       })),
     })
+    // Focus restores the model selection in the DOM, so the inserted
+    // blocks must have rendered first.
+    await expect
+      .element(locator.getByText('b1', {exact: true}))
+      .toBeInTheDocument()
     editor.send({type: 'focus'})
     editor.send({
       type: 'select',

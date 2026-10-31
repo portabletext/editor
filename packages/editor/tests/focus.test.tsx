@@ -49,7 +49,7 @@ describe('focus', () => {
       }
 
       const toolbarLocator = page.getByTestId('toolbar')
-      await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
+      await expect.element(toolbarLocator).toBeInTheDocument()
 
       await userEvent.click(locator)
 
@@ -140,8 +140,8 @@ describe('focus', () => {
 
       const barSpanLocator = locator.getByText('b')
       const toolbarLocator = page.getByTestId('toolbar')
-      await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
-      await vi.waitFor(() => expect.element(toolbarLocator).toBeInTheDocument())
+      await expect.element(barSpanLocator).toBeInTheDocument()
+      await expect.element(toolbarLocator).toBeInTheDocument()
 
       await userEvent.click(barSpanLocator)
 

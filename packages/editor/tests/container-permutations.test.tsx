@@ -201,7 +201,7 @@ describe('container archetype permutations', () => {
   // ARCHETYPE 1   code-block (locked-down)
   // ============================================================
 
-  test('code-block: toggle annotation across root + code-block only annotates root', async () => {
+  test('Scenario: Toggling an annotation across root and a code-block only annotates the root text', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()
@@ -279,7 +279,7 @@ describe('container archetype permutations', () => {
   // ARCHETYPE 2   fact-box (mirrors root)
   // ============================================================
 
-  test('fact-box: toggle bold across root + fact-box bolds both', async () => {
+  test('Scenario: Toggling bold across root and a fact-box bolds both', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()
@@ -344,7 +344,7 @@ describe('container archetype permutations', () => {
     })
   })
 
-  test('fact-box: toggle numbered list across root + fact-box applies to both', async () => {
+  test('Scenario: Toggling a numbered list across root and a fact-box applies to both', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()
@@ -417,7 +417,7 @@ describe('container archetype permutations', () => {
   // ARCHETYPE 3   callout (narrowed list: bullet only)
   // ============================================================
 
-  test('callout: toggle bullet across root + callout applies to both', async () => {
+  test('Scenario: Toggling a bullet list across root and a callout applies to both', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()
@@ -486,7 +486,7 @@ describe('container archetype permutations', () => {
     })
   })
 
-  test('callout: toggle number across root + callout only applies at root (callout out of scope for number)', async () => {
+  test('Scenario: Toggling a numbered list across root and a callout only applies at root because number is out of scope in the callout', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()
@@ -555,7 +555,7 @@ describe('container archetype permutations', () => {
   // ARCHETYPE 4   table.cell with nested callout (heterogeneous depth)
   // ============================================================
 
-  test('table.cell + nested callout: toggle strong across root + cell + nested callout bolds all three', async () => {
+  test('Scenario: Toggling strong across root, a table cell and a nested callout bolds all three', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()
@@ -676,7 +676,7 @@ describe('container archetype permutations', () => {
     })
   })
 
-  test('table.cell + nested callout: toggle em applies to root + cell, NOT to nested callout (callout-in-cell narrows em out)', async () => {
+  test('Scenario: Toggling em across root, a table cell and a nested callout applies to root and the cell but not the nested callout', async () => {
     const keyGenerator = createTestKeyGenerator()
     const rootKey = keyGenerator()
     const rootSpan = keyGenerator()

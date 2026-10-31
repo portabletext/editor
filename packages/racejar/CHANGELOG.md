@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.0.1
+
+### Patch Changes
+
+- [#3455](https://github.com/portabletext/editor/pull/3455) [`0e3e55b`](https://github.com/portabletext/editor/commit/0e3e55bd512cc43474dbc75ed2eed57b3fa3d19d) Thanks [@christianhg](https://github.com/christianhg)! - fix: give each scenario a fresh context
+  
+  Every scenario in a feature now starts with an empty context object. Before, all scenarios in a feature shared one object, so a value a step wrote in one scenario was still there in the next. A scenario could pass only because an earlier scenario left state behind, and the order of the scenarios could change the results. Suites that set up their state in a `Background` or a `Before` hook are unaffected.
+
+- [#3456](https://github.com/portabletext/editor/pull/3456) [`71c7c76`](https://github.com/portabletext/editor/commit/71c7c760dc048e8243eff6920ccd75a335144118) Thanks [@christianhg](https://github.com/christianhg)! - fix: make `hooks` optional in the Jest driver's `Feature`
+  
+  The Jest `Feature` no longer requires a `hooks` array, matching the Vitest and Playwright drivers. A Jest test file can now call `Feature({featureText, stepDefinitions})` without passing `hooks: []` to satisfy the type checker.
+
 ## 4.0.0
 
 ### Major Changes

@@ -94,7 +94,8 @@
       "sanity>@sanity/cli": "8.9.0"
     },
     "patchedDependencies": {
-      "@microsoft/api-extractor": "patches/@microsoft__api-extractor.patch"
+      "@microsoft/api-extractor": "patches/@microsoft__api-extractor.patch",
+      "@vitest/browser-playwright": "patches/@vitest__browser-playwright.patch"
     }
   }
 }

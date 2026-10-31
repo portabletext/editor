@@ -171,7 +171,7 @@ async function createSyncedEditor(options: {
         return page.elementLocator(element)
       })
     : page.getByRole('textbox')
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+  await expect.element(locator).toBeInTheDocument()
 
   return {
     editor: editorRef.current!,
@@ -192,6 +192,20 @@ function makeBlock(key: string, text: string): PortableTextBlock {
   }
 }
 
+function typedBlock(text: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: 'k2',
+    children: [{_type: 'span', _key: 'k3', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+const TIMERS: Array<
+  'setTimeout' | 'clearTimeout' | 'setInterval' | 'clearInterval'
+> = ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']
+
 function getEditorText(editor: Editor): string {
   return toTextspec(editor.getSnapshot().context)
 }
@@ -207,16 +221,17 @@ function getFirstChildKey(editor: Editor): string | undefined {
 
 // ---- Tests ----
 
-describe('ValueSyncPlugin', () => {
+describe(ValueSyncPlugin.name, () => {
   let cleanup: (() => void) | undefined
 
   afterEach(() => {
     cleanup?.()
     cleanup = undefined
+    vi.useRealTimers()
   })
 
   describe('initial value', () => {
-    test('sends initial value from store to editor', async () => {
+    test('Scenario: the editor starts with the initial value from the store', async () => {
       const store = createMockValueStore([makeBlock('b1', 'Hello')])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -226,7 +241,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('starts with empty editor when store is empty', async () => {
+    test('Scenario: an empty store starts the editor empty', async () => {
       const store = createMockValueStore([])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -238,7 +253,7 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('local edits push to store', () => {
-    test('typing pushes value to store after mutation flush', async () => {
+    test('Scenario: typing pushes the value to the store after the mutation flush', async () => {
       const store = createMockValueStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -259,6 +274,36 @@ describe('ValueSyncPlugin', () => {
         }),
       ).toEqual('B: Hello')
     })
+
+    test('a flush landing while a push awaits acknowledgement is pushed', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
+      const store = createMockValueStore()
+      const {editor, locator, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual('B: |')
+      })
+      await userEvent.click(locator)
+
+      const pushedValues: Array<PortableTextBlock[]> = []
+      store.pushValue.mockImplementation((value: PortableTextBlock[]) => {
+        pushedValues.push(value)
+      })
+
+      await userEvent.type(locator, 'abc')
+      await userEvent.keyboard('{Backspace}')
+      await vi.advanceTimersByTimeAsync(250)
+
+      // Both mutations flush in the same tick, and a flushed mutation carries
+      // the editor value at flush time, so both pushes carry the latest text.
+      expect(pushedValues).toEqual([[typedBlock('ab')], [typedBlock('ab')]])
+
+      store.setRemoteValue(pushedValues.at(-1)!)
+      await vi.advanceTimersByTimeAsync(1000)
+
+      expect(getEditorText(editor)).toEqual('B: ab|')
+    })
   })
 
   describe('solo typing fidelity', () => {
@@ -270,7 +315,8 @@ describe('ValueSyncPlugin', () => {
     // diffing the editor against the diverged store and resurrecting
     // deleted text. This test types in bursts that straddle flush timing
     // and requires the editor, the store, and the expected text to agree.
-    test('delete-and-retype bursts converge to exactly what was typed', async () => {
+    test('Scenario: delete-and-retype bursts converge to exactly what was typed', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
       const store = createMockPatchStore([])
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -285,7 +331,7 @@ describe('ValueSyncPlugin', () => {
       // reproduce the burst.
       await userEvent.click(locator)
 
-      const settle = (ms: number) => new Promise((r) => setTimeout(r, ms))
+      const settle = (ms: number) => vi.advanceTimersByTimeAsync(ms)
       const backspace = async (count: number) => {
         for (let i = 0; i < count; i++) {
           await userEvent.keyboard('{Backspace}')
@@ -311,28 +357,22 @@ describe('ValueSyncPlugin', () => {
       await backspace(3)
       await settle(300)
       await userEvent.type(locator, 'ext')
+      await settle(2000)
 
-      const expectedEditor = 'B: publish editors deadline sources context|'
-      const expectedStore = 'B: publish editors deadline sources context'
-
-      await vi.waitFor(
-        () => {
-          expect(getEditorText(editor)).toEqual(expectedEditor)
-          expect(
-            toTextspec({
-              value: store.getValue(),
-              schema: editor.getSnapshot().context.schema,
-              selection: null,
-            }),
-          ).toEqual(expectedStore)
-        },
-        {timeout: 5000},
+      expect(getEditorText(editor)).toEqual(
+        'B: publish editors deadline sources context|',
       )
+      expect(
+        toTextspec({
+          value: store.getValue(),
+          schema: editor.getSnapshot().context.schema,
+          selection: null,
+        }),
+      ).toEqual('B: publish editors deadline sources context')
       // The explicit test timeout is generous because the bursts above are
       // ~70 real key events, each a round-trip to the browser whose cost
       // scales with machine load: the interaction takes ~3s idle but has
-      // measured ~13s on CI, and vitest's 15s default leaves too little
-      // room for the convergence wait on top of that.
+      // measured ~13s on CI, close to vitest's 15s default.
     }, 60_000)
   })
 
@@ -501,7 +541,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('remote change updates editor when idle', async () => {
+    test('Scenario: a remote change updates the idle editor', async () => {
       const store = createMockValueStore()
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -521,7 +561,8 @@ describe('ValueSyncPlugin', () => {
     // at a drifted offset, scrambling words typed in the meantime. The
     // repair must wait out the blink and only act on divergence that
     // persists.
-    test('a transiently wrong store value is never copied into the editor', async () => {
+    test('Scenario: a transiently wrong store value is never copied into the editor', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
       const store = createMockValueStore([makeBlock('b1', 'stable text here')])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -548,11 +589,11 @@ describe('ValueSyncPlugin', () => {
         // The store blinks: a wrong value (own edits double-applied) that
         // self-corrects shortly after, well inside the confirmation window.
         store.setRemoteValue([makeBlock('b1', 'stable tex')])
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await vi.advanceTimersByTimeAsync(50)
         store.setRemoteValue([makeBlock('b1', 'stable text here')])
 
         // Wait past the confirmation window.
-        await new Promise((resolve) => setTimeout(resolve, 400))
+        await vi.advanceTimersByTimeAsync(400)
       } finally {
         editor.send = originalSend
       }
@@ -561,7 +602,7 @@ describe('ValueSyncPlugin', () => {
       expect(syncWrites).toEqual([])
     })
 
-    test('persistent divergence still gets repaired', async () => {
+    test('Scenario: a persistent divergence still gets repaired', async () => {
       const store = createMockValueStore([makeBlock('b1', 'before')])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -579,7 +620,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('remote decorator toggle syncs `marks` inserts and unsets', async () => {
+    test('Scenario: a remote decorator toggle syncs `marks` inserts and unsets', async () => {
       const makeValue = (marks: string[]): PortableTextBlock[] => [
         {
           _type: 'block',
@@ -620,7 +661,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('remote annotation toggle syncs span splits, `marks` and `markDefs`', async () => {
+    test('Scenario: a remote annotation toggle syncs span splits, `marks` and `markDefs`', async () => {
       const plainValue: PortableTextBlock[] = [
         {
           _type: 'block',
@@ -866,7 +907,7 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('echo suppression', () => {
-    test('echo after local edit does not revert editor', async () => {
+    test('Scenario: an echo after a local edit does not revert the editor', async () => {
       const store = createMockValueStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -887,7 +928,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('echo with normalization divergence does not revert editor', async () => {
+    test('Scenario: an echo with normalization divergence does not revert the editor', async () => {
       const store = createMockValueStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -919,7 +960,8 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('stale sync prevention', () => {
-    test('stale remote value during typing does not revert editor', async () => {
+    test('Scenario: a stale remote value during typing does not revert the editor', async () => {
+      vi.useFakeTimers({toFake: TIMERS})
       const store = createMockValueStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -927,10 +969,8 @@ describe('ValueSyncPlugin', () => {
       await locator.click()
       editor.send({type: 'insert.text', text: 'Hello'})
 
-      // Wait for first push
-      await vi.waitFor(() => {
-        expect(store.pushValue).toHaveBeenCalled()
-      })
+      await vi.advanceTimersByTimeAsync(250)
+      expect(store.pushValue).toHaveBeenCalledTimes(1)
       store.pushValue.mockClear()
 
       editor.send({type: 'insert.text', text: ' world'})
@@ -940,22 +980,19 @@ describe('ValueSyncPlugin', () => {
       store.setRemoteValue([makeBlock('stale', 'Hello')])
 
       // Editor should NOT revert to "Hello" — it has pending writes.
-      // Wait a bit to make sure no revert happens.
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await vi.advanceTimersByTimeAsync(249)
+      expect(store.pushValue).not.toHaveBeenCalled()
       expect(getEditorText(editor)).toEqual('B: Hello world|')
 
-      // Wait for the second push
-      await vi.waitFor(() => {
-        expect(store.pushValue).toHaveBeenCalled()
-      })
+      await vi.advanceTimersByTimeAsync(1)
+      expect(store.pushValue).toHaveBeenCalledTimes(1)
 
       // After mutation flush, editor should have the full text
-      await vi.waitFor(() => {
-        expect(getEditorText(editor)).toEqual('B: Hello world|')
-      })
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(getEditorText(editor)).toEqual('B: Hello world|')
     })
 
-    test('remote change during local write applies after flush', async () => {
+    test('Scenario: a remote change during a local write applies after the flush', async () => {
       const store = createMockValueStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -1004,7 +1041,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('remote change without pending writes applies immediately', async () => {
+    test('Scenario: a remote change without pending writes applies immediately', async () => {
       const store = createMockValueStore()
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -1018,7 +1055,7 @@ describe('ValueSyncPlugin', () => {
   })
 
   describe('patch channel', () => {
-    test('remote patches apply to the editor', async () => {
+    test('Scenario: remote patches apply to the editor', async () => {
       const store = createMockPatchStore([makeBlock('b1', 'Hello')])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -1046,7 +1083,7 @@ describe('ValueSyncPlugin', () => {
       expect(store.pushValue).not.toHaveBeenCalled()
     })
 
-    test('does not render a staging span absent from the remote value', async () => {
+    test('Scenario: a staging span absent from the remote value is never rendered', async () => {
       const initialValue = [makeBlock('b1', 'A: ')]
       const finalValue = [makeBlock('b1', 'A: ALPHA')]
       const store = createMockPatchStore(initialValue)
@@ -1086,7 +1123,7 @@ describe('ValueSyncPlugin', () => {
       expect(getEditorText(editor)).toEqual('B: A: ALPHA')
     })
 
-    test('a remote mid-span decorator toggle applies without a transient flash', async () => {
+    test('Scenario: a remote mid-span decorator toggle applies without a transient flash', async () => {
       // Field regression: editor A bolds the word "before" in the middle of
       // a span; on editor B the word vanished ("…quarterly report dawn.")
       // for a beat before the whole-value repair restored it. The patches
@@ -1195,7 +1232,7 @@ describe('ValueSyncPlugin', () => {
       expect(store.pushValue).not.toHaveBeenCalled()
     })
 
-    test('remote text set applies to a specific span', async () => {
+    test('Scenario: a remote text set applies to a specific span', async () => {
       const store = createMockPatchStore([
         makeBlock('b1', 'First'),
         makeBlock('b2', 'Second'),
@@ -1225,7 +1262,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('remote patches apply during local typing without losing local changes', async () => {
+    test('Scenario: remote patches apply during local typing without losing local changes', async () => {
       const store = createMockPatchStore([makeBlock('b1', 'Hello')])
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -1268,7 +1305,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('local edits push operational patches instead of whole values', async () => {
+    test('Scenario: local edits push operational patches instead of whole values', async () => {
       const store = createMockPatchStore()
       const {editor, locator, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -1293,7 +1330,7 @@ describe('ValueSyncPlugin', () => {
       expect(store.pushValue).not.toHaveBeenCalled()
     })
 
-    test('converges to the store value when remote patches cannot apply', async () => {
+    test('Scenario: the editor converges to the store value when remote patches cannot apply', async () => {
       const store = createMockPatchStore([makeBlock('b1', 'Hello')])
       const {editor, unmount} = await createSyncedEditor({store})
       cleanup = unmount
@@ -1339,7 +1376,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('concurrent same-range formatting converges to the store value', async () => {
+    test('Scenario: concurrent same-range formatting converges to the store value', async () => {
       // Both clients format the same range at the same moment: while this
       // client's own patch push is still in flight, the other client's
       // transaction arrives. Its keyed operations were produced against a
@@ -1422,7 +1459,7 @@ describe('ValueSyncPlugin', () => {
       })
     })
 
-    test('falls back to whole-value push when pushPatches throws', async () => {
+    test('Scenario: a throwing `pushPatches` falls back to a whole-value push', async () => {
       const store = createMockPatchStore()
       store.pushPatches.mockImplementation(() => {
         throw new Error('cannot convert')

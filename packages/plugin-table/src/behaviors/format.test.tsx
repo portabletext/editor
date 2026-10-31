@@ -182,7 +182,7 @@ async function selectLeftColumn(value = initialValue) {
 }
 
 describe('rectangular selection formatting', () => {
-  test('decorator.toggle on a column selection only affects the column', async () => {
+  test('Scenario: `decorator.toggle` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
@@ -197,7 +197,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('decorator.toggle on a mixed column applies uniformly', async () => {
+  test('Scenario: `decorator.toggle` on a mixed column applies uniformly', async () => {
     const editor = await selectLeftColumn(mixedColumnValue)
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
@@ -212,7 +212,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('an empty cell in the column neither blocks nor breaks the toggle', async () => {
+  test('Scenario: an empty cell in the column neither blocks nor breaks the toggle', async () => {
     const editor = await selectLeftColumn([
       {
         _type: 'table',
@@ -244,7 +244,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('decorator.add on a column selection only affects the column', async () => {
+  test('Scenario: `decorator.add` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({type: 'decorator.add', decorator: 'strong'})
@@ -258,7 +258,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('decorator.remove on a column selection only affects the column', async () => {
+  test('Scenario: `decorator.remove` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn([
       {
         _type: 'table',
@@ -290,7 +290,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('annotation.add on a column selection only affects the column', async () => {
+  test('Scenario: `annotation.add` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({
@@ -313,7 +313,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('annotation.remove on a column selection only affects the column', async () => {
+  test('Scenario: `annotation.remove` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn([
       {
         _type: 'table',
@@ -345,7 +345,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('annotation.toggle on a mixed column applies uniformly', async () => {
+  test('Scenario: `annotation.toggle` on a mixed column applies uniformly', async () => {
     const editor = await selectLeftColumn([
       {
         _type: 'table',
@@ -381,7 +381,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('style.toggle on a column selection only affects the column', async () => {
+  test('Scenario: `style.toggle` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({type: 'style.toggle', style: 'h1'})
@@ -395,7 +395,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('style.toggle styles empty member cells too', async () => {
+  test('Scenario: `style.toggle` styles empty member cells too', async () => {
     const editor = await selectLeftColumn([
       {
         _type: 'table',
@@ -428,7 +428,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('list item.toggle on a column selection only affects the column', async () => {
+  test('Scenario: `list item.toggle` on a column selection only affects the column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({type: 'list item.toggle', listItem: 'bullet'})
@@ -442,7 +442,7 @@ describe('rectangular selection formatting', () => {
     })
   })
 
-  test('a single undo restores the whole column', async () => {
+  test('Scenario: a single undo restores the whole column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})

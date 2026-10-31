@@ -141,7 +141,7 @@ function getTableCellContent(value: Array<unknown>) {
 }
 
 describe('tables', () => {
-  test('render', async () => {
+  test('Scenario: A table renders with its initial value intact', async () => {
     const {editor, initialValue} = await createTableTestEditor()
 
     await vi.waitFor(() => {
@@ -150,7 +150,7 @@ describe('tables', () => {
   })
 
   describe('incoming patches', () => {
-    test('set headerRows', async () => {
+    test('Scenario: An incoming patch sets headerRows', async () => {
       const {editor, table} = await createTableTestEditor()
 
       editor.send({
@@ -169,7 +169,7 @@ describe('tables', () => {
       })
     })
 
-    test('set rows', async () => {
+    test('Scenario: An incoming patch sets rows', async () => {
       const {editor, table} = await createTableTestEditor()
 
       const newRow = {
@@ -212,7 +212,7 @@ describe('tables', () => {
       })
     })
 
-    test('set cells', async () => {
+    test('Scenario: An incoming patch sets cells', async () => {
       const {editor, table, row} = await createTableTestEditor()
 
       const newCell = {
@@ -254,7 +254,7 @@ describe('tables', () => {
       })
     })
 
-    test('set marks', async () => {
+    test('Scenario: An incoming patch sets marks on a span inside a cell', async () => {
       const {editor, table, row, cell, block, span} =
         await createTableTestEditor()
 
@@ -310,7 +310,7 @@ describe('tables', () => {
       })
     })
 
-    test('unset rows', async () => {
+    test('Scenario: An incoming patch unsets rows', async () => {
       const {editor, table} = await createTableTestEditor()
 
       editor.send({
@@ -326,7 +326,7 @@ describe('tables', () => {
       })
     })
 
-    test('unset cells', async () => {
+    test('Scenario: An incoming patch unsets cells', async () => {
       const {editor, table, row} = await createTableTestEditor()
 
       editor.send({
@@ -344,7 +344,7 @@ describe('tables', () => {
       })
     })
 
-    test('unset content', async () => {
+    test('Scenario: An incoming patch unsets cell content', async () => {
       const {editor, table, row, cell} = await createTableTestEditor()
 
       editor.send({
@@ -369,7 +369,7 @@ describe('tables', () => {
       })
     })
 
-    test('unset children', async () => {
+    test('Scenario: An incoming patch unsets the children of a text block inside a cell', async () => {
       const {editor, table, row, cell, block} = await createTableTestEditor()
 
       editor.send({
@@ -406,7 +406,7 @@ describe('tables', () => {
   })
 
   describe('normalization', () => {
-    test('text blocks inside containers get missing .markDefs', async () => {
+    test('Scenario: Text blocks inside containers get missing .markDefs', async () => {
       const keyGenerator = createTestKeyGenerator()
       const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
@@ -476,7 +476,7 @@ describe('tables', () => {
       })
     })
 
-    test('text blocks inside containers get missing .style', async () => {
+    test('Scenario: Text blocks inside containers get missing .style', async () => {
       const keyGenerator = createTestKeyGenerator()
       const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
@@ -544,7 +544,7 @@ describe('tables', () => {
       })
     })
 
-    test('spans inside containers get missing .marks', async () => {
+    test('Scenario: Spans inside containers get missing .marks', async () => {
       const keyGenerator = createTestKeyGenerator()
       const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
@@ -615,7 +615,7 @@ describe('tables', () => {
       })
     })
 
-    test('duplicate keys inside containers are fixed', async () => {
+    test('Scenario: Duplicate keys inside containers are fixed', async () => {
       const keyGenerator = createTestKeyGenerator()
       const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
@@ -713,7 +713,7 @@ describe('tables', () => {
       })
     })
 
-    test('empty text blocks inside containers get a span inserted', async () => {
+    test('Scenario: Empty text blocks inside containers get a span inserted', async () => {
       const keyGenerator = createTestKeyGenerator()
       const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()
@@ -777,7 +777,7 @@ describe('tables', () => {
       })
     })
 
-    test('text blocks with missing children inside containers get restored', async () => {
+    test('Scenario: Text blocks with missing children inside containers get restored', async () => {
       const keyGenerator = createTestKeyGenerator()
       const editorEngineRef = React.createRef<PortableTextEditorEngine>()
       const tableKey = keyGenerator()

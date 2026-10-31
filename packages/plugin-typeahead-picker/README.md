@@ -177,7 +177,11 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
         case 'image':
           return [
             raise({type: 'delete', at: event.patternSelection}),
-            raise({type: 'insert.block', block: {_type: 'image'}}),
+            raise({
+              type: 'insert.block',
+              block: {_type: 'image'},
+              placement: 'auto',
+            }),
           ]
         default:
           return [raise({type: 'delete', at: event.patternSelection})]
@@ -396,6 +400,7 @@ const commandPicker = defineTypeaheadPicker<CommandMatch>({
         raise({
           type: 'insert.block',
           block: {_type: event.match.blockType, _key: blockKey},
+          placement: 'auto',
         }),
       ]
     },
@@ -497,13 +502,12 @@ function PickerUI() {
 
 The following keyboard shortcuts are handled automatically by the picker:
 
-| Key       | Action                        |
-| --------- | ----------------------------- |
-| `↑` / `↓` | Navigate through matches      |
-| `Enter`   | Insert selected match         |
-| `Tab`     | Insert selected match         |
-| `Escape`  | Dismiss picker                |
-| `Space`   | Dismiss picker (configurable) |
+| Key       | Action                   |
+| --------- | ------------------------ |
+| `↑` / `↓` | Navigate through matches |
+| `Enter`   | Insert selected match    |
+| `Tab`     | Insert selected match    |
+| `Escape`  | Dismiss picker           |
 
 ### Screen reader considerations
 
@@ -525,7 +529,7 @@ The following keyboard shortcuts are handled automatically by the picker:
 
 - **Check `delimiter`**: Must be set (e.g., `delimiter: ':'`)
 - **Check match type**: Matches must include `type: 'exact' | 'partial'`
-- **Check for exact match**: Auto-completion only triggers when exactly one match has `type: 'exact'`
+- **Check for exact match**: Auto-completion only triggers when at least one match has `type: 'exact'`
 - **Check keyword pattern**: The keyword pattern must allow the delimiter character at the boundary. Use `\S*` (matches any non-whitespace) when `delimiter: ':'`
 
 ### Stale matches appear

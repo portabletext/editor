@@ -242,7 +242,7 @@ describe('two clients through a shared patch-channel store', () => {
     consoleError = undefined
   })
 
-  test('concurrent typing in different blocks converges without data loss', async () => {
+  test('Scenario: concurrent typing in different blocks converges without data loss', async () => {
     const server = createTwoClientServer([
       makeBlock('b1', 'alpha'),
       makeBlock('b2', 'omega'),
@@ -275,7 +275,7 @@ describe('two clients through a shared patch-channel store', () => {
     expect(texts).toEqual(['alpha one', 'omega two'])
   })
 
-  test('concurrent same-range bolding converges', async () => {
+  test('Scenario: concurrent same-range bolding converges', async () => {
     // Both clients bold overlapping parts of the same span at the same
     // moment. The engine cannot apply the other side's split operations
     // (its keyed targets are gone locally), so this exercises the repair
@@ -301,7 +301,7 @@ describe('two clients through a shared patch-channel store', () => {
     await settleAndAssertConvergence({server, editorA, editorB})
   })
 
-  test('concurrent link and bold over overlapping ranges converge', async () => {
+  test('Scenario: concurrent link and bold over overlapping ranges converge', async () => {
     // The rig's link-overlap-range scenario: one client annotates while the
     // other bolds an overlapping range. markDefs is written as a whole-array
     // set, so this also exercises sidecar-array conflicts.
@@ -329,7 +329,7 @@ describe('two clients through a shared patch-channel store', () => {
     await settleAndAssertConvergence({server, editorA, editorB})
   })
 
-  test('formatting conflict during concurrent typing converges', async () => {
+  test('Scenario: a formatting conflict during concurrent typing converges', async () => {
     // The hardest mix: one client types while the other formats the range
     // being typed into.
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})

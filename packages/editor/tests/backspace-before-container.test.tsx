@@ -79,7 +79,7 @@ const containers = [
 ]
 
 describe('Backspace before container', () => {
-  test('Backspace at start of empty text block after callout lands at end of callout content', async () => {
+  test('Scenario: Pressing Backspace at the start of an empty text block after a callout lands at the end of the callout content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -105,7 +105,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -131,7 +131,7 @@ describe('Backspace before container', () => {
     })
   })
 
-  test('Backspace at start of empty text block after callout with multi-block content lands at end of last block', async () => {
+  test('Scenario: Pressing Backspace at the start of an empty text block after a callout with multi-block content lands at the end of the last block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -162,7 +162,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -188,7 +188,7 @@ describe('Backspace before container', () => {
     })
   })
 
-  test('Backspace at start of empty text block after table lands at end of last cell content', async () => {
+  test('Scenario: Pressing Backspace at the start of an empty text block after a table lands at the end of the last cell content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -241,7 +241,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -274,7 +274,7 @@ describe('Backspace before container', () => {
     })
   })
 
-  test('Backspace at start of empty text block after void block-object focuses the block-object', async () => {
+  test('Scenario: Pressing Backspace at the start of an empty text block after a void block-object focuses the block-object', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -290,7 +290,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -314,7 +314,7 @@ describe('Backspace before container', () => {
     })
   })
 
-  test('Backspace at start of empty text block after table whose last cell ends in an image focuses the image', async () => {
+  test('Scenario: Pressing Backspace at the start of an empty text block after a table whose last cell ends in an image focuses the image', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -359,7 +359,7 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',

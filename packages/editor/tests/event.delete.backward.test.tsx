@@ -416,7 +416,83 @@ describe('event.delete.backward', () => {
     })
   })
 
-  describe('Scenario: Deleting word', () => {
+  test('Scenario: backspacing at the start of a span after an Indic conjunct cluster keeps the remaining code units in the span they came from', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: fooKey,
+              _type: 'span',
+              text: 'f\u0915\u094d\u0924',
+              marks: ['strong'],
+            },
+            {_key: barKey, _type: 'span', text: 'b', marks: []},
+          ],
+        },
+      ],
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {
+              _key: fooKey,
+              _type: 'span',
+              text: 'f\u0915\u094d',
+              marks: ['strong'],
+            },
+            {_key: barKey, _type: 'span', text: 'b', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: barKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  describe('Deleting word', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -429,7 +505,7 @@ describe('event.delete.backward', () => {
     ]
 
     describe('with selection', () => {
-      test('collapsed selection', async () => {
+      test('Scenario: Deleting a word backward from a collapsed selection removes the word before the caret', async () => {
         const {editor, locator} = await createTestEditor({
           initialValue,
         })
@@ -463,7 +539,7 @@ describe('event.delete.backward', () => {
         })
       })
 
-      test('expanded selection', async () => {
+      test('Scenario: Deleting a word backward with an expanded selection removes only the selected text', async () => {
         const {editor, locator} = await createTestEditor({
           initialValue,
         })
@@ -496,7 +572,7 @@ describe('event.delete.backward', () => {
     })
 
     describe('without selection', () => {
-      test('collapsed selection', async () => {
+      test('Scenario: Deleting a word backward at a collapsed `at` removes the word before it', async () => {
         const {editor} = await createTestEditor({
           initialValue,
         })
@@ -524,7 +600,7 @@ describe('event.delete.backward', () => {
         })
       })
 
-      test('expanded selection', async () => {
+      test('Scenario: Deleting a word backward at an expanded `at` removes only that range', async () => {
         const {editor} = await createTestEditor({
           initialValue,
         })
@@ -554,8 +630,8 @@ describe('event.delete.backward', () => {
     })
   })
 
-  describe('Scenario: Deleting line', () => {
-    test('with selection', async () => {
+  describe('Deleting line', () => {
+    test('Scenario: Deleting a line backward from a selection removes the text before the caret', async () => {
       const {editor, locator} = await createTestEditor({
         initialValue: [
           {
@@ -593,7 +669,7 @@ describe('event.delete.backward', () => {
       })
     })
 
-    test('without selection', async () => {
+    test('Scenario: Deleting a line backward at `at` removes the text before it', async () => {
       const {editor} = await createTestEditor({
         initialValue: [
           {

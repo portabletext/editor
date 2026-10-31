@@ -143,8 +143,8 @@ const twoTablesValue = [
   },
 ]
 
-describe('getTableSelection', () => {
-  test('returns undefined when selection is null', async () => {
+describe(getTableSelection.name, () => {
+  test('Scenario: a null selection yields no table selection', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -155,7 +155,7 @@ describe('getTableSelection', () => {
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
-  test('returns undefined when collapsed inside a single cell', async () => {
+  test('Scenario: a caret collapsed inside a single cell yields no table selection', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -172,7 +172,7 @@ describe('getTableSelection', () => {
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
-  test('returns undefined when anchor and focus are in the same cell at different offsets', async () => {
+  test('Scenario: anchor and focus in the same cell at different offsets yield no table selection', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -190,7 +190,7 @@ describe('getTableSelection', () => {
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
-  test('derives rectangle when anchor and focus are different cells', async () => {
+  test('Scenario: anchor and focus in different cells yield a rectangle', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -211,7 +211,7 @@ describe('getTableSelection', () => {
     })
   })
 
-  test('sorts row and col ranges regardless of direction', async () => {
+  test('Scenario: the row and column ranges are sorted regardless of direction', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -232,7 +232,7 @@ describe('getTableSelection', () => {
     })
   })
 
-  test('returns undefined when one endpoint is outside any cell', async () => {
+  test('Scenario: an endpoint outside any cell yields no table selection', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -253,7 +253,7 @@ describe('getTableSelection', () => {
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
-  test('returns undefined when anchor and focus are in different tables', async () => {
+  test('Scenario: anchor and focus in different tables yield no table selection', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -271,7 +271,7 @@ describe('getTableSelection', () => {
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
-  test('derives the canonical example: (row1, col2) → (row3, col1) on a 3x3 table', async () => {
+  test('Scenario: a selection from (row1, col2) to (row3, col1) on a 3x3 table yields the canonical rectangle', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,

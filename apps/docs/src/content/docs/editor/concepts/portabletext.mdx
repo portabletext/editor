@@ -8,7 +8,7 @@ sidebar:
 
 import {CardGrid, LinkCard} from '@astrojs/starlight/components'
 
-The Portable Text Editor (PTE) is the officially supported editor for working with [Portable Text](https://github.com/portabletext/portabletext). Customize it to fit the needs of your authors and content team using a schema,
+The Portable Text Editor (PTE) is the officially supported editor for working with [Portable Text](https://github.com/portabletext/portabletext). Customize it to fit the needs of your authors and content team using a schema, custom rendering, a toolbar, and Behaviors.
 
 ## Schema
 
@@ -93,7 +93,7 @@ Inline objects differ from annotations and decorators because they aren't wrappi
 
 ## Rendering content in and out of the editor
 
-The schema serves as a foundation for how the PTE renders the text. On it's own, passing just a schema to the editor only annotates or _describes_ text, but it won't change the way it renders.
+The schema serves as a foundation for how the PTE renders the text. On its own, passing just a schema to the editor only annotates or _describes_ text, but it won't change the way it renders.
 
 To affect the way text renders in the editor, pass custom renderers to the editor.
 
@@ -147,7 +147,7 @@ The following terms come up when dealing with Portable Text and the editor. Some
 - Block: Broken down into standard and custom blocks. Standard blocks are sections of text, like paragraphs and headings. Custom blocks are block objects like images, code blocks, embeds, etc.
 - Span: A standard way to express inline text within a block.
 - Children: An array of spans or other inline types contained within a block.
-- Marks: `markDefs` exist in the Portable Text format and connect spans with annotations and decorators. A span can have multiple marks associated with it. Such as text that is bold and italic.
+- Marks: a span's `marks` array holds decorator names and the `_key` of each annotation, which lives in the block's `markDefs`. A span can have multiple marks associated with it. Such as text that is bold and italic.
 - List items: Blocks can be labeled as list items to resemble lists.
 - Selection: The range of text selected, or the cursor location in the editor at a given time.
 - Selection collapsed: A collapsed selection is one where nothing is selected and is instead a single point (cursor).

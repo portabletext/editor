@@ -4,7 +4,7 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.ready', () => {
-  test('emits for "undefined" initial value', async () => {
+  test('Scenario: Ready is emitted for an "undefined" initial value', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
     await createTestEditor({
@@ -14,11 +14,12 @@ describe('event.ready', () => {
     expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
   })
 
-  test('emits for "[]" initial value', async () => {
+  test('Scenario: Ready is emitted for a "[]" initial value', async () => {
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
     await createTestEditor({
       children: <EventListenerPlugin on={onEvent} />,
+      initialValue: [],
     })
 
     expect(onEvent).toHaveBeenCalledWith({type: 'ready'})

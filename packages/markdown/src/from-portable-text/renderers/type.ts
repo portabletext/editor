@@ -1,7 +1,6 @@
 import {isTypedObject} from '@portabletext/schema'
 import {isPortableTextBlock} from '@portabletext/toolkit'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
-import markdownit from 'markdown-it'
 import {
   escapeImageAndLinkText,
   escapeImageAndLinkTitle,
@@ -9,6 +8,7 @@ import {
 } from '../../escape'
 import {markListItemFirstBlock} from '../list-item-first-block'
 import type {PortableTextTypeRenderer} from '../types'
+import {validateLink} from '../validate-link'
 import {wrapInCodeSpan} from './marks'
 
 /**
@@ -22,7 +22,27 @@ export const DefaultCodeBlockRenderer: PortableTextTypeRenderer<{
   if (!isCodeShaped(options.value)) {
     return DefaultUnknownTypeRenderer(options)
   }
-  return `\`\`\`${normalizeLanguage(options.value.language)}\n${options.value.code}\n\`\`\``
+  const fence = '`'.repeat(
+    Math.max(3, longestClosingFenceRun(options.value.code) + 1),
+  )
+  return `${fence}${normalizeLanguage(options.value.language)}\n${options.value.code}\n${fence}`
+}
+
+/**
+ * A code line closes the fence early when it is nothing but a backtick run
+ * at least as long as the opening fence (CommonMark allows up to 3 spaces
+ * of indent and trailing spaces or tabs). Backtick runs anywhere else in
+ * the code can't close it, so they don't widen the fence. Lines split on
+ * CommonMark's line endings only: a regex `m` flag would also split on
+ * U+2028 and U+2029, which Markdown reads as ordinary characters.
+ */
+function longestClosingFenceRun(code: string): number {
+  let longest = 0
+  for (const line of code.split(/\r\n|\r|\n/)) {
+    const run = /^ {0,3}(`+)[ \t]*$/.exec(line)?.[1]
+    longest = Math.max(longest, run?.length ?? 0)
+  }
+  return longest
 }
 
 function isCodeShaped(value: unknown): value is {code: string} {
@@ -83,7 +103,9 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
   alt: string | undefined
   title: string | undefined
 }> = (options) => {
-  if (!isImageShaped(options.value) || !linkValidator(options.value.src)) {
+  if (!isImageShaped(options.value) || !validateLink(options.value.src)) {
+    // A `src` the parse side rejects would reparse as literal text instead
+    // of an image, so it is guarded the same way a malformed shape is
     return DefaultUnknownTypeRenderer(options)
   }
   const alt = escapeImageAndLinkText(options.value.alt ?? '')
@@ -92,16 +114,6 @@ export const DefaultImageRenderer: PortableTextTypeRenderer<{
     : ''
   return `![${alt}](${options.value.src}${title})`
 }
-
-// The markdown-it instance the parse side builds
-// (`to-portable-text/markdown-to-portable-text.ts`) never overrides
-// `validateLink`, so this default instance's validator is the one that
-// will run on reparse. It rejects `javascript:`/`vbscript:`/`file:` and
-// all `data:` URIs except png/gif/jpeg/webp; a `src` it rejects would
-// reparse as literal text instead of an image, so such a `src` is
-// guarded here the same way a malformed image shape is.
-const md = new markdownit()
-const linkValidator = (url: string) => md.validateLink(url)
 
 function isImageShaped(value: unknown): value is {
   src: string

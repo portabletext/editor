@@ -5,7 +5,7 @@ import {createTestEditor} from '../src/test/vitest'
 
 describe('data-pt-path attribute', () => {
   describe('initial rendering', () => {
-    test('editor data-pt-path', async () => {
+    test('Scenario: The editor renders an empty data-pt-path', async () => {
       const {locator} = await createTestEditor()
 
       await vi.waitFor(() => {
@@ -13,7 +13,7 @@ describe('data-pt-path attribute', () => {
       })
     })
 
-    test('text block data-pt-path', async () => {
+    test('Scenario: A text block renders its key as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -29,16 +29,16 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const blockLocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${blockKey}"]']`)
-
       await vi.waitFor(() => {
+        const blockLocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${blockKey}"]']`)
+
         expect(blockLocator).not.toBeNull()
       })
     })
 
-    test('span data-pt-path', async () => {
+    test('Scenario: A span renders its block and span keys as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -54,18 +54,18 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const spanLocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKey}"].children[_key=="${spanKey}"]']`,
-        )
-
       await vi.waitFor(() => {
+        const spanLocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKey}"].children[_key=="${spanKey}"]']`,
+          )
+
         expect(spanLocator).not.toBeNull()
       })
     })
 
-    test('block object data-pt-path', async () => {
+    test('Scenario: A block object renders its key as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -89,16 +89,16 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const imageLocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
-
       await vi.waitFor(() => {
+        const imageLocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
+
         expect(imageLocator).not.toBeNull()
       })
     })
 
-    test('inline object data-pt-path', async () => {
+    test('Scenario: An inline object renders its block and child keys as data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -123,18 +123,18 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const stockTickerLocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKey}"].children[_key=="${stockTickerKey}"]']`,
-        )
-
       await vi.waitFor(() => {
+        const stockTickerLocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKey}"].children[_key=="${stockTickerKey}"]']`,
+          )
+
         expect(stockTickerLocator).not.toBeNull()
       })
     })
 
-    test('multiple text blocks', async () => {
+    test('Scenario: Multiple text blocks each render their block and span data-pt-path', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKeyA = keyGenerator()
       const spanKeyA = keyGenerator()
@@ -157,24 +157,24 @@ describe('data-pt-path attribute', () => {
         ],
       })
 
-      const blockALocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${blockKeyA}"]']`)
-      const blockBLocator = locator
-        .element()
-        .querySelector(`[data-pt-path='[_key=="${blockKeyB}"]']`)
-      const spanALocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKeyA}"].children[_key=="${spanKeyA}"]']`,
-        )
-      const spanBLocator = locator
-        .element()
-        .querySelector(
-          `[data-pt-path='[_key=="${blockKeyB}"].children[_key=="${spanKeyB}"]']`,
-        )
-
       await vi.waitFor(() => {
+        const blockALocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${blockKeyA}"]']`)
+        const blockBLocator = locator
+          .element()
+          .querySelector(`[data-pt-path='[_key=="${blockKeyB}"]']`)
+        const spanALocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKeyA}"].children[_key=="${spanKeyA}"]']`,
+          )
+        const spanBLocator = locator
+          .element()
+          .querySelector(
+            `[data-pt-path='[_key=="${blockKeyB}"].children[_key=="${spanKeyB}"]']`,
+          )
+
         expect(blockALocator).not.toBeNull()
         expect(blockBLocator).not.toBeNull()
         expect(spanALocator).not.toBeNull()
@@ -183,7 +183,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('`block.set` text block key', async () => {
+  test('Scenario: `block.set` with a new text block key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -226,7 +226,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('`block.set` block object key', async () => {
+  test('Scenario: `block.set` with a new block object key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 
@@ -243,11 +243,11 @@ describe('data-pt-path attribute', () => {
       }),
     })
 
-    const imageLocator = locator
-      .element()
-      .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
-
     await vi.waitFor(() => {
+      const imageLocator = locator
+        .element()
+        .querySelector(`[data-pt-path='[_key=="${imageKey}"]']`)
+
       expect(
         imageLocator,
         "Unable to find image from it's data-pt-path",
@@ -276,7 +276,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('remote patch updates text block key', async () => {
+  test('Scenario: A remote patch that sets a new text block key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -323,7 +323,7 @@ describe('data-pt-path attribute', () => {
     })
   })
 
-  test('remote patch updates block object key', async () => {
+  test('Scenario: A remote patch that sets a new block object key updates its data-pt-path', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
 

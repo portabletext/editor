@@ -1,5 +1,8 @@
 import {isSpan} from '@portabletext/schema'
 import type {EditorActor} from '../../../../editor/editor-machine'
+import {getEntireSoftLineDeleteEvents} from '../../../../internal-utils/entire-soft-line-delete-event'
+import {getHardLineDeleteEvent} from '../../../../internal-utils/hard-line-delete-event'
+import {isReplacementDelete} from '../../../../internal-utils/is-replacement-delete'
 import {getNode} from '../../../../traversal/get-node'
 import {getNodes} from '../../../../traversal/get-nodes'
 import {getSpan} from '../../../../traversal/get-span'
@@ -383,6 +386,10 @@ export function createAndroidInputManager({
 
     if (type.startsWith('delete')) {
       const direction = type.endsWith('Backward') ? 'backward' : 'forward'
+      const deleteEvent =
+        isReplacementDelete(type) && isExpandedRange(targetRange)
+          ? ({type: 'delete'} as const)
+          : ({type: 'delete', direction} as const)
       let [start, end] = rangeEdges(targetRange, editor.snapshot.context)
       const leafNodeEntry = getNode(editor.snapshot, start.path)
       const leafResult =
@@ -397,7 +404,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: deleteEvent,
               editor,
             }),
           {at: targetRange},
@@ -412,7 +419,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: deleteEvent,
               editor,
             }),
           {at: targetRange},
@@ -495,7 +502,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete', direction},
+              behaviorEvent: deleteEvent,
               editor,
             }),
           {at: targetRange},
@@ -584,16 +591,13 @@ export function createAndroidInputManager({
       case 'deleteEntireSoftLine': {
         return scheduleAction(
           () => {
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {type: 'delete.backward', unit: 'line'},
-              editor,
-            })
-            editorActor.send({
-              type: 'behavior event',
-              behaviorEvent: {type: 'delete.forward', unit: 'line'},
-              editor,
-            })
+            for (const behaviorEvent of getEntireSoftLineDeleteEvents(editor)) {
+              editorActor.send({
+                type: 'behavior event',
+                behaviorEvent,
+                editor,
+              })
+            }
           },
           {at: targetRange},
         )
@@ -604,7 +608,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete.backward', unit: 'block'},
+              behaviorEvent: getHardLineDeleteEvent(editor, 'backward'),
               editor,
             }),
           {at: targetRange},
@@ -628,7 +632,7 @@ export function createAndroidInputManager({
           () =>
             editorActor.send({
               type: 'behavior event',
-              behaviorEvent: {type: 'delete.forward', unit: 'block'},
+              behaviorEvent: getHardLineDeleteEvent(editor, 'forward'),
               editor,
             }),
           {at: targetRange},

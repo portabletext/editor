@@ -6,7 +6,7 @@ function dmp(before: string, after: string): string {
   return stringifyPatches(makePatches(before, after))
 }
 
-describe('applyPatchOperations', () => {
+describe(applyPatchOperations.name, () => {
   test('sets by key path', () => {
     const doc = {
       content: [{_key: 'b1', children: [{_key: 's1', text: 'hello'}]}],

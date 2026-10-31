@@ -33,7 +33,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('mark-state selectors (container awareness)', () => {
-  test('getMarkState reports decorator marks of the focused span inside a container', async () => {
+  test('Scenario: `getMarkState` reports decorator marks of the focused span inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()
@@ -102,7 +102,7 @@ describe('mark-state selectors (container awareness)', () => {
     expect(isActiveDecorator('em')(snapshot)).toEqual(false)
   })
 
-  test('getActiveAnnotations and isActiveAnnotation see annotations inside a container', async () => {
+  test('Scenario: `getActiveAnnotations` and `isActiveAnnotation` see annotations inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()

@@ -8,7 +8,7 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, onTestFinished, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import mentionPickerFeature from './mention-picker.feature?raw'
@@ -45,12 +45,8 @@ Feature({
       context.stateLocator = page.getByTestId('state')
       context.selectedIndexLocator = page.getByTestId('selectedIndex')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.matchesLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.matchesLocator).toBeInTheDocument()
     }),
   ],
   featureText: mentionPickerFeature,
@@ -183,7 +179,7 @@ function createMatchUsers(config: {
 }
 
 describe('Error handling', () => {
-  test('captures error when getMatches rejects', async () => {
+  test('Scenario: a rejecting `getMatches` surfaces its error in the no matches state', async () => {
     const testError = new Error('API unavailable')
     let capturedError: Error | undefined
 
@@ -191,10 +187,7 @@ describe('Error handling', () => {
       mode: 'async',
       trigger: /@/,
       keyword: /\w*/,
-      getMatches: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        throw testError
-      },
+      getMatches: () => Promise.reject(testError),
       onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
@@ -227,9 +220,7 @@ describe('Error handling', () => {
     const errorStateLocator = page.getByTestId('error-state')
     const errorMessageLocator = page.getByTestId('error-message')
 
-    await vi.waitFor(() =>
-      expect.element(errorStateLocator).toBeInTheDocument(),
-    )
+    await expect.element(errorStateLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, '@test')
@@ -245,7 +236,7 @@ describe('Error handling', () => {
     })
   })
 
-  test('clears error when returning to idle', async () => {
+  test('Scenario: returning to idle clears the error', async () => {
     const testError = new Error('API unavailable')
     let capturedError: Error | undefined
 
@@ -253,10 +244,7 @@ describe('Error handling', () => {
       mode: 'async',
       trigger: /@/,
       keyword: /\w*/,
-      getMatches: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        throw testError
-      },
+      getMatches: () => Promise.reject(testError),
       onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
@@ -289,7 +277,7 @@ describe('Error handling', () => {
     const stateLocator = page.getByTestId('error-clear-state')
     const errorMessageLocator = page.getByTestId('error-clear-message')
 
-    await vi.waitFor(() => expect.element(stateLocator).toBeInTheDocument())
+    await expect.element(stateLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, '@test')
@@ -313,25 +301,20 @@ describe('Error handling', () => {
 })
 
 describe('Race condition handling', () => {
-  test('ignores stale results from slow requests', async () => {
-    const requestOrder: Array<string> = []
-    const responseOrder: Array<string> = []
+  test('Scenario: stale results from a slow request are ignored', async () => {
+    const requestedKeywords: Array<string> = []
+    const renderedMatches: Array<string> = []
+    const resolvers = new Map<string, (matches: Array<MentionMatch>) => void>()
 
     const racePicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
       trigger: /@/,
       keyword: /\w*/,
-      getMatches: async ({keyword}) => {
-        requestOrder.push(keyword)
-
-        if (keyword === 'a') {
-          await new Promise((resolve) => setTimeout(resolve, 100))
-          responseOrder.push(keyword)
-          return [{key: 'a1', name: 'Slow Result A', username: 'a'}]
-        }
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        responseOrder.push(keyword)
-        return [{key: 'ab1', name: 'Fast Result AB', username: 'ab'}]
+      getMatches: ({keyword}) => {
+        requestedKeywords.push(keyword)
+        return new Promise((resolve) => {
+          resolvers.set(keyword, resolve)
+        })
       },
       onSelect: [
         ({event}) => [
@@ -343,12 +326,17 @@ describe('Race condition handling', () => {
 
     function RaceTestPlugin() {
       const picker = useTypeaheadPicker(racePicker)
+      const matches = picker.snapshot.context.matches
+        .map((m) => m.name)
+        .join(',')
+
+      if (renderedMatches.at(-1) !== matches) {
+        renderedMatches.push(matches)
+      }
 
       return (
         <>
-          <div data-testid="race-matches">
-            {picker.snapshot.context.matches.map((m) => m.name).join(',')}
-          </div>
+          <div data-testid="race-matches">{matches}</div>
           <div data-testid="race-keyword">
             {picker.snapshot.context.keyword}
           </div>
@@ -364,55 +352,65 @@ describe('Race condition handling', () => {
     const matchesLocator = page.getByTestId('race-matches')
     const keywordLocator = page.getByTestId('race-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, '@a')
 
-    await new Promise((resolve) => setTimeout(resolve, 20))
+    await vi.waitFor(() => {
+      expect(keywordLocator.element().textContent).toEqual('a')
+    })
+    expect(requestedKeywords).toEqual([''])
+
+    resolvers.get('')?.([])
+
+    await vi.waitFor(() => {
+      expect(requestedKeywords).toEqual(['', 'a'])
+    })
 
     await userEvent.type(locator, 'b')
 
     await vi.waitFor(() => {
       expect(keywordLocator.element().textContent).toEqual('ab')
     })
+    expect(requestedKeywords).toEqual(['', 'a'])
 
-    await vi.waitFor(
-      () => {
-        expect(matchesLocator.element().textContent).toEqual('Fast Result AB')
-      },
-      {timeout: 200},
-    )
+    resolvers.get('a')?.([{key: 'a1', name: 'Slow Result A', username: 'a'}])
 
-    await new Promise((resolve) => setTimeout(resolve, 150))
+    await vi.waitFor(() => {
+      expect(requestedKeywords).toEqual(['', 'a', 'ab'])
+    })
 
-    expect(matchesLocator.element().textContent).toEqual('Fast Result AB')
+    resolvers.get('ab')?.([
+      {key: 'ab1', name: 'Fast Result AB', username: 'ab'},
+    ])
 
-    expect(requestOrder).toContain('a')
-    expect(requestOrder).toContain('ab')
-    expect(responseOrder).toContain('a')
-    expect(responseOrder).toContain('ab')
+    await vi.waitFor(() => {
+      expect(matchesLocator.element().textContent).toEqual('Fast Result AB')
+    })
+    expect(requestedKeywords).toEqual(['', 'a', 'ab'])
+    expect(renderedMatches).toEqual(['', 'Fast Result AB'])
   })
 })
 
 describe('Debouncing', () => {
-  test('delays getMatches calls when debounce is configured', async () => {
-    let callCount = 0
-    const callTimestamps: number[] = []
-    const startTime = Date.now()
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
-    // Use a large debounce window so that even Firefox's slower
-    // character-by-character userEvent.type stays within a single window.
+  test('Scenario: a configured debounce delays `getMatches` calls', async () => {
+    const requestedKeywords: Array<string> = []
+
     const debouncedPicker = defineTypeaheadPicker<MentionMatch>({
       mode: 'async',
       trigger: /@/,
       keyword: /\w*/,
       debounceMs: 1000,
-      getMatches: async ({keyword}) => {
-        callCount++
-        callTimestamps.push(Date.now() - startTime)
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        return [{key: '1', name: `Result for ${keyword}`, username: keyword}]
+      getMatches: ({keyword}) => {
+        requestedKeywords.push(keyword)
+        return Promise.resolve([
+          {key: '1', name: `Result for ${keyword}`, username: keyword},
+        ])
       },
       onSelect: [
         ({event}) => [
@@ -445,28 +443,107 @@ describe('Debouncing', () => {
     const matchesLocator = page.getByTestId('debounce-matches')
     const keywordLocator = page.getByTestId('debounce-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
-    // Type rapidly - each character within the debounce window
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+
     await userEvent.type(locator, '@abc')
 
-    // Wait for keyword to update
-    await vi.waitFor(() => {
-      expect(keywordLocator.element().textContent).toEqual('abc')
-    })
+    expect(keywordLocator.element().textContent).toEqual('abc')
 
-    // Wait for debounce + fetch time
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    await vi.advanceTimersByTimeAsync(999)
+    expect(requestedKeywords).toEqual([])
 
-    // Should have results for the final keyword
+    await vi.advanceTimersByTimeAsync(1)
+    expect(requestedKeywords).toEqual(['abc'])
+
     await vi.waitFor(() => {
       expect(matchesLocator.element().textContent).toEqual('Result for abc')
     })
+    expect(requestedKeywords).toEqual(['abc'])
+  })
 
-    // With 1000ms debouncing, rapid typing should result in fewer calls
-    // than the 3 characters typed (a, ab, abc)
-    expect(callCount).toBeLessThan(3)
+  test('Scenario: each keystroke restarts the debounce window', async () => {
+    const requestedKeywords: Array<string> = []
+
+    const debouncedPicker = defineTypeaheadPicker<MentionMatch>({
+      mode: 'async',
+      trigger: /@/,
+      keyword: /\w*/,
+      debounceMs: 1000,
+      getMatches: ({keyword}) => {
+        requestedKeywords.push(keyword)
+        return Promise.resolve([
+          {key: '1', name: `Result for ${keyword}`, username: keyword},
+        ])
+      },
+      onSelect: [
+        ({event}) => [
+          raise({type: 'delete', at: event.patternSelection}),
+          raise({type: 'insert.text', text: event.match.name}),
+        ],
+      ],
+    })
+
+    function DebounceRestartTestPlugin() {
+      const picker = useTypeaheadPicker(debouncedPicker)
+
+      return (
+        <>
+          <div data-testid="debounce-restart-matches">
+            {picker.snapshot.context.matches
+              .map((match) => match.name)
+              .join(',')}
+          </div>
+          <div data-testid="debounce-restart-keyword">
+            {picker.snapshot.context.keyword}
+          </div>
+        </>
+      )
+    }
+
+    const {locator} = await createTestEditor({
+      children: <DebounceRestartTestPlugin />,
+      schemaDefinition: defineSchema({}),
+    })
+
+    const matchesLocator = page.getByTestId('debounce-restart-matches')
+    const keywordLocator = page.getByTestId('debounce-restart-keyword')
+
+    await expect.element(matchesLocator).toBeInTheDocument()
+
+    await userEvent.click(locator)
+
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+    onTestFinished(() => {
+      vi.useRealTimers()
+    })
+
+    await userEvent.type(locator, '@a')
+    await vi.advanceTimersByTimeAsync(400)
+    await userEvent.type(locator, 'b')
+    await vi.advanceTimersByTimeAsync(400)
+    await userEvent.type(locator, 'c')
+    await vi.advanceTimersByTimeAsync(400)
+    await userEvent.type(locator, 'd')
+
+    expect(keywordLocator.element().textContent).toEqual('abcd')
+    expect(requestedKeywords).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(requestedKeywords).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(requestedKeywords).toEqual(['abcd'])
+
+    await vi.waitFor(() => {
+      expect(matchesLocator.element().textContent).toEqual('Result for abcd')
+    })
+    expect(requestedKeywords).toEqual(['abcd'])
+
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(requestedKeywords).toEqual(['abcd'])
   })
 })

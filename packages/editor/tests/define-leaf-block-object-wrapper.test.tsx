@@ -11,7 +11,7 @@ const schemaDefinition = defineSchema({
 })
 
 describe('defineBlockObject void block-object wrapper contract', () => {
-  test('consumer wrapping content with contentEditable=false + draggable on the inner wrapper preserves the spacer in editable context', async () => {
+  test('Scenario: A consumer wrapping content with contentEditable=false and draggable on the inner wrapper preserves the spacer in editable context', async () => {
     const imageLeaf = defineBlockObject({
       type: 'image',
       render: ({attributes, children, readOnly}) => (
@@ -56,7 +56,7 @@ describe('defineBlockObject void block-object wrapper contract', () => {
     })
   })
 
-  test('Pressing Enter on a void block-object inserts a sibling text block when the leaf wraps content with contentEditable=false', async () => {
+  test('Scenario: Pressing Enter on a void block object inserts a sibling text block when the leaf wraps content with contentEditable=false', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()

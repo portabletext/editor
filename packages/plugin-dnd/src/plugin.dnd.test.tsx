@@ -27,7 +27,7 @@ const containerSchemaDefinition = defineSchema({
   ],
 })
 
-describe('DndProvider', () => {
+describe(DndProvider.name, () => {
   test('Scenario: Dragging an entire block over another block shows the drop position', async () => {
     const {editor, renders} = await renderEditorWithProbes()
 

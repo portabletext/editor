@@ -18,7 +18,6 @@ const TEST_COMPILED_SOURCES = [
   ...COMPILED_SOURCES,
   '/packages/editor/tests/',
   '/packages/editor/gherkin-tests/',
-  '/packages/editor/vitest.setup.ts',
 ]
 
 export default defineConfig({
@@ -39,7 +38,6 @@ export default defineConfig({
         resolve,
         test: {
           name: 'browser',
-          setupFiles: ['./vitest.setup.ts'],
           include: [
             'gherkin-tests/**/*.test.ts',
             'gherkin-tests/**/*.test.tsx',

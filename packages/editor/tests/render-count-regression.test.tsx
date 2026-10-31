@@ -110,7 +110,7 @@ describe('Render count regression', () => {
     }
   }
 
-  test('Typing into one sibling re-renders constant work, not O(N) siblings', async () => {
+  test('Scenario: Typing into one sibling re-renders constant work, not O(N) siblings', async () => {
     const itemCounter = createRenderCounter()
 
     const listContainer = defineContainer({
@@ -200,7 +200,7 @@ describe('Render count regression', () => {
     expect(itemTotal).toBeLessThanOrEqual(3)
   }, 60_000)
 
-  test('Mass unmount: deleting 100 blocks in one event does not crash', async () => {
+  test('Scenario: Deleting 100 blocks in one event unmounts them without crashing', async () => {
     // Forward smoke test: 100 blocks unmount in one React commit ->
     // ~200 `useSyncExternalStore` subscription cleanups -> bounded
     // `Set.delete` calls against the `SelectionStateProvider`'s local
@@ -439,9 +439,7 @@ async function runTypingScenario(options: {
   )
 
   const locator = page.getByRole('textbox')
-  await vi.waitFor(() => expect.element(locator).toBeInTheDocument(), {
-    timeout: 10_000,
-  })
+  await expect.element(locator, {timeout: 10_000}).toBeInTheDocument()
   await vi.waitFor(() => expect(locator.getByText('bar')).toBeInTheDocument(), {
     timeout: 10_000,
   })
@@ -522,7 +520,7 @@ async function runTypingScenario(options: {
 }
 
 describe('Registered nodes: typing render counts', () => {
-  test('Typing produces zero cross-block render callbacks, re-renders same-block sibling spans on every keystroke, fires the decorator callback once per edited-span render, and keeps edited-block and edited-span callbacks bounded', async () => {
+  test('Scenario: Typing produces zero cross-block render callbacks, re-renders same-block sibling spans on every keystroke, fires the decorator callback once per edited-span render, and keeps edited-block and edited-span callbacks bounded', async () => {
     const blockRenders = new Map<string, number>()
     const spanRenders = new Map<string, number>()
     const decoratorRenders = new Map<string, number>()

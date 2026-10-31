@@ -87,7 +87,7 @@ const sharedShapeSchema = defineSchema({
 })
 
 describe('same _type in two different lexical positions', () => {
-  test('shallow table and organism normalize all the way down to a cell holding an empty text block', async () => {
+  test('Scenario: A shallow table and an organism normalize all the way down to a cell holding an empty text block', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     const tableContainer = defineContainer({

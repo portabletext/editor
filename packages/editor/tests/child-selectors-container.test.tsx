@@ -34,7 +34,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('child and span selectors (container awareness)', () => {
-  test('getFocusChild, getFocusSpan, and getAnchorChild resolve at depth', async () => {
+  test('Scenario: getFocusChild, getFocusSpan, and getAnchorChild resolve at depth', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()
@@ -104,7 +104,7 @@ describe('child and span selectors (container awareness)', () => {
     expect(anchorSpan?.node._key).toEqual(span2Key)
   })
 
-  test('getFocusInlineObject resolves an inline object inside a container line', async () => {
+  test('Scenario: getFocusInlineObject resolves an inline object inside a container line', async () => {
     const inlineSchemaDefinition = defineSchema({
       inlineObjects: [{name: 'stock-ticker'}],
       blockObjects: [
@@ -185,7 +185,7 @@ describe('child and span selectors (container awareness)', () => {
     ])
   })
 
-  test('getNextSpan and getPreviousSpan walk within the focus text block at depth', async () => {
+  test('Scenario: getNextSpan and getPreviousSpan walk within the focus text block at depth', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()

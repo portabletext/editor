@@ -213,7 +213,7 @@ function tableWithCleared(
 }
 
 describe('delete behaviors within tables', () => {
-  test('delete.backward at offset 0 of cell start: no-op (no cross-cell merge)', async () => {
+  test('Scenario: `delete.backward` at the start of a cell does not merge across cells', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -231,7 +231,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete.forward at end of cell: no-op (no cross-cell merge)', async () => {
+  test('Scenario: `delete.forward` at the end of a cell does not merge across cells', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -249,7 +249,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete.backward inside cell text: deletes one char within cell', async () => {
+  test('Scenario: `delete.backward` inside cell text deletes one character within the cell', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -293,7 +293,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete on multi-cell rectangle (2x2): clears all touched cells, collapses to top-left cell', async () => {
+  test('Scenario: deleting a 2x2 rectangle clears every touched cell and collapses to the top-left cell', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -327,7 +327,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete on multi-cell rectangle in same row: clears both, leaves other row untouched', async () => {
+  test('Scenario: deleting a rectangle within one row clears both cells and leaves the other row untouched', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -359,7 +359,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete on multi-cell rectangle in cols 1+: selection lands at start of selection top-left, not table top-left', async () => {
+  test('Scenario: deleting a rectangle in columns 1+ lands the selection at the rectangle top-left, not the table top-left', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -393,7 +393,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('split (Enter) inside a cell: splits inside the cell, structure outside cell preserved', async () => {
+  test('Scenario: `split` inside a cell splits within the cell and preserves the structure outside it', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -440,7 +440,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('split (Enter) with multi-cell rectangle selection: clears rectangle, no split', async () => {
+  test('Scenario: `split` over a multi-cell rectangle clears the rectangle without splitting', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -472,7 +472,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('backspace over a partial rectangle clears it', async () => {
+  test('Scenario: backspace over a partial rectangle clears it', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -500,7 +500,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('backspace with the whole table selected deletes the table', async () => {
+  test('Scenario: backspace with the whole table selected deletes the table', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -532,7 +532,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('typing over a multi-cell rectangle replaces it with the typed text', async () => {
+  test('Scenario: typing over a multi-cell rectangle replaces it with the typed text', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -585,7 +585,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('pasting over a column selection replaces the column only', async () => {
+  test('Scenario: pasting over a column selection replaces the column only', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -644,7 +644,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('pasting multi-line text over a rectangle lands inside the cell', async () => {
+  test('Scenario: pasting multi-line text over a rectangle lands inside the cell', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -678,7 +678,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete.range straddling two cells in same row: structure preserved (no cell merge)', async () => {
+  test('Scenario: `delete.range` straddling two cells in a row preserves the structure without merging cells', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -704,7 +704,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete.range straddling rows in same table: structure preserved (no row merge)', async () => {
+  test('Scenario: `delete.range` straddling rows in a table preserves the structure without merging rows', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -732,7 +732,7 @@ describe('delete behaviors within tables', () => {
     })
   })
 
-  test('delete.backward in last empty cell of a single-cell table: removes the table (matches plain-block backspace semantics)', async () => {
+  test('Scenario: `delete.backward` in the last empty cell of a single-cell table removes the table like a plain block backspace', async () => {
     const onlyEmptyCellTable = [
       {
         _type: 'table',

@@ -18,7 +18,7 @@ function decoration(testId: string): RangeDecoration {
   }
 }
 
-describe('splitEditableProps', () => {
+describe(splitEditableProps.name, () => {
   const props: SDKPortableTextEditableProps = {
     'documentId': 'doc-1',
     'documentType': 'post',
@@ -159,7 +159,7 @@ describe('splitEditableProps', () => {
   })
 })
 
-describe('mergePresenceDecorations', () => {
+describe(mergePresenceDecorations.name, () => {
   const caller = [decoration('caller')]
   const cursors = [decoration('cursor-a'), decoration('cursor-b')]
 
@@ -192,7 +192,7 @@ describe('mergePresenceDecorations', () => {
   })
 })
 
-describe('resolveCursorRenderer', () => {
+describe(resolveCursorRenderer.name, () => {
   const custom: RenderCursorFunction = () => (props) => props.children as never
 
   it('draws the built-in caret when the app gave none', () => {

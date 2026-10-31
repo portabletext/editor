@@ -76,18 +76,35 @@ describe('Feature: Scrolling the Selection Into View', () => {
       initialValue: Array.from({length: 120}, (_, index) => paragraph(index)),
     })
     editor.send({type: 'focus'})
-    window.scrollTo(0, 0)
-    await new Promise((resolve) => setTimeout(resolve, 100))
 
-    // The first paragraph is visible at scroll 0; selecting it must not
-    // move the viewport at all.
-    const point = {path: [{_key: 'p1'}, 'children', {_key: 's1'}], offset: 0}
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.rangeCount).toBe(1)
+    })
+
+    const block = document.querySelector(
+      `[data-pt-path="${CSS.escape('[_key=="p60"]')}"]`,
+    )
+    if (!block) {
+      throw new Error('block not rendered')
+    }
+    window.scrollTo(
+      0,
+      window.scrollY +
+        block.getBoundingClientRect().top -
+        window.innerHeight / 4,
+    )
+    const scrollYBeforeSelect = window.scrollY
+    expect(scrollYBeforeSelect).toBeGreaterThan(0)
+
+    const point = {path: [{_key: 'p60'}, 'children', {_key: 's60'}], offset: 0}
     editor.send({type: 'select', at: {anchor: point, focus: point}})
 
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus).toEqual(point)
+      expect(block.contains(window.getSelection()?.focusNode ?? null)).toBe(
+        true,
+      )
     })
-    expect(window.scrollY).toBe(0)
+    expect(window.scrollY).toBe(scrollYBeforeSelect)
   })
 
   test('Scenario: pressing Enter at the start of a block scrolls it back into view as it moves below the fold', async () => {

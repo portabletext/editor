@@ -1,5 +1,5 @@
 import {isTextBlockNode} from '@portabletext/schema'
-import type {EditorSelector} from '../editor/editor-selector'
+import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {Path} from '../engine/interfaces/path'
 import {siblingPath} from '../engine/path/sibling-path'
 import {serializePath} from '../paths/serialize-path'
@@ -9,6 +9,7 @@ import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-objec
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getLastBlock} from '../selectors/selector.get-last-block'
 import {isSelectionCollapsed} from '../selectors/selector.is-selection-collapsed'
+import type {PickFromUnion} from '../type-utils'
 import {getBlockEndPoint} from '../utils/util.get-block-end-point'
 import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
@@ -16,21 +17,21 @@ import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise, type BehaviorAction} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
+import type {SyntheticBehaviorEvent} from './behavior.types.event'
 
 function getUniqueBlockKey(
+  snapshot: EditorSnapshot,
   blockKey: string | undefined,
-): EditorSelector<string> {
-  return (snapshot) => {
-    if (!blockKey) {
-      return snapshot.context.keyGenerator()
-    }
-
-    if (snapshot.blockIndexMap.has(serializePath([{_key: blockKey}]))) {
-      return snapshot.context.keyGenerator()
-    }
-
-    return blockKey
+): string {
+  if (!blockKey) {
+    return snapshot.context.keyGenerator()
   }
+
+  if (snapshot.blockIndexMap.has(serializePath([{_key: blockKey}]))) {
+    return snapshot.context.keyGenerator()
+  }
+
+  return blockKey
 }
 
 /**
@@ -105,46 +106,11 @@ export const abstractInsertBehaviors = [
     },
     actions: [
       ({snapshot, event}, {referenceBlockPath}) => {
-        let firstBlockPath: Path | undefined
-        let lastBlockPath: Path | undefined
-        let previousBlockPath: Path | undefined
-        const actions: Array<BehaviorAction> = []
-
-        let index = -1
-        for (const block of event.blocks) {
-          index++
-          const key = getUniqueBlockKey(block._key)(snapshot)
-          const blockPath: Path = newBlockPath(referenceBlockPath, key)
-
-          if (index === 0) {
-            firstBlockPath = blockPath
-          }
-
-          if (index === event.blocks.length - 1) {
-            lastBlockPath = blockPath
-          }
-
-          actions.push(
-            raise({
-              type: 'insert.block',
-              block: key !== block._key ? {...block, _key: key} : block,
-              placement:
-                event.placement === 'after'
-                  ? 'after'
-                  : index === 0
-                    ? 'before'
-                    : 'after',
-              select: 'none',
-              ...(previousBlockPath
-                ? {at: selectionAt(previousBlockPath)}
-                : event.at
-                  ? {at: event.at}
-                  : {}),
-            }),
-          )
-
-          previousBlockPath = blockPath
-        }
+        const {actions, firstBlockPath, lastBlockPath} = raiseSequentialInserts(
+          snapshot,
+          event,
+          referenceBlockPath,
+        )
 
         const select = event.select ?? 'end'
 
@@ -268,7 +234,7 @@ export const abstractInsertBehaviors = [
               )
             }
 
-            const key = getUniqueBlockKey(block._key)(snapshot)
+            const key = getUniqueBlockKey(snapshot, block._key)
 
             const deletingEndToEnd = isEqualSelectionPoints(
               at.focus,
@@ -297,7 +263,7 @@ export const abstractInsertBehaviors = [
           }
 
           if (index === event.blocks.length - 1) {
-            const lastKey = getUniqueBlockKey(block._key)(snapshot)
+            const lastKey = getUniqueBlockKey(snapshot, block._key)
 
             actions.push(
               raise({
@@ -317,7 +283,7 @@ export const abstractInsertBehaviors = [
             continue
           }
 
-          const key = getUniqueBlockKey(block._key)(snapshot)
+          const key = getUniqueBlockKey(snapshot, block._key)
 
           actions.push(
             raise({
@@ -410,41 +376,11 @@ export const abstractInsertBehaviors = [
     },
     actions: [
       ({snapshot, event}, {referenceBlockPath, originalSelection}) => {
-        let firstBlockPath: Path | undefined
-        let lastBlockPath: Path | undefined
-        let previousBlockPath: Path | undefined
-        const actions: Array<BehaviorAction> = []
-
-        let index = -1
-        for (const block of event.blocks) {
-          index++
-          const key = getUniqueBlockKey(block._key)(snapshot)
-          const blockPath: Path = newBlockPath(referenceBlockPath, key)
-
-          if (index === 0) {
-            firstBlockPath = blockPath
-          }
-
-          if (index === event.blocks.length - 1) {
-            lastBlockPath = blockPath
-          }
-
-          actions.push(
-            raise({
-              type: 'insert.block',
-              block: key !== block._key ? {...block, _key: key} : block,
-              placement: index === 0 ? 'auto' : 'after',
-              select: 'none',
-              ...(previousBlockPath
-                ? {at: selectionAt(previousBlockPath)}
-                : event.at
-                  ? {at: event.at}
-                  : {}),
-            }),
-          )
-
-          previousBlockPath = blockPath
-        }
+        const {actions, firstBlockPath, lastBlockPath} = raiseSequentialInserts(
+          snapshot,
+          event,
+          referenceBlockPath,
+        )
 
         const select = event.select ?? 'end'
 
@@ -690,3 +626,51 @@ export const abstractInsertBehaviors = [
     ],
   }),
 ]
+
+function raiseSequentialInserts(
+  snapshot: EditorSnapshot,
+  event: PickFromUnion<SyntheticBehaviorEvent, 'type', 'insert.blocks'>,
+  referenceBlockPath: Path,
+): {
+  actions: Array<BehaviorAction>
+  firstBlockPath: Path | undefined
+  lastBlockPath: Path | undefined
+} {
+  let firstBlockPath: Path | undefined
+  let lastBlockPath: Path | undefined
+  let previousBlockPath: Path | undefined
+  const actions: Array<BehaviorAction> = []
+
+  let index = -1
+  for (const block of event.blocks) {
+    index++
+    const key = getUniqueBlockKey(snapshot, block._key)
+    const blockPath: Path = newBlockPath(referenceBlockPath, key)
+
+    if (index === 0) {
+      firstBlockPath = blockPath
+    }
+
+    if (index === event.blocks.length - 1) {
+      lastBlockPath = blockPath
+    }
+
+    actions.push(
+      raise({
+        type: 'insert.block',
+        block: key !== block._key ? {...block, _key: key} : block,
+        placement: index === 0 ? event.placement : 'after',
+        select: 'none',
+        ...(previousBlockPath
+          ? {at: selectionAt(previousBlockPath)}
+          : event.at
+            ? {at: event.at}
+            : {}),
+      }),
+    )
+
+    previousBlockPath = blockPath
+  }
+
+  return {actions, firstBlockPath, lastBlockPath}
+}
