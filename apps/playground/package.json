@@ -35,7 +35,7 @@
     "fuse.js": "^7.5.0",
     "lucide-react": "catalog:tooling",
     "react": "catalog:",
-    "react-aria-components": "^1.11.0",
+    "react-aria-components": "^1.22.1",
     "react-dom": "catalog:",
     "react-is": "^19.2.7",
     "remeda": "catalog:tooling",
