@@ -690,6 +690,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
+      thumbjar:
+        specifier: workspace:*
+        version: link:../thumbjar
       typescript:
         specifier: catalog:tooling
         version: 7.0.2

@@ -11,5 +11,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["page", "vite.config.ts"]
+  "include": ["page"]
 }

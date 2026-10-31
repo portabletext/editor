@@ -7,28 +7,10 @@
   style="border: 1px solid #888; min-height: 3em; font-size: 20px"
 ></div>
 <pre id="log" style="font-size: 10px"></pre>
-<script>
+<script type="module">
+  import {recordInput} from 'thumbjar/page'
+
   const field = document.getElementById('ed')
-  const events = []
-  for (const type of [
-    'beforeinput',
-    'input',
-    'compositionstart',
-    'compositionupdate',
-    'compositionend',
-  ]) {
-    field.addEventListener(type, (event) => {
-      events.push({
-        type,
-        inputType: event.inputType,
-        data: event.data,
-        text: field.textContent,
-      })
-      document.getElementById('log').textContent = events
-        .map((entry) => JSON.stringify(entry))
-        .join('\n')
-    })
-  }
-  window.__state = () => ({text: field.textContent, events})
+  recordInput({getText: () => field.textContent, field})
   field.focus()
 </script>

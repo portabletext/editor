@@ -1,17 +1,19 @@
 import {execFileSync} from 'node:child_process'
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
+import {DEVICE_TEST_FILE_SECONDS, DEVICE_TESTS_PER_FILE} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
-import {DEVICE_TEST_FILE_SECONDS, DEVICE_TESTS_PER_FILE} from './budget.ts'
 
-const root = fileURLToPath(new URL('../..', import.meta.url))
+const root = fileURLToPath(new URL('..', import.meta.url))
+// `run-on-device.sh` runs from `packages/editor`.
+const packageRoot = fileURLToPath(new URL('../..', import.meta.url))
 
 describe('DEVICE_TEST_FILE_SECONDS', () => {
   test('is the timeout `run-on-device.sh` runs the device tests under', () => {
-    const script = readFileSync(`${root}scripts/run-on-device.sh`, 'utf8')
+    const script = readFileSync(`${root}run-on-device.sh`, 'utf8')
     const testStage = script.match(
-      /^timeout -k 10 (\S+) pnpm exec vitest run --project device /m,
+      /^timeout -k 10 (\S+) pnpm exec vitest run --config vitest.android.config.ts --project device /m,
     )
     const readBudget = script.match(/^tests_seconds=.*$/m)
 
@@ -22,7 +24,7 @@ describe('DEVICE_TEST_FILE_SECONDS', () => {
           'bash',
           ['-c', `${readBudget?.[0]}; echo $tests_seconds`],
           {
-            cwd: root,
+            cwd: packageRoot,
             encoding: 'utf8',
           },
         ),
