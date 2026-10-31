@@ -1,4 +1,3 @@
-import {fileURLToPath} from 'node:url'
 import {startVitest} from 'vitest/node'
 
 export type SuiteResult = {
@@ -7,13 +6,19 @@ export type SuiteResult = {
   tests: Array<{name: string; state: string}>
 }
 
-/** Run one test file in a Vitest of its own, without reporters, and collect the file's errors and each test's state. */
+/**
+ * Run one test file in a Vitest of its own, without reporters, and collect the
+ * file's errors and each test's state. `file` and `setupFiles` are relative to
+ * `root`.
+ */
 export async function runSuite({
+  root,
   file,
   setupFiles,
   testTimeout = 5_000,
   provide = {},
 }: {
+  root: string
   file: string
   setupFiles: string[]
   testTimeout?: number
@@ -24,7 +29,7 @@ export async function runSuite({
     'test',
     [],
     {
-      root: fileURLToPath(new URL('../..', import.meta.url)),
+      root,
       config: false,
       watch: false,
       include: [file],

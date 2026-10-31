@@ -5,8 +5,8 @@ test.fails('Scenario: Stopping Chrome after typing leaves an adb process that ou
   globalThis.firstAttemptFaults = false
   vi.useFakeTimers()
   const typing = typeOnDevice({
-    lang: 'ja',
-    page: 'editor.html',
+    keyboard: 'ja',
+    url: 'http://localhost:8765/editor.html',
     prefix: '',
     words: [{letters: 'kyou', candidate: '今日'}],
   })
@@ -19,8 +19,8 @@ test.fails('Scenario: Stopping Chrome after typing leaves an adb process that ou
 test('Scenario: The next test types nothing', async () => {
   await expect(
     typeOnDevice({
-      lang: 'ja',
-      page: 'editor.html',
+      keyboard: 'ja',
+      url: 'http://localhost:8765/editor.html',
       prefix: 'x',
       words: [{letters: 'kyou', candidate: '今日'}],
     }),

@@ -10,7 +10,7 @@ const chromeStop = vi.hoisted(() => {
   }
 })
 
-vi.mock(import('../../lib/typing.ts'), async (importOriginal) => ({
+vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   typeInChrome: async () => ({
     text: '今日',

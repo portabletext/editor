@@ -1,27 +1,31 @@
 {
-  "name": "android-ime",
+  "name": "thumbjar",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
-  "scripts": {
-    "build:page": "vite build",
-    "check:types": "tsc --noEmit --pretty --project tsconfig.json && tsc --noEmit --pretty --project tsconfig.page.json",
-    "clean": "del .turbo && del .cache && del dist && del out && del node_modules",
-    "test:device": "vitest run --project device",
-    "test:unit": "vitest run --project unit"
+  "description": "Types on real Gboard on an Android emulator and reports what a web page ended up with",
+  "bin": {
+    "thumbjar": "./src/bin.ts"
   },
-  "dependencies": {
-    "@portabletext/editor": "workspace:*",
-    "@portabletext/test": "workspace:*",
-    "react": "catalog:",
-    "react-dom": "catalog:"
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./page": "./src/page.ts",
+    "./testing": "./src/testing.ts",
+    "./vitest": "./src/vitest/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check:types": "tsc --noEmit --pretty --project tsconfig.json && tsc --noEmit --pretty --project tsconfig.page.json",
+    "clean": "del .turbo && del .cache && del out && del node_modules",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "@types/node": "catalog:tooling",
-    "@vitejs/plugin-react": "catalog:tooling",
     "typescript": "catalog:tooling",
-    "vite": "catalog:tooling",
     "vitest": "catalog:tooling"
+  },
+  "peerDependencies": {
+    "vitest": "^5.0.5"
   },
   "engines": {
     "node": ">=24"

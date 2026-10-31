@@ -3,13 +3,13 @@ import {vi} from 'vitest'
 
 const page = vi.hoisted(() => ({texts: [] as string[], attempt: 0}))
 
-vi.mock(import('../../lib/adb.ts'), async (importOriginal) => ({
+vi.mock(import('../../device/adb.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   adb: async (args: string[]) =>
     args.includes('input_method') ? 'mInputShown=true' : '',
 }))
 
-vi.mock(import('../../lib/cdp.ts'), async (importOriginal) => ({
+vi.mock(import('../../device/cdp.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   targets: async () => [],
   cdpEval: async (expression: string) => {
@@ -34,7 +34,8 @@ vi.mock(import('../../lib/cdp.ts'), async (importOriginal) => ({
   },
 }))
 
-vi.mock(import('../../lib/u2.ts'), async (importOriginal) => {
+// Keep this fake device in sync with the one in `page-throws-once.ts`.
+vi.mock(import('../../device/u2.ts'), async (importOriginal) => {
   const keyboard = readFileSync(
     new URL('../en-keyboard.xml', import.meta.url),
     'utf8',

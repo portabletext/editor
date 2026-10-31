@@ -3,13 +3,14 @@ import {vi} from 'vitest'
 
 const page = vi.hoisted(() => ({attempt: 0}))
 
-vi.mock(import('../../lib/adb.ts'), async (importOriginal) => ({
+vi.mock(import('../../device/adb.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   adb: async (args: string[]) =>
     args.includes('input_method') ? 'mInputShown=true' : '',
 }))
 
-vi.mock(import('../../lib/u2.ts'), async (importOriginal) => {
+// Keep this fake device in sync with the one in `device-types-digit-once.ts`.
+vi.mock(import('../../device/u2.ts'), async (importOriginal) => {
   const keyboard = readFileSync(
     new URL('../en-keyboard.xml', import.meta.url),
     'utf8',

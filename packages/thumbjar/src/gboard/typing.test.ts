@@ -1,13 +1,22 @@
+import {spawnSync} from 'node:child_process'
 import {readFileSync} from 'node:fs'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+import {adb} from '../device/adb.ts'
+import {prefixedPageUrl} from '../device/page-url.ts'
 import {packageKeys} from './hierarchy.ts'
 import {
   compositionstartPerWord,
   isJapanese,
   keyboardState,
   nestedCompositionstart,
+  openInChrome,
   unexpectedDigit,
 } from './typing.ts'
+
+vi.mock(import('../device/adb.ts'), async (importOriginal) => ({
+  ...(await importOriginal()),
+  adb: vi.fn(async () => ''),
+}))
 
 describe(nestedCompositionstart.name, () => {
   test('the Japanese empty-block run restarted the composition once', () => {
@@ -99,6 +108,47 @@ describe(keyboardState.name, () => {
     expect(keyboardState(keys)).toEqual('other')
   })
 })
+
+describe(openInChrome.name, () => {
+  test('the device shell hands Chrome the whole URL, query, fragment and all', async () => {
+    await openInChrome(
+      prefixedPageUrl('http://localhost:8765/editor.html?mode=a#field', 'あ'),
+    )
+
+    expect(
+      vi.mocked(adb).mock.calls.map(([args]) => deviceShellArguments(args)),
+    ).toEqual([
+      [
+        'am',
+        'start',
+        '-a',
+        'android.intent.action.VIEW',
+        '-d',
+        'http://localhost:8765/editor.html?mode=a&prefix=%E3%81%82#field',
+        'com.android.chrome',
+      ],
+    ])
+  })
+})
+
+/**
+ * The arguments `am` receives on the device. `adb shell` joins its arguments with spaces into one command
+ * for the device's POSIX shell, so this runs that command with `am` replaced by a recorder.
+ */
+function deviceShellArguments(args: string[]): string[] {
+  expect(args[0]).toEqual('shell')
+  const {error, signal, status, stdout} = spawnSync(
+    '/bin/sh',
+    ['-c', `am() { printf '%s\\0' am "$@"; }; ${args.slice(1).join(' ')}`],
+    {encoding: 'utf8'},
+  )
+  expect({error, signal, status}).toEqual({
+    error: undefined,
+    signal: null,
+    status: 0,
+  })
+  return stdout.split('\0').slice(0, -1)
+}
 
 function fixtureKeys(fixture: string): Map<string, [number, number]> {
   return packageKeys(

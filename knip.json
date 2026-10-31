@@ -65,6 +65,21 @@
         "page/editor.tsx"
       ]
     },
+    "packages/thumbjar": {
+      "entry": [
+        "src/index.ts!",
+        "src/page.ts!",
+        "src/testing.ts!",
+        "src/vitest/index.ts!",
+        "src/vitest/global-setup.ts!",
+        "src/vitest/setup.ts!",
+        "src/bin.ts!",
+        "src/prepare/*.ts!",
+        "src/device/*.ts",
+        "src/gboard/*.ts",
+        "src/fixtures/suites/*.ts"
+      ]
+    },
     "apps/studio": {
       "ignoreDependencies": [
         "@portabletext/block-tools",

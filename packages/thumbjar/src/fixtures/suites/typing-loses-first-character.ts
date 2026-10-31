@@ -1,6 +1,6 @@
 import {vi} from 'vitest'
 
-vi.mock(import('../../lib/typing.ts'), async (importOriginal) => ({
+vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   typeInChrome: async ({}, {prefix}: {prefix: string}) => ({
     text: `${prefix}ｋ用今日`,

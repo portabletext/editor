@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs'
 import {describe, expect, test} from 'vitest'
+import {pyRepr, pySorted} from '../device/util.ts'
 import {packageKeys, parseXml} from './hierarchy.ts'
-import {pyRepr, pySorted} from './util.ts'
 
 describe(packageKeys.name, () => {
   test('the English keyboard dump has its keys and the space key', () => {
