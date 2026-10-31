@@ -15,24 +15,27 @@ vi.mock(import('node:child_process'), async (importOriginal) => ({
       stderr: new PassThrough(),
       kill: () => true,
     })
-    if (device.spawned.length > 1) queueMicrotask(() => child.emit('close', 0))
+    if (device.spawned.length > 1) {
+      queueMicrotask(() => child.emit('close', 0))
+    }
     return child
   }) as never,
 }))
 
 vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  typeInChrome: async () => {
+  typeInChrome: () => {
     device.attempts += 1
-    if (globalThis.firstAttemptFaults && device.attempts === 1)
-      throw new Error('Gboard window did not appear')
-    return {
+    if (globalThis.firstAttemptFaults && device.attempts === 1) {
+      return Promise.reject(new Error('Gboard window did not appear'))
+    }
+    return Promise.resolve({
       text: 'ｋ用今日',
       picked: ['今日'],
       compositionstart: 2,
       nested: 1,
       compositionstartPerWord: [2],
-    }
+    })
   },
   dumpFailure: async () => {},
 }))

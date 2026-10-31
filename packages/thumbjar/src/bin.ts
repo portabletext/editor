@@ -27,7 +27,9 @@ if (command === 'fetch-u2-jar') {
     allowPositionals: true,
     options: {port: {type: 'string', default: '8765'}},
   })
-  if (positionals.length !== 1) usage()
+  if (positionals.length !== 1) {
+    usage()
+  }
   process.argv = [process.argv[0]!, 'serve', positionals[0]!, values.port]
   await import('./prepare/serve.ts')
 } else if (command === 'prepare') {

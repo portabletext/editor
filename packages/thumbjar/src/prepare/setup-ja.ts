@@ -77,7 +77,9 @@ async function main(): Promise<void> {
   ) {
     // Fall back to the alphabetical All languages list.
     for (let scrolls = 0; scrolls < 60; scrolls++) {
-      if (await row.exists()) break
+      if (await row.exists()) {
+        break
+      }
       await device.find({scrollable: true}).scrollForward(20)
     }
   }
@@ -99,8 +101,9 @@ async function main(): Promise<void> {
       if (
         !(await tile(device, pattern).exists()) ||
         (await layoutSelected(device, pattern)) === want
-      )
+      ) {
         break
+      }
       await tile(device, pattern).click()
       await waitForSelection(device, pattern, want)
     }
@@ -119,16 +122,14 @@ async function main(): Promise<void> {
   await snap(device, 'layouts')
   await tapText(device, '^(Done|Add)$', 'done')
   const subtypes = await adbOutput(['shell', 'dumpsys', 'input_method'])
-  log(
-    'JA_SETUP subtypes: ' +
-      pySorted(
-        new Set(
-          subtypes.match(
-            /mSubtypeName=[^ }]+|locale=[\p{L}\p{N}\p{Mn}\p{Pc}]+/gu,
-          ) ?? [],
-        ),
-      ).join(' | '),
-  )
+  const subtypeNames = pySorted(
+    new Set(
+      subtypes.match(
+        /mSubtypeName=[^ }]+|locale=[\p{L}\p{N}\p{Mn}\p{Pc}]+/gu,
+      ) ?? [],
+    ),
+  ).join(' | ')
+  log(`JA_SETUP subtypes: ${subtypeNames}`)
   await adbPassthrough(['shell', 'input', 'keyevent', 'KEYCODE_HOME'])
   log('JA_SETUP done')
 }
@@ -144,7 +145,7 @@ main().then(
 )
 
 function log(line: string): void {
-  console.log(line)
+  process.stdout.write(`${line}\n`)
 }
 
 async function snap(device: Device, name: string): Promise<void> {
@@ -192,7 +193,9 @@ async function waitForSelection(
   want: boolean,
 ): Promise<void> {
   for (let check = 0; check < 6; check++) {
-    if ((await layoutSelected(device, pattern)) === want) return
+    if ((await layoutSelected(device, pattern)) === want) {
+      return
+    }
     await sleep(0.25)
   }
 }

@@ -25,13 +25,15 @@ vi.mock(import('node:crypto'), async (importOriginal) => ({
 
 vi.mock(import('./adb.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  adb: async () => '',
-  deviceShell: async () =>
-    '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d',
+  adb: () => Promise.resolve(''),
+  deviceShell: () =>
+    Promise.resolve(
+      '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d',
+    ),
   AdbConnection: {
-    service: async () => {
+    service: () => {
       let request = ''
-      return {
+      return Promise.resolve({
         socket: {
           write(data: string) {
             request = data
@@ -43,7 +45,7 @@ vi.mock(import('./adb.ts'), async (importOriginal) => ({
         stream() {},
         close() {},
         closed: false,
-        readUntil: async () => {
+        readUntil: () => {
           const body = request.startsWith('GET /ping')
             ? 'pong'
             : JSON.stringify({
@@ -51,11 +53,13 @@ vi.mock(import('./adb.ts'), async (importOriginal) => ({
                 id: 1,
                 result: server.clickResult,
               })
-          return Buffer.from(
-            `HTTP/1.1 200 OK\r\nContent-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`,
+          return Promise.resolve(
+            Buffer.from(
+              `HTTP/1.1 200 OK\r\nContent-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`,
+            ),
           )
         },
-      }
+      })
     },
   } as never,
 }))

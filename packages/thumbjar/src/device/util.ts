@@ -47,11 +47,13 @@ export async function sleep(seconds: number): Promise<void> {
 /** Reject with the signal's reason when it aborts, and never settle otherwise. */
 export function whenAborted(signal: AbortSignal): Promise<never> {
   return new Promise((_, reject) => {
-    if (signal.aborted) reject(signal.reason)
-    else
+    if (signal.aborted) {
+      reject(signal.reason)
+    } else {
       signal.addEventListener('abort', () => reject(signal.reason), {
         once: true,
       })
+    }
   })
 }
 
@@ -76,8 +78,11 @@ export async function withDeadline<T>(
   )
   const parent = attemptSignal.getStore()
   const onParentAbort = () => controller.abort(parent!.reason)
-  if (parent?.aborted) controller.abort(parent.reason)
-  else parent?.addEventListener('abort', onParentAbort, {once: true})
+  if (parent?.aborted) {
+    controller.abort(parent.reason)
+  } else {
+    parent?.addEventListener('abort', onParentAbort, {once: true})
+  }
   try {
     controller.signal.throwIfAborted()
   } catch (error) {
@@ -88,11 +93,12 @@ export async function withDeadline<T>(
   try {
     return await Promise.race([work, whenAborted(controller.signal)])
   } catch (error) {
-    if (controller.signal.aborted)
+    if (controller.signal.aborted) {
       await Promise.race([
         work.catch(() => {}),
         unboundedDelay(JOIN_GRACE_SECONDS),
       ])
+    }
     throw error
   } finally {
     clearTimeout(timer)
@@ -111,6 +117,7 @@ export function resetPhaseClock(): void {
 
 export function phase(message: string): void {
   const elapsed = ((Date.now() - phaseClockStart) / 1000).toFixed(1).padStart(5)
+  // oxlint-disable-next-line no-console -- PHASE lines are progress output, not warnings, and the rule only allows `console.warn` and `console.error`
   console.log(`PHASE +${elapsed}s ${message}`)
 }
 
@@ -157,7 +164,9 @@ export function pySorted(values: Iterable<string>): string[] {
       const difference =
         leftCharacters[index]!.codePointAt(0)! -
         rightCharacters[index]!.codePointAt(0)!
-      if (difference !== 0) return difference
+      if (difference !== 0) {
+        return difference
+      }
     }
     return leftCharacters.length - rightCharacters.length
   })
@@ -170,11 +179,21 @@ export function pyLen(value: string): number {
 
 /** Python's repr() for the JSON-like values the driver logs. */
 export function pyRepr(value: unknown): string {
-  if (value === null || value === undefined) return 'None'
-  if (typeof value === 'string') return reprString(value)
-  if (typeof value === 'boolean') return value ? 'True' : 'False'
-  if (typeof value === 'number') return String(value)
-  if (Array.isArray(value)) return `[${value.map(pyRepr).join(', ')}]`
+  if (value === null || value === undefined) {
+    return 'None'
+  }
+  if (typeof value === 'string') {
+    return reprString(value)
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'True' : 'False'
+  }
+  if (typeof value === 'number') {
+    return String(value)
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(pyRepr).join(', ')}]`
+  }
   if (typeof value === 'object') {
     return `{${Object.entries(value)
       .map(([key, entry]) => `${reprString(key)}: ${pyRepr(entry)}`)
@@ -210,18 +229,26 @@ function reprString(value: string): string {
   const quote = value.includes("'") && !value.includes('"') ? '"' : "'"
   let out = quote
   for (const character of value) {
-    if (character === quote || character === '\\') out += '\\' + character
-    else if (character === '\n') out += '\\n'
-    else if (character === '\r') out += '\\r'
-    else if (character === '\t') out += '\\t'
-    else if (character !== ' ' && NON_PRINTABLE.test(character)) {
+    if (character === quote || character === '\\') {
+      out += `\\${character}`
+    } else if (character === '\n') {
+      out += '\\n'
+    } else if (character === '\r') {
+      out += '\\r'
+    } else if (character === '\t') {
+      out += '\\t'
+    } else if (character !== ' ' && NON_PRINTABLE.test(character)) {
       const codePoint = character.codePointAt(0)!
-      if (codePoint < 0x100)
-        out += '\\x' + codePoint.toString(16).padStart(2, '0')
-      else if (codePoint < 0x10000)
-        out += '\\u' + codePoint.toString(16).padStart(4, '0')
-      else out += '\\U' + codePoint.toString(16).padStart(8, '0')
-    } else out += character
+      if (codePoint < 0x100) {
+        out += `\\x${codePoint.toString(16).padStart(2, '0')}`
+      } else if (codePoint < 0x10000) {
+        out += `\\u${codePoint.toString(16).padStart(4, '0')}`
+      } else {
+        out += `\\U${codePoint.toString(16).padStart(8, '0')}`
+      }
+    } else {
+      out += character
+    }
   }
   return out + quote
 }

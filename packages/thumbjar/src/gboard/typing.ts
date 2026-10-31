@@ -80,7 +80,9 @@ export async function typeInChrome(
 ): Promise<Typed> {
   const result: Record<string, unknown> = {url: pageUrl, prefix, words}
   const port = localhostPort(pageUrl)
-  if (port !== undefined) await adb(['reverse', `tcp:${port}`, `tcp:${port}`])
+  if (port !== undefined) {
+    await adb(['reverse', `tcp:${port}`, `tcp:${port}`])
+  }
   await adb([
     'forward',
     `tcp:${CDP_PORT}`,
@@ -131,20 +133,20 @@ export async function typeInChrome(
       }
     } catch (error) {
       throwIfAborted()
-      if (error instanceof PageExceptionError) throw error
+      if (error instanceof PageExceptionError) {
+        throw error
+      }
       lastError = error
       phase(`cdp not ready: ${errorRepr(error)}`)
       try {
         const pageTargets = await targets(5)
-        phase(
-          'targets: ' +
-            pageTargets
-              .map(
-                (target) =>
-                  `${pyStr(target.type)} ${pyStr(target.url)} attached=${pyRepr(target.attached)}`,
-              )
-              .join('; '),
-        )
+        const described = pageTargets
+          .map(
+            (target) =>
+              `${pyStr(target.type)} ${pyStr(target.url)} attached=${pyRepr(target.attached)}`,
+          )
+          .join('; ')
+        phase(`targets: ${described}`)
       } catch (targetsError) {
         throwIfAborted()
         phase(`targets unavailable: ${errorRepr(targetsError)}`)
@@ -152,10 +154,11 @@ export async function typeInChrome(
     }
     await sleep(1)
   }
-  if (!loaded)
+  if (!loaded) {
     throw new Error(
       `page never loaded over CDP: ${lastError === undefined ? 'None' : errorRepr(lastError)}`,
     )
+  }
   phase(`page loaded: ${pyStr(await cdpEval('location.href'))}`)
 
   await dismissAnr(device)
@@ -202,10 +205,14 @@ export async function typeInChrome(
       shown =
         inputMethodDump.includes('mInputShown=true') ||
         inputMethodDump.includes('mIsInputViewShown=true')
-      if (shown) break
+      if (shown) {
+        break
+      }
       await sleep(1)
     }
-    if (shown) break
+    if (shown) {
+      break
+    }
     phase(
       `keyboard not shown after tap ${tap + 1}, foreground ${pyRepr(await device.appCurrent())}, tapping again`,
     )
@@ -240,7 +247,9 @@ export async function typeInChrome(
     await device.dumpHierarchy(),
   )
   await device.screenshot(`${outDir()}/${name}-keyboard`)
-  if (keyboard === 'ja') await ensureJapanese(device, name)
+  if (keyboard === 'ja') {
+    await ensureJapanese(device, name)
+  }
   const labels = pySorted((await gboardKeys(device)).keys())
   result.gboard_labels = labels
   phase(
@@ -278,10 +287,11 @@ export async function typeInChrome(
     state.text,
     prefix + words.map((word) => word.letters).join(''),
   )
-  if (digit !== undefined)
+  if (digit !== undefined) {
     throw new Error(
       `mistap: digit ${digit} in typed text ${pyRepr(state.text)} that neither the prefix nor the letters hold`,
     )
+  }
   return typed
 }
 
@@ -297,7 +307,7 @@ export async function dumpFailure(
     device = await connect()
   } catch (error) {
     throwIfAborted()
-    console.log(`u2 connect for dump failed: ${errorRepr(error)}`)
+    console.warn(`u2 connect for dump failed: ${errorRepr(error)}`)
     return
   }
   try {
@@ -305,7 +315,7 @@ export async function dumpFailure(
     await device.screenshot(`${outDir()}/${name}-fail`)
   } catch (error) {
     throwIfAborted()
-    console.log(`dump failed: ${errorRepr(error)}`)
+    console.warn(`dump failed: ${errorRepr(error)}`)
   }
 }
 
@@ -314,7 +324,9 @@ export async function closeChrome(): Promise<void> {
   await adb(['shell', 'am', 'force-stop', CHROME], CHROME_ADB_SECONDS).catch(
     (error: unknown) => {
       throwIfAborted()
-      if (error instanceof ProcessNotStoppedError) throw error
+      if (error instanceof ProcessNotStoppedError) {
+        throw error
+      }
       phase(`force-stop chrome failed: ${errorRepr(error)}`)
     },
   )
@@ -327,7 +339,9 @@ export async function clearChromeTabs(): Promise<void> {
     CHROME_ADB_SECONDS,
   ).catch((error: unknown) => {
     throwIfAborted()
-    if (error instanceof ProcessNotStoppedError) throw error
+    if (error instanceof ProcessNotStoppedError) {
+      throw error
+    }
     phase(`clearing chrome tabs failed: ${errorRepr(error)}`)
   })
 }
@@ -338,7 +352,9 @@ export function nestedCompositionstart(events: PageEvent[]): number {
   let open = false
   for (const event of events) {
     if (event.type === 'compositionstart') {
-      if (open) nested += 1
+      if (open) {
+        nested += 1
+      }
       open = true
     } else if (event.type === 'compositionend') {
       open = false
@@ -374,8 +390,11 @@ const JA_HINTS = ['あ', 'かな', '変換', '空白', '確定', 'ABC', '記号'
 
 /** Whether a Gboard dump's labels hold one of the Japanese layout's keys. */
 export function isJapanese(keys: Iterable<string>): boolean {
-  for (const key of keys)
-    if (JA_HINTS.some((hint) => key.includes(hint))) return true
+  for (const key of keys) {
+    if (JA_HINTS.some((hint) => key.includes(hint))) {
+      return true
+    }
+  }
   return false
 }
 
@@ -393,13 +412,16 @@ export function keyboardState(keys: Keys): KeyboardState {
     [...keys.keys()].some((label) =>
       label.toLowerCase().startsWith('close the new language'),
     )
-  )
+  ) {
     return 'banner'
+  }
   const whole =
     LETTERS.every(
       (letter) => keys.has(letter) || keys.has(letter.toUpperCase()),
     ) && SPACE_KEYS.some((label) => keys.has(label))
-  if (!whole) return 'partial'
+  if (!whole) {
+    return 'partial'
+  }
   return isJapanese(keys.keys()) ? 'japanese-qwerty' : 'other'
 }
 
@@ -428,7 +450,9 @@ export async function openInChrome(url: string): Promise<void> {
 
 async function waitForChrome(device: Device): Promise<void> {
   for (let check = 0; check < 20; check++) {
-    if ((await device.appCurrent()).package === CHROME) return
+    if ((await device.appCurrent()).package === CHROME) {
+      return
+    }
     await sleep(0.5)
   }
 }
@@ -440,8 +464,9 @@ async function waitForFieldFocus(): Promise<void> {
       (await cdpEval(
         'document.activeElement && document.activeElement.isContentEditable',
       )) === true
-    )
+    ) {
       return
+    }
     await sleep(0.25)
   }
 }
@@ -466,7 +491,9 @@ async function dismissChromeScreens(device: Device): Promise<void> {
         break
       }
     }
-    if (!hit) return
+    if (!hit) {
+      return
+    }
     phase(`chrome screen: tapping ${pyRepr(hit)}`)
     await device.find({packageName: CHROME, text: hit}).click()
     await waitUntilGone(device, {packageName: CHROME, text: hit})
@@ -477,7 +504,9 @@ async function dismissChromeScreens(device: Device): Promise<void> {
 async function dismissAnr(device: Device): Promise<number> {
   let dismissed = 0
   for (let dialog = 0; dialog < 5; dialog++) {
-    if (!(await device.find({textContains: "isn't responding"}).exists())) break
+    if (!(await device.find({textContains: "isn't responding"}).exists())) {
+      break
+    }
     const title = await device
       .find({textContains: "isn't responding"})
       .getText()
@@ -494,7 +523,9 @@ async function waitUntilGone(
   fields: Parameters<Device['find']>[0],
 ): Promise<void> {
   for (let check = 0; check < 10; check++) {
-    if (!(await device.find(fields).exists())) return
+    if (!(await device.find(fields).exists())) {
+      return
+    }
     await sleep(0.5)
   }
 }
@@ -509,7 +540,9 @@ async function gboardKeys(device: Device): Promise<Keys> {
   let keys: Keys = new Map()
   for (let attempt = 0; attempt < 8; attempt++) {
     keys = packageKeys(await device.dumpHierarchy(), GBOARD)
-    if (keyboardState(keys) !== 'partial') return keys
+    if (keyboardState(keys) !== 'partial') {
+      return keys
+    }
     phase(
       `a11y dump incomplete, ${keys.size} Gboard nodes (attempt ${attempt + 1}), retrying`,
     )
@@ -524,7 +557,9 @@ async function waitForKeyboardState(
   wanted: KeyboardState,
 ): Promise<void> {
   for (let check = 0; check < 10; check++) {
-    if (keyboardState(await gboardKeys(device)) === wanted) return
+    if (keyboardState(await gboardKeys(device)) === wanted) {
+      return
+    }
     await sleep(0.5)
   }
 }
@@ -551,10 +586,11 @@ async function ensureJapanese(device: Device, name: string): Promise<void> {
   for (let attempt = 0; attempt < 6; attempt++) {
     const keys = await gboardKeys(device)
     if (isJapanese(keys.keys())) {
-      if (!keys.has('k') && !keys.has('K'))
+      if (!keys.has('k') && !keys.has('K')) {
         throw new Error(
           `japanese layout is not romaji QWERTY, labels ${pyRepr(pySorted(keys.keys()).slice(0, 60))}`,
         )
+      }
       phase(`japanese layout active after ${attempt} switches`)
       return
     }
@@ -584,7 +620,9 @@ async function ensureJapanese(device: Device, name: string): Promise<void> {
     } else {
       // The space bar cycles languages on a long swipe, and long-press opens the picker.
       const space = keys.get('Space') ?? keys.get('space')
-      if (!space) break
+      if (!space) {
+        break
+      }
       await device.swipe(
         space[0] - 150,
         space[1],
@@ -606,7 +644,9 @@ async function typeWord(
   word: Word,
   position: number,
 ): Promise<string> {
-  for (const key of word.letters) await tapKey(device, key)
+  for (const key of word.letters) {
+    await tapKey(device, key)
+  }
   phase(`typed ${word.letters} (${position})`)
   await device.screenshot(`${outDir()}/${name}-composing${position}`)
   result[`composing${position}`] = await cdpEval('window.__state()')
@@ -614,7 +654,9 @@ async function typeWord(
   if (word.candidate !== undefined) {
     // Gboard v15 sometimes shows only the kana candidate first and adds the kanji a moment later.
     for (let check = 0; check < 6; check++) {
-      if (keys.has(word.candidate)) break
+      if (keys.has(word.candidate)) {
+        break
+      }
       await sleep(0.5)
       keys = await gboardKeys(device)
     }
@@ -643,5 +685,5 @@ async function typeWord(
 }
 
 function isAscii(value: string): boolean {
-  return /^[\x00-\x7f]*$/.test(value)
+  return /^\p{ASCII}*$/u.test(value)
 }
