@@ -97,8 +97,10 @@ export function captureFault(capture: Capture, bootId: string, now: number): str
     return "the capture holds no logd statistics for its first dump of the main buffer, so nothing shows that dump held every line from boot"
   // logd counts the lines a buffer took and the lines it holds, so equal counts after the dump mean it
   // had dropped none, and the dump began at the buffer's first line.
-  if (stats.now !== stats.total)
-    return `the main buffer had dropped ${stats.total - stats.now} of its ${stats.total} lines by the capture's first dump, so the capture may lack lines from boot on`
+  if (stats.now !== stats.total) {
+    const oldest = earliest(capture.segments[first]!) - capture.header!.btime
+    return `the main buffer had dropped ${stats.total - stats.now} of its ${stats.total} lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from ${oldest.toFixed(1)}s after boot, so a load before then would not show`
+  }
   const segments = capture.segments.slice(first).filter((segment) => segment.length > 0)
   const read = new Set(segments[0]!.map((line) => line.text))
   for (const segment of segments.slice(1)) {
@@ -116,6 +118,10 @@ export function captureFault(capture: Capture, bootId: string, now: number): str
 // A capture holds a hundred thousand lines and more, too many to spread into `Math.max`.
 function latest(lines: CaptureLine[]): number {
   return lines.reduce((last, line) => Math.max(last, line.time), -Infinity)
+}
+
+function earliest(lines: CaptureLine[]): number {
+  return lines.reduce((first, line) => Math.min(first, line.time), Infinity)
 }
 
 function headerFault(capture: Capture, bootId: string): string | undefined {
@@ -141,10 +147,20 @@ export function dictionaryLines(capture: Capture, bootId: string): CaptureLine[]
   })
 }
 
-/** The prep's failure when the load line never came: what was missing, the Gboard version and the lines seen. */
-export function notLoadedMessage(gboardVersion: string, lines: CaptureLine[]): string {
+/**
+ * The prep's failure when the load line never came: that the dictionary never loaded, the Gboard version,
+ * a fallback engine and cancelled dictionary downloads the boot logged, why the capture may also lack the
+ * line, and the lines seen.
+ */
+export function notLoadedMessage(gboardVersion: string, lines: CaptureLine[], captureFault: string | undefined): string {
+  const fallback = lines.some((line) => line.text.includes('Fallback to minimal engine'))
+  const cancelled = lines.filter((line) => /download for __MOZCPACK_mozcmain_\w+ is cancelled/.test(line.text)).length
+  const logged = [
+    ...(fallback ? ['logged `Fallback to minimal engine`'] : []),
+    ...(cancelled > 0 ? [`${cancelled} ${cancelled === 1 ? 'download' : 'downloads'} of \`__MOZCPACK_mozcmain_ja_JP\` ${cancelled === 1 ? 'was' : 'were'} cancelled`] : []),
+  ]
   return [
-    `Gboard ${gboardVersion} never logged its Japanese dictionary load, a \`data_loader.cc\` \`New data is loaded\` line for a \`mozcdata-<version>.data\` file, within ${DICTIONARY_LOAD_SECONDS}s of boot. Dictionary lines seen:`,
+    `the Japanese dictionary never loaded: Gboard ${gboardVersion} logged no \`data_loader.cc\` \`New data is loaded\` line for a \`mozcdata-<version>.data\` file within ${DICTIONARY_LOAD_SECONDS}s of boot.${logged.length === 0 ? '' : ` It ${logged.join(', and ')}.`}${captureFault === undefined ? '' : ` The capture may also lack the line: ${captureFault}.`} Dictionary lines seen:`,
     ...(lines.length === 0 ? ['(none)'] : lines.map((line) => line.text.trim())),
   ].join('\n')
 }
@@ -153,11 +169,12 @@ export type WaitOutcome =
   | {kind: 'loaded'; line: CaptureLine}
   | {kind: 'waiting'}
   | {kind: 'capture-fault'; reason: string}
-  | {kind: 'not-loaded'}
+  | {kind: 'not-loaded'; captureFault: string | undefined}
 
 /**
- * Whether this boot's capture shows the dictionary loaded. Past the deadline, a capture that could have
- * missed the line is a capture fault, never a missing load.
+ * Whether this boot's capture shows the dictionary loaded. A capture of another boot or without a header
+ * fails at once. Past the deadline the load is missing, with the reason a capture that could have missed
+ * the line gives.
  */
 export function waitOutcome(capture: Capture, {bootId, now, deadlinePassed}: {bootId: string; now: number; deadlinePassed: boolean}): WaitOutcome {
   const header = headerFault(capture, bootId)
@@ -165,8 +182,7 @@ export function waitOutcome(capture: Capture, {bootId, now, deadlinePassed}: {bo
   const line = bootLines(capture, bootId).find((candidate) => isDictionaryLoadLine(candidate.text))
   if (line !== undefined) return {kind: 'loaded', line}
   if (!deadlinePassed) return {kind: 'waiting'}
-  const fault = captureFault(capture, bootId, now)
-  return fault === undefined ? {kind: 'not-loaded'} : {kind: 'capture-fault', reason: fault}
+  return {kind: 'not-loaded', captureFault: captureFault(capture, bootId, now)}
 }
 
 /**

@@ -95,6 +95,7 @@ async function wait(out: string, booted: number): Promise<void> {
           notLoadedMessage(
             await gboardVersion(),
             dictionaryLines(capture, bootId),
+            outcome.captureFault,
           ),
         )
     }

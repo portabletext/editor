@@ -23,6 +23,13 @@ fail() { log "PREP FAILED: $*"; exit 1; }
 # Runs the function `$2` under a cap of `$1` seconds and 2 more to stop. A function that fails has logged
 # its own PREP FAILED line.
 stage() { timeout -k 2 "$1" bash -c "$2"; local rc=$?; [ $rc -eq 124 ] && log "PREP FAILED: $2 ran past $1s"; return $rc; }
+# Fails the prep with the reason the dictionary wait printed, so the job summary names it.
+dictionary_failure() {
+  local reason
+  reason=$(grep -m 1 '^DICTIONARY FAILED: ' "$out/ja-dictionary.log" 2>/dev/null)
+  [ -n "$reason" ] || fail "japanese dictionary wait gave no reason, see ja-dictionary.log"
+  fail "japanese dictionary wait: ${reason#DICTIONARY FAILED: } See ja-dictionary.log"
+}
 
 # Gboard's `main` log from this boot, where it logs its dictionary load and session rebuilds, for the Japanese
 # dictionary wait. The header ties the file to the boot, so a file from an earlier boot or one left behind never
@@ -142,7 +149,7 @@ prep() {
     timeout -k 5 $((wait_seconds + 45)) node scripts/dictionary.ts wait "$out" "$booted" 2>&1 | tee -a "$out/ja-dictionary.log"
     rc=${PIPESTATUS[0]}
     log "japanese dictionary wait rc=$rc"
-    [ "$rc" -eq 0 ] || fail "japanese dictionary never loaded, see ja-dictionary.log"
+    [ "$rc" -eq 0 ] || dictionary_failure
     log "japanese dictionary check"
     timeout -k 10 180 node scripts/dictionary.ts check "$out" 2>&1 | tee -a "$out/ja-dictionary.log"
     rc=${PIPESTATUS[0]}
@@ -166,7 +173,7 @@ server=$!
 trap 'kill $server 2>/dev/null' EXIT
 
 # One deadline for the whole prep. `prep` runs in a subshell, so its `fail` exits only the subshell.
-export -f prep stage capture_seed capture_follow stop_capture hide_dialogs block_self_update device_settings serve_to_device log a fail
+export -f prep stage dictionary_failure capture_seed capture_follow stop_capture hide_dialogs block_self_update device_settings serve_to_device log a fail
 export lang out booted DICTIONARY_LOAD_SECONDS
 rm -f "$out/prep.log" "$out/summary.md"
 exec 3> >(tee -a "$out/prep.log")

@@ -193,3 +193,66 @@ describe('a failed prep', () => {
     ])
   }, 60_000)
 })
+
+describe('the dictionary wait that failed', () => {
+  // The line `scripts/dictionary.ts wait` prints for run 41281397831's boot, from its capture in
+  // `scripts/lib/dictionary.test.ts`.
+  const NEVER_LOADED =
+    "DICTIONARY FAILED: the Japanese dictionary never loaded: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. Dictionary lines seen:"
+
+  test("names the wait's own reason in the PREP FAILED line, which leads with the dictionary that never loaded", () => {
+    expect(
+      dictionaryFailure([
+        'DICTIONARY waiting for the load line until 360s after boot, now 60s',
+        NEVER_LOADED,
+        '1793515060.365  1756  4711 E native  : Fallback to minimal engine.',
+      ]),
+    ).toEqual(
+      `PREP FAILED: japanese dictionary wait: ${NEVER_LOADED.replace('DICTIONARY FAILED: ', '')} See ja-dictionary.log`,
+    )
+  })
+
+  test('names a capture of another boot as the wait gives it', () => {
+    expect(
+      dictionaryFailure([
+        'DICTIONARY FAILED: the boot capture cannot show whether Gboard loaded its Japanese dictionary: the capture has no CAPTURE header, so nothing ties it to this boot',
+      ]),
+    ).toEqual(
+      'PREP FAILED: japanese dictionary wait: the boot capture cannot show whether Gboard loaded its Japanese dictionary: the capture has no CAPTURE header, so nothing ties it to this boot See ja-dictionary.log',
+    )
+  })
+
+  test('says the wait gave no reason when it printed none, as when it ran past its cap', () => {
+    expect(
+      dictionaryFailure(['DICTIONARY still waiting 333s after boot']),
+    ).toEqual(
+      'PREP FAILED: japanese dictionary wait gave no reason, see ja-dictionary.log',
+    )
+  })
+})
+
+/** The PREP FAILED line `run-on-device.sh` logs for a dictionary wait that printed `lines` to `ja-dictionary.log`. */
+function dictionaryFailure(lines: string[]): string {
+  const script = readFileSync(join(app, 'scripts', 'run-on-device.sh'), 'utf8')
+  // `log` and `fail` are one-line functions, `dictionary_failure` a block that ends on a line of its own.
+  const functions = [
+    /^log\(\) \{.*\}$/m,
+    /^fail\(\) \{.*\}$/m,
+    /^dictionary_failure\(\) \{\n[\s\S]*?\n\}$/m,
+  ].map((pattern) => pattern.exec(script)?.[0] ?? '')
+  mkdirSync(join(directory, 'out'))
+  writeFileSync(
+    join(directory, 'out', 'ja-dictionary.log'),
+    `${lines.join('\n')}\n`,
+  )
+  try {
+    execFileSync(
+      'bash',
+      ['-c', `out=out\n${functions.join('\n')}\n(dictionary_failure)`],
+      {cwd: directory, stdio: 'pipe'},
+    )
+  } catch {}
+  return readFileSync(join(directory, 'out', 'phases.log'), 'utf8')
+    .trim()
+    .replace(/^PHASE \S+ /, '')
+}

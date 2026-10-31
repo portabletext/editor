@@ -23,6 +23,10 @@ const capture = fixture('boot-logcat.txt')
 const LOAD_LINE = capture.split('\n').find((line) => line.includes('data_loader.cc:121'))!
 const RELOADED_LINE = capture.split('\n').find((line) => line.includes('RELOADED'))!
 const MARKER = 'ime-prep-switch-0b6a3e2c-1d4f-4a8e-9c7b-5e2d1f0a3b4c'
+// The `ja.enter` prep of run 41281397831, which never loaded the dictionary: its header, its logd
+// statistics, the first line of each reader, every dictionary line and the capture's last line.
+const NEVER_LOADED_BOOT_ID = '62cd1ade-9b02-4723-ba9e-2749dda3d074'
+const neverLoaded = fixture('boot-logcat-never-loaded.txt')
 
 describe(isDictionaryLoadLine.name, () => {
   test('matches the load line of the recorded boot', () => {
@@ -90,37 +94,51 @@ describe(waitOutcome.name, () => {
   })
 
   test('reports a dictionary that never loaded once the deadline passed on a whole capture', () => {
-    expect(waitOutcome(parseCapture(withoutLoad(capture)), {bootId: BOOT_ID, now: 1793453700, deadlinePassed: true})).toEqual({kind: 'not-loaded'})
+    expect(waitOutcome(parseCapture(withoutLoad(capture)), {bootId: BOOT_ID, now: 1793453700, deadlinePassed: true})).toEqual({
+      kind: 'not-loaded',
+      captureFault: undefined,
+    })
   })
 
-  test('reports a capture fault, never a missing load, when the capture has a hole', () => {
+  test('reports a missing load with the hole as context when the capture has a hole', () => {
     const text = withoutLoad(capture).replace(/(CAPTURE_SEGMENT start 1793453549\n--------- beginning of main\n)[^\n]*\n[^\n]*\n/, '$1')
 
     expect(waitOutcome(parseCapture(text), {bootId: BOOT_ID, now: 1793453700, deadlinePassed: true})).toEqual({
-      kind: 'capture-fault',
-      reason: 'the capture has a hole before 1793453657.613: a reader restarted on a main buffer whose oldest line the capture had not read',
+      kind: 'not-loaded',
+      captureFault: 'the capture has a hole before 1793453657.613: a reader restarted on a main buffer whose oldest line the capture had not read',
     })
   })
 
-  test('reports a capture fault, never a missing load, when the main buffer had dropped lines from boot by the first dump', () => {
-    const text = withoutLoad(capture).replace('CAPTURE_STATS main total=2/2 now=2/2', 'CAPTURE_STATS main total=2/9 now=2/2')
+  test('reports a missing load with the dropped lines as context when the main buffer had dropped lines from boot by the first dump', () => {
+    const text = withoutLoad(capture)
+      .replace('CAPTURE_STATS main total=2/2 now=2/2', 'CAPTURE_STATS main total=2/9 now=2/2')
+      .replaceAll('1793453504.000', '1793453534.912')
 
     expect(waitOutcome(parseCapture(text), {bootId: BOOT_ID, now: 1793453700, deadlinePassed: true})).toEqual({
-      kind: 'capture-fault',
-      reason: 'the main buffer had dropped 7 of its 9 lines by the capture\'s first dump, so the capture may lack lines from boot on',
+      kind: 'not-loaded',
+      captureFault:
+        "the main buffer had dropped 7 of its 9 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 31.9s after boot, so a load before then would not show",
     })
   })
 
-  test('reports a capture fault, never a missing load, when the capture holds no logd statistics for its first dump', () => {
+  test('reports the recorded boot that never loaded as a missing load, with its dropped lines as context', () => {
+    expect(waitOutcome(parseCapture(neverLoaded), {bootId: NEVER_LOADED_BOOT_ID, now: 1793515368, deadlinePassed: true})).toEqual({
+      kind: 'not-loaded',
+      captureFault:
+        "the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show",
+    })
+  })
+
+  test('reports a missing load with the missing statistics as context when the capture holds no logd statistics for its first dump', () => {
     const text = withoutLoad(capture).replace('CAPTURE_STATS main total=2/2 now=2/2\n', '')
 
     expect(waitOutcome(parseCapture(text), {bootId: BOOT_ID, now: 1793453700, deadlinePassed: true})).toEqual({
-      kind: 'capture-fault',
-      reason: 'the capture holds no logd statistics for its first dump of the main buffer, so nothing shows that dump held every line from boot',
+      kind: 'not-loaded',
+      captureFault: 'the capture holds no logd statistics for its first dump of the main buffer, so nothing shows that dump held every line from boot',
     })
   })
 
-  test('reports a capture fault, never a missing load, when a restarted reader begins on an older line of another buffer but on a main line the capture never read', () => {
+  test('reports a missing load with the hole as context when a restarted reader begins on an older line of another buffer but on a main line the capture never read', () => {
     const text = [
       `CAPTURE boot_id=${BOOT_ID} btime=1793453503`,
       'CAPTURE_SEGMENT seed',
@@ -138,15 +156,15 @@ describe(waitOutcome.name, () => {
     ].join('\n')
 
     expect(waitOutcome(parseCapture(text), {bootId: BOOT_ID, now: 1793453870, deadlinePassed: true})).toEqual({
-      kind: 'capture-fault',
-      reason: 'the capture has a hole before 1793453853.000: a reader restarted on a main buffer whose oldest line the capture had not read',
+      kind: 'not-loaded',
+      captureFault: 'the capture has a hole before 1793453853.000: a reader restarted on a main buffer whose oldest line the capture had not read',
     })
   })
 
-  test('reports a capture fault when the reader stopped', () => {
+  test('reports a missing load with the stopped reader as context when the reader stopped', () => {
     expect(waitOutcome(parseCapture(withoutLoad(capture)), {bootId: BOOT_ID, now: 1793453800, deadlinePassed: true})).toEqual({
-      kind: 'capture-fault',
-      reason: "the capture's last line is from 110s ago, so its reader stopped",
+      kind: 'not-loaded',
+      captureFault: "the capture's last line is from 110s ago, so its reader stopped",
     })
   })
 })
@@ -178,11 +196,11 @@ describe(captureFault.name, () => {
 })
 
 describe(notLoadedMessage.name, () => {
-  test('names the missing line, the Gboard version and the dictionary lines of the boot', () => {
+  test('leads with the dictionary that never loaded, then names the Gboard version and the dictionary lines of the boot', () => {
     const parsed = parseCapture(withoutLoad(capture))
 
-    expect(notLoadedMessage('15.1.08.726012951-preload-x86_64', dictionaryLines(parsed, BOOT_ID)).split('\n')).toEqual([
-      'Gboard 15.1.08.726012951-preload-x86_64 never logged its Japanese dictionary load, a `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file, within 360s of boot. Dictionary lines seen:',
+    expect(notLoadedMessage('15.1.08.726012951-preload-x86_64', dictionaryLines(parsed, BOOT_ID), undefined).split('\n')).toEqual([
+      'the Japanese dictionary never loaded: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 1 download of `__MOZCPACK_mozcmain_ja_JP` was cancelled. Dictionary lines seen:',
       '1793453620.349  1749  4776 E native  : E0000 00:00:1793453620.349674    4776 mozcjni.cc:114] j_data_file_path is null.  Fallback to minimal engine.',
       '1793453620.775  1749  2181 I DownloadManager: DownloadManager.downloadInternal():412 Download for __MOZCPACK_mozcmain_ja_JP scheduled with params DownloadParams{allowMetered=true, requireCharging=false, foreground=true, immediately=true, priority=0}',
       '1793453651.042  1749  2004 I DownloadManager: DownloadManager$4.onFailure():573 download for __MOZCPACK_mozcmain_ja_JP is cancelled',
@@ -192,6 +210,26 @@ describe(notLoadedMessage.name, () => {
       '1793453689.294  1749  1749 I SystemSubtypesReportModule: SystemSubtypesReportModule$3.onCurrentInputMethodEntryChanged():149 entry: ja-JP, source: GLOBE_KEY',
       '1793453690.133  1749  4776 I SessionExecutor: SessionExecutor$ExecutorMainCallback.ensureSession():515 Mozc engine reload status: RELOADED',
     ])
+  })
+
+  test('leads the recorded boot that never loaded with that, names its fallback and cancelled downloads, and gives the dropped lines after them', () => {
+    const parsed = parseCapture(neverLoaded)
+    const outcome = waitOutcome(parsed, {bootId: NEVER_LOADED_BOOT_ID, now: 1793515368, deadlinePassed: true})
+
+    expect(
+      notLoadedMessage('15.1.08.726012951-preload-x86_64', dictionaryLines(parsed, NEVER_LOADED_BOOT_ID), outcome.kind === 'not-loaded' ? outcome.captureFault : 'none')
+        .split('\n')
+        .slice(0, 2),
+    ).toEqual([
+      "the Japanese dictionary never loaded: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. Dictionary lines seen:",
+      '1793515005.511  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=true, entryLanguageVariantChanged=true, keyboardContextChanged=true',
+    ])
+  })
+
+  test('names neither the fallback nor cancelled downloads when the boot logged none', () => {
+    expect(notLoadedMessage('15.1.08.726012951-preload-x86_64', [], undefined)).toEqual(
+      'the Japanese dictionary never loaded: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. Dictionary lines seen:\n(none)',
+    )
   })
 })
 

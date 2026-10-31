@@ -1,0 +1,33 @@
+CAPTURE boot_id=62cd1ade-9b02-4723-ba9e-2749dda3d074 btime=1793514968
+CAPTURE_SEGMENT seed
+--------- beginning of main
+         1793514994.898   668   799 I ArtService: Dexopt result: [packageName = com.android.calllogbackup] DexContainerFileDexoptResult{dexContainerFile=/system/priv-app/CallLogBackup/CallLogBackup.apk, primaryAbi=true, abi=x86_64, actualCompilerFilter=verify, status=SKIPPED, dex2oatWallTimeMillis=0, dex2oatCpuTimeMillis=0, sizeBytes=0, sizeBeforeBytes=0, extendedStatusFlags=[]}
+         1793515005.511  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=true, entryLanguageVariantChanged=true, keyboardContextChanged=true
+         1793515005.536  1756  1756 I KeyboardModeManager: KeyboardModeManager.onCurrentInputMethodEntryChanged():1400 Reload data for context change
+         1793515005.906  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=true, entryLanguageVariantChanged=false, keyboardContextChanged=false
+         1793515005.912  1756  1756 I KeyboardModeManager: KeyboardModeManager.onCurrentInputMethodEntryChanged():1400 Reload data for context change
+CAPTURE_STATS main total=1560142/9812 now=1102028/6947
+CAPTURE_SEGMENT start 1793515008
+--------- beginning of main
+         1793514994.898   668   799 I ArtService: Dexopt result: [packageName = com.android.calllogbackup] DexContainerFileDexoptResult{dexContainerFile=/system/priv-app/CallLogBackup/CallLogBackup.apk, primaryAbi=true, abi=x86_64, actualCompilerFilter=verify, status=SKIPPED, dex2oatWallTimeMillis=0, dex2oatCpuTimeMillis=0, sizeBytes=0, sizeBeforeBytes=0, extendedStatusFlags=[]}
+         1793515005.511  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=true, entryLanguageVariantChanged=true, keyboardContextChanged=true
+         1793515005.536  1756  1756 I KeyboardModeManager: KeyboardModeManager.onCurrentInputMethodEntryChanged():1400 Reload data for context change
+         1793515005.906  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=true, entryLanguageVariantChanged=false, keyboardContextChanged=false
+         1793515005.912  1756  1756 I KeyboardModeManager: KeyboardModeManager.onCurrentInputMethodEntryChanged():1400 Reload data for context change
+         1793515010.160  1756  1756 I SystemSubtypesReportModule: SystemSubtypesReportModule$3.onCurrentInputMethodEntryChanged():149 entry: en-US, source: UNSPECIFIED
+         1793515010.160  1756  1756 I SystemSubtypesReportModule: SystemSubtypesReportModule$3.onCurrentInputMethodEntryChanged():163 switchSubtype(en-US)
+         1793515010.166  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=false, entryLanguageVariantChanged=false, keyboardContextChanged=true
+         1793515044.433  1756  1756 I SystemSubtypesReportModule: SystemSubtypesReportModule$3.onCurrentInputMethodEntryChanged():149 entry: en-US, source: UNSPECIFIED
+         1793515044.433  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2285 onCurrentInputMethodEntryChanged(): imeDefsChanged=false, entryLanguageVariantChanged=false, keyboardContextChanged=false
+         1793515044.433  1756  1756 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2302 Skip the entry change as the input method entry is consider as not changed.
+         1793515060.365  1756  4711 E native  : E0000 00:00:1793515060.365886    4711 mozcjni.cc:114] j_data_file_path is null.  Fallback to minimal engine.
+         1793515065.914  1756  2161 I DownloadManager: DownloadManager.downloadInternal():412 Download for __MOZCPACK_mozcmain_ja_JP scheduled with params DownloadParams{allowMetered=true, requireCharging=false, foreground=true, immediately=true, priority=0}
+         1793515065.914  1756  2161 I DownloadManager: DownloadManager.startDownload():495 start download of __MOZCPACK_mozcmain_ja_JP
+         1793515065.914  1756  2161 I DownloadManager: DownloadManager.downloadInternal():412 Download for __MOZCPACK_mozcspellchecker_ja_JP scheduled with params DownloadParams{allowMetered=false, requireCharging=false, foreground=false, immediately=false, priority=0}
+         1793515066.032  1756  1756 I DownloadManager: DownloadManager$4.onFailure():573 download for __MOZCPACK_mozcmain_ja_JP is cancelled
+         1793515066.040  1756  2157 I DownloadManager: DownloadManager$3.onProgress():514 Downloading __MOZCPACK_mozcmain_ja_JP with size 32748
+         1793515066.113  1756  2007 I DownloadManager: DownloadManager.startDownload():495 start download of __MOZCPACK_mozcspellchecker_ja_JP
+         1793515066.118  1756  2007 I DownloadManager: DownloadManager$4.onFailure():573 download for __MOZCPACK_mozcspellchecker_ja_JP is cancelled
+         1793515066.205  1756  2003 I DownloadManager: DownloadManager.startDownload():495 start download of __MOZCPACK_mozcmain_ja_JP
+         1793515066.206  1756  2003 I DownloadManager: DownloadManager$4.onFailure():573 download for __MOZCPACK_mozcmain_ja_JP is cancelled
+         1793515367.663  1253  1485 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
