@@ -35,6 +35,7 @@ import {
 import {createRoot} from 'react-dom/client'
 import {Committed} from './committed'
 import {frozenLog} from './frozen-log'
+import {splitTiming} from './split-timing'
 
 declare global {
   interface Window {
@@ -51,6 +52,7 @@ const behavior = params.get('behavior')
 // The crash and Enter cases' pages. Without these params `editor.html` stays the page the composition
 // tests were written against: it records no errors, and an exception in `__state` reaches the driver.
 const crashCase = params.has('decorate') || params.has('behavior')
+const timing = crashCase && params.get('timing') === '1' ? splitTiming() : null
 
 const keyGenerator = createTestKeyGenerator()
 
@@ -164,6 +166,7 @@ function Probe() {
         errors,
         committed: committed.entries,
         deletions: deletions.entries,
+        ...(timing ? {splitTiming: timing.entries} : {}),
         decorated: decorated.map(({element, ...entry}) => ({
           ...entry,
           live: element?.textContent ?? null,
@@ -194,7 +197,7 @@ function Editable() {
   // change they cause. A render React abandons or supersedes logs nothing.
   return (
     <>
-      {decorate ? <Committed value={ranges} record={committed.record} /> : null}
+      {decorate ? <Committed value={ranges} record={recordCommitted} /> : null}
       <PortableTextEditable
         rangeDecorations={decorations}
         style={{border: '1px solid #888', minHeight: '3em', fontSize: 20}}
@@ -303,6 +306,7 @@ function Decorated(props: PropsWithChildren) {
       element: ref.current,
     }
     decorated.push(entry)
+    timing?.leaf(ref.current)
     return () => {
       if (errors.length === 0) entry.element = null
     }
@@ -312,6 +316,11 @@ function Decorated(props: PropsWithChildren) {
       {props.children}
     </span>
   )
+}
+
+function recordCommitted(ranges: Array<{text: string; composing: boolean}>) {
+  committed.record(ranges)
+  timing?.ranges(ranges)
 }
 
 function selectedText(

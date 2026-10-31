@@ -133,9 +133,9 @@ describe('the workflow', () => {
   )
   const jobMinutes = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(workflow)?.[1])
 
-  // The split control spike runs only its own files.
-  test('runs every split control file once, on a device prepared for the language its name starts with', () => {
-    expect(rows.map((row) => row.file).sort()).toEqual(deviceFiles.filter((file) => file.includes('.split-control')))
+  // The split timing spike runs only its own files.
+  test('runs every split timing file once, on a device prepared for the language its name starts with', () => {
+    expect(rows.map((row) => row.file).sort()).toEqual(deviceFiles.filter((file) => file.includes('.split-timing')))
     expect(rows.filter((row) => !row.file.startsWith(`tests/${row.lang}.`))).toEqual([])
   })
 

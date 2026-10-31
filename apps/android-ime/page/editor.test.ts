@@ -168,3 +168,23 @@ describe('`window.__state`', () => {
     ])
   })
 })
+
+describe('`window.__state` with `timing=1`', () => {
+  test('holds no `splitTiming` in a crash page without it', async () => {
+    await loadPage(`?prefix=foo&decorate=${encodeURIComponent('きょう')}`)
+
+    const state = (await cdpEval('window.__state()')) as Record<string, unknown>
+
+    expect(Object.keys(state)).toEqual([
+      'text',
+      'blocks',
+      'dom',
+      'focused',
+      'events',
+      'errors',
+      'committed',
+      'deletions',
+      'decorated',
+    ])
+  })
+})

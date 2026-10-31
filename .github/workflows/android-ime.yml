@@ -45,13 +45,10 @@ jobs:
       fail-fast: false
       matrix:
         # One row per device test file. A file runs on a device prepared for
-        # its language. This spike runs only the split control's files.
+        # its language. This spike runs only the split timing's files.
         suite:
-          - {lang: ja, file: tests/ja.split-control.test.ts}
-          - {lang: ja, file: tests/ja.split-control-keep.test.ts}
-          - {lang: ja, file: tests/ja.split-control-style.test.ts}
-          - {lang: en, file: tests/en.split-control.test.ts}
-          - {lang: en, file: tests/en.split-control-style.test.ts}
+          - {lang: ja, file: tests/ja.split-timing.test.ts}
+          - {lang: en, file: tests/en.split-timing.test.ts}
         api: [36]
 
     steps:
