@@ -1,0 +1,114 @@
+import {readdirSync, readFileSync} from 'node:fs'
+import {createVitest} from 'vitest/node'
+import {fileURLToPath} from 'node:url'
+import {describe, expect, test} from 'vitest'
+import {
+  COUNT_KILL_SECONDS,
+  COUNT_SECONDS,
+  countDeviceTests,
+  DEVICE_TEST_TIMEOUT_SECONDS,
+  DIAGNOSTICS_KILL_SECONDS,
+  DIAGNOSTICS_SECONDS,
+  PREP_KILL_SECONDS,
+  PREP_SECONDS,
+  runOnDeviceWorstSeconds,
+  SUITE_KILL_SECONDS,
+  suiteSeconds,
+  TYPE_ON_DEVICE_WORST_SECONDS,
+} from './budget.ts'
+
+const app = new URL('../../', import.meta.url)
+const deviceFiles = readdirSync(new URL('tests/', app))
+  .filter((name) => name.endsWith('.test.ts'))
+  .map((name) => `tests/${name}`)
+  .sort()
+const script = readFileSync(new URL('scripts/run-on-device.sh', app), 'utf8')
+const workflow = readFileSync(new URL('../../.github/workflows/android-ime.yml', app), 'utf8')
+
+// The emulator boot inside each run step, `emulator-boot-timeout`, and an allowance for the emulator
+// runner's own SDK checks, AVD creation and shutdown around the script, which nothing times.
+const BOOT_SECONDS = 360
+const RUNNER_ALLOWANCE_SECONDS = 150
+
+describe('the per-test bounds', () => {
+  test('a call takes at most 655 seconds and a device test may run 695', () => {
+    expect({call: TYPE_ON_DEVICE_WORST_SECONDS, test: DEVICE_TEST_TIMEOUT_SECONDS}).toEqual({call: 655, test: 695})
+  })
+})
+
+describe(countDeviceTests.name, () => {
+  test('counts top-level tests, failing ones included, and nothing nested or in comments', () => {
+    expect(countDeviceTests("test('a', () => {})\n// test('b')\ntest.fails('c', () => {\n  test('d')\n})\n")).toEqual(2)
+  })
+
+  test('counts each device test file the way Vitest collects it', async () => {
+    const vitest = await createVitest({
+      root: fileURLToPath(app),
+      config: false,
+      watch: false,
+      include: deviceFiles,
+      reporters: [],
+    })
+    try {
+      const {testModules} = await vitest.collect(deviceFiles, {staticParse: true})
+      const collected = Object.fromEntries(
+        testModules.map((testModule) => [testModule.relativeModuleId, [...testModule.children.allTests()].length]),
+      )
+      const counted = Object.fromEntries(
+        deviceFiles.map((file) => [file, countDeviceTests(readFileSync(new URL(file, app), 'utf8'))]),
+      )
+      expect(counted).toEqual(collected)
+    } finally {
+      await vitest.close()
+    }
+  })
+})
+
+describe('run-on-device.sh', () => {
+  test('runs each stage under the caps `budget.ts` sums', () => {
+    expect({
+      count: /timeout -k (\d+) (\d+) node scripts\/suite-seconds\.ts/.exec(script)?.slice(1).map(Number),
+      prep: /timeout -k (\d+) (\d+) bash -c prep/.exec(script)?.slice(1).map(Number),
+      suite: /timeout -k (\d+) "\$suite_seconds" pnpm exec vitest run --project device "\$file"/.exec(script)?.slice(1).map(Number),
+      diagnostics: /timeout -k (\d+) (\d+) bash -c '\n\s+adb logcat -d -b crash/.exec(script)?.slice(1).map(Number),
+    }).toEqual({
+      count: [COUNT_KILL_SECONDS, COUNT_SECONDS],
+      prep: [PREP_KILL_SECONDS, PREP_SECONDS],
+      suite: [SUITE_KILL_SECONDS],
+      diagnostics: [DIAGNOSTICS_KILL_SECONDS, DIAGNOSTICS_SECONDS],
+    })
+  })
+})
+
+describe('the workflow', () => {
+  const rows = [...workflow.matchAll(/^\s+- \{lang: (\w+), file: (\S+)\}$/gm)].map((match) => ({lang: match[1]!, file: match[2]!}))
+  const stepMinutes = [...workflow.matchAll(/^ {8}timeout-minutes: (\d+)$/gm)].map((match) => Number(match[1]))
+  const runStepMinutes = [...workflow.matchAll(/^ {8}timeout-minutes: (\d+)\n(?: {8}.*\n)*? {8}uses: reactivecircus\/android-emulator-runner/gm)].map((match) =>
+    Number(match[1]),
+  )
+  const jobMinutes = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(workflow)?.[1])
+
+  test('runs every device test file once, on a device prepared for the language its name starts with', () => {
+    expect(rows.map((row) => row.file).sort()).toEqual(deviceFiles)
+    expect(rows.filter((row) => !row.file.startsWith(`tests/${row.lang}.`))).toEqual([])
+  })
+
+  test('gives each run step room for the boot and the script on the largest file', () => {
+    const largest = Math.max(...deviceFiles.map((file) => countDeviceTests(readFileSync(new URL(file, app), 'utf8'))))
+    const needed = BOOT_SECONDS + runOnDeviceWorstSeconds(largest) + RUNNER_ALLOWANCE_SECONDS
+    expect({
+      runSteps: runStepMinutes.length,
+      tooShort: runStepMinutes.filter((minutes) => minutes * 60 < needed),
+    }).toEqual({runSteps: 2, tooShort: []})
+  })
+
+  test('allows the job the sum of its step caps', () => {
+    expect(jobMinutes).toEqual(stepMinutes.reduce((sum, minutes) => sum + minutes, 0))
+  })
+})
+
+describe(suiteSeconds.name, () => {
+  test('a file of three tests is capped at 2040 seconds and its script ends within 2750', () => {
+    expect({suite: suiteSeconds(3), script: runOnDeviceWorstSeconds(3)}).toEqual({suite: 2040, script: 2750})
+  })
+})

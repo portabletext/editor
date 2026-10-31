@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Runs inside android-emulator-runner's script block, emulator already booted.
-# Prepares the device, then runs the device tests for IME_LANG. A prep step that breaks exits before
-# any test runs, with a PREP FAILED line naming the step.
+# Usage: IME_LANG=ja scripts/run-on-device.sh tests/ja.test.ts
+# Prepares the device for IME_LANG, then runs the one device test file given. A prep step that breaks
+# exits before any test runs, with a PREP FAILED line naming the step.
 # Every stage runs under `timeout -k`, so a hang shows up as a logged timeout and the stage ends within
-# its cap plus the kill-after: prep 600 + 10 seconds, the tests 1680 + 10, the diagnostics after them
-# 60 + 5. The README sums these into the workflow's step timeout.
+# its cap plus the kill-after: counting the tests 20 + 5 seconds, prep 600 + 10, the tests the file's cap from
+# `scripts/suite-seconds.ts` + 10, the diagnostics after them 60 + 5. `scripts/lib/budget.ts` holds these
+# numbers, and its unit test checks them against this script and the workflow's step timeout.
 set -u
 lang=${IME_LANG:-en}
+file=${1:?usage: IME_LANG=<ja|en> scripts/run-on-device.sh <test file>}
 out=out
 mkdir -p "$out"
 log() { echo "PHASE $(date +%H:%M:%S) $*" | tee -a "$out/phases.log"; }
@@ -58,6 +61,10 @@ prep() {
 }
 
 echo "BOOTED at $(date +%s)" | tee -a "$out/timing.txt"
+# The suite's cap follows from the file's number of tests. A file that cannot be read fails before any
+# device work.
+suite_seconds=$(timeout -k 5 20 node scripts/suite-seconds.ts "$file") || fail "count tests in $file"
+log "suite cap ${suite_seconds}s for $file"
 log "http server"
 node scripts/serve.ts dist 8765 < /dev/null > "$out/http.log" 2>&1 &
 server=$!
@@ -71,14 +78,18 @@ rc=$?
 [ $rc -eq 124 ] && log "PREP FAILED: prep ran past 600s"
 [ $rc -eq 0 ] || exit 1
 
-(timeout -k 5 1800 adb logcat -v time > "$out/logcat.txt" 2>&1 &)
+(timeout -k 5 $((suite_seconds + 120)) adb logcat -v time > "$out/logcat.txt" 2>&1 &)
 
-# Three tests of at most `TYPE_ON_DEVICE_WORST_SECONDS` (535s, `scripts/lib/budget.ts`) each, plus Vitest's
-# own startup and global setup.
 log "tests start"
-timeout -k 10 1680 pnpm exec vitest run --project device "tests/$lang.test.ts" < /dev/null 2>&1 | tee -a "$out/vitest.log"
+# `tests/setup.ts` writes the file's line of the job summary here, counting inconclusive calls and driver
+# faults apart from passed and failed tests.
+rm -f "$out/summary.md"
+IME_SUMMARY_FILE="$out/summary.md" timeout -k 10 "$suite_seconds" pnpm exec vitest run --project device "$file" < /dev/null 2>&1 | tee -a "$out/vitest.log"
 status=${PIPESTATUS[0]}
 log "tests rc=$status"
+[ -s "$out/summary.md" ] || echo "\`$file\`: no result, the test run ended with rc=$status before the file finished" > "$out/summary.md"
+cat "$out/summary.md"
+[ -n "${GITHUB_STEP_SUMMARY:-}" ] && cat "$out/summary.md" >> "$GITHUB_STEP_SUMMARY"
 
 timeout -k 5 60 bash -c '
   adb logcat -d -b crash > "$1/logcat-crash.txt"
