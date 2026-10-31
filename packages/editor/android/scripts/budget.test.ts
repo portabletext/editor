@@ -18,10 +18,14 @@ describe('DEVICE_TEST_FILE_SECONDS', () => {
     expect(testStage?.[1]).toEqual('"$tests_seconds"')
     expect(
       Number(
-        execFileSync('bash', ['-c', `${readBudget?.[0]}; echo $tests_seconds`], {
-          cwd: root,
-          encoding: 'utf8',
-        }),
+        execFileSync(
+          'bash',
+          ['-c', `${readBudget?.[0]}; echo $tests_seconds`],
+          {
+            cwd: root,
+            encoding: 'utf8',
+          },
+        ),
       ),
     ).toEqual(DEVICE_TEST_FILE_SECONDS)
   })

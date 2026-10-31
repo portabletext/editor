@@ -10,7 +10,10 @@ let phaseClockStart = Date.now()
 const attemptSignal = new AsyncLocalStorage<AbortSignal>()
 
 /** Run `run` so every later `sleep`, `tracked` and transport call in it stops once `signal` aborts. */
-export function runAbortable<T>(signal: AbortSignal, run: () => Promise<T>): Promise<T> {
+export function runAbortable<T>(
+  signal: AbortSignal,
+  run: () => Promise<T>,
+): Promise<T> {
   return attemptSignal.run(signal, run)
 }
 
@@ -45,7 +48,10 @@ export async function sleep(seconds: number): Promise<void> {
 export function whenAborted(signal: AbortSignal): Promise<never> {
   return new Promise((_, reject) => {
     if (signal.aborted) reject(signal.reason)
-    else signal.addEventListener('abort', () => reject(signal.reason), {once: true})
+    else
+      signal.addEventListener('abort', () => reject(signal.reason), {
+        once: true,
+      })
   })
 }
 
@@ -55,9 +61,19 @@ export function whenAborted(signal: AbortSignal): Promise<never> {
  * `JOIN_GRACE_SECONDS` for `run` to stop, then reject with the abort reason, so the call settles within
  * `seconds + JOIN_GRACE_SECONDS` even when `run` ignores the abort.
  */
-export async function withDeadline<T>(label: string, seconds: number, run: () => Promise<T>): Promise<T> {
+export async function withDeadline<T>(
+  label: string,
+  seconds: number,
+  run: () => Promise<T>,
+): Promise<T> {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(new DeadlineError(`${label} timed out after ${seconds}s`)), seconds * 1000)
+  const timer = setTimeout(
+    () =>
+      controller.abort(
+        new DeadlineError(`${label} timed out after ${seconds}s`),
+      ),
+    seconds * 1000,
+  )
   const parent = attemptSignal.getStore()
   const onParentAbort = () => controller.abort(parent!.reason)
   if (parent?.aborted) controller.abort(parent.reason)
@@ -72,7 +88,11 @@ export async function withDeadline<T>(label: string, seconds: number, run: () =>
   try {
     return await Promise.race([work, whenAborted(controller.signal)])
   } catch (error) {
-    if (controller.signal.aborted) await Promise.race([work.catch(() => {}), unboundedDelay(JOIN_GRACE_SECONDS)])
+    if (controller.signal.aborted)
+      await Promise.race([
+        work.catch(() => {}),
+        unboundedDelay(JOIN_GRACE_SECONDS),
+      ])
     throw error
   } finally {
     clearTimeout(timer)
@@ -97,7 +117,10 @@ export function phase(message: string): void {
 // The call the driver is blocked on, so the watchdog can say where a hang sits.
 let inFlight = ''
 
-export async function tracked<T>(label: string, run: () => Promise<T>): Promise<T> {
+export async function tracked<T>(
+  label: string,
+  run: () => Promise<T>,
+): Promise<T> {
   throwIfAborted()
   const previous = inFlight
   inFlight = label
@@ -110,7 +133,13 @@ export async function tracked<T>(label: string, run: () => Promise<T>): Promise<
 
 /** Log what the driver is waiting on shortly before its attempt times out. Returns a function that cancels it. */
 export function watchdog(seconds: number): () => void {
-  const timer = setTimeout(() => phase(`WATCHDOG still running after ${seconds}s, waiting on: ${inFlight || 'nothing tracked'}`), seconds * 1000)
+  const timer = setTimeout(
+    () =>
+      phase(
+        `WATCHDOG still running after ${seconds}s, waiting on: ${inFlight || 'nothing tracked'}`,
+      ),
+    seconds * 1000,
+  )
   timer.unref()
   return () => clearTimeout(timer)
 }
@@ -120,8 +149,14 @@ export function pySorted(values: Iterable<string>): string[] {
   return [...values].sort((left, right) => {
     const leftCharacters = [...left]
     const rightCharacters = [...right]
-    for (let index = 0; index < Math.min(leftCharacters.length, rightCharacters.length); index++) {
-      const difference = leftCharacters[index]!.codePointAt(0)! - rightCharacters[index]!.codePointAt(0)!
+    for (
+      let index = 0;
+      index < Math.min(leftCharacters.length, rightCharacters.length);
+      index++
+    ) {
+      const difference =
+        leftCharacters[index]!.codePointAt(0)! -
+        rightCharacters[index]!.codePointAt(0)!
       if (difference !== 0) return difference
     }
     return leftCharacters.length - rightCharacters.length
@@ -141,7 +176,9 @@ export function pyRepr(value: unknown): string {
   if (typeof value === 'number') return String(value)
   if (Array.isArray(value)) return `[${value.map(pyRepr).join(', ')}]`
   if (typeof value === 'object') {
-    return `{${Object.entries(value).map(([key, entry]) => `${reprString(key)}: ${pyRepr(entry)}`).join(', ')}}`
+    return `{${Object.entries(value)
+      .map(([key, entry]) => `${reprString(key)}: ${pyRepr(entry)}`)
+      .join(', ')}}`
   }
   return String(value)
 }
@@ -153,7 +190,10 @@ export function pyStr(value: unknown): string {
 
 export function errorRepr(error: unknown): string {
   if (error instanceof Error) {
-    const cause = error.cause instanceof Error ? ` (${error.cause.name}: ${error.cause.message})` : ''
+    const cause =
+      error.cause instanceof Error
+        ? ` (${error.cause.name}: ${error.cause.message})`
+        : ''
     return `${error.name}: ${error.message}${cause}`
   }
   return String(error)
@@ -176,8 +216,10 @@ function reprString(value: string): string {
     else if (character === '\t') out += '\\t'
     else if (character !== ' ' && NON_PRINTABLE.test(character)) {
       const codePoint = character.codePointAt(0)!
-      if (codePoint < 0x100) out += '\\x' + codePoint.toString(16).padStart(2, '0')
-      else if (codePoint < 0x10000) out += '\\u' + codePoint.toString(16).padStart(4, '0')
+      if (codePoint < 0x100)
+        out += '\\x' + codePoint.toString(16).padStart(2, '0')
+      else if (codePoint < 0x10000)
+        out += '\\u' + codePoint.toString(16).padStart(4, '0')
       else out += '\\U' + codePoint.toString(16).padStart(8, '0')
     } else out += character
   }
