@@ -45,6 +45,7 @@ declare module 'vitest' {
 type PageState = {
   text: string | null
   dom: string | null | undefined
+  focused: boolean
   blocks: number | null
   events: Array<{type: string}>
   errors: string[]
@@ -135,7 +136,9 @@ async function typeWords(
   await vi.waitFor(() => expect(state().text).toEqual(prefix))
   const editable =
     dom.window.document.querySelector<HTMLElement>('[contenteditable]')!
+  expect(state().focused).toEqual(false)
   editable.focus()
+  expect(state().focused).toEqual(true)
 
   const picked: string[] = []
   const beforeCommit: NonNullable<Typed['beforeCommit']> = []

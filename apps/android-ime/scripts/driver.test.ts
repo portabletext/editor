@@ -589,6 +589,38 @@ describe('a word Space commits as kana', () => {
   }, 60_000)
 })
 
+describe('the read after a fault in a crash case', () => {
+  test("logs the page's text, its DOM text and focus with the outcome unchanged, keeps the outcome when printing the line fails, and is skipped without a crash", async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/typing-logs-page-after-fault.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/gboard-with-layouts.ts',
+          'tests/setup.ts',
+        ],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: A crash case that faults after a letter logs the page it reads after the fault and ends inconclusive',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Printing the page after the fault throws',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A call without a crash reads no page after the fault and is retried',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 60_000)
+})
+
 describe('a required candidate', () => {
   test('is tapped when Gboard offers it on the retry, a candidate that is not required still falls back to Space, and one Space would commit first faults', async () => {
     expect(
