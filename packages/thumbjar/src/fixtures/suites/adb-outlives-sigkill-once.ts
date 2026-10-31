@@ -20,7 +20,7 @@ vi.mock(import('node:child_process'), async (importOriginal) => ({
   }) as never,
 }))
 
-vi.mock(import('../../lib/typing.ts'), async (importOriginal) => ({
+vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   typeInChrome: async () => {
     device.attempts += 1

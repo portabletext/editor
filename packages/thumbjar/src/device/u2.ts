@@ -4,7 +4,7 @@
 
 import {createHash} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
-import {dirname, join} from 'node:path'
+import {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {
   adb,
@@ -20,12 +20,8 @@ const JAR_URL =
   'https://github.com/openatx/android-uiautomator-server-jar/releases/download/0.4.1/u2.jar'
 const JAR_SHA256 =
   '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d'
-const JAR_PATH = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  '..',
-  '.cache',
-  'u2.jar',
+const JAR_PATH = fileURLToPath(
+  new URL('.cache/u2.jar', import.meta.resolve('thumbjar/package.json')),
 )
 const DEVICE_JAR = '/data/local/tmp/u2.jar'
 const SERVER_PORT = 9008

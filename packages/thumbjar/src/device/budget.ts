@@ -53,7 +53,7 @@ export const TYPE_ON_DEVICE_WORST_SECONDS =
 export const DEVICE_TEST_TIMEOUT_SECONDS =
   TYPE_ON_DEVICE_WORST_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
 
-/** The device tests in one file. `scripts/lib/budget.test.ts` fails when a file declares more. */
+/** The device tests in one file that `DEVICE_TEST_FILE_SECONDS` allows for. */
 export const DEVICE_TESTS_PER_FILE = 3
 
 /**
@@ -65,13 +65,13 @@ export const GLOBAL_SETUP_ADB_SECONDS = 30
 /** The global setup's request for the test page. */
 export const GLOBAL_SETUP_PAGE_SECONDS = 5
 
-/** Vitest's start, the collection of the file, the synchronous `afterAll` in `tests/setup.ts` and its exit. */
+/** Vitest's start, the collection of the file, the synchronous `afterAll` in `src/vitest/setup.ts` and its exit. */
 export const VITEST_STARTUP_SECONDS = 60
 
 /**
- * The longest a run of one device test file takes, which `scripts/run-on-device.sh` reads as the test
- * stage's timeout. Cutting the run off earlier would stop Vitest before its last test times out and
- * before `afterAll` in `tests/setup.ts` can name a driver fault.
+ * The longest a run of one device test file takes, the timeout to run it under. Cutting the run off
+ * earlier would stop Vitest before its last test times out and before `afterAll` in `src/vitest/setup.ts`
+ * can name a driver fault.
  */
 export const DEVICE_TEST_FILE_SECONDS =
   DEVICE_TESTS_PER_FILE * DEVICE_TEST_TIMEOUT_SECONDS +

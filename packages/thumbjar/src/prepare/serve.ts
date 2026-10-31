@@ -1,6 +1,6 @@
 // Serve a directory over HTTP for the test pages, with one log line per request.
 //
-// Usage: node scripts/serve.ts <dir> <port>
+// Usage: thumbjar serve <dir> [--port 8765]
 
 import {createReadStream, statSync} from 'node:fs'
 import http from 'node:http'

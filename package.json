@@ -19,7 +19,7 @@
     "build:toolbar": "turbo build --filter=@portabletext/toolbar...",
     "changeset:version": "changeset version && node .changeset/annotate-lockstep-releases.mjs",
     "check:format": "oxfmt --check . && prettier --check \"**/*.{astro,feature}\"",
-    "check:knip": "knip",
+    "check:knip": "NODE_OPTIONS=\"$NODE_OPTIONS --conditions=source\" knip",
     "check:lint": "oxlint",
     "check:types": "turbo check:types",
     "check:types:watch": "turbo check:types:watch",
