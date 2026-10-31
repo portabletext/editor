@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-type Mode = 'replace' | 'keep' | 'style' | 'none'
+type Mode = 'replace' | 'keep' | 'style' | 'none' | 'bounce' | 'replace-bounce'
 
 type Caret = {
   /** The anchor node's `nodeName`, `#text` for a text node. */
@@ -133,6 +133,10 @@ function write(event: InputEvent) {
     })
     return
   }
+  if (mode === 'bounce') {
+    if (completed) bounce(event, node)
+    return
+  }
   if (!complete) return
   // The word already sits alone in a span of an earlier write, so there is nothing to split off.
   if (node.data === word && node.parentElement?.dataset.split !== undefined)
@@ -148,7 +152,7 @@ function write(event: InputEvent) {
   span.style.background = 'yellow'
   let wordNode: Text
   let op: string
-  if (mode === 'replace') {
+  if (mode === 'replace' || mode === 'replace-bounce') {
     wordNode = document.createTextNode(word)
     span.append(wordNode)
     const head = node.data.slice(0, start)
@@ -170,6 +174,13 @@ function write(event: InputEvent) {
     span.append(wordNode)
     op = `splitText(${start}), wrap tail`
   }
+  if (mode === 'replace-bounce') {
+    record({type: 'write', mode, ...trigger(event), op, before, after: caret()})
+    // The editor's pair: into the new leaf's text node, then straight back to the node the caret was in,
+    // which the replace has detached.
+    bounceTo(event, wordNode, word.length, node, before.anchorOffset ?? 0)
+    return
+  }
   const moved =
     selection.anchorNode !== wordNode ||
     selection.anchorOffset !== word.length ||
@@ -183,6 +194,75 @@ function write(event: InputEvent) {
     restored: mode === 'replace' || moved,
     before,
     after: {...caret(), sameNode: selection.anchorNode === node},
+  })
+}
+
+// `mode=bounce`: no node under the caret changes. An empty span goes in after the caret's node, the caret
+// moves into it and straight back.
+function bounce(event: InputEvent, node: Text) {
+  const before = caret()
+  const span = document.createElement('span')
+  span.dataset.split = ''
+  node.after(span)
+  record({
+    type: 'write',
+    mode,
+    ...trigger(event),
+    op: 'after(span)',
+    before,
+    after: caret(),
+  })
+  bounceTo(event, span, 0, node, before.anchorOffset ?? 0)
+}
+
+// `removeAllRanges` and `addRange` into `(into, intoOffset)`, then `setBaseAndExtent` back to
+// `(back, backOffset)`, each logged with the caret it leaves.
+function bounceTo(
+  event: InputEvent,
+  into: Node,
+  intoOffset: number,
+  back: Node,
+  backOffset: number,
+) {
+  const selection = getSelection()!
+  const range = document.createRange()
+  range.setStart(into, intoOffset)
+  range.collapse(true)
+  selection.removeAllRanges()
+  record({
+    type: 'write',
+    mode,
+    ...trigger(event),
+    op: 'removeAllRanges',
+    after: caret(),
+  })
+  selection.addRange(range)
+  record({
+    type: 'write',
+    mode,
+    ...trigger(event),
+    op: 'addRange',
+    after: caret(),
+  })
+  let threw: string | undefined
+  try {
+    selection.setBaseAndExtent(back, backOffset, back, backOffset)
+  } catch (error) {
+    threw =
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+  }
+  record({
+    type: 'write',
+    mode,
+    ...trigger(event),
+    op: 'setBaseAndExtent',
+    target: {
+      connected: back.isConnected,
+      text: back.textContent,
+      offset: backOffset,
+    },
+    ...(threw === undefined ? {} : {threw}),
+    after: {...caret(), sameNode: selection.anchorNode === back},
   })
 }
 

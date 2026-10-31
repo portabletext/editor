@@ -45,6 +45,8 @@ type Entry = {
   data?: string | null
   texts?: string[]
   text?: string
+  /** Spike: the first frames of the call's stack, on `removeAllRanges`, `addRange` and `setBaseAndExtent`. */
+  stack?: string[]
 }
 
 type InputState = {
@@ -56,6 +58,14 @@ type InputState = {
   frame: boolean
   timeout: boolean
 }
+
+// The writes whose callers the spike names. `scripts/map-stack.ts` maps their frames to editor source.
+const TRACED_WRITES: ReadonlySet<string> = new Set([
+  'addRange',
+  'removeAllRanges',
+  'setBaseAndExtent',
+])
+const STACK_FRAMES = 15
 
 const SELECTION_WRITES = [
   'addRange',
@@ -168,8 +178,9 @@ export function splitTiming(): {
       configurable: true,
       writable: true,
       value: function (this: Selection, ...args: unknown[]) {
+        const stack = TRACED_WRITES.has(method) ? callerFrames() : undefined
         const result = original.apply(this, args)
-        push('select', {data: method})
+        push('select', {data: method, ...(stack ? {stack} : {})})
         return result
       },
     })
@@ -244,6 +255,19 @@ function inputFields(event: Event): Partial<Entry> {
   return event instanceof InputEvent
     ? {inputType: event.inputType, data: event.data}
     : {}
+}
+
+// V8 keeps 10 frames by default, fewer than this function's and the wrapper's frames and `STACK_FRAMES`.
+// Those two come first after the message line, so the frames kept start at the wrapper's caller.
+function callerFrames(): string[] {
+  const limit = Error.stackTraceLimit
+  Error.stackTraceLimit = STACK_FRAMES + 2
+  const stack = new Error().stack
+  Error.stackTraceLimit = limit
+  return (stack ?? '')
+    .split('\n')
+    .slice(3, 3 + STACK_FRAMES)
+    .map((frame) => frame.trim())
 }
 
 function round(milliseconds: number): number {

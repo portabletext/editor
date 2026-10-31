@@ -9,6 +9,9 @@ export default defineConfig(({mode}) => ({
   build: {
     outDir: '../dist',
     emptyOutDir: mode !== 'split',
+    // Spike: a `.map` next to each bundle, so `scripts/map-stack.ts` can map the frames `timing=1` pages
+    // log to editor source. `run-on-device.sh` copies them into the artifact.
+    sourcemap: true,
     rolldownOptions: {
       input: (mode === 'split'
         ? {split: 'page/split.html'}

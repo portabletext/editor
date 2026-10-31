@@ -353,10 +353,34 @@ export async function typeInChrome(
     await raiseKeyboard(device, name, lang, url, result)
     state = await typeWords(device, name, result, layout, words, progress)
   } catch (error) {
-    if (!(error instanceof PageRecordedErrors)) throw error
+    if (!(error instanceof PageRecordedErrors)) {
+      if (timingPage(page)) await saveStateAfterFault(name, result, error)
+      throw error
+    }
     state = error.state
   }
   return outcome(state, undefined)
+}
+
+// Spike: a `timing=1` page's log is the result even when the driver faults, so the fault writes it out.
+function timingPage(page: string): boolean {
+  return new URLSearchParams(page.split('?')[1] ?? '').get('timing') === '1'
+}
+
+/**
+ * Spike: write the page's state after `fault` into the attempt's JSON, as `faultState`, before the fault
+ * goes on to the driver. It reads the page straight over CDP, so no page error it shows reaches the
+ * attempt's error record, and a failed read is only logged: the outcome is the fault's either way.
+ */
+async function saveStateAfterFault(name: string, result: Record<string, unknown>, fault: unknown): Promise<void> {
+  try {
+    result.faultState = await cdpEval('window.__state()')
+    result.fault = errorRepr(fault)
+    writeFileSync(`${OUT}/${name}.json`, JSON.stringify(result, null, 2))
+    phase(`saved the timing page's state after the fault: ${errorRepr(fault)}`)
+  } catch (error) {
+    phase(`could not save the timing page's state after the fault: ${errorRepr(error)}`)
+  }
 }
 
 function classified(pageErrors: PageErrorRecord, error: FaultWithPageErrors): FaultWithPageErrors {

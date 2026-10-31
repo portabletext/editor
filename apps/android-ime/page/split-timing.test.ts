@@ -41,3 +41,35 @@ test('labels each entry with the task it ran in after the `input`', async () => 
     {kind: 'ranges', input: 1, phase: 'afterTimeout', texts: ['later']},
   ])
 })
+
+test('carries the caller frames on `addRange`, `removeAllRanges` and `setBaseAndExtent` only', () => {
+  const timing = splitTiming()
+  const field = document.createElement('div')
+  field.textContent = 'foo'
+  document.body.append(field)
+  const selection = document.getSelection()!
+  const range = document.createRange()
+  range.setStart(field.firstChild!, 1)
+
+  function writeSelection() {
+    selection.removeAllRanges()
+    selection.addRange(range)
+    selection.setBaseAndExtent(field.firstChild!, 2, field.firstChild!, 2)
+    selection.collapse(field.firstChild!, 3)
+  }
+  writeSelection()
+
+  expect(
+    timing.entries
+      .filter(({kind}) => kind === 'select')
+      .map(({data, stack}) => ({
+        data,
+        caller: stack?.[0]?.startsWith('at writeSelection ') ?? null,
+      })),
+  ).toEqual([
+    {data: 'removeAllRanges', caller: true},
+    {data: 'addRange', caller: true},
+    {data: 'setBaseAndExtent', caller: true},
+    {data: 'collapse', caller: null},
+  ])
+})

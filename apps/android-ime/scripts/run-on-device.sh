@@ -143,6 +143,11 @@ echo "BOOTED at $booted" | tee -a "$out/timing.txt"
 # device work.
 suite_seconds=$(timeout -k 5 20 node scripts/suite-seconds.ts "$file") || fail "count tests in $file"
 log "suite cap ${suite_seconds}s for $file"
+# Spike: the page's and the editor's source maps, so `scripts/map-stack.ts` can map the stacks a `timing=1`
+# page logs from the artifact alone.
+mkdir -p "$out/sourcemaps/page" "$out/sourcemaps/editor-lib"
+cp dist/assets/*.map "$out/sourcemaps/page/"
+(cd ../../packages/editor/lib && find . -name '*.js.map' -exec cp --parents {} "$OLDPWD/$out/sourcemaps/editor-lib/" \;)
 log "http server"
 node scripts/serve.ts dist 8765 < /dev/null > "$out/http.log" 2>&1 &
 server=$!
