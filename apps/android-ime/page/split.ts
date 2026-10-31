@@ -8,7 +8,14 @@ declare global {
   }
 }
 
-type Mode = 'replace' | 'keep' | 'style' | 'none' | 'bounce' | 'replace-bounce'
+type Mode =
+  | 'replace'
+  | 'keep'
+  | 'style'
+  | 'none'
+  | 'bounce'
+  | 'replace-bounce'
+  | 'defer'
 
 type Caret = {
   /** The anchor node's `nodeName`, `#text` for a text node. */
@@ -34,6 +41,10 @@ const errors: string[] = []
 let composing = false
 // Whether the caret's text node ended with `word` at the last `input`, so a write runs once per completion.
 let wasComplete = false
+// `mode=defer`: the `input` of the completion it holds back while a composition is open, and when the latest
+// `compositionend` came, from `performance.now()`.
+let deferred: InputEvent | null = null
+let compositionEndAt: number | null = null
 
 // The span `mode=style` restyles. Its text node is the one typing goes into from the start.
 const styled = document.createElement('span')
@@ -78,7 +89,10 @@ for (const type of [
     type,
     (event) => {
       if (type === 'compositionstart') composing = true
-      if (type === 'compositionend') composing = false
+      if (type === 'compositionend') {
+        composing = false
+        compositionEndAt = performance.now()
+      }
       record({
         type,
         inputType: event instanceof InputEvent ? event.inputType : undefined,
@@ -102,6 +116,18 @@ field.addEventListener('input', (event) => {
     recordError(error)
   }
 })
+
+// `mode=defer` applies a split it held back once the composition has ended, in the `compositionend` event
+// itself, or at the next `input` when the committed text is not in the caret's node yet.
+if (mode === 'defer') {
+  field.addEventListener('compositionend', (event) => {
+    try {
+      flushDeferred('compositionend', (event as CompositionEvent).data)
+    } catch (error) {
+      recordError(error)
+    }
+  })
+}
 
 window.__state = () => ({
   text: field.textContent,
@@ -137,6 +163,18 @@ function write(event: InputEvent) {
     if (completed) bounce(event, node)
     return
   }
+  if (mode === 'defer') {
+    if (deferred && !composing) {
+      flushDeferred('input', event.data ?? '')
+      return
+    }
+    if (!completed) return
+    if (composing) {
+      deferred = event
+      record({type: 'defer', mode, ...trigger(event), before: caret()})
+      return
+    }
+  }
   if (!complete) return
   // The word already sits alone in a span of an earlier write, so there is nothing to split off.
   if (node.data === word && node.parentElement?.dataset.split !== undefined)
@@ -161,18 +199,8 @@ function write(event: InputEvent) {
       span,
     )
     op = head === '' ? 'replaceWith(span)' : 'replaceWith(text, span)'
-  } else if (start === 0) {
-    // `splitText(0)` would leave the caret's node empty and move its text to a new one, so the word's
-    // own node goes into the span.
-    wordNode = node
-    node.before(span)
-    span.append(node)
-    op = 'wrap'
   } else {
-    wordNode = node.splitText(start)
-    wordNode.before(span)
-    span.append(wordNode)
-    op = `splitText(${start}), wrap tail`
+    ;({wordNode, op} = keep(node, start, span))
   }
   if (mode === 'replace-bounce') {
     record({type: 'write', mode, ...trigger(event), op, before, after: caret()})
@@ -192,6 +220,82 @@ function write(event: InputEvent) {
     ...trigger(event),
     op,
     restored: mode === 'replace' || moved,
+    ...(mode === 'defer'
+      ? {deferred: false, applied: 'input', msAfterCompositionend: null}
+      : {}),
+    before,
+    after: {...caret(), sameNode: selection.anchorNode === node},
+  })
+}
+
+// The split `mode=keep` and `mode=defer` make: the caret's node keeps the text before `start`, and the rest
+// goes into `span`.
+function keep(node: Text, start: number, span: HTMLElement) {
+  if (start === 0) {
+    // `splitText(0)` would leave the caret's node empty and move its text to a new one, so the word's
+    // own node goes into the span.
+    node.before(span)
+    span.append(node)
+    return {wordNode: node, op: 'wrap'}
+  }
+  const wordNode = node.splitText(start)
+  wordNode.before(span)
+  span.append(wordNode)
+  return {wordNode, op: `splitText(${start}), wrap tail`}
+}
+
+// `mode=defer`, once no composition is open: the `keep` split of the held-back completion. The split takes
+// `word` when the caret's node still ends with it, else the text the composition committed (`今日` for the
+// composing `きょう`). `applied` names the event it runs in, and `msAfterCompositionend` how long after the
+// latest `compositionend`.
+function flushDeferred(applied: 'compositionend' | 'input', committed: string) {
+  const event = deferred
+  if (!event) return
+  const selection = getSelection()
+  const node = selection?.anchorNode
+  if (!selection || !(node instanceof Text) || !field.contains(node)) return
+  const target = node.data.endsWith(word)
+    ? word
+    : committed !== '' && node.data.endsWith(committed)
+      ? committed
+      : null
+  const timing = {
+    applied,
+    msAfterCompositionend:
+      compositionEndAt === null ? null : performance.now() - compositionEndAt,
+  }
+  if (target === null) {
+    record({
+      type: 'defer-miss',
+      mode,
+      ...trigger(event),
+      committed,
+      ...timing,
+      before: caret(),
+    })
+    return
+  }
+  deferred = null
+  wasComplete = node.data.endsWith(word)
+  const before = caret()
+  const span = document.createElement('span')
+  span.dataset.split = ''
+  span.style.background = 'yellow'
+  const {wordNode, op} = keep(node, node.data.length - target.length, span)
+  const moved =
+    selection.anchorNode !== wordNode ||
+    selection.anchorOffset !== target.length ||
+    !selection.isCollapsed
+  if (moved) selection.collapse(wordNode, target.length)
+  record({
+    type: 'write',
+    mode,
+    ...trigger(event),
+    split: target,
+    op,
+    restored: moved,
+    deferred: true,
+    ...timing,
     before,
     after: {...caret(), sameNode: selection.anchorNode === node},
   })

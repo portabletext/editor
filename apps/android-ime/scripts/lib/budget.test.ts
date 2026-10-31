@@ -133,10 +133,10 @@ describe('the workflow', () => {
   )
   const jobMinutes = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(workflow)?.[1])
 
-  // The spike runs only the split timing's and the selection bounce controls' files.
-  test('runs every split timing and bounce control file once, on a device prepared for the language its name starts with', () => {
+  // The spike runs only the restore boundary's files, with and without timing, and the keep and defer controls' files.
+  test('runs every split boundary, timing, keep and defer control file once, on a device prepared for the language its name starts with', () => {
     expect(rows.map((row) => row.file).sort()).toEqual(
-      deviceFiles.filter((file) => file.includes('.split-timing') || file.includes('.split-control-bounce')),
+      deviceFiles.filter((file) => /\.split-(boundary|timing|control-keep|control-defer)\./.test(file)),
     )
     expect(rows.filter((row) => !row.file.startsWith(`tests/${row.lang}.`))).toEqual([])
   })
