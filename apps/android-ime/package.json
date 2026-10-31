@@ -17,8 +17,10 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@types/jsdom": "catalog:tooling",
     "@types/node": "catalog:tooling",
     "@vitejs/plugin-react": "catalog:tooling",
+    "jsdom": "catalog:tooling",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling"

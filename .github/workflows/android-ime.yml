@@ -49,6 +49,9 @@ jobs:
         suite:
           - {lang: ja, file: tests/ja.test.ts}
           - {lang: en, file: tests/en.test.ts}
+          - {lang: ja, file: tests/ja.crashes.test.ts}
+          - {lang: ja, file: tests/ja.enter.test.ts}
+          - {lang: en, file: tests/en.enter.test.ts}
         api: [36]
 
     steps:
