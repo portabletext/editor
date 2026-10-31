@@ -97,8 +97,10 @@ export function captureFault(capture: Capture, bootId: string, now: number): str
     return "the capture holds no logd statistics for its first dump of the main buffer, so nothing shows that dump held every line from boot"
   // logd counts the lines a buffer took and the lines it holds, so equal counts after the dump mean it
   // had dropped none, and the dump began at the buffer's first line.
-  if (stats.now !== stats.total)
-    return `the main buffer had dropped ${stats.total - stats.now} of its ${stats.total} lines by the capture's first dump, so the capture may lack lines from boot on`
+  if (stats.now !== stats.total) {
+    const oldest = earliest(capture.segments[first]!) - capture.header!.btime
+    return `the main buffer had dropped ${stats.total - stats.now} of its ${stats.total} lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from ${oldest.toFixed(1)}s after boot, so a load before then would not show`
+  }
   const segments = capture.segments.slice(first).filter((segment) => segment.length > 0)
   const read = new Set(segments[0]!.map((line) => line.text))
   for (const segment of segments.slice(1)) {
@@ -116,6 +118,10 @@ export function captureFault(capture: Capture, bootId: string, now: number): str
 // A capture holds a hundred thousand lines and more, too many to spread into `Math.max`.
 function latest(lines: CaptureLine[]): number {
   return lines.reduce((last, line) => Math.max(last, line.time), -Infinity)
+}
+
+function earliest(lines: CaptureLine[]): number {
+  return lines.reduce((first, line) => Math.min(first, line.time), Infinity)
 }
 
 function headerFault(capture: Capture, bootId: string): string | undefined {

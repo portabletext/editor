@@ -103,11 +103,13 @@ describe(waitOutcome.name, () => {
   })
 
   test('reports a capture fault, never a missing load, when the main buffer had dropped lines from boot by the first dump', () => {
-    const text = withoutLoad(capture).replace('CAPTURE_STATS main total=2/2 now=2/2', 'CAPTURE_STATS main total=2/9 now=2/2')
+    const text = withoutLoad(capture)
+      .replace('CAPTURE_STATS main total=2/2 now=2/2', 'CAPTURE_STATS main total=2/9 now=2/2')
+      .replaceAll('1793453504.000', '1793453534.912')
 
     expect(waitOutcome(parseCapture(text), {bootId: BOOT_ID, now: 1793453700, deadlinePassed: true})).toEqual({
       kind: 'capture-fault',
-      reason: 'the main buffer had dropped 7 of its 9 lines by the capture\'s first dump, so the capture may lack lines from boot on',
+      reason: 'the main buffer had dropped 7 of its 9 lines by the capture\'s first dump, so the capture may lack lines from boot on, its oldest kept line is from 31.9s after boot, so a load before then would not show',
     })
   })
 
