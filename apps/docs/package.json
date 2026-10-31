@@ -40,7 +40,7 @@
     "react-dom": "catalog:",
     "sharp": "^0.35.5",
     "starlight-links-validator": "^0.27.0",
-    "starlight-package-managers": "^0.12.0",
+    "starlight-package-managers": "^0.13.0",
     "starlight-typedoc": "^0.23.0",
     "tailwind-merge": "catalog:tooling",
     "tailwindcss": "catalog:tooling",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
-    "starlight-llms-txt": "^0.11.0",
+    "starlight-llms-txt": "^0.12.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }
