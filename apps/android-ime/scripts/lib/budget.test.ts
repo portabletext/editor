@@ -89,7 +89,7 @@ const BOOT_SECONDS = 360
 const RUNNER_ALLOWANCE_SECONDS = 150
 
 describe('DEVICE_TEST_FILE_SECONDS', () => {
-  test('is the timeout `run-on-device.sh` runs a file of that many tests under, and `suiteSeconds` that of a smaller file', () => {
+  test('is the timeout `run-on-device.sh` runs a file of that many tests under, and `suiteSeconds` that of a smaller file or one whose tests check a Space', () => {
     const testStage = script.match(
       /^IME_SUMMARY_FILE=\S+ timeout -k 10 (\S+) pnpm exec vitest run --project device "\$file" /m,
     )
@@ -107,9 +107,10 @@ describe('DEVICE_TEST_FILE_SECONDS', () => {
     writeFileSync(twoTests, "test('a', () => {})\ntest.fails('b', () => {})\n")
     try {
       expect(testStage?.[1]).toEqual('"$tests_seconds"')
-      expect({threeTests: read('tests/ja.test.ts'), twoTests: read(twoTests)}).toEqual({
+      expect({threeTests: read('tests/ja.test.ts'), twoTests: read(twoTests), spaceTests: read('tests/en.crashes.test.ts')}).toEqual({
         threeTests: DEVICE_TEST_FILE_SECONDS,
         twoTests: suiteSeconds(2),
+        spaceTests: suiteSeconds(2, 2),
       })
     } finally {
       rmSync(directory, {recursive: true, force: true})
@@ -244,7 +245,11 @@ describe('the Space check after the final read of an English crash case', () => 
         }),
       ),
     ).toEqual({
+      'tests/en.crashes.test.ts': {checkSpace: 2, tests: 2, timeout: 2},
+      'tests/en.enter.test.ts': {checkSpace: 0, tests: 2, timeout: 0},
       'tests/en.test.ts': {checkSpace: 0, tests: 3, timeout: 0},
+      'tests/ja.crashes.test.ts': {checkSpace: 0, tests: 2, timeout: 0},
+      'tests/ja.enter.test.ts': {checkSpace: 0, tests: 2, timeout: 0},
       'tests/ja.test.ts': {checkSpace: 0, tests: 3, timeout: 0},
     })
   })
@@ -388,6 +393,16 @@ describe('the workflow', () => {
     )
     const needed = BOOT_SECONDS + longest + RUNNER_ALLOWANCE_SECONDS
     expect(runStepMinutes).toEqual([Math.ceil(needed / 60), Math.ceil(needed / 60)])
+  })
+
+  test('fits the script on `en.crashes`, two tests each with the Space check, in the run step its row gets, under the job cap', () => {
+    const script = runOnDeviceWorstSeconds(2, 2)
+    expect({
+      script,
+      stepMinutes: Math.ceil((BOOT_SECONDS + script + RUNNER_ALLOWANCE_SECONDS) / 60),
+      runStepMinutes,
+      jobMinutes,
+    }).toEqual({script: 2683, stepMinutes: 54, runStepMinutes: [64, 64], jobMinutes: 176})
   })
 
   test('allows the job the sum of its step caps', () => {

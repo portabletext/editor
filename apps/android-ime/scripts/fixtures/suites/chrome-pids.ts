@@ -1,4 +1,5 @@
-import type {CommandError, CommandTimeoutError} from '../../lib/adb.ts'
+import type {adb, CommandError, CommandTimeoutError} from '../../lib/adb.ts'
+import {DEVICE_STATE_SECONDS} from '../../lib/budget.ts'
 import {currentSignal, whenAborted} from '../../lib/util.ts'
 
 // Chrome's process on a fake device for the restart before a retry: `pidof` reads its pid, and once a
@@ -11,7 +12,12 @@ const chrome = {
   pidofTimesOutAfter: undefined as number | undefined,
   pidofFails: undefined as {read: number; stderr: string} | undefined,
   slowPidof: undefined as {read: number; seconds: number} | undefined,
-  getState: 'device' as string | {stderr: string} | 'timeout' | 'hangs',
+  getState: 'device' as
+    | string
+    | {stderr: string}
+    | 'timeout'
+    | 'hangs'
+    | 'spawned',
   notRunning: false,
   relaunch: undefined as 'none' | 'old' | undefined,
   pidofReads: 0,
@@ -20,26 +26,27 @@ const chrome = {
 
 /**
  * What the fake device answers `adb shell pidof` and `adb shell am force-stop` for Chrome and `adb get-state`, `undefined` for
- * anything else. `errors` are the mocked module's own classes.
+ * anything else. `original` is the mocked module itself.
  */
 export function chromeAdb(
   args: string[],
-  errors: {
+  original: {
+    adb: typeof adb
     CommandError: typeof CommandError
     CommandTimeoutError: typeof CommandTimeoutError
   },
 ): string | Promise<string> | undefined {
-  const {CommandError, CommandTimeoutError} = errors
+  const {CommandError, CommandTimeoutError} = original
   const command = args.join(' ')
   if (command.startsWith('shell pidof com.android.chrome')) {
     chrome.pidofReads += 1
     if (chrome.slowPidof?.read === chrome.pidofReads) {
       const {seconds} = chrome.slowPidof
       return new Promise((resolve) => setTimeout(resolve, seconds * 1000)).then(
-        () => pidof(command, errors),
+        () => pidof(command, original),
       )
     }
-    return pidof(command, errors)
+    return pidof(command, original)
   }
   if (command === 'shell am force-stop com.android.chrome') {
     if (!chrome.survivesStop && !chrome.notRunning) chrome.pid += 1
@@ -56,6 +63,8 @@ export function chromeAdb(
     if (chrome.getState === 'timeout')
       throw new CommandTimeoutError(`adb ${command} timed out after 5s`)
     if (chrome.getState === 'hangs') return whenAborted(currentSignal()!)
+    if (chrome.getState === 'spawned')
+      return original.adb(args, DEVICE_STATE_SECONDS)
     if (typeof chrome.getState !== 'string')
       throw new CommandError(
         `adb ${command} exited with 1: ${chrome.getState.stderr}`,
@@ -111,9 +120,9 @@ declare global {
     slowPidof?: {read: number; seconds: number}
     /**
      * What `adb get-state` prints, `device` by default, or its exit 1 with `stderr`, or its timeout, or
-     * whether it hangs until its call is stopped.
+     * whether it hangs until its call is stopped, or whether it spawns its adb process as the driver does.
      */
-    getState?: string | {stderr: string} | 'timeout' | 'hangs'
+    getState?: string | {stderr: string} | 'timeout' | 'hangs' | 'spawned'
     /** No Chrome runs until the next force-stop, which the relaunch after it follows. */
     notRunning?: true
     /** The third `pidof`, the one after the retry's relaunch, finds no Chrome or the first one's pid. */

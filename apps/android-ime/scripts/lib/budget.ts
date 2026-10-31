@@ -19,7 +19,7 @@ export const FAILURE_DUMP_SECONDS = 30
 export const SERVER_CLOSE_SECONDS = 10
 
 /** How long an adb process gets to exit after SIGTERM, and again after SIGKILL. */
-export const KILL_GRACE_SECONDS = 2
+export const KILL_GRACE_SECONDS: number = 2
 
 /** Each adb call that stops Chrome or clears its tabs. */
 export const CHROME_ADB_SECONDS = 15
@@ -44,7 +44,7 @@ export const RESTART_SECONDS = CHROME_PID_SECONDS + CHROME_ADB_SECONDS + CHROME_
  * and names the device's state in the call's result. After a failed prep, `run-on-device.sh` reads it once
  * too, under this cap and `KILL_GRACE_SECONDS`.
  */
-export const DEVICE_STATE_SECONDS = 5
+export const DEVICE_STATE_SECONDS: number = 5
 
 /**
  * The driver's read of `adb get-state`, which runs once the restart or the retry that failed has stopped:
