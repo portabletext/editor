@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/portabletext/editor/main/packages/racejar/assets/logo-64.svg" alt="racejar" width="64" height="64">
+
 # `racejar`
 
 > A testing framework agnostic [Gherkin](https://cucumber.io/docs/gherkin/reference/) driver
