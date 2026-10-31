@@ -1,10 +1,10 @@
+import {typeOnDevice} from 'thumbjar'
 import {expect, test} from 'vitest'
-import {typeOnDevice} from '../scripts/driver.ts'
 
 test('Scenario: Typing kyou twice into a plain contenteditable', async () => {
   const typed = await typeOnDevice({
-    lang: 'ja',
-    page: 'plain.html',
+    keyboard: 'ja',
+    url: 'http://localhost:8765/plain.html',
     prefix: '',
     words: [
       {letters: 'kyou', candidate: '今日'},
@@ -23,8 +23,8 @@ test('Scenario: Typing kyou twice into a plain contenteditable', async () => {
 
 test('Scenario: Typing kyou twice into an empty block', async () => {
   const typed = await typeOnDevice({
-    lang: 'ja',
-    page: 'editor.html',
+    keyboard: 'ja',
+    url: 'http://localhost:8765/editor.html',
     prefix: '',
     words: [
       {letters: 'kyou', candidate: '今日'},
@@ -41,8 +41,8 @@ test('Scenario: Typing kyou twice into an empty block', async () => {
 
 test('Scenario: Typing kyou twice after existing text', async () => {
   const typed = await typeOnDevice({
-    lang: 'ja',
-    page: 'editor.html',
+    keyboard: 'ja',
+    url: 'http://localhost:8765/editor.html',
     prefix: 'x',
     words: [
       {letters: 'kyou', candidate: '今日'},

@@ -1,10 +1,14 @@
+import {fileURLToPath} from 'node:url'
+import {runSuite} from 'thumbjar/testing'
 import {describe, expect, test} from 'vitest'
-import {runSuite} from './fixtures/run-suite.ts'
+
+const root = fileURLToPath(new URL('..', import.meta.url))
 
 describe('the Japanese device tests', () => {
   test('passes every case when Gboard commits a word as kana', async () => {
     expect(
       await runSuite({
+        root,
         file: 'tests/ja.test.ts',
         setupFiles: [
           'scripts/fixtures/suites/typing-commits-kana-then-kanji.ts',
@@ -33,6 +37,7 @@ describe('the Japanese device tests', () => {
   test('fails every case when the text is right but the page recorded no composition', async () => {
     expect(
       await runSuite({
+        root,
         file: 'tests/ja.test.ts',
         setupFiles: [
           'scripts/fixtures/suites/typing-records-no-composition.ts',
