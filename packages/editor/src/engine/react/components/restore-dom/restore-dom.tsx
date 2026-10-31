@@ -1,5 +1,6 @@
 import {
   Component,
+  createContext,
   type ComponentType,
   type ContextType,
   type ReactNode,
@@ -18,6 +19,13 @@ const MUTATION_OBSERVER_CONFIG: MutationObserverInit = {
   characterData: true,
   characterDataOldValue: true,
 }
+
+type RestoreDOMObserver = {
+  flushMutations: () => void
+  discardMutations: () => void
+}
+
+const RestoreDOMObserverContext = createContext<RestoreDOMObserver | null>(null)
 
 type RestoreDOMProps = {
   children?: ReactNode
@@ -74,6 +82,45 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
     this.mutationObserver?.disconnect()
   }
 
+  private observer: RestoreDOMObserver = {
+    flushMutations: () => {
+      const pendingMutations = this.mutationObserver?.takeRecords()
+      if (pendingMutations?.length) {
+        this.manager?.registerMutations(pendingMutations)
+      }
+    },
+    discardMutations: () => {
+      this.mutationObserver?.takeRecords()
+    },
+  }
+
+  override render() {
+    return (
+      <RestoreDOMObserverContext.Provider value={this.observer}>
+        {this.props.children}
+      </RestoreDOMObserverContext.Provider>
+    )
+  }
+}
+
+// A subtree that re-renders without `RestoreDOMComponent` updating (a
+// decoration change re-renders only the affected `Text`) commits while the
+// observer is still connected. Without this boundary React's own insert of
+// the new leaf is buffered as a user mutation and the next `restoreDOM`
+// removes it.
+class RestoreDOMBoundaryComponent extends Component<{children?: ReactNode}> {
+  static override contextType = RestoreDOMObserverContext
+  override context: ContextType<typeof RestoreDOMObserverContext> = null
+
+  override getSnapshotBeforeUpdate() {
+    this.context?.flushMutations()
+    return null
+  }
+
+  override componentDidUpdate() {
+    this.context?.discardMutations()
+  }
+
   override render() {
     return this.props.children
   }
@@ -82,3 +129,6 @@ class RestoreDOMComponent extends Component<RestoreDOMProps> {
 export const RestoreDOM: ComponentType<RestoreDOMProps> = IS_ANDROID
   ? RestoreDOMComponent
   : ({children}) => <>{children}</>
+
+export const RestoreDOMBoundary: ComponentType<{children?: ReactNode}> =
+  IS_ANDROID ? RestoreDOMBoundaryComponent : ({children}) => <>{children}</>

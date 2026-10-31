@@ -12,6 +12,7 @@ import {getTextDecorations} from '../../text/get-text-decorations'
 import {useDecorations} from '../hooks/use-decorations'
 import type {RenderLeafProps, RenderTextProps} from './editable'
 import Leaf from './leaf'
+import {RestoreDOMBoundary} from './restore-dom/restore-dom'
 
 const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
 
@@ -67,11 +68,15 @@ const Text = (props: {
     'data-pt-path': dataPath,
   }
 
-  return renderText({
-    text,
-    children,
-    attributes,
-  })
+  return (
+    <RestoreDOMBoundary>
+      {renderText({
+        text,
+        children,
+        attributes,
+      })}
+    </RestoreDOMBoundary>
+  )
 }
 
 const MemoizedText = React.memo(Text, (prev, next) => {
