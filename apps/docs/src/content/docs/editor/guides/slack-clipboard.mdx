@@ -1,0 +1,137 @@
+---
+title: Paste from and copy to Slack
+description: Keep formatting when content moves between Slack and the Portable Text Editor, with two behaviors and @portabletext/slack.
+---
+
+import {PackageManagers} from 'starlight-package-managers'
+
+Slack puts no HTML on the clipboard. A copy from Slack holds `text/plain` and `slack/texty`, a JSON string holding a Quill Delta, and only `slack/texty` carries the formatting. Slack's message box also reads `slack/texty` on paste and ignores the structure of HTML. Without help, a paste from Slack arrives as plain text, and a copy into Slack loses its lists, quotes and code blocks.
+
+`@portabletext/slack` converts between `slack/texty` and Portable Text. This guide wires it into the editor with two behaviors, one for each direction. It assumes you know how the editor's [clipboard pipeline](/editor/concepts/clipboard/) works.
+
+<PackageManagers pkg="@portabletext/slack" />
+
+## Paste from Slack
+
+The editor's own `deserialize` behavior only looks for the formats it knows, so a paste from Slack would fall through to `text/plain`. A behavior on `deserialize` runs first and can read `slack/texty` from the clipboard:
+
+```tsx
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {slackToPortableText} from '@portabletext/slack'
+
+const pasteFromSlack = defineBehavior({
+  on: 'deserialize',
+  guard: ({snapshot, event}) => {
+    const dataTransfer = event.originEvent.originEvent.dataTransfer
+    const texty = dataTransfer.getData('slack/texty')
+
+    if (!texty || dataTransfer.getData('application/x-portable-text')) {
+      return false
+    }
+
+    const blocks = slackToPortableText(texty, {
+      schema: snapshot.context.schema,
+      keyGenerator: snapshot.context.keyGenerator,
+    })
+
+    return blocks.length > 0 ? {blocks} : false
+  },
+  actions: [
+    ({event}, {blocks}) => [
+      raise({
+        type: 'deserialization.success',
+        mimeType: 'slack/texty',
+        data: blocks,
+        originEvent: event.originEvent,
+      }),
+    ],
+  ],
+})
+```
+
+The `deserialize` event wraps the native paste, so the clipboard is at `event.originEvent.originEvent.dataTransfer`. Passing the editor's schema means the conversion only builds what your editor accepts. Raising `deserialization.success` hands the blocks back to the editor, which fits them to the paste destination and inserts them.
+
+The guard declines when there is no `slack/texty`, or when it holds nothing the conversion could read. The editor then goes on with its own formats as if this behavior weren't there.
+
+It also declines when the clipboard holds `application/x-portable-text`. A copy from an editor with the copy behavior below carries both formats, and the editor's own format keeps everything, while the Slack conversion drops what Slack can't show.
+
+## Copy to Slack
+
+A copy raises one `serialize.data` event per format. Claim the `text/plain` one, and write both payloads `portableTextToSlack` returns:
+
+```tsx
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+import {getFragment} from '@portabletext/editor/selectors'
+import {portableTextToSlack} from '@portabletext/slack'
+
+const copyForSlack = defineBehavior({
+  on: 'serialize.data',
+  guard: ({snapshot, event}) => {
+    if (event.mimeType !== 'text/plain') {
+      return false
+    }
+
+    const fragmentSnapshot =
+      event.originEvent.type === 'drag.dragstart'
+        ? {
+            ...snapshot,
+            context: {
+              ...snapshot.context,
+              selection: event.originEvent.position.selection,
+            },
+          }
+        : snapshot
+    const blocks = getFragment(fragmentSnapshot).map((entry) => entry.node)
+
+    if (blocks.length === 0) {
+      return false
+    }
+
+    return portableTextToSlack(blocks, {schema: snapshot.context.schema})
+  },
+  actions: [
+    ({event}, {texty, text}) => [
+      raise({
+        type: 'serialization.success',
+        mimeType: 'slack/texty',
+        data: texty,
+        originEvent: event.originEvent,
+      }),
+      raise({
+        type: 'serialization.success',
+        mimeType: 'text/plain',
+        data: text,
+        originEvent: event.originEvent,
+      }),
+    ],
+  ],
+})
+```
+
+A drag doesn't move the editor selection, so on `drag.dragstart` the guard reads the fragment from the dragged range in `event.originEvent.position.selection`, as the editor's own serializers do.
+
+There is no `serialize.data` event for `slack/texty`, since the editor only raises one for each format it writes. Claiming `text/plain` gives the behavior a place to write `slack/texty` next to it. The editor writes each `serialization.success` to the clipboard, and its other formats are written as usual.
+
+The `text` payload replaces the editor's own plain text. It writes bullets as `•`, numbered items with their number, quotes with `>` and code blocks between fences, so a paste into an app that only reads plain text still shows the structure.
+
+## Register the behaviors
+
+Register both with a `BehaviorPlugin` inside your `EditorProvider`. Keep the array stable, since the plugin re-registers its behaviors when the array changes:
+
+```tsx
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
+
+const slackBehaviors = [pasteFromSlack, copyForSlack]
+
+export function SlackClipboardPlugin() {
+  return <BehaviorPlugin behaviors={slackBehaviors} />
+}
+```
+
+## Mentions, channels and emoji
+
+By default a mention, channel link or emoji pasted from Slack becomes its display text, such as `@foo`, `#foo` or `:foo:`. To turn them into your own inline objects, pass `embeds` matchers to `slackToPortableText` in the paste behavior. To write them back on copy, pass matching `types` matchers to `portableTextToSlack` in the copy behavior. Without them, the copy removes each inline object and reports it. The package README lists what each [`embeds`](https://github.com/portabletext/editor/tree/main/packages/slack#embeds) and [`types`](https://github.com/portabletext/editor/tree/main/packages/slack#inline-objects) matcher receives.
+
+## What doesn't survive
+
+Slack can't show headings, images, tables, custom objects, annotations other than links, or formatting inside a code block. On copy, headings become bold lines, code blocks keep only their text, links with an unsafe URL keep their text without the link, and other constructs become the text they hold. On paste, anything your schema doesn't declare is dropped or flattened, keeping its text. Both functions report each loss through `onDegradation`, which the README covers for both directions.

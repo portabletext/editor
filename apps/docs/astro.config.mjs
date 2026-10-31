@@ -133,6 +133,7 @@ export default defineConfig({
                 {slug: 'editor/guides/create-behavior'},
                 {slug: 'editor/guides/behavior-cheat-sheet'},
                 {slug: 'editor/guides/testing-behaviors'},
+                {slug: 'editor/guides/slack-clipboard'},
               ],
             },
             {
