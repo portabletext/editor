@@ -32,7 +32,8 @@ vi.mock(import('node:crypto'), async (importOriginal) => ({
     update() {
       return this
     },
-    digest: () => '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d',
+    digest: () =>
+      '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d',
   })) as never,
 }))
 
@@ -55,7 +56,11 @@ vi.mock(import('./adb.ts'), async (importOriginal) => ({
         },
         closed: false,
         readUntil: async () =>
-          Buffer.from(++device.pings === 1 ? 'HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nno' : 'HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong'),
+          Buffer.from(
+            ++device.pings === 1
+              ? 'HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nno'
+              : 'HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\npong',
+          ),
       }
     },
   } as never,
@@ -71,6 +76,9 @@ describe(Device.connect.name, () => {
     device.releaseShell()
 
     await expect(connecting).rejects.toThrow('attempt timed out')
-    expect({services: device.services, closed: device.closed}).toEqual({services: [], closed: []})
+    expect({services: device.services, closed: device.closed}).toEqual({
+      services: [],
+      closed: [],
+    })
   })
 })

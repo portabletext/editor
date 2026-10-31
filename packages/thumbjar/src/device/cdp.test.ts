@@ -14,7 +14,10 @@ describe(cdpEval.name, () => {
         result: {type: 'object', subtype: 'error'},
         exceptionDetails: {
           text: 'Uncaught',
-          exception: {description: 'TypeError: Cannot read properties of undefined (reading "context")'},
+          exception: {
+            description:
+              'TypeError: Cannot read properties of undefined (reading "context")',
+          },
         },
       },
     })
@@ -37,7 +40,13 @@ describe(cdpEval.name, () => {
 function stubPage(reply: Record<string, unknown>): string[] {
   const evaluations: string[] = []
   vi.stubGlobal('fetch', async () => ({
-    json: async () => [{type: 'page', url: page, webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1'}],
+    json: async () => [
+      {
+        type: 'page',
+        url: page,
+        webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1',
+      },
+    ],
   }))
   vi.stubGlobal(
     'WebSocket',
@@ -47,9 +56,18 @@ function stubPage(reply: Record<string, unknown>): string[] {
         queueMicrotask(() => this.dispatchEvent(new Event('open')))
       }
       send(data: string) {
-        const request = JSON.parse(data) as {id: number; params: {expression: string}}
+        const request = JSON.parse(data) as {
+          id: number
+          params: {expression: string}
+        }
         evaluations.push(request.params.expression)
-        queueMicrotask(() => this.dispatchEvent(new MessageEvent('message', {data: JSON.stringify({id: request.id, ...reply})})))
+        queueMicrotask(() =>
+          this.dispatchEvent(
+            new MessageEvent('message', {
+              data: JSON.stringify({id: request.id, ...reply}),
+            }),
+          ),
+        )
       }
       close() {}
     },

@@ -35,9 +35,11 @@ describe(run.name, () => {
 
   test('a timed-out run settles only after the process has exited', async () => {
     const ready = join(directory, 'ready')
-    const running = run(process.execPath, ['-e', ignoreSigterm(ready)], 0.5).catch(
-      (error: Error) => error.message,
-    )
+    const running = run(
+      process.execPath,
+      ['-e', ignoreSigterm(ready)],
+      0.5,
+    ).catch((error: Error) => error.message)
     await fileAppears(ready)
     const pid = Number(readFileSync(ready, 'utf8'))
 
