@@ -1,7 +1,7 @@
 name: Android IME
 
 # Types on real Gboard in an Android emulator into a test page built from
-# the workspace editor, see `apps/android-ime/README.md`.
+# the workspace editor, see `packages/editor/android/README.md`.
 #
 # Each job prepares the emulator and runs the Vitest device tests for its
 # language. A job is red when the device never booted, a prep step failed
@@ -17,7 +17,9 @@ on:
       - packages/editor/src/engine/dom/plugin/dom-editor.ts
       - packages/editor/src/behaviors/behavior.abstract.input.ts
       - packages/editor/src/editor/Editable.tsx
-      - apps/android-ime/**
+      - packages/editor/android/**
+      - packages/editor/vitest.android.config.ts
+      - packages/thumbjar/**
       - .github/workflows/android-ime.yml
   schedule:
     - cron: "17 3 * * *"
@@ -35,7 +37,7 @@ jobs:
     name: Android IME (${{ matrix.lang }})
     runs-on: ubuntu-latest
     # The sum of the step caps below on the boot retry path, see the budget in
-    # `apps/android-ime/README.md`.
+    # `packages/editor/android/README.md`.
     timeout-minutes: 145
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -80,14 +82,13 @@ jobs:
       - name: Build the test page
         timeout-minutes: 10
         run: |
-          pnpm exec turbo build --filter='android-ime^...'
-          pnpm --filter android-ime build:page
+          pnpm exec turbo build --filter='@portabletext/editor...'
+          pnpm --filter @portabletext/editor build:android
           node -e "console.log('EDITOR_VERSION', require('./packages/editor/package.json').version)"
 
       - name: Fetch the uiautomator2 server jar
         timeout-minutes: 2
-        working-directory: apps/android-ime
-        run: node scripts/fetch-u2-jar.ts
+        run: pnpm --filter @portabletext/editor exec thumbjar fetch-u2-jar
 
       # The emulator steps install the same packages again, which only checks them once they are here.
       - name: Install the emulator and its system image
@@ -98,10 +99,10 @@ jobs:
 
       - name: Record start
         timeout-minutes: 1
-        working-directory: apps/android-ime
-        run: mkdir -p out && echo "EMULATOR_START at $(date +%s)" | tee out/timing.txt
+        working-directory: packages/editor
+        run: mkdir -p android/out && echo "EMULATOR_START at $(date +%s)" | tee android/out/timing.txt
 
-      # Boot, device prep and the tests, see the budget in `apps/android-ime/README.md`.
+      # Boot, device prep and the tests, see the budget in `packages/editor/android/README.md`.
       - name: Run on emulator
         id: run1
         continue-on-error: true
@@ -120,17 +121,17 @@ jobs:
           heap-size: 512M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
-          working-directory: apps/android-ime
-          script: scripts/run-on-device.sh
+          working-directory: packages/editor
+          script: android/run-on-device.sh
 
       # The emulator sometimes never comes online. Retry once, but only when it never booted.
       - name: Check boot
         id: boot
         if: steps.run1.outcome == 'failure'
         timeout-minutes: 1
-        working-directory: apps/android-ime
+        working-directory: packages/editor
         run: |
-          if grep -q BOOTED out/timing.txt; then echo booted=yes >> $GITHUB_OUTPUT; else echo booted=no >> $GITHUB_OUTPUT; echo "BOOT_RETRY"; fi
+          if grep -q BOOTED android/out/timing.txt; then echo booted=yes >> $GITHUB_OUTPUT; else echo booted=no >> $GITHUB_OUTPUT; echo "BOOT_RETRY"; fi
 
       - name: Run on emulator (boot retry)
         id: run2
@@ -151,18 +152,18 @@ jobs:
           heap-size: 512M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
-          working-directory: apps/android-ime
-          script: scripts/run-on-device.sh
+          working-directory: packages/editor
+          script: android/run-on-device.sh
 
       - name: Boot time
         if: always()
         timeout-minutes: 1
-        working-directory: apps/android-ime
+        working-directory: packages/editor
         run: |
-          s=$(grep EMULATOR_START out/timing.txt | awk '{print $3}')
-          b=$(grep BOOTED out/timing.txt | awk '{print $3}')
+          s=$(grep EMULATOR_START android/out/timing.txt | awk '{print $3}')
+          b=$(grep BOOTED android/out/timing.txt | awk '{print $3}')
           [ -n "$s" ] && [ -n "$b" ] && echo "BOOT_SECONDS $((b - s))"
-          cat out/phases.log || true
+          cat android/out/phases.log || true
 
       # The run steps continue on error so the boot retry can follow. This
       # step turns the job red when the last run failed.
@@ -179,4 +180,4 @@ jobs:
         timeout-minutes: 5
         with:
           name: android-ime-${{ matrix.lang }}-api${{ matrix.api }}-${{ github.run_attempt }}
-          path: apps/android-ime/out/
+          path: packages/editor/android/out/

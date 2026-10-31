@@ -1,0 +1,33 @@
+{
+  "name": "thumbjar",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Types on real Gboard on an Android emulator and reports what a web page ended up with",
+  "bin": {
+    "thumbjar": "./src/bin.ts"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./page": "./src/page.ts",
+    "./testing": "./src/testing.ts",
+    "./vitest": "./src/vitest/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check:types": "tsc --noEmit --pretty --project tsconfig.json && tsc --noEmit --pretty --project tsconfig.page.json",
+    "clean": "del .turbo && del .cache && del out && del node_modules",
+    "test:unit": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:tooling",
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
+  },
+  "peerDependencies": {
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

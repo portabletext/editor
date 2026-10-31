@@ -23,7 +23,11 @@
         "src/test/_exports/index.ts!",
         "src/test/vitest/_exports/index.ts!",
         "src/utils/_exports/index.ts!",
-        "package.config.ts!"
+        "package.config.ts!",
+        "vitest.android.config.ts",
+        "android/vite.config.ts",
+        "android/page/editor.tsx",
+        "android/scripts/fixtures/suites/*.ts"
       ],
       "ignoreDependencies": [
         "oxc-transform-react",
@@ -57,12 +61,18 @@
         "sharp"
       ]
     },
-    "apps/android-ime": {
+    "packages/thumbjar": {
       "entry": [
-        "scripts/*.ts",
-        "scripts/lib/*.ts",
-        "scripts/fixtures/suites/*.ts",
-        "page/editor.tsx"
+        "src/index.ts!",
+        "src/page.ts!",
+        "src/vitest/index.ts!",
+        "src/vitest/global-setup.ts!",
+        "src/vitest/setup.ts!",
+        "src/bin.ts!",
+        "src/prepare/*.ts!",
+        "src/device/*.ts",
+        "src/gboard/*.ts",
+        "src/fixtures/suites/*.ts"
       ]
     },
     "apps/studio": {
