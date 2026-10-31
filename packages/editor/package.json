@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/editor",
-  "version": "8.2.10",
+  "version": "8.2.11",
   "description": "Portable Text Editor made in React",
   "keywords": [
     "collaborative",

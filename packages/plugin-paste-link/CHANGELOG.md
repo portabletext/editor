@@ -1,5 +1,11 @@
 # @portabletext/plugin-paste-link
 
+## 5.0.24
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.11`
+
 ## 5.0.23
 
 ### Patch Changes
