@@ -71,7 +71,9 @@ export async function typeOnDevice(
   options: TypeOnDeviceOptions,
 ): Promise<Typed> {
   const currentTest = TestRunner.getCurrentTest<RunnerTestCase | undefined>()
-  if (!currentTest) throw new Error('`typeOnDevice` runs inside a test')
+  if (!currentTest) {
+    throw new Error('`typeOnDevice` runs inside a test')
+  }
   const run: DriverRun = {
     test: currentTest.name,
     fails: Boolean(currentTest.fails),
@@ -89,18 +91,23 @@ export async function typeOnDevice(
   }
   const testSignal = currentTest.context.signal
   const settle = (state: 'complete' | 'faulted' | 'page-exception') => {
-    if (run.state === 'driving')
+    if (run.state === 'driving') {
       run.state = testSignal.aborted ? 'aborted' : state
+    }
   }
-  if (testSignal.aborted) run.state = 'aborted'
-  else
+  if (testSignal.aborted) {
+    run.state = 'aborted'
+  } else {
     testSignal.addEventListener(
       'abort',
       () => {
-        if (run.state === 'driving') run.state = 'aborted'
+        if (run.state === 'driving') {
+          run.state = 'aborted'
+        }
       },
       {once: true},
     )
+  }
   // A test that times out aborts its signal, which stops every device call of this run.
   const running = runAbortable(testSignal, async () => {
     let typed: Typed
@@ -119,7 +126,9 @@ export async function typeOnDevice(
       if (error instanceof PageExceptionError) {
         settle('page-exception')
         run.pageException = error.message
-      } else settle('faulted')
+      } else {
+        settle('faulted')
+      }
       await cleanUpChrome().catch((cleanupError: unknown) =>
         phase(`cleanup failed: ${errorRepr(cleanupError)}`),
       )
@@ -164,7 +173,9 @@ export async function withDriverRetry<T>({
   try {
     return await attempt(1)
   } catch (error) {
-    if (!canRetry(error)) throw error
+    if (!canRetry(error)) {
+      throw error
+    }
     phase(`RETRY ${name}: ${errorRepr(error)}`)
     console.warn(
       `Driver fault in ${name}, restarting Chrome and typing again: ${errorRepr(error)}`,
@@ -211,7 +222,9 @@ async function timedAttempt(
       'stopping uiautomator2',
       SERVER_CLOSE_SECONDS,
       async () => {
-        for (const device of devices) await device.close().catch(() => {})
+        for (const device of devices) {
+          await device.close().catch(() => {})
+        }
       },
     ).catch((closeError: unknown) =>
       phase(`stopping uiautomator2 failed: ${errorRepr(closeError)}`),

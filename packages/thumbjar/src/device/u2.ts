@@ -57,17 +57,20 @@ export class LaunchUiAutomationError extends Error {
 
 /** Download u2.jar into .cache unless it is already there, and check its hash. */
 export async function ensureJar(): Promise<string> {
-  if (existsSync(JAR_PATH) && sha256(readFileSync(JAR_PATH)) === JAR_SHA256)
+  if (existsSync(JAR_PATH) && sha256(readFileSync(JAR_PATH)) === JAR_SHA256) {
     return JAR_PATH
+  }
   const response = await fetch(JAR_URL, {signal: AbortSignal.timeout(120_000)})
-  if (!response.ok)
+  if (!response.ok) {
     throw new Error(
       `u2.jar download failed: ${response.status} ${response.statusText}`,
     )
+  }
   const data = Buffer.from(await response.arrayBuffer())
   const hash = sha256(data)
-  if (hash !== JAR_SHA256)
+  if (hash !== JAR_SHA256) {
     throw new Error(`u2.jar sha256 ${hash}, expected ${JAR_SHA256}`)
+  }
   mkdirSync(dirname(JAR_PATH), {recursive: true})
   writeFileSync(JAR_PATH, data)
   return JAR_PATH
@@ -145,8 +148,12 @@ export class Device {
     await tracked('uiautomator2 start', async () => {
       await setupJar()
       throwIfAborted()
-      if (this.#server?.exited) this.#server = undefined
-      if (await checkAlive()) return
+      if (this.#server?.exited) {
+        this.#server = undefined
+      }
+      if (await checkAlive()) {
+        return
+      }
       throwIfAborted()
       const connection = await AdbConnection.service(
         `shell:CLASSPATH=${DEVICE_JAR} app_process / com.wetest.uia2.Main -p ${SERVER_PORT}`,
@@ -157,15 +164,19 @@ export class Device {
       throwIfAborted()
       const deadline = Date.now() + 30_000
       while (Date.now() < deadline) {
-        if (server.output.includes('already registered'))
+        if (server.output.includes('already registered')) {
           throw new LaunchUiAutomationError(
             `accessibility service already registered: ${server.output}`,
           )
-        if (server.exited)
+        }
+        if (server.exited) {
           throw new LaunchUiAutomationError(
             `server quit unexpectedly: ${server.output}`,
           )
-        if (await checkAlive()) return
+        }
+        if (await checkAlive()) {
+          return
+        }
         await sleep(0.5)
       }
       throw new LaunchUiAutomationError(`server not ready: ${server.output}`)
@@ -174,7 +185,9 @@ export class Device {
 
   /** Stop the server this Device launched. A server it found running is left alone. */
   async close(): Promise<void> {
-    if (this.#server) await this.stopServer()
+    if (this.#server) {
+      await this.stopServer()
+    }
   }
 
   async stopServer(): Promise<void> {
@@ -182,7 +195,9 @@ export class Device {
     this.#server = undefined
     const deadline = Date.now() + 10_000
     while (Date.now() < deadline) {
-      if (!(await checkAlive())) return
+      if (!(await checkAlive())) {
+        return
+      }
       await sleep(0.5)
     }
   }
@@ -205,8 +220,9 @@ export class Device {
             error instanceof HTTPError ||
             error instanceof UiAutomationNotConnectedError
           )
-        )
+        ) {
           throw error
+        }
         throwIfAborted()
         await this.stopServer()
         await this.startServer()
@@ -227,9 +243,12 @@ export class Device {
       const content = String(
         (await this.rpc('dumpWindowHierarchy', [false, 50])) ?? '',
       )
-      if (content !== '' && !content.includes('<hierarchy rotation="0" />'))
+      if (content !== '' && !content.includes('<hierarchy rotation="0" />')) {
         return content
-      if (attempt < 2) await sleep(1)
+      }
+      if (attempt < 2) {
+        await sleep(1)
+      }
     }
     return `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\r\n<hierarchy rotation="0" />`
   }
@@ -239,8 +258,9 @@ export class Device {
    * nothing about whether the app under it handled the tap. A rejected injection throws.
    */
   async click(x: number, y: number): Promise<void> {
-    if ((await this.rpc('click', [x, y])) === false)
+    if ((await this.rpc('click', [x, y])) === false) {
       throw new TapNotInjectedError(`tap at ${x},${y} was not injected`)
+    }
   }
 
   /** Swipe over `duration` seconds. uiautomator moves one step about every 5ms. */
@@ -287,7 +307,9 @@ export class Device {
     const match =
       /Override size: (\d+)x(\d+)/.exec(output) ??
       /Physical size: (\d+)x(\d+)/.exec(output)
-    if (!match) throw new AdbError(`wm size output unexpected: ${output}`)
+    if (!match) {
+      throw new AdbError(`wm size output unexpected: ${output}`)
+    }
     const width = Number(match[1])
     const height = Number(match[2])
     let rotation: number | undefined
@@ -298,7 +320,9 @@ export class Device {
         break
       }
     }
-    if (rotation === undefined) throw new AdbError('rotation get failed')
+    if (rotation === undefined) {
+      throw new AdbError('rotation get failed')
+    }
     return rotation % 2 === 1 ? [height, width] : [width, height]
   }
 
@@ -308,7 +332,9 @@ export class Device {
       try {
         return await this.#appCurrentOnce()
       } catch (error) {
-        if (!(error instanceof AdbError) || attempt >= 3) throw error
+        if (!(error instanceof AdbError) || attempt >= 3) {
+          throw error
+        }
         await sleep(0.5 + Math.random() * 0.1)
       }
     }
@@ -318,7 +344,9 @@ export class Device {
     const focused = /mCurrentFocus=Window\{.*\s+([^\s]+)\/([^\s]+)\}/.exec(
       await deviceShell('dumpsys window windows'),
     )
-    if (focused) return {package: focused[1]!, activity: focused[2]!, pid: 0}
+    if (focused) {
+      return {package: focused[1]!, activity: focused[2]!, pid: 0}
+    }
     const resumed =
       /mResumedActivity: ActivityRecord\{.*?\s+([^\s]+)\/([^\s]+)\s.*?\}/.exec(
         await deviceShell('dumpsys activity activities'),
@@ -333,9 +361,13 @@ export class Device {
         activity: activity[2]!,
         pid: Number(activity[3]),
       }
-      if (last.package === resumedPackage) return last
+      if (last.package === resumedPackage) {
+        return last
+      }
     }
-    if (last) return last
+    if (last) {
+      return last
+    }
     throw new AdbError("Couldn't get focused app")
   }
 
@@ -368,16 +400,19 @@ export class UiObject {
       )
     } catch (error) {
       // A wait that fails over HTTP falls back to a plain existence check.
-      if (!(error instanceof HTTPError)) throw error
+      if (!(error instanceof HTTPError)) {
+        throw error
+      }
       return this.exists()
     }
   }
 
   async mustWait(timeout?: number): Promise<void> {
-    if (!(await this.wait(timeout)))
+    if (!(await this.wait(timeout))) {
       throw new UiObjectNotFoundError(
         `-32002 ${JSON.stringify(this.selector)} wait`,
       )
+    }
   }
 
   async info(): Promise<ObjInfo> {
@@ -388,8 +423,9 @@ export class UiObject {
     await this.mustWait(timeout)
     const info = await this.info()
     const bounds = info.visibleBounds ?? info.bounds
-    if (!bounds)
+    if (!bounds) {
       throw new RPCError(`no bounds for ${JSON.stringify(this.selector)}`)
+    }
     await this.device.click(
       bounds.left + (bounds.right - bounds.left) * 0.5,
       bounds.top + (bounds.bottom - bounds.top) * 0.5,
@@ -410,8 +446,11 @@ export class UiObject {
 
 function selector(fields: SelectorFields): Record<string, unknown> {
   let mask = 0
-  for (const key of Object.keys(fields) as Array<keyof typeof SELECTOR_FIELDS>)
+  for (const key of Object.keys(fields) as Array<
+    keyof typeof SELECTOR_FIELDS
+  >) {
     mask |= SELECTOR_FIELDS[key]
+  }
   return {mask, childOrSibling: [], childOrSiblingSelector: [], ...fields}
 }
 
@@ -425,33 +464,40 @@ function asciiJson(value: unknown): string {
   return JSON.stringify(value).replace(
     /[\u0080-￿]/g,
     (character) =>
-      '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0'),
+      `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
   )
 }
 
 /** Index of the end of a complete HTTP response in `data`, or -1 while it is incomplete. */
 function responseEnd(data: Buffer): number {
   const headerEnd = data.indexOf('\r\n\r\n')
-  if (headerEnd < 0) return -1
+  if (headerEnd < 0) {
+    return -1
+  }
   const head = data.subarray(0, headerEnd).toString('latin1')
   const bodyStart = headerEnd + 4
   const length = /^content-length:\s*(\d+)/im.exec(head)
-  if (length)
+  if (length) {
     return data.length >= bodyStart + Number(length[1])
       ? bodyStart + Number(length[1])
       : -1
+  }
   if (/^transfer-encoding:\s*chunked/im.test(head)) {
     let at = bodyStart
     for (;;) {
       const lineEnd = data.indexOf('\r\n', at)
-      if (lineEnd < 0) return -1
+      if (lineEnd < 0) {
+        return -1
+      }
       const size = parseInt(data.subarray(at, lineEnd).toString('latin1'), 16)
       if (size === 0) {
         const end = data.indexOf('\r\n', lineEnd + 2)
         return end < 0 ? -1 : end + 2
       }
       at = lineEnd + 2 + size + 2
-      if (at > data.length) return -1
+      if (at > data.length) {
+        return -1
+      }
     }
   }
   return -1
@@ -465,10 +511,11 @@ function parseResponse(raw: Buffer): {
   const headerEnd = raw.indexOf('\r\n\r\n')
   const head = raw.subarray(0, headerEnd).toString('latin1')
   const statusLine = /^HTTP\/\d\.\d (\d+) ?(.*)/.exec(head)
-  if (!statusLine)
+  if (!statusLine) {
     throw new HTTPError(
       `malformed HTTP response: ${JSON.stringify(head.slice(0, 80))}`,
     )
+  }
   let body = raw.subarray(headerEnd + 4)
   if (/^transfer-encoding:\s*chunked/im.test(head)) {
     const parts: Buffer[] = []
@@ -476,14 +523,18 @@ function parseResponse(raw: Buffer): {
     for (;;) {
       const lineEnd = body.indexOf('\r\n', at)
       const size = parseInt(body.subarray(at, lineEnd).toString('latin1'), 16)
-      if (!size) break
+      if (!size) {
+        break
+      }
       parts.push(body.subarray(lineEnd + 2, lineEnd + 2 + size))
       at = lineEnd + 2 + size + 2
     }
     body = Buffer.concat(parts)
   } else {
     const length = /^content-length:\s*(\d+)/im.exec(head)
-    if (length) body = body.subarray(0, Number(length[1]))
+    if (length) {
+      body = body.subarray(0, Number(length[1]))
+    }
   }
   return {status: Number(statusLine[1]), reason: statusLine[2] ?? '', body}
 }
@@ -499,11 +550,12 @@ async function httpRequest(
   try {
     connection = await AdbConnection.service(`tcp:${SERVER_PORT}`, timeout)
   } catch (error) {
-    if (error instanceof AdbError)
+    if (error instanceof AdbError) {
       throw new HTTPError(
         `Unable to connect to uiautomator2 server: ${error.message}`,
         {cause: error},
       )
+    }
     throw error
   }
   try {
@@ -515,28 +567,36 @@ async function httpRequest(
       'Accept-Encoding: ',
       'Content-Type: application/json',
     ]
-    if (body) headers.push(`Content-Length: ${Buffer.byteLength(body)}`)
+    if (body) {
+      headers.push(`Content-Length: ${Buffer.byteLength(body)}`)
+    }
     throwIfAborted()
-    connection.socket.write(headers.join('\r\n') + '\r\n\r\n' + body)
+    connection.socket.write(`${headers.join('\r\n')}\r\n\r\n${body}`)
     const raw = await connection.readUntil((buffer) => responseEnd(buffer) >= 0)
     let end = responseEnd(raw)
     if (end < 0) {
-      if (raw.length === 0)
+      if (raw.length === 0) {
         throw new RemoteDisconnected(
           'Remote end closed connection without response',
         )
+      }
       const headerEnd = raw.indexOf('\r\n\r\n')
       const head = raw.subarray(0, Math.max(headerEnd, 0)).toString('latin1')
       // A response without a length or chunking ends when the server closes the connection.
-      if (headerEnd < 0 || /^(content-length|transfer-encoding):/im.test(head))
+      if (
+        headerEnd < 0 ||
+        /^(content-length|transfer-encoding):/im.test(head)
+      ) {
         throw new RemoteDisconnected('connection closed mid-response')
+      }
       end = raw.length
     }
     const response = parseResponse(raw.subarray(0, end))
-    if (response.status !== 200)
+    if (response.status !== 200) {
       throw new HTTPError(
         `HTTP request failed: ${response.status} ${response.reason}`,
       )
+    }
     return response.body
   } finally {
     connection.close()
@@ -553,25 +613,31 @@ async function jsonrpcOnce(
     await httpRequest('POST', '/jsonrpc/0', payload, timeout)
   ).toString('utf8')
   const data: unknown = JSON.parse(text)
-  if (typeof data !== 'object' || data === null)
+  if (typeof data !== 'object' || data === null) {
     throw new RPCError('Unknown RPC error: not a dict')
+  }
   if ('error' in data) {
     const error = (data.error ?? {}) as {code?: unknown; message?: unknown}
     const message = String(error.message ?? '')
-    if (text.includes('UiAutomation not connected'))
+    if (text.includes('UiAutomation not connected')) {
       throw new UiAutomationNotConnectedError('UiAutomation not connected')
-    if (message.includes('android.os.DeadObjectException'))
+    }
+    if (message.includes('android.os.DeadObjectException')) {
       throw new UiAutomationNotConnectedError('android.os.DeadObjectException')
-    if (message.includes('android.os.DeadSystemRuntimeException'))
+    }
+    if (message.includes('android.os.DeadSystemRuntimeException')) {
       throw new UiAutomationNotConnectedError(
         'android.os.DeadSystemRuntimeException',
       )
-    if (message.includes('uiautomator.UiObjectNotFoundException'))
+    }
+    if (message.includes('uiautomator.UiObjectNotFoundException')) {
       throw new UiObjectNotFoundError(`${String(error.code)} ${message}`)
+    }
     throw new RPCError(`Unknown RPC error: ${String(error.code)} ${message}`)
   }
-  if (!('result' in data))
+  if (!('result' in data)) {
     throw new RPCError('Unknown RPC error: no result field')
+  }
   return data.result
 }
 
@@ -604,8 +670,9 @@ async function checkAlive(): Promise<boolean> {
       (await httpRequest('GET', '/ping', undefined, 10)).toString() === 'pong'
     )
   } catch (error) {
-    if (error instanceof HTTPError || error instanceof ConnectionLost)
+    if (error instanceof HTTPError || error instanceof ConnectionLost) {
       return false
+    }
     throw error
   }
 }
@@ -615,8 +682,11 @@ async function setupJar(): Promise<void> {
   const md5 = createHash('md5').update(readFileSync(local)).digest('hex')
   let output = await deviceShell(shellQuote(['toybox', 'md5sum', DEVICE_JAR]))
   throwIfAborted()
-  if (output.includes('toybox') && output.includes('not found'))
+  if (output.includes('toybox') && output.includes('not found')) {
     output = await deviceShell(shellQuote(['md5', DEVICE_JAR]))
+  }
   throwIfAborted()
-  if (!output.includes(md5)) await adb(['push', local, DEVICE_JAR], 120)
+  if (!output.includes(md5)) {
+    await adb(['push', local, DEVICE_JAR], 120)
+  }
 }
