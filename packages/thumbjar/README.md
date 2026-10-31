@@ -1,3 +1,5 @@
+<img src="assets/logo-64.svg" alt="thumbjar" width="64" height="64">
+
 # thumbjar
 
 Types on real Gboard in an Android emulator into a web page in Chrome, and reports what the page ended up with, for Vitest tests. Private to this monorepo: it has no build, and consumers import its TypeScript source through `workspace:*` and run it on Node 24's type stripping.
