@@ -461,7 +461,18 @@ function createInputRules<TMatch extends object>(
         return false
       }
 
-      if (lastMatch.targetOffsets.anchor.offset < event.textBefore.length) {
+      const triggerMatch = lastMatch.text.match(triggerPattern)
+      const triggerEndOffset =
+        triggerMatch !== null && triggerMatch.index === 0
+          ? lastMatch.targetOffsets.anchor.offset + triggerMatch[0].length
+          : lastMatch.targetOffsets.anchor.offset
+      const insertionCompletesTrigger =
+        triggerEndOffset > event.textBefore.length
+
+      if (
+        lastMatch.targetOffsets.anchor.offset < event.textBefore.length &&
+        !insertionCompletesTrigger
+      ) {
         // Match starts before insertion. Check if the inserted text itself
         // matches the partial pattern (e.g., inserting `:dog` after `foo:`).
         const insertedMatch = event.textInserted.match(partialPattern)
@@ -548,7 +559,15 @@ function createInputRules<TMatch extends object>(
         return false
       }
 
-      if (event.textInserted !== lastMatch.text) {
+      const insertionCompletesTriggerAtCaret =
+        lastMatch.targetOffsets.focus.offset ===
+          event.textBefore.length + event.textInserted.length &&
+        lastMatch.text.endsWith(event.textInserted)
+
+      if (
+        event.textInserted !== lastMatch.text &&
+        !insertionCompletesTriggerAtCaret
+      ) {
         return false
       }
 

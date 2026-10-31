@@ -9,12 +9,14 @@ import type {
 
 type BaseConfigWithoutDelimiter<TMatch extends object> = {
   /**
-   * Pattern that activates the picker. Must be a single character.
+   * Pattern that activates the picker. One or more characters, activating
+   * when the character that completes the trigger is typed.
    * Can include `^` for start-of-block triggers.
    *
    * @example `/:/` - activates on colon
    * @example `/@/` - activates on at-sign
    * @example `/^\//` - activates on slash at start of block
+   * @example `/\[\[/` - activates on the second of two opening brackets
    */
   trigger: RegExp
   /**
@@ -43,12 +45,14 @@ type BaseConfigWithoutDelimiter<TMatch extends object> = {
 
 type BaseConfigWithDelimiter<TMatch extends AutoCompleteMatch> = {
   /**
-   * Pattern that activates the picker. Must be a single character.
+   * Pattern that activates the picker. One or more characters, activating
+   * when the character that completes the trigger is typed.
    * Can include `^` for start-of-block triggers.
    *
    * @example `/:/` - activates on colon
    * @example `/@/` - activates on at-sign
    * @example `/^\//` - activates on slash at start of block
+   * @example `/\[\[/` - activates on the second of two opening brackets
    */
   trigger: RegExp
   /**
