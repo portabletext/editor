@@ -29,29 +29,35 @@ const server = http.createServer((request, response) => {
     if (
       path !== root &&
       !path.startsWith(root.endsWith(sep) ? root : root + sep)
-    )
+    ) {
       throw new Error('outside root')
-    if (statSync(path).isDirectory()) path = join(path, 'index.html')
+    }
+    if (statSync(path).isDirectory()) {
+      path = join(path, 'index.html')
+    }
     const size = statSync(path).size
     response.writeHead(200, {
       'content-type': TYPES[extname(path)] ?? 'application/octet-stream',
       'content-length': size,
     })
-    if (request.method === 'HEAD') response.end()
-    else createReadStream(path).pipe(response)
+    if (request.method === 'HEAD') {
+      response.end()
+    } else {
+      createReadStream(path).pipe(response)
+    }
   } catch {
     status = 404
     response.writeHead(404, {'content-type': 'text/plain'})
     response.end('not found')
   }
-  console.log(
-    `${request.socket.remoteAddress?.replace(/^::ffff:/, '')} - - [${stamp()}] "${request.method} ${request.url} HTTP/${request.httpVersion}" ${status} -`,
+  process.stdout.write(
+    `${request.socket.remoteAddress?.replace(/^::ffff:/, '')} - - [${stamp()}] "${request.method} ${request.url} HTTP/${request.httpVersion}" ${status} -\n`,
   )
 })
 
 server.listen(port, () =>
-  console.log(
-    `Serving HTTP on 0.0.0.0 port ${port} (http://0.0.0.0:${port}/) ...`,
+  process.stdout.write(
+    `Serving HTTP on 0.0.0.0 port ${port} (http://0.0.0.0:${port}/) ...\n`,
   ),
 )
 

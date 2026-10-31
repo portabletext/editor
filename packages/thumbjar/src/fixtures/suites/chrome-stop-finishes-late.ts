@@ -12,16 +12,18 @@ const chromeStop = vi.hoisted(() => {
 
 vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  typeInChrome: async () => ({
-    text: '今日',
-    picked: ['今日'],
-    compositionstart: 1,
-    nested: 0,
-    compositionstartPerWord: [1],
-  }),
+  typeInChrome: () =>
+    Promise.resolve({
+      text: '今日',
+      picked: ['今日'],
+      compositionstart: 1,
+      nested: 0,
+      compositionstartPerWord: [1],
+    }),
   closeChrome: () => chromeStop.stopped,
-  clearChromeTabs: async () => {
+  clearChromeTabs: () => {
     globalThis.chromeTabsCleared = true
+    return Promise.resolve()
   },
 }))
 

@@ -51,10 +51,11 @@ export async function targets(timeout: number): Promise<Target[]> {
     return (await response.json()) as Target[]
   } catch (error) {
     currentSignal()?.throwIfAborted()
-    if (error instanceof Error && error.name === 'TimeoutError')
+    if (error instanceof Error && error.name === 'TimeoutError') {
       throw new ReadTimeout(`no answer from the target list in ${timeout}s`, {
         cause: error,
       })
+    }
     throw error
   }
 }
@@ -80,8 +81,9 @@ export async function cdpEval(expression: string): Promise<unknown> {
         error instanceof NoTargetError ||
         error instanceof ProtocolError ||
         error instanceof PageExceptionError
-      )
+      ) {
         throw error
+      }
       last = error
       phase(`cdp dropped (${attempt + 1}): ${errorRepr(error)}, retrying`)
       await sleep(1.5)
@@ -103,8 +105,9 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
   const page = (await targets(10)).find(
     (target) => target.type === 'page' && target.url === currentUrl,
   )
-  if (!page?.webSocketDebuggerUrl)
+  if (!page?.webSocketDebuggerUrl) {
     throw new NoTargetError(`no page target for ${currentUrl}`)
+  }
   // Chrome names itself localhost in the socket URL. Keep the path and talk to the forwarded IPv4 port.
   const url = new URL(page.webSocketDebuggerUrl)
   url.host = `127.0.0.1:${CDP_PORT}`
@@ -116,13 +119,18 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
     let settled = false
     const onAbort = () => finish(signal!.reason)
     const finish = (error: Error | undefined, value?: unknown) => {
-      if (settled) return
+      if (settled) {
+        return
+      }
       settled = true
       clearTimeout(timer)
       signal?.removeEventListener('abort', onAbort)
       socket.close()
-      if (error) reject(error)
-      else resolve(value)
+      if (error) {
+        reject(error)
+      } else {
+        resolve(value)
+      }
     }
     const timer = setTimeout(
       () => finish(new WebSocketError('timed out after 10s')),
@@ -153,7 +161,9 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
         finish(new WebSocketError(`bad frame: ${errorRepr(error)}`))
         return
       }
-      if (message.id !== 1) return
+      if (message.id !== 1) {
+        return
+      }
       const exception = message.result?.exceptionDetails
       if (exception) {
         const description = exception.exception?.description ?? 'no description'
@@ -162,9 +172,11 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
             `${exception.text ?? 'Uncaught'} in \`${expression.slice(0, 60)}\`: ${description}`,
           ),
         )
-      } else if (!message.result?.result)
+      } else if (!message.result?.result) {
         finish(new ProtocolError(JSON.stringify(message.error ?? message)))
-      else finish(undefined, message.result.result.value)
+      } else {
+        finish(undefined, message.result.result.value)
+      }
     })
     socket.addEventListener('error', () =>
       finish(new WebSocketError('connection error')),
