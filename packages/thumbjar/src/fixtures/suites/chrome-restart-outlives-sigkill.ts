@@ -5,8 +5,8 @@ test('Scenario: Stopping Chrome for the retry leaves an adb process that outlive
   globalThis.firstAttemptFaults = true
   vi.useFakeTimers()
   const typing = typeOnDevice({
-    lang: 'ja',
-    page: 'editor.html',
+    keyboard: 'ja',
+    url: 'http://localhost:8765/editor.html',
     prefix: '',
     words: [{letters: 'kyou', candidate: '今日'}],
   }).catch((error: Error) => error.name)

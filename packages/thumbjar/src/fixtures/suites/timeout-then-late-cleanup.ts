@@ -3,8 +3,8 @@ import {driverRuns, typeOnDevice} from '../../driver.ts'
 
 test.fails('Scenario: Typing kyou into an empty block times out while Chrome stops', async () => {
   const typed = await typeOnDevice({
-    lang: 'ja',
-    page: 'editor.html',
+    keyboard: 'ja',
+    url: 'http://localhost:8765/editor.html',
     prefix: '',
     words: [{letters: 'kyou', candidate: '今日'}],
   })

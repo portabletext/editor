@@ -1,7 +1,7 @@
 // Download the uiautomator2 server jar into .cache before the emulator boots, so no test pays for it.
 
-import {ensureJar} from './lib/u2.ts'
-import {errorRepr, sleep} from './lib/util.ts'
+import {ensureJar} from '../device/u2.ts'
+import {errorRepr, sleep} from '../device/util.ts'
 
 for (let attempt = 1; ; attempt++) {
   try {

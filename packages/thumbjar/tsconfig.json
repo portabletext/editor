@@ -20,5 +20,6 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["scripts/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "exclude": ["src/page.ts"]
 }

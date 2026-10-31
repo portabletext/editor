@@ -1,13 +1,13 @@
 // Add the Japanese QWERTY (romaji) layout to Gboard through its settings UI.
 //
-// Play images have no root, so the locale route is closed. Every step dumps the screen to out/ja-setup-*.
+// Play images have no root, so the locale route is closed. Every step dumps the screen to <outdir>/ja-setup-*.
 //
-// Usage: node scripts/setup-ja.ts <outdir>
+// Usage: node src/prepare/setup-ja.ts <outdir>, run by `thumbjar prepare --keyboard ja`
 
 import {writeFileSync} from 'node:fs'
-import {adbOutput, adbPassthrough} from './lib/adb.ts'
-import {Device, type UiObject} from './lib/u2.ts'
-import {pySorted, sleep} from './lib/util.ts'
+import {adbOutput, adbPassthrough} from '../device/adb.ts'
+import {Device, type UiObject} from '../device/u2.ts'
+import {pySorted, sleep} from '../device/util.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 const out = process.argv[2]!
@@ -159,19 +159,8 @@ async function tapText(
   device: Device,
   pattern: string,
   name: string,
-  scroll = false,
 ): Promise<void> {
   const node = device.find({textMatches: `(?i)${pattern}`})
-  if (
-    !(await node.exists()) &&
-    scroll &&
-    (await device.find({scrollable: true}).exists())
-  ) {
-    for (let scrolls = 0; scrolls < 12; scrolls++) {
-      await device.find({scrollable: true}).scrollForward(30)
-      if (await node.exists()) break
-    }
-  }
   if (!(await node.wait(15))) {
     await snap(device, `missing-${name}`)
     throw new Error(`no node matching ${JSON.stringify(pattern)} for ${name}`)

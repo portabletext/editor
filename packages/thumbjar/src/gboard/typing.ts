@@ -2,17 +2,17 @@
 // candidate, and read the page's text and events back over CDP.
 
 import {writeFileSync} from 'node:fs'
-import {adb, ProcessNotStoppedError} from './adb.ts'
-import {CHROME_ADB_SECONDS} from './budget.ts'
+import {adb, ProcessNotStoppedError, shellQuote} from '../device/adb.ts'
+import {CHROME_ADB_SECONDS} from '../device/budget.ts'
 import {
   cdpEval,
   CDP_PORT,
   PageExceptionError,
   setCurrentUrl,
   targets,
-} from './cdp.ts'
-import {packageKeys} from './hierarchy.ts'
-import type {Device} from './u2.ts'
+} from '../device/cdp.ts'
+import {localhostPort, prefixedPageUrl} from '../device/page-url.ts'
+import type {Device} from '../device/u2.ts'
 import {
   errorRepr,
   phase,
@@ -22,13 +22,11 @@ import {
   pyStr,
   sleep,
   throwIfAborted,
-} from './util.ts'
-
-export const OUT = 'out'
+} from '../device/util.ts'
+import {packageKeys} from './hierarchy.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 const CHROME = 'com.android.chrome'
-const PORT = 8765
 
 type Keys = Map<string, [number, number]>
 type PageEvent = {type: string; [key: string]: unknown}
@@ -38,6 +36,7 @@ type PageState = {
   [key: string]: unknown
 }
 
+/** One word to type on Gboard. */
 export type Word = {
   /** The keys to tap, one character each. */
   letters: string
@@ -45,15 +44,22 @@ export type Word = {
   candidate?: string
 }
 
+/** What `typeOnDevice` opens and types. */
 export type TypeOnDeviceOptions = {
-  /** `ja` switches Gboard to its Japanese QWERTY layout before typing. */
-  lang: 'ja' | 'en'
-  page: 'plain.html' | 'editor.html'
-  /** Text the block holds before typing, `''` for an empty block. */
+  /**
+   * The page to type into, served on the host. A `localhost` port is reversed to the device with
+   * `adb reverse`. The driver sets `prefix` as its `prefix` search parameter, and the page installs
+   * `window.__state` with `recordInput` from `thumbjar/page`.
+   */
+  url: string
+  /** `ja` switches Gboard to its Japanese QWERTY layout before typing, `en` leaves it on English. */
+  keyboard: 'ja' | 'en'
+  /** Text the field holds before typing, `''` for an empty field. */
   prefix: string
   words: Word[]
 }
 
+/** What the page held after typing, and how Gboard composed it. */
 export type Typed = {
   /** The text after typing, from `window.__state()`. */
   text: string | null
@@ -69,11 +75,12 @@ export type Typed = {
 /** Open the page in Chrome, type `words` on Gboard and read back what the page holds. */
 export async function typeInChrome(
   name: string,
-  {lang, page, prefix, words}: TypeOnDeviceOptions,
+  {url: pageUrl, keyboard, prefix, words}: TypeOnDeviceOptions,
   connect: () => Promise<Device>,
 ): Promise<Typed> {
-  const result: Record<string, unknown> = {page, prefix, words}
-  await adb(['reverse', `tcp:${PORT}`, `tcp:${PORT}`])
+  const result: Record<string, unknown> = {url: pageUrl, prefix, words}
+  const port = localhostPort(pageUrl)
+  if (port !== undefined) await adb(['reverse', `tcp:${port}`, `tcp:${port}`])
   await adb([
     'forward',
     `tcp:${CDP_PORT}`,
@@ -101,7 +108,7 @@ export async function typeInChrome(
     `uiautomator2 up: ${pyStr(info.productName)} ${pyRepr(await device.windowSize()).replace(/^\[(.*)\]$/, '($1)')}`,
   )
 
-  const url = `http://localhost:${PORT}/${page}?prefix=${encodeURIComponent(prefix)}`
+  const url = prefixedPageUrl(pageUrl, prefix)
   setCurrentUrl(url)
   await openInChrome(url)
   phase('chrome launched')
@@ -153,7 +160,7 @@ export async function typeInChrome(
 
   await dismissAnr(device)
   phase(`before field lookup: ${pyRepr(await device.appCurrent())}`)
-  await device.screenshot(`${OUT}/${name}-loaded`)
+  await device.screenshot(`${outDir()}/${name}-loaded`)
   if ((await device.appCurrent()).package !== CHROME) {
     await openInChrome(url)
     await waitForChrome(device)
@@ -221,16 +228,19 @@ export async function typeInChrome(
     `gboard in a11y tree: ${pyRepr(await device.find({packageName: GBOARD}).exists())}, chrome in a11y tree: ${pyRepr(await device.find({packageName: CHROME}).exists())}`,
   )
   if (!shown) {
-    writeFileSync(`${OUT}/${name}-ims.txt`, inputMethodDump)
+    writeFileSync(`${outDir()}/${name}-ims.txt`, inputMethodDump)
     throw new Error('Gboard window did not appear')
   }
   phase('keyboard visible')
   // The input method window shows before Gboard has drawn its keys.
   await gboardKeys(device)
 
-  writeFileSync(`${OUT}/${name}-keyboard.xml`, await device.dumpHierarchy())
-  await device.screenshot(`${OUT}/${name}-keyboard`)
-  if (lang === 'ja') await ensureJapanese(device, name)
+  writeFileSync(
+    `${outDir()}/${name}-keyboard.xml`,
+    await device.dumpHierarchy(),
+  )
+  await device.screenshot(`${outDir()}/${name}-keyboard`)
+  if (keyboard === 'ja') await ensureJapanese(device, name)
   const labels = pySorted((await gboardKeys(device)).keys())
   result.gboard_labels = labels
   phase(
@@ -258,7 +268,7 @@ export async function typeInChrome(
     compositionstartPerWord: compositionstartPerWord(state.events, wordEnds),
   }
   result.typed = typed
-  writeFileSync(`${OUT}/${name}.json`, JSON.stringify(result, null, 2))
+  writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
   phase(`typed ${pyRepr(state.text)} picked=${picked.join('/')}`)
   // The one place the driver reads the page's text to classify a fault. A digit neither the prefix nor
   // the letters hold can only come from a tap that landed as a long press on a key's number hint. An
@@ -291,14 +301,15 @@ export async function dumpFailure(
     return
   }
   try {
-    writeFileSync(`${OUT}/${name}-fail.xml`, await device.dumpHierarchy())
-    await device.screenshot(`${OUT}/${name}-fail`)
+    writeFileSync(`${outDir()}/${name}-fail.xml`, await device.dumpHierarchy())
+    await device.screenshot(`${outDir()}/${name}-fail`)
   } catch (error) {
     throwIfAborted()
     console.log(`dump failed: ${errorRepr(error)}`)
   }
 }
 
+/** Force-stop Chrome. It throws when the attempt is cancelled or an adb process outlived SIGKILL, and logs any other failure. */
 export async function closeChrome(): Promise<void> {
   await adb(['shell', 'am', 'force-stop', CHROME], CHROME_ADB_SECONDS).catch(
     (error: unknown) => {
@@ -361,6 +372,7 @@ export function unexpectedDigit(
 
 const JA_HINTS = ['あ', 'かな', '変換', '空白', '確定', 'ABC', '記号']
 
+/** Whether a Gboard dump's labels hold one of the Japanese layout's keys. */
 export function isJapanese(keys: Iterable<string>): boolean {
   for (const key of keys)
     if (JA_HINTS.some((hint) => key.includes(hint))) return true
@@ -391,16 +403,26 @@ export function keyboardState(keys: Keys): KeyboardState {
   return isJapanese(keys.keys()) ? 'japanese-qwerty' : 'other'
 }
 
-async function openInChrome(url: string): Promise<void> {
+/**
+ * Where artifacts go: `THUMBJAR_OUT_DIR`, which `deviceProject` sets from its `outDir`, or `out` in the
+ * working directory.
+ */
+export function outDir(): string {
+  return process.env.THUMBJAR_OUT_DIR ?? 'out'
+}
+
+export async function openInChrome(url: string): Promise<void> {
   await adb([
     'shell',
-    'am',
-    'start',
-    '-a',
-    'android.intent.action.VIEW',
-    '-d',
-    url,
-    CHROME,
+    shellQuote([
+      'am',
+      'start',
+      '-a',
+      'android.intent.action.VIEW',
+      '-d',
+      url,
+      CHROME,
+    ]),
   ])
 }
 
@@ -537,7 +559,7 @@ async function ensureJapanese(device: Device, name: string): Promise<void> {
       return
     }
     writeFileSync(
-      `${OUT}/${name}-lang-${attempt}.xml`,
+      `${outDir()}/${name}-lang-${attempt}.xml`,
       await device.dumpHierarchy(),
     )
     // Gboard v15 shows a "Japanese is now installed" banner over the keyboard. Its text mentions the
@@ -586,7 +608,7 @@ async function typeWord(
 ): Promise<string> {
   for (const key of word.letters) await tapKey(device, key)
   phase(`typed ${word.letters} (${position})`)
-  await device.screenshot(`${OUT}/${name}-composing${position}`)
+  await device.screenshot(`${outDir()}/${name}-composing${position}`)
   result[`composing${position}`] = await cdpEval('window.__state()')
   let keys = await gboardKeys(device)
   if (word.candidate !== undefined) {
@@ -616,7 +638,7 @@ async function typeWord(
   // Gboard commits the word and resets its suggestion strip asynchronously, and neither the page nor the
   // accessibility tree signals when it is ready for the next word.
   await sleep(1.5)
-  await device.screenshot(`${OUT}/${name}-after${position}`)
+  await device.screenshot(`${outDir()}/${name}-after${position}`)
   return picked
 }
 
