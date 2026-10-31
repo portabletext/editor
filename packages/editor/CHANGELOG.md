@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.2.11
+
+### Patch Changes
+
+- [#3531](https://github.com/portabletext/editor/pull/3531) [`944de88`](https://github.com/portabletext/editor/commit/944de886b75a0f1371a2652306fc8a3093ead746) Thanks [@christianhg](https://github.com/christianhg)! - fix: raise `select` on line moves and on word moves at the document edge
+  
+  Extending the selection by line (Option+Shift+ArrowUp/ArrowDown), moving an expanded selection by line at the start or end of the document (Option+ArrowUp/ArrowDown), and moving by word at the end or start of the document (Ctrl+ArrowRight/ArrowLeft, Option+ArrowRight/ArrowLeft on Apple) now raise a `select` event when they change the selection, so Behaviors on `select` see these changes and can override or prevent them. Before, these moves bypassed `select`, and a word move could land a selection that a Behavior had just prevented.
+
 ## 8.2.10
 
 ### Patch Changes
