@@ -155,10 +155,11 @@ function Probe() {
       } catch (error) {
         recordError(error)
       }
-      const dom = document.querySelector('[contenteditable]')?.textContent
+      const editable = document.querySelector('[contenteditable]')
       return {
         ...last,
-        dom,
+        dom: editable?.textContent,
+        focused: editable !== null && document.activeElement === editable,
         events,
         errors,
         committed: committed.entries,

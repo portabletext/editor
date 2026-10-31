@@ -111,15 +111,60 @@ describe('`window.__state` once the editor fails to give its snapshot after a re
     )
   })
 
-  test('returns the last text read with the error recorded in a crash page', async () => {
+  test("returns the last text read and the editable's current text with the error recorded in a crash page", async () => {
     await loadPage(`?prefix=foo&decorate=${encodeURIComponent('きょう')}`)
     snapshot.fails = true
+    document.querySelector('[contenteditable]')!.textContent = 'bar'
 
     const state = (await cdpEval('window.__state()')) as Record<string, unknown>
 
-    expect({text: state.text, errors: state.errors}).toEqual({
+    expect({text: state.text, dom: state.dom, errors: state.errors}).toEqual({
       text: 'foo',
+      dom: 'bar',
       errors: ['Error: snapshot unavailable'],
     })
+  })
+})
+
+describe('`window.__state`', () => {
+  test('returns the same keys as before in the shipped page, without `focused`', async () => {
+    await loadPage('?prefix=foo')
+    ;(document.querySelector('[contenteditable]') as HTMLElement).focus()
+
+    const state = (await cdpEval('window.__state()')) as Record<string, unknown>
+
+    expect(Object.keys(state)).toEqual(['text', 'dom', 'events'])
+  })
+
+  test("reports in a crash page whether the editable has focus, next to the editable's text", async () => {
+    await loadPage(`?prefix=foo&decorate=${encodeURIComponent('きょう')}`)
+    const editable = document.querySelector('[contenteditable]') as HTMLElement
+
+    const before = (await cdpEval('window.__state()')) as Record<
+      string,
+      unknown
+    >
+    editable.focus()
+    const focused = (await cdpEval('window.__state()')) as Record<
+      string,
+      unknown
+    >
+    editable.blur()
+    const blurred = (await cdpEval('window.__state()')) as Record<
+      string,
+      unknown
+    >
+
+    expect(
+      [before, focused, blurred].map(({text, dom, focused}) => ({
+        text,
+        dom,
+        focused,
+      })),
+    ).toEqual([
+      {text: 'foo', dom: 'foo', focused: false},
+      {text: 'foo', dom: 'foo', focused: true},
+      {text: 'foo', dom: 'foo', focused: false},
+    ])
   })
 })

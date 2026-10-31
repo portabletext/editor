@@ -24,7 +24,12 @@ type CommittedRange = {text: string; composing: boolean}
 /** A selection point as the editor gives it. */
 type SelectionPoint = {path: unknown[]; offset: number}
 type PageState = {
+  /** The text of the editor's value, or the last one read once the editor failed to give it. */
   text: string | null
+  /** The editable's `textContent`. */
+  dom?: string | null | undefined
+  /** Whether the editable is the document's active element, from a crash page only. */
+  focused?: boolean
   events: PageEvent[]
   errors?: string[]
   blocks?: number | null
@@ -331,6 +336,7 @@ export async function typeInChrome(
   cleanup.readAfterFault = async (fault) => {
     const unread = progress.unread
     const state = await readState(result, 'afterFault', pageErrors)
+    if (crash !== undefined) logPageAfterFault(state)
     if ((state.errors ?? []).length === 0) throw fault
     phase(`the page recorded errors by the read after the fault: ${errorRepr(fault)}`)
     // The read stands in for the one the step in progress was due to take after its last tap. The page's
@@ -778,6 +784,18 @@ async function typeWords(
   if (last !== undefined && marks !== undefined) throwOnUnmetEvidence(last, 'commit', state, marks, words.length)
   if (progress.stopOnErrors) throwOnErrors(state)
   return state
+}
+
+function logPageAfterFault(state: PageState): void {
+  try {
+    phase(`page after the fault: text ${pyRepr(state.text)}, dom ${pyRepr(state.dom)}, focused ${pyRepr(state.focused)}`)
+  } catch (logError) {
+    try {
+      phase(`page log after the fault failed: ${errorRepr(logError)}`)
+    } catch {
+      // The log that failed is the one this would write to.
+    }
+  }
 }
 
 function logLengths(state: PageState): LogLengths {
