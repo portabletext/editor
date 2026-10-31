@@ -9,6 +9,7 @@ import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {pathEquals} from '../../path/path-equals'
 import {getTextDecorations} from '../../text/get-text-decorations'
+import {useCompositionHold} from '../hooks/use-composition-hold'
 import {useDecorations} from '../hooks/use-decorations'
 import type {RenderLeafProps, RenderTextProps} from './editable'
 import Leaf from './leaf'
@@ -42,7 +43,11 @@ const Text = (props: {
     text,
   } = props
 
-  const decorations = useDecorations(text, path, parentDecorations)
+  const {decorations, composingLeaf} = useCompositionHold(
+    text,
+    path,
+    useDecorations(text, path, parentDecorations),
+  )
   const decoratedLeaves = getTextDecorations(text, decorations)
   const children = []
 
@@ -52,7 +57,7 @@ const Text = (props: {
     children.push(
       <Leaf
         isLast={isLast && i === decoratedLeaves.length - 1}
-        key={`${text._key}-${i}`}
+        key={leafKey(text._key, i, position, composingLeaf)}
         leaf={leaf}
         leafPosition={position}
         text={text}
@@ -82,6 +87,26 @@ const Text = (props: {
   ) : (
     rendered
   )
+}
+
+// SPIKE ONLY: the leaf the IME composes in keeps the key it had when the
+// composition started, so a leaf added before it does not remount it.
+function leafKey(
+  textKey: string,
+  index: number,
+  position: {start: number; end: number} | undefined,
+  composingLeaf: {start: number; end: number; index: number} | null,
+): string {
+  if (!composingLeaf) {
+    return `${textKey}-${index}`
+  }
+  const start = position?.start ?? 0
+  if (start === composingLeaf.start) {
+    return `${textKey}-${composingLeaf.index}`
+  }
+  return index === composingLeaf.index
+    ? `${textKey}-${index}-beside-composing`
+    : `${textKey}-${index}`
 }
 
 const MemoizedText = React.memo(Text, (prev, next) => {

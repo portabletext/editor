@@ -46,7 +46,8 @@ jobs:
       matrix:
         # One row per device test file. A file runs on a device prepared for
         # its language. This spike runs only the restore boundary's files,
-        # with and without timing, and the keep and defer controls' files.
+        # with and without timing, the composition hold's files, and the keep
+        # and defer controls' files.
         suite:
           - {lang: ja, file: tests/ja.split-boundary.test.ts}
           - {lang: en, file: tests/en.split-boundary.test.ts}
@@ -55,6 +56,8 @@ jobs:
           - {lang: ja, file: tests/ja.split-control-defer.test.ts}
           - {lang: en, file: tests/en.split-control-defer.test.ts}
           - {lang: ja, file: tests/ja.split-control-keep.test.ts}
+          - {lang: ja, file: tests/ja.split-hold.test.ts}
+          - {lang: en, file: tests/en.split-hold.test.ts}
         api: [36]
 
     steps:
