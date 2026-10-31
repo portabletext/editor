@@ -13,3 +13,8 @@ packages/html/src/tests/**/*.html
 packages/markdown/src/example-document.out.md
 packages/markdown/src/example-document.advanced.out.md
 packages/editor/tests/__fixtures__/wire-catalogue
+
+# Temporary, removed in the next commit: keeps the pre-commit oxfmt run off the moved files so the move stays byte-identical.
+packages/thumbjar/src/gboard
+packages/thumbjar/src/device
+packages/editor/android/scripts/budget.test.ts
