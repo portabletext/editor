@@ -46,7 +46,7 @@
     "tailwindcss": "catalog:tooling",
     "tailwindcss-animate": "^1.0.7",
     "ts-morph": "^27.0.2",
-    "typedoc": "^0.28.15",
+    "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "^4.14.1"
   },
   "devDependencies": {
