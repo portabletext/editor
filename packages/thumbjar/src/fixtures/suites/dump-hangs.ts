@@ -1,9 +1,9 @@
 import {vi} from 'vitest'
-import {sleep} from '../../lib/util.ts'
+import {sleep} from '../../device/util.ts'
 
 const calls: string[] = []
 
-vi.mock(import('../../lib/typing.ts'), async (importOriginal) => {
+vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
   let attempts = 0
   return {
     ...(await importOriginal()),

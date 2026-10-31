@@ -1,6 +1,9 @@
+import {fileURLToPath} from 'node:url'
 import {describe, expect, test} from 'vitest'
 import {typeOnDevice, withDriverRetry} from './driver.ts'
-import {runSuite} from './fixtures/run-suite.ts'
+import {runSuite} from './testing.ts'
+
+const root = fileURLToPath(new URL('..', import.meta.url))
 
 describe(withDriverRetry.name, () => {
   test('a driver fault restarts and types once more', async () => {
@@ -86,8 +89,9 @@ describe(typeOnDevice.name, () => {
   test('stops a hung failure dump before the retry starts', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/retried-typing.ts',
-        setupFiles: ['scripts/fixtures/suites/dump-hangs.ts'],
+        root,
+        file: 'src/fixtures/suites/retried-typing.ts',
+        setupFiles: ['src/fixtures/suites/dump-hangs.ts'],
         testTimeout: 15_000,
       }),
     ).toEqual({
@@ -104,8 +108,9 @@ describe('a digit in the typed text', () => {
   test('retries an attempt whose text holds a digit the inputs do not, and returns a digit the prefix holds', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/typing-with-long-press-digit.ts',
-        setupFiles: ['scripts/fixtures/suites/device-types-digit-once.ts'],
+        root,
+        file: 'src/fixtures/suites/typing-with-long-press-digit.ts',
+        setupFiles: ['src/fixtures/suites/device-types-digit-once.ts'],
         testTimeout: 15_000,
       }),
     ).toEqual({
@@ -133,10 +138,11 @@ describe('an exception in the page', () => {
   test('ends the call without a retry and fails the file of a test.fails test with the exception', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/page-throws-in-empty-block.ts',
+        root,
+        file: 'src/fixtures/suites/page-throws-in-empty-block.ts',
         setupFiles: [
-          'scripts/fixtures/suites/page-throws-once.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/page-throws-once.ts',
+          'src/vitest/setup.ts',
         ],
         testTimeout: 15_000,
       }),
@@ -159,10 +165,11 @@ describe('an adb process that outlives SIGKILL', () => {
   test('stops the call before the retry when it is left by the Chrome restart, and fails the file', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/chrome-restart-outlives-sigkill.ts',
+        root,
+        file: 'src/fixtures/suites/chrome-restart-outlives-sigkill.ts',
         setupFiles: [
-          'scripts/fixtures/suites/adb-outlives-sigkill-once.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/adb-outlives-sigkill-once.ts',
+          'src/vitest/setup.ts',
         ],
       }),
     ).toEqual({
@@ -182,10 +189,11 @@ describe('an adb process that outlives SIGKILL', () => {
   test('fails the file of a test.fails test when it is left by the final cleanup, and stops every later call', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/cleanup-outlives-sigkill.ts',
+        root,
+        file: 'src/fixtures/suites/cleanup-outlives-sigkill.ts',
         setupFiles: [
-          'scripts/fixtures/suites/adb-outlives-sigkill-once.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/adb-outlives-sigkill-once.ts',
+          'src/vitest/setup.ts',
         ],
       }),
     ).toEqual({
@@ -208,10 +216,11 @@ describe('a test.fails device test with the device setup file', () => {
   test('fails its file when the test times out while the driver still types', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        root,
+        file: 'src/fixtures/suites/failing-empty-block.ts',
         setupFiles: [
-          'scripts/fixtures/suites/typing-hangs.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/typing-hangs.ts',
+          'src/vitest/setup.ts',
         ],
         testTimeout: 1_000,
       }),
@@ -229,10 +238,11 @@ describe('a test.fails device test with the device setup file', () => {
   test('fails its file when stopping Chrome after typing hangs until the test times out', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        root,
+        file: 'src/fixtures/suites/failing-empty-block.ts',
         setupFiles: [
-          'scripts/fixtures/suites/chrome-stop-hangs.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/chrome-stop-hangs.ts',
+          'src/vitest/setup.ts',
         ],
         testTimeout: 1_000,
       }),
@@ -250,10 +260,11 @@ describe('a test.fails device test with the device setup file', () => {
   test('fails its file when the test times out and Chrome finishes stopping during the next test', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/timeout-then-late-cleanup.ts',
+        root,
+        file: 'src/fixtures/suites/timeout-then-late-cleanup.ts',
         setupFiles: [
-          'scripts/fixtures/suites/chrome-stop-finishes-late.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/chrome-stop-finishes-late.ts',
+          'src/vitest/setup.ts',
         ],
       }),
     ).toEqual({
@@ -277,10 +288,11 @@ describe('a test.fails device test with the device setup file', () => {
   test('fails its file when the driver faults on both attempts', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        root,
+        file: 'src/fixtures/suites/failing-empty-block.ts',
         setupFiles: [
-          'scripts/fixtures/suites/typing-faults-twice.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/typing-faults-twice.ts',
+          'src/vitest/setup.ts',
         ],
       }),
     ).toEqual({
@@ -297,10 +309,11 @@ describe('a test.fails device test with the device setup file', () => {
   test('counts a failed editor assertion after a recovered driver fault as the expected failure', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/failing-empty-block.ts',
+        root,
+        file: 'src/fixtures/suites/failing-empty-block.ts',
         setupFiles: [
-          'scripts/fixtures/suites/typing-faults-once.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/typing-faults-once.ts',
+          'src/vitest/setup.ts',
         ],
       }),
     ).toEqual({
@@ -315,10 +328,11 @@ describe('a test.fails device test with the device setup file', () => {
   test('counts a failed editor assertion as the expected failure, and fails a plain test with the same result', async () => {
     expect(
       await runSuite({
-        file: 'scripts/fixtures/suites/empty-block-and-existing-text.ts',
+        root,
+        file: 'src/fixtures/suites/empty-block-and-existing-text.ts',
         setupFiles: [
-          'scripts/fixtures/suites/typing-loses-first-character.ts',
-          'tests/setup.ts',
+          'src/fixtures/suites/typing-loses-first-character.ts',
+          'src/vitest/setup.ts',
         ],
       }),
     ).toEqual({

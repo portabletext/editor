@@ -5,8 +5,8 @@ test('Scenario: A long press types a digit on the first attempt', async () => {
   vi.useFakeTimers()
   globalThis.pageTexts = ['K7ou ', 'Kyou ']
   const typing = typeOnDevice({
-    lang: 'en',
-    page: 'plain.html',
+    keyboard: 'en',
+    url: 'http://localhost:8765/plain.html',
     prefix: '',
     words: [{letters: 'kyou'}],
   })
@@ -19,8 +19,8 @@ test('Scenario: A digit the prefix already holds is an editor result', async () 
   vi.useFakeTimers()
   globalThis.pageTexts = ['x7kyou ', 'x7kyou ']
   const typing = typeOnDevice({
-    lang: 'en',
-    page: 'editor.html',
+    keyboard: 'en',
+    url: 'http://localhost:8765/editor.html',
     prefix: 'x7',
     words: [{letters: 'kyou'}],
   })
@@ -33,8 +33,8 @@ test('Scenario: A digit on both attempts fails the test as a driver fault', asyn
   vi.useFakeTimers()
   globalThis.pageTexts = ['K7ou ', 'K7ou ']
   const typing = typeOnDevice({
-    lang: 'en',
-    page: 'plain.html',
+    keyboard: 'en',
+    url: 'http://localhost:8765/plain.html',
     prefix: '',
     words: [{letters: 'kyou'}],
   }).catch((error: Error) => error.message)

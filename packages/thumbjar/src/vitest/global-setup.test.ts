@@ -8,12 +8,12 @@ import {
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import setup from '../tests/global-setup.ts'
-import {GLOBAL_SETUP_ADB_SECONDS, JOIN_GRACE_SECONDS} from './lib/budget.ts'
+import {GLOBAL_SETUP_ADB_SECONDS, JOIN_GRACE_SECONDS} from '../device/budget.ts'
+import globalSetup from './global-setup.ts'
 
 // Half a second instead of 30. The typed `vi.mock(import(...))` form rejects it, as the export's type
 // is the literal 30.
-vi.mock('./lib/budget.ts', async (importOriginal) => ({
+vi.mock('../device/budget.ts', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   GLOBAL_SETUP_ADB_SECONDS: 0.5,
 }))
@@ -22,7 +22,7 @@ let directory: string
 const leftRunning: number[] = []
 
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), 'android-ime-global-setup-'))
+  directory = mkdtempSync(join(tmpdir(), 'thumbjar-global-setup-'))
   vi.stubEnv('PATH', `${directory}:${process.env.PATH}`)
 })
 
@@ -52,7 +52,7 @@ describe('the global setup', () => {
         (GLOBAL_SETUP_ADB_SECONDS + JOIN_GRACE_SECONDS) * 1000,
     }).toEqual({
       settled:
-        'No Android device to type on (adb get-state timed out after 0.5s). Boot an API 36 Play Store emulator and run `scripts/run-on-device.sh`, see the README.',
+        'No Android device to type on (adb get-state timed out after 0.5s). Boot an API 36 Play Store emulator and run `thumbjar prepare`, see the thumbjar README.',
       inBound: true,
     })
   }, 10_000)
@@ -78,7 +78,7 @@ describe('the global setup', () => {
         Date.now() - start <
         (GLOBAL_SETUP_ADB_SECONDS + JOIN_GRACE_SECONDS) * 1000,
     }).toEqual({
-      settled: `No Android device to type on (adb get-state (pid ${shell}) still runs after SIGKILL). Boot an API 36 Play Store emulator and run \`scripts/run-on-device.sh\`, see the README.`,
+      settled: `No Android device to type on (adb get-state (pid ${shell}) still runs after SIGKILL). Boot an API 36 Play Store emulator and run \`thumbjar prepare\`, see the thumbjar README.`,
       inBound: true,
     })
   }, 10_000)
@@ -87,10 +87,19 @@ describe('the global setup', () => {
     vi.stubEnv('PATH', directory)
 
     await expect(setup()).rejects.toThrow(
-      'No Android device to type on (adb is not on PATH). Boot an API 36 Play Store emulator and run `scripts/run-on-device.sh`, see the README.',
+      'No Android device to type on (adb is not on PATH). Boot an API 36 Play Store emulator and run `thumbjar prepare`, see the thumbjar README.',
     )
   })
 })
+
+function setup(): Promise<void> {
+  return globalSetup({
+    getProvidedContext: () => ({
+      thumbjarPageUrl: 'http://localhost:8765/editor.html',
+      thumbjarPageHint: 'Serve it.',
+    }),
+  })
+}
 
 function fakeAdb(script: string): void {
   writeFileSync(join(directory, 'adb'), script)

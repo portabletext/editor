@@ -6,25 +6,16 @@
 
 import {mkdirSync} from 'node:fs'
 import {TestRunner, type RunnerTestCase} from 'vitest'
-import {assertNoUnstoppedProcess, unstoppedProcesses} from './lib/adb.ts'
+import {assertNoUnstoppedProcess, unstoppedProcesses} from './device/adb.ts'
 import {
   ATTEMPT_SECONDS,
   CLEANUP_SECONDS,
   FAILURE_DUMP_SECONDS,
   RESTART_SECONDS,
   SERVER_CLOSE_SECONDS,
-} from './lib/budget.ts'
-import {PageExceptionError} from './lib/cdp.ts'
-import {
-  clearChromeTabs,
-  closeChrome,
-  dumpFailure,
-  OUT,
-  typeInChrome,
-  type TypeOnDeviceOptions,
-  type Typed,
-} from './lib/typing.ts'
-import {Device} from './lib/u2.ts'
+} from './device/budget.ts'
+import {PageExceptionError} from './device/cdp.ts'
+import {Device} from './device/u2.ts'
 import {
   errorRepr,
   phase,
@@ -32,13 +23,23 @@ import {
   runAbortable,
   watchdog,
   withDeadline,
-} from './lib/util.ts'
+} from './device/util.ts'
+import {
+  clearChromeTabs,
+  closeChrome,
+  dumpFailure,
+  outDir,
+  typeInChrome,
+  type TypeOnDeviceOptions,
+  type Typed,
+} from './gboard/typing.ts'
 
-export type {TypeOnDeviceOptions, Typed, Word} from './lib/typing.ts'
+export type {TypeOnDeviceOptions, Typed, Word} from './gboard/typing.ts'
 
 const WATCHDOG_SECONDS = ATTEMPT_SECONDS - 15
 
-export type DriverRun = {
+/** One `typeOnDevice` call and how it ended. */
+type DriverRun = {
   test: string
   fails: boolean
   /**
@@ -55,7 +56,7 @@ export type DriverRun = {
 
 /**
  * Every `typeOnDevice` call in the current test file. `test.fails` counts any error, a timeout included, as
- * its expected failure, so `tests/setup.ts` fails the file for a `test.fails` run that never completed.
+ * its expected failure, so the setup file `deviceProject` adds fails the file for a `test.fails` run that never completed.
  */
 export const driverRuns: DriverRun[] = []
 
@@ -63,8 +64,8 @@ export const driverRuns: DriverRun[] = []
 let previousRun: Promise<void> = Promise.resolve()
 
 /**
- * Open `page` in a fresh Chrome, type `words` on Gboard and read back what the page holds. A driver fault
- * restarts Chrome and types everything again once. Artifacts go to `out/<lang>-<test name>*`.
+ * Open `url` in a fresh Chrome, type `words` on Gboard and read back what the page holds. A driver fault
+ * restarts Chrome and types everything again once. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
  */
 export async function typeOnDevice(
   options: TypeOnDeviceOptions,
@@ -77,8 +78,8 @@ export async function typeOnDevice(
     state: 'driving',
   }
   driverRuns.push(run)
-  const name = `${options.lang}-${slug(currentTest.name)}`
-  mkdirSync(OUT, {recursive: true})
+  const name = `${options.keyboard}-${slug(currentTest.name)}`
+  mkdirSync(outDir(), {recursive: true})
   await previousRun
   try {
     assertNoUnstoppedProcess()

@@ -1,0 +1,10 @@
+{
+  // `thumbjar/page` runs in the browser, inside the page the driver types into.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["esnext", "dom"],
+    "types": []
+  },
+  "include": ["src/page.ts"],
+  "exclude": []
+}
