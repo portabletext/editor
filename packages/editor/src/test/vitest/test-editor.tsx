@@ -1,3 +1,4 @@
+import {applyAll} from '@portabletext/patches'
 import {
   defineSchema,
   type PortableTextBlock,
@@ -118,6 +119,44 @@ export async function createTestEditors(
   const onEditorEvent = vi.fn<(event: EditorEmittedEvent) => void>()
   const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
+  // Like a Studio form, both editors are fed from one shared document: the
+  // peer gets each mutation's patches and both editors get the document as
+  // `update value`. An editor's own snapshot can lag behind patches still in
+  // flight to it, and the sync machine applies a parked value a second later
+  // without revalidating it, so a peer snapshot would roll back newer edits.
+  let sharedDocument = options.initialValue
+  let isValueUpdateQueued = false
+
+  function relayMutation(event: EditorEmittedEvent, peer: Editor | null) {
+    if (event.type !== 'mutation') {
+      return
+    }
+
+    sharedDocument = applyAll(sharedDocument, event.patches)
+
+    peer?.send({
+      type: 'patches',
+      patches: event.patches.map((patch) => ({
+        ...patch,
+        origin: 'remote',
+      })),
+      snapshot: sharedDocument,
+    })
+
+    // A flush emits all its mutations synchronously and the sender is no
+    // longer busy during them, so a value sent after the first would roll
+    // back the rest. Studio's form value reaches the editors after React
+    // renders, once the whole flush has landed.
+    if (!isValueUpdateQueued) {
+      isValueUpdateQueued = true
+      queueMicrotask(() => {
+        isValueUpdateQueued = false
+        editorRef.current?.send({type: 'update value', value: sharedDocument})
+        editorBRef.current?.send({type: 'update value', value: sharedDocument})
+      })
+    }
+  }
+
   render(
     <>
       <EditorProvider
@@ -135,20 +174,7 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorEvent(event)
-            if (event.type === 'mutation') {
-              editorBRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: event.value,
-              })
-              editorBRef.current?.send({
-                type: 'update value',
-                value: event.value,
-              })
-            }
+            relayMutation(event, editorBRef.current)
           }}
         />
         {options.children}
@@ -168,20 +194,7 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorBEvent(event)
-            if (event.type === 'mutation') {
-              editorRef.current?.send({
-                type: 'patches',
-                patches: event.patches.map((patch) => ({
-                  ...patch,
-                  origin: 'remote',
-                })),
-                snapshot: event.value,
-              })
-              editorRef.current?.send({
-                type: 'update value',
-                value: event.value,
-              })
-            }
+            relayMutation(event, editorRef.current)
           }}
         />
         {options.children}
