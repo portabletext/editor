@@ -91,6 +91,12 @@ function evaluate(expression: string): Record<string, unknown> {
   if (expression === 'typeof window.__state') {
     return value('function')
   }
+  if (
+    expression ===
+    "typeof window.__field === 'function' && window.__field() !== null"
+  ) {
+    return value(true)
+  }
   if (expression === 'location.href') {
     return value(url)
   }

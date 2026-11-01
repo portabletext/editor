@@ -65,6 +65,12 @@ function pageReply(expression: string): unknown {
   if (expression === 'typeof window.__state') {
     return 'function'
   }
+  if (
+    expression ===
+    "typeof window.__field === 'function' && window.__field() !== null"
+  ) {
+    return true
+  }
   if (expression === 'location.href') {
     return 'http://localhost:8765/plain.html'
   }
