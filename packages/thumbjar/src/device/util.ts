@@ -218,6 +218,102 @@ export function errorRepr(error: unknown): string {
   return String(error)
 }
 
+/** Shown in place of a thrown value that cannot be converted to text. */
+export const UNPRINTABLE_ERROR =
+  '<thrown value that cannot be converted to text>'
+
+/**
+ * `errorRepr`, or `UNPRINTABLE_ERROR` when converting `error` throws, for example from its `toString` or a
+ * `message` getter, so describing a failure never replaces it. Every part goes through `String`, which
+ * shows a Symbol by its description where a template literal would throw.
+ */
+export function guardedErrorRepr(error: unknown): string {
+  try {
+    if (error instanceof Error) {
+      const cause =
+        error.cause instanceof Error
+          ? ` (${String(error.cause.name)}: ${String(error.cause.message)})`
+          : ''
+      return `${String(error.name)}: ${String(error.message)}${cause}`
+    }
+    return String(error)
+  } catch {
+    return UNPRINTABLE_ERROR
+  }
+}
+
+/**
+ * `error`'s message, or `error` as a string when it is not an `Error`, or `UNPRINTABLE_ERROR` when reading
+ * or converting either throws. `String` shows a Symbol by its description.
+ */
+export function guardedErrorMessage(error: unknown): string {
+  try {
+    return String(error instanceof Error ? error.message : error)
+  } catch {
+    return UNPRINTABLE_ERROR
+  }
+}
+
+/**
+ * How the driver reads a value it did not create, a thrown value or an abort reason, which can be any
+ * value: a revoked Proxy throws from `instanceof`, and a throwing `toString` or a Symbol `message` from
+ * a conversion.
+ */
+export type Inspection = {
+  /** `error` as text, for a log line or a step record. */
+  describe: (error: unknown) => string
+  /** `error.message`, for the `driverRuns` record of a page exception. */
+  message: (error: Error) => string
+  /** What `inspect` returns, or `fallback` when the inspection is guarded and `inspect` throws. */
+  guard: <T>(inspect: () => T, fallback: T) => T
+}
+
+/** Lets every conversion throw as it did, so the errors and log lines of `typeOnDevice` stay as they were. */
+export const PLAIN_INSPECTION: Inspection = {
+  describe: errorRepr,
+  message: (error) => error.message,
+  guard: (inspect) => inspect(),
+}
+
+/** Never throws in place of the value it reads, so `runOnDevice` keeps the thrown value and the abort reason. */
+export const GUARDED_INSPECTION: Inspection = {
+  describe: guardedErrorRepr,
+  message: guardedErrorMessage,
+  guard: (inspect, fallback) => {
+    try {
+      return inspect()
+    } catch {
+      return fallback
+    }
+  },
+}
+
+// The inspection of the call the current code belongs to.
+const callInspection = new AsyncLocalStorage<Inspection>()
+
+/** Run `run` so the device helpers in it read thrown values and abort reasons through `inspection`. */
+export function runInspecting<T>(inspection: Inspection, run: () => T): T {
+  return callInspection.run(inspection, run)
+}
+
+/** The inspection of the call the current code belongs to, `PLAIN_INSPECTION` outside one. */
+export function currentInspection(): Inspection {
+  return callInspection.getStore() ?? PLAIN_INSPECTION
+}
+
+/** `error` as text through the current call's inspection. */
+export function describeError(error: unknown): string {
+  return currentInspection().describe(error)
+}
+
+/** Whether `value` is an instance of `type`, `false` when the current call's inspection is guarded and `instanceof` throws. */
+export function isInstance<T>(
+  value: unknown,
+  type: abstract new (...args: never[]) => T,
+): value is T {
+  return currentInspection().guard(() => value instanceof type, false)
+}
+
 // Characters Python's str.isprintable() rejects, apart from the plain space.
 const NON_PRINTABLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]/u
 

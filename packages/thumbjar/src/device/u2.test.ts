@@ -1,6 +1,7 @@
 import {describe, expect, test, vi} from 'vitest'
+import {AdbError} from './adb.ts'
 import {Device} from './u2.ts'
-import {runAbortable} from './util.ts'
+import {GUARDED_INSPECTION, runAbortable, runInspecting} from './util.ts'
 
 const device = vi.hoisted(() => {
   let releaseShell!: () => void
@@ -17,6 +18,7 @@ const device = vi.hoisted(() => {
     services: [] as string[],
     closed: [] as string[],
     pings: 0,
+    serviceError: undefined as unknown,
   }
 })
 
@@ -47,6 +49,9 @@ vi.mock(import('./adb.ts'), async (importOriginal) => ({
   },
   AdbConnection: {
     service: (service: string) => {
+      if (device.serviceError !== undefined) {
+        return Promise.reject(device.serviceError)
+      }
       device.services.push(service)
       return Promise.resolve({
         socket: {write() {}, unref() {}, setTimeout() {}},
@@ -82,5 +87,25 @@ describe(Device.connect.name, () => {
       services: [],
       closed: [],
     })
+  })
+
+  test('under `runOnDevice`, an adb error whose `message` cannot be read is the error of the start', async () => {
+    device.releaseShell()
+    const unreadable = Object.defineProperty(
+      new AdbError('adb failed'),
+      'message',
+      {
+        get: () => {
+          throw new Error('message getter failed')
+        },
+      },
+    )
+    device.serviceError = unreadable
+    const error = await runInspecting(GUARDED_INSPECTION, () =>
+      Device.connect(),
+    ).catch((error: unknown) => error)
+    device.serviceError = undefined
+
+    expect(error).toBe(unreadable)
   })
 })
