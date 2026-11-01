@@ -14,7 +14,13 @@ import {
   deviceShell,
   shellQuote,
 } from './adb.ts'
-import {sleep, throwIfAborted, tracked} from './util.ts'
+import {
+  currentInspection,
+  isInstance,
+  sleep,
+  throwIfAborted,
+  tracked,
+} from './util.ts'
 
 const JAR_URL =
   'https://github.com/openatx/android-uiautomator-server-jar/releases/download/0.4.1/u2.jar'
@@ -213,8 +219,8 @@ export class Device {
       } catch (error) {
         if (
           !(
-            error instanceof HTTPError ||
-            error instanceof UiAutomationNotConnectedError
+            isInstance(error, HTTPError) ||
+            isInstance(error, UiAutomationNotConnectedError)
           )
         ) {
           throw error
@@ -328,7 +334,7 @@ export class Device {
       try {
         return await this.#appCurrentOnce()
       } catch (error) {
-        if (!(error instanceof AdbError) || attempt >= 3) {
+        if (!isInstance(error, AdbError) || attempt >= 3) {
           throw error
         }
         await sleep(0.5 + Math.random() * 0.1)
@@ -396,7 +402,7 @@ export class UiObject {
       )
     } catch (error) {
       // A wait that fails over HTTP falls back to a plain existence check.
-      if (!(error instanceof HTTPError)) {
+      if (!isInstance(error, HTTPError)) {
         throw error
       }
       return this.exists()
@@ -546,9 +552,9 @@ async function httpRequest(
   try {
     connection = await AdbConnection.service(`tcp:${SERVER_PORT}`, timeout)
   } catch (error) {
-    if (error instanceof AdbError) {
+    if (isInstance(error, AdbError)) {
       throw new HTTPError(
-        `Unable to connect to uiautomator2 server: ${error.message}`,
+        `Unable to connect to uiautomator2 server: ${currentInspection().message(error)}`,
         {cause: error},
       )
     }
@@ -666,7 +672,7 @@ async function checkAlive(): Promise<boolean> {
       (await httpRequest('GET', '/ping', undefined, 10)).toString() === 'pong'
     )
   } catch (error) {
-    if (error instanceof HTTPError || error instanceof ConnectionLost) {
+    if (isInstance(error, HTTPError) || isInstance(error, ConnectionLost)) {
       return false
     }
     throw error
