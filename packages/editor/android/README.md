@@ -17,6 +17,8 @@ Each language has a test file in `tests/`, `tests/ja.test.ts` and `tests/en.test
 2. The editor with one empty block, `editor.html`.
 3. The editor with one block that already holds `x`, `editor.html?prefix=x`.
 
+`tests/en-textarea.test.ts` types `kyou` twice on English Gboard into a plain `textarea`, `textarea.html`, and expects `Kyou kyou `. It is a control for `textarea` support in thumbjar, and CI never runs it, since `run-on-device.sh` only runs `tests/$IME_LANG.test.ts`. Run it against a prepared device with `pnpm test:android --run tests/en-textarea.test.ts`.
+
 It runs on pull requests that touch the editor's input handling, this directory or `packages/thumbjar`, every night against `main`, and on demand.
 
 The empty-block test in `tests/ja.test.ts` covers a bug the editor has had: Gboard restarted the composition after the first character typed in an empty block, left that character behind as a full-width `ｋ` and converted the first word without it, as `ｋ用今日`.
@@ -100,11 +102,11 @@ Then:
 2. Run the workflow on your branch, or `test:android` against a local emulator, and check the new test's result.
 3. If it fails on `main` because of a known bug, make it `test.fails` and describe the bug by its behavior in a comment inside the test.
 
-Each test adds about a minute or two to its job. A page other than `plain.html` and `editor.html` needs its HTML in `page/`, an entry in `vite.config.ts` and a call to `recordInput` from `thumbjar/page`.
+Each test adds about a minute or two to its job. A page other than `plain.html`, `textarea.html` and `editor.html` needs its HTML in `page/`, an entry in `vite.config.ts` and a call to `recordInput` from `thumbjar/page`.
 
 ## Files
 
-1. `tests/ja.test.ts`, `tests/en.test.ts`: the device tests.
+1. `tests/ja.test.ts`, `tests/en.test.ts`: the device tests CI runs. `tests/en-textarea.test.ts`: the `textarea` control, run by hand.
 2. `page/`: the test pages, built with Vite from the workspace editor by `pnpm build:android`.
 3. `run-on-device.sh`: runs inside the booted emulator. It serves the pages, runs `thumbjar prepare` and the tests for `IME_LANG`, and records diagnostics after them.
 4. `scripts/device-suites.test.ts` and `scripts/fixtures/`: run `tests/ja.test.ts` against fake typing results.

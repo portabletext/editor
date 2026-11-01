@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:tooling",
+    "jsdom": "catalog:tooling",
     "typescript": "catalog:tooling",
     "vitest": "catalog:tooling"
   },

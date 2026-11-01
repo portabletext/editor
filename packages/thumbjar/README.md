@@ -53,9 +53,11 @@ When Gboard has not loaded a word's candidates yet, the driver commits it with S
 
 ### `thumbjar/page`
 
-`recordInput({getText, field})` runs in the page. It records `beforeinput`, `input` and composition events and installs the `window.__state()` the driver reads after each word. `getText` returns the text to report, for example from an editor's model. Without `field`, events are recorded on `document` in the capture phase, so the field may render later, and `window.__state()` also reports the first `[contenteditable]`'s `textContent` as `dom`. With `field`, events are recorded on that element along with its `textContent` at each event. Each event is also printed to a `#log` element when the page has one.
+`recordInput({getText, field})` runs in the page. It records `beforeinput`, `input` and composition events and installs the `window.__state()` the driver reads after each word. `getText` returns the text to report, for example from an editor's model. `field` names the field the driver types into, a `textarea`, a text `input` (`text`, `search`, `tel`, `url` or `password`) or a `[contenteditable]`. A field's text is its `value` for a `textarea` or an `input` and its `textContent` otherwise. Without `field`, events are recorded on `document` in the capture phase, so the field may render later, and `window.__state()` also reports the text of the first `textarea`, text `input` or `[contenteditable]` as `dom`. With `field`, events are recorded on that element along with its text at each event. Each event is also printed to a `#log` element when the page has one.
 
-The driver taps the page's first `[contenteditable]` and waits until `window.__state` exists before it types.
+A page seeds the field and then leaves it to the keyboard. A page that controls it, writing its `value` back from its own state on each input the way a React `value` prop does, restarts Gboard's composition: on a `textarea` that nested 7 of 8 Japanese compositions.
+
+The driver waits until `window.__state` exists before it types. It then taps the field `recordInput` named, or without one the page's first `textarea`, text `input` or `[contenteditable]`, and focuses it with the caret after its text.
 
 ### `thumbjar/vitest`
 
