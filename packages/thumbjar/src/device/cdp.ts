@@ -2,7 +2,15 @@
 // connection through the global WebSocket.
 
 import {adb} from './adb.ts'
-import {currentSignal, errorRepr, phase, sleep, tracked} from './util.ts'
+import {
+  currentInspection,
+  currentSignal,
+  describeError,
+  isInstance,
+  phase,
+  sleep,
+  tracked,
+} from './util.ts'
 
 export const CDP_PORT = 9222
 
@@ -51,7 +59,12 @@ export async function targets(timeout: number): Promise<Target[]> {
     return (await response.json()) as Target[]
   } catch (error) {
     currentSignal()?.throwIfAborted()
-    if (error instanceof Error && error.name === 'TimeoutError') {
+    if (
+      currentInspection().guard(
+        () => error instanceof Error && error.name === 'TimeoutError',
+        false,
+      )
+    ) {
       throw new ReadTimeout(`no answer from the target list in ${timeout}s`, {
         cause: error,
       })
@@ -78,14 +91,14 @@ export async function cdpEval(expression: string): Promise<unknown> {
       // Timeouts, dropped sockets and a target list that is not JSON are retried. A missing target, a
       // protocol error or an exception in the page fails at once.
       if (
-        error instanceof NoTargetError ||
-        error instanceof ProtocolError ||
-        error instanceof PageExceptionError
+        isInstance(error, NoTargetError) ||
+        isInstance(error, ProtocolError) ||
+        isInstance(error, PageExceptionError)
       ) {
         throw error
       }
       last = error
-      phase(`cdp dropped (${attempt + 1}): ${errorRepr(error)}, retrying`)
+      phase(`cdp dropped (${attempt + 1}): ${describeError(error)}, retrying`)
       await sleep(1.5)
       try {
         await adb([
@@ -158,7 +171,7 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
       try {
         message = JSON.parse(String(event.data))
       } catch (error) {
-        finish(new WebSocketError(`bad frame: ${errorRepr(error)}`))
+        finish(new WebSocketError(`bad frame: ${describeError(error)}`))
         return
       }
       if (message.id !== 1) {

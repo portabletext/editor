@@ -1,2 +1,17 @@
-export {typeOnDevice} from './driver.ts'
-export type {TypeOnDeviceOptions, Typed, Word} from './driver.ts'
+export {runOnDevice, typeOnDevice} from './driver.ts'
+export type {
+  BackspaceStep,
+  Commit,
+  ComposeStep,
+  EnterStep,
+  GraphemeSelection,
+  PageEvent,
+  Run,
+  RunOnDeviceOptions,
+  Step,
+  StepRecord,
+  StepStatus,
+  TypeOnDeviceOptions,
+  Typed,
+  Word,
+} from './driver.ts'

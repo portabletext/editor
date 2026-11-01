@@ -9,6 +9,24 @@ export function packageKeys(
   packageName: string,
 ): Map<string, [number, number]> {
   const keys = new Map<string, [number, number]>()
+  for (const node of packageNodes(xml, packageName)) {
+    if (!keys.has(node.label)) {
+      keys.set(node.label, node.center)
+    }
+  }
+  return keys
+}
+
+/** A labelled node of a package, its resource id without the package prefix and its bounds center. */
+export type PackageNode = {
+  label: string
+  id: string
+  center: [number, number]
+}
+
+/** Every node of `packageName` with a content-desc or text, in document order. */
+export function packageNodes(xml: string, packageName: string): PackageNode[] {
+  const nodes: PackageNode[] = []
   for (const node of parseXml(xml)) {
     if (node.tag !== 'node' || node.attrs.package !== packageName) {
       continue
@@ -27,14 +45,13 @@ export function packageKeys(
         }
         return Number(coordinate)
       }) as [number, number, number, number]
-    if (!keys.has(label)) {
-      keys.set(label, [
-        Math.floor((left + right) / 2),
-        Math.floor((top + bottom) / 2),
-      ])
-    }
+    nodes.push({
+      label,
+      id: (node.attrs['resource-id'] ?? '').replace(`${packageName}:id/`, ''),
+      center: [Math.floor((left + right) / 2), Math.floor((top + bottom) / 2)],
+    })
   }
-  return keys
+  return nodes
 }
 
 /** Every element in document order. */

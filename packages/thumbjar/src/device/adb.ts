@@ -4,7 +4,14 @@
 import {spawn} from 'node:child_process'
 import net from 'node:net'
 import {KILL_GRACE_SECONDS} from './budget.ts'
-import {currentSignal, throwIfAborted, tracked} from './util.ts'
+import {
+  currentInspection,
+  currentSignal,
+  throwIfAborted,
+  tracked,
+  UNPRINTABLE_ERROR,
+  type Inspection,
+} from './util.ts'
 
 export class CommandError extends Error {
   override name = 'CommandError'
@@ -180,16 +187,35 @@ export class AdbConnection {
   #wake: (() => void) | undefined
   #onData: ((chunk: Buffer) => void) | undefined
 
-  private constructor(socket: net.Socket, signal: AbortSignal | undefined) {
+  private constructor(
+    socket: net.Socket,
+    signal: AbortSignal | undefined,
+    inspection: Inspection,
+  ) {
     this.socket = socket
     // An abort of the attempt that opened the connection destroys it, so a read the attempt is blocked on
     // rejects with the abort reason and a server it launched over this shell ends.
     if (signal) {
       const onAbort = () => {
-        this.#error =
-          signal.reason instanceof Error
-            ? signal.reason
-            : new Error(String(signal.reason))
+        // The listener runs in the context of whoever aborted, so it reads the reason through the
+        // inspection of the call that opened the connection.
+        // A plain inspection runs only its callback. The fallback is built only after a guarded inspection
+        // threw, and it reads the reason through its own guard.
+        const read = inspection.guard<{error: Error} | undefined>(
+          () => ({
+            error:
+              signal.reason instanceof Error
+                ? signal.reason
+                : new Error(String(signal.reason)),
+          }),
+          undefined,
+        )
+        this.#error = read
+          ? read.error
+          : new Error(
+              UNPRINTABLE_ERROR,
+              inspection.guard(() => ({cause: signal.reason}), undefined),
+            )
         socket.destroy()
       }
       signal.addEventListener('abort', onAbort, {once: true})
@@ -226,6 +252,7 @@ export class AdbConnection {
     const host = process.env.ANDROID_ADB_SERVER_HOST ?? '127.0.0.1'
     const port = Number(process.env.ANDROID_ADB_SERVER_PORT ?? 5037)
     const signal = currentSignal()
+    const inspection = currentInspection()
     signal?.throwIfAborted()
     return new Promise((resolve, reject) => {
       const socket = net.connect({host, port})
@@ -237,7 +264,7 @@ export class AdbConnection {
       socket.setTimeout(timeout * 1000)
       socket.once('connect', () => {
         signal?.removeEventListener('abort', onAbort)
-        resolve(new AdbConnection(socket, signal))
+        resolve(new AdbConnection(socket, signal, inspection))
       })
       socket.once('error', (error) =>
         reject(
