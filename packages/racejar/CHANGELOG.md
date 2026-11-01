@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.0.2
+
+### Patch Changes
+
+- [#3559](https://github.com/portabletext/editor/pull/3559) [`77772f4`](https://github.com/portabletext/editor/commit/77772f41f89945af8d194bdbc2d9684baeb2f750) Thanks [@christianhg](https://github.com/christianhg)! - fix: mark the test runner peer dependencies as optional
+  
+  Each entry point needs only its own test runner. `racejar/vitest` needs `vitest`, `racejar/jest` needs `@jest/globals` and `racejar/playwright` needs `@playwright/test`. Installing `racejar` no longer warns about the two runners you don't use, and package managers that install peers automatically no longer pull them in.
+
 ## 4.0.1
 
 ### Patch Changes

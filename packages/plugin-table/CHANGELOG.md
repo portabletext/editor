@@ -1,5 +1,11 @@
 # @portabletext/plugin-table
 
+## 2.0.24
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.11`
+
 ## 2.0.23
 
 ### Patch Changes
