@@ -68,3 +68,87 @@ jobs:
             echo "The first line of a changeset repeats a commit subject verbatim."
             exit 1
           fi
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: |
+            .changeset/config.json
+            apps/*/package.json
+            examples/*/package.json
+            packages/*/package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Check that each fix/feat commit ships a changeset
+        env:
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Scopes that never release: packages changesets ignores and private
+          # packages, named with or without the `@portabletext/` prefix.
+          unreleased=$( {
+            jq -r '.ignore[]' .changeset/config.json
+            jq -r 'select(.private == true) | .name' apps/*/package.json examples/*/package.json packages/*/package.json
+          } | sed 's|^@portabletext/||' | sort -u)
+
+          commits=$(gh api "repos/$REPO/pulls/$PR_NUMBER/commits" --paginate | jq -s 'add')
+
+          changed_files() {
+            gh api "repos/$REPO/commits/$1" --paginate --jq '.files[] | "\(.status) \(.filename)"'
+          }
+
+          ships_changeset() {
+            grep -E '^(added|modified|renamed) \.changeset/[^/]+\.md$' <<< "$1" | grep -qv ' \.changeset/README\.md$'
+          }
+
+          offenders=""
+          count=$(jq length <<< "$commits")
+          for ((i = 0; i < count; i++)); do
+            sha=$(jq -r ".[$i].sha" <<< "$commits")
+            subject=$(jq -r ".[$i].commit.message | split(\"\n\")[0]" <<< "$commits")
+            author=$(jq -r ".[$i].author.login // \"\"" <<< "$commits")
+
+            if ! [[ "$subject" =~ ^(fix|feat)(\(([^\)]*)\))?!?: ]]; then
+              continue
+            fi
+            scope=${BASH_REMATCH[3]}
+            if [ -n "$scope" ] && grep -qxF -- "$scope" <<< "$unreleased"; then
+              continue
+            fi
+
+            files=$(changed_files "$sha")
+            if ships_changeset "$files"; then
+              continue
+            fi
+
+            # A new package's 1.0.0 is published by hand, so the commit that
+            # introduces it has no changeset.
+            if grep -qE '^added packages/[^/]+/package\.json$' <<< "$files"; then
+              continue
+            fi
+
+            # Renovate commits get their changeset from a follow-up bot commit.
+            if [ "$author" = "renovate[bot]" ]; then
+              followed=0
+              for ((j = i + 1; j < count; j++)); do
+                if [ "$(jq -r ".[$j].author.login // \"\"" <<< "$commits")" = "ecoscript[bot]" ] &&
+                  ships_changeset "$(changed_files "$(jq -r ".[$j].sha" <<< "$commits")")"; then
+                  followed=1
+                  break
+                fi
+              done
+              if [ "$followed" -eq 1 ]; then
+                continue
+              fi
+            fi
+
+            offenders+="  ${sha:0:7} $subject"$'\n'
+          done
+
+          if [ -n "$offenders" ]; then
+            echo "These fix/feat commits ship no changeset:"
+            printf '%s' "$offenders"
+            echo "Each fix/feat commit ships its own changeset in the same commit."
+            echo "Retype a commit without a releasable change as refactor:, chore:, test: or docs:."
+            exit 1
+          fi

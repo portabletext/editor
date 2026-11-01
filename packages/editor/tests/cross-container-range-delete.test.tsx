@@ -90,7 +90,7 @@ const containers = [
 ]
 
 describe('cross-container range delete', () => {
-  test('root text block -> code-block line', async () => {
+  test('Scenario: Backspace over a range from a root text block into a code-block line removes the selected text', async () => {
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
@@ -158,7 +158,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('code-block line -> root text block below', async () => {
+  test('Scenario: Backspace over a range from a code-block line into the root text block below removes the selected text', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()
@@ -226,7 +226,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('across three root siblings with a container in the middle merges outer text blocks (same parent)', async () => {
+  test('Scenario: Backspace over a range across three root siblings with a container in the middle merges the outer text blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const firstTextKey = keyGenerator()
     const firstSpanKey = keyGenerator()
@@ -297,7 +297,7 @@ describe('cross-container range delete', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|z')
   })
 
-  test('across two sibling containers (callout - code-block)', async () => {
+  test('Scenario: Backspace over a range across a callout and a sibling code-block keeps both containers', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const calloutBlockKey = keyGenerator()
@@ -378,7 +378,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('within same container across two lines still merges (same-parent path unchanged)', async () => {
+  test('Scenario: Backspace over a range across two lines of the same container merges the lines', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const firstLineKey = keyGenerator()
@@ -462,7 +462,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('range selection covering a root void block merges outer text blocks (same parent)', async () => {
+  test('Scenario: Backspace over a range covering a root void block merges the outer text blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
     const firstTextKey = keyGenerator()
     const firstSpanKey = keyGenerator()
@@ -517,7 +517,7 @@ describe('cross-container range delete', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo|ar')
   })
 
-  test('Backspace at start of an empty container line below a text block unwraps the line', async () => {
+  test('Scenario: Backspace at the start of an empty container line below a text block unwraps the line', async () => {
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
@@ -591,7 +591,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('start inside multi-line callout removes trailing lines, leaves callout shell with leading content', async () => {
+  test('Scenario: Backspace over a range starting inside a multi-line callout removes its trailing lines and keeps the callout with its leading content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -681,7 +681,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('end inside multi-line callout removes leading lines, leaves callout shell with trailing content', async () => {
+  test('Scenario: Backspace over a range ending inside a multi-line callout removes its leading lines and keeps the callout with its trailing content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
@@ -771,7 +771,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('cross-parent selection removes fully-covered root sibling between containers', async () => {
+  test('Scenario: Backspace over a range across two containers removes the fully covered root block between them', async () => {
     const keyGenerator = createTestKeyGenerator()
     const callout1Key = keyGenerator()
     const callout1LineKey = keyGenerator()
@@ -863,7 +863,7 @@ describe('cross-container range delete', () => {
     )
   })
 
-  test('hanging range across a callout removes the callout entirely', async () => {
+  test('Scenario: Backspace over a hanging range across a callout removes the callout entirely', async () => {
     const keyGenerator = createTestKeyGenerator()
     const fooBlockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
@@ -1016,7 +1016,7 @@ const tableContainers = [
 ]
 
 describe('cross-container range delete: deep structures', () => {
-  test('start mid-line in callout-in-cell-in-table, end in root text below table', async () => {
+  test('Scenario: Backspace over a range from mid-line in a callout inside a table cell to root text below the table removes the selected content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
@@ -1180,7 +1180,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('start in root text, end mid-line in callout-in-cell-in-table', async () => {
+  test('Scenario: Backspace over a range from root text to mid-line in a callout inside a table cell removes the selected content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const textBlockKey = keyGenerator()
     const textSpanKey = keyGenerator()
@@ -1344,7 +1344,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('selection across cells in same row preserves intermediate cell shells with cleared content', async () => {
+  test('Scenario: Backspace over a range across cells in the same row keeps the intermediate cells with their content cleared', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
@@ -1489,7 +1489,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('selection across rows in same table preserves intermediate row shells with cells cleared', async () => {
+  test('Scenario: Backspace over a range across rows in the same table keeps the intermediate rows with their cells cleared', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const row0Key = keyGenerator()
@@ -1675,7 +1675,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('Selecting an entire empty table and pressing Delete unsets the table', async () => {
+  test('Scenario: Selecting an entire empty table and pressing Delete unsets the table', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const row1Key = keyGenerator()
@@ -1855,7 +1855,7 @@ describe('cross-container range delete: deep structures', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
-  test('Selecting only the first two of three empty cells in a row collapses the selection without removing structure', async () => {
+  test('Scenario: Selecting only the first two of three empty cells in a row and pressing Delete collapses the selection without removing structure', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
@@ -1985,7 +1985,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('Selecting from the first cell to a middle cell of a 2x3 table preserves the trailing cells', async () => {
+  test('Scenario: Selecting from the first cell to a middle cell of a 2x3 table and pressing Delete preserves the trailing cells', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const row0Key = keyGenerator()
@@ -2183,7 +2183,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('selecting all the text in an editable container preserves the shell', async () => {
+  test('Scenario: Deleting all the text in an editable container keeps the container', async () => {
     // Slash-command flow: typing `/im` inside a callout, selecting the
     // Image action emits `delete` of the pattern selection followed by
     // `insert.block`. The callout shell must remain in place so the
@@ -2237,7 +2237,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('inserting a block after fully clearing the text inside a callout lands the block inside', async () => {
+  test('Scenario: Inserting a block after clearing all the text inside a callout lands the block inside the callout', async () => {
     // Slash-command flow: typing '/im' inside a callout, picking the
     // Image action raises 'delete' of the typed pattern then
     // 'insert.block' for the image. The image must land inside the
@@ -2360,7 +2360,7 @@ describe('cross-container range delete: deep structures', () => {
     )
   })
 
-  test('Cmd-A + Delete across two code-blocks removes both', async () => {
+  test('Scenario: Cmd-A + Delete across two code-blocks removes both', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlock1Key = keyGenerator()
     const line1Key = keyGenerator()
@@ -2436,7 +2436,7 @@ describe('cross-container range delete: deep structures', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
-  test('Cmd-A + Delete via keyboard across code-block, callout and table removes all', async () => {
+  test('Scenario: Cmd-A + Delete via keyboard across a code-block, a callout and a table removes all of them', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const codeLineKey = keyGenerator()
@@ -2555,14 +2555,7 @@ describe('cross-container range delete: deep structures', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
-  test('positional-only nested containers: clears cell text in selection range', async () => {
-    // Regression: when `row` and `cell` are registered ONLY as nested
-    // positional overrides inside `table.of` (no top-level registration),
-    // a selection range crossing cells should still clear text in covered
-    // cells. The bug: `clearContainerContents` used a bare type-keyed
-    // `editor.containers.get('cell')` which only finds top-level
-    // registrations; positionally-registered cells were silently skipped,
-    // leaving text in covered intermediate cells.
+  test('Scenario: Delete over a range across nested containers registered only positionally clears the covered cell text', async () => {
     const keyGenerator = createTestKeyGenerator()
     const tableKey = keyGenerator()
     const row0Key = keyGenerator()

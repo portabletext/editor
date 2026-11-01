@@ -1,0 +1,421 @@
+{
+  "page": "plain.html",
+  "prefix": "",
+  "gboard_labels": [
+    ",",
+    ".",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "A",
+    "B",
+    "Back",
+    "C",
+    "Clipboard",
+    "D",
+    "Delete",
+    "E",
+    "Emoji button",
+    "Enter",
+    "F",
+    "G",
+    "GIF Keyboard",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "Open features menu",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "Settings",
+    "Shift enabled",
+    "Space",
+    "Sticker Keyboard",
+    "Symbol keyboard",
+    "T",
+    "Theme settings",
+    "U",
+    "Use voice typing",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z"
+  ],
+  "composing1": {
+    "text": "Kyou",
+    "events": [
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "K",
+        "text": ""
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "K",
+        "text": "K"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "K"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Ky"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Ky"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyo"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyo"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou"
+      }
+    ]
+  },
+  "candidates1": [],
+  "picked1": "space",
+  "after_first": {
+    "text": "Kyou ",
+    "events": [
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "K",
+        "text": ""
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "K",
+        "text": "K"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "K"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Ky"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Ky"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyo"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyo"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou "
+      }
+    ]
+  },
+  "composing2": {
+    "text": "Kyou kyou",
+    "events": [
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "K",
+        "text": ""
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "K",
+        "text": "K"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "K"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Ky"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Ky"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyo"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyo"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou "
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "k",
+        "text": "Kyou "
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "k",
+        "text": "Kyou k"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Kyou k"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Kyou ky"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyou ky"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyou kyo"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou kyo"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou kyou"
+      }
+    ]
+  },
+  "candidates2": [],
+  "picked2": "space",
+  "state": {
+    "text": "Kyou kyou ",
+    "events": [
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "K",
+        "text": ""
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "K",
+        "text": "K"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "K"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Ky"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Ky"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyo"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyo"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou "
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "k",
+        "text": "Kyou "
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "k",
+        "text": "Kyou k"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Kyou k"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "y",
+        "text": "Kyou ky"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyou ky"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "o",
+        "text": "Kyou kyo"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou kyo"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": "u",
+        "text": "Kyou kyou"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou kyou"
+      },
+      {
+        "type": "input",
+        "inputType": "insertText",
+        "data": " ",
+        "text": "Kyou kyou "
+      }
+    ]
+  },
+  "second_word_compositionstart": 0,
+  "picked": "space/space",
+  "nested_compositionstart": 0
+}

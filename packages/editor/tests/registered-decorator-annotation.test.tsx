@@ -23,7 +23,7 @@ const annotationSchema = defineSchema({
 })
 
 describe('registered decorator', () => {
-  test('registered render fires for its type', async () => {
+  test('Scenario: A registered decorator render fires for its type', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -60,7 +60,7 @@ describe('registered decorator', () => {
     })
   })
 
-  test('renderDefault output equals the unregistered output', async () => {
+  test('Scenario: A registered decorator calling `renderDefault` renders the same output as an unregistered one', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -110,7 +110,7 @@ describe('registered decorator', () => {
     expect(identityRender).toHaveBeenCalled()
   })
 
-  test('focused and selected marks reflect the cursor', async () => {
+  test('Scenario: A registered decorator receives focused and selected states that follow the cursor', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
@@ -192,7 +192,7 @@ describe('registered decorator', () => {
     })
   })
 
-  test('composes inside a registered text block', async () => {
+  test('Scenario: A registered decorator composes inside a registered text block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -234,7 +234,7 @@ describe('registered decorator', () => {
     })
   })
 
-  test('a registered decorator whose name is not in the schema never fires', async () => {
+  test('Scenario: A registered decorator whose name is not in the schema never fires', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanAKey = keyGenerator()
@@ -279,7 +279,7 @@ describe('registered decorator', () => {
 })
 
 describe('registered annotation', () => {
-  test('registered render receives the markDef as `annotation`', async () => {
+  test('Scenario: A registered annotation render receives the markDef as `annotation`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -338,7 +338,7 @@ describe('registered annotation', () => {
     })
   })
 
-  test('renderDefault output equals the unregistered output', async () => {
+  test('Scenario: A registered annotation calling `renderDefault` renders the same output as an unregistered one', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -391,7 +391,7 @@ describe('registered annotation', () => {
     expect(identityRender).toHaveBeenCalled()
   })
 
-  test('focused and selected marks reflect the cursor', async () => {
+  test('Scenario: A registered annotation receives focused and selected states that follow the cursor', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
@@ -471,7 +471,7 @@ describe('registered annotation', () => {
     })
   })
 
-  test('composes inside a registered text block', async () => {
+  test('Scenario: A registered annotation composes inside a registered text block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -523,7 +523,7 @@ describe('registered annotation', () => {
     })
   })
 
-  test('a registered annotation whose _type is not in the schema never fires', async () => {
+  test('Scenario: A registered annotation whose _type is not in the schema never fires', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanAKey = keyGenerator()
@@ -584,7 +584,7 @@ describe('registered annotation', () => {
     )
   })
 
-  test('a mark whose markDef is missing is still skipped silently with a registered "*" annotation', async () => {
+  test('Scenario: A mark whose markDef is missing is still skipped silently with a registered "*" annotation', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanAKey = keyGenerator()
@@ -643,7 +643,7 @@ describe('registered annotation', () => {
     ).toEqual(new Set(['link']))
   })
 
-  test('a markDef whose _type is not in the schema is still skipped silently with a registered "*" annotation', async () => {
+  test('Scenario: A markDef whose _type is not in the schema is still skipped silently with a registered "*" annotation', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanAKey = keyGenerator()

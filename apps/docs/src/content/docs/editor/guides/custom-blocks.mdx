@@ -7,7 +7,7 @@ sidebar:
 
 import {LinkCard} from '@astrojs/starlight/components'
 
-The Portable Text Editor handles text blocks (paragraphs, headings, lists) by default. To add structured content like images, code blocks, or calls to action, you define custom block types in your schema and tell the editor how to render and insert them. If your editor still renders block objects and inline objects through the deprecated `renderBlock`/`renderChild` props, see the [migration guide](/editor/guides/migrate-render-props/) to move to node registrations.
+The Portable Text Editor handles text blocks (paragraphs, headings, lists) by default. To add structured content like images, code blocks, or calls to action, you define custom block types in your schema and tell the editor how to render and insert them. If your editor still renders block objects and inline objects through the `renderBlock`/`renderChild` props, removed in this major, see the [migration guide](/editor/guides/migrate-render-props/) to move to node registrations.
 
 You should be familiar with the [getting started guide](/editor/getting-started/) and [custom rendering](/editor/guides/custom-rendering/) first.
 
@@ -160,7 +160,7 @@ function Toolbar() {
   return (
     <div>
       {/* ... decorator and style buttons */}
-      {toolbarSchema.blockObjects?.map((blockObject) => (
+      {toolbarSchema.blockObjects.map((blockObject) => (
         <BlockObjectButton key={blockObject.name} schemaType={blockObject} />
       ))}
     </div>
@@ -365,10 +365,10 @@ function Toolbar() {
   return (
     <div>
       {/* ... decorator and style buttons */}
-      {toolbarSchema.blockObjects?.map((blockObject) => (
+      {toolbarSchema.blockObjects.map((blockObject) => (
         <BlockObjectButton key={blockObject.name} schemaType={blockObject} />
       ))}
-      {toolbarSchema.inlineObjects?.map((inlineObject) => (
+      {toolbarSchema.inlineObjects.map((inlineObject) => (
         <InlineObjectButton key={inlineObject.name} schemaType={inlineObject} />
       ))}
     </div>
@@ -426,7 +426,7 @@ The image block sits between text blocks. The stock ticker sits inside a text bl
 
 <LinkCard
   title="Customize editor rendering"
-  description="Reference for the decorator, annotation, and placeholder render props, plus range decorations."
+  description="Reference for decorator and annotation registrations, the placeholder render prop, and range decorations."
   href="/editor/guides/custom-rendering/"
 />
 <LinkCard

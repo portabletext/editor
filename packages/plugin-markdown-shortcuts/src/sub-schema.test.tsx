@@ -5,8 +5,8 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {MarkdownShortcutsPlugin} from './plugin.markdown-shortcuts'
 
-describe('Markdown shortcuts respect the sub-schema at the focus', () => {
-  test('`defaultStyle` is only queried when backspace can clear a style', async () => {
+describe('Markdown shortcuts and the sub-schema at the focus', () => {
+  test('Scenario: `defaultStyle` is only queried when backspace can clear a style', async () => {
     const schemaDefinition = defineSchema({
       styles: [{name: 'normal'}, {name: 'h1'}],
     })
@@ -83,7 +83,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
     expect(defaultStyle).toHaveBeenCalled()
   })
 
-  test('typing `# ` inside a code-block-line does not consume the keystroke', async () => {
+  test('Scenario: typing `# ` inside a code-block-line does not consume the keystroke', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}, {name: 'em'}],
       styles: [{name: 'normal'}, {name: 'h1'}, {name: 'h2'}, {name: 'h3'}],
@@ -193,7 +193,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
     })
   })
 
-  test('typing `- ` inside a code-block-line does not consume the keystroke', async () => {
+  test('Scenario: typing `- ` inside a code-block-line does not consume the keystroke', async () => {
     const schemaDefinition = defineSchema({
       styles: [{name: 'normal'}],
       lists: [{name: 'bullet'}, {name: 'number'}],
@@ -291,7 +291,7 @@ describe('Markdown shortcuts respect the sub-schema at the focus', () => {
     })
   })
 
-  test('typing a markdown link when no link annotation is declared does not consume the keystroke or move the caret', async () => {
+  test('Scenario: typing a markdown link when no link annotation is declared does not consume the keystroke or move the caret', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'strong'}],
       styles: [{name: 'normal'}],

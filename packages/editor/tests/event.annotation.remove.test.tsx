@@ -8,8 +8,8 @@ import {
 } from '../test-utils/text-selection'
 
 describe('event.annotation.remove', () => {
-  describe('Scenario: Removing annotation from part of annotated text', () => {
-    test('with `at`, without selection', async () => {
+  describe('Removing annotation from part of annotated text', () => {
+    test('Scenario: Removing annotation from part of annotated text with `at` and no selection', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -83,7 +83,7 @@ describe('event.annotation.remove', () => {
       })
     })
 
-    test('with `at`, with selection', async () => {
+    test('Scenario: Removing annotation from part of annotated text with `at` and a selection', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -162,7 +162,7 @@ describe('event.annotation.remove', () => {
       })
     })
 
-    test('without `at`, with selection', async () => {
+    test('Scenario: Removing annotation from part of annotated text with a selection and no `at`', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -225,7 +225,7 @@ describe('event.annotation.remove', () => {
       })
     })
 
-    test('without `at`, without selection', async () => {
+    test('Scenario: Removing annotation without `at` or a selection is a noop', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -287,8 +287,8 @@ describe('event.annotation.remove', () => {
     })
   })
 
-  describe('Scenario: Collapsed selection removes entire annotation', () => {
-    test('with collapsed `at` inside annotated span', async () => {
+  describe('Collapsed selection removes entire annotation', () => {
+    test('Scenario: A collapsed `at` inside an annotated span removes the entire annotation', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const span1Key = keyGenerator()

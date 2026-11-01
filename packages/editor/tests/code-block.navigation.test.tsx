@@ -32,7 +32,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('code block navigation', () => {
-  test('ArrowRight moves the caret forward inside a code block line', async () => {
+  test('Scenario: ArrowRight moves the caret forward inside a code block line', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()
@@ -93,7 +93,7 @@ describe('code block navigation', () => {
     })
   })
 
-  test('Backspace deletes one character inside a code block line', async () => {
+  test('Scenario: Backspace deletes one character inside a code block line', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const lineKey = keyGenerator()

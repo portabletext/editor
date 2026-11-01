@@ -29,7 +29,7 @@ const calloutContainer = [
 ]
 
 describe('insert.block inside a container', () => {
-  test('placement: after — inserts a sibling block AFTER the focused block inside the container', async () => {
+  test('Scenario: Inserting a block with placement after adds a sibling after the focused block inside the container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()
@@ -121,7 +121,7 @@ describe('insert.block inside a container', () => {
     })
   })
 
-  test('placement: before — inserts a sibling block BEFORE the focused block inside the container', async () => {
+  test('Scenario: Inserting a block with placement before adds a sibling before the focused block inside the container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()
@@ -215,7 +215,7 @@ describe('insert.block inside a container', () => {
     })
   })
 
-  test('placement: auto, collapsed caret at end of block — merges the inserted text block fragment into the existing one', async () => {
+  test('Scenario: Inserting a text block with placement auto at a caret at the end of a block merges it into that block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()
@@ -305,7 +305,7 @@ describe('insert.block inside a container', () => {
     })
   })
 
-  test('placement: auto, empty target block — replaces the empty block inside the container', async () => {
+  test('Scenario: Inserting a block with placement auto into an empty block replaces it inside the container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()
@@ -390,7 +390,7 @@ describe('insert.block inside a container', () => {
     })
   })
 
-  test('placement: auto, collapsed caret in middle of text block — splits block and inserts block object between', async () => {
+  test('Scenario: Inserting a block object with placement auto at a caret in the middle of a text block splits the block around it', async () => {
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()

@@ -47,14 +47,14 @@ There are three categories of Behavior Events:
 
 <LinkCard
   title="Behavior API reference"
-  description="Review the full list of native an synthetic events."
+  description="Review the full list of native and synthetic events."
   href="/editor/reference/behavior-api/"
 />
 
 The Behavior API uses events to trigger actions by listening for a specific event.
 
 :::note
-All events except native events can be executed or raised from within behaviors, but only synthetic events are guaranteed to resolve into a state change.
+Behaviors can raise synthetic and custom events, but they can only execute synthetic events. Only synthetic events are guaranteed to resolve into a state change.
 :::
 
 ## Guards
@@ -87,16 +87,18 @@ actions: [
 
 Passing parameters allows you to reuse conditional behavior, such as selecting part of a string, without rewriting the logic.
 
-Guards are optional. This means it's possible to create an unconditional behavior that always runs when an event occurs. The "soft return" behavior build into the PTE is one example:
+Guards are optional. This means it's possible to create an unconditional behavior that always runs when an event occurs. The "soft return" behavior built into the PTE is one example:
 
 ```js
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+
 const softReturn = defineBehavior({
   on: 'insert.soft break',
-  actions: [() => [execute({type: 'insert.text', text: '\n'})]],
+  actions: [() => [raise({type: 'insert.text', text: '\n'})]],
 })
 ```
 
-This behavior listens for soft break events and uses the `insert.text` action to insert a `\n` instead to prevent splitting text blocks with `Shift+Enter`. These unconditional behaviors are rare and you'll mostly encounter conditional behaviors.
+This behavior listens for soft break events and raises an `insert.text` event with a `\n` instead to prevent splitting text blocks with `Shift+Enter`. These unconditional behaviors are rare and you'll mostly encounter conditional behaviors.
 
 ## Actions
 
@@ -111,10 +113,9 @@ So far we've only seen examples that invoke a single action, but you can send mu
 To send an event back into the editor, use the `raise` action type or the `raise` helper. This is useful for chaining behaviors and default events.
 
 ```tsx
-// Approach A: With the type set to 'raise'
-// Approach B: With the raise helper
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
 
+// With the type set to 'raise'
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -125,7 +126,8 @@ const raisedUppercaseA = defineBehavior({
   ],
 })
 
-const raisedUppercaseA = defineBehavior({
+// With the raise helper
+const raisedUppercaseAWithHelper = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
   actions: [({snapshot, event}) => [raise({type: 'insert.text', text: 'A'})]],

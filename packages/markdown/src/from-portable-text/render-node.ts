@@ -55,6 +55,7 @@ export const createRenderNode = (
   listIndexMap: Map<string, number>,
   listDepthMap: Map<string, number>,
   reportDegradation: ReportDegradation | undefined,
+  backslashBreaksAfterEmptyLines = false,
 ): RenderNode => {
   // Keyed by the actual `@text` node objects `buildMarksTree` produces, not
   // by render order: a custom type/mark renderer can call `renderNode` with
@@ -63,6 +64,11 @@ export const createRenderNode = (
   // A synthetic node was never planned, so it's absent from the map and
   // renders its own raw text.
   const escapedTextByNode = new WeakMap<ToolkitTextNode, string>()
+
+  // A `'  \n'` break right after an empty line leaves a whitespace-only
+  // line, which Markdown reads as a blank line ending the paragraph. A
+  // backslash break keeps the line non-blank.
+  const backslashBreakNodes = new WeakSet<ToolkitTextNode>()
 
   // `renderListItem` renders a styled item through a copy of the block
   // (with `listItem` stripped, to avoid recursing back into itself), so a
@@ -119,24 +125,38 @@ export const createRenderNode = (
     chunks: ReadonlyArray<string>,
   ): void {
     let pointer = 0
+    let isFirstLine = true
+    let lineIsEmpty = true
 
     const visit = (
       node: ToolkitNestedPortableTextSpan | ToolkitTextNode | TypedObject,
     ) => {
       if (isPortableTextToolkitTextNode(node)) {
-        if (node.text !== '\n') {
-          const escaped = chunks[pointer]
-          if (escaped !== undefined) {
-            escapedTextByNode.set(node, escaped)
+        if (node.text === '\n') {
+          if (backslashBreaksAfterEmptyLines && lineIsEmpty && !isFirstLine) {
+            backslashBreakNodes.add(node)
           }
-          pointer++
+          isFirstLine = false
+          lineIsEmpty = true
+          return
+        }
+        const escaped = chunks[pointer]
+        if (escaped !== undefined) {
+          escapedTextByNode.set(node, escaped)
+        }
+        pointer++
+        if (node.text !== '') {
+          lineIsEmpty = false
         }
         return
       }
 
       if (isPortableTextToolkitSpan(node)) {
         node.children.forEach(visit)
+        return
       }
+
+      lineIsEmpty = false
     }
 
     nodes.forEach(visit)
@@ -298,7 +318,7 @@ export const createRenderNode = (
 
   function renderText(node: ToolkitTextNode): string {
     if (node.text === '\n') {
-      return renderers.hardBreak()
+      return backslashBreakNodes.has(node) ? '\\\n' : renderers.hardBreak()
     }
 
     return escapedTextByNode.get(node) ?? node.text

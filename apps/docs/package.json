@@ -38,20 +38,20 @@
     "lucide-react": "catalog:tooling",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "sharp": "^0.35.0",
-    "starlight-links-validator": "^0.25.2",
-    "starlight-package-managers": "^0.12.0",
+    "sharp": "^0.35.5",
+    "starlight-links-validator": "^0.27.0",
+    "starlight-package-managers": "^0.13.0",
     "starlight-typedoc": "^0.23.0",
     "tailwind-merge": "catalog:tooling",
     "tailwindcss": "catalog:tooling",
     "tailwindcss-animate": "^1.0.7",
     "ts-morph": "^27.0.2",
-    "typedoc": "^0.28.15",
-    "typedoc-plugin-markdown": "^4.8.0"
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.14.1"
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
-    "starlight-llms-txt": "^0.11.0",
+    "starlight-llms-txt": "^0.12.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

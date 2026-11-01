@@ -25,6 +25,7 @@ import {
   defaultStrongDecoratorDefinition,
   defaultTableObjectDefinition,
   defaultTaskListItemDefinition,
+  defaultUnderlineDecoratorDefinition,
   defaultUnorderedListItemDefinition,
   h1StyleDefinition,
   h2StyleDefinition,
@@ -142,6 +143,7 @@ type Options = {
     em?: DecoratorMatcher
     code?: DecoratorMatcher
     strikeThrough?: DecoratorMatcher
+    underline?: DecoratorMatcher
     link?: AnnotationMatcher<{href: string; title: string | undefined}>
   }
   block?: {
@@ -280,6 +282,7 @@ const defaultOptions = {
     strikeThrough: buildDecoratorMatcher(
       defaultStrikeThroughDecoratorDefinition,
     ),
+    underline: buildDecoratorMatcher(defaultUnderlineDecoratorDefinition),
     link: buildAnnotationMatcher(defaultLinkObjectDefinition),
   },
   types: {
@@ -429,15 +432,74 @@ function collectInlineText(
       if (depth === 0) {
         break
       }
-    } else if (child.type === 'text') {
-      text += child.content
-    } else if (child.type === 'softbreak') {
-      text += ' '
-    } else if (child.type === 'hardbreak') {
-      text += '\n'
+    } else {
+      text += inlineChildText(child)
     }
   }
   return text
+}
+
+/**
+ * Concatenates the plain text strictly between two inline children, for a
+ * degradation snippet whose open and close are both `html_inline` tokens
+ * and so can't be told apart by `type` the way `collectInlineText` does.
+ */
+function collectTextBetween(
+  children: ReadonlyArray<{type: string; content: string}>,
+  openIndex: number,
+  closeIndex: number,
+): string {
+  let text = ''
+  for (let i = openIndex + 1; i < closeIndex; i++) {
+    const child = children[i]
+    if (child) {
+      text += inlineChildText(child)
+    }
+  }
+  return text
+}
+
+function inlineChildText(child: {type: string; content: string}): string {
+  if (child.type === 'text') {
+    return child.content
+  }
+  if (child.type === 'softbreak') {
+    return ' '
+  }
+  if (child.type === 'hardbreak') {
+    return '\n'
+  }
+  return ''
+}
+
+/**
+ * Pairs bare `<u>` and `</u>` inline HTML tags (the form
+ * `DefaultUnderlineRenderer` writes) within one inline token's children,
+ * mapping each open's index to its close's index. Only paired tags become
+ * underline: `markDefRefs` outlives the inline token, so an open with no
+ * close would underline every block after it. markdown-it gives `~~` the
+ * same guarantee, emitting `s_open` only when its `s_close` follows.
+ */
+function pairUnderlineTags(
+  children: ReadonlyArray<{type: string; content: string}>,
+): Map<number, number> {
+  const closeByOpenIndex = new Map<number, number>()
+  const openIndexes: Array<number> = []
+  for (let index = 0; index < children.length; index++) {
+    const child = children[index]
+    if (child?.type !== 'html_inline') {
+      continue
+    }
+    if (/^<u>$/i.test(child.content)) {
+      openIndexes.push(index)
+    } else if (/^<\/u>$/i.test(child.content)) {
+      const openIndex = openIndexes.pop()
+      if (openIndex !== undefined) {
+        closeByOpenIndex.set(openIndex, index)
+      }
+    }
+  }
+  return closeByOpenIndex
 }
 
 // A per-group snippet/line list longer than this is truncated with an
@@ -555,6 +617,23 @@ function buildDegradationMessage(degradations: Array<Degradation>): string {
 export function markdownToPortableText(
   markdown: string,
   options?: Options,
+): Array<PortableTextBlock> {
+  return convertMarkdown(markdown, options, undefined)
+}
+
+export function markdownToPortableTextWithBlockLines(
+  markdown: string,
+  options: Pick<Options, 'schema'>,
+): {portableText: Array<PortableTextBlock>; blockStartLines: Array<number>} {
+  const blockStartLines: Array<number> = []
+  const portableText = convertMarkdown(markdown, options, blockStartLines)
+  return {portableText, blockStartLines}
+}
+
+function convertMarkdown(
+  markdown: string,
+  options: Options | undefined,
+  blockStartLines: Array<number> | undefined,
 ): Array<PortableTextBlock> {
   const carriedObjectKeys = new Set<string>()
   const consolidatedOptions = {
@@ -1077,11 +1156,37 @@ export function markdownToPortableText(
     }
   }
 
+  // Every top-level node is pushed while a token from inside its own
+  // construct is being walked (an opener, its content, or its closer), and
+  // closers and inline tokens carry no `map`, so the last `map` seen is a
+  // line of the construct that produced whatever lands on top level next.
+  // Nodes only ever leave the top level from its end, replaced by a node of
+  // the same construct (a container's `splice(startIndex)` before its
+  // wrapper is pushed, a table cell's `pop()`), so a line recorded for a
+  // removed node is still a line of whatever replaces it.
+  let lastMappedLine = 0
+  const recordBlockStartLines = () => {
+    if (blockStartLines === undefined) {
+      return
+    }
+    blockStartLines.length = Math.min(
+      blockStartLines.length,
+      portableText.length,
+    )
+    while (blockStartLines.length < portableText.length) {
+      blockStartLines.push(lastMappedLine)
+    }
+  }
+
   // Walk tokens
   for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+    recordBlockStartLines()
     const token = tokens[tokenIndex]
     if (!token) {
       continue
+    }
+    if (blockStartLines !== undefined && token.map) {
+      lastMappedLine = token.map[0]
     }
 
     switch (token.type) {
@@ -2322,6 +2427,10 @@ export function markdownToPortableText(
 
         // Walk its children for text/marks/links
         const inlineChildren = token.children ?? []
+        const underlineCloseByOpenIndex = pairUnderlineTags(inlineChildren)
+        const pairedUnderlineCloseIndexes = new Set(
+          underlineCloseByOpenIndex.values(),
+        )
         for (
           let childIndex = 0;
           childIndex < inlineChildren.length;
@@ -2618,18 +2727,12 @@ export function markdownToPortableText(
             case 'link_close': {
               // remove the last link key
               const markDefKeys = new Set(currentMarkDefs.map((d) => d._key))
-              let lastLinkIndex: number | undefined
 
-              for (const markDefRef of markDefRefs.reverse()) {
-                if (markDefKeys.has(markDefRef)) {
-                  lastLinkIndex = markDefRefs.indexOf(markDefRef)
+              for (let index = markDefRefs.length - 1; index >= 0; index--) {
+                if (markDefKeys.has(markDefRefs[index]!)) {
+                  markDefRefs.splice(index, 1)
                   break
                 }
-              }
-
-              if (lastLinkIndex !== undefined) {
-                const realIndex = markDefRefs.length - 1 - lastLinkIndex
-                markDefRefs.splice(realIndex, 1)
               }
               break
             }
@@ -2739,6 +2842,53 @@ export function markdownToPortableText(
               break
             }
             case 'html_inline': {
+              const underlineCloseIndex =
+                underlineCloseByOpenIndex.get(childIndex)
+
+              if (underlineCloseIndex !== undefined) {
+                const decorator = consolidatedOptions.marks.underline({
+                  context: {schema: consolidatedOptions.schema},
+                })
+
+                if (!decorator) {
+                  report({
+                    type: 'decorator-dropped',
+                    message:
+                      degradationMessage['decorator-dropped']('underline'),
+                    line: inlineLine(),
+                    snippet: truncateSnippet(
+                      collectTextBetween(
+                        inlineChildren,
+                        childIndex,
+                        underlineCloseIndex,
+                      ),
+                    ),
+                  })
+                  break
+                }
+
+                markDefRefs.push(decorator)
+                break
+              }
+
+              if (pairedUnderlineCloseIndexes.has(childIndex)) {
+                const decorator = consolidatedOptions.marks.underline({
+                  context: {schema: consolidatedOptions.schema},
+                })
+
+                if (!decorator) {
+                  break
+                }
+
+                const index = markDefRefs.lastIndexOf(decorator)
+
+                if (index !== -1) {
+                  markDefRefs.splice(index, 1)
+                }
+
+                break
+              }
+
               // Handle inline HTML based on configuration
               if (consolidatedOptions.html.inline === 'text') {
                 addSpan(childToken.content)
@@ -2861,6 +3011,7 @@ export function markdownToPortableText(
   }
 
   flushBlock()
+  recordBlockStartLines()
 
   if (degradationEvents.length > 0) {
     options?.onDegradation?.({

@@ -1,9 +1,13 @@
 import type {Schema} from '@portabletext/schema'
+import {isPortableTextBlock, toPlainText} from '@portabletext/toolkit'
 import type {
   ArbitraryTypedObject,
   PortableTextBlock,
   TypedObject,
 } from '@portabletext/types'
+import {defaultKeyGenerator} from '../key-generator'
+import {neutralForm, type Node} from '../neutral-form'
+import {markdownToPortableTextWithBlockLines} from '../to-portable-text/markdown-to-portable-text'
 import {buildListIndexMap} from './build-list-index-map'
 import type {
   SerializeDegradation,
@@ -166,7 +170,7 @@ export function portableTextToMarkdownWithLostContent(
 }
 
 function renderMarkdown(
-  blocks: Array<TypedObject>,
+  inputBlocks: Array<TypedObject>,
   options: Options,
   onLostContent:
     | ((
@@ -175,10 +179,13 @@ function renderMarkdown(
     | undefined,
 ): string {
   const renderers = {
-    block: {
-      ...defaultRenderers.block,
-      ...options.block,
-    },
+    block:
+      typeof options.block === 'function'
+        ? options.block
+        : {
+            ...defaultRenderers.block,
+            ...options.block,
+          },
     listItem: options.listItem ?? defaultRenderers.listItem,
     marks: {
       ...defaultRenderers.marks,
@@ -204,8 +211,14 @@ function renderMarkdown(
 
   const tracksDegradations = Boolean(options.onDegradation || onLostContent)
   const originalBlockKeys = tracksDegradations
-    ? blocks.map((node) => node._key)
+    ? inputBlocks.map((node) => node._key)
     : undefined
+
+  // List numbering is looked up by `_key`, so keyless blocks get one, on a
+  // copy so the caller's blocks are left as they were passed in.
+  const blocks = inputBlocks.map((block) =>
+    block._key ? block : {...block, _key: defaultKeyGenerator()},
+  )
 
   const {listIndexMap, listDepthMap} = buildListIndexMap(blocks)
 
@@ -283,27 +296,64 @@ function renderMarkdown(
       return {
         node,
         rendered: renderNode({node, index, isInline: false, renderNode}),
+        index,
       }
     })
     .filter(({rendered}) => rendered !== '')
 
-  const markdown = renderedBlocks
-    .map(({node, rendered}, index) => {
-      const nextBlock = renderedBlocks.at(index + 1)
+  const renderedOutputs = renderedBlocks.map(({rendered}) => rendered)
+  const spacings = renderedBlocks.slice(1).map(
+    (nextBlock, position) =>
+      renderBlockSpacing({
+        current: renderedBlocks[position]!.node,
+        next: nextBlock.node,
+      }) ?? '\n\n',
+  )
 
-      if (!nextBlock) {
-        return rendered
+  if (options.hardBreak === undefined && options.blockSpacing === undefined) {
+    const candidates = new Map<number, string>()
+    renderedBlocks.forEach(({node, rendered, index}, position) => {
+      const candidate = renderBackslashBreakCandidate(node, index)
+      if (candidate !== undefined && candidate !== rendered) {
+        candidates.set(position, candidate)
       }
-
-      const blockSpacing =
-        renderBlockSpacing({
-          current: node,
-          next: nextBlock.node,
-        }) ?? '\n\n'
-
-      return `${rendered}${blockSpacing}`
     })
-    .join('')
+    if (candidates.size > 0) {
+      for (const [position, candidate] of verifyCandidates(
+        renderedBlocks.map(({node}) => node),
+        renderedOutputs,
+        spacings,
+        candidates,
+        options.schema,
+      )) {
+        renderedOutputs[position] = candidate
+      }
+    }
+  }
+
+  const markdown = joinRenderedBlocks(renderedOutputs, spacings)
+
+  function renderBackslashBreakCandidate(
+    node: TypedObject,
+    index: number,
+  ): string | undefined {
+    if (!isPortableTextBlock(node) || !toPlainText(node).includes('\n\n')) {
+      return undefined
+    }
+    const renderCandidateNode = createRenderNode(
+      renderers,
+      listIndexMap,
+      listDepthMap,
+      undefined,
+      true,
+    )
+    return renderCandidateNode({
+      node,
+      index,
+      isInline: false,
+      renderNode: renderCandidateNode,
+    })
+  }
 
   if (options.onDegradation && internalDegradations.length > 0) {
     options.onDegradation({
@@ -315,6 +365,136 @@ function renderMarkdown(
   }
 
   return markdown
+}
+
+// Dropping a failed candidate restores a whitespace-only line, which can
+// change how later blocks parse (the next list item becomes a lazy
+// continuation), so the survivors need verifying again, and a failure then
+// drops every candidate rather than starting another round. The deserialize
+// options a caller pairs with this call are not visible here, so the parse
+// uses the default parser settings plus `schema`.
+function verifyCandidates(
+  nodes: ReadonlyArray<TypedObject>,
+  renderedOutputs: ReadonlyArray<string>,
+  spacings: ReadonlyArray<string>,
+  candidates: ReadonlyMap<number, string>,
+  schema: Schema | undefined,
+): ReadonlyMap<number, string> {
+  const expectedByBlock = parseByBlock(renderedOutputs, spacings, schema)
+  const firstRound = failingCandidates(
+    nodes,
+    renderedOutputs,
+    spacings,
+    candidates,
+    expectedByBlock,
+    schema,
+  )
+  if (firstRound.size === 0) {
+    return candidates
+  }
+  const survivors = new Map(
+    [...candidates].filter(([position]) => !firstRound.has(position)),
+  )
+  if (survivors.size === 0) {
+    return survivors
+  }
+  const secondRound = failingCandidates(
+    nodes,
+    renderedOutputs,
+    spacings,
+    survivors,
+    expectedByBlock,
+    schema,
+  )
+  return secondRound.size === 0 ? survivors : new Map()
+}
+
+function failingCandidates(
+  nodes: ReadonlyArray<TypedObject>,
+  renderedOutputs: ReadonlyArray<string>,
+  spacings: ReadonlyArray<string>,
+  candidates: ReadonlyMap<number, string>,
+  expectedByBlock: ReadonlyArray<ReadonlyArray<string>>,
+  schema: Schema | undefined,
+): Set<number> {
+  const parsedByBlock = parseByBlock(
+    renderedOutputs.map(
+      (rendered, position) => candidates.get(position) ?? rendered,
+    ),
+    spacings,
+    schema,
+  )
+  const failing = new Set<number>()
+  // A node holds the bytes from the line it starts in onward, so a block
+  // without a candidate that parses differently was changed by a candidate
+  // its nodes ran into: one after it, before the next block without a
+  // candidate that parses as expected.
+  let blamingLaterCandidates = false
+  parsedByBlock.forEach((parsed, position) => {
+    const expected = candidates.has(position)
+      ? [neutralForm(nodes[position] as unknown as Node)]
+      : expectedByBlock[position]!
+    const matches =
+      parsed.length === expected.length &&
+      parsed.every((form, formIndex) => form === expected[formIndex])
+    if (candidates.has(position)) {
+      if (!matches || blamingLaterCandidates) {
+        failing.add(position)
+      }
+    } else {
+      blamingLaterCandidates = !matches
+    }
+  })
+  return failing
+}
+
+function parseByBlock(
+  renderedOutputs: ReadonlyArray<string>,
+  spacings: ReadonlyArray<string>,
+  schema: Schema | undefined,
+): Array<Array<string>> {
+  const blockStartLines: Array<number> = []
+  let line = 0
+  renderedOutputs.forEach((rendered, position) => {
+    blockStartLines.push(line)
+    line += lineCount(rendered) + lineCount(spacings[position] ?? '')
+  })
+  const parsed = markdownToPortableTextWithBlockLines(
+    joinRenderedBlocks(renderedOutputs, spacings),
+    {schema},
+  )
+  const formsByBlock: Array<Array<string>> = renderedOutputs.map(() => [])
+  let position = 0
+  parsed.portableText.forEach((node, nodeIndex) => {
+    const nodeLine = parsed.blockStartLines[nodeIndex]!
+    while (
+      position + 1 < blockStartLines.length &&
+      blockStartLines[position + 1]! <= nodeLine
+    ) {
+      position++
+    }
+    formsByBlock[position]!.push(neutralForm(node as unknown as Node))
+  })
+  return formsByBlock
+}
+
+function lineCount(text: string): number {
+  let count = 0
+  for (const character of text) {
+    if (character === '\n') {
+      count++
+    }
+  }
+  return count
+}
+
+function joinRenderedBlocks(
+  renderedOutputs: ReadonlyArray<string>,
+  spacings: ReadonlyArray<string>,
+): string {
+  return renderedOutputs
+    .map((rendered, position) => `${rendered}${spacings[position] ?? ''}`)
+    .join('')
 }
 
 function gateDefaultTypeRenderers(

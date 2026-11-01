@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-sdk-value",
-  "version": "8.1.16",
+  "version": "8.1.18",
   "description": "Connect a Portable Text Editor with a Sanity document using the SDK",
   "keywords": [
     "@sanity/sdk",
@@ -73,7 +73,7 @@
     "@portabletext/schema": "workspace:^",
     "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "catalog:tooling",
-    "@sanity/sdk-react": "^3.0.0",
+    "@sanity/sdk-react": "^3.11.0",
     "@sanity/tsconfig": "catalog:tooling",
     "@types/react": "catalog:tooling",
     "@types/react-dom": "catalog:tooling",

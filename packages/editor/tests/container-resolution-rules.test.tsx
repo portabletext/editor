@@ -112,7 +112,7 @@ const colonySchema = defineSchema({
 })
 
 describe('Rule 1: registration is type-keyed, activation is position-gated', () => {
-  test('top-level registration of an inline-only type activates where the schema declares it', async () => {
+  test('Scenario: A top-level registration of an inline-only type activates where the schema declares it', async () => {
     const keyGenerator = createTestKeyGenerator()
 
     await createTestEditor({
@@ -181,7 +181,7 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
 })
 
 describe('Registration silent-skip behavior', () => {
-  test('top-level registration of an unknown type silently skips, other registrations unaffected', async () => {
+  test('Scenario: A top-level registration of an unknown type silently skips and other registrations are unaffected', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 
@@ -249,7 +249,7 @@ describe('Registration silent-skip behavior', () => {
     warn.mockRestore()
   })
 
-  test('nested registration of an unknown type silently skips, chain-aware warn, parent still registers', async () => {
+  test('Scenario: A nested registration of an unknown type silently skips with a chain-aware warning and the parent still registers', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 
@@ -321,7 +321,7 @@ describe('Registration silent-skip behavior', () => {
     warn.mockRestore()
   })
 
-  test('registration with a arrayField that does not exist on the schema type silently skips', async () => {
+  test('Scenario: A registration with an arrayField that does not exist on the schema type silently skips', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const keyGenerator = createTestKeyGenerator()
 
@@ -388,7 +388,7 @@ describe('Registration silent-skip behavior', () => {
 })
 
 describe('Rule 2: container chains are rooted in the editor value array', () => {
-  test('registered type does not activate inside an unregistered object-node ancestor', async () => {
+  test('Scenario: A registered type does not activate inside an unregistered object-node ancestor', async () => {
     // Container chains are rooted in the editor value array. When a
     // registered type appears inside an unregistered object-node
     // ancestor (here: `organism` and `cell` registered, but `colony`

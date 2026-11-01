@@ -7,8 +7,8 @@ import {userEvent} from 'vitest/browser'
 import {InputRulePlugin} from './plugin.input-rule'
 import {createStockTickerRule} from './rule.stock-ticker'
 
-describe('stock-ticker rule respects the sub-schema at the focus', () => {
-  test('does not trigger inside a container that does not declare the inline object', async () => {
+describe('stock-ticker rule and the sub-schema at the focus', () => {
+  test('Scenario: the stock-ticker rule does not trigger inside a container that does not declare the inline object', async () => {
     const schemaDefinition = defineSchema({
       // Root declares stock-ticker.
       inlineObjects: [{name: 'stock-ticker'}],

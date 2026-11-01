@@ -1,4 +1,5 @@
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -9,9 +10,12 @@ import {
   type BehaviorEvent,
 } from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/relay'
+import {move} from '../src/engine/core/move'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 import {getBlockStartPoint} from '../src/utils'
 import {
   getSelectionAfterText,
@@ -953,5 +957,599 @@ describe('event.select', () => {
         backward: true,
       })
     })
+  })
+
+  test('Scenario: Extending the focus by line raises `select` event', async () => {
+    const selectEvents: Array<BehaviorEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <>
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [forward(event)],
+                  ({event}) => [
+                    effect(() => {
+                      selectEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    const caretSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: caretSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(caretSelection)
+    })
+
+    // Option+Shift+ArrowDown only reaches this `move` on Apple platforms, so
+    // the test calls it the way the editable's keydown handler does.
+    move(editorEngineRef.current!, {unit: 'line', edge: 'focus'})
+
+    const extendedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(extendedSelection)
+    })
+
+    expect(selectEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+      },
+      {type: 'select', at: caretSelection},
+      {type: 'select', at: extendedSelection},
+    ])
+  })
+
+  test('Scenario: Extending the focus backward by line raises backward `select` event', async () => {
+    const selectEvents: Array<BehaviorEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <>
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [forward(event)],
+                  ({event}) => [
+                    effect(() => {
+                      selectEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    const caretSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: caretSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(caretSelection)
+    })
+
+    // Option+Shift+ArrowUp only reaches this `move` on Apple platforms, so
+    // the test calls it the way the editable's keydown handler does.
+    move(editorEngineRef.current!, {unit: 'line', edge: 'focus', reverse: true})
+
+    const extendedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      backward: true,
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(extendedSelection)
+    })
+
+    expect(selectEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+      },
+      {type: 'select', at: caretSelection},
+      {type: 'select', at: extendedSelection},
+    ])
+  })
+
+  test('Scenario: Moving an expanded selection down by line at the document end raises `select` event', async () => {
+    const selectEvents: Array<BehaviorEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <>
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [forward(event)],
+                  ({event}) => [
+                    effect(() => {
+                      selectEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    const expandedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: expandedSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
+    })
+
+    move(editorEngineRef.current!, {unit: 'line'})
+
+    const collapsedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(collapsedSelection)
+    })
+
+    expect(selectEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+      },
+      {type: 'select', at: expandedSelection},
+      {type: 'select', at: collapsedSelection},
+    ])
+  })
+
+  test('Scenario: Swallowing the collapse of an expanded selection keeps it through a word move at the document end', async () => {
+    const selectEvents: Array<BehaviorEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <>
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [forward(event)],
+                  ({event}) => [
+                    effect(() => {
+                      selectEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                guard: ({event}) =>
+                  event.at?.anchor.offset === 3 && event.at?.focus.offset === 3,
+                actions: [],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    const expandedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: expandedSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
+    })
+
+    await userEvent.keyboard('{Control>}{ArrowRight}{/Control}')
+
+    const collapsedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+
+    await vi.waitFor(() => {
+      expect(selectEvents).toEqual([
+        {
+          type: 'select',
+          at: {
+            anchor: {
+              path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+              offset: 0,
+            },
+            backward: false,
+          },
+        },
+        {type: 'select', at: expandedSelection},
+        {type: 'select', at: collapsedSelection},
+        {type: 'select', at: collapsedSelection},
+      ])
+    })
+
+    expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
+  })
+
+  test('Scenario: Moving an expanded selection up by line at the document start raises `select` event', async () => {
+    const selectEvents: Array<BehaviorEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <>
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [forward(event)],
+                  ({event}) => [
+                    effect(() => {
+                      selectEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    const expandedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: expandedSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
+    })
+
+    move(editorEngineRef.current!, {unit: 'line', reverse: true})
+
+    const collapsedSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      backward: false,
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(collapsedSelection)
+    })
+
+    expect(selectEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+      },
+      {type: 'select', at: expandedSelection},
+      {type: 'select', at: collapsedSelection},
+    ])
+  })
+
+  test('Scenario: Setting an unchanged selection raises no `select` event', async () => {
+    const selectEvents: Array<BehaviorEvent> = []
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: fooBlockKey,
+          _type: 'block',
+          children: [{_key: fooSpanKey, _type: 'span', text: 'foo'}],
+        },
+      ],
+      children: (
+        <>
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'select',
+                actions: [
+                  ({event}) => [forward(event)],
+                  ({event}) => [
+                    effect(() => {
+                      selectEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    const endSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 3,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: endSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(endSelection)
+    })
+
+    editorEngineRef.current!.setSelection({
+      anchor: endSelection.anchor,
+      focus: endSelection.focus,
+    })
+
+    expect(editor.getSnapshot().context.selection).toEqual(endSelection)
+
+    move(editorEngineRef.current!, {unit: 'line', edge: 'focus'})
+
+    expect(editor.getSnapshot().context.selection).toEqual(endSelection)
+
+    const startSelection = {
+      anchor: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      backward: false,
+    }
+
+    editor.send({type: 'select', at: startSelection})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual(startSelection)
+    })
+
+    expect(selectEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          backward: false,
+        },
+      },
+      {type: 'select', at: endSelection},
+      {type: 'select', at: startSelection},
+    ])
   })
 })

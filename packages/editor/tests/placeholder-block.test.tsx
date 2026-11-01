@@ -136,8 +136,8 @@ describe(createPlaceholderBlock.name, () => {
     })
   })
 
-  describe('Scenario: Placeholder removed by incoming patch', () => {
-    test('no foreign value', async () => {
+  describe('Placeholder removed by incoming patch', () => {
+    test('Scenario: Placeholder removed by incoming patch with no foreign value', async () => {
       let foreignValue: Array<PortableTextBlock> | undefined
       const patches: Array<Patch> = []
       const keyGenerator = createTestKeyGenerator()
@@ -184,7 +184,7 @@ describe(createPlaceholderBlock.name, () => {
       })
     })
 
-    test('with foreign value', async () => {
+    test('Scenario: Placeholder removed by incoming patch with a foreign value', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -259,7 +259,7 @@ describe(createPlaceholderBlock.name, () => {
       })
     })
 
-    test('undoing placeholder insertion is a noop', async () => {
+    test('Scenario: Undoing placeholder insertion after an incoming patch is a noop', async () => {
       const patches: Array<Patch> = []
       const keyGenerator = createTestKeyGenerator()
       const {editor} = await createTestEditor({
@@ -1209,8 +1209,8 @@ describe(createPlaceholderBlock.name, () => {
     })
   })
 
-  describe('Scenario: Placeholder can be represented by a custom React Node', () => {
-    test('no initial value', async () => {
+  describe('Placeholder can be represented by a custom React Node', () => {
+    test('Scenario: Custom placeholder renders with no initial value', async () => {
       const renderPlaceholder = () => <div>Placeholder</div>
       const {locator} = await createTestEditor({
         editableProps: {renderPlaceholder},
@@ -1221,7 +1221,7 @@ describe(createPlaceholderBlock.name, () => {
       })
     })
 
-    test('initial empty text block', async () => {
+    test('Scenario: Custom placeholder renders for an initial empty text block', async () => {
       const renderPlaceholder = () => <div>Placeholder</div>
       const {locator} = await createTestEditor({
         initialValue: [
@@ -1241,7 +1241,7 @@ describe(createPlaceholderBlock.name, () => {
       })
     })
 
-    test('initial empty heading does not render placeholder', async () => {
+    test('Scenario: Custom placeholder does not render for an initial empty heading', async () => {
       const renderPlaceholder = () => <div>Placeholder</div>
       const {locator} = await createTestEditor({
         schemaDefinition: defineSchema({

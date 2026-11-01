@@ -5,8 +5,8 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {CharacterPairDecoratorPlugin} from './plugin.character-pair-decorator'
 
-describe('Character pair decorator respects the sub-schema at the focus', () => {
-  test('typing `*foo*` inside a code-block-line does not toggle em', async () => {
+describe('Character pair decorator and the sub-schema at the focus', () => {
+  test('Scenario: typing `*foo*` inside a code-block-line does not toggle em', async () => {
     const schemaDefinition = defineSchema({
       decorators: [{name: 'em'}, {name: 'strong'}],
       blockObjects: [

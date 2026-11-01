@@ -44,7 +44,7 @@ const MENTION_WRAPPER_ATTRS =
 const SPAN_WRAPPER_ATTRS = 'data-testid="span-wrapper" data-pt-marks="true"'
 
 describe('inline pipeline mode inherits from text block', () => {
-  test('registered inline-object inside a bare text block gets the same wrapper attributes as inside a registered one', async () => {
+  test('Scenario: A registered inline-object inside a bare text block gets the same wrapper attributes as inside a registered one', async () => {
     const schema = defineSchema({
       inlineObjects: [{name: 'mention', fields: []}],
     })
@@ -85,7 +85,7 @@ describe('inline pipeline mode inherits from text block', () => {
     })
   })
 
-  test('registered span inside a bare text block gets the same wrapper attributes as inside a registered one', async () => {
+  test('Scenario: A registered span inside a bare text block gets the same wrapper attributes as inside a registered one', async () => {
     const schema = defineSchema({})
     const span = defineSpan({
       type: 'span',
@@ -117,7 +117,7 @@ describe('inline pipeline mode inherits from text block', () => {
     })
   })
 
-  test('registered inline-object inside a registered text block gets the same wrapper attributes as inside a bare one', async () => {
+  test('Scenario: A registered inline-object inside a registered text block gets the same wrapper attributes as inside a bare one', async () => {
     const schema = defineSchema({
       inlineObjects: [{name: 'mention', fields: []}],
     })
@@ -166,7 +166,7 @@ describe('inline pipeline mode inherits from text block', () => {
     })
   })
 
-  test('registered span inside a registered text block gets the same wrapper attributes as inside a bare one', async () => {
+  test('Scenario: A registered span inside a registered text block gets the same wrapper attributes as inside a bare one', async () => {
     const schema = defineSchema({})
     const richBlock = defineTextBlock({
       type: 'block',

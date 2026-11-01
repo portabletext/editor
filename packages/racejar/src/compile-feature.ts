@@ -94,7 +94,6 @@ export function compileFeature<
   const scenarios = pickles.map((pickle) => {
     const skippedPickle = pickle.tags.some((tag) => tag.name === '@skip')
     const onlyPickle = pickle.tags.some((tag) => tag.name === '@only')
-    context = {} as TContext
 
     const steps = pickle.steps.map((step) => {
       const matchingSteps = stepImplementations
@@ -162,12 +161,17 @@ export function compileFeature<
     tag: skippedFeature ? 'skip' : onlyFeature ? 'only' : undefined,
     name: gherkinDocument.feature.name,
     scenarios,
-    beforeHooks: (hooks ?? [])
-      .filter((hook) => hook.type === 'Before')
-      .map(
-        (hook) => (stepContext: TStepContext | undefined) =>
-          hook.callback(Object.assign(context, stepContext)),
-      ),
+    beforeHooks: [
+      () => {
+        context = {} as TContext
+      },
+      ...(hooks ?? [])
+        .filter((hook) => hook.type === 'Before')
+        .map(
+          (hook) => (stepContext: TStepContext | undefined) =>
+            hook.callback(Object.assign(context, stepContext)),
+        ),
+    ],
     afterHooks: (hooks ?? [])
       .filter((hook) => hook.type === 'After')
       .map(

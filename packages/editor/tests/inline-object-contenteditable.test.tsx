@@ -9,7 +9,7 @@ import {
 import {createTestEditor} from '../src/test/vitest'
 
 describe('inline-object void wrapper contenteditable', () => {
-  test('the consumer wrapper has `contenteditable="false"` when registered via `defineInlineObject`', async () => {
+  test('Scenario: The consumer wrapper has `contenteditable="false"` when registered via `defineInlineObject`', async () => {
     const stockTickerLeaf = defineInlineObject({
       type: 'stock-ticker',
       render: ({attributes, children, node}) => {
@@ -54,7 +54,7 @@ describe('inline-object void wrapper contenteditable', () => {
     })
   })
 
-  test('the engine-rendered placeholder wrapper has `contenteditable="false"` inside a container without `defineInlineObject`', async () => {
+  test('Scenario: The engine-rendered placeholder wrapper has `contenteditable="false"` inside a container without `defineInlineObject`', async () => {
     const cellContainer = defineContainer({
       type: 'cell',
       arrayField: 'content',

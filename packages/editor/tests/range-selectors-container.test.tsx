@@ -31,7 +31,7 @@ const codeBlockContainer = defineContainer({
 })
 
 describe('range selectors (container awareness)', () => {
-  test('range selectors resolve at correct depth when selection is inside a container', async () => {
+  test('Scenario: Range selectors resolve at the correct depth when the selection is inside a container', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()
@@ -144,7 +144,7 @@ describe('range selectors (container awareness)', () => {
     ])
   })
 
-  test('getSelectedValue preserves the container when the selection is wholly inside it', async () => {
+  test('Scenario: `getSelectedValue` preserves the container when the selection is wholly inside it', async () => {
     const keyGenerator = createTestKeyGenerator()
     const codeBlockKey = keyGenerator()
     const line1Key = keyGenerator()

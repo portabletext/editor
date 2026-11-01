@@ -18,7 +18,6 @@ jobs:
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
-          cache: pnpm
           node-version: lts/*
 
       - name: Install project dependencies
@@ -26,4 +25,4 @@ jobs:
 
       - uses: rexxars/bundle-stats@v2
         with:
-          build-command: pnpm build --filter @portabletext/editor... --filter @portabletext/markdown...
+          build-command: pnpm build --filter='./packages/*'

@@ -158,56 +158,56 @@ async function navFrom(
 }
 
 describe('table keyboard navigation', () => {
-  test('Tab moves to the next cell in the row', async () => {
+  test('Scenario: `Tab` moves to the next cell in the row', async () => {
     const editor = await navFrom('c00', 1, 'Tab')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c01')
     })
   })
 
-  test('Tab wraps to the first cell of the next row', async () => {
+  test('Scenario: `Tab` wraps to the first cell of the next row', async () => {
     const editor = await navFrom('c01', 1, 'Tab')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c10')
     })
   })
 
-  test('Tab at the last cell does not move (passes through)', async () => {
+  test('Scenario: `Tab` at the last cell passes through without moving', async () => {
     const editor = await navFrom('c11', 1, 'Tab')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c11')
     })
   })
 
-  test('Shift+Tab moves to the previous cell', async () => {
+  test('Scenario: `Shift+Tab` moves to the previous cell', async () => {
     const editor = await navFrom('c01', 1, 'Shift>}{Tab}{/Shift')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
     })
   })
 
-  test('Shift+Tab wraps to the last cell of the previous row', async () => {
+  test('Scenario: `Shift+Tab` wraps to the last cell of the previous row', async () => {
     const editor = await navFrom('c10', 1, 'Shift>}{Tab}{/Shift')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c01')
     })
   })
 
-  test('Shift+Tab at the first cell does not move (passes through)', async () => {
+  test('Scenario: `Shift+Tab` at the first cell passes through without moving', async () => {
     const editor = await navFrom('c00', 1, 'Shift>}{Tab}{/Shift')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
     })
   })
 
-  test('ArrowDown moves to the cell directly below (same column)', async () => {
+  test('Scenario: `ArrowDown` moves to the cell directly below in the same column', async () => {
     const editor = await navFrom('c01', 1, 'ArrowDown')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c11')
     })
   })
 
-  test('ArrowDown in the bottom row escapes into a block after the table', async () => {
+  test('Scenario: `ArrowDown` in the bottom row escapes into a block after the table', async () => {
     const editor = await navFrom('c10', 1, 'ArrowDown')
     await vi.waitFor(() => {
       // The table is the document's only block, so there is nothing below
@@ -226,7 +226,7 @@ describe('table keyboard navigation', () => {
     })
   })
 
-  test('Tab inside a list item indents instead of navigating', async () => {
+  test('Scenario: `Tab` inside a list item indents instead of navigating', async () => {
     // Core owns `Tab`/`Shift+Tab` for list items; the cell navigation
     // yields so indenting inside a cell keeps working.
     const listValue = [
@@ -308,7 +308,7 @@ describe('table keyboard navigation', () => {
     expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
   })
 
-  test('ArrowUp on an image at the top of a cell inserts a text block above it', async () => {
+  test('Scenario: `ArrowUp` on an image at the top of a cell inserts a text block above it', async () => {
     // A focused block object at its cell's edge belongs to the engine's
     // lonely-block-object escape (insert an empty text block beside it,
     // inside the cell), not to cell navigation.
@@ -434,7 +434,7 @@ describe('table keyboard navigation', () => {
     expect(editor.getSnapshot().context.value).toHaveLength(1)
   })
 
-  test('round trips through a 3x3 table with a block above never accumulate blocks', async () => {
+  test('Scenario: round trips through a 3x3 table with a block above never accumulate blocks', async () => {
     // Field-reported: repeatedly arrowing through a table left a trail of
     // inserted blocks. The trigger needed a 3x3 grid, a text block above,
     // and several passes; chromium's native ArrowUp at the top row first
@@ -551,7 +551,7 @@ describe('table keyboard navigation', () => {
     // measured 10-15 s, against vitest's 15 s default.
   }, 60_000)
 
-  test('repeated ArrowDown escapes reuse the block below instead of accumulating', async () => {
+  test('Scenario: repeated `ArrowDown` escapes reuse the block below instead of accumulating', async () => {
     const editor = await navFrom('c10', 1, 'ArrowDown')
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toHaveLength(2)
@@ -574,7 +574,7 @@ describe('table keyboard navigation', () => {
     expect(editor.getSnapshot().context.value).toHaveLength(2)
   })
 
-  test('ArrowDown in the bottom row moves into the block below', async () => {
+  test('Scenario: `ArrowDown` in the bottom row moves into the block below', async () => {
     // Native chromium ArrowDown at a table's bottom row walks forward
     // through the cells instead of exiting, so the plugin owns the
     // sibling case: the caret lands in the block below, nothing inserts.
@@ -594,7 +594,7 @@ describe('table keyboard navigation', () => {
     expect(editor.getSnapshot().context.value).toHaveLength(2)
   })
 
-  test('ArrowUp in the top row moves into the block above', async () => {
+  test('Scenario: `ArrowUp` in the top row moves into the block above', async () => {
     const editor = await navFrom('c00', 0, 'ArrowUp', [
       {
         _type: 'block',
@@ -611,14 +611,14 @@ describe('table keyboard navigation', () => {
     expect(editor.getSnapshot().context.value).toHaveLength(2)
   })
 
-  test('ArrowUp moves to the cell directly above (same column)', async () => {
+  test('Scenario: `ArrowUp` moves to the cell directly above in the same column', async () => {
     const editor = await navFrom('c10', 0, 'ArrowUp')
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
     })
   })
 
-  test('ArrowUp at the document-edge cell escapes into a block before the table', async () => {
+  test('Scenario: `ArrowUp` at the document-edge cell escapes into a block before the table', async () => {
     const editor = await navFrom('c00', 0, 'ArrowUp')
     await vi.waitFor(() => {
       // The table is the document's only block, so the engine's container
@@ -637,7 +637,7 @@ describe('table keyboard navigation', () => {
     })
   })
 
-  test('ArrowUp lands in the last block of the cell above', async () => {
+  test('Scenario: `ArrowUp` lands in the last block of the cell above', async () => {
     const value = [
       {
         _type: 'table',
@@ -708,7 +708,7 @@ describe('table keyboard navigation across a wrapped cell', () => {
     wrapStyle.remove()
   })
 
-  test('ArrowDown from the last visual line crosses to the cell below', async () => {
+  test('Scenario: `ArrowDown` from the last visual line crosses to the cell below', async () => {
     const editor = await navFrom(
       'c00',
       longText.length,
@@ -720,21 +720,21 @@ describe('table keyboard navigation across a wrapped cell', () => {
     })
   })
 
-  test('ArrowDown from an earlier line stays in the cell (passes through)', async () => {
+  test('Scenario: `ArrowDown` from an earlier line passes through and stays in the cell', async () => {
     const editor = await navFrom('c00', 0, 'ArrowDown', wrappedValue)
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
     })
   })
 
-  test('ArrowUp from the first visual line crosses to the cell above', async () => {
+  test('Scenario: `ArrowUp` from the first visual line crosses to the cell above', async () => {
     const editor = await navFrom('c10', 0, 'ArrowUp', wrappedValue)
     await vi.waitFor(() => {
       expect(focusCellKey(editor.getSnapshot())).toEqual('c00')
     })
   })
 
-  test('ArrowUp from a later line stays in the cell (passes through)', async () => {
+  test('Scenario: `ArrowUp` from a later line passes through and stays in the cell', async () => {
     const editor = await navFrom(
       'c10',
       longText.length,
@@ -747,7 +747,7 @@ describe('table keyboard navigation across a wrapped cell', () => {
   })
 })
 
-describe('table keyboard navigation preserves the caret column', () => {
+describe('table keyboard navigation and the caret column', () => {
   // Identical text in the stacked cells, so the x of a given offset in one
   // cell is exactly the x of the same offset in the other.
   const columnValue = [
@@ -761,7 +761,7 @@ describe('table keyboard navigation preserves the caret column', () => {
     },
   ]
 
-  test('ArrowDown lands at the same column in the cell below', async () => {
+  test('Scenario: `ArrowDown` lands at the same column in the cell below', async () => {
     const editor = await navFrom('c00', 3, 'ArrowDown', columnValue)
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection?.focus).toEqual({
@@ -771,7 +771,7 @@ describe('table keyboard navigation preserves the caret column', () => {
     })
   })
 
-  test('ArrowUp lands at the same column in the cell above', async () => {
+  test('Scenario: `ArrowUp` lands at the same column in the cell above', async () => {
     const editor = await navFrom('c10', 2, 'ArrowUp', columnValue)
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.selection?.focus).toEqual({

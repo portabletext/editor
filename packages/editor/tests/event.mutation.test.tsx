@@ -565,7 +565,7 @@ describe('event.mutation', () => {
     await render(<App />)
 
     const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo')
@@ -593,8 +593,10 @@ describe('event.mutation', () => {
         },
       ])
 
-      expect(mutationEvents).toHaveLength(1)
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual(patches)
     })
+
+    const deliveredMutationCount = mutationEvents.length
 
     await userEvent.type(locator, 'bar')
 
@@ -608,7 +610,7 @@ describe('event.mutation', () => {
         },
       ])
 
-      expect(mutationEvents.at(1)).toEqual({
+      expect(mutationEvents.at(deliveredMutationCount)).toEqual({
         type: 'mutation',
         patches: [
           {
@@ -636,7 +638,7 @@ describe('event.mutation', () => {
         ],
       })
 
-      expect(mutationEvents.length).toBe(2)
+      expect(mutationEvents.length).toBe(deliveredMutationCount + 1)
     })
   })
 })

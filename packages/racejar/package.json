@@ -1,6 +1,6 @@
 {
   "name": "racejar",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A testing framework agnostic Gherkin driver",
   "keywords": [
     "cucumber",
@@ -82,6 +82,17 @@
     "@jest/globals": "^30.3.0",
     "@playwright/test": "^1.62.1",
     "vitest": "^5.0.4"
+  },
+  "peerDependenciesMeta": {
+    "@jest/globals": {
+      "optional": true
+    },
+    "@playwright/test": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=22.12"

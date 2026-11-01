@@ -1,5 +1,22 @@
 # @portabletext/plugin-typeahead-picker
 
+## 7.0.24
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.24
+
+## 7.0.23
+
+### Patch Changes
+
+- [#3450](https://github.com/portabletext/editor/pull/3450) [`f77f800`](https://github.com/portabletext/editor/commit/f77f80020db68e3a31b29d0587f985fa094adcd7) Thanks [@christianhg](https://github.com/christianhg)! - fix: restart the `debounceMs` wait on every keyword change
+  
+  With `debounceMs` set, `getMatches` now runs once the keyword has stopped changing for `debounceMs`, as documented. Previously the wait started at the first keystroke and later keystrokes did not postpone it, so a request could run before typing stopped. For example, with `debounceMs: 1000` and `@abcd` typed one key every 400ms, `getMatches` was called with `ab` and then `abcd`. Now it is called only with `abcd`, 1000ms after the last keystroke. Pickers without `debounceMs` behave as before.
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.23
+
 ## 7.0.22
 
 ### Patch Changes

@@ -2194,7 +2194,7 @@ describe('createDecorationLayer: batcher lifecycle', () => {
   })
 })
 
-describe('DecorationsPlugin', () => {
+describe(DecorationsPlugin.name, () => {
   test('Scenario: DecorationsPlugin registers on mount and decorates text', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -2448,7 +2448,7 @@ describe('DecorationsPlugin', () => {
   })
 })
 
-describe('useDecorationLayer', () => {
+describe(useDecorationLayer.name, () => {
   test('Scenario: the returned handle stays the same object across re-renders, even as decorations changes', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()

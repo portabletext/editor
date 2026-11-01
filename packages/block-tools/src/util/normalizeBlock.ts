@@ -30,6 +30,9 @@ export interface BlockNormalizationOptions {
   keyGenerator?: () => string
 }
 
+// Keep in sync with `packages/html/src/deserializer/normalize-block.ts`:
+// `@portabletext/html` keeps its copy internal, since exporting it would add
+// permanent public API there.
 /**
  * Normalizes a block by ensuring it has a `_key` property. If the block is a
  * portable text block, additional normalization is applied:

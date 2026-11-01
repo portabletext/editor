@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.settings.json",
   "include": ["**/*.ts", "**/*.tsx", "src/index.ts"],
-  "exclude": ["dist", "./node_modules"],
+  "exclude": ["dist", "./node_modules", "bundle-tests"],
   "compilerOptions": {
     "paths": {
       "@portabletext/editor/test": ["../editor/src/test/_exports/index.ts"],

@@ -5,7 +5,10 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {applyMarkdownEdit} from './apply-markdown-edit'
+import {
+  applyMarkdownEdit,
+  type ReconciliationReport,
+} from './apply-markdown-edit'
 import {defaultTableObjectDefinition} from './default-schema'
 import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
 
@@ -959,6 +962,377 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
+  test('an empty line between hard breaks round-trips with its keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\n\nbar', marks: []},
+        ],
+      },
+    ]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      portableTextToMarkdown(structuredClone(stored)),
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo\n\nbar', marks: []}],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('two empty lines between hard breaks round-trips with its keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'foo\n\n\nbar',
+            marks: [],
+          },
+        ],
+      },
+    ]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      portableTextToMarkdown(structuredClone(stored)),
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo\n\n\nbar', marks: []},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('an empty line between hard breaks in a blockquote round-trips with its keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'blockquote',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\n\nbar', marks: []},
+        ],
+      },
+    ]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      portableTextToMarkdown(structuredClone(stored)),
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'blockquote',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo\n\nbar', marks: []}],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('two empty lines between hard breaks in a blockquote round-trips with its keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'blockquote',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'foo\n\n\nbar',
+            marks: [],
+          },
+        ],
+      },
+    ]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      portableTextToMarkdown(structuredClone(stored)),
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'blockquote',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo\n\n\nbar', marks: []},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('an empty line between hard breaks in a list item round-trips with its keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        listItem: 'bullet',
+        level: 1,
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\n\nbar', marks: []},
+        ],
+      },
+    ]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      portableTextToMarkdown(structuredClone(stored)),
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        listItem: 'bullet',
+        level: 1,
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo\n\nbar', marks: []}],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
+  test('two empty lines between hard breaks in a list item round-trips with its keys', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        listItem: 'bullet',
+        level: 1,
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'foo\n\n\nbar',
+            marks: [],
+          },
+        ],
+      },
+    ]
+    let report!: ReconciliationReport
+    const result = applyMarkdownEdit(
+      stored,
+      portableTextToMarkdown(structuredClone(stored)),
+      {
+        deserialize: {keyGenerator},
+        onReconciliation: (r) => {
+          report = r
+        },
+      },
+    )
+    expect(result).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        listItem: 'bullet',
+        level: 1,
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k1', text: 'foo\n\n\nbar', marks: []},
+        ],
+      },
+    ])
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
   test('empty markdown means an empty value', () => {
     const keyGenerator = createTestKeyGenerator()
     expect(
@@ -1517,6 +1891,49 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
+  test('an unchanged code block holding a line of backticks keeps its key', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {_type: 'code', _key: 'code1', code: 'foo\n```\nbar'},
+      {_type: 'code', _key: 'code2', code: '````'},
+    ]
+    let report!: ReconciliationReport
+    expect(
+      applyMarkdownEdit(
+        stored,
+        portableTextToMarkdown(structuredClone(stored)),
+        {
+          deserialize: {keyGenerator},
+          onReconciliation: (reconciliationReport) => {
+            report = reconciliationReport
+          },
+        },
+      ),
+    ).toEqual(stored)
+    expect(report).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'code1',
+          path: [{_key: 'code1'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'code2',
+          path: [{_key: 'code2'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+  })
+
   test('repeated horizontal rules pair in order around an edit', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
@@ -1556,6 +1973,167 @@ describe(applyMarkdownEdit.name, () => {
         ],
       },
     ])
+  })
+
+  test('editing words next to an underlined span keeps the underline', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'before use.',
+      'before first use.',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'safety notice',
+            marks: ['underline'],
+          },
+          {_type: 'span', _key: 's3', text: ' before first use.', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'foo bar', marks: []}],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('rewriting underlined words keeps the underline on the new words', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'safety notice',
+      'safety warning',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'safety warning',
+            marks: ['underline'],
+          },
+          {_type: 'span', _key: 's3', text: ' before use.', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'foo bar', marks: []}],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('underlining a word in another block adds the underline there', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      'foo bar',
+      'foo <u>bar</u>',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'safety notice',
+            marks: ['underline'],
+          },
+          {_type: 'span', _key: 's3', text: ' before use.', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k5', text: 'foo ', marks: []},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['underline']},
+        ],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
+  })
+
+  test('removing the underline tags removes the underline', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const onDegradation = vi.fn()
+    const stored = [safetyNoticeBlock(), block('b2', 's4', 'foo bar')]
+    const markdown = portableTextToMarkdown(structuredClone(stored)).replace(
+      '<u>safety notice</u>',
+      'safety notice',
+    )
+    expect(
+      applyMarkdownEdit(stored, markdown, {
+        deserialize: {keyGenerator, onDegradation},
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 's1',
+            text: 'Read the safety notice before use.',
+            marks: [],
+          },
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's4', text: 'foo bar', marks: []}],
+      },
+    ])
+    expect(onDegradation).not.toHaveBeenCalled()
   })
 
   test('two links in one block each keep their annotation keys', () => {
@@ -3059,4 +3637,18 @@ function manyParagraphs(count: number, prefix: string): string {
     {length: count},
     (_, index) => `${prefix} filler text ${index}`,
   ).join('\n\n')
+}
+
+function safetyNoticeBlock(): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: 'b1',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: 's1', text: 'Read the ', marks: []},
+      {_type: 'span', _key: 's2', text: 'safety notice', marks: ['underline']},
+      {_type: 'span', _key: 's3', text: ' before use.', marks: []},
+    ],
+  }
 }

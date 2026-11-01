@@ -8,7 +8,7 @@ import {
 import {defineSchema} from '@portabletext/schema'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {page, userEvent, type Locator} from 'vitest/browser'
 import {defineTypeaheadPicker} from './define-typeahead-picker'
 import {getPickerState} from './test-utils'
@@ -84,12 +84,8 @@ Feature({
       context.stateLocator = page.getByTestId('state')
       context.selectedIndexLocator = page.getByTestId('selectedIndex')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
-      await vi.waitFor(() =>
-        expect.element(context.matchesLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
+      await expect.element(context.matchesLocator).toBeInTheDocument()
     }),
   ],
   featureText: typeaheadPickerFeature,
@@ -155,8 +151,8 @@ type SyncMatch = {
   name: string
 }
 
-describe('TypeaheadSelectEvent', () => {
-  test('event.keyword contains the extracted keyword, not the full match', async () => {
+describe('Select event', () => {
+  test('Scenario: `event.keyword` on select holds the extracted keyword, not the full match', async () => {
     let receivedKeyword: string | undefined
 
     const testPicker = defineTypeaheadPicker<SyncMatch>({
@@ -192,7 +188,7 @@ describe('TypeaheadSelectEvent', () => {
     const matchesLocator = page.getByTestId('event-keyword-matches')
     const stateLocator = page.getByTestId('event-keyword-state')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
@@ -218,7 +214,7 @@ describe('TypeaheadSelectEvent', () => {
 })
 
 describe('Error handling in checking complete state', () => {
-  test('error is visible when getMatches fails during complete keyword check', async () => {
+  test('Scenario: an error from `getMatches` during the complete keyword check stays visible', async () => {
     const testError = new Error('Failed to fetch matches')
     let capturedError: Error | undefined
     let capturedState: string | undefined
@@ -228,10 +224,7 @@ describe('Error handling in checking complete state', () => {
       trigger: /:/,
       keyword: /\S*/,
       delimiter: ':',
-      getMatches: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        throw testError
-      },
+      getMatches: () => Promise.reject(testError),
       onSelect: [
         ({event}) => [
           raise({type: 'delete', at: event.patternSelection}),
@@ -263,7 +256,7 @@ describe('Error handling in checking complete state', () => {
     const stateLocator = page.getByTestId('complete-error-state')
     const errorMessageLocator = page.getByTestId('complete-error-message')
 
-    await vi.waitFor(() => expect.element(stateLocator).toBeInTheDocument())
+    await expect.element(stateLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
@@ -286,17 +279,19 @@ describe('Error handling in checking complete state', () => {
 })
 
 describe('Sync mode debouncing', () => {
-  test('delays getMatches calls when debounceMs is configured in sync mode', async () => {
-    let callCount = 0
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
-    // Use a large debounce window so that even Firefox's slower
-    // character-by-character userEvent.type stays within a single window.
+  test('Scenario: sync mode delays `getMatches` calls when `debounceMs` is configured', async () => {
+    const requestedKeywords: Array<string> = []
+
     const debouncedSyncPicker = defineTypeaheadPicker<SyncMatch>({
       trigger: /:/,
       keyword: /\w*/,
       debounceMs: 3000,
       getMatches: ({keyword}) => {
-        callCount++
+        requestedKeywords.push(keyword)
         return [{key: '1', name: `Result for ${keyword}`}]
       },
       onSelect: [
@@ -331,28 +326,25 @@ describe('Sync mode debouncing', () => {
     const matchesLocator = page.getByTestId('sync-debounce-matches')
     const keywordLocator = page.getByTestId('sync-debounce-keyword')
 
-    await vi.waitFor(() => expect.element(matchesLocator).toBeInTheDocument())
+    await expect.element(matchesLocator).toBeInTheDocument()
 
     await userEvent.click(locator)
 
-    // Type rapidly - each character within the debounce window
+    vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+
     await userEvent.type(locator, ':abc')
 
-    // Wait for keyword to update
-    await vi.waitFor(() => {
-      expect(keywordLocator.element().textContent).toEqual('abc')
-    })
+    expect(keywordLocator.element().textContent).toEqual('abc')
 
-    // Wait for debounce time
-    await new Promise((resolve) => setTimeout(resolve, 3500))
+    await vi.advanceTimersByTimeAsync(2999)
+    expect(requestedKeywords).toEqual([])
 
-    // Should have results for the final keyword
+    await vi.advanceTimersByTimeAsync(1)
+    expect(requestedKeywords).toEqual(['abc'])
+
     await vi.waitFor(() => {
       expect(matchesLocator.element().textContent).toEqual('Result for abc')
     })
-
-    // With 1000ms debouncing, rapid typing should result in fewer calls
-    // than the 3 characters typed (a, ab, abc)
-    expect(callCount).toBeLessThan(3)
+    expect(requestedKeywords).toEqual(['abc'])
   })
 })

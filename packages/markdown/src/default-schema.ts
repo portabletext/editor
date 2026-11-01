@@ -80,6 +80,10 @@ export const defaultStrikeThroughDecoratorDefinition = {
   name: 'strike-through',
 } as const satisfies DecoratorDefinition
 
+export const defaultUnderlineDecoratorDefinition = {
+  name: 'underline',
+} as const satisfies DecoratorDefinition
+
 /********************
  * Default annotation definitions
  ********************/
@@ -205,6 +209,7 @@ export const defaultSchema = compileSchema(
       defaultEmDecoratorDefinition,
       defaultCodeDecoratorDefinition,
       defaultStrikeThroughDecoratorDefinition,
+      defaultUnderlineDecoratorDefinition,
     ],
     annotations: [defaultLinkObjectDefinition],
     blockObjects: [

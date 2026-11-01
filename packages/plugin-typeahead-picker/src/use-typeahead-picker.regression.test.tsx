@@ -35,15 +35,14 @@ const users: Record<string, Array<string>> = {
   'Jane Smith': ['jane'],
 }
 
-async function getMatches({
+function getMatches({
   keyword,
 }: {
   keyword: string
 }): Promise<Array<MentionMatch>> {
-  await new Promise((resolve) => setTimeout(resolve, 10))
   const matches: Array<MentionMatch> = []
   if (keyword.length < 1) {
-    return matches
+    return Promise.resolve(matches)
   }
   for (const name in users) {
     const usernames = users[name] ?? []
@@ -53,7 +52,7 @@ async function getMatches({
       }
     }
   }
-  return matches
+  return Promise.resolve(matches)
 }
 
 const mentionPicker = defineTypeaheadPicker<MentionMatch>({
@@ -69,7 +68,7 @@ const mentionPicker = defineTypeaheadPicker<MentionMatch>({
   ],
 })
 
-test('does not infinite-loop when the picker becomes active', async () => {
+test('Scenario: activating the picker does not infinite-loop', async () => {
   const renderCounts: Array<number> = []
 
   function PickerProbe() {
@@ -102,7 +101,7 @@ test('does not infinite-loop when the picker becomes active', async () => {
   })
 
   const stateLocator = page.getByTestId('state')
-  await vi.waitFor(() => expect.element(stateLocator).toBeInTheDocument())
+  await expect.element(stateLocator).toBeInTheDocument()
   expect(stateLocator.element().textContent).toEqual('idle')
 
   await userEvent.click(locator)

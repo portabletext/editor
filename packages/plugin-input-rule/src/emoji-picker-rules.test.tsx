@@ -10,7 +10,7 @@ import {defineSchema} from '@portabletext/schema'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import {useEffect, useState} from 'react'
-import {expect, vi} from 'vitest'
+import {expect} from 'vitest'
 import {page, type Locator} from 'vitest/browser'
 import emojiPickerRulesFeature from './emoji-picker-rules.feature?raw'
 import {defineInputRule} from './input-rule'
@@ -105,9 +105,7 @@ Feature({
       context.editor = editor
       context.keywordLocator = page.getByTestId('keyword')
 
-      await vi.waitFor(() =>
-        expect.element(context.keywordLocator).toBeInTheDocument(),
-      )
+      await expect.element(context.keywordLocator).toBeInTheDocument()
     }),
   ],
   featureText: emojiPickerRulesFeature,

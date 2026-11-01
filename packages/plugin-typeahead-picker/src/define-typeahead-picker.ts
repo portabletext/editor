@@ -189,7 +189,7 @@ type AsyncConfigWithDelimiter<TMatch extends AutoCompleteMatch> =
  *   onSelect: [
  *     ({event}) => [
  *       raise({type: 'delete', at: event.patternSelection}),
- *       raise({type: 'insert.inline object', inlineObject: {_type: 'mention', userId: event.match.id}}),
+ *       raise({type: 'insert.inline object', inlineObject: {name: 'mention', value: {userId: event.match.id}}}),
  *     ],
  *   ],
  * })

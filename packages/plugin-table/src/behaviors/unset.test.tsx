@@ -148,7 +148,7 @@ const twoByTwoValue = [
 ]
 
 describe('custom.unset.row', () => {
-  test('unsets a row when `at` points to the row', async () => {
+  test('Scenario: unsetting a row through its path removes the row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -178,7 +178,7 @@ describe('custom.unset.row', () => {
     })
   })
 
-  test('finds the closest row when `at` points to a cell', async () => {
+  test('Scenario: unsetting a row through a cell path removes the closest row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -210,7 +210,7 @@ describe('custom.unset.row', () => {
 })
 
 describe('custom.unset.column', () => {
-  test('unsets a column when `at` points to a cell', async () => {
+  test('Scenario: unsetting a column through a cell path removes the column', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -378,7 +378,7 @@ function pointInSpan(rowKey: string, colKey: string) {
 }
 
 describe('custom.unset.row — selection recovery', () => {
-  test('cursor inside the unset row moves to next row, same column', async () => {
+  test('Scenario: a cursor inside the unset row moves to the next row in the same column', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -424,7 +424,7 @@ describe('custom.unset.row — selection recovery', () => {
     })
   })
 
-  test('cursor in last row falls back to previous row, same column', async () => {
+  test('Scenario: a cursor in the unset last row falls back to the previous row in the same column', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -470,7 +470,7 @@ describe('custom.unset.row — selection recovery', () => {
     })
   })
 
-  test('cursor outside the unset row stays where it is', async () => {
+  test('Scenario: a cursor outside the unset row stays where it is', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -515,7 +515,7 @@ describe('custom.unset.row — selection recovery', () => {
     })
   })
 
-  test('expanded selection spans the unset row — both endpoints survive, no corrective select', async () => {
+  test('Scenario: an expanded selection spanning the unset row keeps both endpoints without a corrective select', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -561,7 +561,7 @@ describe('custom.unset.row — selection recovery', () => {
     })
   })
 
-  test('guard refuses when there is only one row left', async () => {
+  test('Scenario: unsetting the only remaining row is refused', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -579,7 +579,7 @@ describe('custom.unset.row — selection recovery', () => {
 })
 
 describe('custom.unset.column — selection recovery', () => {
-  test('cursor inside the unset column moves to next column, same row', async () => {
+  test('Scenario: a cursor inside the unset column moves to the next column in the same row', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -634,7 +634,7 @@ describe('custom.unset.column — selection recovery', () => {
     })
   })
 
-  test('cursor in the last column falls back to previous column', async () => {
+  test('Scenario: a cursor in the unset last column falls back to the previous column', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -689,7 +689,7 @@ describe('custom.unset.column — selection recovery', () => {
     })
   })
 
-  test('guard refuses when there is only one column left', async () => {
+  test('Scenario: unsetting the only remaining column is refused', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -756,7 +756,7 @@ const placeholderBlock = {
 }
 
 describe('custom.unset.table', () => {
-  test('unsets the table when `at` points to the table', async () => {
+  test('Scenario: unsetting the table through its path removes the table', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -780,7 +780,7 @@ describe('custom.unset.table', () => {
     })
   })
 
-  test('unsets the table when `at` points to a row', async () => {
+  test('Scenario: unsetting the table through a row path removes the table', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -804,7 +804,7 @@ describe('custom.unset.table', () => {
     })
   })
 
-  test('unsets the table when `at` points to a cell', async () => {
+  test('Scenario: unsetting the table through a cell path removes the table', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -828,7 +828,7 @@ describe('custom.unset.table', () => {
     })
   })
 
-  test('is a no-op when `at` does not resolve to a table', async () => {
+  test('Scenario: unsetting the table at a path outside any table leaves the value unchanged', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -846,7 +846,7 @@ describe('custom.unset.table', () => {
 })
 
 describe('custom.unset.table — selection recovery', () => {
-  test('cursor inside the unset table moves to next sibling block', async () => {
+  test('Scenario: a cursor inside the unset table moves to the next sibling block', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -873,7 +873,7 @@ describe('custom.unset.table — selection recovery', () => {
     })
   })
 
-  test('cursor inside the unset table moves to previous sibling when no next exists', async () => {
+  test('Scenario: a cursor inside the unset table moves to the previous sibling when no next exists', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
@@ -900,7 +900,7 @@ describe('custom.unset.table — selection recovery', () => {
     })
   })
 
-  test('cursor outside the table is preserved', async () => {
+  test('Scenario: a cursor outside the table is preserved', async () => {
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,

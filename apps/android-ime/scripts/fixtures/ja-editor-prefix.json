@@ -1,0 +1,549 @@
+{
+  "page": "editor.html",
+  "prefix": "x",
+  "gboard_labels": [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "Back",
+    "Enter",
+    "GIF キーボード",
+    "Shift",
+    "Switch input method",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+    "x",
+    "y",
+    "z",
+    "アルファベット入力キーボード",
+    "クリップボード",
+    "ステッカー キーボード",
+    "スペース",
+    "削除",
+    "句点",
+    "右",
+    "左",
+    "手書き入力",
+    "機能メニューを開く",
+    "次の言語",
+    "設定",
+    "読点",
+    "長音記号",
+    "音声入力を使用"
+  ],
+  "composing1": {
+    "text": "xきょう",
+    "dom": "xきょう",
+    "events": [
+      {
+        "type": "compositionstart",
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょう"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      }
+    ]
+  },
+  "candidates1": [
+    "今日",
+    "きょう",
+    "その他の候補",
+    "長音記号",
+    "削除",
+    "読点",
+    "疑問符",
+    "スペース",
+    "句点",
+    "左",
+    "右"
+  ],
+  "picked1": "今日",
+  "after_first": {
+    "text": "x今日",
+    "dom": "x今日",
+    "events": [
+      {
+        "type": "compositionstart",
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょう"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "今日"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "compositionend",
+        "data": "今日"
+      }
+    ]
+  },
+  "composing2": {
+    "text": "x今日きょう",
+    "dom": "x今日きょう",
+    "events": [
+      {
+        "type": "compositionstart",
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょう"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "今日"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "compositionend",
+        "data": "今日"
+      },
+      {
+        "type": "compositionstart",
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょう"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      }
+    ]
+  },
+  "candidates2": [
+    "今日",
+    "きょう",
+    "その他の候補",
+    "長音記号",
+    "削除",
+    "読点",
+    "疑問符",
+    "スペース",
+    "句点",
+    "左",
+    "右"
+  ],
+  "picked2": "今日",
+  "state": {
+    "text": "x今日今日",
+    "dom": "x今日今日",
+    "events": [
+      {
+        "type": "compositionstart",
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょう"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "今日"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "compositionend",
+        "data": "今日"
+      },
+      {
+        "type": "compositionstart",
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "ｋｙ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょ"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょ"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "きょう"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "きょう"
+      },
+      {
+        "type": "compositionupdate",
+        "data": "今日"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "data": "今日"
+      },
+      {
+        "type": "compositionend",
+        "data": "今日"
+      }
+    ]
+  },
+  "second_word_compositionstart": 1,
+  "picked": "今日/今日",
+  "nested_compositionstart": 0
+}

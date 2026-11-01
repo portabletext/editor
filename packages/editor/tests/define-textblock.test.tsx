@@ -19,7 +19,7 @@ const calloutSchemaDefinition = defineSchema({
   ],
 })
 
-test('TextBlockPlugin renders custom wrapper', async () => {
+test('Scenario: A TextBlockPlugin renders its custom wrapper', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()
@@ -63,7 +63,7 @@ test('TextBlockPlugin renders custom wrapper', async () => {
   })
 })
 
-test('Without TextBlockPlugin, engine default renders', async () => {
+test('Scenario: Without a TextBlockPlugin the engine default renders', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()
@@ -94,7 +94,7 @@ test('Without TextBlockPlugin, engine default renders', async () => {
   })
 })
 
-test('Cross-map collision: text-block then container for same type warns and skips', async () => {
+test('Scenario: Registering a text block then a container for the same type warns and skips the container', async () => {
   const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()

@@ -8,10 +8,6 @@ export interface LeafPosition {
   isLast?: true
 }
 
-export interface TextEqualsOptions {
-  loose?: boolean
-}
-
 export type DecoratedRange = Range & {
   merge?: (leaf: PortableTextSpan, decoration: object) => void
   /**

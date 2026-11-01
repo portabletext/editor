@@ -1,3 +1,4 @@
+import {applyAll} from '@portabletext/patches'
 import {
   defineSchema,
   type PortableTextBlock,
@@ -113,43 +114,6 @@ export async function createTestEditor(
 }
 
 /**
- * Relays a `mutation` event's patches to `target` immediately, and its
- * `value` once the whole synchronous flush batch that produced the event
- * has finished. A single `flush()` call can emit several `mutation`
- * events back to back (one per pending bulk), all stamped with the same
- * current-at-flush-time `value` (see `MutationEvent.value`); sending that
- * value on the first of them would jump `target` straight past the
- * others' own patches before they get relayed, so those patches would
- * find nothing left to apply against.
- */
-function relayMutationsTo(target: React.RefObject<Editor | null>) {
-  let pendingValue: Array<PortableTextBlock> | undefined
-  let valueSyncScheduled = false
-
-  return (event: EditorEmittedEvent) => {
-    if (event.type !== 'mutation') {
-      return
-    }
-    target.current?.send({
-      type: 'patches',
-      patches: event.patches.map((patch) => ({
-        ...patch,
-        origin: 'remote',
-      })),
-      snapshot: event.value,
-    })
-    pendingValue = event.value
-    if (!valueSyncScheduled) {
-      valueSyncScheduled = true
-      queueMicrotask(() => {
-        valueSyncScheduled = false
-        target.current?.send({type: 'update value', value: pendingValue})
-      })
-    }
-  }
-}
-
-/**
  * @internal
  */
 export async function createTestEditors(
@@ -167,8 +131,44 @@ export async function createTestEditors(
   const keyGeneratorB = options.keyGenerator ?? createTestKeyGenerator('eb-')
   const onEditorEvent = vi.fn<(event: EditorEmittedEvent) => void>()
   const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-  const relayToB = relayMutationsTo(editorBRef)
-  const relayToA = relayMutationsTo(editorRef)
+
+  // Like a Studio form, both editors are fed from one shared document: the
+  // peer gets each mutation's patches and both editors get the document as
+  // `update value`. An editor's own snapshot can lag behind patches still in
+  // flight to it, and the sync machine applies a parked value a second later
+  // without revalidating it, so a peer snapshot would roll back newer edits.
+  let sharedDocument = options.initialValue
+  let isValueUpdateQueued = false
+
+  function relayMutation(event: EditorEmittedEvent, peer: Editor | null) {
+    if (event.type !== 'mutation') {
+      return
+    }
+
+    sharedDocument = applyAll(sharedDocument, event.patches)
+
+    peer?.send({
+      type: 'patches',
+      patches: event.patches.map((patch) => ({
+        ...patch,
+        origin: 'remote',
+      })),
+      snapshot: sharedDocument,
+    })
+
+    // A flush emits all its mutations synchronously and the sender is no
+    // longer busy during them, so a value sent after the first would roll
+    // back the rest. Studio's form value reaches the editors after React
+    // renders, once the whole flush has landed.
+    if (!isValueUpdateQueued) {
+      isValueUpdateQueued = true
+      queueMicrotask(() => {
+        isValueUpdateQueued = false
+        editorRef.current?.send({type: 'update value', value: sharedDocument})
+        editorBRef.current?.send({type: 'update value', value: sharedDocument})
+      })
+    }
+  }
 
   render(
     <>
@@ -187,7 +187,7 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorEvent(event)
-            relayToB(event)
+            relayMutation(event, editorBRef.current)
           }}
         />
         {options.children}
@@ -207,7 +207,7 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorBEvent(event)
-            relayToA(event)
+            relayMutation(event, editorRef.current)
           }}
         />
         {options.children}

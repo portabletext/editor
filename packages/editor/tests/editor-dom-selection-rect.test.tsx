@@ -35,7 +35,7 @@ function withCaret(
 }
 
 describe('editor.dom.getSelectionRect', () => {
-  test("returns a rect for the snapshot's selection, lower for a lower block", async () => {
+  test("Scenario: `getSelectionRect` returns a rect for the snapshot's selection, lower for a lower block", async () => {
     const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,
@@ -54,7 +54,7 @@ describe('editor.dom.getSelectionRect', () => {
     expect(rectBottom!.top).toBeGreaterThan(rectTop!.top)
   })
 
-  test('returns null when the snapshot has no selection', async () => {
+  test('Scenario: `getSelectionRect` returns null when the snapshot has no selection', async () => {
     const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,
@@ -69,7 +69,7 @@ describe('editor.dom.getSelectionRect', () => {
     ).toBeNull()
   })
 
-  test('returns null when the selection does not resolve', async () => {
+  test('Scenario: `getSelectionRect` returns null when the selection does not resolve', async () => {
     const {editor} = await createTestEditor({
       schemaDefinition: defineSchema({}),
       initialValue,

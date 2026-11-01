@@ -47,7 +47,7 @@ Read more about using behaviors and building your own with these guides:
 
 ## Log inserted text
 
-Send and `effect` type action along with a `forward` action to perform side effects without altering the chain of events.
+Send an `effect` action along with a `forward` action to perform side effects without altering the chain of events.
 
 ```js
 const logInsertText = defineBehavior({
@@ -72,6 +72,8 @@ const logInsertText = defineBehavior({
 The `effect` and `forward` actions also have shorthand functions:
 
 ```tsx
+import {defineBehavior, effect, forward} from '@portabletext/editor/behaviors'
+
 const logInsertText = defineBehavior({
   on: 'insert.text',
   actions: [
@@ -87,16 +89,19 @@ const logInsertText = defineBehavior({
 
 ## Auto-close parenthesis
 
-You can write behaviors to auto-close common paired characters. This example closes parenthesis, and then moves the cursor in between the two characters. This logic can expand to cover more sets.
+You can write behaviors to auto-close common paired characters. This example closes parentheses, and then moves the cursor in between the two characters. This logic can expand to cover more sets.
 
 ```js
 const autoCloseParens = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => {
-    return event.text === '('
+    if (event.text !== '(' || !snapshot.context.selection) {
+      return false
+    }
+    return {selection: snapshot.context.selection}
   },
   actions: [
-    ({snapshot, event}) => [
+    ({event}, {selection}) => [
       // Execute the original event that includes the '('
       {type: 'execute', event},
       // Execute a new insert.text event with a closing parenthesis
@@ -112,14 +117,14 @@ const autoCloseParens = defineBehavior({
         type: 'execute',
         event: {
           type: 'select',
-          selection: {
+          at: {
             anchor: {
-              path: snapshot.context.selection.anchor.path,
-              offset: snapshot.context.selection.anchor.offset + 1,
+              path: selection.anchor.path,
+              offset: selection.anchor.offset + 1,
             },
             focus: {
-              path: snapshot.context.selection.focus.path,
-              offset: snapshot.context.selection.focus.offset + 1,
+              path: selection.focus.path,
+              offset: selection.focus.offset + 1,
             },
           },
         },
@@ -132,6 +137,8 @@ const autoCloseParens = defineBehavior({
 The `execute` action also has a shorthand function:
 
 ```tsx
+import {defineBehavior, execute} from '@portabletext/editor/behaviors'
+
 const autoCloseParens = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => {
@@ -203,6 +210,8 @@ const raisedUppercaseA = defineBehavior({
 The `raise` action also has a shorthand function:
 
 ```tsx
+import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+
 const raisedUppercaseA = defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',

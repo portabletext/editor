@@ -77,6 +77,14 @@ const EngineString = (props: {
     parent.children[parent.children.length - 1] === text &&
     getTextContent(editor, parentPath) === ''
   ) {
+    // COMPAT: On Android the empty line and the text it turns into must be
+    // one DOM element with one text node. The IME composes in a text node it
+    // creates inside the empty line, and swapping the element on the first
+    // flush takes that node away and restarts the composition.
+    if (IS_ANDROID) {
+      return <TextString text="" isLineBreak />
+    }
+
     return <ZeroWidthString isLineBreak />
   }
 
@@ -99,19 +107,24 @@ const EngineString = (props: {
 /**
  * Leaf strings with text in them.
  */
-const TextString = (props: {text: string; isTrailing?: boolean}) => {
+const TextString = (props: {
+  text: string
+  isTrailing?: boolean
+  isLineBreak?: boolean
+}) => {
   // This component reconciles the DOM text node against the model on every
   // render (the dependency-less layout effect below). React Compiler must not
   // memoize it: a skipped render is a skipped reconcile, which strands any
   // text the browser wrote ahead of the model. Keep it uncompiled regardless
   // of which build (lib, tests, playground) sets the react-compiler boundary.
   'use no memo'
-  const {text, isTrailing = false} = props
+  const {text, isTrailing = false, isLineBreak = false} = props
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
   }
   const [initialText] = useState(getTextContent)
+  const [initialLineBreak] = useState(isLineBreak)
 
   // This is the actual text rendering boundary where we interface with the DOM
   // The text is not rendered as part of the virtual DOM, as since we handle basic character insertions natively,
@@ -126,6 +139,11 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
     // null coalescing text to make sure we're not outputing "null" as a string in the extreme case it is nullish at runtime
     const textWithTrailing = getTextContent()
 
+    if (IS_ANDROID && ref.current) {
+      reconcileAndroidString(ref.current, textWithTrailing, isLineBreak)
+      return
+    }
+
     if (ref.current && ref.current.textContent !== textWithTrailing) {
       ref.current.textContent = textWithTrailing
     }
@@ -136,6 +154,10 @@ const TextString = (props: {text: string; isTrailing?: boolean}) => {
 
   // We intentionally render a memoized <span> that only receives the initial text content when the component is mounted.
   // We defer to the layout effect above to update the `textContent` of the span element when needed.
+  if (initialLineBreak) {
+    return <MemoizedLineBreak ref={ref} />
+  }
+
   return <MemoizedText ref={ref}>{initialText}</MemoizedText>
 }
 
@@ -148,6 +170,68 @@ const MemoizedText = memo(
     )
   }),
 )
+
+const MemoizedLineBreak = memo(
+  forwardRef<HTMLSpanElement>((_props, ref) => {
+    return (
+      <span data-pt-zero-width data-pt-line-break ref={ref}>
+        <br />
+      </span>
+    )
+  }),
+)
+
+/**
+ * Brings an Android string element in line with the model without replacing
+ * the text node in it, since that node may be the one the IME composes in.
+ */
+function reconcileAndroidString(
+  element: HTMLSpanElement,
+  text: string,
+  isLineBreak: boolean,
+) {
+  if (isLineBreak) {
+    element.removeAttribute('data-pt-text')
+    element.setAttribute('data-pt-zero-width', 'true')
+    element.setAttribute('data-pt-line-break', 'true')
+
+    for (const child of Array.from(element.childNodes)) {
+      if (child.nodeName !== 'BR') {
+        element.removeChild(child)
+      }
+    }
+
+    if (!element.querySelector('br')) {
+      element.appendChild(element.ownerDocument.createElement('br'))
+    }
+
+    return
+  }
+
+  element.removeAttribute('data-pt-zero-width')
+  element.removeAttribute('data-pt-line-break')
+  element.setAttribute('data-pt-text', 'true')
+
+  let textNode: Text | null = null
+
+  for (const child of Array.from(element.childNodes)) {
+    if (!textNode && child.nodeType === Node.TEXT_NODE) {
+      textNode = child as Text
+      continue
+    }
+
+    element.removeChild(child)
+  }
+
+  if (!textNode) {
+    element.appendChild(element.ownerDocument.createTextNode(text))
+    return
+  }
+
+  if (textNode.data !== text) {
+    textNode.data = text
+  }
+}
 
 /**
  * Leaf strings without text, render as zero-width strings.

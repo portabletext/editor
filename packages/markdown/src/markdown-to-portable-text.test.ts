@@ -843,9 +843,343 @@ describe(markdownToPortableText.name, () => {
         ])
       })
     })
+
+    describe('underline', () => {
+      test('default definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const onDegradation = vi.fn()
+        expect(
+          markdownToPortableText('foo <u>bar</u> baz', {
+            keyGenerator,
+            onDegradation,
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+              {_type: 'span', _key: 'k2', text: 'bar', marks: ['underline']},
+              {_type: 'span', _key: 'k3', text: ' baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(onDegradation).not.toHaveBeenCalled()
+      })
+
+      test('uppercase tags', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('foo <U>bar</U> baz', {keyGenerator}),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+              {_type: 'span', _key: 'k2', text: 'bar', marks: ['underline']},
+              {_type: 'span', _key: 'k3', text: ' baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      test('inside strong', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('**foo <u>bar</u>** baz', {keyGenerator}),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: ['strong']},
+              {
+                _type: 'span',
+                _key: 'k2',
+                text: 'bar',
+                marks: ['strong', 'underline'],
+              },
+              {_type: 'span', _key: 'k3', text: ' baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      test('around strong', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('<u>foo **bar**</u> baz', {keyGenerator}),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: ['underline']},
+              {
+                _type: 'span',
+                _key: 'k2',
+                text: 'bar',
+                marks: ['underline', 'strong'],
+              },
+              {_type: 'span', _key: 'k3', text: ' baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      test('`html.inline` set to `text`', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('foo <u>bar</u> <span>baz</span>', {
+            keyGenerator,
+            html: {inline: 'text'},
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+              {_type: 'span', _key: 'k2', text: 'bar', marks: ['underline']},
+              {
+                _type: 'span',
+                _key: 'k3',
+                text: ' <span>baz</span>',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      test('custom definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        expect(
+          markdownToPortableText('foo <u>bar</u> baz', {
+            keyGenerator,
+            schema: compileSchema(defineSchema({decorators: [{name: 'u'}]})),
+            marks: {
+              underline: () => 'u',
+            },
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+              {_type: 'span', _key: 'k2', text: 'bar', marks: ['u']},
+              {_type: 'span', _key: 'k3', text: ' baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      test('no definition', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const onDegradation = vi.fn()
+        expect(
+          markdownToPortableText('foo <u>bar</u> baz', {
+            keyGenerator,
+            schema: compileSchema(defineSchema({})),
+            onDegradation,
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo bar baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(onDegradation.mock.calls).toEqual([
+          [
+            {
+              degradations: [
+                {
+                  type: 'decorator-dropped',
+                  message:
+                    'Removed underline formatting, kept the text: the schema has no `underline` decorator',
+                  line: 1,
+                  snippet: 'bar',
+                },
+              ],
+              message:
+                'Markdown could not be converted without loss:\n- line 1: Removed underline formatting, kept the text: the schema has no `underline` decorator ("bar")',
+            },
+          ],
+        ])
+      })
+
+      test('a tag with attributes stays dropped inline HTML', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const onDegradation = vi.fn()
+        expect(
+          markdownToPortableText('foo <u class="x">bar</u> baz', {
+            keyGenerator,
+            onDegradation,
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo bar baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(
+          onDegradation.mock.calls.map(([report]) => report.degradations),
+        ).toEqual([
+          [
+            {
+              type: 'inline-html-dropped',
+              message:
+                'Removed inline HTML tags, kept nothing: `html.inline` is `skip` (the default)',
+              line: 1,
+              snippet: '<u class="x">',
+            },
+            {
+              type: 'inline-html-dropped',
+              message:
+                'Removed inline HTML tags, kept nothing: `html.inline` is `skip` (the default)',
+              line: 1,
+              snippet: '</u>',
+            },
+          ],
+        ])
+      })
+
+      test('an unclosed open tag underlines nothing, in its block or the next', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const onDegradation = vi.fn()
+        expect(
+          markdownToPortableText('foo <u>bar\n\nbaz', {
+            keyGenerator,
+            onDegradation,
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(
+          onDegradation.mock.calls.map(([report]) => report.degradations),
+        ).toEqual([
+          [
+            {
+              type: 'inline-html-dropped',
+              message:
+                'Removed inline HTML tags, kept nothing: `html.inline` is `skip` (the default)',
+              line: 1,
+              snippet: '<u>',
+            },
+          ],
+        ])
+      })
+
+      test('an unmatched close tag stays dropped inline HTML', () => {
+        const keyGenerator = createTestKeyGenerator()
+        const onDegradation = vi.fn()
+        expect(
+          markdownToPortableText('**foo</u> bar**', {
+            keyGenerator,
+            onDegradation,
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo bar', marks: ['strong']},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(
+          onDegradation.mock.calls.map(([report]) => report.degradations),
+        ).toEqual([
+          [
+            {
+              type: 'inline-html-dropped',
+              message:
+                'Removed inline HTML tags, kept nothing: `html.inline` is `skip` (the default)',
+              line: 1,
+              snippet: '</u>',
+            },
+          ],
+        ])
+      })
+    })
   })
 
   describe('link', () => {
+    test('bold that wraps a link and continues after it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      expect(
+        markdownToPortableText('**[x](https://example.com) y** z', {
+          keyGenerator,
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k2',
+              text: 'x',
+              marks: ['strong', 'k1'],
+            },
+            {
+              _type: 'span',
+              _key: 'k3',
+              text: ' y',
+              marks: ['strong'],
+            },
+            {
+              _type: 'span',
+              _key: 'k4',
+              text: ' z',
+              marks: [],
+            },
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+          style: 'normal',
+        },
+      ])
+    })
+
     test('default definition', () => {
       const keyGenerator = createTestKeyGenerator()
       expect(

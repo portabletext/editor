@@ -19,7 +19,7 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('registered render: blocks', () => {
-  test('Receives the updated node for text block changes', async () => {
+  test('Scenario: Changing a text block passes the updated node to its render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const fooBlock = {
       _type: 'block',
@@ -82,8 +82,8 @@ describe('registered render: blocks', () => {
     })
 
     const barSpanLocator = locator.getByText('bar')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
-    await vi.waitFor(() => expect.element(barSpanLocator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
+    await expect.element(barSpanLocator).toBeInTheDocument()
 
     expect(renderBlockValues).toEqual([
       {
@@ -159,7 +159,7 @@ describe('registered render: blocks', () => {
     )
   })
 
-  test('Re-renders when a nested custom prop is patched', async () => {
+  test('Scenario: Patching a nested custom prop re-renders the block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -270,7 +270,7 @@ describe('registered render: blocks', () => {
     })
   })
 
-  test('Re-renders when a nested custom prop is unset', async () => {
+  test('Scenario: Unsetting a nested custom prop re-renders the block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -410,7 +410,7 @@ describe('registered render: blocks', () => {
     )
 
     const locator = page.getByRole('textbox')
-    await vi.waitFor(() => expect.element(locator).toBeInTheDocument())
+    await expect.element(locator).toBeInTheDocument()
 
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo')
@@ -428,7 +428,7 @@ describe('registered render: blocks', () => {
     })
   })
 
-  test('Keyless block receives a valid `_key` from normalization before render', async () => {
+  test('Scenario: A keyless block receives a valid `_key` from normalization before render', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
