@@ -92,8 +92,8 @@ catalogs:
       specifier: ^0.0.88
       version: 0.0.88
     remeda:
-      specifier: ^2.32.0
-      version: 2.32.0
+      specifier: ^2.57.0
+      version: 2.57.0
     tailwind-merge:
       specifier: ^3.3.1
       version: 3.4.0
@@ -426,7 +426,7 @@ importers:
         version: 19.3.0
       remeda:
         specifier: catalog:tooling
-        version: 2.32.0
+        version: 2.57.0
       shiki:
         specifier: ^3.23.0
         version: 3.23.0
@@ -9727,8 +9727,9 @@ packages:
   remark-stringify@11.0.0:
     resolution: {integrity: sha512-1OSmLd3awB/t8qdoEOMazZkNsfVTeY4fTsgzcQFdXNq8ToTN4ZGwrMnlda4K6smTFKD+GRV6O48i6Z4iKgPPpw==}
 
-  remeda@2.32.0:
-    resolution: {integrity: sha512-BZx9DsT4FAgXDTOdgJIc5eY6ECIXMwtlSPQoPglF20ycSWigttDDe88AozEsPPT4OWk5NujroGSBC1phw5uU+w==}
+  remeda@2.57.0:
+    resolution: {integrity: sha512-bzJOJBNTVzEfrRht0Dg3KiKToP/K+nNnoW1UvJ+qxY7TNlwPjuGdqgKU/SFULIg8GJc11RGwafvPcRDR/f4Wcw==}
+    engines: {node: '>=18.0.0'}
 
   request-light@0.5.8:
     resolution: {integrity: sha512-3Zjgh+8b5fhRJBQZoy+zbVKpAQGLyka0MPgW3zruTF4dFFJ8Fqcfu9YsAvi/rvdcaTeWG3MkbZv4WKxAn/84Lg==}
@@ -20312,9 +20313,7 @@ snapshots:
       mdast-util-to-markdown: 2.1.2
       unified: 11.0.5
 
-  remeda@2.32.0:
-    dependencies:
-      type-fest: 4.41.0
+  remeda@2.57.0: {}
 
   request-light@0.5.8: {}
 
