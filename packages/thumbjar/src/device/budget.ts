@@ -53,9 +53,6 @@ export const TYPE_ON_DEVICE_WORST_SECONDS =
 export const DEVICE_TEST_TIMEOUT_SECONDS =
   TYPE_ON_DEVICE_WORST_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
 
-/** The device tests in one file that `DEVICE_TEST_FILE_SECONDS` allows for. */
-export const DEVICE_TESTS_PER_FILE = 3
-
 /**
  * The global setup's `adb get-state`, which checks for a device. Stopping it after the timeout takes up to
  * `JOIN_GRACE_SECONDS` more, after which the setup fails even when the process outlived SIGKILL.
@@ -69,13 +66,16 @@ export const GLOBAL_SETUP_PAGE_SECONDS = 5
 export const VITEST_STARTUP_SECONDS = 60
 
 /**
- * The longest a run of one device test file takes, the timeout to run it under. Cutting the run off
- * earlier would stop Vitest before its last test times out and before `afterAll` in `src/vitest/setup.ts`
- * can name a driver fault.
+ * The longest a run of one device test file of `testCount` tests takes, the timeout to run it under.
+ * Cutting the run off earlier would stop Vitest before its last test times out and before `afterAll` in
+ * `src/vitest/setup.ts` can name a driver fault.
  */
-export const DEVICE_TEST_FILE_SECONDS =
-  DEVICE_TESTS_PER_FILE * DEVICE_TEST_TIMEOUT_SECONDS +
-  GLOBAL_SETUP_ADB_SECONDS +
-  JOIN_GRACE_SECONDS +
-  GLOBAL_SETUP_PAGE_SECONDS +
-  VITEST_STARTUP_SECONDS
+export function deviceTestFileSeconds(testCount: number): number {
+  return (
+    testCount * DEVICE_TEST_TIMEOUT_SECONDS +
+    GLOBAL_SETUP_ADB_SECONDS +
+    JOIN_GRACE_SECONDS +
+    GLOBAL_SETUP_PAGE_SECONDS +
+    VITEST_STARTUP_SECONDS
+  )
+}
