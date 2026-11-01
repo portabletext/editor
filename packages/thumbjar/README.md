@@ -110,7 +110,7 @@ The driver waits until `window.__state` exists before it types. It then taps the
 
 Its global setup fails the run before any test when `adb` has no device or `pageUrl` does not answer. It runs `adb get-state` through the driver's `adb`, so an adb that ignores SIGTERM is killed and one that outlives SIGKILL fails the setup instead of hanging it. Its setup file fails a test file as described under Retries.
 
-`DEVICE_TEST_FILE_SECONDS` is the longest a run of one device test file takes, to run a file under a timeout of the caller's own, for `DEVICE_TESTS_PER_FILE` tests at most, see the time budget below.
+`deviceTestFileSeconds(testCount)` is the longest a run of one device test file of `testCount` tests takes, to run the file under a timeout of the caller's own, see the time budget below.
 
 ### `thumbjar/testing`
 
@@ -152,7 +152,7 @@ The driver cuts every stage of its own off at a deadline, so a hang there ends a
 
 1. One `typeOnDevice` call takes at most 535 seconds: two attempts of 180 seconds, each with a 30-second failure dump and 10 seconds to stop its uiautomator2 servers, a 20-second Chrome restart between them and 35 seconds of cleanup after, each stage with 5 seconds to stop. An adb process gets 2 seconds after SIGTERM and 2 more after SIGKILL, inside those 5. `src/device/budget.ts` holds the bounds, and the device test timeout of 575 seconds that `deviceProject` sets is taken from them: each test has room for one cleanup carried over from a test before it that timed out.
 2. `thumbjar prepare` runs the whole prep under `timeout -k 10 600`, so it ends within 610 seconds. The ANR settle starts no new check after 240 seconds and ends within about 285, and the Japanese setup within 250.
-3. One device test file runs within `DEVICE_TEST_FILE_SECONDS`, 1825 seconds: three tests, `DEVICE_TESTS_PER_FILE`, of 575 each, 40 for the global setup, 30 for its device check, 5 to stop that adb and 5 for the page check, and 60 for Vitest's own start and exit. A caller that cuts the run off at it lets a test that times out last still leave the setup file room to fail the file.
+3. One device test file runs within `deviceTestFileSeconds(testCount)`: 575 seconds for each of its tests, 40 for the global setup, 30 for its device check, 5 to stop that adb and 5 for the page check, and 60 for Vitest's own start and exit, 1825 seconds for a file of three tests. A caller that cuts the run off at it lets a test that times out last still leave the setup file room to fail the file.
 
 These are enforced caps, not expected times. A test typically takes a minute or two. The bounds are per call and start once the call drives the device. A call made while another is driving or queued waits for those first, and spends its own test's timeout while it waits, so a call queued behind the calls of concurrent tests can time out before it starts.
 
