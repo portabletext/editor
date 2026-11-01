@@ -83,6 +83,17 @@
     "@playwright/test": "^1.62.1",
     "vitest": "^5.0.4"
   },
+  "peerDependenciesMeta": {
+    "@jest/globals": {
+      "optional": true
+    },
+    "@playwright/test": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
+  },
   "engines": {
     "node": ">=22.12"
   }
