@@ -49,14 +49,31 @@ const params = new URLSearchParams(location.search)
 const prefix = params.get('prefix') ?? ''
 const decorate = params.get('decorate') ?? ''
 const behavior = params.get('behavior')
+const gap = params.get('gap') ?? ''
 // The crash and Enter cases' pages. Without these params `editor.html` stays the page the composition
 // tests were written against: it records no errors, and an exception in `__state` reaches the driver.
-const crashCase = params.has('decorate') || params.has('behavior')
+const crashCase =
+  params.has('decorate') || params.has('behavior') || params.has('gap')
 const timing = crashCase && params.get('timing') === '1' ? splitTiming() : null
 
 const keyGenerator = createTestKeyGenerator()
 
+// Spike: `gap=<text>` seeds a block with `<text>` above the block the driver types in, see
+// `gapDecorations`.
+const gapBlock = gap
+  ? [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keyGenerator(), text: gap, marks: []}],
+      },
+    ]
+  : []
+
 const initialValue = [
+  ...gapBlock,
   {
     _type: 'block',
     _key: keyGenerator(),
@@ -78,6 +95,7 @@ const decorated: Array<{
 const committed = frozenLog<Array<{text: string; composing: boolean}>>(errors)
 const deletions = frozenLog<{at: EditorSelection}>(errors)
 let composing = false
+let gapChanges = 0
 
 if (crashCase) {
   window.addEventListener('error', (event) => {
@@ -181,9 +199,12 @@ function Editable() {
   const editor = useEditor()
   const value = useEditorSelector(editor, (snapshot) => snapshot.context.value)
   const {decorations, ranges} = useMemo(() => {
-    if (!decorate) return {decorations: [], ranges: []}
+    if (!decorate && !gap) return {decorations: [], ranges: []}
     const snapshot = editor.getSnapshot()
-    const decorations = wordDecorations(snapshot, decorate)
+    const decorations = [
+      ...(decorate ? wordDecorations(snapshot, decorate) : []),
+      ...gapDecorations(snapshot),
+    ]
     return {
       decorations,
       ranges: decorations.map(({selection}) => ({
@@ -197,7 +218,9 @@ function Editable() {
   // change they cause. A render React abandons or supersedes logs nothing.
   return (
     <>
-      {decorate ? <Committed value={ranges} record={recordCommitted} /> : null}
+      {decorate || gap ? (
+        <Committed value={ranges} record={recordCommitted} />
+      ) : null}
       <PortableTextEditable
         rangeDecorations={decorations}
         style={{border: '1px solid #888', minHeight: '3em', fontSize: 20}}
@@ -286,6 +309,28 @@ function wordDecorations(
     }
   }
   return decorations
+}
+
+/**
+ * Spike: a decoration over the start of the `gap` block that grows by a character, and wraps back to one,
+ * on each change of the value while a composition is open. The IME composes in another block, so the
+ * editor renders each change as a `Text`-only commit away from the composing text.
+ */
+function gapDecorations(snapshot: EditorSnapshot): RangeDecoration[] {
+  const block = gapBlock[0]
+  if (!block) return []
+  if (composing) gapChanges += 1
+  const selection = blockOffsetsToSelection({
+    snapshot,
+    offsets: {
+      anchor: {path: [{_key: block._key}], offset: 0},
+      focus: {
+        path: [{_key: block._key}],
+        offset: (gapChanges % gap.length) + 1,
+      },
+    },
+  })
+  return selection ? [{component: Highlight, selection}] : []
 }
 
 // The editor calls a decoration's `component` as a function inside its leaf, so hooks there would be the

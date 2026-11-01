@@ -133,11 +133,11 @@ describe('the workflow', () => {
   )
   const jobMinutes = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(workflow)?.[1])
 
-  // The spike runs only the restore boundary's files, with and without timing, the composition hold's files, and
-  // the keep and defer controls' files.
-  test('runs every split boundary, timing, hold, keep and defer control file once, on a device prepared for the language its name starts with', () => {
+  // The spike runs only the restore boundary's files, with and without timing, the composition hold's files, the gap
+  // file, and the keep and defer controls' files.
+  test('runs every split boundary, timing, hold, gap, keep and defer control file once, on a device prepared for the language its name starts with', () => {
     expect(rows.map((row) => row.file).sort()).toEqual(
-      deviceFiles.filter((file) => /\.split-(boundary|timing|hold|control-keep|control-defer)\./.test(file)),
+      deviceFiles.filter((file) => /\.split-(boundary|timing|hold|gap|control-keep|control-defer)\./.test(file)),
     )
     expect(rows.filter((row) => !row.file.startsWith(`tests/${row.lang}.`))).toEqual([])
   })
