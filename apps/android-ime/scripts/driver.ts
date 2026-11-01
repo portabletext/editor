@@ -16,7 +16,6 @@ import {
 } from './lib/budget.ts'
 import {PageExceptionError} from './lib/cdp.ts'
 import {
-  clearChromeTabs,
   closeChrome,
   dumpFailure,
   OUT,
@@ -63,8 +62,9 @@ export const driverRuns: DriverRun[] = []
 let previousRun: Promise<void> = Promise.resolve()
 
 /**
- * Open `page` in a fresh Chrome, type `words` on Gboard and read back what the page holds. A driver fault
- * restarts Chrome and types everything again once. Artifacts go to `out/<lang>-<test name>*`.
+ * Open `page` in Chrome, which is stopped and started again for each test, picking the page by its exact
+ * URL. Type `words` on Gboard and read back what the page holds. A driver fault restarts Chrome and types
+ * everything again once. Artifacts go to `out/<lang>-<test name>*`.
  */
 export async function typeOnDevice(
   options: TypeOnDeviceOptions,
@@ -219,15 +219,12 @@ async function timedAttempt(
 }
 
 /**
- * Stop Chrome and delete its saved tabs, so the next test opens its page in a fresh Chrome. It runs under
- * a signal of its own, so it also runs after the test's timeout aborted the attempt.
+ * Stop Chrome. It runs under a signal of its own, so it also runs after the test's timeout aborted the
+ * attempt.
  */
 function cleanUpChrome(): Promise<void> {
   return runAbortable(new AbortController().signal, () =>
-    withDeadline('cleanup', CLEANUP_SECONDS, async () => {
-      await closeChrome()
-      await clearChromeTabs()
-    }),
+    withDeadline('cleanup', CLEANUP_SECONDS, closeChrome),
   )
 }
 

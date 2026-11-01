@@ -241,15 +241,6 @@ export async function closeChrome(): Promise<void> {
   })
 }
 
-/** Delete Chrome's saved tabs, so the next test's Chrome does not restore this test's page. */
-export async function clearChromeTabs(): Promise<void> {
-  await adb(['shell', 'rm', '-rf', '/data/data/com.android.chrome/app_tabs'], CHROME_ADB_SECONDS).catch((error: unknown) => {
-    throwIfAborted()
-    if (error instanceof ProcessNotStoppedError) throw error
-    phase(`clearing chrome tabs failed: ${errorRepr(error)}`)
-  })
-}
-
 /** Count compositionstart events that arrive while an earlier composition is still open. */
 export function nestedCompositionstart(events: PageEvent[]): number {
   let nested = 0
