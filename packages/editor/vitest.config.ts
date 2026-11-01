@@ -77,6 +77,7 @@ export default defineConfig({
           name: 'unit',
           exclude: [
             'node_modules',
+            'android',
             'gherkin-tests',
             'tests',
             'src/editor/*.test.ts',

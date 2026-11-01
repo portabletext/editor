@@ -1,0 +1,16 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>plain</title>
+<div
+  id="ed"
+  contenteditable="true"
+  style="border: 1px solid #888; min-height: 3em; font-size: 20px"
+></div>
+<pre id="log" style="font-size: 10px"></pre>
+<script type="module">
+  import {recordInput} from 'thumbjar/page'
+
+  const field = document.getElementById('ed')
+  recordInput({getText: () => field.textContent, field})
+  field.focus()
+</script>
