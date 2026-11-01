@@ -11,6 +11,7 @@
 set -u
 cd "$(dirname "$0")/.." || exit 1
 lang=${IME_LANG:-en}
+file=${DEVICE_TEST_FILE:-tests/$lang.test.ts}
 out=android/out
 mkdir -p "$out"
 log() { echo "PHASE $(date +%H:%M:%S) $*" | tee -a "$out/phases.log"; }
@@ -30,7 +31,7 @@ pnpm exec thumbjar prepare --keyboard "$lang" --page-url http://localhost:8765/e
 (timeout -k 5 $((tests_seconds + 10 + 65)) adb logcat -v time > "$out/logcat.txt" 2>&1 &)
 
 log "tests start"
-timeout -k 10 "$tests_seconds" pnpm exec vitest run --config vitest.android.config.ts --project device "tests/$lang.test.ts" < /dev/null 2>&1 | tee -a "$out/vitest.log"
+timeout -k 10 "$tests_seconds" pnpm exec vitest run --config vitest.android.config.ts --project device "$file" < /dev/null 2>&1 | tee -a "$out/vitest.log"
 status=${PIPESTATUS[0]}
 log "tests rc=$status"
 

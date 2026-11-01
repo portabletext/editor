@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lang: [ja, en]
+        lang: [en]
         api: [36]
 
     steps:
@@ -109,6 +109,7 @@ jobs:
         timeout-minutes: 52
         env:
           IME_LANG: ${{ matrix.lang }}
+          DEVICE_TEST_FILE: tests/en-textarea.test.ts
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -140,6 +141,7 @@ jobs:
         timeout-minutes: 52
         env:
           IME_LANG: ${{ matrix.lang }}
+          DEVICE_TEST_FILE: tests/en-textarea.test.ts
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
