@@ -4,8 +4,11 @@ import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent, type Locator} from 'vitest/browser'
 import type {Editor} from '../src'
+import {execute} from '../src/behaviors/behavior.types.action'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {EventListenerPlugin} from '../src/plugins'
-import {createTestEditor} from '../src/test/vitest'
+import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {createTestEditor, createTestEditors} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 /**********
@@ -1822,6 +1825,105 @@ describe('Collaborative editing', () => {
         'foo ',
         'bar baz',
       ])
+    })
+  })
+  describe('Two-editor harness', () => {
+    test('Scenario: Two mutations flushed together do not roll back the sender', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+      const value = (text: string): Array<PortableTextBlock> => [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text, marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      const caret = (offset: number) => ({
+        anchor: {path: spanPath, offset},
+        focus: {path: spanPath, offset},
+        backward: false,
+      })
+      const {editor, editorB, onEditorEvent} = await createTestEditors({
+        keyGenerator,
+        initialValue: value('foo'),
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'insert.text',
+                actions: [({event}) => [execute(event)]],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      await vi.waitFor(() => {
+        expect(onEditorEvent).toHaveBeenCalledWith({type: 'ready'})
+      })
+
+      editor.send({type: 'select', at: caret(3)})
+      vi.mocked(onEditorEvent).mockClear()
+
+      editor.send({type: 'insert.text', text: 'a'})
+      editor.send({type: 'insert.text', text: 'b'})
+
+      const patchA: Patch = {
+        type: 'diffMatchPatch',
+        path: [...spanPath, 'text'],
+        value: '@@ -1,3 +1,4 @@\n foo\n+a\n',
+        origin: 'local',
+      }
+      const patchB: Patch = {
+        type: 'diffMatchPatch',
+        path: [...spanPath, 'text'],
+        value: '@@ -1,4 +1,5 @@\n fooa\n+b\n',
+        origin: 'local',
+      }
+
+      await vi.waitFor(
+        () => {
+          expect(getTersePt(editorB.getSnapshot().context)).toEqual(['fooab'])
+        },
+        {timeout: 3_000},
+      )
+
+      expect(
+        vi.mocked(onEditorEvent).mock.calls.map(([event]) => event),
+      ).toEqual([
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert.text',
+            path: spanPath,
+            offset: 3,
+            text: 'a',
+          },
+          origin: 'local',
+        },
+        {type: 'patch', patch: patchA, intakeRepair: false},
+        {type: 'selection', selection: caret(4)},
+        {
+          type: 'operation',
+          operation: {
+            type: 'insert.text',
+            path: spanPath,
+            offset: 4,
+            text: 'b',
+          },
+          origin: 'local',
+        },
+        {type: 'patch', patch: patchB, intakeRepair: false},
+        {type: 'selection', selection: caret(5)},
+        {type: 'mutation', patches: [patchA], value: value('fooab')},
+        {type: 'mutation', patches: [patchB], value: value('fooab')},
+      ])
+      expect(getTersePt(editor.getSnapshot().context)).toEqual(['fooab'])
+      expect(getTersePt(editorB.getSnapshot().context)).toEqual(['fooab'])
     })
   })
 })
