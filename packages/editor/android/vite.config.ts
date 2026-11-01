@@ -12,7 +12,11 @@ export default defineConfig({
     outDir: fileURLToPath(new URL('dist', import.meta.url)),
     emptyOutDir: true,
     rolldownOptions: {
-      input: {editor: page('editor.html'), plain: page('plain.html')},
+      input: {
+        editor: page('editor.html'),
+        plain: page('plain.html'),
+        textarea: page('textarea.html'),
+      },
     },
   },
 })
