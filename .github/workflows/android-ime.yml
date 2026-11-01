@@ -3,10 +3,11 @@ name: Android IME
 # Types on real Gboard in an Android emulator into a test page built from
 # the workspace editor, see `packages/editor/android/README.md`.
 #
-# Each job prepares the emulator and runs the Vitest device tests for its
-# language. A job is red when the device never booted, a prep step failed
-# or a test failed, an editor assertion included. This workflow is not a
-# required check, so a red job blocks nothing.
+# Each job prepares a fresh emulator for its row's language and runs that
+# row's device test file. A job is red when a prep step failed or a test
+# failed, an editor assertion included, or as an infrastructure failure when
+# the emulator never booted or adb lost the device on the retry too. This
+# workflow is not a required check, so a red job blocks nothing.
 
 on:
   pull_request:
@@ -35,11 +36,12 @@ permissions:
 
 jobs:
   emulator:
-    name: Android IME (${{ matrix.lang }})
+    name: Android IME (${{ matrix.suite.file }})
     runs-on: ubuntu-latest
-    # The sum of the step caps below on the boot retry path, see the budget in
-    # `packages/editor/android/README.md`.
-    timeout-minutes: 153
+    # The sum of the step caps below on the retry path, see the budget in
+    # `packages/editor/android/README.md`. `android/scripts/budget.test.ts`
+    # checks it.
+    timeout-minutes: 152
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -47,10 +49,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        lang: [ja, en]
+        # One row per device test file CI runs, on a device prepared for its
+        # language. `tests/en-textarea.test.ts` is a control run by hand.
+        suite:
+          - {lang: ja, file: tests/ja.test.ts}
+          - {lang: en, file: tests/en.test.ts}
         api: [36]
 
     steps:
+      - name: Name the suite
+        id: suite
+        timeout-minutes: 1
+        run: echo "name=$(basename '${{ matrix.suite.file }}' .test.ts)" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v7
         timeout-minutes: 3
 
@@ -108,7 +119,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 52
         env:
-          IME_LANG: ${{ matrix.lang }}
+          IME_LANG: ${{ matrix.suite.lang }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -122,24 +133,25 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
-          script: android/run-on-device.sh
+          script: android/run-on-device.sh ${{ matrix.suite.file }}
 
-      # The emulator sometimes never comes online. Retry once, but only when it never booted.
-      - name: Check boot
-        id: boot
+      # The emulator sometimes never comes online, or adb loses it after boot.
+      # Retry once on a fresh emulator then, never after a failure on a
+      # reachable device.
+      - name: Decide the retry
+        id: retry
         if: steps.run1.outcome == 'failure'
         timeout-minutes: 1
         working-directory: packages/editor
-        run: |
-          if grep -q BOOTED android/out/timing.txt; then echo booted=yes >> $GITHUB_OUTPUT; else echo booted=no >> $GITHUB_OUTPUT; echo "BOOT_RETRY"; fi
+        run: node android/scripts/emulator-runs.ts retry android/out/timing.txt
 
-      - name: Run on emulator (boot retry)
+      - name: Run on emulator (retry)
         id: run2
-        if: steps.run1.outcome == 'failure' && steps.boot.outputs.booted == 'no'
+        if: steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'
         continue-on-error: true
         timeout-minutes: 52
         env:
-          IME_LANG: ${{ matrix.lang }}
+          IME_LANG: ${{ matrix.suite.lang }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -153,31 +165,28 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
-          script: android/run-on-device.sh
+          script: android/run-on-device.sh ${{ matrix.suite.file }}
 
       - name: Boot time
         if: always()
         timeout-minutes: 1
         working-directory: packages/editor
         run: |
-          s=$(grep EMULATOR_START android/out/timing.txt | awk '{print $3}')
-          b=$(grep BOOTED android/out/timing.txt | awk '{print $3}')
-          [ -n "$s" ] && [ -n "$b" ] && echo "BOOT_SECONDS $((b - s))"
+          node android/scripts/emulator-runs.ts boot-seconds android/out/timing.txt
           cat android/out/phases.log || true
 
-      # The run steps continue on error so the boot retry can follow. This
-      # step turns the job red when the last run failed.
+      # The run steps continue on error so the retry can follow. This step
+      # turns the job red when the last run failed, and names a failure of the
+      # emulator apart from a test result.
       - name: Result
         if: always()
         timeout-minutes: 1
-        run: |
-          if [ "${{ steps.run2.outcome }}" != skipped ]; then outcome="${{ steps.run2.outcome }}"; else outcome="${{ steps.run1.outcome }}"; fi
-          echo "run outcome: $outcome"
-          [ "$outcome" = success ]
+        working-directory: packages/editor
+        run: node android/scripts/emulator-runs.ts result android/out/timing.txt "${{ steps.run2.outcome != 'skipped' && steps.run2.outcome || steps.run1.outcome }}"
 
       - uses: actions/upload-artifact@v7
         if: always()
         timeout-minutes: 5
         with:
-          name: android-ime-${{ matrix.lang }}-api${{ matrix.api }}-${{ github.run_attempt }}
+          name: android-ime-${{ steps.suite.outputs.name }}-api${{ matrix.api }}-${{ github.run_attempt }}
           path: packages/editor/android/out/
