@@ -23,6 +23,7 @@ import {
   sleep,
   throwIfAborted,
 } from '../device/util.ts'
+import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './field.ts'
 import {packageKeys} from './hierarchy.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
@@ -120,45 +121,7 @@ export async function typeInChrome(
   await dismissChromeScreens(device)
   phase(`foreground: ${pyRepr(await device.appCurrent())}`)
 
-  let lastError: unknown
-  let loaded = false
-  for (let attempt = 0; attempt < 20; attempt++) {
-    try {
-      if (
-        (await cdpEval('document.readyState')) === 'complete' &&
-        (await cdpEval('typeof window.__state')) === 'function'
-      ) {
-        loaded = true
-        break
-      }
-    } catch (error) {
-      throwIfAborted()
-      if (error instanceof PageExceptionError) {
-        throw error
-      }
-      lastError = error
-      phase(`cdp not ready: ${errorRepr(error)}`)
-      try {
-        const pageTargets = await targets(5)
-        const described = pageTargets
-          .map(
-            (target) =>
-              `${pyStr(target.type)} ${pyStr(target.url)} attached=${pyRepr(target.attached)}`,
-          )
-          .join('; ')
-        phase(`targets: ${described}`)
-      } catch (targetsError) {
-        throwIfAborted()
-        phase(`targets unavailable: ${errorRepr(targetsError)}`)
-      }
-    }
-    await sleep(1)
-  }
-  if (!loaded) {
-    throw new Error(
-      `page never loaded over CDP: ${lastError === undefined ? 'None' : errorRepr(lastError)}`,
-    )
-  }
+  await waitForPage()
   phase(`page loaded: ${pyStr(await cdpEval('location.href'))}`)
 
   await dismissAnr(device)
@@ -168,12 +131,13 @@ export async function typeInChrome(
     await openInChrome(url)
     await waitForChrome(device)
     phase(`re-foregrounded: ${pyRepr(await device.appCurrent())}`)
+    // The reopened document may not have run `recordInput` yet, and the field expressions cannot see a
+    // field the page names until it has.
+    await waitForPage()
   }
-  // Chrome exposes the contenteditable as an EditText. Tapping it focuses it and raises Gboard.
+  // Chrome exposes the field as an EditText. Tapping it focuses it and raises Gboard.
   // Web content is not reliably in the UiAutomator tree, so locate the field through the page and tap it on screen.
-  const field = (await cdpEval(
-    "(() => { const field = document.querySelector('[contenteditable]'); field.style.minHeight = '50vh'; const rect = field.getBoundingClientRect(); return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, devicePixelRatio, innerHeight, screenHeight: screen.height}; })()",
-  )) as {
+  const field = (await evalOnField(FIELD_RECT)) as {
     x: number
     y: number
     devicePixelRatio: number
@@ -191,12 +155,8 @@ export async function typeInChrome(
   )
   await device.click(tapX, tapY)
   await waitForFieldFocus()
-  await cdpEval(
-    "(() => { const field = document.querySelector('[contenteditable]'); field.focus(); const range = document.createRange(); range.selectNodeContents(field); range.collapse(false); const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range); })()",
-  )
-  phase(
-    `field focused: activeElement=${pyRepr(await cdpEval('document.activeElement && document.activeElement.isContentEditable'))}`,
-  )
+  await evalOnField(FOCUS_FIELD)
+  phase(`field focused: activeElement=${pyRepr(await cdpEval(FIELD_FOCUSED))}`)
   let shown = false
   let inputMethodDump = ''
   for (let tap = 0; tap < 4; tap++) {
@@ -448,6 +408,71 @@ export async function openInChrome(url: string): Promise<void> {
   ])
 }
 
+async function waitForPage(): Promise<void> {
+  let lastError: unknown
+  let fieldMissing = false
+  for (let attempt = 0; attempt < 20; attempt++) {
+    fieldMissing = false
+    try {
+      if (
+        (await cdpEval('document.readyState')) === 'complete' &&
+        (await cdpEval('typeof window.__state')) === 'function'
+      ) {
+        if (
+          (await cdpEval(
+            "typeof window.__field === 'function' && window.__field() !== null",
+          )) === true
+        ) {
+          return
+        }
+        fieldMissing = true
+      }
+    } catch (error) {
+      throwIfAborted()
+      if (error instanceof PageExceptionError) {
+        throw error
+      }
+      lastError = error
+      phase(`cdp not ready: ${errorRepr(error)}`)
+      try {
+        const pageTargets = await targets(5)
+        const described = pageTargets
+          .map(
+            (target) =>
+              `${pyStr(target.type)} ${pyStr(target.url)} attached=${pyRepr(target.attached)}`,
+          )
+          .join('; ')
+        phase(`targets: ${described}`)
+      } catch (targetsError) {
+        throwIfAborted()
+        phase(`targets unavailable: ${errorRepr(targetsError)}`)
+      }
+    }
+    await sleep(1)
+  }
+  if (fieldMissing) {
+    throw new Error(FIELD_MISSING)
+  }
+  throw new Error(
+    `page never loaded over CDP: ${lastError === undefined ? 'None' : errorRepr(lastError)}`,
+  )
+}
+
+/** Evaluate a field expression from `field.ts` until it finds the field instead of returning `null`. */
+async function evalOnField(expression: string): Promise<unknown> {
+  for (let check = 0; check < 20; check++) {
+    const result = await cdpEval(expression)
+    if (result !== null) {
+      return result
+    }
+    await sleep(1)
+  }
+  throw new Error(FIELD_MISSING)
+}
+
+const FIELD_MISSING =
+  'page never rendered its field: `window.__field()` found no `textarea`, text `input` or `[contenteditable]`'
+
 async function waitForChrome(device: Device): Promise<void> {
   for (let check = 0; check < 20; check++) {
     if ((await device.appCurrent()).package === CHROME) {
@@ -460,11 +485,7 @@ async function waitForChrome(device: Device): Promise<void> {
 /** Wait for the tap to focus the field. A tap that misses it is followed by the forced focus anyway. */
 async function waitForFieldFocus(): Promise<void> {
   for (let check = 0; check < 12; check++) {
-    if (
-      (await cdpEval(
-        'document.activeElement && document.activeElement.isContentEditable',
-      )) === true
-    ) {
+    if ((await cdpEval(FIELD_FOCUSED)) === true) {
       return
     }
     await sleep(0.25)
