@@ -4,10 +4,10 @@
 import {writeFileSync} from 'node:fs'
 import {adb, ProcessNotStoppedError, unstoppedProcesses} from './adb.ts'
 import {CHROME_ADB_SECONDS} from './budget.ts'
-import {cdpEval, CDP_PORT, PageExceptionError, setCurrentUrl, targets} from './cdp.ts'
+import {cdpConsole, cdpEval, CDP_PORT, PageExceptionError, setCurrentUrl, targets, type ConsoleEntry} from './cdp.ts'
 import {packageKeys, parseXml} from './hierarchy.ts'
 import type {Device} from './u2.ts'
-import {currentSignal, errorRepr, phase, pyLen, pyRepr, pySorted, pyStr, sleep, throwIfAborted} from './util.ts'
+import {currentSignal, errorRepr, phase, pyLen, pyRepr, pySorted, pyStr, sleep, throwIfAborted, tracked} from './util.ts'
 
 export const OUT = 'out'
 
@@ -354,7 +354,7 @@ export async function typeInChrome(
     state = await typeWords(device, name, result, layout, words, progress)
   } catch (error) {
     if (!(error instanceof PageRecordedErrors)) {
-      if (timingPage(page)) await saveStateAfterFault(name, result, error)
+      if (savesStateAfterFault(page)) await saveStateAfterFault(name, result, error)
       throw error
     }
     state = error.state
@@ -362,25 +362,50 @@ export async function typeInChrome(
   return outcome(state, undefined)
 }
 
-// Spike: a `timing=1` page's log is the result even when the driver faults, so the fault writes it out.
-function timingPage(page: string): boolean {
-  return new URLSearchParams(page.split('?')[1] ?? '').get('timing') === '1'
+// Spike: a `timing=1` page's log is the result even when the driver faults, and a `gap` page can take its
+// editor down with an error no `crash` names, so the fault writes either out.
+function savesStateAfterFault(page: string): boolean {
+  const params = new URLSearchParams(page.split('?')[1] ?? '')
+  return params.get('timing') === '1' || params.has('gap')
 }
 
 /**
- * Spike: write the page's state after `fault` into the attempt's JSON, as `faultState`, before the fault
- * goes on to the driver. It reads the page straight over CDP, so no page error it shows reaches the
- * attempt's error record, and a failed read is only logged: the outcome is the fault's either way.
+ * Spike: write the page's state and its console's errors after `fault` into the attempt's JSON, as
+ * `faultState` and `faultConsole`, before the fault goes on to the driver, and log the first error either
+ * holds. It reads the page straight over CDP, so no page error it shows reaches the attempt's error record,
+ * and a failed read is only logged: the outcome is the fault's either way.
  */
 async function saveStateAfterFault(name: string, result: Record<string, unknown>, fault: unknown): Promise<void> {
+  result.fault = errorRepr(fault)
+  let faultState: unknown
+  let faultConsole: ConsoleEntry[] = []
   try {
-    result.faultState = await cdpEval('window.__state()')
-    result.fault = errorRepr(fault)
-    writeFileSync(`${OUT}/${name}.json`, JSON.stringify(result, null, 2))
-    phase(`saved the timing page's state after the fault: ${errorRepr(fault)}`)
+    faultState = await cdpEval('window.__state()')
+    result.faultState = faultState
   } catch (error) {
-    phase(`could not save the timing page's state after the fault: ${errorRepr(error)}`)
+    phase(`could not read the page's state after the fault: ${errorRepr(error)}`)
   }
+  try {
+    faultConsole = await tracked('cdp console', () => cdpConsole())
+    result.faultConsole = faultConsole
+  } catch (error) {
+    phase(`could not read the page's console after the fault: ${errorRepr(error)}`)
+  }
+  try {
+    writeFileSync(`${OUT}/${name}.json`, JSON.stringify(result, null, 2))
+    phase(`saved the page's state after the fault: ${errorRepr(fault)}`)
+  } catch (error) {
+    phase(`could not save the page's state after the fault: ${errorRepr(error)}`)
+  }
+  const firstError = firstErrorAfterFault(faultState, faultConsole)
+  if (firstError !== undefined) phase(`first error after the fault: ${firstError}`)
+}
+
+/** The page's first recorded error, or else the first line of its console's first error. */
+function firstErrorAfterFault(state: unknown, entries: ConsoleEntry[]): string | undefined {
+  if (typeof state === 'object' && state !== null && 'errors' in state && Array.isArray(state.errors) && typeof state.errors[0] === 'string')
+    return state.errors[0]
+  return entries[0]?.text.split('\n')[0]
 }
 
 function classified(pageErrors: PageErrorRecord, error: FaultWithPageErrors): FaultWithPageErrors {

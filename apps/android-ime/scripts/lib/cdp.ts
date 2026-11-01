@@ -77,14 +77,7 @@ export async function cdpEval(expression: string): Promise<unknown> {
 }
 
 async function cdpEvalOnce(expression: string): Promise<unknown> {
-  // Match the whole URL. An empty `prefix=` is a prefix of every other prefix, so a tab Chrome restored from an
-  // earlier test would otherwise match.
-  const page = (await targets(10)).find((target) => target.type === 'page' && target.url === currentUrl)
-  if (!page?.webSocketDebuggerUrl) throw new NoTargetError(`no page target for ${currentUrl}`)
-  // Chrome names itself localhost in the socket URL. Keep the path and talk to the forwarded IPv4 port.
-  const url = new URL(page.webSocketDebuggerUrl)
-  url.host = `127.0.0.1:${CDP_PORT}`
-  // The global WebSocket sends no Origin header, so Chrome accepts it without --remote-allow-origins.
+  const url = await pageSocketUrl()
   const signal = currentSignal()
   signal?.throwIfAborted()
   const socket = new WebSocket(url)
@@ -128,4 +121,81 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
     socket.addEventListener('error', () => finish(new WebSocketError('connection error')))
     socket.addEventListener('close', (event) => finish(new WebSocketError(`closed before a reply, code ${event.code}`)))
   })
+}
+
+/** An uncaught exception or a `console.error` call the page's console holds. */
+export type ConsoleEntry = {source: 'exception' | 'console.error'; text: string}
+
+/**
+ * Spike: the page's uncaught exceptions and `console.error` calls, read once over a fresh connection.
+ * Chrome replays the messages its console already holds as events before it answers `Runtime.enable`,
+ * so the reply ends the read.
+ */
+export async function cdpConsole(): Promise<ConsoleEntry[]> {
+  const url = await pageSocketUrl()
+  const signal = currentSignal()
+  signal?.throwIfAborted()
+  const socket = new WebSocket(url)
+  const entries: ConsoleEntry[] = []
+  return await new Promise<ConsoleEntry[]>((resolve, reject) => {
+    let settled = false
+    const onAbort = () => finish(signal!.reason)
+    const finish = (error: Error | undefined) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
+      socket.close()
+      if (error) reject(error)
+      else resolve(entries)
+    }
+    const timer = setTimeout(() => finish(new WebSocketError('timed out after 10s')), 10_000)
+    signal?.addEventListener('abort', onAbort, {once: true})
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify({id: 1, method: 'Runtime.enable'}))
+    })
+    socket.addEventListener('message', (event) => {
+      if (settled) return
+      let message: {
+        id?: number
+        method?: string
+        params?: {
+          type?: string
+          args?: Array<{value?: unknown; description?: string}>
+          exceptionDetails?: {text?: string; exception?: {description?: string}}
+        }
+        error?: unknown
+      }
+      try {
+        message = JSON.parse(String(event.data))
+      } catch (error) {
+        finish(new WebSocketError(`bad frame: ${errorRepr(error)}`))
+        return
+      }
+      if (message.method === 'Runtime.exceptionThrown') {
+        const details = message.params?.exceptionDetails
+        entries.push({source: 'exception', text: details?.exception?.description ?? details?.text ?? 'no description'})
+      } else if (message.method === 'Runtime.consoleAPICalled' && message.params?.type === 'error') {
+        const args = message.params.args ?? []
+        entries.push({source: 'console.error', text: args.map((arg) => arg.description ?? String(arg.value)).join(' ')})
+      } else if (message.id === 1) {
+        if (message.error !== undefined) finish(new ProtocolError(JSON.stringify(message.error)))
+        else finish(undefined)
+      }
+    })
+    socket.addEventListener('error', () => finish(new WebSocketError('connection error')))
+    socket.addEventListener('close', (event) => finish(new WebSocketError(`closed before a reply, code ${event.code}`)))
+  })
+}
+
+async function pageSocketUrl(): Promise<URL> {
+  // Match the whole URL. An empty `prefix=` is a prefix of every other prefix, so a tab Chrome restored from an
+  // earlier test would otherwise match.
+  const page = (await targets(10)).find((target) => target.type === 'page' && target.url === currentUrl)
+  if (!page?.webSocketDebuggerUrl) throw new NoTargetError(`no page target for ${currentUrl}`)
+  // Chrome names itself localhost in the socket URL. Keep the path and talk to the forwarded IPv4 port.
+  // The global WebSocket sends no Origin header, so Chrome accepts it without --remote-allow-origins.
+  const url = new URL(page.webSocketDebuggerUrl)
+  url.host = `127.0.0.1:${CDP_PORT}`
+  return url
 }

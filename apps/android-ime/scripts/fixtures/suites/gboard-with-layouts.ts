@@ -41,6 +41,8 @@ const gboard = vi.hoisted(() => ({
   errorsFrom: undefined as number | undefined,
   errorsAttempt: 1,
   error: '',
+  console: [] as Array<{source: 'exception' | 'console.error'; text: string}>,
+  consoleReads: 0,
   stateReads: 0,
   loseKeyboardAfter: undefined as string | undefined,
   missingKeyboard: false,
@@ -164,6 +166,10 @@ vi.mock(import('../../lib/adb.ts'), async (importOriginal) => ({
 vi.mock(import('../../lib/cdp.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
   targets: async () => [],
+  cdpConsole: async () => {
+    gboard.consoleReads += 1
+    return gboard.console
+  },
   cdpEval: async (expression: string) => {
     if (expression === 'document.readyState') return 'complete'
     if (expression === 'typeof window.__state') return 'function'
@@ -361,6 +367,8 @@ declare global {
     errorsAttempt?: number
     /** The error the page records, the `removeChild` one by default. */
     error?: string
+    /** The uncaught exceptions and `console.error` calls the page's console replays to a CDP read. */
+    console?: Array<{source: 'exception' | 'console.error'; text: string}>
     /** After the first attempt's tap on this key, the letter layout's dumps hold no Gboard node. */
     loseKeyboardAfter?: string
     /**
@@ -379,6 +387,8 @@ declare global {
   }) => void
   /** The labels of the keys tapped in each attempt. */
   var gboardTaps: () => string[][]
+  /** How many times the driver read the page's console. */
+  var gboardConsoleReads: () => number
 }
 globalThis.fakeGboard = (options) => {
   Object.assign(gboard, {
@@ -407,6 +417,8 @@ globalThis.fakeGboard = (options) => {
     errorsFrom: options.errorsFrom,
     errorsAttempt: options.errorsAttempt ?? 1,
     error: options.error ?? ERROR,
+    console: options.console ?? [],
+    consoleReads: 0,
     stateReads: 0,
     loseKeyboardAfter: options.loseKeyboardAfter,
     missingKeyboard: false,
@@ -422,3 +434,4 @@ globalThis.fakeGboard = (options) => {
   })
 }
 globalThis.gboardTaps = () => gboard.taps
+globalThis.gboardConsoleReads = () => gboard.consoleReads

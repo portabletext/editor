@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {cdpEval, setCurrentUrl} from './cdp.ts'
+import {cdpConsole, cdpEval, setCurrentUrl} from './cdp.ts'
 
 const page = 'http://localhost:8765/editor.html?prefix='
 
@@ -33,6 +33,51 @@ describe(cdpEval.name, () => {
     await expect(cdpEval('document.readyState')).resolves.toEqual('complete')
   })
 })
+
+describe(cdpConsole.name, () => {
+  test("the exceptions and console errors Chrome replays before it answers Runtime.enable are the page's console, a plain log not", async () => {
+    stubConsole([
+      {method: 'Runtime.consoleAPICalled', params: {type: 'log', args: [{type: 'string', value: 'foo'}]}},
+      {
+        method: 'Runtime.consoleAPICalled',
+        params: {type: 'error', args: [{type: 'string', value: 'bar'}, {type: 'object', description: 'Error: baz'}]},
+      },
+      {
+        method: 'Runtime.exceptionThrown',
+        params: {exceptionDetails: {text: 'Uncaught', exception: {description: "NotFoundError: Failed to execute 'removeChild' on 'Node'"}}},
+      },
+      {id: 1, result: {}},
+      {method: 'Runtime.exceptionThrown', params: {exceptionDetails: {text: 'Uncaught', exception: {description: 'Error: after the reply'}}}},
+    ])
+    setCurrentUrl(page)
+
+    await expect(cdpConsole()).resolves.toEqual([
+      {source: 'console.error', text: 'bar Error: baz'},
+      {source: 'exception', text: "NotFoundError: Failed to execute 'removeChild' on 'Node'"},
+    ])
+  })
+})
+
+function stubConsole(frames: Array<Record<string, unknown>>): void {
+  vi.stubGlobal('fetch', async () => ({
+    json: async () => [{type: 'page', url: page, webSocketDebuggerUrl: 'ws://localhost:9222/devtools/page/1'}],
+  }))
+  vi.stubGlobal(
+    'WebSocket',
+    class extends EventTarget {
+      constructor() {
+        super()
+        queueMicrotask(() => this.dispatchEvent(new Event('open')))
+      }
+      send() {
+        queueMicrotask(() => {
+          for (const frame of frames) this.dispatchEvent(new MessageEvent('message', {data: JSON.stringify(frame)}))
+        })
+      }
+      close() {}
+    },
+  )
+}
 
 function stubPage(reply: Record<string, unknown>): string[] {
   const evaluations: string[] = []

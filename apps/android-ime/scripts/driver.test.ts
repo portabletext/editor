@@ -618,6 +618,30 @@ describe('the read after a fault in a crash case', () => {
   }, 60_000)
 })
 
+describe('a fault on a gap page', () => {
+  test("saves the page's state and console errors into the attempt's JSON, logs the first error, and is still retried", async () => {
+    expect(
+      await runSuite({
+        file: 'scripts/fixtures/suites/gap-page-saves-errors-after-fault.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/gboard-with-layouts.ts',
+          'tests/setup.ts',
+        ],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: A gap page whose keyboard is gone after word 1 saves the error its page and console hold and is retried',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 60_000)
+})
+
 describe('a required candidate', () => {
   test('is tapped when Gboard offers it on the retry, a candidate that is not required still falls back to Space, and one Space would commit first faults', async () => {
     expect(
