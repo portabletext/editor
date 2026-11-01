@@ -4,7 +4,7 @@
 # any test runs, with a PREP FAILED line naming the step.
 # Every stage runs under `timeout -k`, so a hang shows up as a logged timeout and the stage ends within
 # its cap plus the kill-after: reading the test stage's cap 10 + 5 seconds, prep 600 + 10, the tests
-# `DEVICE_TEST_FILE_SECONDS` (1825, `scripts/lib/budget.ts`) + 10, the diagnostics after them 60 + 5.
+# `DEVICE_TEST_FILE_SECONDS` (1735, `scripts/lib/budget.ts`) + 10, the diagnostics after them 60 + 5.
 # The README sums these into the workflow's step timeout.
 set -u
 lang=${IME_LANG:-en}

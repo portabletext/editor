@@ -19,15 +19,15 @@ vi.mock(import('../../lib/typing.ts'), async (importOriginal) => ({
     nested: 0,
     compositionstartPerWord: [1],
   }),
-  closeChrome: () => chromeStop.stopped,
-  clearChromeTabs: async () => {
-    globalThis.chromeTabsCleared = true
+  closeChrome: async () => {
+    await chromeStop.stopped
+    globalThis.chromeStopReturned = true
   },
 }))
 
 declare global {
   var finishChromeStop: () => void
-  var chromeTabsCleared: boolean
+  var chromeStopReturned: boolean
 }
-globalThis.chromeTabsCleared = false
+globalThis.chromeStopReturned = false
 globalThis.finishChromeStop = chromeStop.release

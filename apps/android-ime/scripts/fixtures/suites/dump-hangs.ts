@@ -30,9 +30,6 @@ vi.mock(import('../../lib/typing.ts'), async (importOriginal) => {
     closeChrome: async () => {
       calls.push('close chrome')
     },
-    clearChromeTabs: async () => {
-      calls.push('clear tabs')
-    },
   }
 })
 
