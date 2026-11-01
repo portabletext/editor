@@ -1,5 +1,5 @@
-// One typing attempt on the device: open the page in Chrome, raise Gboard, tap each word's keys and its
-// candidate, and read the page's text and events back over CDP.
+// One attempt on the device: open the page in Chrome, raise Gboard, drive each step on its keys, and read
+// the page's text, selection and events back over CDP.
 
 import {writeFileSync} from 'node:fs'
 import {adb, ProcessNotStoppedError, shellQuote} from '../device/adb.ts'
@@ -14,7 +14,11 @@ import {
 import {localhostPort, prefixedPageUrl} from '../device/page-url.ts'
 import type {Device} from '../device/u2.ts'
 import {
-  errorRepr,
+  currentInspection,
+  describeError,
+  guardedErrorMessage,
+  guardedErrorRepr,
+  isInstance,
   phase,
   pyLen,
   pyRepr,
@@ -22,15 +26,25 @@ import {
   pyStr,
   sleep,
   throwIfAborted,
+  UNPRINTABLE_ERROR,
 } from '../device/util.ts'
+import type {
+  Commit,
+  GraphemeSelection,
+  PageEvent,
+  Run,
+  RunOnDeviceOptions,
+  Step,
+  StepRecord,
+} from '../steps.ts'
 import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './field.ts'
-import {packageKeys} from './hierarchy.ts'
+import {packageKeys, packageNodes, type PackageNode} from './hierarchy.ts'
+import {LETTERS} from './support.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 const CHROME = 'com.android.chrome'
 
 type Keys = Map<string, [number, number]>
-type PageEvent = {type: string; [key: string]: unknown}
 type PageState = {
   text: string | null
   events: PageEvent[]
@@ -80,6 +94,148 @@ export async function typeInChrome(
   connect: () => Promise<Device>,
 ): Promise<Typed> {
   const result: Record<string, unknown> = {url: pageUrl, prefix, words}
+  const device = await openKeyboard(
+    name,
+    {url: pageUrl, keyboard, prefix},
+    connect,
+    result,
+  )
+  const {picked, stepEnds, text, events} = await runSteps(
+    device,
+    name,
+    result,
+    words,
+    {
+      // A word is read only when the loop reaches it, so a malformed word throws after the words before it are typed.
+      toStep: (word): Step => ({
+        type: 'compose',
+        letters: word.letters,
+        commit:
+          word.candidate === undefined ? 'space' : {candidate: word.candidate},
+      }),
+      boundaries: false,
+    },
+  )
+  const typed: Typed = {
+    text,
+    picked: picked.map((commit) => commit ?? 'space'),
+    compositionstart: events.filter(
+      (event) => event.type === 'compositionstart',
+    ).length,
+    // The first-character bug's signal: a compositionstart that arrives while an earlier composition is still open.
+    nested: nestedCompositionstart(events),
+    compositionstartPerWord: compositionstartPerWord(events, stepEnds),
+  }
+  result.typed = typed
+  writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
+  phase(`typed ${pyRepr(text)} picked=${typed.picked.join('/')}`)
+  throwOnUnexpectedDigit(
+    text,
+    prefix + words.map((word) => word.letters).join(''),
+  )
+  return typed
+}
+
+/**
+ * Open the page in Chrome, drive `steps` on Gboard and read back a record of each. A step that throws is
+ * recorded as `failed`, the steps after it as `skipped`, and the attempt throws its error as a driver
+ * fault, after passing it with the records to `onStepFailure` and writing the records to `<name>.json`.
+ */
+export async function runInChrome(
+  name: string,
+  {url: pageUrl, keyboard, prefix, steps}: RunOnDeviceOptions,
+  connect: () => Promise<Device>,
+  onStepFailure?: (error: unknown, records: StepRecord[]) => void,
+): Promise<Run> {
+  const result: Record<string, unknown> = {url: pageUrl, prefix, steps}
+  const records: StepRecord[] = []
+  let run: Run
+  try {
+    const device = await openKeyboard(
+      name,
+      {url: pageUrl, keyboard, prefix},
+      connect,
+      result,
+    )
+    const {text, selection, events} = await runSteps(
+      device,
+      name,
+      result,
+      steps,
+      {toStep: (step) => step, records, boundaries: true},
+    )
+    run = {steps: records, text, selection, events}
+  } catch (error) {
+    if (records.length > 0) {
+      onStepFailure?.(error, records)
+      result.records = records
+      // Serializing runs the steps' getters and `toJSON`, so a failure to write the artifact never replaces
+      // the step's error or decides whether it is retried.
+      try {
+        writeFileSync(
+          `${outDir()}/${name}.json`,
+          JSON.stringify(result, null, 2),
+        )
+      } catch (artifactError) {
+        phase(`failure artifact not written: ${describeError(artifactError)}`)
+      }
+    }
+    throw error
+  }
+  result.run = run
+  writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
+  phase(
+    `ran ${pyRepr(run.text)} steps=${records.map((record) => `${record.type}:${record.status}`).join('/')}`,
+  )
+  throwOnUnexpectedDigit(
+    run.text,
+    prefix +
+      steps
+        .map((step) =>
+          step.type === 'compose' ? (step.letters ?? step.text) : '',
+        )
+        .join(''),
+  )
+  return run
+}
+
+/**
+ * A new error whose message is `error`'s, or `error` as a string when it is not an `Error`, followed by
+ * one line per step of `records`, with `error` as its `cause`. When reading or converting that message
+ * throws, the message starts with `UNPRINTABLE_ERROR` instead.
+ */
+export function withStepRecords(error: unknown, records: StepRecord[]): Error {
+  const lines = records.map(
+    (record, index) =>
+      `  ${index + 1}. ${field(() => String(record.type))}: ${field(() => String(record.status))}${field(() => (record.reason === undefined ? '' : ` (${String(record.reason)})`), ` (${UNPRINTABLE_ERROR})`)}, textAfter ${field(() => pyRepr(record.textAfter))}`,
+  )
+  return new Error(
+    `${guardedErrorMessage(error)}\nSteps:\n${lines.join('\n')}`,
+    {cause: error},
+  )
+}
+
+// Each field of a step line is converted on its own, so a field that cannot be shown never replaces the
+// error or the other fields.
+function field(convert: () => string, fallback = UNPRINTABLE_ERROR): string {
+  try {
+    return convert()
+  } catch {
+    return fallback
+  }
+}
+
+/** Open the page in Chrome, tap its field and wait until Gboard shows the keyboard's layout. */
+async function openKeyboard(
+  name: string,
+  {
+    url: pageUrl,
+    keyboard,
+    prefix,
+  }: Pick<RunOnDeviceOptions, 'url' | 'keyboard' | 'prefix'>,
+  connect: () => Promise<Device>,
+  result: Record<string, unknown>,
+): Promise<Device> {
   const port = localhostPort(pageUrl)
   if (port !== undefined) {
     await adb(['reverse', `tcp:${port}`, `tcp:${port}`])
@@ -101,7 +257,7 @@ export async function typeInChrome(
       break
     } catch (error) {
       throwIfAborted()
-      phase(`uiautomator2 not ready (${attempt + 1}): ${errorRepr(error)}`)
+      phase(`uiautomator2 not ready (${attempt + 1}): ${describeError(error)}`)
       await sleep(2)
       device = await connect()
     }
@@ -216,43 +372,182 @@ export async function typeInChrome(
     `keys found: ${labels.length} labels, sample ${pyRepr(labels.slice(0, 40))}`,
   )
 
-  const wordEnds: number[] = []
-  const picked: string[] = []
-  for (const [index, word] of words.entries()) {
-    picked.push(await typeWord(device, name, result, word, index + 1))
-    const after = (await cdpEval('window.__state()')) as PageState
-    result[`after${index + 1}`] = after
-    wordEnds.push(after.events.length)
+  return device
+}
+
+/**
+ * Drive `inputs` in order, each converted with `toStep` when the loop reaches it, and push a record of
+ * each to `records`. A step that throws is recorded as `failed` and every step after it as `skipped`,
+ * and its error is thrown.
+ *
+ * With `boundaries`, a step's record spans the boundary before it and the boundary after it, each one
+ * `FIELD_BOUNDARY` evaluation, and the first is read after the field is focused, before the first step.
+ * Without them, the page sees only the `window.__state()` calls `typeOnDevice` made: one after each step
+ * and one after the last, the records hold no selection, and `events` holds every event the page recorded.
+ */
+async function runSteps<Input>(
+  device: Device,
+  name: string,
+  result: Record<string, unknown>,
+  inputs: Input[],
+  {
+    toStep,
+    records,
+    boundaries,
+  }: {
+    toStep: (input: Input) => Step
+    records?: StepRecord[]
+    boundaries: boolean
+  },
+): Promise<{
+  /** How each `compose` step was committed: its candidate or `space`, `undefined` for any other step. */
+  picked: Array<string | undefined>
+  /** The page's event count after each step. */
+  stepEnds: number[]
+  text: string | null
+  selection: GraphemeSelection | null
+  events: PageEvent[]
+}> {
+  const picked: Array<string | undefined> = []
+  const stepEnds: number[] = []
+  let last = boundaries ? await readBoundary() : undefined
+  const firstEnd = last?.state.events.length ?? 0
+  let eventsBefore = firstEnd
+  for (const [index, input] of inputs.entries()) {
+    const step = toStep(input)
+    const position = index + 1
+    let after: PageState
+    try {
+      picked.push(await runStep(device, name, result, step, position))
+      if (boundaries) {
+        last = await readBoundary()
+        after = last.state
+      } else {
+        after = (await cdpEval('window.__state()')) as PageState
+      }
+      result[`after${position}`] = after
+    } catch (error) {
+      if (records !== undefined) {
+        // `typeOnDevice` keeps no records, so it never reads the words after the one that threw.
+        // A step whose `type` throws when read again leaves the records of the steps before it, so the
+        // step's error still propagates.
+        currentInspection().guard(
+          () =>
+            records.push(
+              {
+                type: step.type,
+                status: 'failed',
+                reason: guardedErrorRepr(error),
+                textAfter: null,
+                selectionAfter: null,
+                events: [],
+              },
+              ...Array.from(
+                inputs.slice(index + 1),
+                (skipped): StepRecord => ({
+                  type: toStep(skipped).type,
+                  status: 'skipped',
+                  reason: `step ${position} failed`,
+                  textAfter: null,
+                  selectionAfter: null,
+                  events: [],
+                }),
+              ),
+            ),
+          undefined,
+        )
+      }
+      throw error
+    }
+    stepEnds.push(after.events.length)
+    records?.push({
+      type: step.type,
+      status: 'done',
+      textAfter: after.text,
+      selectionAfter: last?.selection ?? null,
+      events: after.events.slice(eventsBefore),
+    })
+    eventsBefore = after.events.length
+  }
+  if (last) {
+    result.state = last.state
+    return {
+      picked,
+      stepEnds,
+      text: last.state.text,
+      selection: last.selection,
+      events: last.state.events.slice(firstEnd),
+    }
   }
   const state = (await cdpEval('window.__state()')) as PageState
   result.state = state
-  const typed: Typed = {
-    text: state.text,
+  return {
     picked,
-    compositionstart: state.events.filter(
-      (event) => event.type === 'compositionstart',
-    ).length,
-    // The first-character bug's signal: a compositionstart that arrives while an earlier composition is still open.
-    nested: nestedCompositionstart(state.events),
-    compositionstartPerWord: compositionstartPerWord(state.events, wordEnds),
+    stepEnds,
+    text: state.text,
+    selection: null,
+    events: state.events,
   }
-  result.typed = typed
-  writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
-  phase(`typed ${pyRepr(state.text)} picked=${picked.join('/')}`)
-  // The one place the driver reads the page's text to classify a fault. A digit neither the prefix nor
-  // the letters hold can only come from a tap that landed as a long press on a key's number hint. An
-  // editor that produced one every time would fault twice and fail the test, so a retry can only hide an
-  // editor that produces it intermittently.
-  const digit = unexpectedDigit(
-    state.text,
-    prefix + words.map((word) => word.letters).join(''),
-  )
+}
+
+/** The page's state and the field's selection in grapheme clusters, from one `FIELD_BOUNDARY` evaluation. */
+async function readBoundary(): Promise<{
+  state: PageState
+  selection: GraphemeSelection | null
+}> {
+  const {state, selection} = (await cdpEval(FIELD_BOUNDARY)) as {
+    state: PageState
+    selection: unknown
+  }
+  return {state, selection: graphemeSelection(selection)}
+}
+
+/** Drive one step on Gboard. Returns what committed a `compose` step. */
+async function runStep(
+  device: Device,
+  name: string,
+  result: Record<string, unknown>,
+  step: Step,
+  position: number,
+): Promise<string | undefined> {
+  switch (step.type) {
+    case 'compose':
+      return compose(
+        device,
+        name,
+        result,
+        step.letters ?? step.text,
+        step.commit ?? 'space',
+        position,
+      )
+    case 'enter':
+      await tapRole(device, 'enter')
+      await settle(device, name, position)
+      return undefined
+    case 'backspace':
+      for (let tap = 0; tap < (step.times ?? 1); tap++) {
+        await tapRole(device, 'delete')
+      }
+      await settle(device, name, position)
+      return undefined
+  }
+}
+
+/**
+ * Throw a driver fault for a digit in `text` that `inputs` does not hold.
+ *
+ * The one place the driver reads the page's text to classify a fault. A digit neither the prefix nor
+ * the letters hold can only come from a tap that landed as a long press on a key's number hint. An
+ * editor that produced one every time would fault twice and fail the test, so a retry can only hide an
+ * editor that produces it intermittently.
+ */
+function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
+  const digit = unexpectedDigit(text, inputs)
   if (digit !== undefined) {
     throw new Error(
-      `mistap: digit ${digit} in typed text ${pyRepr(state.text)} that neither the prefix nor the letters hold`,
+      `mistap: digit ${digit} in typed text ${pyRepr(text)} that neither the prefix nor the letters hold`,
     )
   }
-  return typed
 }
 
 /** Save the screen and its accessibility dump after a failed attempt, over a fresh uiautomator2 connection. */
@@ -267,7 +562,7 @@ export async function dumpFailure(
     device = await connect()
   } catch (error) {
     throwIfAborted()
-    console.warn(`u2 connect for dump failed: ${errorRepr(error)}`)
+    console.warn(`u2 connect for dump failed: ${describeError(error)}`)
     return
   }
   try {
@@ -275,7 +570,7 @@ export async function dumpFailure(
     await device.screenshot(`${outDir()}/${name}-fail`)
   } catch (error) {
     throwIfAborted()
-    console.warn(`dump failed: ${errorRepr(error)}`)
+    console.warn(`dump failed: ${describeError(error)}`)
   }
 }
 
@@ -284,10 +579,10 @@ export async function closeChrome(): Promise<void> {
   await adb(['shell', 'am', 'force-stop', CHROME], CHROME_ADB_SECONDS).catch(
     (error: unknown) => {
       throwIfAborted()
-      if (error instanceof ProcessNotStoppedError) {
+      if (isInstance(error, ProcessNotStoppedError)) {
         throw error
       }
-      phase(`force-stop chrome failed: ${errorRepr(error)}`)
+      phase(`force-stop chrome failed: ${describeError(error)}`)
     },
   )
 }
@@ -299,10 +594,10 @@ export async function clearChromeTabs(): Promise<void> {
     CHROME_ADB_SECONDS,
   ).catch((error: unknown) => {
     throwIfAborted()
-    if (error instanceof ProcessNotStoppedError) {
+    if (isInstance(error, ProcessNotStoppedError)) {
       throw error
     }
-    phase(`clearing chrome tabs failed: ${errorRepr(error)}`)
+    phase(`clearing chrome tabs failed: ${describeError(error)}`)
   })
 }
 
@@ -360,7 +655,6 @@ export function isJapanese(keys: Iterable<string>): boolean {
 
 export type KeyboardState = 'japanese-qwerty' | 'banner' | 'other' | 'partial'
 
-const LETTERS = [...'abcdefghijklmnopqrstuvwxyz']
 const SPACE_KEYS = ['Space', 'space', 'スペース']
 
 /**
@@ -420,11 +714,11 @@ async function waitForPage(): Promise<void> {
       }
     } catch (error) {
       throwIfAborted()
-      if (error instanceof PageExceptionError) {
+      if (isInstance(error, PageExceptionError)) {
         throw error
       }
       lastError = error
-      phase(`cdp not ready: ${errorRepr(error)}`)
+      phase(`cdp not ready: ${describeError(error)}`)
       try {
         const pageTargets = await targets(5)
         const described = pageTargets
@@ -436,13 +730,13 @@ async function waitForPage(): Promise<void> {
         phase(`targets: ${described}`)
       } catch (targetsError) {
         throwIfAborted()
-        phase(`targets unavailable: ${errorRepr(targetsError)}`)
+        phase(`targets unavailable: ${describeError(targetsError)}`)
       }
     }
     await sleep(1)
   }
   throw new Error(
-    `page never loaded over CDP: ${lastError === undefined ? 'None' : errorRepr(lastError)}`,
+    `page never loaded over CDP: ${lastError === undefined ? 'None' : describeError(lastError)}`,
   )
 }
 
@@ -630,25 +924,35 @@ async function ensureJapanese(device: Device, name: string): Promise<void> {
   throw new Error('could not switch Gboard to Japanese')
 }
 
-/** Tap `word`'s letters, then its candidate when Gboard offers it, otherwise Space. Returns what committed it. */
-async function typeWord(
+/**
+ * Tap `letters`, then commit them: tap the candidate when Gboard offers it, otherwise Space, or leave the
+ * composition open. Returns the candidate or `space` that committed them, `undefined` for `none`.
+ */
+async function compose(
   device: Device,
   name: string,
   result: Record<string, unknown>,
-  word: Word,
+  letters: string,
+  commit: Commit,
   position: number,
-): Promise<string> {
-  for (const key of word.letters) {
+): Promise<string | undefined> {
+  for (const key of letters) {
     await tapKey(device, key)
   }
-  phase(`typed ${word.letters} (${position})`)
+  phase(`typed ${letters} (${position})`)
   await device.screenshot(`${outDir()}/${name}-composing${position}`)
   result[`composing${position}`] = await cdpEval('window.__state()')
+  if (commit === 'none') {
+    result[`picked${position}`] = 'none'
+    await settle(device, name, position)
+    return undefined
+  }
+  const wanted = commit === 'space' ? undefined : commit.candidate
   let keys = await gboardKeys(device)
-  if (word.candidate !== undefined) {
+  if (wanted !== undefined) {
     // Gboard v15 sometimes shows only the kana candidate first and adds the kanji a moment later.
     for (let check = 0; check < 6; check++) {
-      if (keys.has(word.candidate)) {
+      if (keys.has(wanted)) {
         break
       }
       await sleep(0.5)
@@ -659,11 +963,10 @@ async function typeWord(
     .filter((label) => pyLen(label) <= 6 && !isAscii(label))
     .slice(0, 30)
   let picked: string
-  const candidate =
-    word.candidate === undefined ? undefined : keys.get(word.candidate)
+  const candidate = wanted === undefined ? undefined : keys.get(wanted)
   if (candidate) {
     await device.click(...candidate)
-    picked = word.candidate!
+    picked = wanted!
   } else {
     keys = await gboardKeys(device)
     // The Japanese layout labels its space key スペース.
@@ -671,11 +974,100 @@ async function typeWord(
     picked = 'space'
   }
   result[`picked${position}`] = picked
+  await settle(device, name, position)
+  return picked
+}
+
+/** Wait for Gboard to settle after a step's last tap, and save the screen. */
+async function settle(
+  device: Device,
+  name: string,
+  position: number,
+): Promise<void> {
   // Gboard commits the word and resets its suggestion strip asynchronously, and neither the page nor the
   // accessibility tree signals when it is ready for the next word.
   await sleep(1.5)
   await device.screenshot(`${outDir()}/${name}-after${position}`)
-  return picked
+}
+
+/** A Gboard key that plays the same role on every layout, whatever its label says there. */
+export type KeyRole = 'enter' | 'delete'
+
+const ROLE_IDS: Record<KeyRole, string> = {
+  enter: 'key_pos_ime_action',
+  delete: 'key_pos_del',
+}
+
+// The action key's label follows the field's `enterkeyhint`, and the delete key's the layout's language.
+const ROLE_LABELS: Record<KeyRole, RegExp> = {
+  enter: /^(enter|done|go|search|next|send|return)$/i,
+  delete: /^(delete|backspace|削除)$/i,
+}
+
+/** The Gboard node that plays `role`, by resource id first and label second. */
+export function roleKey(
+  nodes: PackageNode[],
+  role: KeyRole,
+): PackageNode | undefined {
+  return (
+    nodes.find((node) => node.id === ROLE_IDS[role]) ??
+    nodes.find((node) => ROLE_LABELS[role].test(node.label))
+  )
+}
+
+async function tapRole(device: Device, role: KeyRole): Promise<void> {
+  // Waits for a whole layout first, so a dump taken mid-redraw does not read as a missing key.
+  await gboardKeys(device)
+  const nodes = packageNodes(await device.dumpHierarchy(), GBOARD)
+  const key = roleKey(nodes, role)
+  if (!key) {
+    throw new Error(
+      `no Gboard ${role} key, labels: ${pyRepr(
+        pySorted(nodes.map((node) => node.label)).slice(0, 80),
+      )}`,
+    )
+  }
+  await device.click(...key.center)
+  // Paces taps at a typist's speed, as `tapKey` does.
+  await sleep(0.4)
+}
+
+// The selection in the field the driver types into, in UTF-16 offsets of the field's text. `null` when
+// it is outside the field.
+const FIELD_SELECTION = `(() => { const field = typeof window.__field === 'function' ? window.__field() : null; if (!field) return null; if (field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement) { const backward = field.selectionDirection === 'backward'; return {text: field.value, anchor: backward ? field.selectionEnd : field.selectionStart, focus: backward ? field.selectionStart : field.selectionEnd}; } const selection = getSelection(); if (!selection || !selection.rangeCount || !field.contains(selection.anchorNode) || !field.contains(selection.focusNode)) return null; const offset = (node, nodeOffset) => { const range = document.createRange(); range.setStart(field, 0); range.setEnd(node, nodeOffset); return range.toString().length; }; return {text: field.textContent, anchor: offset(selection.anchorNode, selection.anchorOffset), focus: offset(selection.focusNode, selection.focusOffset)}; })()`
+
+// The page's `window.__state()` and the field's selection from one evaluation, so no event can land
+// between them.
+const FIELD_BOUNDARY = `({state: window.__state(), selection: ${FIELD_SELECTION}})`
+
+/** A `FIELD_SELECTION` reply in grapheme clusters. */
+export function graphemeSelection(reply: unknown): GraphemeSelection | null {
+  if (reply === null || typeof reply !== 'object') {
+    return null
+  }
+  const {text, anchor, focus} = reply as {
+    text: string | null
+    anchor: number
+    focus: number
+  }
+  return {
+    anchor: graphemeOffset(text ?? '', anchor),
+    focus: graphemeOffset(text ?? '', focus),
+  }
+}
+
+const GRAPHEMES = new Intl.Segmenter(undefined, {granularity: 'grapheme'})
+
+/** The number of grapheme clusters in `text` that start before the UTF-16 `offset`. */
+export function graphemeOffset(text: string, offset: number): number {
+  let clusters = 0
+  for (const {index} of GRAPHEMES.segment(text)) {
+    if (index >= offset) {
+      break
+    }
+    clusters += 1
+  }
+  return clusters
 }
 
 function isAscii(value: string): boolean {

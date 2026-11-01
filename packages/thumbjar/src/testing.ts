@@ -3,13 +3,14 @@ import {startVitest} from 'vitest/node'
 export type SuiteResult = {
   file: string
   errors: string[]
-  tests: Array<{name: string; state: string}>
+  /** Each test's state, and for a skipped test the note it was skipped with, if any. */
+  tests: Array<{name: string; state: string; note?: string}>
 }
 
 /**
  * Run one test file in a Vitest of its own, without reporters, and collect the
- * file's errors and each test's state. `file` and `setupFiles` are relative to
- * `root`.
+ * file's errors, each test's state and the note of a test skipped with one.
+ * `file` and `setupFiles` are relative to `root`.
  */
 export async function runSuite({
   root,
@@ -44,10 +45,12 @@ export async function runSuite({
     return {
       file: testModule!.state(),
       errors: testModule!.errors().map((error) => error.message ?? ''),
-      tests: [...testModule!.children.allTests()].map((testCase) => ({
-        name: testCase.name,
-        state: testCase.result().state,
-      })),
+      tests: [...testModule!.children.allTests()].map((testCase) => {
+        const result = testCase.result()
+        return result.state === 'skipped' && result.note !== undefined
+          ? {name: testCase.name, state: result.state, note: result.note}
+          : {name: testCase.name, state: result.state}
+      }),
     }
   } finally {
     await vitest.close()
