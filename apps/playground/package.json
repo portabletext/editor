@@ -38,7 +38,6 @@
     "react-aria-components": "^1.22.1",
     "react-dom": "catalog:",
     "react-is": "^19.2.7",
-    "remeda": "catalog:tooling",
     "shiki": "^3.23.0",
     "xstate": "catalog:",
     "zod": "^4.6.7"

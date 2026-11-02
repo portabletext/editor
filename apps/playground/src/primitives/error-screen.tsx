@@ -1,4 +1,3 @@
-import {isError} from 'remeda'
 import {Button} from './button'
 
 export function ErrorScreen(props: {
@@ -27,5 +26,5 @@ export function ErrorScreen(props: {
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
-  return isError(error) ? error.message : fallback
+  return error instanceof Error ? error.message : fallback
 }
