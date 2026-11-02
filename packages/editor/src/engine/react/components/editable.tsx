@@ -79,6 +79,7 @@ import {useEngine} from '../hooks/use-engine'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {ReadOnlyContext} from '../hooks/use-read-only'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
+import {attachRef} from '../utils/attach-ref'
 import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
 import {RestoreDOM} from './restore-dom/restore-dom'
@@ -1033,30 +1034,29 @@ export const Editable = forwardRef(
     )
 
     const callbackRef = useCallback(
-      (node: HTMLDivElement | null) => {
-        if (node == null) {
+      (node: HTMLDivElement) => {
+        // Attach a native DOM event handler for `beforeinput` events, because React's
+        // built-in `onBeforeInput` is actually a leaky polyfill that doesn't expose
+        // real `beforeinput` events sadly... (2019/11/04)
+        // https://github.com/facebook/react/issues/11211
+        if (HAS_BEFORE_INPUT_SUPPORT) {
+          node.addEventListener('beforeinput', onDOMBeforeInput)
+        }
+
+        ref.current = node
+        const detachForwardedRef = attachRef(forwardedRef, node)
+
+        return () => {
           onDOMSelectionChange.cancel()
           scheduleOnDOMSelectionChange.cancel()
           editor.domElement = null
 
-          if (ref.current && HAS_BEFORE_INPUT_SUPPORT) {
-            ref.current.removeEventListener('beforeinput', onDOMBeforeInput)
-          }
-        } else {
-          // Attach a native DOM event handler for `beforeinput` events, because React's
-          // built-in `onBeforeInput` is actually a leaky polyfill that doesn't expose
-          // real `beforeinput` events sadly... (2019/11/04)
-          // https://github.com/facebook/react/issues/11211
           if (HAS_BEFORE_INPUT_SUPPORT) {
-            node.addEventListener('beforeinput', onDOMBeforeInput)
+            node.removeEventListener('beforeinput', onDOMBeforeInput)
           }
-        }
 
-        ref.current = node
-        if (typeof forwardedRef === 'function') {
-          forwardedRef(node)
-        } else if (forwardedRef) {
-          forwardedRef.current = node
+          ref.current = null
+          detachForwardedRef()
         }
       },
       [

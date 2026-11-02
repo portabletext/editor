@@ -1,7 +1,9 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {createRef} from 'react'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
+import {page, userEvent} from 'vitest/browser'
+import {defineSchema, EditorProvider, PortableTextEditable} from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
@@ -206,5 +208,177 @@ describe('selection validation', () => {
       },
       backward: false,
     })
+  })
+
+  test('Scenario: Unmounting the editable disconnects its mutation observer', async () => {
+    const observe = vi.spyOn(MutationObserver.prototype, 'observe')
+    const disconnect = vi.spyOn(MutationObserver.prototype, 'disconnect')
+    onTestFinished(() => {
+      observe.mockRestore()
+      disconnect.mockRestore()
+    })
+
+    const renderResult = await render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <PortableTextEditable data-testid="editable" />
+      </EditorProvider>,
+    )
+    await expect.element(page.getByTestId('editable')).toBeInTheDocument()
+    const editorElement = page.getByTestId('editable').element()
+
+    const editorObservers = observe.mock.contexts.filter(
+      (_observer, index) => observe.mock.calls[index]?.[0] === editorElement,
+    )
+    expect(
+      editorObservers.filter(
+        (observer) => !disconnect.mock.contexts.includes(observer),
+      ),
+    ).toHaveLength(1)
+
+    await renderResult.unmount()
+
+    expect(
+      editorObservers.filter(
+        (observer) => !disconnect.mock.contexts.includes(observer),
+      ),
+    ).toEqual([])
+  })
+
+  test('Scenario: Unmounting the editable clears the ref passed to it', async () => {
+    const editableRef = createRef<HTMLDivElement>()
+
+    const renderResult = await render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator: createTestKeyGenerator(),
+          schemaDefinition: defineSchema({}),
+        }}
+      >
+        <PortableTextEditable ref={editableRef} data-testid="editable" />
+      </EditorProvider>,
+    )
+    await expect.element(page.getByTestId('editable')).toBeInTheDocument()
+    expect(editableRef.current).toBe(page.getByTestId('editable').element())
+
+    await renderResult.unmount()
+
+    expect(editableRef.current).toEqual(null)
+  })
+
+  test('Scenario: A callback ref passed to the editable receives `null` when the element detaches', async () => {
+    const events: Array<[string, HTMLDivElement | null]> = []
+    const firstRef = (node: HTMLDivElement | null) => {
+      events.push(['first', node])
+    }
+    const secondRef = (node: HTMLDivElement | null) => {
+      events.push(['second', node])
+    }
+    const initialConfig = {
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+    }
+
+    const renderResult = await render(
+      <EditorProvider initialConfig={initialConfig}>
+        <PortableTextEditable ref={firstRef} data-testid="editable" />
+      </EditorProvider>,
+    )
+    await expect.element(page.getByTestId('editable')).toBeInTheDocument()
+    const editorElement = page.getByTestId('editable').element()
+
+    expect(events).toEqual([
+      ['first', editorElement],
+      ['first', null],
+      ['first', editorElement],
+    ])
+
+    await renderResult.rerender(
+      <EditorProvider initialConfig={initialConfig}>
+        <PortableTextEditable ref={secondRef} data-testid="editable" />
+      </EditorProvider>,
+    )
+
+    expect(events).toEqual([
+      ['first', editorElement],
+      ['first', null],
+      ['first', editorElement],
+      ['first', null],
+      ['second', editorElement],
+    ])
+
+    await renderResult.unmount()
+
+    expect(events).toEqual([
+      ['first', editorElement],
+      ['first', null],
+      ['first', editorElement],
+      ['first', null],
+      ['second', editorElement],
+      ['second', null],
+    ])
+  })
+
+  test('Scenario: A callback ref passed to the editable has its returned cleanup run when the element detaches', async () => {
+    const events: Array<[string, HTMLDivElement | null]> = []
+    const firstRef = (node: HTMLDivElement | null) => {
+      events.push(['first', node])
+      return () => {
+        events.push(['first cleanup', node])
+      }
+    }
+    const secondRef = (node: HTMLDivElement | null) => {
+      events.push(['second', node])
+      return () => {
+        events.push(['second cleanup', node])
+      }
+    }
+    const initialConfig = {
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+    }
+
+    const renderResult = await render(
+      <EditorProvider initialConfig={initialConfig}>
+        <PortableTextEditable ref={firstRef} data-testid="editable" />
+      </EditorProvider>,
+    )
+    await expect.element(page.getByTestId('editable')).toBeInTheDocument()
+    const editorElement = page.getByTestId('editable').element()
+
+    expect(events).toEqual([
+      ['first', editorElement],
+      ['first cleanup', editorElement],
+      ['first', editorElement],
+    ])
+
+    await renderResult.rerender(
+      <EditorProvider initialConfig={initialConfig}>
+        <PortableTextEditable ref={secondRef} data-testid="editable" />
+      </EditorProvider>,
+    )
+
+    expect(events).toEqual([
+      ['first', editorElement],
+      ['first cleanup', editorElement],
+      ['first', editorElement],
+      ['first cleanup', editorElement],
+      ['second', editorElement],
+    ])
+
+    await renderResult.unmount()
+
+    expect(events).toEqual([
+      ['first', editorElement],
+      ['first cleanup', editorElement],
+      ['first', editorElement],
+      ['first cleanup', editorElement],
+      ['second', editorElement],
+      ['second cleanup', editorElement],
+    ])
   })
 })
