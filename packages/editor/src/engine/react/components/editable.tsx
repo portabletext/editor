@@ -1168,7 +1168,6 @@ export const Editable = forwardRef(
                   if (
                     !HAS_BEFORE_INPUT_SUPPORT &&
                     !readOnly &&
-                    !isEventHandled(event as any, attributes.onBeforeInput) &&
                     DOMEditor.hasSelectableTarget(editor, event.target)
                   ) {
                     event.preventDefault()
@@ -1182,7 +1181,7 @@ export const Editable = forwardRef(
                     }
                   }
                 },
-                [attributes.onBeforeInput, editor, editorActor, readOnly],
+                [editor, editorActor, readOnly],
               )}
               onInput={useCallback(
                 (event: React.FormEvent<HTMLDivElement>) => {
