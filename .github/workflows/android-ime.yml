@@ -38,10 +38,11 @@ jobs:
   emulator:
     name: Android IME (${{ matrix.suite.file }})
     runs-on: ubuntu-latest
-    # The sum of the step caps below on the retry path, see the budget in
+    # The row's job cap: the sum of the step caps below on the retry path and
+    # a minute for the runner between steps, see the budget in
     # `packages/editor/android/README.md`. `android/scripts/budget.test.ts`
     # checks it.
-    timeout-minutes: 152
+    timeout-minutes: ${{ matrix.suite.job_minutes }}
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -50,10 +51,22 @@ jobs:
       fail-fast: false
       matrix:
         # One row per device test file CI runs, on a device prepared for its
-        # language. `tests/en-textarea.test.ts` is a control run by hand.
+        # language, with its run steps' and its job's caps, which the
+        # language's prep sets. `tests/en-textarea.test.ts` is a control run
+        # by hand.
         suite:
-          - {lang: ja, file: tests/ja.test.ts}
-          - {lang: en, file: tests/en.test.ts}
+          - {
+              lang: ja,
+              file: tests/ja.test.ts,
+              run_minutes: 57,
+              job_minutes: 163,
+            }
+          - {
+              lang: en,
+              file: tests/en.test.ts,
+              run_minutes: 53,
+              job_minutes: 155,
+            }
         api: [36]
 
     steps:
@@ -116,7 +129,7 @@ jobs:
       - name: Run on emulator
         id: run1
         continue-on-error: true
-        timeout-minutes: 52
+        timeout-minutes: ${{ matrix.suite.run_minutes }}
         env:
           IME_LANG: ${{ matrix.suite.lang }}
         uses: reactivecircus/android-emulator-runner@v2
@@ -148,7 +161,7 @@ jobs:
         id: run2
         if: steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'
         continue-on-error: true
-        timeout-minutes: 52
+        timeout-minutes: ${{ matrix.suite.run_minutes }}
         env:
           IME_LANG: ${{ matrix.suite.lang }}
         uses: reactivecircus/android-emulator-runner@v2
