@@ -12,10 +12,15 @@ export default defineConfig({
       import: './dist/prepare/setup-ja.js',
       runtime: 'node',
     },
+    {
+      source: './src/prepare/dictionary.ts',
+      import: './dist/prepare/dictionary.js',
+      runtime: 'node',
+    },
   ],
   plugins: [
     {
-      // `thumbjar prepare` runs `prepare.sh` next to `bin.js`, and it runs `diagnose.sh` and `setup-ja.js` next to itself.
+      // `thumbjar prepare` runs `prepare.sh` next to `bin.js`, and it runs `diagnose.sh`, `setup-ja.js` and `dictionary.js` next to itself.
       name: 'thumbjar-prepare-scripts',
       writeBundle() {
         mkdirSync('dist/prepare', {recursive: true})
