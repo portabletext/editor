@@ -789,6 +789,7 @@ describe(runInChrome.name, () => {
             status: 'done',
             textAfter: 'foo\n',
             selectionAfter: {anchor: 4, focus: 4},
+            focusedAfter: true,
             events: [
               {
                 type: 'beforeinput',
@@ -851,6 +852,7 @@ describe(runInChrome.name, () => {
             status: 'done',
             textAfter: '👍🏽fo',
             selectionAfter: {anchor: 3, focus: 3},
+            focusedAfter: true,
             events: [
               {
                 type: 'beforeinput',
@@ -871,6 +873,7 @@ describe(runInChrome.name, () => {
             status: 'done',
             textAfter: '👍🏽',
             selectionAfter: {anchor: 1, focus: 1},
+            focusedAfter: true,
             events: [
               {
                 type: 'beforeinput',
@@ -1020,6 +1023,7 @@ describe(runInChrome.name, () => {
           status: 'done',
           textAfter: 'foo\n',
           selectionAfter: {anchor: 4, focus: 4},
+          focusedAfter: true,
           events: [
             {
               type: 'beforeinput',
@@ -1082,6 +1086,7 @@ describe(runInChrome.name, () => {
           status: 'done',
           textAfter: 'fo',
           selectionAfter: {anchor: 2, focus: 2},
+          focusedAfter: true,
           events: [
             {
               type: 'beforeinput',
@@ -1108,6 +1113,7 @@ describe(runInChrome.name, () => {
           status: 'done',
           textAfter: 'fo\n',
           selectionAfter: {anchor: 3, focus: 3},
+          focusedAfter: true,
           events: [
             {
               type: 'beforeinput',
@@ -1201,6 +1207,7 @@ describe(runInChrome.name, () => {
         status: 'done',
         textAfter: 'fo',
         selectionAfter: {anchor: 2, focus: 2},
+        focusedAfter: true,
         events: [
           {
             type: 'beforeinput',
@@ -1222,6 +1229,7 @@ describe(runInChrome.name, () => {
         reason: expect.stringMatching(/^Error: no Gboard enter key, labels: /),
         textAfter: null,
         selectionAfter: null,
+        focusedAfter: null,
         events: [],
       },
       {
@@ -1230,6 +1238,7 @@ describe(runInChrome.name, () => {
         reason: 'step 2 failed',
         textAfter: null,
         selectionAfter: null,
+        focusedAfter: null,
         events: [],
       },
     ])

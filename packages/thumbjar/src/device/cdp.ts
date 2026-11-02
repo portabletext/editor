@@ -1,7 +1,7 @@
 // Chrome DevTools protocol over `adb forward`: the target list through fetch, one Runtime.evaluate per
 // connection through the global WebSocket.
 
-import {adb} from './adb.ts'
+import {adb, throwIfStrictLoss} from './adb.ts'
 import {
   currentInspection,
   currentSignal,
@@ -97,6 +97,7 @@ export async function cdpEval(expression: string): Promise<unknown> {
       ) {
         throw error
       }
+      throwIfStrictLoss(error)
       last = error
       phase(`cdp dropped (${attempt + 1}): ${describeError(error)}, retrying`)
       await sleep(1.5)
@@ -106,7 +107,9 @@ export async function cdpEval(expression: string): Promise<unknown> {
           `tcp:${CDP_PORT}`,
           'localabstract:chrome_devtools_remote',
         ])
-      } catch {}
+      } catch (forwardError) {
+        throwIfStrictLoss(forwardError)
+      }
     }
   }
   throw last
