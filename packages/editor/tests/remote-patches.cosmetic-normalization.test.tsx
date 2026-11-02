@@ -299,6 +299,152 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
+  test("Scenario: A collaborator's paste arriving without its staging span's unset does not echo a second copy", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const pastedBlockKey = keyGenerator()
+    const pastedSpanKey = keyGenerator()
+    const otherBlockKey = keyGenerator()
+    const otherSpanKey = keyGenerator()
+    const stagingSpanKey = keyGenerator()
+    const patchEvents: Array<PatchEvent> = []
+    const mutationEvents: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patchEvents.push(event)
+            }
+            if (event.type === 'mutation') {
+              mutationEvents.push(event)
+            }
+          }}
+        />
+      ),
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: pastedBlockKey,
+          children: [
+            {_type: 'span', _key: pastedSpanKey, text: 'foo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: otherBlockKey,
+          children: [
+            {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: pastedBlockKey}, 'children', {_key: pastedSpanKey}],
+          position: 'after',
+          items: [
+            {_type: 'span', _key: stagingSpanKey, text: 'bar', marks: []},
+          ],
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {_key: pastedBlockKey},
+            'children',
+            {_key: pastedSpanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar'))),
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: pastedBlockKey,
+          children: [
+            {_type: 'span', _key: pastedSpanKey, text: 'foobar', marks: []},
+            {_type: 'span', _key: stagingSpanKey, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: otherBlockKey,
+          children: [
+            {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    // A local edit in another block is the flush point: an echo of the
+    // remote change would be emitted before this edit's own patch.
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: otherBlockKey}, 'children', {_key: otherSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: otherBlockKey}, 'children', {_key: otherSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    await vi.waitFor(() => {
+      expect(patchEvents.map((event) => event.patch)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {_key: otherBlockKey},
+            'children',
+            {_key: otherSpanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+          origin: 'local',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {_key: otherBlockKey},
+            'children',
+            {_key: otherSpanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
   test('Scenario: An empty span arriving via remote patches is kept', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
