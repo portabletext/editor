@@ -251,7 +251,6 @@ export function createAndroidInputManager({
     }
 
     compositionEndTimeoutId = setTimeout(() => {
-      editor.composing = false
       flush()
     }, RESOLVE_DELAY)
   }

@@ -9,9 +9,14 @@ import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {pathEquals} from '../../path/path-equals'
 import {getTextDecorations} from '../../text/get-text-decorations'
+import {
+  useCompositionHold,
+  type ComposingLeaf,
+} from '../hooks/use-composition-hold'
 import {useDecorations} from '../hooks/use-decorations'
 import type {RenderLeafProps, RenderTextProps} from './editable'
 import Leaf from './leaf'
+import {RestoreDOMBoundary} from './restore-dom/restore-dom'
 
 const defaultRenderText = (props: RenderTextProps) => <DefaultText {...props} />
 
@@ -38,7 +43,11 @@ const Text = (props: {
     text,
   } = props
 
-  const decorations = useDecorations(text, path, parentDecorations)
+  const {decorations, composingLeaf} = useCompositionHold(
+    text,
+    path,
+    useDecorations(text, path, parentDecorations),
+  )
   const decoratedLeaves = getTextDecorations(text, decorations)
   const children = []
 
@@ -48,7 +57,7 @@ const Text = (props: {
     children.push(
       <Leaf
         isLast={isLast && i === decoratedLeaves.length - 1}
-        key={`${text._key}-${i}`}
+        key={leafKey(text, i, position, composingLeaf)}
         leaf={leaf}
         leafPosition={position}
         text={text}
@@ -67,11 +76,39 @@ const Text = (props: {
     'data-pt-path': dataPath,
   }
 
-  return renderText({
-    text,
-    children,
-    attributes,
-  })
+  return (
+    <RestoreDOMBoundary>
+      {renderText({
+        text,
+        children,
+        attributes,
+      })}
+    </RestoreDOMBoundary>
+  )
+}
+
+// The leaf the IME composes in keeps the key it had when the composition
+// started, so a leaf added before it does not remount its text node.
+function leafKey(
+  text: PortableTextSpan,
+  index: number,
+  position: {start: number; end: number} | undefined,
+  composingLeaf: ComposingLeaf | null,
+): string {
+  if (!composingLeaf) {
+    return `${text._key}-${index}`
+  }
+  if (
+    (position?.start ?? 0) === composingLeaf.start &&
+    (position?.end ?? text.text.length) === composingLeaf.end
+  ) {
+    // An empty leaf from a collapsed decoration shares a start or an end with
+    // the composing leaf, so only both ends identify it.
+    return `${text._key}-${composingLeaf.index}`
+  }
+  return index === composingLeaf.index
+    ? `${text._key}-${index}-beside-composing`
+    : `${text._key}-${index}`
 }
 
 const MemoizedText = React.memo(Text, (prev, next) => {

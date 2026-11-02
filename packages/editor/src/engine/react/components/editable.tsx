@@ -74,6 +74,7 @@ import {rangeEquals} from '../../range/range-equals'
 import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
 import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
+import {endComposition} from '../hooks/use-composition-hold'
 import {DecorateContext, useDecorateContext} from '../hooks/use-decorations'
 import {useEngine} from '../hooks/use-engine'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
@@ -230,6 +231,15 @@ export const Editable = forwardRef(
         ref.current.focus()
       }
     }, [autoFocus])
+
+    // An editable unmounted mid-composition never sees `compositionend`, and
+    // the engine outlives it.
+    useEffect(
+      () => () => {
+        endComposition(editor)
+      },
+      [editor],
+    )
 
     /**
      * The AndroidInputManager object has a cyclical dependency on onDOMSelectionChange
@@ -967,9 +977,7 @@ export const Editable = forwardRef(
                 // then we will abort because we're still composing and the selection
                 // won't be updated properly.
                 // https://www.w3.org/TR/input-events-2/
-                if (editor.composing) {
-                  editor.composing = false
-                }
+                endComposition(editor)
               }
 
               // use a weak comparison instead of 'instanceof' to allow
@@ -1412,7 +1420,7 @@ export const Editable = forwardRef(
                   if (DOMEditor.hasSelectableTarget(editor, event.target)) {
                     if (editor.composing) {
                       Promise.resolve().then(() => {
-                        editor.composing = false
+                        endComposition(editor)
                       })
                     }
 
@@ -1458,6 +1466,12 @@ export const Editable = forwardRef(
                     !isDOMEventTargetInput(event)
                   ) {
                     if (!editor.composing) {
+                      // A composition whose `compositionstart` never reached
+                      // the editable starts here, through the same entry point
+                      // that retires the previous composition's scheduled work.
+                      androidInputManagerRef.current?.handleCompositionStart(
+                        event,
+                      )
                       editor.composing = true
                     }
                   }
@@ -1543,8 +1557,8 @@ export const Editable = forwardRef(
                     // COMPAT: The composition end event isn't fired reliably in all browsers,
                     // so we sometimes might end up stuck in a composition state even though we
                     // aren't composing any more.
-                    if (editor.composing && nativeEvent.isComposing === false) {
-                      editor.composing = false
+                    if (nativeEvent.isComposing === false) {
+                      endComposition(editor)
                     }
 
                     if (

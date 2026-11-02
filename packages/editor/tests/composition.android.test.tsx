@@ -1,6 +1,7 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {createRef} from 'react'
+import {createRef, useState} from 'react'
+import {flushSync} from 'react-dom'
 import {afterAll, describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {cdp, page, server, userEvent} from 'vitest/browser'
@@ -676,6 +677,146 @@ describe.skipIf(!isChromium)('Composition (IME) on Android', () => {
       .element(locator)
       .toHaveTextContent('Ky', {normalizeWhitespace: false})
   })
+  test('Scenario: A host input handler that handles the event unmounts the editable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const editorRef = createRef<Editor>()
+    await render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+          initialValue: [
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [
+                {_key: spanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <UnmountOnInput />
+      </EditorProvider>,
+    )
+    const locator = page.getByRole('textbox')
+    await expect.element(locator).toBeInTheDocument()
+    await userEvent.click(locator)
+    editorRef.current!.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+
+    await cdp().send('Input.insertText', {text: 'b'})
+
+    await expect.element(locator).not.toBeInTheDocument()
+    await vi.waitFor(() => {
+      expect(editorRef.current!.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foob', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: An operation listener unmounts the editable while the input is applied', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const editorRef = createRef<Editor>()
+    let unmount = () => {}
+    function Host() {
+      const [mounted, setMounted] = useState(true)
+      unmount = () => setMounted(false)
+      return mounted ? <PortableTextEditable /> : null
+    }
+    await render(
+      <EditorProvider
+        initialConfig={{
+          keyGenerator,
+          schemaDefinition: defineSchema({}),
+          initialValue: [
+            {
+              _key: blockKey,
+              _type: 'block',
+              children: [
+                {_key: spanKey, _type: 'span', text: 'foo ', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        }}
+      >
+        <EditorRefPlugin ref={editorRef} />
+        <Host />
+      </EditorProvider>,
+    )
+    const locator = page.getByRole('textbox')
+    await expect.element(locator).toBeInTheDocument()
+    await userEvent.click(locator)
+    editorRef.current!.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 4,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusOffset).toEqual(4)
+    })
+    let unmounted = false
+    const subscription = editorRef.current!.on('operation', (event) => {
+      if (!unmounted && event.operation.type === 'insert.text') {
+        unmounted = true
+        flushSync(unmount)
+      }
+    })
+
+    await cdp().send('Input.insertText', {text: 'b'})
+
+    await expect.element(locator).not.toBeInTheDocument()
+    await vi.waitFor(() => {
+      expect(editorRef.current!.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo b', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    subscription.unsubscribe()
+  })
+
   test('Scenario: Cancelling a composition in an empty block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
@@ -749,3 +890,15 @@ describe.skipIf(!isChromium)('Composition (IME) on Android', () => {
       .toHaveTextContent('か', {normalizeWhitespace: false})
   })
 })
+
+function UnmountOnInput() {
+  const [mounted, setMounted] = useState(true)
+  return mounted ? (
+    <PortableTextEditable
+      onInput={(event) => {
+        flushSync(() => setMounted(false))
+        event.preventDefault()
+      }}
+    />
+  ) : null
+}
