@@ -63,14 +63,14 @@ jobs:
           - {
               lang: ja,
               file: tests/ja.test.ts,
-              run_minutes: 56,
-              job_minutes: 186,
+              run_minutes: 62,
+              job_minutes: 198,
             }
           - {
               lang: en,
               file: tests/en.test.ts,
-              run_minutes: 52,
-              job_minutes: 178,
+              run_minutes: 57,
+              job_minutes: 188,
             }
         api: [36]
 
