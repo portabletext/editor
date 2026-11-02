@@ -3,6 +3,7 @@
 
 import {pyRepr} from '../device/util.ts'
 import type {RunOnDeviceOptions, Step} from '../steps.ts'
+import {TEXT_SYMBOLS} from './symbols.ts'
 
 /**
  * The keys of Gboard's letter page on both layouts, by their lowercase letter. `keyboardState` reads a
@@ -86,11 +87,17 @@ function unsupportedCompose(
   if (text !== undefined && typeof text !== 'string') {
     return `\`text\` is ${pyRepr(text)}, not a string`
   }
-  if (text !== undefined && keyboard === 'ja') {
-    return 'Japanese QWERTY composes kana from romaji, so `text` has no keys on it, pass the romaji as `letters`'
+  if (
+    text !== undefined &&
+    keyboard === 'ja' &&
+    [...text].some((character) => !TEXT_SYMBOLS.includes(character))
+  ) {
+    return `Japanese QWERTY composes kana from romaji, so \`text\` drives only ${TEXT_SYMBOLS.map((symbol) => pyRepr(symbol)).join(' and ')} on it, pass the romaji as \`letters\``
   }
   const keyless = [...(letters ?? text)!].find(
-    (character) => !LETTERS.includes(character),
+    (character) =>
+      !LETTERS.includes(character) &&
+      (letters !== undefined || !TEXT_SYMBOLS.includes(character)),
   )
   if (keyless !== undefined && LETTERS.includes(keyless.toLowerCase())) {
     // `tapKey` finds a capital only while Gboard shows capitals, which follows its Shift state, and the
@@ -98,6 +105,9 @@ function unsupportedCompose(
     return letters === undefined
       ? `${pyRepr(keyless)} needs Gboard's Shift state, which \`runOnDevice\` does not drive`
       : `\`letters\` names keys by their lowercase letter, and ${pyRepr(keyless)} depends on Gboard's Shift state, so use ${pyRepr(keyless.toLowerCase())}`
+  }
+  if (keyless !== undefined && letters === undefined) {
+    return `${pyRepr(keyless)} is no character \`text\` drives on Gboard's English layout, which drives a to z, ${TEXT_SYMBOLS.map((symbol) => pyRepr(symbol)).join(' and ')}`
   }
   if (keyless !== undefined) {
     return `${pyRepr(keyless)} has no key on Gboard's letter page, which only maps a to z`

@@ -2,6 +2,14 @@ import {readFileSync} from 'node:fs'
 import {describe, expect, test} from 'vitest'
 import {
   CAPTURE_SEED_SECONDS,
+  DEVICE_STATE_READ_SECONDS,
+  DEVICE_TEST_TIMEOUT_SECONDS,
+  FAULT_READ_SECONDS,
+  FRESH_RESTART_SECONDS,
+  JOIN_GRACE_SECONDS,
+  RESTART_SECONDS,
+  RUN_ON_DEVICE_WORST_SECONDS,
+  TYPE_ON_DEVICE_WORST_SECONDS,
   DICTIONARY_CHECK_KILL_SECONDS,
   DICTIONARY_CHECK_SECONDS,
   DICTIONARY_LOAD_SECONDS,
@@ -27,8 +35,28 @@ const prepare = readFileSync(
 describe(deviceTestFileSeconds.name, () => {
   test("gives each test its timeout on top of the global setup and Vitest's start and exit", () => {
     expect([1, 2, 3, 4].map(deviceTestFileSeconds)).toEqual([
-      645, 1190, 1735, 2280,
+      761, 1422, 2083, 2744,
     ])
+  })
+})
+
+describe('the worst case of a call', () => {
+  test('leaves a `typeOnDevice` call at 520 seconds and gives a `runOnDevice` call 636 for its reads after a fault, its fresh Chrome and its device state, and the test timeout covers the longer', () => {
+    expect({
+      typeOnDevice: TYPE_ON_DEVICE_WORST_SECONDS,
+      runOnDevice: RUN_ON_DEVICE_WORST_SECONDS,
+      parts: {
+        faultReads: 2 * (FAULT_READ_SECONDS + JOIN_GRACE_SECONDS),
+        restartGrowth: FRESH_RESTART_SECONDS - RESTART_SECONDS,
+        deviceState: DEVICE_STATE_READ_SECONDS + JOIN_GRACE_SECONDS,
+      },
+      testTimeout: DEVICE_TEST_TIMEOUT_SECONDS,
+    }).toEqual({
+      typeOnDevice: 520,
+      runOnDevice: 636,
+      parts: {faultReads: 70, restartGrowth: 32, deviceState: 14},
+      testTimeout: 661,
+    })
   })
 })
 

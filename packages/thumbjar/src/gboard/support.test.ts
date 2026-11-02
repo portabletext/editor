@@ -38,7 +38,7 @@ describe(unsupportedReason.name, () => {
     })
   })
 
-  test('`text` is composed from its letters on English and has no keys on Japanese QWERTY', () => {
+  test('`text` is composed from its letters on English and drives no letter on Japanese QWERTY', () => {
     expect({
       en: unsupportedReason({type: 'compose', text: 'foo'}, 'en'),
       enCapital: unsupportedReason({type: 'compose', text: 'Foo'}, 'en'),
@@ -47,7 +47,7 @@ describe(unsupportedReason.name, () => {
       en: undefined,
       enCapital:
         "'F' needs Gboard's Shift state, which `runOnDevice` does not drive",
-      ja: 'Japanese QWERTY composes kana from romaji, so `text` has no keys on it, pass the romaji as `letters`',
+      ja: "Japanese QWERTY composes kana from romaji, so `text` drives only '-' and ' ' on it, pass the romaji as `letters`",
     })
   })
 
@@ -68,6 +68,24 @@ describe(unsupportedReason.name, () => {
         undefined,
         "`letters` names keys by their lowercase letter, and 'K' depends on Gboard's Shift state, so use 'k'",
       ],
+    })
+  })
+
+  test("`text` drives '-' and ' ' on both keyboards, English letters on English only, and `letters` stays a to z", () => {
+    expect({
+      en: unsupportedReason({type: 'compose', text: 'foo- bar'}, 'en'),
+      ja: unsupportedReason({type: 'compose', text: '- '}, 'ja'),
+      enOther: unsupportedReason({type: 'compose', text: 'foo!'}, 'en'),
+      jaLetters: unsupportedReason({type: 'compose', text: '-a'}, 'ja'),
+      letters: unsupportedReason({type: 'compose', letters: '- '}, 'en'),
+    }).toEqual({
+      en: undefined,
+      ja: undefined,
+      enOther:
+        "'!' is no character `text` drives on Gboard's English layout, which drives a to z, '-' and ' '",
+      jaLetters:
+        "Japanese QWERTY composes kana from romaji, so `text` drives only '-' and ' ' on it, pass the romaji as `letters`",
+      letters: "'-' has no key on Gboard's letter page, which only maps a to z",
     })
   })
 

@@ -1,5 +1,8 @@
+import {mkdtempSync, readFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {runOnDevice, typeOnDevice, withDriverRetry} from './driver.ts'
 import {runSuite} from './testing.ts'
 
@@ -414,7 +417,7 @@ describe(runOnDevice.name, () => {
       errors: [],
       tests: [
         {
-          name: 'Scenario: Backspace, Enter and Backspace fail on both attempts',
+          name: 'Scenario: Backspace, Enter and Backspace fail before any input, then on Enter in the retry',
           state: 'passed',
         },
         {
@@ -466,7 +469,7 @@ describe(runOnDevice.name, () => {
           state: 'passed',
         },
         {
-          name: 'Scenario: A step that throws a revoked Proxy on both attempts fails with the Proxy as the cause',
+          name: 'Scenario: A step that throws a revoked Proxy after input fails with the Proxy as the cause',
           state: 'passed',
         },
         {
@@ -620,4 +623,555 @@ describe(runOnDevice.name, () => {
       ],
     })
   }, 30_000)
+})
+
+describe('the retry of a `runOnDevice` call', () => {
+  test('runs only in a Chrome proven new, never after input, and never once adb lost the device', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/run-retry-policy.ts',
+        setupFiles: ['src/fixtures/suites/gboard-device.ts'],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: A fault before any input is retried once the old Chrome stopped and the new one runs in another process',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A fault before any input is not retried when the old Chrome still runs after the force-stop',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A fault before any input is not retried when the relaunched Chrome runs in the old process',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A fault before any input is not retried when the pid of the old Chrome cannot be read',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A fault after a key tap is inconclusive and never retried, and keeps its error and records',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A fault right after a Delete tap is inconclusive, since Delete changes the field',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A key tap whose reply was rejected counts as sent input, so its fault is never retried',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A key tap the device never answers counts as sent input, so the attempt timing out is never retried',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: An adb call that fails on adb's error for a lost device ends the call device offline without a retry",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap the adb server answers with `FAIL device offline` ends the call device offline, like the CLI's error",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A tap whose socket to the adb server closed is no lost device, and after input it ends the call inconclusive',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The pid read failing on adb's error for a lost device ends the call device offline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A force-stop that fails on adb's error for a lost device ends the call device offline before the restart reads a pid again, while the old Chrome still runs",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A force-stop that fails on adb's error for a lost device ends the call device offline, though later pid reads would show a fresh Chrome",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: adb's lost-device error while uiautomator2 starts ends the call device offline at once, without polling it again or retrying",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: An ordinary error while uiautomator2 starts is polled again, and the call completes',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: adb's lost-device error while the page loads over CDP ends the call device offline at once, without polling it again or retrying",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: An ordinary error while the page loads over CDP is polled again, and the call completes',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: adb's CLI error for a lost device that a helper recognised is never read again, so a message that throws on its second read still ends the call device offline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The adb server's wrapped `FAIL` for a lost device that a helper recognised is never read again, so a message that throws on its second read still ends the call device offline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A step whose adb call adb's CLI lost the device on fails with that error as its cause and in its record, not the driver's own recognition of it",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A step whose adb call the adb server's `FAIL` lost the device on fails with that error as its cause and in its record, not the driver's own recognition of it",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The wait for uiautomator2 passes on a lost device a helper below it already recognised, never reading adb's error again",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The wait for the page over CDP passes on a lost device a helper below it already recognised, never reading adb's error again",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A pid read that times out and an `adb get-state` that answers offline end the call device offline',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A pid read that times out while `adb get-state` answers device on stdout is inconclusive and marked answered, whatever adb wrote on stderr',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A pid read that times out and an `adb get-state` that never answers is inconclusive and marked unconfirmed, never device offline',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Two timeouts before any input read `adb get-state` once in the call',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: The state read answers only the failure it was read for, so a later timeout in the call is unconfirmed',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A later failure that throws the same error object as the timeout the state read answered is unconfirmed',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A step that throws the same error on both attempts is unconfirmed on the second, whose failure the state read never answered',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: adb's CLI error for a lost device is read once to classify and quote it, so a message that throws when read again cannot reopen a retry after input",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The adb server's wrapped `FAIL` for a lost device is read once to classify and quote it, so a message that throws when read again cannot reopen a retry after input",
+          state: 'passed',
+        },
+      ],
+    })
+  }, 60_000)
+})
+
+describe('the step records of a `runOnDevice` call', () => {
+  test("hold the field's focus, read the page back into a failed step, fail a candidate Gboard does not offer, and type '- ' on the symbol layouts", async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/run-step-records.ts',
+        setupFiles: ['src/fixtures/suites/gboard-device.ts'],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: "Scenario: Each step's record holds whether the field has focus, read in the same evaluation as its text and selection",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: After a step fails, the page's text, selection and focus are read into its record, and the error is the step's",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The page is read into the failed step's record after the attempt timed out, on a clock of its own",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A read after the failed step that does not answer leaves its text, selection and focus unread, and the error is the step's",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A failed step read back before the test's deadline ends the call inconclusive",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A failed step whose read back is still running at the test's deadline ends the call inconclusive, and the read is stopped",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: The test's deadline during a step that still runs ends the call aborted",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap that times out after input, with the state read answered before the test's deadline, ends the call inconclusive and answered",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap that times out after input, with the state read still running at the test's deadline, ends the call inconclusive and unconfirmed",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A pid read that times out, with the state read answered before the test's deadline, ends the call inconclusive and answered",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A pid read that times out, with the state read still running at the test's deadline, ends the call inconclusive and unconfirmed",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A rejected tap after input, with the failure dump done before the test's deadline, ends the call inconclusive",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A rejected tap after input, with the failure dump still running at the test's deadline, ends the call inconclusive",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: An exception in the page, with the read of the page done before the test's deadline, ends the call on the page's exception",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: An exception in the page, with the read of the page still running at the test's deadline, ends the call on the page's exception",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: The outcome of a failed attempt is recorded before any diagnostic, so one that never answers changes nothing',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap that fails on adb's error for a lost device, from adb's CLI, ends the call device offline from that error alone, with the state read hanging at the test's deadline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap that fails on adb's error for a lost device, from adb's CLI, ends the call device offline from that error alone, with the failure dump hanging at the test's deadline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap that fails on adb's error for a lost device, from the adb server's `FAIL`, ends the call device offline from that error alone, with the state read hanging at the test's deadline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A tap that fails on adb's error for a lost device, from the adb server's `FAIL`, ends the call device offline from that error alone, with the failure dump hanging at the test's deadline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A timeout before any input, with the state read still running at the test's deadline before the retry, ends the call inconclusive and unconfirmed",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A timeout before any input, with the failure dump still running at the test's deadline before the retry, ends the call inconclusive and unconfirmed",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A timeout before any input, with the state read answering device before the test's deadline, retries, and the deadline during the retry's restart ends the call aborted",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A timeout before any input, with the state read answering offline before the test's deadline, ends the call device offline",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A rejected tap before any input, with the failure dump still running at the test's deadline before the retry, ends the call on a driver fault",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A retry that refuses a Chrome that did not restart still ends the call on the first attempt's step records",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A retry whose own step fails ends the call on its own step records, not the first attempt's",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A rejected tap before any input, with the failure dump done before the test's deadline, is retried and the call completes",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: A test deadline that reading adb's lost-device error itself aborts still ends the call device offline, since the failure was already being classified",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A test deadline that reading a pre-input timeout itself aborts ends the call inconclusive and unconfirmed, since the failure was already being classified',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: No diagnostic read sits between two inputs',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A candidate Gboard offers is tapped',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A candidate Gboard does not offer fails the step instead of committing with Space',
+          state: 'passed',
+        },
+        {
+          name: "Scenario: '- ' in English text is typed on Gboard's symbol layout, which the step leaves for the letters again",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: ' -' in English text is typed in its order, reopening the symbol layout for the dash after a space, since Space returns Gboard to the letters",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: '- ' in Japanese text is typed through the alphabet layout, the numeric pad and its 記号キーボード, which the step leaves for romaji again",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: ' -' in Japanese text is typed in its order, reopening 記号キーボード from the numeric pad for each dash after a space, and the step ends on romaji",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: '- -' in Japanese text is typed in its order, reopening 記号キーボード from the numeric pad for each dash after a space, and the step ends on romaji",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: '-  ' in Japanese text types both spaces on the numeric pad after the dash, and the step ends on romaji",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: ' ' in Japanese text is tapped on the numeric pad even when the dump after 数字キーボード still shows the alphabet layout",
+          state: 'passed',
+        },
+        {
+          name: "Scenario: ' ' in English text is tapped on the symbol layout even when the dump after Symbol keyboard still shows the letters",
+          state: 'passed',
+        },
+      ],
+    })
+  }, 60_000)
+})
+
+describe('a `typeOnDevice` call', () => {
+  test('commits a candidate Gboard does not offer with Space, and retries a fault after input in a restarted Chrome', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/typing-keeps-its-outcomes.ts',
+        setupFiles: ['src/fixtures/suites/gboard-device.ts'],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: A candidate Gboard does not offer is committed with Space',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A fault after a key tap is retried in a restarted Chrome without a pid check',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 60_000)
+})
+
+describe('a page exception in the read of a failed step', () => {
+  test('ends the call on it before and after input and on the retry, and fails the file', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/readback-page-exception.ts',
+        setupFiles: [
+          'src/fixtures/suites/gboard-device.ts',
+          'src/vitest/setup.ts',
+        ],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'The page threw while the driver typed, which can be an editor failure, so it is not retried: "Scenario: A page exception in the read of a step that failed before input ends the call on it": Uncaught in `window.__state()`: Error: getSnapshot failed, "Scenario: A page exception in the read of a step that failed on the retry ends the call on it": Uncaught in `window.__state()`: Error: getSnapshot failed, "Scenario: A page exception in the read of a step that failed after input ends the call on it, not inconclusive": Uncaught in `window.__state()`: Error: getSnapshot failed.',
+      ],
+      tests: [
+        {
+          name: 'Scenario: A page exception in the read of a step that failed before input ends the call on it',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A page exception in the read of a step that failed on the retry ends the call on it',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: A page exception in the read of a step that failed after input ends the call on it, not inconclusive',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Another error in the read of a failed step stays a diagnostic, and the call still retries',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 60_000)
+})
+
+describe('a test.fails `runOnDevice` test with the device setup file', () => {
+  test('fails its file when its call ended inconclusive or with the device offline', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/failing-run-outcomes.ts',
+        setupFiles: [
+          'src/fixtures/suites/gboard-device.ts',
+          'src/vitest/setup.ts',
+        ],
+        testTimeout: 15_000,
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'In "Scenario: Backspace and Enter after foo" the driver ended inconclusive: the driver faulted after it sent input, so it was not retried. In "Scenario: Enter after foo" adb lost the device, so it was not retried: adb shell dumpsys input_method exited with 1: error: device offline. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.',
+      ],
+      tests: [
+        {name: 'Scenario: Backspace and Enter after foo', state: 'passed'},
+        {name: 'Scenario: Enter after foo', state: 'passed'},
+      ],
+    })
+  }, 60_000)
+})
+
+describe('the job summary', () => {
+  test("counts each test of the file by its result and its last driver call's outcome, with the undercount notes", async () => {
+    const summaryFile = join(
+      mkdtempSync(join(tmpdir(), 'thumbjar-summary-')),
+      'summary.md',
+    )
+    vi.stubEnv('GITHUB_STEP_SUMMARY', summaryFile)
+    let result: Awaited<ReturnType<typeof runSuite>>
+    try {
+      result = await runSuite({
+        root,
+        file: 'src/fixtures/suites/every-outcome.ts',
+        setupFiles: [
+          'src/fixtures/suites/gboard-device.ts',
+          'src/vitest/setup.ts',
+        ],
+        testTimeout: 15_000,
+      })
+    } finally {
+      vi.unstubAllEnvs()
+    }
+
+    expect({result, summary: readFileSync(summaryFile, 'utf8')}).toEqual({
+      result: {
+        file: 'failed',
+        errors: [],
+        tests: [
+          {name: 'Scenario: Passed', state: 'passed'},
+          {name: 'Scenario: Failed', state: 'failed'},
+          {name: 'Scenario: Expected failure', state: 'passed'},
+          {name: 'Scenario: Inconclusive after input', state: 'failed'},
+          {name: 'Scenario: Device offline', state: 'failed'},
+          {name: 'Scenario: Driver fault', state: 'failed'},
+          {
+            name: 'Scenario: Inconclusive while the device answered',
+            state: 'failed',
+          },
+          {
+            name: 'Scenario: Inconclusive while the device was not checked',
+            state: 'failed',
+          },
+          {name: 'Scenario: Passed without a driver call', state: 'passed'},
+          {
+            name: 'Scenario: Passed on its last call after a driver fault',
+            state: 'passed',
+          },
+          {name: 'Scenario: Passed in a group', state: 'passed'},
+          {name: 'Scenario: Expected failure in a group', state: 'passed'},
+          {name: 'Scenario: Passed in a group', state: 'failed'},
+          {name: 'Scenario: Skipped', state: 'skipped'},
+          {name: 'Scenario: Todo', state: 'skipped'},
+          {
+            name: 'Scenario: A case Gboard cannot drive',
+            state: 'skipped',
+            note: "Gboard cannot drive step 1 (compose): '💥' has no key on Gboard's letter page, which only maps a to z",
+          },
+        ],
+      },
+      summary: [
+        '`src/fixtures/suites/every-outcome.ts`: 4 passed ("Scenario: Passed", "Scenario: Passed without a driver call", "Scenario: Passed on its last call after a driver fault", "Scenario: Passed in a group"), 1 failed ("Scenario: Failed"), 2 expected failure ("Scenario: Expected failure", "Scenario: Expected failure in a group"), 4 inconclusive ("Scenario: Inconclusive after input", "Scenario: Inconclusive while the device answered", "Scenario: Inconclusive while the device was not checked", "Scenario: Passed in a group"), 1 device offline ("Scenario: Device offline"), 1 driver fault ("Scenario: Driver fault")',
+        '',
+        '3 not run, skipped or todo ("Scenario: Skipped", "Scenario: Todo", "Scenario: A case Gboard cannot drive")',
+        '',
+        'Not counted as device offline: adb could still reach the device right after the failure. A device that dropped off and came back before that check is missed, so the device offline count can be too low.',
+        '',
+        'Could not check whether the device was reachable, so the device offline count can be too low.',
+        '',
+      ].join('\n'),
+    })
+  }, 60_000)
+
+  test('leaves skipped, todo and runtime-skipped tests out of the counts and lists them on their own line, and counts a retried and two same-named tests by their own results', async () => {
+    const summaryFile = join(
+      mkdtempSync(join(tmpdir(), 'thumbjar-summary-')),
+      'summary.md',
+    )
+    vi.stubEnv('GITHUB_STEP_SUMMARY', summaryFile)
+    let result: Awaited<ReturnType<typeof runSuite>>
+    try {
+      result = await runSuite({
+        root,
+        file: 'src/fixtures/suites/nested-outcomes.ts',
+        setupFiles: [
+          'src/fixtures/suites/gboard-device.ts',
+          'src/vitest/setup.ts',
+        ],
+        testTimeout: 15_000,
+      })
+    } finally {
+      vi.unstubAllEnvs()
+    }
+
+    expect({result, summary: readFileSync(summaryFile, 'utf8')}).toEqual({
+      result: {
+        file: 'passed',
+        errors: [],
+        tests: [
+          {name: 'Scenario: Passed', state: 'passed'},
+          {name: 'Scenario: Expected failure', state: 'passed'},
+          {name: 'Scenario: Skipped', state: 'skipped'},
+          {name: 'Scenario: Todo', state: 'skipped'},
+          {
+            name: 'Scenario: Skipped as it runs',
+            state: 'skipped',
+            note: 'unsupported',
+          },
+          {name: 'Scenario: Passed on its retry', state: 'passed'},
+          {name: 'Scenario: Same name', state: 'passed'},
+          {name: 'Scenario: Same name', state: 'passed'},
+        ],
+      },
+      summary: [
+        '`src/fixtures/suites/nested-outcomes.ts`: 3 passed ("Scenario: Passed", "Scenario: Passed on its retry", "Scenario: Same name"), 0 failed, 1 expected failure ("Scenario: Expected failure"), 1 inconclusive ("Scenario: Same name"), 0 device offline, 0 driver fault',
+        '',
+        '3 not run, skipped or todo ("Scenario: Skipped", "Scenario: Todo", "Scenario: Skipped as it runs")',
+        '',
+      ].join('\n'),
+    })
+  }, 60_000)
 })

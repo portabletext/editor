@@ -41,7 +41,8 @@ export type DeviceProjectOptions = {
  *
  * Global setup fails the run before any test when `adb` has no device or `pageUrl` does not answer.
  * A setup file fails a test file in which an adb process outlived SIGKILL or the page threw while the
- * driver typed, or whose `test.fails` test ended on a driver fault or never completed.
+ * driver typed, or whose `test.fails` test ended inconclusive, with the device offline, on a driver fault or
+ * never completed. With `GITHUB_STEP_SUMMARY` set, it appends the file's outcome counts to it.
  *
  * @example
  * ```ts

@@ -9,10 +9,13 @@ import {FIELD_FOCUSED, FIELD_RECT} from '../../gboard/field.ts'
  * reading its `failingBoundary`th boundary, the one before the first step being the first, throws
  * `boundaryError`. Either throws `error` instead when the fault has one. With `abort`, reading that
  * boundary aborts `abort` with `error` instead, the way a test's timeout aborts its signal, and waits.
+ * With `failingLookup`, every Gboard dump after the first boundary throws `error`, so the first step
+ * fails looking up its key, before it taps anything.
  */
 type AttemptFault = {
   error?: unknown
   rejectedTap?: number
+  failingLookup?: boolean
   failingBoundary?: number
   boundaryError?: 'driver' | 'page'
   abort?: AbortController
@@ -23,12 +26,28 @@ const page = vi.hoisted(() => ({
   attempt: 0,
   taps: 0,
   boundaries: 0,
+  // Chrome's pid, `0` while it does not run. Each start gets a new one.
+  chromePid: 1,
 }))
 
 vi.mock(import('../../device/adb.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  adb: (args: string[]) =>
-    Promise.resolve(args.includes('input_method') ? 'mInputShown=true' : ''),
+  adb: (args: string[]) => {
+    const command = args.join(' ')
+    if (command.includes('pidof com.android.chrome')) {
+      return Promise.resolve(
+        `${page.chromePid === 0 ? '' : `${page.chromePid}\n`}pidof exit ${page.chromePid === 0 ? 1 : 0}\n`,
+      )
+    }
+    if (command === 'shell am force-stop com.android.chrome') {
+      page.chromePid = 0
+    } else if (command.startsWith('shell am start') && page.chromePid === 0) {
+      page.chromePid = page.attempt + 2
+    }
+    return Promise.resolve(
+      args.includes('input_method') ? 'mInputShown=true' : '',
+    )
+  },
 }))
 
 vi.mock(import('../../device/cdp.ts'), async (importOriginal) => ({
@@ -53,7 +72,12 @@ vi.mock(import('../../device/u2.ts'), async (importOriginal) => {
         pid: 1,
       }),
     screenshot: async () => {},
-    dumpHierarchy: () => Promise.resolve(keyboard),
+    dumpHierarchy: () => {
+      const fault = page.faults[page.attempt - 1]
+      return fault?.failingLookup && page.boundaries > 0
+        ? Promise.reject(fault.error)
+        : Promise.resolve(keyboard)
+    },
     click: () => {
       page.taps += 1
       const fault = page.faults[page.attempt - 1]

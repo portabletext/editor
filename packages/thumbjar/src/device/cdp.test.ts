@@ -1,10 +1,26 @@
 import {afterEach, describe, expect, test, vi} from 'vitest'
+import {CommandError, DeviceLost, runStrict} from './adb.ts'
 import {cdpEval, setCurrentUrl} from './cdp.ts'
+
+const forward = vi.hoisted(() => ({error: undefined as unknown, calls: 0}))
+
+vi.mock(import('./adb.ts'), async (importOriginal) => ({
+  ...(await importOriginal()),
+  adb: () => {
+    forward.calls += 1
+    return forward.error === undefined
+      ? Promise.resolve('')
+      : Promise.reject(forward.error)
+  },
+}))
 
 const page = 'http://localhost:8765/editor.html?prefix='
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.useRealTimers()
+  forward.error = undefined
+  forward.calls = 0
 })
 
 describe(cdpEval.name, () => {
@@ -35,7 +51,72 @@ describe(cdpEval.name, () => {
 
     await expect(cdpEval('document.readyState')).resolves.toEqual('complete')
   })
+
+  test("under `runOnDevice`, adb's error for a lost device when it forwards DevTools again ends the evaluation with it, evaluating no more", async () => {
+    vi.useFakeTimers()
+    const targetLists = stubDroppedTargets()
+    const fault = new CommandError(
+      'adb forward tcp:9222 localabstract:chrome_devtools_remote exited with 1: error: device offline',
+    )
+    forward.error = fault
+    setCurrentUrl(page)
+
+    const evaluating = runStrict(() => cdpEval('document.readyState')).catch(
+      (error: unknown) => error,
+    )
+    await vi.runAllTimersAsync()
+
+    const error = await evaluating
+
+    expect({
+      error,
+      cause: (error as Error).cause,
+      targetLists: targetLists.length,
+      forwards: forward.calls,
+    }).toEqual({
+      error: new DeviceLost(
+        'adb forward tcp:9222 localabstract:chrome_devtools_remote exited with 1: error: device offline',
+        fault,
+      ),
+      cause: fault,
+      targetLists: 1,
+      forwards: 1,
+    })
+  })
+
+  test('outside `runOnDevice`, the same error is ignored and the evaluation is retried on a fresh connection', async () => {
+    vi.useFakeTimers()
+    const targetLists = stubDroppedTargets()
+    forward.error = new CommandError(
+      'adb forward tcp:9222 localabstract:chrome_devtools_remote exited with 1: error: device offline',
+    )
+    setCurrentUrl(page)
+
+    const evaluating = cdpEval('document.readyState').catch(
+      (error: unknown) => error,
+    )
+    await vi.runAllTimersAsync()
+
+    expect({
+      error: String(await evaluating),
+      targetLists: targetLists.length,
+      forwards: forward.calls,
+    }).toEqual({
+      error: 'Error: target list dropped',
+      targetLists: 4,
+      forwards: 4,
+    })
+  })
 })
+
+function stubDroppedTargets(): string[] {
+  const targetLists: string[] = []
+  vi.stubGlobal('fetch', () => {
+    targetLists.push('/json')
+    return Promise.reject(new Error('target list dropped'))
+  })
+  return targetLists
+}
 
 function stubPage(reply: Record<string, unknown>): string[] {
   const evaluations: string[] = []

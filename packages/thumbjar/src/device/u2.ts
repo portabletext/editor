@@ -11,6 +11,7 @@ import {
   ConnectionLost,
   deviceShell,
   shellQuote,
+  throwIfStrictLoss,
 } from './adb.ts'
 import {ensureJar} from './u2-jar.ts'
 import {
@@ -197,6 +198,7 @@ export class Device {
           throw error
         }
         throwIfAborted()
+        throwIfStrictLoss(error)
         await this.stopServer()
         await this.startServer()
         throwIfAborted()
@@ -308,6 +310,7 @@ export class Device {
         if (!isInstance(error, AdbError) || attempt >= 3) {
           throw error
         }
+        throwIfStrictLoss(error)
         await sleep(0.5 + Math.random() * 0.1)
       }
     }
@@ -376,6 +379,7 @@ export class UiObject {
       if (!isInstance(error, HTTPError)) {
         throw error
       }
+      throwIfStrictLoss(error)
       return this.exists()
     }
   }
@@ -640,6 +644,7 @@ async function checkAlive(): Promise<boolean> {
     )
   } catch (error) {
     if (isInstance(error, HTTPError) || isInstance(error, ConnectionLost)) {
+      throwIfStrictLoss(error)
       return false
     }
     throw error
