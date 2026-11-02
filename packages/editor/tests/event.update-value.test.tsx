@@ -1,5 +1,4 @@
 import {applyAll} from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
@@ -9,6 +8,7 @@ import {
   type EditorEmittedEvent,
   type MutationEvent,
   type Patch,
+  type PortableTextBlock,
 } from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
@@ -1803,6 +1803,984 @@ describe('event.update value', () => {
     })
   })
 
+  test('Scenario: Swapping two blocks emits no patches of its own', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [bar, foo]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [sentinelPatch],
+      ])
+    })
+    expect(applyAll([bar, foo], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: Moving the first block to the end emits no patches of its own', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [bar, baz, foo]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, baz, foo])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [sentinelPatch],
+      ])
+    })
+    expect(applyAll([bar, baz, foo], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: Moving the last block to the start emits no patches of its own', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [baz, foo, bar]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([baz, foo, bar])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: barSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [sentinelPatch],
+      ])
+    })
+    expect(applyAll([baz, foo, bar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: Swapping two blocks keeps a caret or range in the third block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [bar, foo, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [foo, bar, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([foo, bar, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        backward: true,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        backward: true,
+      })
+    })
+
+    editor.send({type: 'update value', value: [bar, foo, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 1,
+      },
+      backward: true,
+    })
+  })
+
+  test('Scenario: Moving the block holding the caret keeps the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [bar, baz, foo]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, baz, foo])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: Swapping two blocks keeps a range whose anchor is in the moved block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [bar, foo, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([bar, foo, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      })
+    })
+
+    editor.send({type: 'update value', value: [foo, bar, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([foo, bar, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: Moving a block across several blocks keeps a range whose anchor is in the moved block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const quxKey = keyGenerator()
+    const quxSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const qux = textBlock(quxKey, quxSpanKey, 'qux')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz, qux],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: quxKey}, 'children', {_key: quxSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: quxKey}, 'children', {_key: quxSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      })
+    })
+
+    editor.send({type: 'update value', value: [foo, qux, bar, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([foo, qux, bar, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: quxKey}, 'children', {_key: quxSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 2,
+      },
+      backward: true,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      })
+    })
+
+    editor.send({type: 'update value', value: [baz, foo, qux, bar]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([baz, foo, qux, bar])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: quxKey}, 'children', {_key: quxSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: quxKey}, 'children', {_key: quxSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [foo, qux, bar, baz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([foo, qux, bar, baz])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: quxKey}, 'children', {_key: quxSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: Moving a block that also changes type keeps a range whose anchor is in the moved block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}, {name: 'video'}],
+      }),
+      initialValue: [foo, {_type: 'image', _key: imageKey}, baz],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: imageKey}], offset: 0},
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [{_type: 'video', _key: imageKey}, foo, baz],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_type: 'video', _key: imageKey},
+        foo,
+        baz,
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: imageKey}], offset: 0},
+      focus: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: Moving a text block that becomes a block object resets a range whose anchor is in it', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      initialValue: [foo, bar, baz],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 2,
+        },
+        backward: true,
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [foo, {_type: 'image', _key: bazKey}, bar],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        {_type: 'image', _key: bazKey},
+        bar,
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 0,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: Moving the block holding the caret past a keyless block keeps the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    } as unknown as PortableTextBlock
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, keylessBar, baz],
+    })
+    const repairedBar = textBlock('k7', barSpanKey, 'bar')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        repairedBar,
+        baz,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [baz, keylessBar, foo]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        baz,
+        repairedBar,
+        foo,
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      backward: false,
+    })
+  })
+
+  test('Scenario: Swapping two blocks around a keyless block keeps a range spanning them', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    } as unknown as PortableTextBlock
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, keylessBar, baz],
+    })
+    const repairedBar = textBlock('k7', barSpanKey, 'bar')
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        repairedBar,
+        baz,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 2,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'update value', value: [baz, keylessBar, foo]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        baz,
+        repairedBar,
+        foo,
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+        offset: 2,
+      },
+      backward: true,
+    })
+  })
+
   test('Scenario: Multiple blocks with children changes in same update', async () => {
     const keyGenerator = createTestKeyGenerator()
     const block1Key = keyGenerator()
@@ -2374,6 +3352,537 @@ describe('event.update value: mechanically repaired invalid blocks', () => {
         },
       ])
     })
+  })
+
+  test('Scenario: a block updated in place with a keyless child publishes its repair', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const keylessFoo = {
+      ...foo,
+      children: [{_type: 'span', text: 'foo', marks: []}],
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [keylessFoo, bar, baz]})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: fooKey}, 'children', 0, '_key'],
+      value: 'k8',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock(fooKey, 'k8', 'foo'),
+        bar,
+        baz,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: barSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([keylessFoo, bar, baz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a block moved up with a keyless child publishes its repair like one updated in place', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const keylessFoo = {
+      ...foo,
+      children: [{_type: 'span', text: 'foo', marks: []}],
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [bar, keylessFoo, baz]})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: fooKey}, 'children', 0, '_key'],
+      value: 'k8',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        bar,
+        textBlock(fooKey, 'k8', 'foo'),
+        baz,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: barSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([bar, keylessFoo, baz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a block moved down with a keyless child publishes its repair like one updated in place', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const baz = textBlock(bazKey, bazSpanKey, 'baz')
+    const keylessFoo = {
+      ...foo,
+      children: [{_type: 'span', text: 'foo', marks: []}],
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, baz],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [bar, baz, keylessFoo]})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: fooKey}, 'children', 0, '_key'],
+      value: 'k8',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        bar,
+        baz,
+        textBlock(fooKey, 'k8', 'foo'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: barSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([bar, baz, keylessFoo], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a new block in front of existing blocks with a keyless child publishes its repair', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const keylessBaz = {
+      _type: 'block',
+      _key: bazKey,
+      children: [{_type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [keylessBaz, foo, bar]})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: bazKey}, 'children', 0, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock(bazKey, 'k7', 'baz'),
+        foo,
+        bar,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([keylessBaz, foo, bar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a new block between existing blocks with a keyless child publishes its repair', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const keylessBaz = {
+      _type: 'block',
+      _key: bazKey,
+      children: [{_type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [foo, keylessBaz, bar]})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: bazKey}, 'children', 0, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        textBlock(bazKey, 'k7', 'baz'),
+        bar,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([foo, keylessBaz, bar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a new block after existing blocks with a keyless child publishes its repair', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const keylessBaz = {
+      _type: 'block',
+      _key: bazKey,
+      children: [{_type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [foo, bar, keylessBaz]})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: bazKey}, 'children', 0, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        bar,
+        textBlock(bazKey, 'k7', 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([foo, bar, keylessBaz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([])
+    consoleWarn.mockRestore()
   })
 
   test('Scenario: a startup value with a keyless child emits the repair patch immediately, before any local edit', async () => {
@@ -4381,6 +5890,105 @@ describe('event.update value: mechanically repaired invalid blocks', () => {
     })
   })
 
+  test('Scenario: a stale echo that moves a repaired block keeps recognising later echoes', async () => {
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const staleB0 = {
+      _key: 'b0',
+      _type: 'block',
+      children: [
+        {_key: 's0', _type: 'span', text: 'hello', marks: []},
+        {_key: 's0', _type: 'span', text: ' world', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    }
+    const b1 = {
+      _key: 'b1',
+      _type: 'block',
+      children: [{_key: 's1', _type: 'span', text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const b2 = {
+      _key: 'b2',
+      _type: 'block',
+      children: [{_key: 's2', _type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const b3 = {
+      _key: 'b3',
+      _type: 'block',
+      children: [{_key: 's3', _type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const repairedB0 = {
+      _key: 'b0',
+      _type: 'block',
+      children: [
+        {_key: 's0', _type: 'span', text: 'hello', marks: []},
+        {_key: 'k2', _type: 'span', text: ' world', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [b1, b2, staleB0],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    const repairPatch = {
+      type: 'set',
+      path: [{_key: 'b0'}, 'children', 1, '_key'],
+      value: 'k2',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch])
+      expect(editor.getSnapshot().context.value).toEqual([b1, b2, repairedB0])
+    })
+
+    editor.send({type: 'update value', value: [staleB0, b1, b2]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([repairedB0, b1, b2])
+    })
+
+    editor.send({type: 'update value', value: [staleB0, b1, b2, b3]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        repairedB0,
+        b1,
+        b2,
+        b3,
+      ])
+    })
+
+    expect(patches).toEqual([repairPatch])
+    await vi.waitFor(() => {
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch],
+      ])
+    })
+  })
+
   test('Scenario: a stale echo with different text on the repaired span is a genuine edit and re-repairs with a fresh key', async () => {
     const patches: Array<Patch> = []
     const {editor} = await createTestEditor({
@@ -5340,3 +6948,17 @@ describe('event.update value: mechanically repaired invalid blocks', () => {
     })
   })
 })
+
+function textBlock(
+  key: string,
+  spanKey: string,
+  text: string,
+): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: key,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
