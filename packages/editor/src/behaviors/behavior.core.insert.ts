@@ -9,7 +9,11 @@ import {defineBehavior} from './behavior.types.behavior'
 export const coreInsertBehaviors = [
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) => {
+    guard: ({snapshot, event}) => {
+      if (event.at !== undefined && event.offset !== undefined) {
+        return false
+      }
+
       const focusSpan = getFocusSpan(snapshot)
 
       if (!focusSpan) {
