@@ -119,7 +119,7 @@ describe(runOnDeviceWorstSeconds.name, () => {
     })
   })
 
-  test('a Japanese file of three tests is capped at 1735 seconds and its script ends within 2729, an English one within 2472, and a file of two within 2184 and 1927', () => {
+  test('a Japanese file of three tests is capped at 2083 seconds and its script ends within 3077, an English one within 2820, and a file of two within 2416 and 2159', () => {
     expect({
       threeTests: {
         tests: deviceTestFileSeconds(3),
@@ -132,8 +132,8 @@ describe(runOnDeviceWorstSeconds.name, () => {
         en: runOnDeviceWorstSeconds('en', 2),
       },
     }).toEqual({
-      threeTests: {tests: 1735, ja: 2729, en: 2472},
-      twoTests: {tests: 1190, ja: 2184, en: 1927},
+      threeTests: {tests: 2083, ja: 3077, en: 2820},
+      twoTests: {tests: 1422, ja: 2416, en: 2159},
     })
   })
 
@@ -186,8 +186,8 @@ describe(runStepMinutes.name, () => {
       },
     }).toEqual({
       headroom: 60,
-      ja: {minutes: 56, spare: 91},
-      en: {minutes: 52, spare: 108},
+      ja: {minutes: 62, spare: 103},
+      en: {minutes: 57, spare: 60},
     })
   })
 })
@@ -224,8 +224,8 @@ describe('budget.mjs run as `node`’s entry whose file is removed once loaded',
         'removed',
       ),
     ]).toEqual([
-      {status: 0, stdout: '1735\n', stderr: '', removed: true},
-      {status: 0, stdout: '1735\n', stderr: '', removed: true},
+      {status: 0, stdout: '2083\n', stderr: '', removed: true},
+      {status: 0, stdout: '2083\n', stderr: '', removed: true},
     ])
   })
 })
@@ -331,7 +331,7 @@ describe('the workflow', () => {
     }).toEqual({worst: 165, headroom: 15, minutes: 3, step: 3})
   })
 
-  test('caps the Japanese run steps at 56 minutes and its job at 186, the English run steps at 52 and its job at 178', () => {
+  test('caps the Japanese run steps at 62 minutes and its job at 198, the English run steps at 57 and its job at 188', () => {
     expect(
       rows.map(({lang, runMinutes, jobMinutes}) => ({
         lang,
@@ -339,8 +339,8 @@ describe('the workflow', () => {
         jobMinutes,
       })),
     ).toEqual([
-      {lang: 'ja', runMinutes: 56, jobMinutes: 186},
-      {lang: 'en', runMinutes: 52, jobMinutes: 178},
+      {lang: 'ja', runMinutes: 62, jobMinutes: 198},
+      {lang: 'en', runMinutes: 57, jobMinutes: 188},
     ])
   })
 })
