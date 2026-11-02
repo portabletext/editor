@@ -4,6 +4,7 @@ import {
   set,
   setIfMissing,
   unset,
+  type JSONValue,
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
@@ -6215,6 +6216,1326 @@ describe('event.patches', () => {
                 markDefs: [],
                 style: 'normal',
               },
+            ],
+          },
+        ])
+      })
+    })
+
+    test.each([0, -1])(
+      'Scenario: insert two blocks, the first keyless, after %s into a container emptied by a whole-node set',
+      async (index) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const firstKey = keyGenerator()
+        const secondKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: firstKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({
+                  type: 'box',
+                  arrayField: 'content',
+                  render: ({children}) => <>{children}</>,
+                }),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position: 'after',
+              items: [
+                {_type: 'grid', title: 'foo'},
+                {_key: secondKey, _type: 'grid', title: 'bar'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_key: 'k6', _type: 'grid', title: 'foo'},
+                {_key: secondKey, _type: 'grid', title: 'bar'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      [0, -1].flatMap((index) =>
+        (['before', 'after'] as const).flatMap((position) =>
+          (['sidecar', 'structural'] as const).map((array) => ({
+            array,
+            index,
+            position,
+          })),
+        ),
+      ),
+    )(
+      'Scenario: insert two identical keyed items $position $index into an empty $array array',
+      async ({array, index, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+        const firstKey = keyGenerator()
+        const secondKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+          children:
+            array === 'structural' ? (
+              <NodePlugin
+                nodes={[
+                  defineContainer({
+                    type: 'box',
+                    arrayField: 'content',
+                    render: ({children}) => <>{children}</>,
+                  }),
+                ]}
+              />
+            ) : null,
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position,
+              items: [
+                {_key: firstKey, _type: 'grid', title: 'foo'},
+                {_key: secondKey, _type: 'grid', title: 'foo'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_key: firstKey, _type: 'grid', title: 'foo'},
+                {_key: secondKey, _type: 'grid', title: 'foo'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      [0, -1].flatMap((index) =>
+        (['before', 'after'] as const).flatMap((position) =>
+          (['sidecar', 'structural'] as const).map((array) => ({
+            array,
+            index,
+            position,
+          })),
+        ),
+      ),
+    )(
+      'Scenario: insert three distinct keyed items $position $index into an empty $array array',
+      async ({array, index, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+        const firstKey = keyGenerator()
+        const secondKey = keyGenerator()
+        const thirdKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+          children:
+            array === 'structural' ? (
+              <NodePlugin
+                nodes={[
+                  defineContainer({
+                    type: 'box',
+                    arrayField: 'content',
+                    render: ({children}) => <>{children}</>,
+                  }),
+                ]}
+              />
+            ) : null,
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position,
+              items: [
+                {_key: firstKey, _type: 'grid', title: 'foo'},
+                {_key: secondKey, _type: 'grid', title: 'bar'},
+                {_key: thirdKey, _type: 'grid', title: 'baz'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_key: firstKey, _type: 'grid', title: 'foo'},
+                {_key: secondKey, _type: 'grid', title: 'bar'},
+                {_key: thirdKey, _type: 'grid', title: 'baz'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      [0, -1].flatMap((index) =>
+        (['before', 'after'] as const).map((position) => ({index, position})),
+      ),
+    )(
+      'Scenario: insert two identical keyless items $position $index into an empty sidecar array',
+      async ({index, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position,
+              items: [
+                {_type: 'grid', title: 'foo'},
+                {_type: 'grid', title: 'foo'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_type: 'grid', title: 'foo'},
+                {_type: 'grid', title: 'foo'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      [0, -1].flatMap((index) =>
+        (['before', 'after'] as const).map((position) => ({index, position})),
+      ),
+    )(
+      'Scenario: insert three distinct keyless items $position $index into an empty sidecar array',
+      async ({index, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position,
+              items: [
+                {_type: 'grid', title: 'foo'},
+                {_type: 'grid', title: 'bar'},
+                {_type: 'grid', title: 'baz'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_type: 'grid', title: 'foo'},
+                {_type: 'grid', title: 'bar'},
+                {_type: 'grid', title: 'baz'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      (['before', 'after'] as const).flatMap((position) =>
+        [1, -2, -4, 'missing key'].map((selector) => ({position, selector})),
+      ),
+    )(
+      'Scenario: insert two keyless items $position $selector into an empty sidecar array applies neither',
+      async ({position, selector}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const gridKey = keyGenerator()
+        const missingKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+          initialValue: [{_key: gridKey, _type: 'grid', items: []}],
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [
+                {_key: gridKey},
+                'items',
+                selector === 'missing key' ? {_key: missingKey} : selector,
+              ],
+              position,
+              items: [{title: 'foo'}, {title: 'bar'}],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+        editor.send({type: 'set', at: [{_key: gridKey}, 'title'], value: 'baz'})
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: gridKey, _type: 'grid', title: 'baz', items: []},
+          ])
+        })
+      },
+    )
+
+    test.each(
+      [0, -1].flatMap((index) =>
+        (['before', 'after'] as const).map((position) => ({index, position})),
+      ),
+    )(
+      'Scenario: insert two identical keyless items $position $index into an empty structural array',
+      async ({index, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({
+                  type: 'box',
+                  arrayField: 'content',
+                  render: ({children}) => <>{children}</>,
+                }),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position,
+              items: [
+                {_type: 'grid', title: 'foo'},
+                {_type: 'grid', title: 'foo'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_key: 'k6', _type: 'grid', title: 'foo'},
+                {_key: 'k5', _type: 'grid', title: 'foo'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      [0, -1].flatMap((index) =>
+        (['before', 'after'] as const).map((position) => ({index, position})),
+      ),
+    )(
+      'Scenario: insert three distinct keyless items $position $index into an empty structural array',
+      async ({index, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'foo'}],
+            },
+          ],
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({
+                  type: 'box',
+                  arrayField: 'content',
+                  render: ({children}) => <>{children}</>,
+                }),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'set',
+          at: [0],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [{_key: emptyBoxKey}, 'content', index],
+              position,
+              items: [
+                {_type: 'grid', title: 'foo'},
+                {_type: 'grid', title: 'bar'},
+                {_type: 'grid', title: 'baz'},
+              ],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: emptyBoxKey,
+              _type: 'box',
+              content: [
+                {_key: 'k7', _type: 'grid', title: 'foo'},
+                {_key: 'k6', _type: 'grid', title: 'bar'},
+                {_key: 'k5', _type: 'grid', title: 'baz'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each([
+      {position: 'after', index: -2},
+      {position: 'after', index: 1},
+    ] as const)(
+      'Scenario: insert a keyless block $position $index before a container emptied by a whole-node set',
+      async ({position, index}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const firstKey = keyGenerator()
+        const secondKey = keyGenerator()
+        const boxKey = keyGenerator()
+        const emptyBoxKey = keyGenerator()
+        const contentKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'grid'}],
+                  },
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {_key: firstKey, _type: 'grid', title: 'foo'},
+            {_key: secondKey, _type: 'grid', title: 'bar'},
+            {
+              _key: boxKey,
+              _type: 'box',
+              content: [{_key: contentKey, _type: 'grid', title: 'baz'}],
+            },
+          ],
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({
+                  type: 'box',
+                  arrayField: 'content',
+                  render: ({children}) => <>{children}</>,
+                }),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'set',
+          at: [{_key: boxKey}],
+          value: {_key: emptyBoxKey, _type: 'box', content: []},
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: firstKey, _type: 'grid', title: 'foo'},
+            {_key: secondKey, _type: 'grid', title: 'bar'},
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [index],
+              position,
+              items: [{_type: 'grid', title: 'baz'}],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: firstKey, _type: 'grid', title: 'foo'},
+            {_key: secondKey, _type: 'grid', title: 'bar'},
+            {_key: 'k7', _type: 'grid', title: 'baz'},
+            {_key: emptyBoxKey, _type: 'box', content: []},
+          ])
+        })
+      },
+    )
+
+    test.fails('Scenario: insert a keyed block after a fractional negative index lands where `applyAll` puts it', async () => {
+      // Today the remote writer splices at the fractional index and puts the
+      // block first.
+      const keyGenerator = createTestKeyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+      const bazKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [
+          {_key: fooKey, _type: 'grid', title: 'foo'},
+          {_key: barKey, _type: 'grid', title: 'bar'},
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [-1.5],
+            position: 'after',
+            items: [{_key: bazKey, _type: 'grid', title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {_key: fooKey, _type: 'grid', title: 'foo'},
+          {_key: bazKey, _type: 'grid', title: 'baz'},
+          {_key: barKey, _type: 'grid', title: 'bar'},
+        ])
+      })
+    })
+
+    test.fails('Scenario: insert a keyless block after an index through a negative ancestor inserts it and leaves an emptied container after it alone', async () => {
+      // Today the remote writer drops an insert through a negative ancestor.
+      const keyGenerator = createTestKeyGenerator()
+      const outerKey = keyGenerator()
+      const gridKey = keyGenerator()
+      const boxKey = keyGenerator()
+      const emptyBoxKey = keyGenerator()
+      const contentKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'grid'},
+            {
+              name: 'box',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'grid'}],
+                },
+              ],
+            },
+            {
+              name: 'outer',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'grid'}, {type: 'box'}],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {
+                _key: boxKey,
+                _type: 'box',
+                content: [{_key: contentKey, _type: 'grid', title: 'bar'}],
+              },
+            ],
+          },
+        ],
+        children: (
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'outer',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+              defineContainer({
+                type: 'box',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'set',
+        at: [{_key: outerKey}, 'content', {_key: boxKey}],
+        value: {_key: emptyBoxKey, _type: 'box', content: []},
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {_key: emptyBoxKey, _type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [-1, 'content', 0],
+            position: 'after',
+            items: [{_type: 'grid', title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {_key: 'k7', _type: 'grid', title: 'baz'},
+              {_key: emptyBoxKey, _type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+    })
+
+    test.fails('Scenario: insert a keyless block after an index through a numeric ancestor inserts it and leaves an emptied container after it alone', async () => {
+      // Today the remote writer puts an insert through a numeric container
+      // parent into a `children` field.
+      const keyGenerator = createTestKeyGenerator()
+      const outerKey = keyGenerator()
+      const gridKey = keyGenerator()
+      const boxKey = keyGenerator()
+      const emptyBoxKey = keyGenerator()
+      const contentKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'grid'},
+            {
+              name: 'box',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'grid'}],
+                },
+              ],
+            },
+            {
+              name: 'outer',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'grid'}, {type: 'box'}],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {
+                _key: boxKey,
+                _type: 'box',
+                content: [{_key: contentKey, _type: 'grid', title: 'bar'}],
+              },
+            ],
+          },
+        ],
+        children: (
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'outer',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+              defineContainer({
+                type: 'box',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'set',
+        at: [{_key: outerKey}, 'content', {_key: boxKey}],
+        value: {_key: emptyBoxKey, _type: 'box', content: []},
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {_key: emptyBoxKey, _type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [0, 'content', 0],
+            position: 'after',
+            items: [{_type: 'grid', title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {_key: 'k7', _type: 'grid', title: 'baz'},
+              {_key: emptyBoxKey, _type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: insert a keyless block after an index through a keyed ancestor leaves an emptied container after it alone', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const outerKey = keyGenerator()
+      const gridKey = keyGenerator()
+      const boxKey = keyGenerator()
+      const emptyBoxKey = keyGenerator()
+      const contentKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'grid'},
+            {
+              name: 'box',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'grid'}],
+                },
+              ],
+            },
+            {
+              name: 'outer',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'grid'}, {type: 'box'}],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {
+                _key: boxKey,
+                _type: 'box',
+                content: [{_key: contentKey, _type: 'grid', title: 'bar'}],
+              },
+            ],
+          },
+        ],
+        children: (
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'outer',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+              defineContainer({
+                type: 'box',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'set',
+        at: [{_key: outerKey}, 'content', {_key: boxKey}],
+        value: {_key: emptyBoxKey, _type: 'box', content: []},
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {_key: emptyBoxKey, _type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: outerKey}, 'content', 0],
+            position: 'after',
+            items: [{_type: 'grid', title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {_key: 'k7', _type: 'grid', title: 'baz'},
+              {_key: emptyBoxKey, _type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+    })
+
+    test.fails('Scenario: insert an existing node after an index through a negative ancestor inserts a copy and leaves that node alone', async () => {
+      // Today the remote writer drops an insert through a negative ancestor.
+      const keyGenerator = createTestKeyGenerator()
+      const outerKey = keyGenerator()
+      const gridKey = keyGenerator()
+      const boxKey = keyGenerator()
+      const contentKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'grid'},
+            {
+              name: 'box',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'grid'}],
+                },
+              ],
+            },
+            {
+              name: 'outer',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'grid'}, {type: 'box'}],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: gridKey, _type: 'grid', title: 'foo'},
+              {
+                _key: boxKey,
+                _type: 'box',
+                content: [{_key: contentKey, _type: 'grid', title: 'bar'}],
+              },
+            ],
+          },
+        ],
+        children: (
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'outer',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+              defineContainer({
+                type: 'box',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: outerKey}, 'content', {_key: gridKey}],
+            value: {_type: 'grid', title: 'foo'},
+            origin: 'remote',
+          },
+          {
+            type: 'set',
+            path: [{_key: outerKey}, 'content', {_key: boxKey}],
+            value: {_type: 'box', content: []},
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_type: 'grid', title: 'foo'},
+              {_type: 'box', content: []},
+            ],
+          },
+        ])
+      })
+
+      const outer = editor.getSnapshot().context.value[0] as unknown as {
+        content: Array<JSONValue>
+      }
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [-1, 'content', 0],
+            position: 'after',
+            items: [outer.content[1]!],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: outerKey,
+            _type: 'outer',
+            content: [
+              {_key: 'k9', _type: 'grid', title: 'foo'},
+              {
+                _key: 'k6',
+                _type: 'box',
+                content: [
+                  {
+                    _key: 'k7',
+                    _type: 'block',
+                    children: [
+                      {_key: 'k8', _type: 'span', marks: [], text: ''},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+              {_type: 'box', content: []},
             ],
           },
         ])

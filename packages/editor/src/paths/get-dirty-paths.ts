@@ -12,7 +12,7 @@ import type {
 } from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
-import {nodeSegment} from './node-segment'
+import {hasUsableKey, nodeSegment} from './node-segment'
 
 /**
  * Recursively collect descendant paths using numeric indices.
@@ -88,6 +88,7 @@ export function getDirtyPaths(
     value: Array<Node>
   },
   op: EngineOperation,
+  insertedPath?: Path,
 ): Array<Path> {
   switch (op.type) {
     case 'insert.text':
@@ -288,6 +289,20 @@ export function getDirtyPaths(
         }
       }
       levels.push(nodePath)
+
+      const lastSegment = path[path.length - 1]
+      if (
+        op.position === 'after' &&
+        typeof lastSegment === 'number' &&
+        !hasUsableKey(node._key)
+      ) {
+        // `{_key: undefined}` only finds the first keyless sibling, so a
+        // keyless node inserted after an index is also found by the path
+        // `applyOperation` spliced it in at.
+        if (insertedPath) {
+          levels.push(insertedPath)
+        }
+      }
 
       if (isSpan(context, node)) {
         return levels

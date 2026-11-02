@@ -42,8 +42,17 @@ import {
 import {hasRemoteFrame} from './apply-context'
 import {getSetInverse} from './get-set-inverse'
 
-export function applyOperation(editor: Editor, op: EngineOperation): void {
+/**
+ * Applies `op` to the tree. For an `insert` into a structural child array,
+ * returns the path the node was spliced in at, in the array actually
+ * written, or `undefined` when nothing was spliced.
+ */
+export function applyOperation(
+  editor: Editor,
+  op: EngineOperation,
+): Path | undefined {
   let transformSelection = false
+  let insertedPath: Path | undefined
 
   switch (op.type) {
     case 'insert': {
@@ -70,7 +79,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      modifyChildren(editor, parentPath(path), (children) => {
+      modifyChildren(editor, parentPath(path), (children, fieldName) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
         if (
           !editor.applyContext.some(
@@ -103,7 +112,12 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           }
           index = op.position === 'after' ? siblingIndex + 1 : siblingIndex
         } else if (typeof lastSegment === 'number') {
-          index = op.position === 'after' ? lastSegment + 1 : lastSegment
+          // Like `@portabletext/patches`, `[0]` in an empty array addresses
+          // the item being inserted, whichever the position.
+          index =
+            op.position === 'after' && children.length > 0
+              ? lastSegment + 1
+              : lastSegment
         } else {
           throw new Error(
             `Cannot apply an "insert" operation at path ${serializePath(path)} because the last segment is a field name.`,
@@ -126,7 +140,21 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           }
         }
 
-        return insertChildren(children, index, node)
+        // The start `splice` derives from `index`: truncated toward zero,
+        // then counted from the end when negative, then clamped to the
+        // array. `|| 0` turns `NaN` and `-0` into `0`.
+        const relativeIndex = Math.trunc(index) || 0
+        const spliceIndex =
+          relativeIndex < 0
+            ? Math.max(children.length + relativeIndex, 0)
+            : Math.min(relativeIndex, children.length)
+        insertedPath = [
+          ...parentPath(path),
+          ...(fieldName === undefined ? [] : [fieldName]),
+          spliceIndex,
+        ]
+
+        return insertChildren(children, spliceIndex, node)
       })
 
       transformSelection = true
@@ -566,6 +594,8 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       }
     }
   }
+
+  return insertedPath
 }
 
 /**

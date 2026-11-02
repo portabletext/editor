@@ -1,4 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import type {Node} from '../engine/interfaces/node'
 import {defineContainer} from '../renderers/renderer.types'
@@ -765,6 +766,168 @@ describe(getDirtyPaths.name, () => {
       ])
     })
 
+    test('insert keyless block after an index also dirties the path it was spliced in at', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const inserted: Node = {
+        _type: 'image',
+        _key: undefined as unknown as string,
+      }
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: emptyContainers,
+            value: [
+              {_type: 'image', _key: keyGenerator()},
+              {_type: 'image', _key: keyGenerator()},
+              inserted,
+              {_type: 'image', _key: keyGenerator()},
+            ],
+          },
+          {type: 'insert', path: [-2], node: inserted, position: 'after'},
+          [2],
+        ),
+      ).toEqual([[], [-2], [{_key: undefined}], [2]])
+    })
+
+    test('insert keyless block after an index dirties no extra path when nothing was spliced', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const existing: Node = {
+        _type: 'image',
+        _key: undefined as unknown as string,
+      }
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: emptyContainers,
+            value: [{_type: 'image', _key: keyGenerator()}, existing],
+          },
+          {type: 'insert', path: [0], node: existing, position: 'after'},
+        ),
+      ).toEqual([[], [0], [{_key: undefined}]])
+    })
+
+    test('insert keyless block after an index through a negative ancestor dirties no extra path when nothing was spliced', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const gridKey = keyGenerator()
+      const emptyBoxKey = keyGenerator()
+      const outerKey = keyGenerator()
+
+      expect(
+        getDirtyPaths(
+          nestedContainerContext([
+            {
+              _key: outerKey,
+              _type: 'outer',
+              content: [
+                {_key: gridKey, _type: 'grid', title: 'foo'},
+                {_key: emptyBoxKey, _type: 'box', content: []},
+              ],
+            },
+          ]),
+          {
+            type: 'insert',
+            path: [-1, 'content', 0],
+            node: {
+              _type: 'grid',
+              _key: undefined as unknown as string,
+              title: 'baz',
+            },
+            position: 'after',
+          },
+        ),
+      ).toEqual([
+        [],
+        [-1],
+        [-1, 'content', 0],
+        [-1, 'content', {_key: undefined}],
+      ])
+    })
+
+    test('insert an existing keyless node after an index through a negative ancestor dirties no extra path when nothing was spliced', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const outerKey = keyGenerator()
+      const emptyBox: Node = {
+        _type: 'box',
+        _key: undefined as unknown as string,
+        content: [],
+      }
+
+      expect(
+        getDirtyPaths(
+          nestedContainerContext([
+            {
+              _key: outerKey,
+              _type: 'outer',
+              content: [
+                {
+                  _type: 'grid',
+                  _key: undefined as unknown as string,
+                  title: 'foo',
+                },
+                emptyBox,
+              ],
+            },
+          ]),
+          {
+            type: 'insert',
+            path: [-1, 'content', 0],
+            node: emptyBox,
+            position: 'after',
+          },
+        ),
+      ).toEqual([
+        [],
+        [-1],
+        [-1, 'content', 0],
+        [-1, 'content', {_key: undefined}],
+      ])
+    })
+
+    test('insert keyless block after an index through a keyed ancestor dirties the path it was spliced in at', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const gridKey = keyGenerator()
+      const emptyBoxKey = keyGenerator()
+      const outerKey = keyGenerator()
+      const inserted: Node = {
+        _type: 'grid',
+        _key: undefined as unknown as string,
+        title: 'baz',
+      }
+
+      expect(
+        getDirtyPaths(
+          nestedContainerContext([
+            {
+              _key: outerKey,
+              _type: 'outer',
+              content: [
+                {_key: gridKey, _type: 'grid', title: 'foo'},
+                inserted,
+                {_key: emptyBoxKey, _type: 'box', content: []},
+              ],
+            },
+          ]),
+          {
+            type: 'insert',
+            path: [{_key: outerKey}, 'content', 0],
+            node: inserted,
+            position: 'after',
+          },
+          [{_key: outerKey}, 'content', 1],
+        ),
+      ).toEqual([
+        [],
+        [{_key: outerKey}],
+        [{_key: outerKey}, 'content', 0],
+        [{_key: outerKey}, 'content', {_key: undefined}],
+        [{_key: outerKey}, 'content', 1],
+      ])
+    })
+
     test('insert block dirties ancestors, node path, and children', () => {
       const blockNode: Node = {
         _type: 'block',
@@ -973,3 +1136,42 @@ describe(getDirtyPaths.name, () => {
     })
   })
 })
+
+function nestedContainerContext(value: Array<Node>) {
+  const nestedSchema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {name: 'grid'},
+        {
+          name: 'box',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}, {type: 'grid'}],
+            },
+          ],
+        },
+        {
+          name: 'outer',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'grid'}, {type: 'box'}],
+            },
+          ],
+        },
+      ],
+    }),
+  )
+
+  return {
+    schema: nestedSchema,
+    containers: resolveContainers(nestedSchema, [
+      defineContainer({type: 'outer', arrayField: 'content'}),
+      defineContainer({type: 'box', arrayField: 'content'}),
+    ]),
+    value,
+  }
+}

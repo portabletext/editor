@@ -2,12 +2,14 @@ import {isSpan} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {defineSchema, type Patch} from '../src'
 import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
+import {EventListenerPlugin, NodePlugin} from '../src/plugins'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {getActiveDecorators} from '../src/selectors/selector.get-active-decorators'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
@@ -1047,4 +1049,526 @@ describe('event.insert.text', () => {
       expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
     })
   })
+
+  test.each([
+    {
+      name: 'a keyed path',
+      at: (blockKey: string, spanKey: string) => [
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ],
+    },
+    {name: 'an index path', at: () => [0, 'children', 0]},
+  ])(
+    'Scenario: `insert.text` at an explicit position by $name maps a caret in the same span',
+    async ({at}) => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const patches: Array<Patch> = []
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 1,
+          },
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 1,
+          },
+          backward: false,
+        })
+      })
+
+      editor.send({
+        type: 'insert.text',
+        at: at(blockKey, spanKey),
+        offset: 1,
+        text: 'bar',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: blockKey,
+            children: [
+              {_type: 'span', _key: spanKey, text: 'fbaroo', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 4,
+          },
+          focus: {
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 4,
+          },
+          backward: false,
+        })
+        expect(patches).toEqual([
+          {
+            type: 'diffMatchPatch',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n f\n+bar\n oo\n',
+            origin: 'local',
+          },
+        ])
+      })
+    },
+  )
+
+  test.each([
+    {
+      name: 'a keyed path',
+      at: ({
+        tableKey,
+        rowKey,
+        cellKey,
+        blockKey,
+        spanKey,
+      }: {
+        tableKey: string
+        rowKey: string
+        cellKey: string
+        blockKey: string
+        spanKey: string
+      }) => [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ],
+    },
+    {
+      name: 'an index path',
+      at: () => [0, 'rows', 0, 'cells', 0, 'content', 0, 'children', 0],
+    },
+    {
+      name: 'a negative index path',
+      at: () => [-1, 'rows', -1, 'cells', -1, 'content', -1, 'children', -1],
+    },
+  ])(
+    'Scenario: `insert.text` at an explicit position by $name maps a caret in the same span in a table cell',
+    async ({at}) => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const keys = {tableKey, rowKey, cellKey, blockKey, spanKey}
+      const spanPath = [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ]
+      const patches: Array<Patch> = []
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: tableSchemaDefinition,
+        initialValue: tableCellValue(keys, 'foo'),
+        children: (
+          <>
+            <NodePlugin nodes={tableContainers} />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  patches.push(event.patch)
+                }
+              }}
+            />
+          </>
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: spanPath, offset: 1},
+          focus: {path: spanPath, offset: 1},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: spanPath, offset: 1},
+          focus: {path: spanPath, offset: 1},
+          backward: false,
+        })
+      })
+
+      editor.send({type: 'insert.text', at: at(keys), offset: 1, text: 'bar'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(
+          tableCellValue(keys, 'fbaroo'),
+        )
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: spanPath, offset: 4},
+          focus: {path: spanPath, offset: 4},
+          backward: false,
+        })
+        expect(patches).toEqual([
+          {
+            type: 'diffMatchPatch',
+            path: [...spanPath, 'text'],
+            value: '@@ -1,3 +1,6 @@\n f\n+bar\n oo\n',
+            origin: 'local',
+          },
+        ])
+      })
+    },
+  )
+
+  test.each([
+    {
+      name: 'a keyed path',
+      at: ({
+        tableKey,
+        rowKey,
+        cellKey,
+        calloutKey,
+        blockKey,
+        spanKey,
+      }: {
+        tableKey: string
+        rowKey: string
+        cellKey: string
+        calloutKey: string
+        blockKey: string
+        spanKey: string
+      }) => [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        {_key: calloutKey},
+        'content',
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ],
+    },
+    {
+      name: 'an index path',
+      at: () => [
+        0,
+        'rows',
+        0,
+        'cells',
+        0,
+        'content',
+        0,
+        'content',
+        0,
+        'children',
+        0,
+      ],
+    },
+    {
+      name: 'a negative index path',
+      at: () => [
+        -1,
+        'rows',
+        -1,
+        'cells',
+        -1,
+        'content',
+        -1,
+        'content',
+        -1,
+        'children',
+        -1,
+      ],
+    },
+  ])(
+    'Scenario: `insert.text` at an explicit position by $name maps a caret in the same span in a callout in a table cell',
+    async ({at}) => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const calloutKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const keys = {tableKey, rowKey, cellKey, calloutKey, blockKey, spanKey}
+      const spanPath = [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        {_key: calloutKey},
+        'content',
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ]
+      const patches: Array<Patch> = []
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: tableSchemaDefinition,
+        initialValue: calloutInTableCellValue(keys, 'foo'),
+        children: (
+          <>
+            <NodePlugin nodes={tableContainers} />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  patches.push(event.patch)
+                }
+              }}
+            />
+          </>
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: spanPath, offset: 1},
+          focus: {path: spanPath, offset: 1},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: spanPath, offset: 1},
+          focus: {path: spanPath, offset: 1},
+          backward: false,
+        })
+      })
+
+      editor.send({type: 'insert.text', at: at(keys), offset: 1, text: 'bar'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(
+          calloutInTableCellValue(keys, 'fbaroo'),
+        )
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: spanPath, offset: 4},
+          focus: {path: spanPath, offset: 4},
+          backward: false,
+        })
+        expect(patches).toEqual([
+          {
+            type: 'diffMatchPatch',
+            path: [...spanPath, 'text'],
+            value: '@@ -1,3 +1,6 @@\n f\n+bar\n oo\n',
+            origin: 'local',
+          },
+        ])
+      })
+    },
+  )
 })
+
+const tableSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [
+                            {type: 'block'},
+                            {
+                              type: 'object',
+                              name: 'callout',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const tableContainers = [
+  defineContainer({
+    type: 'table',
+    arrayField: 'rows',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer({
+    type: 'row',
+    arrayField: 'cells',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer({
+    type: 'cell',
+    arrayField: 'content',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer({
+    type: 'callout',
+    arrayField: 'content',
+    render: ({children}) => <>{children}</>,
+  }),
+]
+
+function tableCellValue(
+  keys: {
+    tableKey: string
+    rowKey: string
+    cellKey: string
+    blockKey: string
+    spanKey: string
+  },
+  text: string,
+) {
+  return [
+    {
+      _key: keys.tableKey,
+      _type: 'table',
+      rows: [
+        {
+          _key: keys.rowKey,
+          _type: 'row',
+          cells: [
+            {
+              _key: keys.cellKey,
+              _type: 'cell',
+              content: [textBlock(keys.blockKey, keys.spanKey, text)],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+}
+
+function calloutInTableCellValue(
+  keys: {
+    tableKey: string
+    rowKey: string
+    cellKey: string
+    calloutKey: string
+    blockKey: string
+    spanKey: string
+  },
+  text: string,
+) {
+  return [
+    {
+      _key: keys.tableKey,
+      _type: 'table',
+      rows: [
+        {
+          _key: keys.rowKey,
+          _type: 'row',
+          cells: [
+            {
+              _key: keys.cellKey,
+              _type: 'cell',
+              content: [
+                {
+                  _key: keys.calloutKey,
+                  _type: 'callout',
+                  content: [textBlock(keys.blockKey, keys.spanKey, text)],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+}
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    children: [{_key: spanKey, _type: 'span', text, marks: []}],
+    markDefs: [],
+  }
+}

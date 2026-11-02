@@ -1,4 +1,5 @@
 import type {KeyedSegment} from '../types/paths'
+import {isRecord} from '../utils/asserters'
 
 /**
  * A key only addresses a node when it's a non-empty string; sync payloads
@@ -20,4 +21,24 @@ export function nodeSegment(
   index: number,
 ): KeyedSegment | number {
   return hasUsableKey(node._key) ? {_key: node._key} : index
+}
+
+/**
+ * A key segment only finds the one element meant when every sibling is an
+ * object and no other sibling shares the key.
+ */
+export function isAddressableByKey(
+  elements: Array<unknown>,
+  key: string,
+): boolean {
+  let count = 0
+  for (const element of elements) {
+    if (!isRecord(element)) {
+      return false
+    }
+    if (element['_key'] === key) {
+      count++
+    }
+  }
+  return count === 1
 }

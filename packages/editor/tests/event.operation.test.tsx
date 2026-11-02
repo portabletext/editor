@@ -280,7 +280,7 @@ describe('event.operation', () => {
           value: 'k2',
           inverse: {
             type: 'set',
-            path: [{_key: 'b1'}, 'children', 1, '_key'],
+            path: [{_key: 'b1'}, 'children', {_key: 'k2'}, '_key'],
             value: 'dup',
           },
         },

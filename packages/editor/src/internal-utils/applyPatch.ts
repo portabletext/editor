@@ -20,6 +20,8 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {PathSegment} from '../types/paths'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyDeselect} from './apply-selection'
 import {isEqualValues} from './equality'
 import {getValue} from './get-value'
@@ -162,6 +164,17 @@ function insertPatch(
       ))
 
   const arrayFieldPath = patch.path.slice(0, -1)
+  const arrayField = getValue(editor.snapshot.context.value, arrayFieldPath)
+
+  if (
+    Array.isArray(arrayField) &&
+    !isInsertSelectorValid(arrayField, patch.path.at(-1))
+  ) {
+    return false
+  }
+
+  const arrayFieldWasEmpty =
+    Array.isArray(arrayField) && arrayField.length === 0
 
   for (let index = 0; index < items.length; index++) {
     if (index === 0) {
@@ -186,13 +199,27 @@ function insertPatch(
           position: 'after',
         })
       } else {
+        if (arrayFieldWasEmpty) {
+          // The selector is `[0]` or `[-1]`, and like `arrayInsert` in
+          // `@portabletext/patches`, an empty array then takes the items as
+          // they are, whatever the position. A sidecar array goes through
+          // `@portabletext/patches`, where `before` an index equal to the
+          // length addresses nothing.
+          editor.apply({
+            type: 'insert',
+            path: [...arrayFieldPath, index - 1],
+            node: items[index] as Node,
+            position: 'after',
+          })
+          continue
+        }
+
         const lastSegment = patch.path.at(-1)!
         const baseIndex = typeof lastSegment === 'number' ? lastSegment : 0
         const offset = position === 'after' ? 1 : 0
-        const numericIndex = baseIndex + offset + index
         editor.apply({
           type: 'insert',
-          path: [...arrayFieldPath, numericIndex],
+          path: [...arrayFieldPath, baseIndex + offset + index],
           node: items[index] as Node,
           position: 'before',
         })
@@ -212,6 +239,35 @@ function insertPatch(
   }
 
   return true
+}
+
+/**
+ * Mirrors `@portabletext/patches`, which applies all of an insert's items or
+ * none: the selector must address an existing item (`findTargetIndex`),
+ * except that an empty array also takes `[0]` and `[-1]`.
+ */
+function isInsertSelectorValid(
+  array: Array<unknown>,
+  selector: PathSegment | undefined,
+): boolean {
+  if (typeof selector === 'number') {
+    if (array.length === 0) {
+      return selector === 0 || selector === -1
+    }
+    const index = selector < 0 ? array.length + selector : selector
+    return index >= 0 && index < array.length
+  }
+
+  if (isKeyedSegment(selector)) {
+    return array.some(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        (item as Record<string, unknown>)['_key'] === selector._key,
+    )
+  }
+
+  return false
 }
 
 function setPatch(

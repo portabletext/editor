@@ -886,6 +886,132 @@ describe(applyOperation.name, () => {
     })
   })
 
+  describe('insert at a numeric index', () => {
+    test.each([
+      {length: 0, index: 0},
+      {length: 0, index: -0},
+      {length: 0, index: -0.5},
+      {length: 0, index: -1},
+      {length: 0, index: -1.5},
+      {length: 0, index: -3},
+      {length: 2, index: 0},
+      {length: 2, index: -0},
+      {length: 2, index: 1},
+      {length: 2, index: 1.5},
+      {length: 2, index: 2},
+      {length: 2, index: -0.5},
+      {length: 2, index: -1},
+      {length: 2, index: -1.5},
+      {length: 2, index: -2},
+      {length: 2, index: -2.5},
+      {length: 2, index: -3},
+      {length: 2, index: -10},
+    ])(
+      'before $index into $length blocks writes where splice does and returns the written index',
+      ({length, index}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const value: Array<PortableTextBlock> = Array.from({length}, () => ({
+          _key: keyGenerator(),
+          _type: 'image',
+        }))
+        const node = {_key: keyGenerator(), _type: 'image'}
+        const editor = createBareEditor(value)
+        const spliced = value.slice()
+        spliced.splice(index, 0, node)
+
+        const insertedPath = applyOperation(editor, {
+          type: 'insert',
+          path: [index],
+          position: 'before',
+          node,
+        })
+
+        expect(editor.snapshot.context.value).toEqual(spliced)
+        expect(insertedPath).toEqual([
+          editor.snapshot.context.value.indexOf(node),
+        ])
+      },
+    )
+
+    test.each([
+      {length: 0, index: 1},
+      {length: 2, index: 2.5},
+      {length: 2, index: 3},
+    ])(
+      'before $index into $length blocks throws instead of appending',
+      ({length, index}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const value: Array<PortableTextBlock> = Array.from({length}, () => ({
+          _key: keyGenerator(),
+          _type: 'image',
+        }))
+        const editor = createBareEditor(value)
+
+        expect(() =>
+          applyOperation(editor, {
+            type: 'insert',
+            path: [index],
+            position: 'before',
+            node: {_key: keyGenerator(), _type: 'image'},
+          }),
+        ).toThrow(
+          `Cannot apply an "insert" operation at path ${index} because the destination is past the end of the node.`,
+        )
+      },
+    )
+
+    test('after -2 into two blocks inserts after the first and returns that index', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+      const bazKey = keyGenerator()
+      const editor = createBareEditor([
+        {_key: fooKey, _type: 'image'},
+        {_key: barKey, _type: 'image'},
+      ])
+
+      const insertedPath = applyOperation(editor, {
+        type: 'insert',
+        path: [-2],
+        position: 'after',
+        node: {_key: bazKey, _type: 'image'},
+      })
+
+      expect(editor.snapshot.context.value).toEqual([
+        {_key: fooKey, _type: 'image'},
+        {_key: bazKey, _type: 'image'},
+        {_key: barKey, _type: 'image'},
+      ])
+      expect(insertedPath).toEqual([1])
+    })
+
+    test.fails('after -1 into two blocks appends and returns that index', () => {
+      // Today the writer inserts at index 0, a known bug tracked separately.
+      const keyGenerator = createTestKeyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+      const bazKey = keyGenerator()
+      const editor = createBareEditor([
+        {_key: fooKey, _type: 'image'},
+        {_key: barKey, _type: 'image'},
+      ])
+
+      const insertedPath = applyOperation(editor, {
+        type: 'insert',
+        path: [-1],
+        position: 'after',
+        node: {_key: bazKey, _type: 'image'},
+      })
+
+      expect(editor.snapshot.context.value).toEqual([
+        {_key: fooKey, _type: 'image'},
+        {_key: barKey, _type: 'image'},
+        {_key: bazKey, _type: 'image'},
+      ])
+      expect(insertedPath).toEqual([2])
+    })
+  })
+
   describe('root block resolution', () => {
     test('a block index segment resolves the block at that index', () => {
       const keyGenerator = createTestKeyGenerator()

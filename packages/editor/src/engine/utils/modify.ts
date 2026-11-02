@@ -150,12 +150,12 @@ export const modifyDescendant = <N extends Node>(
  *
  * When path is empty, modifies the editor's children directly.
  * When path points to a node, resolves the correct child field name
- * via getNodeChildren and modifies that field.
+ * via getNodeChildren and modifies that field, which `f` receives.
  */
 export const modifyChildren = (
   editor: Editor,
   path: Path,
-  f: (children: Node[]) => Node[],
+  f: (children: Node[], fieldName?: string) => Node[],
 ) => {
   if (path.length === 0) {
     editor.snapshot.context.value = f(
@@ -196,7 +196,7 @@ export const modifyChildren = (
         : []
       return {
         ...node,
-        [fieldName]: f(currentChildren),
+        [fieldName]: f(currentChildren, fieldName),
       }
     })
   }

@@ -1,5 +1,6 @@
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {applySelect} from '../internal-utils/apply-selection'
+import {resolveOperationPath} from '../internal-utils/resolve-operation-path'
 import {getNode} from '../traversal/get-node'
 import {getSibling} from '../traversal/get-sibling'
 import {getSpan} from '../traversal/get-span'
@@ -18,9 +19,18 @@ export const insertTextOperationImplementation: OperationImplementation<
       return
     }
 
+    const path = resolveOperationPath(
+      operation.editor.snapshot.context.value,
+      operation.at,
+    )
+
+    if (!path) {
+      return
+    }
+
     operation.editor.apply({
       type: 'insert.text',
-      path: operation.at,
+      path,
       offset: operation.offset,
       text: operation.text,
     })
