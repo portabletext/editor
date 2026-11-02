@@ -975,7 +975,11 @@ const textInsertionListenerCallback = <
     return input.context.editor.registerBehavior({
       behavior: defineBehavior({
         on: 'insert.text',
-        guard: ({snapshot}) => {
+        guard: ({snapshot, event}) => {
+          if (event.at !== undefined && event.offset !== undefined) {
+            return false
+          }
+
           if (!context.focusSpan) {
             return false
           }

@@ -1,4 +1,11 @@
-import {raise} from '@portabletext/editor/behaviors'
+import {
+  defineBehavior,
+  effect,
+  forward,
+  raise,
+  type BehaviorEvent,
+} from '@portabletext/editor/behaviors'
+import {BehaviorPlugin} from '@portabletext/editor/plugins'
 import {parameterTypes} from '@portabletext/editor/test'
 import {
   createTestEditor,
@@ -6,6 +13,7 @@ import {
   type Context,
 } from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {Before, Then} from 'racejar'
 import {Feature} from 'racejar/vitest'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -145,6 +153,289 @@ function EmojiPickerPlugin() {
     </>
   )
 }
+
+describe('`insert.text` at an explicit position', () => {
+  test('Scenario: a trigger inserted at a position in another block does not activate the picker at the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+    const events: Array<BehaviorEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: spanAKey, text: 'foo ', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: spanBKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    forward(event),
+                    effect(() => {
+                      events.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EmojiPickerPlugin />
+        </>
+      ),
+    })
+
+    const keywordLocator = page.getByTestId('keyword')
+    const matchesLocator = page.getByTestId('matches')
+    const stateLocator = page.getByTestId('state')
+
+    await expect.element(stateLocator).toBeInTheDocument()
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+      offset: 3,
+      text: ':',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: spanAKey, text: 'foo ', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: spanBKey, text: 'bar:', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        backward: false,
+      })
+    })
+
+    expect(events).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+            offset: 4,
+          },
+          focus: {
+            path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+            offset: 4,
+          },
+        },
+      },
+      {
+        type: 'insert.text',
+        at: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+        offset: 3,
+        text: ':',
+      },
+    ])
+    expect(stateLocator.element().textContent).toEqual('idle')
+    expect(keywordLocator.element().textContent).toEqual('')
+    expect(matchesLocator.element().textContent).toEqual('')
+  })
+
+  test('Scenario: text inserted at a position in another block does not dismiss the picker with the caret before the trigger', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const spanAKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const spanBKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: spanAKey, text: 'foo ', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: spanBKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <EmojiPickerPlugin />,
+    })
+
+    const keywordLocator = page.getByTestId('keyword')
+    const matchesLocator = page.getByTestId('matches')
+    const stateLocator = page.getByTestId('state')
+
+    await expect.element(stateLocator).toBeInTheDocument()
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: ':'})
+    editor.send({type: 'insert.text', text: 'j'})
+    editor.send({type: 'insert.text', text: 'o'})
+
+    await vi.waitFor(() => {
+      expect(stateLocator.element().textContent).toEqual('showing matches')
+      expect(keywordLocator.element().textContent).toEqual('jo')
+      expect(matchesLocator.element().textContent).toEqual('😂,😹,🕹️')
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        backward: false,
+      })
+      expect(stateLocator.element().textContent).toEqual('showing matches')
+      expect(keywordLocator.element().textContent).toEqual('jo')
+      expect(matchesLocator.element().textContent).toEqual('😂,😹,🕹️')
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: spanAKey, text: 'foo :jo', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [
+            {_type: 'span', _key: spanBKey, text: 'barbaz', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+          offset: 4,
+        },
+        backward: false,
+      })
+    })
+
+    expect(stateLocator.element().textContent).toEqual('showing matches')
+    expect(keywordLocator.element().textContent).toEqual('jo')
+    expect(matchesLocator.element().textContent).toEqual('😂,😹,🕹️')
+  })
+})
 
 type SyncMatch = {
   key: string
