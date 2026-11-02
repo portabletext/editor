@@ -97,6 +97,8 @@ const defaultRenderers: PortableTextRenderers = {
   unknownBlockStyle: DefaultUnknownStyleRenderer,
 }
 
+const SETEXT_STYLES = new Set(['h1', 'h2'])
+
 type Options = Partial<PortableTextRenderers> & {
   blockSpacing?: BlockSpacingRenderer
 
@@ -313,7 +315,7 @@ function renderMarkdown(
   if (options.hardBreak === undefined && options.blockSpacing === undefined) {
     const candidates = new Map<number, string>()
     renderedBlocks.forEach(({node, rendered, index}, position) => {
-      const candidate = renderBackslashBreakCandidate(node, index)
+      const candidate = renderCandidate(node, index)
       if (candidate !== undefined && candidate !== rendered) {
         candidates.set(position, candidate)
       }
@@ -333,11 +335,18 @@ function renderMarkdown(
 
   const markdown = joinRenderedBlocks(renderedOutputs, spacings)
 
-  function renderBackslashBreakCandidate(
+  function renderCandidate(
     node: TypedObject,
     index: number,
   ): string | undefined {
-    if (!isPortableTextBlock(node) || !toPlainText(node).includes('\n\n')) {
+    if (!isPortableTextBlock(node)) {
+      return undefined
+    }
+    const text = toPlainText(node)
+    if (
+      !text.includes('\n\n') &&
+      !(SETEXT_STYLES.has(node.style ?? 'normal') && text.includes('\n'))
+    ) {
       return undefined
     }
     const renderCandidateNode = createRenderNode(
