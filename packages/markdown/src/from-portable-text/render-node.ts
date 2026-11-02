@@ -29,7 +29,11 @@ import {
 } from './list-item-first-block'
 import {DefaultUnknownListItemRenderer} from './renderers/list-item'
 import {DefaultUnknownMarkRenderer} from './renderers/marks'
-import {DefaultUnknownStyleRenderer} from './renderers/style'
+import {
+  DefaultH1Renderer,
+  DefaultH2Renderer,
+  DefaultUnknownStyleRenderer,
+} from './renderers/style'
 import type {PortableTextRenderers, RenderNode, Serializable} from './types'
 
 type ReportDegradation = (
@@ -50,12 +54,17 @@ type ReportDegradation = (
  */
 const HEADING_STYLES = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
 
+const SETEXT_UNDERLINES = new Map([
+  [DefaultH1Renderer, '==='],
+  [DefaultH2Renderer, '---'],
+])
+
 export const createRenderNode = (
   renderers: PortableTextRenderers,
   listIndexMap: Map<string, number>,
   listDepthMap: Map<string, number>,
   reportDegradation: ReportDegradation | undefined,
-  backslashBreaksAfterEmptyLines = false,
+  candidateForms = false,
 ): RenderNode => {
   // Keyed by the actual `@text` node objects `buildMarksTree` produces, not
   // by render order: a custom type/mark renderer can call `renderNode` with
@@ -133,7 +142,7 @@ export const createRenderNode = (
     ) => {
       if (isPortableTextToolkitTextNode(node)) {
         if (node.text === '\n') {
-          if (backslashBreaksAfterEmptyLines && lineIsEmpty && !isFirstLine) {
+          if (candidateForms && lineIsEmpty && !isFirstLine) {
             backslashBreakNodes.add(node)
           }
           isFirstLine = false
@@ -288,15 +297,25 @@ export const createRenderNode = (
     isListItem: boolean,
   ): string {
     const style = node.style || 'normal'
-    const children = renderBlockChildren(
-      node,
-      HEADING_STYLES.has(style),
-      isListItem,
-    )
     const handler =
       typeof renderers.block === 'function'
         ? renderers.block
         : renderers.block[style]
+    // A setext heading's lines are ordinary paragraph lines, so every line,
+    // the first included, gets the full line-start escaping.
+    const setextUnderline =
+      candidateForms &&
+      !isInline &&
+      !isListItem &&
+      handler !== undefined &&
+      toPlainText(node).includes('\n')
+        ? SETEXT_UNDERLINES.get(handler)
+        : undefined
+    const children = renderBlockChildren(
+      node,
+      HEADING_STYLES.has(style) && setextUnderline === undefined,
+      isListItem,
+    )
     const block = handler || renderers.unknownBlockStyle
 
     if (
@@ -311,6 +330,10 @@ export const createRenderNode = (
         node: reportedNodeAliases.get(node) ?? node,
         owner: reportedNodeAliases.get(node) ?? node,
       })
+    }
+
+    if (setextUnderline !== undefined) {
+      return `${children}\n${setextUnderline}`
     }
 
     return block({index, isInline, children, value: node, renderNode})

@@ -436,7 +436,7 @@ describe('the reconciliation report', () => {
       {
         _type: 'block',
         _key: 'b2',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 's2', text: 'bar\nbaz', marks: []}],
       },
@@ -454,7 +454,7 @@ describe('the reconciliation report', () => {
       {
         _type: 'block',
         _key: 'k2',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
       },
@@ -2180,7 +2180,7 @@ describe('the reconciliation report', () => {
       {
         _type: 'block',
         _key: 'b2',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 's4', text: 'bar\nqux', marks: []}],
       },
@@ -2198,7 +2198,7 @@ describe('the reconciliation report', () => {
       {
         _type: 'block',
         _key: 'k2',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
       },
@@ -3460,7 +3460,7 @@ describe('the reconciliation report', () => {
       {
         _type: 'block',
         _key: 'b1',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 's1', text: 'one\ntwo', marks: []}],
       },
@@ -3931,7 +3931,7 @@ describe('the reconciliation report', () => {
       {
         _type: 'block',
         _key: 'b1',
-        style: 'h1',
+        style: 'h4',
         markDefs: [],
         children: [{_type: 'span', _key: 's1', text: 'foo\nbar', marks: []}],
       },
@@ -3946,7 +3946,7 @@ describe('the reconciliation report', () => {
     let report!: ReconciliationReport
     applyMarkdownEdit(stored, markdown, {
       schema: compileSchema(
-        defineSchema({styles: [{name: 'normal'}, {name: 'h1'}]}),
+        defineSchema({styles: [{name: 'normal'}, {name: 'h4'}]}),
       ),
       deserialize: {keyGenerator},
       onReconciliation: (r) => {

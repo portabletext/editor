@@ -1631,7 +1631,7 @@ describe(portableTextToMarkdown.name, () => {
         {
           _type: 'block',
           _key: keyGenerator(),
-          style: 'h1',
+          style: 'h3',
           children: [
             {
               _type: 'span',
@@ -1643,7 +1643,7 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe('# foo  \n  \nbar')
+      expect(portableTextToMarkdown(portableText)).toBe('### foo  \n  \nbar')
     })
 
     test('an empty line between hard breaks keeps a custom hard break', () => {
@@ -2323,6 +2323,730 @@ describe(portableTextToMarkdown.name, () => {
       ]
       expect(portableTextToMarkdown(portableText)).toBe(
         'foo  \n\\\nbar\n\n<pre>\n\nbaz  \n  \nqux',
+      )
+    })
+  })
+
+  describe('setext headings', () => {
+    test('an h1 with a hard break is written as a setext heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \nbar\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 with a hard break is written as a setext heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \nbar\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h1 with an empty line between hard breaks is written as a setext heading with a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\\nbar\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 with an empty line between hard breaks is written as a setext heading with a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\\nbar\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 with strong across a hard break is written as a setext heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo ', marks: []},
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'bar\nbaz',
+              marks: ['strong'],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo **bar  \nbaz**\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+            {_type: 'span', _key: 'k2', text: 'bar\nbaz', marks: ['strong']},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h1 with a link across a hard break is written as a setext heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo ', marks: []},
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'bar\nbaz',
+              marks: [linkKey],
+            },
+          ],
+          markDefs: [
+            {_type: 'link', _key: linkKey, href: 'https://example.com'},
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo [bar  \nbaz](https://example.com)\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+            {_type: 'span', _key: 'k3', text: 'bar\nbaz', marks: ['k2']},
+          ],
+          markDefs: [{_type: 'link', _key: 'k2', href: 'https://example.com'}],
+        },
+      ])
+    })
+
+    test('an h2 whose second line is a dash underline escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\n---', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\---\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\n---', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h1 whose second line is an equals underline escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\n===', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\===\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\n===', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 whose second line is a lone dash escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\n-', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\-\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\n-', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 whose second line is a thematic break escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\n***', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\***\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\n***', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 whose second line starts with a blockquote marker escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n> bar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\> bar\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n> bar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 whose second line starts with a list marker escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n- bar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\- bar\n---')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n- bar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h1 whose first line starts with a hash escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '# foo\nbar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('\\# foo  \nbar\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k1', text: '# foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h1 whose second line starts with a hash escapes it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo\n# bar',
+              marks: [],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo  \n\\# bar\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n# bar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 with a hard break between two paragraphs is written as a setext heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'bar\nbaz', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'qux', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText)
+      expect(markdown).toBe('foo\n\nbar  \nbaz\n---\n\nqux')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'h2',
+          children: [{_type: 'span', _key: 'k3', text: 'bar\nbaz', marks: []}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k5', text: 'qux', marks: []}],
+          markDefs: [],
+        },
+      ])
+    })
+
+    test('an h2 without a hard break keeps the ATX heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('## foo')
+    })
+
+    test('an h3 with a hard break keeps the ATX heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('### foo  \nbar')
+    })
+
+    test('an h2 with a hard break keeps a custom h2 renderer', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          block: {h2: ({children}) => `## ${children}`},
+        }),
+      ).toBe('## foo  \nbar')
+    })
+
+    test('an h1 with a hard break keeps a custom block renderer function', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {
+          block: ({children}) => `# ${children}`,
+        }),
+      ).toBe('# foo  \nbar')
+    })
+
+    test('an h2 with a hard break keeps the ATX heading with a custom hard break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {hardBreak: () => '  \n'}),
+      ).toBe('## foo  \nbar')
+    })
+
+    test('an h2 with a hard break keeps the ATX heading with a custom block spacing', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(
+        portableTextToMarkdown(portableText, {blockSpacing: () => '\n\n'}),
+      ).toBe('## foo  \nbar')
+    })
+
+    test('an h2 list item with a hard break keeps the ATX heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('- ## foo  \nbar')
+    })
+
+    test('an h2 with a hard break keeps the ATX heading when its first line is empty', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: '\nfoo', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('##   \nfoo')
+    })
+
+    test('an h2 with a hard break keeps the ATX heading when its last line is empty', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\n', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe('## foo  \n')
+    })
+
+    test('an h2 with a hard break keeps the ATX heading inside an HTML block the previous block leaves open', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const portableText = [
+        {_type: 'html', _key: keyGenerator(), html: '<pre>'},
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h2',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      expect(portableTextToMarkdown(portableText)).toBe(
+        '<pre>\n\n## foo  \nbar',
       )
     })
   })
@@ -5872,10 +6596,10 @@ describe(portableTextToMarkdown.name, () => {
 
       describe('a heading with a hard break in its text', () => {
         test("only the first line is inside the heading's `# ` prefix", () => {
-          const portableText = [leavesBlock(['a\n- b'], {style: 'h1'})]
+          const portableText = [leavesBlock(['a\n- b'], {style: 'h3'})]
 
           const markdown = portableTextToMarkdown(portableText)
-          expect(markdown).toBe('# a  \n\\- b')
+          expect(markdown).toBe('### a  \n\\- b')
 
           const reparsed = markdownToPortableText(markdown)
           expect(reparsed).toHaveLength(2)
@@ -5888,7 +6612,7 @@ describe(portableTextToMarkdown.name, () => {
           ) {
             throw new Error('Expected two portable text blocks')
           }
-          expect(heading.style).toBe('h1')
+          expect(heading.style).toBe('h3')
           expect(blockText(heading)).toBe('a')
           // The second raw line is no longer inside the heading's `# `
           // prefix, so it's an ordinary line: it must not misparse as a
