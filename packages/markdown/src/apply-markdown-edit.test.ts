@@ -930,7 +930,7 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
-  test('a heading with a hard break cannot be traced, so keys reset', () => {
+  test('an h1 with a hard break round-trips with its keys', () => {
     const keyGenerator = createTestKeyGenerator()
     const stored = [
       {
@@ -947,8 +947,33 @@ describe(applyMarkdownEdit.name, () => {
     ).toEqual([
       {
         _type: 'block',
-        _key: 'k0',
+        _key: 'b1',
         style: 'h1',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's1', text: 'one\ntwo', marks: []}],
+      },
+    ])
+  })
+
+  test('an h3 with a hard break cannot be traced, so keys reset', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: 'b1',
+        style: 'h3',
+        markDefs: [],
+        children: [{_type: 'span', _key: 's1', text: 'one\ntwo', marks: []}],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(
+      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 'k1', text: 'one', marks: []}],
       },
@@ -1690,7 +1715,7 @@ describe(applyMarkdownEdit.name, () => {
       {
         _type: 'block',
         _key: 'b1',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 's1', text: 'one\ntwo', marks: []}],
       },
@@ -1705,7 +1730,7 @@ describe(applyMarkdownEdit.name, () => {
       {
         _type: 'block',
         _key: 'k0',
-        style: 'h1',
+        style: 'h3',
         markDefs: [],
         children: [{_type: 'span', _key: 'k1', text: 'one', marks: []}],
       },
