@@ -7,7 +7,6 @@ import {
   useEffect,
   useId,
   useMemo,
-  useState,
   type ClipboardEvent,
   type FocusEventHandler,
   type KeyboardEvent,
@@ -118,7 +117,6 @@ export const PortableTextEditable = forwardRef<
   } = props
 
   const portableTextEditor = usePortableTextEditor()
-  const [hasInvalidValue, setHasInvalidValue] = useState(false)
 
   const editorActor = useContext(EditorActorContext)
   const relay = useContext(RelayContext)
@@ -223,27 +221,17 @@ export const PortableTextEditable = forwardRef<
       restoreSelectionFromProps()
     })
 
-    const onInvalidValue = editorActor.on('invalid value', () => {
-      setHasInvalidValue(true)
-    })
-
-    const onValueChanged = editorActor.on('value changed', () => {
-      setHasInvalidValue(false)
-    })
-
     return () => {
       onReady.unsubscribe()
-      onInvalidValue.unsubscribe()
-      onValueChanged.unsubscribe()
     }
   }, [editorActor, restoreSelectionFromProps])
 
   // Restore selection from props when it changes
   useEffect(() => {
-    if (propsSelection && !hasInvalidValue) {
+    if (propsSelection) {
       restoreSelectionFromProps()
     }
-  }, [hasInvalidValue, propsSelection, restoreSelectionFromProps])
+  }, [propsSelection, restoreSelectionFromProps])
 
   // Handle from props onCopy function
   const handleCopy = useCallback(
@@ -888,7 +876,7 @@ export const PortableTextEditable = forwardRef<
     return null
   }
 
-  return hasInvalidValue ? null : (
+  return (
     <SelectionStateProvider>
       <EngineEditable
         {...restProps}
