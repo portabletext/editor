@@ -21,6 +21,7 @@ import {
   type RenderLeafProps,
 } from '../engine/react/components/editable'
 import {useEngine} from '../engine/react/hooks/use-engine'
+import {attachRef} from '../engine/react/utils/attach-ref'
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
 import {getEventPosition} from '../internal-utils/event-position'
@@ -662,9 +663,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [readOnly, onDragStart, editorActor, editorEngine],
   )
@@ -698,9 +696,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDrag, editorActor, editorEngine],
   )
@@ -723,9 +718,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragEnd, editorActor, editorEngine],
   )
@@ -759,9 +751,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragEnter, editorActor, editorEngine],
   )
@@ -797,9 +786,6 @@ export const PortableTextEditable = forwardRef<
         editor: editorEngine,
         nativeEvent: event,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragOver, editorActor, editorEngine],
   )
@@ -836,9 +822,6 @@ export const PortableTextEditable = forwardRef<
         editor: editorEngine,
         nativeEvent: event,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDrop, editorActor, editorEngine],
   )
@@ -871,42 +854,32 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragLeave, editorActor, editorEngine],
   )
 
   const callbackRef = useCallback(
-    (editorElement: HTMLDivElement | null) => {
-      if (typeof forwardedRef === 'function') {
-        forwardedRef(editorElement)
-      } else if (forwardedRef) {
-        forwardedRef.current = editorElement
-      }
+    (editorElement: HTMLDivElement) => {
+      const detachForwardedRef = attachRef(forwardedRef, editorElement)
 
-      if (editorElement) {
-        // Observe mutations (child list and subtree) to this component's DOM,
-        // and make sure the editor selection is valid when that happens.
-        const mutationObserver = new MutationObserver(() => {
-          validateSelectionActor.send({
-            type: 'validate selection',
-            editorElement,
-          })
+      // Observe mutations (child list and subtree) to this component's DOM,
+      // and make sure the editor selection is valid when that happens.
+      const mutationObserver = new MutationObserver(() => {
+        validateSelectionActor.send({
+          type: 'validate selection',
+          editorElement,
         })
+      })
 
-        mutationObserver.observe(editorElement, {
-          childList: true,
-          subtree: true,
-        })
+      mutationObserver.observe(editorElement, {
+        childList: true,
+        subtree: true,
+      })
 
-        return () => {
-          mutationObserver.disconnect()
-        }
+      return () => {
+        mutationObserver.disconnect()
+        detachForwardedRef()
       }
-
-      return undefined
     },
     [forwardedRef, validateSelectionActor],
   )
@@ -923,7 +896,6 @@ export const PortableTextEditable = forwardRef<
         editorActor={editorActor}
         data-read-only={readOnly}
         autoFocus={false}
-        className={restProps.className}
         decorate={decorate}
         onBlur={handleOnBlur}
         onCopy={handleCopy}
