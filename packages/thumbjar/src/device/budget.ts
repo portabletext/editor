@@ -79,3 +79,66 @@ export function deviceTestFileSeconds(testCount: number): number {
     VITEST_STARTUP_SECONDS
   )
 }
+
+/**
+ * `thumbjar prepare`'s stages before this change, the ANR settle, the device facts, Chrome and the soft
+ * keyboard, the Japanese layout and the page check. They have no cap of their own, so the prep's deadline
+ * bounds them together.
+ */
+export const PREP_STAGES_SECONDS = 600
+
+/** The Japanese prep's boot capture: its header, the `main` buffer's size, the seed dump and logd's counts. */
+export const CAPTURE_SEED_SECONDS = 15
+
+/** Disabling Play Store, so it updates no app during the run. A failure there is only logged. */
+export const SELF_UPDATE_BLOCK_SECONDS = 20
+
+/**
+ * How long after the emulator came online Gboard gets to log its Japanese dictionary load. Over 18 fresh
+ * boots the load came 80 to 176 seconds after boot. One boot logged a dictionary download error and a retry
+ * about 65 seconds before its load, and 360 also covers a load that needs one more such retry.
+ */
+export const DICTIONARY_LOAD_SECONDS = 360
+
+/**
+ * The dictionary wait's last read of the capture and the Gboard version query for its failure message,
+ * after `DICTIONARY_LOAD_SECONDS`.
+ */
+export const DICTIONARY_WAIT_TAIL_SECONDS = 45
+export const DICTIONARY_WAIT_KILL_SECONDS = 5
+
+/** The switch to Japanese and the uncommitted `kyou` after the dictionary loaded, `dictionary.js check`. */
+export const DICTIONARY_CHECK_SECONDS = 180
+export const DICTIONARY_CHECK_KILL_SECONDS = 10
+
+/** How long the prep gets to stop once it ran past its deadline. */
+export const PREP_KILL_SECONDS = 10
+
+/**
+ * The longest `thumbjar prepare` runs for `keyboard`, its kill-after included, so the time a caller's prep
+ * stage needs. English runs its stages and the Play Store block. Japanese adds the boot capture before its
+ * deadline and the dictionary wait and check, and the wait ends `DICTIONARY_LOAD_SECONDS` after the
+ * emulator came online, which the stages before it already cover, or with one last read when they ran past
+ * it.
+ */
+export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
+  const english =
+    SELF_UPDATE_BLOCK_SECONDS +
+    KILL_GRACE_SECONDS +
+    PREP_STAGES_SECONDS +
+    PREP_KILL_SECONDS
+  if (keyboard === 'en') {
+    return english
+  }
+  return (
+    english -
+    PREP_STAGES_SECONDS +
+    Math.max(PREP_STAGES_SECONDS, DICTIONARY_LOAD_SECONDS) +
+    CAPTURE_SEED_SECONDS +
+    KILL_GRACE_SECONDS +
+    DICTIONARY_WAIT_TAIL_SECONDS +
+    DICTIONARY_WAIT_KILL_SECONDS +
+    DICTIONARY_CHECK_SECONDS +
+    DICTIONARY_CHECK_KILL_SECONDS
+  )
+}

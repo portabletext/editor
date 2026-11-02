@@ -12,9 +12,11 @@ const USAGE = `Usage:
       Download the uiautomator2 server jar and check its hash, before the emulator boots.
   thumbjar serve <dir> [--port 8765]
       Serve a built page directory over HTTP, one log line per request.
-  thumbjar prepare --keyboard ja|en --page-url <url> [--out-dir out]
-      Prepare a booted emulator: wait out the post-boot ANR storm, set up Chrome and Gboard, add the
-      Japanese layout for \`--keyboard ja\`, check that <url> answers and reverse its port to the device
+  thumbjar prepare --keyboard ja|en --page-url <url> [--out-dir out] [--booted <epoch seconds>]
+      Prepare a booted emulator: keep Play Store from updating apps, wait out the post-boot ANR storm,
+      set up Chrome and Gboard, add the Japanese layout for \`--keyboard ja\` and wait until Gboard has
+      loaded its Japanese dictionary, at most 360 seconds after --booted, when the emulator came online,
+      or after the prep started without it, check that <url> answers and reverse its port to the device
       when it is on localhost.`
 
 const [command, ...rest] = process.argv.slice(2)
@@ -39,11 +41,13 @@ if (command === 'fetch-u2-jar') {
       'keyboard': {type: 'string'},
       'page-url': {type: 'string'},
       'out-dir': {type: 'string', default: 'out'},
+      'booted': {type: 'string'},
     },
   })
   if (
     (values.keyboard !== 'ja' && values.keyboard !== 'en') ||
-    values['page-url'] === undefined
+    values['page-url'] === undefined ||
+    (values.booted !== undefined && !/^\d+$/.test(values.booted))
   ) {
     usage()
   }
@@ -57,6 +61,7 @@ if (command === 'fetch-u2-jar') {
         THUMBJAR_PAGE_URL: values['page-url'],
         THUMBJAR_PAGE_PORT: localhostPort(values['page-url']) ?? '',
         THUMBJAR_OUT_DIR: values['out-dir'],
+        THUMBJAR_BOOTED: values.booted ?? String(Math.floor(Date.now() / 1000)),
       },
     },
   )

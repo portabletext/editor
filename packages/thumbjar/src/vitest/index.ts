@@ -2,7 +2,7 @@ import {fileURLToPath} from 'node:url'
 import type {TestProjectInlineConfiguration} from 'vitest/config'
 import {DEVICE_TEST_TIMEOUT_SECONDS} from '../device/budget.ts'
 
-export {deviceTestFileSeconds} from '../device/budget.ts'
+export {deviceTestFileSeconds, prepWorstSeconds} from '../device/budget.ts'
 
 declare module 'vitest' {
   export interface ProvidedContext {
