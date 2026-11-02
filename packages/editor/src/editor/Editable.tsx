@@ -663,9 +663,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [readOnly, onDragStart, editorActor, editorEngine],
   )
@@ -699,9 +696,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDrag, editorActor, editorEngine],
   )
@@ -724,9 +718,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragEnd, editorActor, editorEngine],
   )
@@ -760,9 +751,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragEnter, editorActor, editorEngine],
   )
@@ -798,9 +786,6 @@ export const PortableTextEditable = forwardRef<
         editor: editorEngine,
         nativeEvent: event,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragOver, editorActor, editorEngine],
   )
@@ -837,9 +822,6 @@ export const PortableTextEditable = forwardRef<
         editor: editorEngine,
         nativeEvent: event,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDrop, editorActor, editorEngine],
   )
@@ -872,9 +854,6 @@ export const PortableTextEditable = forwardRef<
         },
         editor: editorEngine,
       })
-
-      // Prevent the engine from handling the event
-      return true
     },
     [onDragLeave, editorActor, editorEngine],
   )
@@ -917,7 +896,6 @@ export const PortableTextEditable = forwardRef<
         editorActor={editorActor}
         data-read-only={readOnly}
         autoFocus={false}
-        className={restProps.className}
         decorate={decorate}
         onBlur={handleOnBlur}
         onCopy={handleCopy}
