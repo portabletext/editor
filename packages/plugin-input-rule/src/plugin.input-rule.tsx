@@ -50,6 +50,10 @@ export function defineInputRuleBehavior(config: {
   return defineBehavior({
     on: 'insert.text',
     guard: ({snapshot, event, dom}) => {
+      if (event.at !== undefined && event.offset !== undefined) {
+        return false
+      }
+
       if (
         !snapshot.context.selection ||
         !isSelectionCollapsed(snapshot.context.selection)
