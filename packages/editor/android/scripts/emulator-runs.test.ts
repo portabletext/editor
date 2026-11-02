@@ -55,6 +55,10 @@ const lostThenStalled =
   'EMULATOR_START at 100\nBOOTED at 160\nCHECKED lost at 700\n'
 const reachableThenStalled =
   'EMULATOR_START at 100\nBOOTED at 160\nCHECKED device at 700\n'
+// The prep failure `run-on-device.sh` records for a real CI boot whose Gboard never loaded the dictionary.
+const NEVER_LOADED =
+  "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
+const dictionaryNeverLoaded = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nCHECKED device at 700\n`
 const retryNeverBooted = 'RETRY\nEMULATOR_START at 1000\n'
 const retryBooted =
   'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nCHECKED skipped at 1780\nDONE at 1800\n'
@@ -155,6 +159,10 @@ describe(retryAfter.name, () => {
     ])
   })
 
+  test('does not retry a prep that failed on a reachable device because the Japanese dictionary never loaded', () => {
+    expect(retryAfter(dictionaryNeverLoaded)).toEqual({retry: false})
+  })
+
   test('does not retry a first run that ended after boot without a completed device check', () => {
     expect([retryAfter(interrupted), retryAfter(checkerTimedOut)]).toEqual([
       {retry: false},
@@ -243,6 +251,22 @@ describe(runResult.name, () => {
       {
         passed: false,
         line: 'run outcome: failure, on the retry after the emulator never booted',
+      },
+    ])
+  })
+
+  test("fails a prep that failed on a reachable device with the prep's own reason, on the first run and on the retry", () => {
+    expect([
+      runResult(dictionaryNeverLoaded, 'failure'),
+      runResult(`${lostInTests}RETRY\n${dictionaryNeverLoaded}`, 'failure'),
+    ]).toEqual([
+      {
+        passed: false,
+        line: `run outcome: failure, the prep failed: ${NEVER_LOADED}`,
+      },
+      {
+        passed: false,
+        line: `run outcome: failure, on the retry after adb lost the device, the prep failed: ${NEVER_LOADED}`,
       },
     ])
   })
@@ -502,6 +526,23 @@ describe('emulator-runs.mjs result', () => {
         timing: lostInTests + retryLost,
       },
     ])
+  })
+})
+
+describe('emulator-runs.mjs result after a failed prep', () => {
+  test("quotes the prep's reason in the log and the job summary", () => {
+    expect(
+      workflowCommand(
+        ['result', 'timing.txt', 'failure'],
+        dictionaryNeverLoaded,
+      ),
+    ).toEqual({
+      status: 1,
+      stdout: `run outcome: failure, the prep failed: ${NEVER_LOADED}\n`,
+      output: '',
+      summary: `run outcome: failure, the prep failed: ${NEVER_LOADED}\n`,
+      timing: dictionaryNeverLoaded,
+    })
   })
 })
 

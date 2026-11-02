@@ -9,11 +9,10 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs'
-import {createRequire} from 'node:module'
 import {tmpdir} from 'node:os'
 import {basename, join} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {deviceTestFileSeconds} from 'thumbjar/vitest'
+import {deviceTestFileSeconds, prepWorstSeconds} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
 import {
@@ -25,7 +24,9 @@ import {
   DEVICE_CHECK_SECONDS,
   DIAGNOSTICS_KILL_SECONDS,
   DIAGNOSTICS_SECONDS,
-  PREP_SECONDS,
+  JOB_HEADROOM_MINUTES,
+  prepSeconds,
+  RUN_STEP_HEADROOM_SECONDS,
   runOnDeviceWorstSeconds,
   runStepMinutes,
   TESTS_KILL_SECONDS,
@@ -40,22 +41,25 @@ const script = readFileSync(
   new URL('../run-on-device.sh', import.meta.url),
   'utf8',
 )
-const prepare = readFileSync(
-  new URL(
-    'src/prepare/prepare.sh',
-    pathToFileURL(
-      createRequire(import.meta.url).resolve('thumbjar/package.json'),
-    ),
-  ),
-  'utf8',
-)
 const workflow = readFileSync(
   new URL('../../../../.github/workflows/android-ime.yml', import.meta.url),
   'utf8',
 )
-const rows = [
-  ...workflow.matchAll(/^ {10}- \{lang: (\w+), file: (\S+)\}$/gm),
-].map((match) => ({lang: match[1], file: match[2]}))
+// oxfmt wraps a long row over several lines, so each row is read as the flow mapping between its braces.
+const rows = [...workflow.matchAll(/^ {10}- \{([^}]*)\}$/gm)].map((match) => {
+  const row = Object.fromEntries(
+    match[1]!
+      .split(',')
+      .map((pair) => pair.split(':').map((part) => part.trim()))
+      .filter((pair) => pair[0] !== ''),
+  )
+  return {
+    lang: row.lang as 'ja' | 'en',
+    file: row.file as string,
+    runMinutes: Number(row.run_minutes),
+    jobMinutes: Number(row.job_minutes),
+  }
+})
 
 describe(countDeviceTests.name, () => {
   test('counts top-level tests, failing ones included, and nothing nested or in comments', () => {
@@ -99,33 +103,41 @@ describe(countDeviceTests.name, () => {
 })
 
 describe(runOnDeviceWorstSeconds.name, () => {
-  test('a file of three tests is capped at 1825 seconds and its script ends within 2540, a file of two at 1250 and 1965', () => {
+  test("takes each keyboard's prep cap from thumbjar's, so a prep that grows grows its run step", () => {
     expect({
-      threeTests: {
-        tests: deviceTestFileSeconds(3),
-        script: runOnDeviceWorstSeconds(3),
-      },
-      twoTests: {
-        tests: deviceTestFileSeconds(2),
-        script: runOnDeviceWorstSeconds(2),
-      },
+      ja: {prep: prepSeconds('ja'), thumbjar: prepWorstSeconds('ja')},
+      en: {prep: prepSeconds('en'), thumbjar: prepWorstSeconds('en')},
     }).toEqual({
-      threeTests: {tests: 1825, script: 2540},
-      twoTests: {tests: 1250, script: 1965},
+      ja: {prep: 889, thumbjar: 889},
+      en: {prep: 632, thumbjar: 632},
     })
   })
 
-  test('sums the caps `run-on-device.sh` and `thumbjar prepare` run their stages under', () => {
+  test('a Japanese file of three tests is capped at 1825 seconds and its script ends within 2819, an English one within 2562, and a file of two within 2244 and 1987', () => {
+    expect({
+      threeTests: {
+        tests: deviceTestFileSeconds(3),
+        ja: runOnDeviceWorstSeconds('ja', 3),
+        en: runOnDeviceWorstSeconds('en', 3),
+      },
+      twoTests: {
+        tests: deviceTestFileSeconds(2),
+        ja: runOnDeviceWorstSeconds('ja', 2),
+        en: runOnDeviceWorstSeconds('en', 2),
+      },
+    }).toEqual({
+      threeTests: {tests: 1825, ja: 2819, en: 2562},
+      twoTests: {tests: 1250, ja: 2244, en: 1987},
+    })
+  })
+
+  test('sums the caps `run-on-device.sh` runs its stages under', () => {
     expect({
       capRead:
         /^tests_seconds=\$\(timeout -k (\d+) (\d+) node android\/scripts\/budget\.mjs "android\/\$file"\)$/m
           .exec(script)
           ?.slice(1)
           .map(Number),
-      prep: /^timeout -k (\d+) (\d+) bash -c prep$/m
-        .exec(prepare)
-        ?.slice(1)
-        .map(Number),
       tests:
         /^timeout -k (\d+) "\$tests_seconds" pnpm exec vitest run --config vitest\.android\.config\.ts --project device "\$file" /m
           .exec(script)
@@ -143,10 +155,33 @@ describe(runOnDeviceWorstSeconds.name, () => {
           .map(Number),
     }).toEqual({
       capRead: [CAP_READ_KILL_SECONDS, CAP_READ_SECONDS],
-      prep: [10, PREP_SECONDS - 10],
       tests: [TESTS_KILL_SECONDS],
       deviceCheck: [DEVICE_CHECK_KILL_SECONDS, DEVICE_CHECK_SECONDS],
       diagnostics: [DIAGNOSTICS_KILL_SECONDS, DIAGNOSTICS_SECONDS],
+    })
+  })
+})
+
+describe(runStepMinutes.name, () => {
+  test('leaves a minute of headroom past the boot, the script and the runner allowance, for the action, shell and pnpm startup no cap counts', () => {
+    expect({
+      headroom: RUN_STEP_HEADROOM_SECONDS,
+      ja: {
+        minutes: runStepMinutes('ja', 3),
+        spare:
+          runStepMinutes('ja', 3) * 60 -
+          (BOOT_SECONDS + runOnDeviceWorstSeconds('ja', 3) + 180),
+      },
+      en: {
+        minutes: runStepMinutes('en', 3),
+        spare:
+          runStepMinutes('en', 3) * 60 -
+          (BOOT_SECONDS + runOnDeviceWorstSeconds('en', 3) + 180),
+      },
+    }).toEqual({
+      headroom: 60,
+      ja: {minutes: 57, spare: 61},
+      en: {minutes: 53, spare: 78},
     })
   })
 })
@@ -190,18 +225,18 @@ describe('budget.mjs run as `node`’s entry whose file is removed once loaded',
 })
 
 describe('the workflow', () => {
-  const stepMinutes = [
+  const fixedStepMinutes = [
     ...workflow.matchAll(/^ {8}timeout-minutes: (\d+)$/gm),
   ].map((match) => Number(match[1]))
   const runStepCaps = [
     ...workflow.matchAll(
-      /^ {8}timeout-minutes: (\d+)\n(?: {8}.*\n)*? {8}uses: reactivecircus\/android-emulator-runner/gm,
+      /^ {8}timeout-minutes: (.+)\n(?: {8}.*\n)*? {8}uses: reactivecircus\/android-emulator-runner/gm,
     ),
-  ].map((match) => Number(match[1]))
-  const jobMinutes = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(workflow)?.[1])
+  ].map((match) => match[1])
+  const jobCap = /^ {4}timeout-minutes: (.+)$/m.exec(workflow)?.[1]
 
   test('runs `ja.test.ts` and `en.test.ts` in a job each, on a device prepared for the language the file is named after', () => {
-    expect(rows).toEqual([
+    expect(rows.map(({lang, file}) => ({lang, file}))).toEqual([
       {lang: 'ja', file: 'tests/ja.test.ts'},
       {lang: 'en', file: 'tests/en.test.ts'},
     ])
@@ -245,30 +280,49 @@ describe('the workflow', () => {
     ).toEqual([BOOT_SECONDS, BOOT_SECONDS])
   })
 
-  test('gives each run step the boot, the script on the largest file CI runs and the runner allowance, rounded up to a minute', () => {
-    const largest = Math.max(
-      ...rows.map((row) =>
-        countDeviceTests(readFileSync(`${root}${row.file}`, 'utf8')),
+  test("caps each run step and the job at its own row's minutes", () => {
+    expect({runStepCaps, jobCap}).toEqual({
+      runStepCaps: [
+        '${{ matrix.suite.run_minutes }}',
+        '${{ matrix.suite.run_minutes }}',
+      ],
+      jobCap: '${{ matrix.suite.job_minutes }}',
+    })
+  })
+
+  test("gives each row's run steps the boot, the script on its file for its keyboard, the runner allowance and the headroom, rounded up to a minute", () => {
+    expect(rows.map((row) => row.runMinutes)).toEqual(
+      rows.map((row) =>
+        runStepMinutes(
+          row.lang,
+          countDeviceTests(readFileSync(`${root}${row.file}`, 'utf8')),
+        ),
       ),
     )
-
-    expect(runStepCaps).toEqual([
-      runStepMinutes(largest),
-      runStepMinutes(largest),
-    ])
   })
 
-  test('allows the job the sum of its step caps', () => {
-    expect(jobMinutes).toEqual(
-      stepMinutes.reduce((sum, minutes) => sum + minutes, 0),
+  test("allows each row's job its fixed step caps, its two run steps and a minute for the Result step to run", () => {
+    expect(rows.map((row) => row.jobMinutes)).toEqual(
+      rows.map(
+        (row) =>
+          fixedStepMinutes.reduce((sum, minutes) => sum + minutes, 0) +
+          2 * row.runMinutes +
+          JOB_HEADROOM_MINUTES,
+      ),
     )
   })
 
-  test('caps each run step at 52 minutes and the job at 152', () => {
-    expect({runStepCaps, jobMinutes}).toEqual({
-      runStepCaps: [52, 52],
-      jobMinutes: 152,
-    })
+  test('caps the Japanese run steps at 57 minutes and its job at 163, the English run steps at 53 and its job at 155', () => {
+    expect(
+      rows.map(({lang, runMinutes, jobMinutes}) => ({
+        lang,
+        runMinutes,
+        jobMinutes,
+      })),
+    ).toEqual([
+      {lang: 'ja', runMinutes: 57, jobMinutes: 163},
+      {lang: 'en', runMinutes: 53, jobMinutes: 155},
+    ])
   })
 })
 

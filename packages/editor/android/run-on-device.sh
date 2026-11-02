@@ -23,7 +23,8 @@ skipped() { echo "CHECKED skipped at $(date +%s)" >> "$out/timing.txt"; }
 fail() { log "PREP FAILED: $*"; skipped; exit 1; }
 device_check() { log "device check: $(timeout -k 5 10 node android/scripts/emulator-runs.mjs device-state "$out/timing.txt" || echo unchecked)"; }
 
-echo "BOOTED at $(date +%s)" | tee -a "$out/timing.txt"
+booted=$(date +%s)
+echo "BOOTED at $booted" | tee -a "$out/timing.txt"
 tests_seconds=$(timeout -k 5 10 node android/scripts/budget.mjs "android/$file")
 [[ $tests_seconds =~ ^[0-9]+$ ]] || fail "read the test stage timeout for $file"
 log "http server"
@@ -31,7 +32,12 @@ pnpm exec thumbjar serve android/dist --port 8765 < /dev/null > "$out/http.log" 
 server=$!
 trap 'kill $server 2>/dev/null' EXIT
 
-if ! pnpm exec thumbjar prepare --keyboard "$lang" --page-url http://localhost:8765/editor.html --out-dir "$out"; then
+earlier_phases=$(cat "$out/phases.log" 2>/dev/null | wc -l)
+if ! pnpm exec thumbjar prepare --keyboard "$lang" --page-url http://localhost:8765/editor.html --out-dir "$out" --booted "$booted"; then
+  # The prep's own reason, for the job summary. Only the device check below decides a retry. A retry's
+  # `phases.log` still holds the lost boot's lines, so only the lines this prep appended count.
+  reason=$(tail -n +$((earlier_phases + 1)) "$out/phases.log" 2>/dev/null | grep -o 'PREP FAILED: .*' | tail -n 1)
+  [ -n "$reason" ] && echo "$reason" >> "$out/timing.txt"
   device_check
   exit 1
 fi
