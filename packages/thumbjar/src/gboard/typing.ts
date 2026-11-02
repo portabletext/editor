@@ -226,7 +226,7 @@ function field(convert: () => string, fallback = UNPRINTABLE_ERROR): string {
 }
 
 /** Open the page in Chrome, tap its field and wait until Gboard shows the keyboard's layout. */
-async function openKeyboard(
+export async function openKeyboard(
   name: string,
   {
     url: pageUrl,
@@ -816,7 +816,7 @@ async function dismissChromeScreens(device: Device): Promise<void> {
 }
 
 /** Tap Wait on any "isn't responding" dialog. It steals window focus, so the keyboard never shows. */
-async function dismissAnr(device: Device): Promise<number> {
+export async function dismissAnr(device: Device): Promise<number> {
   let dismissed = 0
   for (let dialog = 0; dialog < 5; dialog++) {
     if (!(await device.find({textContains: "isn't responding"}).exists())) {
@@ -851,7 +851,7 @@ async function waitUntilGone(
  * A dump taken mid-redraw can hold only part of the keyboard, or no Gboard nodes at all, so dump again
  * until it holds a whole layout or the new-language banner. After eight dumps, return the last one.
  */
-async function gboardKeys(device: Device): Promise<Keys> {
+export async function gboardKeys(device: Device): Promise<Keys> {
   let keys: Keys = new Map()
   for (let attempt = 0; attempt < 8; attempt++) {
     keys = packageKeys(await device.dumpHierarchy(), GBOARD)
@@ -897,7 +897,10 @@ async function tapKey(device: Device, label: string): Promise<void> {
 }
 
 /** Gboard opens on English. Tap its language key until the Japanese layout shows. */
-async function ensureJapanese(device: Device, name: string): Promise<void> {
+export async function ensureJapanese(
+  device: Device,
+  name: string,
+): Promise<void> {
   for (let attempt = 0; attempt < 6; attempt++) {
     const keys = await gboardKeys(device)
     if (isJapanese(keys.keys())) {
