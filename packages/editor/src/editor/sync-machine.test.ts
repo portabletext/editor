@@ -1,4 +1,8 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {createActor} from 'xstate'
@@ -7,9 +11,10 @@ import {updateSelectionPlugin} from '../engine-plugins/engine-plugin.update-sele
 import type {ApplyContextFrame} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {createEditor} from '../engine/create-editor'
+import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {editorMachine} from './editor-machine'
-import {syncMachine} from './sync-machine'
+import {findOldBlock, syncMachine} from './sync-machine'
 
 function createTestEngine(keyGenerator: () => string) {
   const schema = compileSchema(defineSchema({}))
@@ -89,5 +94,43 @@ describe('sync machine', () => {
     })
 
     expect(remoteFrames).toEqual([{kind: 'remote', source: 'update-value'}])
+  })
+
+  test('`findOldBlock` resolves a moved block without scanning the value', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const schema = compileSchema(defineSchema({}))
+    const value: Array<PortableTextBlock> = Array.from({length: 5}, () => ({
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+    }))
+    const containers = new Map()
+    const blockIndexMap = new Map<string, number>()
+    buildIndexMaps({schema, containers, value}, {blockIndexMap})
+
+    const readIndexes: Array<number> = []
+    const observedValue = new Proxy(value, {
+      get(target, property, receiver) {
+        if (typeof property === 'string' && /^\d+$/.test(property)) {
+          readIndexes.push(Number(property))
+        }
+        return Reflect.get(target, property, receiver)
+      },
+    })
+
+    const result = findOldBlock({
+      snapshot: {
+        context: {schema, containers, value: observedValue},
+        blockIndexMap,
+      },
+      blockKey: value[4]!._key,
+      index: 0,
+      incomingKeys: new Set(value.map((block) => block._key)),
+    })
+
+    expect(result).toEqual({blockAtIndex: value[0], oldBlock: value[4]})
+    expect(readIndexes).toEqual([0, 4, 4])
   })
 })

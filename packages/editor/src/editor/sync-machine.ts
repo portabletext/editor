@@ -35,7 +35,9 @@ import {
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toEngineBlock} from '../internal-utils/values'
+import {getNode} from '../traversal/get-node'
 import {hasNode} from '../traversal/has-node'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -471,11 +473,18 @@ async function updateValue({
   }
 
   if (value && value.length > 0) {
+    const incomingKeys = new Set(value.map((block) => block._key))
+    // A key repeated in the incoming value has no single editor block to
+    // reconcile against, so such a value falls back to syncing by index.
+    const keyedIncomingKeys =
+      incomingKeys.size === value.length ? incomingKeys : undefined
+
     if (streamBlocks) {
       await new Promise<void>((resolve) => {
         isChanged = removeExtraBlocks({
           editorEngine,
           value,
+          incomingKeys: keyedIncomingKeys,
           remoteSource,
         })
 
@@ -493,6 +502,7 @@ async function updateValue({
               index: currentBlockIndex,
               editorEngine,
               value,
+              incomingKeys: keyedIncomingKeys,
               remoteSource,
             })
 
@@ -513,6 +523,7 @@ async function updateValue({
       isChanged = removeExtraBlocks({
         editorEngine,
         value,
+        incomingKeys: keyedIncomingKeys,
         remoteSource,
       })
 
@@ -526,6 +537,7 @@ async function updateValue({
           index,
           editorEngine,
           value,
+          incomingKeys: keyedIncomingKeys,
           remoteSource,
         })
 
@@ -631,44 +643,51 @@ function clearEditor({
 }
 
 /**
- * Compare the length of the value and the length of the editor's children, and
- * remove blocks that have become superfluous
+ * Remove the editor blocks the incoming value no longer holds: those whose
+ * key is absent from `incomingKeys`, or, when the value is synced by index,
+ * those beyond its length.
  */
 function removeExtraBlocks({
   editorEngine,
   value,
+  incomingKeys,
   remoteSource,
 }: {
   editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
+  incomingKeys: Set<string> | undefined
   remoteSource: RemoteSyncSource
 }) {
-  let isChanged = false
+  const blocks = editorEngine.snapshot.context.value
+  const extraBlocks = incomingKeys
+    ? blocks.filter((block) => !incomingKeys.has(block._key))
+    : blocks.slice(value.length)
+
+  if (extraBlocks.length === blocks.length) {
+    // Emptying the editor would make normalization insert a placeholder
+    // block with a fresh key. The kept block is replaced by the first
+    // incoming block instead.
+    extraBlocks.shift()
+  }
+
+  if (extraBlocks.length === 0) {
+    return false
+  }
 
   withRemoteChanges(editorEngine, remoteSource, () => {
     withoutNormalizing(editorEngine, () => {
       withoutPatching(editorEngine, () => {
-        const childrenLength = editorEngine.snapshot.context.value.length
-
-        if (value.length < childrenLength) {
-          for (let i = childrenLength - 1; i > value.length - 1; i--) {
-            const removeNode = editorEngine.snapshot.context.value[i]
-            if (!removeNode) {
-              continue
-            }
-            editorEngine.apply({
-              type: 'unset',
-              path: [{_key: removeNode._key}],
-            })
-          }
-
-          isChanged = true
+        for (const extraBlock of extraBlocks.toReversed()) {
+          editorEngine.apply({
+            type: 'unset',
+            path: [{_key: extraBlock._key}],
+          })
         }
       })
     })
   })
 
-  return isChanged
+  return true
 }
 
 function syncBlock({
@@ -678,6 +697,7 @@ function syncBlock({
   index,
   editorEngine,
   value,
+  incomingKeys,
   remoteSource,
 }: {
   context: {
@@ -691,47 +711,36 @@ function syncBlock({
   index: number
   editorEngine: PortableTextEditorEngine
   value: Array<PortableTextBlock>
+  incomingKeys: Set<string> | undefined
   remoteSource: RemoteSyncSource
 }) {
-  const oldBlock = editorEngine.snapshot.context.value.at(index)
+  const {blockAtIndex, oldBlock} = findOldBlock({
+    snapshot: editorEngine.snapshot,
+    blockKey: block._key,
+    index,
+    incomingKeys,
+  })
+  const isMoved = oldBlock !== undefined && oldBlock !== blockAtIndex
 
-  if (!oldBlock) {
-    const validation = validateValue(
-      [block],
-      context.schema,
-      context.keyGenerator,
-    )
-
-    debug.syncValue(
-      'Validating and inserting new block in the end of the value',
-      block,
-    )
-
-    if (validation.valid || validation.resolution?.autoResolve) {
-      const repairedBlock = applyAutoResolution(validation, [block], block)
-      const engineBlock = toEngineBlock(repairedBlock, {
-        schemaTypes: context.schema,
-      })
-
-      withRemoteChanges(editorEngine, remoteSource, () => {
-        withoutNormalizing(editorEngine, () => {
-          withoutPatching(editorEngine, () => {
-            editorEngine.apply({
-              type: 'insert',
-              path: [editorEngine.snapshot.context.value.length],
-              node: engineBlock,
-              position: 'before',
-            })
-          })
-        })
-      })
-
-      return {
-        blockChanged: true,
-        blockValid: true,
-      }
+  if (oldBlock && isEqualBlocks(context, block, oldBlock)) {
+    if (isMoved) {
+      moveBlock({editorEngine, oldBlock, index, remoteSource})
     }
 
+    return {
+      blockChanged: isMoved,
+      blockValid: true,
+    }
+  }
+
+  const validationValue = [block]
+  const validation = validateValue(
+    validationValue,
+    context.schema,
+    context.keyGenerator,
+  )
+
+  if (!validation.valid && !validation.resolution?.autoResolve) {
     debug.syncValue('Invalid', validation)
 
     sendBack({
@@ -746,27 +755,6 @@ function syncBlock({
     }
   }
 
-  if (isEqualBlocks(context, block, oldBlock)) {
-    return {
-      blockChanged: false,
-      blockValid: true,
-    }
-  }
-
-  const blockToValidate = value[index]
-  if (!blockToValidate) {
-    return {
-      blockChanged: false,
-      blockValid: true,
-    }
-  }
-  const validationValue = [blockToValidate]
-  const validation = validateValue(
-    validationValue,
-    context.schema,
-    context.keyGenerator,
-  )
-
   // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
   if (
     !validation.valid &&
@@ -780,7 +768,7 @@ function syncBlock({
       context.previousValue !== value
     ) {
       console.warn(
-        `${validation.resolution.action} for block with _key '${blockToValidate._key}'. ${validation.resolution?.description}`,
+        `${validation.resolution.action} for block with _key '${block._key}'. ${validation.resolution?.description}`,
       )
       validation.resolution.patches.forEach((patch) => {
         sendBack({type: 'patch', patch})
@@ -788,61 +776,169 @@ function syncBlock({
     }
   }
 
-  if (validation.valid || validation.resolution?.autoResolve) {
-    const repairedBlock = applyAutoResolution(
-      validation,
-      validationValue,
-      block,
-    )
+  const repairedBlock = applyAutoResolution(validation, validationValue, block)
+  const engineBlock = toEngineBlock(repairedBlock, {
+    schemaTypes: context.schema,
+  })
+  // In a keyed sync, the block at the index can only lack an incoming key if
+  // it is the block `removeExtraBlocks` kept so the editor never empties.
+  const replacedBlock =
+    oldBlock ??
+    (blockAtIndex && !incomingKeys?.has(blockAtIndex._key)
+      ? blockAtIndex
+      : undefined)
 
-    if (oldBlock._key === block._key && oldBlock._type === block._type) {
-      debug.syncValue('Updating block', oldBlock, repairedBlock)
+  if (isMoved && oldBlock._type === block._type) {
+    moveBlock({editorEngine, oldBlock, index, remoteSource})
+  }
 
-      withRemoteChanges(editorEngine, remoteSource, () => {
-        withoutNormalizing(editorEngine, () => {
-          withoutPatching(editorEngine, () => {
-            updateBlock({
-              context,
-              editorEngine,
-              oldEngineBlock: oldBlock,
-              block: repairedBlock,
-              index,
-            })
+  withRemoteChanges(editorEngine, remoteSource, () => {
+    withoutNormalizing(editorEngine, () => {
+      withoutPatching(editorEngine, () => {
+        if (!replacedBlock) {
+          debug.syncValue('Inserting new block', repairedBlock)
+
+          editorEngine.apply({
+            type: 'insert',
+            path: [index],
+            node: engineBlock,
+            position: 'before',
           })
-        })
-      })
-    } else {
-      debug.syncValue('Replacing block', oldBlock, repairedBlock)
+        } else if (
+          replacedBlock._key === block._key &&
+          replacedBlock._type === block._type
+        ) {
+          debug.syncValue('Updating block', replacedBlock, repairedBlock)
 
-      withRemoteChanges(editorEngine, remoteSource, () => {
-        withoutNormalizing(editorEngine, () => {
-          withoutPatching(editorEngine, () => {
+          updateBlock({
+            context,
+            editorEngine,
+            oldEngineBlock: replacedBlock,
+            block: repairedBlock,
+            index,
+          })
+        } else {
+          debug.syncValue('Replacing block', replacedBlock, repairedBlock)
+
+          const replace = () =>
             replaceBlock({
-              context,
               editorEngine,
-              block: repairedBlock,
+              oldBlock: replacedBlock,
+              engineBlock,
               index,
             })
-          })
+
+          if (isMoved) {
+            withMovedBlockSelection({
+              editorEngine,
+              blockKey: replacedBlock._key,
+              move: replace,
+            })
+          } else {
+            replace()
+          }
+        }
+      })
+    })
+  })
+
+  return {
+    blockChanged: true,
+    blockValid: true,
+  }
+}
+
+/**
+ * Find the editor block an incoming block reconciles against: the block at
+ * `index` when the value is synced by index, otherwise the block with the
+ * same key. The keyed lookup goes through `blockIndexMap` so a reorder does
+ * not scan the value once per block.
+ */
+export function findOldBlock({
+  snapshot,
+  blockKey,
+  index,
+  incomingKeys,
+}: {
+  snapshot: TraversalSnapshot
+  blockKey: string
+  index: number
+  incomingKeys: Set<string> | undefined
+}) {
+  const blockAtIndex = snapshot.context.value.at(index)
+  const oldBlock =
+    !incomingKeys || blockAtIndex?._key === blockKey
+      ? blockAtIndex
+      : getNode(snapshot, [{_key: blockKey}])?.node
+
+  return {blockAtIndex, oldBlock}
+}
+
+function moveBlock({
+  editorEngine,
+  oldBlock,
+  index,
+  remoteSource,
+}: {
+  editorEngine: PortableTextEditorEngine
+  oldBlock: Node
+  index: number
+  remoteSource: RemoteSyncSource
+}) {
+  debug.syncValue('Moving block', oldBlock)
+
+  withRemoteChanges(editorEngine, remoteSource, () => {
+    withoutNormalizing(editorEngine, () => {
+      withoutPatching(editorEngine, () => {
+        withMovedBlockSelection({
+          editorEngine,
+          blockKey: oldBlock._key,
+          move: () =>
+            replaceBlock({
+              editorEngine,
+              oldBlock,
+              engineBlock: oldBlock,
+              index,
+            }),
         })
       })
-    }
-
-    return {
-      blockChanged: true,
-      blockValid: true,
-    }
-  } else {
-    sendBack({
-      type: 'invalid value',
-      resolution: validation.resolution,
-      value,
     })
+  })
+}
 
-    return {
-      blockChanged: false,
-      blockValid: false,
-    }
+function withMovedBlockSelection({
+  editorEngine,
+  blockKey,
+  move,
+}: {
+  editorEngine: PortableTextEditorEngine
+  blockKey: string
+  move: () => void
+}) {
+  const currentSelection = editorEngine.snapshot.context.selection
+  const anchorBlockSegment = currentSelection?.anchor.path[0]
+  const focusBlockSegment = currentSelection?.focus.path[0]
+  const selectionOnBlock =
+    currentSelection &&
+    ((isKeyedSegment(anchorBlockSegment) &&
+      anchorBlockSegment._key === blockKey) ||
+      (isKeyedSegment(focusBlockSegment) &&
+        focusBlockSegment._key === blockKey))
+
+  if (selectionOnBlock) {
+    // `replaceBlock` only restores a selection whose focus is in the
+    // block, and the in-place replace path keeps that rule.
+    applyDeselect(editorEngine)
+  }
+
+  move()
+
+  if (
+    selectionOnBlock &&
+    hasNode(editorEngine.snapshot, currentSelection.anchor.path) &&
+    hasNode(editorEngine.snapshot, currentSelection.focus.path)
+  ) {
+    applySelect(editorEngine, currentSelection)
   }
 }
 
@@ -867,47 +963,32 @@ function applyAutoResolution(
 }
 
 function replaceBlock({
-  context,
   editorEngine,
-  block,
+  oldBlock,
+  engineBlock,
   index,
 }: {
-  context: {
-    keyGenerator: () => string
-    previousValue: Array<PortableTextBlock> | undefined
-    readOnly: boolean
-    schema: EditorSchema
-  }
   editorEngine: PortableTextEditorEngine
-  block: PortableTextBlock
+  oldBlock: Node
+  engineBlock: Node
   index: number
 }) {
-  const engineBlock = toEngineBlock(block, {
-    schemaTypes: context.schema,
-  })
-
   // While replacing the block and the current selection focus is on the replaced block,
   // temporarily deselect the editor then optimistically try to restore the selection afterwards.
   const currentSelection = editorEngine.snapshot.context.selection
   const focusBlockSegment = currentSelection?.focus.path[0]
-  const blockAtIndex = editorEngine.snapshot.context.value[index]
   const selectionFocusOnBlock =
     currentSelection &&
     isKeyedSegment(focusBlockSegment) &&
-    blockAtIndex &&
-    focusBlockSegment._key === blockAtIndex._key
+    focusBlockSegment._key === oldBlock._key
 
   if (selectionFocusOnBlock) {
     applyDeselect(editorEngine)
   }
 
-  const oldNode = editorEngine.snapshot.context.value[index]
-  if (!oldNode) {
-    return
-  }
   editorEngine.apply({
     type: 'unset',
-    path: [{_key: oldNode._key}],
+    path: [{_key: oldBlock._key}],
   })
   editorEngine.apply({
     type: 'insert',
