@@ -8,6 +8,7 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {getActiveDecorators} from '../src/selectors/selector.get-active-decorators'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
@@ -485,6 +486,565 @@ describe('event.insert.text', () => {
           markDefs: [],
         },
       ])
+    })
+  })
+
+  test('Scenario: `insert.text` at an explicit position leaves a caret on an inline object alone', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const inlineKey = keyGenerator()
+    const barKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        inlineObjects: [
+          {name: 'stock-ticker', fields: [{name: 'symbol', type: 'string'}]},
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: inlineKey, symbol: 'AAPL'},
+            {_type: 'span', _key: barKey, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: bazKey, text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: foo{stock-ticker symbol="AAPL"}bar\nB: baz',
+      )
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockBKey}, 'children', {_key: bazKey}],
+      offset: 3,
+      text: 'qux',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [
+            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+            {_type: 'stock-ticker', _key: inlineKey, symbol: 'AAPL'},
+            {_type: 'span', _key: barKey, text: 'bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: bazKey, text: 'bazqux', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: `insert.text` at an explicit position leaves an expanded selection alone', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo\nB: bar')
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockBKey}, 'children', {_key: barKey}],
+      offset: 0,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bazbar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: `insert.text` with `at` but no `offset` deletes an expanded selection first', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo\nB: bar')
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockBKey}, 'children', {_key: barKey}],
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: `insert.text` at an explicit position without a selection leaves the selection empty', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo\nB: bar')
+      expect(editor.getSnapshot().context.selection).toEqual(null)
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockAKey}, 'children', {_key: fooKey}],
+      offset: 0,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'bazfoo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual(null)
+    })
+  })
+
+  test('Scenario: `insert.text` at an explicit position ignores a decorator toggled on at the caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockAKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const blockBKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo\nB: bar')
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'decorator.toggle', decorator: 'strong'})
+
+    await vi.waitFor(() => {
+      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockBKey}, 'children', {_key: barKey}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockAKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: blockBKey,
+          children: [{_type: 'span', _key: barKey, text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
+    })
+  })
+
+  test('Scenario: `insert.text` at an explicit position maps a selection in the same span like any other edit', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
+    })
+
+    await userEvent.click(locator)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'decorator.toggle', decorator: 'strong'})
+
+    await vi.waitFor(() => {
+      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockKey}, 'children', {_key: fooKey}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: fooKey, text: 'foobaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 6,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: fooKey}],
+          offset: 6,
+        },
+        backward: false,
+      })
+      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
     })
   })
 })
