@@ -10,6 +10,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {getNodeChildren} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
 import {nodeSegment} from './node-segment'
@@ -80,6 +81,9 @@ function collectDescendantPaths(
 
 /**
  * Get the "dirty" paths generated from an operation.
+ *
+ * `context.value` is the value after `op` applied and `previousValue` the
+ * value before it.
  */
 export function getDirtyPaths(
   context: {
@@ -88,6 +92,7 @@ export function getDirtyPaths(
     value: Array<Node>
   },
   op: EngineOperation,
+  previousValue: Array<Node>,
 ): Array<Path> {
   switch (op.type) {
     case 'insert.text':
@@ -170,6 +175,16 @@ export function getDirtyPaths(
       }
 
       const levels = pathLevels(dirtyPath)
+
+      if (propertyName === '_key' && typeof op.value === 'string') {
+        // The new key can already belong to an earlier sibling, and paths
+        // queued before the rename resolve through the old key, so the
+        // renamed node and its subtree are dirtied again by position.
+        // Normalization pops the last path first: the renamed node goes
+        // last so a repeated key is renamed before its content resolves
+        // through it.
+        levels.push(...getRenamedSubtreePaths(context, previousValue, nodePath))
+      }
 
       // When a child array field is replaced, dirty the new children
       if (Array.isArray(op.value) && typeof propertyName === 'string') {
@@ -321,4 +336,79 @@ export function getDirtyPaths(
       return []
     }
   }
+}
+
+/**
+ * Numeric paths to the descendants of the node at `nodePath`, followed by
+ * the node itself.
+ *
+ * `nodePath` is resolved against the value before the operation, where a
+ * keyed segment finds the first sibling with that key, the node the
+ * operation applied to. Setting a `_key` moves no node, so the same indices
+ * address it in the value after the operation.
+ */
+function getRenamedSubtreePaths(
+  context: {
+    schema: EditorSchema
+    containers: Containers
+    value: Array<Node>
+  },
+  previousValue: Array<Node>,
+  nodePath: Path,
+): Array<Path> {
+  let previousChildren: Array<Node> = previousValue
+  let currentNode: Node | {value: Array<Node>} = {value: context.value}
+  let renamedNode: Node | undefined
+  let parent: RegisteredContainer | undefined
+  const indexPath: Path = []
+
+  for (let i = 0; i < nodePath.length; i++) {
+    const segment = nodePath[i]
+
+    if (typeof segment === 'string') {
+      continue
+    }
+
+    let index: number
+    if (isKeyedSegment(segment)) {
+      index = previousChildren.findIndex((child) => child._key === segment._key)
+    } else if (typeof segment === 'number') {
+      index = segment
+    } else {
+      return []
+    }
+    const next = getNodeChildren(context, currentNode, parent)
+    const node = next?.children[index]
+    const previousNode = previousChildren[index]
+
+    if (!next || !node || !previousNode) {
+      return []
+    }
+
+    if (indexPath.length > 0) {
+      indexPath.push(next.fieldName)
+    }
+    indexPath.push(index)
+
+    if (i < nodePath.length - 1) {
+      const previousNext = getNodeChildren(context, previousNode, next.parent)
+      if (!previousNext) {
+        return []
+      }
+      previousChildren = previousNext.children
+    }
+
+    currentNode = node
+    renamedNode = node
+    parent = next.parent
+  }
+
+  if (!renamedNode) {
+    return []
+  }
+
+  const paths: Array<Path> = []
+  collectDescendantPaths(context, renamedNode, indexPath, paths, parent)
+  paths.push(indexPath)
+  return paths
 }

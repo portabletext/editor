@@ -1,7 +1,11 @@
+import {applyAll, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
+import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
+import type {PortableTextBlock} from '../src'
 import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -1114,4 +1118,444 @@ describe('event.update value with containers', () => {
       )
     })
   })
+
+  test('Scenario: A repeated container key with a keyless span in the later container publishes patches that replay to the editor value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const incoming = [
+      callout(calloutKey, [textBlock(fooKey, fooSpanKey, 'foo')]),
+      callout(calloutKey, [keylessTextBlock(barKey, 'bar')]),
+      textBlock(bazKey, bazSpanKey, 'baz'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [textBlock(bazKey, bazSpanKey, 'baz')],
+      children: (
+        <>
+          <NodePlugin nodes={calloutContainer} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'update value', value: incoming})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        callout(calloutKey, [textBlock(fooKey, fooSpanKey, 'foo')]),
+        callout('k8', [textBlock(barKey, 'k9', 'bar')]),
+        textBlock(bazKey, bazSpanKey, 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: bazKey}, 'children', {_key: bazSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {type: 'set', path: [1, '_key'], value: 'k8', origin: 'local'},
+        {
+          type: 'set',
+          path: [
+            {_key: 'k8'},
+            'content',
+            {_key: barKey},
+            'children',
+            0,
+            '_key',
+          ],
+          value: 'k9',
+          origin: 'local',
+        },
+        sentinelPatch,
+      ])
+    })
+    expect(applyAll(incoming, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [textBlock(fooKey, fooSpanKey, 'foo')]),
+      callout('k8', [textBlock(barKey, 'k9', 'bar')]),
+      textBlock(bazKey, bazSpanKey, 'baz!'),
+    ])
+  })
+
+  test('Scenario: A repeated container key whose lines also repeat a key, with a keyless span in the later container, publishes patches that replay to the editor value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const lineKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const incoming = [
+      callout(calloutKey, [textBlock(lineKey, fooSpanKey, 'foo')]),
+      callout(calloutKey, [keylessTextBlock(lineKey, 'bar')]),
+      textBlock(bazKey, bazSpanKey, 'baz'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [textBlock(bazKey, bazSpanKey, 'baz')],
+      children: (
+        <>
+          <NodePlugin nodes={calloutContainer} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'update value', value: incoming})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        callout(calloutKey, [textBlock(lineKey, fooSpanKey, 'foo')]),
+        callout('k7', [textBlock(lineKey, 'k8', 'bar')]),
+        textBlock(bazKey, bazSpanKey, 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: bazKey}, 'children', {_key: bazSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {type: 'set', path: [1, '_key'], value: 'k7', origin: 'local'},
+        {
+          type: 'set',
+          path: [
+            {_key: 'k7'},
+            'content',
+            {_key: lineKey},
+            'children',
+            0,
+            '_key',
+          ],
+          value: 'k8',
+          origin: 'local',
+        },
+        sentinelPatch,
+      ])
+    })
+    expect(applyAll(incoming, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [textBlock(lineKey, fooSpanKey, 'foo')]),
+      callout('k7', [textBlock(lineKey, 'k8', 'bar')]),
+      textBlock(bazKey, bazSpanKey, 'baz!'),
+    ])
+  })
+
+  test('Scenario: A repeated container key with a keyless span two containers deep in the later container publishes patches that replay to the editor value', async () => {
+    const nestedCalloutSchema = defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [
+                {type: 'block'},
+                {
+                  type: 'object',
+                  name: 'callout',
+                  fields: [
+                    {name: 'content', type: 'array', of: [{type: 'block'}]},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const keyGenerator = createTestKeyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const innerCalloutKey = keyGenerator()
+    const barKey = keyGenerator()
+    const incoming = [
+      callout(calloutKey, [textBlock(fooKey, fooSpanKey, 'foo')]),
+      callout(calloutKey, [
+        callout(innerCalloutKey, [keylessTextBlock(barKey, 'bar')]),
+      ]),
+      textBlock(bazKey, bazSpanKey, 'baz'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedCalloutSchema,
+      initialValue: [textBlock(bazKey, bazSpanKey, 'baz')],
+      children: (
+        <>
+          <NodePlugin nodes={calloutContainer} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'update value', value: incoming})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        callout(calloutKey, [textBlock(fooKey, fooSpanKey, 'foo')]),
+        callout('k9', [
+          callout(innerCalloutKey, [textBlock(barKey, 'k10', 'bar')]),
+        ]),
+        textBlock(bazKey, bazSpanKey, 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: bazKey}, 'children', {_key: bazSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {type: 'set', path: [1, '_key'], value: 'k9', origin: 'local'},
+        {
+          type: 'set',
+          path: [
+            {_key: 'k9'},
+            'content',
+            {_key: innerCalloutKey},
+            'content',
+            {_key: barKey},
+            'children',
+            0,
+            '_key',
+          ],
+          value: 'k10',
+          origin: 'local',
+        },
+        sentinelPatch,
+      ])
+    })
+    expect(applyAll(incoming, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [textBlock(fooKey, fooSpanKey, 'foo')]),
+      callout('k9', [
+        callout(innerCalloutKey, [textBlock(barKey, 'k10', 'bar')]),
+      ]),
+      textBlock(bazKey, bazSpanKey, 'baz!'),
+    ])
+  })
+
+  test('Scenario: Repeated block keys and a keyless span inside Portable Text in a non-container field are left as they are', async () => {
+    const quoteSchema = defineSchema({
+      blockObjects: [
+        {
+          name: 'quote',
+          fields: [{name: 'body', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    })
+    const keyGenerator = createTestKeyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const quoteKey = keyGenerator()
+    const lineKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const incoming = [
+      {
+        _type: 'quote',
+        _key: quoteKey,
+        body: [
+          textBlock(lineKey, fooSpanKey, 'foo'),
+          keylessTextBlock(lineKey, 'bar'),
+        ],
+      },
+      textBlock(bazKey, bazSpanKey, 'baz'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: quoteSchema,
+      initialValue: [textBlock(bazKey, bazSpanKey, 'baz')],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: incoming})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'quote',
+          _key: quoteKey,
+          body: [
+            textBlock(lineKey, fooSpanKey, 'foo'),
+            keylessTextBlock(lineKey, 'bar'),
+          ],
+        },
+        textBlock(bazKey, bazSpanKey, 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: bazKey}, 'children', {_key: bazSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: bazKey}, 'children', {_key: bazSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([sentinelPatch])
+    })
+    expect(applyAll(incoming, patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'quote',
+        _key: quoteKey,
+        body: [
+          textBlock(lineKey, fooSpanKey, 'foo'),
+          keylessTextBlock(lineKey, 'bar'),
+        ],
+      },
+      textBlock(bazKey, bazSpanKey, 'baz!'),
+    ])
+  })
 })
+
+function textBlock(
+  key: string,
+  spanKey: string,
+  text: string,
+): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: key,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function keylessTextBlock(key: string, text: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: key,
+    children: [{_type: 'span', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function callout(
+  key: string,
+  content: Array<PortableTextBlock>,
+): PortableTextBlock {
+  return {_type: 'callout', _key: key, content}
+}

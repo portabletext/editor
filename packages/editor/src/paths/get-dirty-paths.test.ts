@@ -93,6 +93,7 @@ describe(getDirtyPaths.name, () => {
             offset: 0,
             text: 'hello',
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'b1'}], [{_key: 'b1'}, 'children', {_key: 's1'}]])
     })
@@ -111,6 +112,7 @@ describe(getDirtyPaths.name, () => {
             offset: 0,
             text: 'hello',
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'b1'}], [{_key: 'b1'}, 'children', {_key: 's1'}]])
     })
@@ -135,6 +137,7 @@ describe(getDirtyPaths.name, () => {
             offset: 0,
             text: 'hello',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -164,6 +167,7 @@ describe(getDirtyPaths.name, () => {
             offset: 0,
             text: 'hello',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -205,6 +209,7 @@ describe(getDirtyPaths.name, () => {
             path: [],
             value: newValue,
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -245,6 +250,7 @@ describe(getDirtyPaths.name, () => {
             path: [],
             value: newValue,
           },
+          [],
         ),
       ).toEqual([[], [0], [0, 'children', 0], [1], [1, 'children', 0]])
     })
@@ -262,6 +268,7 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'b1'}, 'style'],
             value: 'h1',
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'b1'}]])
     })
@@ -279,6 +286,7 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'old-key'}, '_key'],
             value: 'new-key',
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'new-key'}]])
     })
@@ -307,6 +315,7 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'b1'}],
             value: replacementNode,
           },
+          [replacementNode],
         ),
       ).toEqual([
         [],
@@ -343,6 +352,7 @@ describe(getDirtyPaths.name, () => {
               {_type: 'span', _key: 'new-s2', text: 'text'},
             ],
           },
+          [blockNode],
         ),
       ).toEqual([
         [],
@@ -383,6 +393,7 @@ describe(getDirtyPaths.name, () => {
               {_type: 'span', _key: '', text: 'bar'},
             ],
           },
+          [blockNode],
         ),
       ).toEqual([
         [],
@@ -419,6 +430,7 @@ describe(getDirtyPaths.name, () => {
             path: [],
             value: [calloutNode],
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -441,6 +453,7 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'c1'}, 'content', {_key: 'b1'}, 'style'],
             value: 'h1',
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'c1'}], [{_key: 'c1'}, 'content', {_key: 'b1'}]])
     })
@@ -458,11 +471,192 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'c1'}, 'content', {_key: 'old'}, '_key'],
             value: 'new-key',
           },
+          [],
         ),
       ).toEqual([
         [],
         [{_key: 'c1'}],
         [{_key: 'c1'}, 'content', {_key: 'new-key'}],
+      ])
+    })
+
+    test('_key change of a callout dirties it and its descendants by index', () => {
+      const firstCallout: Node = {
+        _type: 'callout',
+        _key: 'c1',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'foo'}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      }
+      const secondCalloutContent: Array<Node> = [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', text: 'bar'}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: containerContainers,
+            value: [
+              firstCallout,
+              {
+                _type: 'callout',
+                _key: 'new-key',
+                content: secondCalloutContent,
+              },
+            ],
+          },
+          {
+            type: 'set',
+            path: [{_key: 'old-key'}, '_key'],
+            value: 'new-key',
+          },
+          [
+            firstCallout,
+            {_type: 'callout', _key: 'old-key', content: secondCalloutContent},
+          ],
+        ),
+      ).toEqual([
+        [],
+        [{_key: 'new-key'}],
+        [1, 'content', 0],
+        [1, 'content', 0, 'children', 0],
+        [1],
+      ])
+    })
+
+    test('_key change of a callout to the key of an earlier callout dirties the renamed callout by index', () => {
+      const firstCallout: Node = {
+        _type: 'callout',
+        _key: 'c1',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'foo'}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      }
+      const secondCalloutContent: Array<Node> = [
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [
+            {_type: 'span', _key: 's2', text: 'bar'},
+            {_type: 'span', text: 'baz'},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: containerContainers,
+            value: [
+              firstCallout,
+              {_type: 'callout', _key: 'c1', content: secondCalloutContent},
+            ],
+          },
+          {
+            type: 'set',
+            path: [{_key: 'c2'}, '_key'],
+            value: 'c1',
+          },
+          [
+            firstCallout,
+            {_type: 'callout', _key: 'c2', content: secondCalloutContent},
+          ],
+        ),
+      ).toEqual([
+        [],
+        [{_key: 'c1'}],
+        [1, 'content', 0],
+        [1, 'content', 0, 'children', 0],
+        [1, 'content', 0, 'children', 1],
+        [1],
+      ])
+    })
+
+    test('_key change of a nested callout to the key of an earlier sibling dirties the renamed callout by index', () => {
+      const firstCallout: Node = {
+        _type: 'callout',
+        _key: 'c1',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'foo'}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      }
+      const secondCalloutContent: Array<Node> = [
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', text: 'bar'}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: containerContainers,
+            value: [
+              {
+                _type: 'callout',
+                _key: 'outer',
+                content: [
+                  firstCallout,
+                  {_type: 'callout', _key: 'c1', content: secondCalloutContent},
+                ],
+              },
+            ],
+          },
+          {
+            type: 'set',
+            path: [{_key: 'outer'}, 'content', {_key: 'c2'}, '_key'],
+            value: 'c1',
+          },
+          [
+            {
+              _type: 'callout',
+              _key: 'outer',
+              content: [
+                firstCallout,
+                {_type: 'callout', _key: 'c2', content: secondCalloutContent},
+              ],
+            },
+          ],
+        ),
+      ).toEqual([
+        [],
+        [{_key: 'outer'}],
+        [{_key: 'outer'}, 'content', {_key: 'c1'}],
+        [0, 'content', 1, 'content', 0],
+        [0, 'content', 1, 'content', 0, 'children', 0],
+        [0, 'content', 1],
       ])
     })
 
@@ -496,6 +690,7 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'c1'}, 'content', {_key: 'b1'}],
             value: replacementBlock,
           },
+          [calloutNode],
         ),
       ).toEqual([
         [],
@@ -536,6 +731,7 @@ describe(getDirtyPaths.name, () => {
               {_type: 'span', _key: 'new-s2', text: 'text'},
             ],
           },
+          [calloutNode],
         ),
       ).toEqual([
         [],
@@ -568,6 +764,7 @@ describe(getDirtyPaths.name, () => {
             ],
             value: 'h1',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -600,6 +797,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}],
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'b1'}]])
     })
@@ -616,6 +814,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'b1'}, 'style'],
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'b1'}]])
     })
@@ -649,6 +848,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'old-key'}, '_key'],
           },
+          value,
         ),
       ).toEqual([[], [1]])
     })
@@ -665,6 +865,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'b1'}, 'children', 0],
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'b1'}]])
     })
@@ -681,6 +882,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'c1'}, 'content', {_key: 'b1'}],
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'c1'}]])
     })
@@ -697,6 +899,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'c1'}, 'content', {_key: 'b1'}, 'style'],
           },
+          [],
         ),
       ).toEqual([[], [{_key: 'c1'}], [{_key: 'c1'}, 'content', {_key: 'b1'}]])
     })
@@ -736,6 +939,7 @@ describe(getDirtyPaths.name, () => {
             type: 'unset',
             path: [{_key: 'c1'}, 'content', {_key: 'old-key'}, '_key'],
           },
+          calloutValue,
         ),
       ).toEqual([[], [{_key: 'c1'}], [{_key: 'c1'}, 'content', 1]])
     })
@@ -756,6 +960,7 @@ describe(getDirtyPaths.name, () => {
             node: {_type: 'span', _key: 'new-span', text: ''},
             position: 'after',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -790,6 +995,7 @@ describe(getDirtyPaths.name, () => {
             node: blockNode,
             position: 'after',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -828,6 +1034,7 @@ describe(getDirtyPaths.name, () => {
             node: calloutNode,
             position: 'after',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -858,6 +1065,7 @@ describe(getDirtyPaths.name, () => {
             node: {_type: 'span', _key: 'new-span', text: ''},
             position: 'after',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -893,6 +1101,7 @@ describe(getDirtyPaths.name, () => {
             node: blockNode,
             position: 'after',
           },
+          [],
         ),
       ).toEqual([
         [],
@@ -934,6 +1143,7 @@ describe(getDirtyPaths.name, () => {
             node: blockNode,
             position: 'after',
           },
+          [],
         ),
       ).toEqual([
         [],

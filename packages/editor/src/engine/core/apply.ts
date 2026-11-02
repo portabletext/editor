@@ -41,9 +41,13 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
+  const previousValue = editor.snapshot.context.value
   applyOperation(editor, op)
 
-  updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
+  updateDirtyPaths(
+    editor,
+    getDirtyPaths(editor.snapshot.context, op, previousValue),
+  )
 
   editor.operations.push(op)
   normalize(editor, {

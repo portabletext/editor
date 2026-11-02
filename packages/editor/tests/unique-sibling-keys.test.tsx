@@ -2,6 +2,8 @@ import {defineSchema, isTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
 
@@ -392,5 +394,291 @@ describe('unique sibling `_key`s', () => {
         },
       ])
     })
+  })
+
+  test('Scenario: A remote rename to the key of an earlier container renames the repeat and keys its content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstCalloutKey = keyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const secondCalloutKey = keyGenerator()
+    const secondBlockKey = keyGenerator()
+    const secondSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: firstCalloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: firstBlockKey,
+              children: [
+                {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: secondCalloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: secondBlockKey,
+              children: [
+                {_type: 'span', _key: secondSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+      ),
+    })
+
+    const errors: Array<string> = []
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.message)
+    }
+    window.addEventListener('error', onError)
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [
+            {_key: secondCalloutKey},
+            'content',
+            {_key: secondBlockKey},
+            'children',
+            {_key: secondSpanKey},
+            '_key',
+          ],
+        },
+        {
+          type: 'set',
+          path: [{_key: secondCalloutKey}, '_key'],
+          value: firstCalloutKey,
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: firstCalloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: firstBlockKey,
+              children: [
+                {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: 'k8',
+          content: [
+            {
+              _type: 'block',
+              _key: secondBlockKey,
+              children: [{_type: 'span', _key: 'k9', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    window.removeEventListener('error', onError)
+    expect(errors).toEqual([])
+  })
+
+  test('Scenario: A remote rename to the key of an earlier container inside a container renames the repeat and keys its content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const outerCalloutKey = keyGenerator()
+    const firstCalloutKey = keyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const secondCalloutKey = keyGenerator()
+    const secondBlockKey = keyGenerator()
+    const secondSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'callout',
+                    fields: [
+                      {name: 'content', type: 'array', of: [{type: 'block'}]},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: outerCalloutKey,
+          content: [
+            {
+              _type: 'callout',
+              _key: firstCalloutKey,
+              content: [
+                {
+                  _type: 'block',
+                  _key: firstBlockKey,
+                  children: [
+                    {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              _type: 'callout',
+              _key: secondCalloutKey,
+              content: [
+                {
+                  _type: 'block',
+                  _key: secondBlockKey,
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: secondSpanKey,
+                      text: 'bar',
+                      marks: [],
+                    },
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+      ),
+    })
+
+    const errors: Array<string> = []
+    const onError = (event: ErrorEvent) => {
+      errors.push(event.message)
+    }
+    window.addEventListener('error', onError)
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'unset',
+          path: [
+            {_key: outerCalloutKey},
+            'content',
+            {_key: secondCalloutKey},
+            'content',
+            {_key: secondBlockKey},
+            'children',
+            {_key: secondSpanKey},
+            '_key',
+          ],
+        },
+        {
+          type: 'set',
+          path: [
+            {_key: outerCalloutKey},
+            'content',
+            {_key: secondCalloutKey},
+            '_key',
+          ],
+          value: firstCalloutKey,
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: outerCalloutKey,
+          content: [
+            {
+              _type: 'callout',
+              _key: firstCalloutKey,
+              content: [
+                {
+                  _type: 'block',
+                  _key: firstBlockKey,
+                  children: [
+                    {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+            {
+              _type: 'callout',
+              _key: 'k9',
+              content: [
+                {
+                  _type: 'block',
+                  _key: secondBlockKey,
+                  children: [
+                    {_type: 'span', _key: 'k10', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    window.removeEventListener('error', onError)
+    expect(errors).toEqual([])
   })
 })

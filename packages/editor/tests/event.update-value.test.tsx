@@ -3723,6 +3723,1094 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     consoleWarn.mockRestore()
   })
 
+  test('Scenario: a repeated block key with a keyless child in the later block addresses its repair by the rekeyed key', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      _key: fooKey,
+      children: [{_type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, textBlock(barKey, barSpanKey, 'bar')],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [foo, keylessBar]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        textBlock('k7', 'k6', 'bar'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: 'k7'}, 'children', 0],
+      value: {_type: 'span', text: 'bar', marks: [], _key: 'k6'},
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch, repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([foo, keylessBar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${fooKey}'. Child at index 0 is missing required _key in block with _key ${fooKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a repeated block key with a keyless child in the first block keeps addressing its repair by the incoming key', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const keylessFoo = {
+      _type: 'block',
+      _key: fooKey,
+      children: [{_type: 'span', text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const repeatedBar = textBlock(fooKey, barSpanKey, 'bar')
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [keylessFoo, repeatedBar]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        textBlock(fooKey, 'k6', 'foo'),
+        textBlock('k7', barSpanKey, 'bar'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: 'k6'}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: 'k6'}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: fooKey}, 'children', 0],
+      value: {_type: 'span', text: 'foo', marks: [], _key: 'k6'},
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: 'k6'}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch, repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([keylessFoo, repeatedBar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${fooKey}'. Child at index 0 is missing required _key in block with _key ${fooKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a repeated block key with empty children in the later block addresses its repair by the rekeyed key', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const emptyBlock = {
+      _type: 'block',
+      _key: fooKey,
+      children: [],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, textBlock(barKey, barSpanKey, 'bar')],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [foo, emptyBlock]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        textBlock('k7', 'k6', ''),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+    const setIfMissingPatch: Patch = {
+      type: 'setIfMissing',
+      path: [{_key: 'k7'}, 'children'],
+      value: [],
+    }
+    const insertPatch: Patch = {
+      type: 'insert',
+      path: [{_key: 'k7'}, 'children', 0],
+      position: 'after',
+      items: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        rekeyPatch,
+        setIfMissingPatch,
+        insertPatch,
+        sentinelPatch,
+      ])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, setIfMissingPatch, insertPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([foo, emptyBlock], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Insert an empty text for block with _key '${fooKey}'. Children for text block with _key '${fooKey}' is empty.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: three blocks sharing a key with repairs in the second and third address each repair by its rekeyed key', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const linkKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      _key: fooKey,
+      children: [{_type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const orphanedLinkBaz = {
+      ...textBlock(fooKey, bazSpanKey, 'baz'),
+      markDefs: [{_key: linkKey, _type: 'link', href: 'https://example.com'}],
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      }),
+      initialValue: [
+        foo,
+        textBlock(barKey, barSpanKey, 'bar'),
+        textBlock(bazKey, bazSpanKey, 'baz'),
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [foo, keylessBar, orphanedLinkBaz],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        textBlock('k10', 'k9', 'bar'),
+        textBlock('k11', bazSpanKey, 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const barRekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k10',
+      origin: 'local',
+    }
+    const bazRekeyPatch: Patch = {
+      type: 'set',
+      path: [2, '_key'],
+      value: 'k11',
+      origin: 'local',
+    }
+    const barRepairPatch: Patch = {
+      type: 'set',
+      path: [{_key: 'k10'}, 'children', 0],
+      value: {_type: 'span', text: 'bar', marks: [], _key: 'k9'},
+    }
+    const bazRepairPatch: Patch = {
+      type: 'unset',
+      path: [{_key: 'k11'}, 'markDefs', {_key: linkKey}],
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        barRekeyPatch,
+        bazRekeyPatch,
+        barRepairPatch,
+        bazRepairPatch,
+        sentinelPatch,
+      ])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [
+          barRekeyPatch,
+          bazRekeyPatch,
+          barRepairPatch,
+          bazRepairPatch,
+          sentinelPatch,
+        ],
+      ])
+    })
+    expect(applyAll([foo, keylessBar, orphanedLinkBaz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${fooKey}'. Child at index 0 is missing required _key in block with _key ${fooKey}.`,
+      ],
+      [
+        `Remove unused mark definition item for block with _key '${fooKey}'. Block contains orphaned data (unused mark definitions): ${linkKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a repeated block key whose repaired block moves addresses its repair by the rekeyed key', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const keylessBaz = {
+      _type: 'block',
+      _key: barKey,
+      children: [{_type: 'span', text: 'baz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [textBlock(fooKey, fooSpanKey, 'foo'), bar],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [bar, keylessBaz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        bar,
+        textBlock('k8', 'k7', 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k8',
+      origin: 'local',
+    }
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: 'k8'}, 'children', 0],
+      value: {_type: 'span', text: 'baz', marks: [], _key: 'k7'},
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: barSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch, repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([bar, keylessBaz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${barKey}'. Child at index 0 is missing required _key in block with _key ${barKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a repeated block key that collides with an old editor block replaced later renames only incoming blocks', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const keylessBarKey = keyGenerator()
+    const repeatedFoo = textBlock(barKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      _key: keylessBarKey,
+      children: [{_type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const repeatedBaz = textBlock(barKey, bazSpanKey, 'baz')
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        textBlock(barKey, barSpanKey, 'bar'),
+        textBlock(bazKey, bazSpanKey, 'baz'),
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [repeatedFoo, keylessBar, repeatedBaz],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        repeatedFoo,
+        textBlock(keylessBarKey, 'k10', 'bar'),
+        textBlock('k11', bazSpanKey, 'baz'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [2, '_key'],
+      value: 'k11',
+      origin: 'local',
+    }
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: keylessBarKey}, 'children', 0],
+      value: {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch, repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([repeatedFoo, keylessBar, repeatedBaz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${keylessBarKey}'. Child at index 0 is missing required _key in block with _key ${keylessBarKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a repeated block key without a repair publishes its rename', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const bar = textBlock(barKey, barSpanKey, 'bar')
+    const repeatedBaz = textBlock(barKey, bazSpanKey, 'baz')
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, bar, textBlock(bazKey, bazSpanKey, 'baz')],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [bar, foo, repeatedBaz]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        bar,
+        foo,
+        textBlock('k9', bazSpanKey, 'baz'),
+      ])
+    })
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [2, '_key'],
+      value: 'k9',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([bar, foo, repeatedBaz], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: a repeated block key whose rename flips the editor read-only publishes its repair once editable', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      _key: fooKey,
+      children: [{_type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, textBlock(barKey, barSpanKey, 'bar')],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.on('operation', (event) => {
+      if (
+        event.operation.type === 'set' &&
+        event.operation.path[1] === '_key'
+      ) {
+        editor.send({type: 'update readOnly', readOnly: true})
+      }
+    })
+
+    editor.send({type: 'update value', value: [foo, keylessBar]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        textBlock('k7', 'k6', 'bar'),
+      ])
+    })
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k7',
+      origin: 'local',
+    }
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: 'k7'}, 'children', 0],
+      value: {_type: 'span', text: 'bar', marks: [], _key: 'k6'},
+    }
+
+    // The rename is published before the subscriber flips the editor
+    // read-only; the repair after it is deferred until the editor is
+    // editable again.
+    expect(patches).toEqual([rekeyPatch])
+    expect(mutations).toEqual([])
+
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([rekeyPatch, repairPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [rekeyPatch, repairPatch],
+      ])
+    })
+    expect(applyAll([foo, keylessBar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${fooKey}'. Child at index 0 is missing required _key in block with _key ${fooKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
+  test('Scenario: a repeated block key whose later repeat is invalid halts the sync and publishes the rename of the old block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const repeatedFoo = textBlock(barKey, fooSpanKey, 'foo')
+    const repeatedImage = {_type: 'image', _key: barKey}
+    const events: Array<EditorEmittedEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (
+              event.type === 'patch' ||
+              event.type === 'mutation' ||
+              event.type === 'invalid value'
+            ) {
+              events.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [repeatedFoo, repeatedImage],
+    })
+
+    const invalidValueEvent: EditorEmittedEvent = {
+      type: 'invalid value',
+      resolution: {
+        action: 'Remove the block',
+        description: `Block with _key '${barKey}' has invalid _type 'image'`,
+        i18n: {
+          action: 'inputs.portable-text.invalid-value.disallowed-type.action',
+          description:
+            'inputs.portable-text.invalid-value.disallowed-type.description',
+          values: {key: barKey, typeName: 'image'},
+        },
+        item: repeatedImage,
+        patches: [{type: 'unset', path: [{_key: barKey}]}],
+      },
+      value: [repeatedFoo, repeatedImage],
+    }
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([invalidValueEvent])
+    })
+    // The normalizer renames the old second block, and the pristine editor
+    // holds the rename patch until the next local edit.
+    expect(editor.getSnapshot().context.value).toEqual([
+      repeatedFoo,
+      textBlock('k6', barSpanKey, 'bar'),
+    ])
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k6',
+      origin: 'local',
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        invalidValueEvent,
+        {type: 'patch', patch: rekeyPatch},
+        {type: 'patch', patch: sentinelPatch},
+        {
+          type: 'mutation',
+          patches: [rekeyPatch, sentinelPatch],
+          value: [
+            textBlock(barKey, fooSpanKey, 'foo!'),
+            textBlock('k6', barSpanKey, 'bar'),
+          ],
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      textBlock(barKey, fooSpanKey, 'foo!'),
+      textBlock('k6', barSpanKey, 'bar'),
+    ])
+  })
+
+  test('Scenario: three blocks sharing a key mixed with a keyless block object halt the sync and publish the rename already applied', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const imageKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const repeatedBar = textBlock(fooKey, barSpanKey, 'bar')
+    const keylessImage = {_type: 'image'} as PortableTextBlock
+    const repeatedBaz = textBlock(fooKey, bazSpanKey, 'baz')
+    const events: Array<EditorEmittedEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+      initialValue: [
+        foo,
+        textBlock(barKey, barSpanKey, 'bar'),
+        {_type: 'image', _key: imageKey},
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (
+              event.type === 'patch' ||
+              event.type === 'mutation' ||
+              event.type === 'invalid value'
+            ) {
+              events.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [foo, repeatedBar, keylessImage, repeatedBaz],
+    })
+
+    const rekeyPatch: Patch = {
+      type: 'set',
+      path: [1, '_key'],
+      value: 'k8',
+      origin: 'local',
+    }
+    const invalidValueEvent: EditorEmittedEvent = {
+      type: 'invalid value',
+      resolution: {
+        action: 'Set the block with a random _key value',
+        description: 'Block at index 0 is missing required _key.',
+        i18n: {
+          action: 'inputs.portable-text.invalid-value.missing-key.action',
+          description:
+            'inputs.portable-text.invalid-value.missing-key.description',
+          values: {index: 0},
+        },
+        item: keylessImage,
+        patches: [
+          {type: 'set', path: [0], value: {_type: 'image', _key: 'k9'}},
+        ],
+      },
+      value: [foo, repeatedBar, keylessImage, repeatedBaz],
+    }
+    const syncedValue = [
+      foo,
+      textBlock('k8', barSpanKey, 'bar'),
+      {_type: 'image', _key: imageKey},
+    ]
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {type: 'patch', patch: rekeyPatch},
+        invalidValueEvent,
+        {type: 'mutation', patches: [rekeyPatch], value: syncedValue},
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual(syncedValue)
+  })
+
+  test('Scenario: unique block keys with a keyless child in the later block keep addressing the repair by the incoming key', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const foo = textBlock(fooKey, fooSpanKey, 'foo')
+    const keylessBar = {
+      _type: 'block',
+      _key: barKey,
+      children: [{_type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [foo, textBlock(barKey, barSpanKey, 'bar')],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+            if (event.type === 'mutation') {
+              mutations.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'update value', value: [foo, keylessBar]})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        foo,
+        textBlock(barKey, 'k6', 'bar'),
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: barKey}, 'children', 0],
+      value: {_type: 'span', text: 'bar', marks: [], _key: 'k6'},
+    }
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([foo, keylessBar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(consoleWarn.mock.calls).toEqual([
+      [
+        `Set a new random _key on the object for block with _key '${barKey}'. Child at index 0 is missing required _key in block with _key ${barKey}.`,
+      ],
+    ])
+    consoleWarn.mockRestore()
+  })
+
   test('Scenario: a startup value with a keyless child is repaired in the engine without emitting patches', async () => {
     const patches: Array<Patch> = []
     const mutations: Array<MutationEvent> = []

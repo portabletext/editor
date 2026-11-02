@@ -755,25 +755,23 @@ function syncBlock({
     }
   }
 
-  // Resolve validations that can be resolved automatically, without involving the user (but only if the value was changed)
-  if (
+  // Only publish auto resolutions and block renames if the value has been populated before and is different from the last one.
+  const publishesRepairs =
+    !context.readOnly &&
+    context.previousValue !== undefined &&
+    context.previousValue !== value
+  const autoResolutionPatches =
+    publishesRepairs &&
     !validation.valid &&
     validation.resolution?.autoResolve &&
-    validation.resolution?.patches.length > 0
-  ) {
-    // Only apply auto resolution if the value has been populated before and is different from the last one.
-    if (
-      !context.readOnly &&
-      context.previousValue &&
-      context.previousValue !== value
-    ) {
-      console.warn(
-        `${validation.resolution.action} for block with _key '${block._key}'. ${validation.resolution?.description}`,
-      )
-      validation.resolution.patches.forEach((patch) => {
-        sendBack({type: 'patch', patch})
-      })
-    }
+    validation.resolution.patches.length > 0
+      ? validation.resolution.patches
+      : []
+
+  if (autoResolutionPatches.length > 0) {
+    console.warn(
+      `${validation.resolution?.action} for block with _key '${block._key}'. ${validation.resolution?.description}`,
+    )
   }
 
   const repairedBlock = applyAutoResolution(validation, validationValue, block)
@@ -839,13 +837,107 @@ function syncBlock({
           }
         }
       })
+
+      if (!incomingKeys && publishesRepairs) {
+        renameRepeatedBlockKey({
+          context,
+          editorEngine,
+          blockKey: block._key,
+          index,
+          value,
+        })
+      }
     })
   })
+
+  const syncedBlockKey = incomingKeys
+    ? block._key
+    : (editorEngine.snapshot.context.value.at(index)?._key ?? block._key)
+
+  for (const patch of autoResolutionPatches) {
+    sendBack({
+      type: 'patch',
+      patch:
+        syncedBlockKey === block._key
+          ? patch
+          : {...patch, path: [{_key: syncedBlockKey}, ...patch.path.slice(1)]},
+    })
+  }
 
   return {
     blockChanged: true,
     blockValid: true,
   }
+}
+
+/**
+ * Give the block just synced at `index` a unique key before normalization
+ * sees the repeat. A repeat of an already synced block is renamed with a
+ * patch, so the host renames the same block at `index`. An old editor block
+ * holding the key is renamed without a patch only if every incoming block up
+ * to its index syncs, so the sync is sure to replace it and the host never
+ * had it at its position. Otherwise the sync halts before it, and the
+ * normalizer renames it with a patch.
+ */
+function renameRepeatedBlockKey({
+  context,
+  editorEngine,
+  blockKey,
+  index,
+  value,
+}: {
+  context: {
+    keyGenerator: () => string
+    schema: EditorSchema
+  }
+  editorEngine: PortableTextEditorEngine
+  blockKey: string
+  index: number
+  value: Array<PortableTextBlock>
+}) {
+  const firstIndexOfKey = editorEngine.snapshot.context.value.findIndex(
+    (existingBlock) => existingBlock._key === blockKey,
+  )
+
+  if (firstIndexOfKey !== -1 && firstIndexOfKey < index) {
+    editorEngine.apply({
+      type: 'set',
+      path: [index, '_key'],
+      value: context.keyGenerator(),
+    })
+  }
+
+  const oldBlockIndexes = editorEngine.snapshot.context.value.flatMap(
+    (existingBlock, existingIndex) =>
+      existingIndex > index &&
+      existingBlock._key === blockKey &&
+      value
+        .slice(index + 1, existingIndex + 1)
+        .every((incomingBlock) => isSyncable(context.schema, incomingBlock))
+        ? [existingIndex]
+        : [],
+  )
+
+  withoutPatching(editorEngine, () => {
+    for (const oldBlockIndex of oldBlockIndexes) {
+      editorEngine.apply({
+        type: 'set',
+        path: [oldBlockIndex, '_key'],
+        value: context.keyGenerator(),
+      })
+    }
+  })
+}
+
+/**
+ * Whether `syncBlock` accepts the block rather than halting the sync on it.
+ */
+function isSyncable(schema: EditorSchema, block: PortableTextBlock) {
+  // The keys minted for a resolution are discarded, so they must not advance
+  // the editor's key generator.
+  const validation = validateValue([block], schema, () => '')
+
+  return validation.valid || validation.resolution?.autoResolve === true
 }
 
 /**
