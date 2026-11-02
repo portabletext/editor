@@ -570,8 +570,10 @@ export const abstractInsertBehaviors = [
    */
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) =>
-      isSelectionCollapsed(snapshot) && getFocusInlineObject(snapshot),
+    guard: ({snapshot, event}) =>
+      (event.at === undefined || event.offset === undefined) &&
+      isSelectionCollapsed(snapshot) &&
+      getFocusInlineObject(snapshot),
     actions: [
       ({event}) => [raise({type: 'move.forward', distance: 1}), raise(event)],
     ],
@@ -583,7 +585,11 @@ export const abstractInsertBehaviors = [
    */
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) => {
+    guard: ({snapshot, event}) => {
+      if (event.at !== undefined && event.offset !== undefined) {
+        return false
+      }
+
       return isSelectionExpanded(snapshot)
     },
     actions: [({event}) => [raise({type: 'delete'}), raise(event)]],
@@ -595,7 +601,11 @@ export const abstractInsertBehaviors = [
    */
   defineBehavior({
     on: 'insert.text',
-    guard: ({snapshot}) => {
+    guard: ({snapshot, event}) => {
+      if (event.at !== undefined && event.offset !== undefined) {
+        return false
+      }
+
       if (snapshot.context.selection) {
         return false
       }
