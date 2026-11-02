@@ -4,7 +4,8 @@ import {fileURLToPath} from 'node:url'
 
 // `timing.txt` holds one block of lines per emulator run, the retry's after a `RETRY` line. Each block
 // opens with `EMULATOR_START`, written just before its run step. A run prints `BOOTED` once its emulator
-// is up. Once its last stage has ended, it adds one `CHECKED <verdict>` line in a single write: `skipped`
+// is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes. Once its last
+// stage has ended, it adds one `CHECKED <verdict>` line in a single write: `skipped`
 // when no check was needed, or the verdict of the device check after a failed stage, `device` or `lost`,
 // which the check writes itself before it does anything else. A booted run without that line ended before
 // a check reached a verdict, by its run step's timeout, the check's own, or an `adb get-state` that proved
@@ -87,8 +88,10 @@ export function retryAfter(timing) {
  * @returns {{passed: boolean, line: string}}
  */
 export function runResult(timing, outcome) {
-  const states = splitRuns(timing).map(runState)
+  const runs = splitRuns(timing)
+  const states = runs.map(runState)
   const last = states.at(-1)
+  const prepFailure = /^PREP FAILED: (.*)$/m.exec(runs.at(-1) ?? '')?.[1]
   const first = states.length > 1 ? states[0] : undefined
 
   const retry =
@@ -111,7 +114,7 @@ export function runResult(timing, outcome) {
   }
   return {
     passed: outcome === 'success',
-    line: `run outcome: ${outcome}${retry}`,
+    line: `run outcome: ${outcome}${retry}${prepFailure === undefined ? '' : `, the prep failed: ${prepFailure}`}`,
   }
 }
 

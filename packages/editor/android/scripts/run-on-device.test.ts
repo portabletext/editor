@@ -17,6 +17,9 @@ import {describe, expect, test, vi} from 'vitest'
 
 const android = fileURLToPath(new URL('..', import.meta.url))
 const packageRoot = fileURLToPath(new URL('../..', import.meta.url))
+// The PREP FAILED line `thumbjar prepare` logs for a real CI boot whose Gboard never loaded the dictionary.
+const NEVER_LOADED =
+  "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
 const realTee = spawnSync('bash', ['-c', 'command -v tee'], {
   encoding: 'utf8',
 }).stdout.trim()
@@ -42,7 +45,7 @@ describe('run-on-device.sh', () => {
       {
         status: 0,
         calls: [
-          'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out',
+          'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
           'pnpm exec vitest run --config vitest.android.config.ts --project device tests/ja.test.ts',
           'adb logcat -d -b crash',
           'adb shell dumpsys activity exit-info com.android.chrome',
@@ -58,7 +61,7 @@ describe('run-on-device.sh', () => {
       {
         status: 0,
         calls: [
-          'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+          'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
           'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en-textarea.test.ts',
           'adb logcat -d -b crash',
           'adb shell dumpsys activity exit-info com.android.chrome',
@@ -86,7 +89,7 @@ describe('run-on-device.sh', () => {
     ).toEqual({
       status: 1,
       calls: [
-        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
         'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
         'adb get-state',
         'adb logcat -d -b crash',
@@ -115,7 +118,7 @@ describe('run-on-device.sh', () => {
     ).toEqual({
       status: 1,
       calls: [
-        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
         'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
         'adb get-state',
         'adb logcat -d -b crash',
@@ -152,7 +155,7 @@ describe('run-on-device.sh', () => {
       {
         status: 1,
         calls: [
-          'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out',
+          'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
           'adb get-state',
         ],
         phases: ['http server', 'device check: device'],
@@ -161,13 +164,73 @@ describe('run-on-device.sh', () => {
       {
         status: 1,
         calls: [
-          'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out',
+          'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
           'adb get-state',
         ],
         phases: ['http server', 'device check: lost'],
         timing: ['BOOTED', 'CHECKED lost'],
       },
     ])
+  })
+})
+
+describe('run-on-device.sh after a prep that named its failure', () => {
+  test("records the prep's reason for the job summary before the device check, and runs no tests", () => {
+    expect(
+      runOnDevice({
+        lang: 'ja',
+        file: 'tests/ja.test.ts',
+        prep: 1,
+        prepFailure: NEVER_LOADED,
+        tests: 0,
+        getState: 'device',
+      }),
+    ).toEqual({
+      status: 1,
+      calls: [
+        'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
+        'adb get-state',
+      ],
+      phases: [
+        'http server',
+        `PREP FAILED: ${NEVER_LOADED}`,
+        'device check: device',
+      ],
+      timing: ['BOOTED', `PREP FAILED: ${NEVER_LOADED}`, 'CHECKED device'],
+    })
+  })
+})
+
+describe('run-on-device.sh on the retry after adb lost the device', () => {
+  test("records no reason for a prep that named none, though `phases.log` holds the first boot's", () => {
+    expect(
+      runOnDevice({
+        lang: 'ja',
+        file: 'tests/ja.test.ts',
+        earlierPhases: [
+          'http server',
+          `PREP FAILED: ${NEVER_LOADED}`,
+          'device check: lost',
+        ],
+        prep: 1,
+        tests: 0,
+        getState: 'device',
+      }),
+    ).toEqual({
+      status: 1,
+      calls: [
+        'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
+        'adb get-state',
+      ],
+      phases: [
+        'http server',
+        `PREP FAILED: ${NEVER_LOADED}`,
+        'device check: lost',
+        'http server',
+        'device check: device',
+      ],
+      timing: ['BOOTED', 'CHECKED device'],
+    })
   })
 })
 
@@ -182,7 +245,7 @@ describe('run-on-device.sh cut off by its run step', () => {
       }),
     ).toEqual({
       calls: [
-        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
         'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
       ],
       timing: ['BOOTED'],
@@ -206,7 +269,7 @@ describe('run-on-device.sh cut off by its run step', () => {
     ]).toEqual([
       {
         calls: [
-          'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+          'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
           'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
           'adb get-state',
         ],
@@ -214,7 +277,7 @@ describe('run-on-device.sh cut off by its run step', () => {
       },
       {
         calls: [
-          'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+          'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
           'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
           'adb get-state',
         ],
@@ -237,7 +300,7 @@ describe('run-on-device.sh with a device check that never completes', () => {
     ).toEqual({
       status: 1,
       calls: [
-        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
         'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
         'adb get-state',
         'adb logcat -d -b crash',
@@ -266,7 +329,7 @@ describe('run-on-device.sh with a device check that never completes', () => {
     ).toEqual({
       status: 1,
       calls: [
-        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out',
+        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
         'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
         'adb get-state',
         'adb logcat -d -b crash',
@@ -287,7 +350,11 @@ describe('run-on-device.sh with a device check that never completes', () => {
 function runOnDevice(options: {
   lang: string
   file: string
+  /** The lines an earlier boot's run left in `phases.log`, as the retry finds them. */
+  earlierPhases?: string[]
   prep: number
+  /** The PREP FAILED line's reason the fake prep logs to `phases.log`, as `thumbjar prepare` does. */
+  prepFailure?: string
   tests: number
   getState: 'device' | 'none' | 'stalled' | 'hung'
 }) {
@@ -296,12 +363,25 @@ function runOnDevice(options: {
     const bin = join(directory, 'bin')
     const calls = join(directory, 'calls.log')
     deviceTree(directory)
+    if (options.earlierPhases !== undefined) {
+      mkdirSync(join(directory, 'android/out'))
+      writeFileSync(
+        join(directory, 'android/out/phases.log'),
+        options.earlierPhases
+          .map((line) => `PHASE 00:00:00 ${line}\n`)
+          .join(''),
+      )
+    }
     writeFileSync(
       join(bin, 'pnpm'),
       `#!/usr/bin/env bash
 case "$*" in
   "exec thumbjar serve"*) exit 0 ;;
-  "exec thumbjar prepare"*) echo "pnpm $*" >> ${calls}; exit ${options.prep} ;;
+  "exec thumbjar prepare"*)
+    echo "pnpm $*" >> ${calls}
+    ${options.prepFailure === undefined ? '' : `printf 'PHASE 00:00:00 PREP FAILED: %s\\n' ${shellString(options.prepFailure)} >> android/out/phases.log`}
+    exit ${options.prep}
+    ;;
   "exec vitest"*) echo "pnpm $*" >> ${calls}; exit ${options.tests} ;;
 esac
 `,
@@ -336,9 +416,15 @@ esac
       },
     )
     const out = join(directory, 'android/out')
+    const booted = /^BOOTED at (\d+)$/m.exec(
+      readFileSync(join(out, 'timing.txt'), 'utf8'),
+    )?.[1]
     return {
       status: result.status,
-      calls: readFileSync(calls, 'utf8').trimEnd().split('\n'),
+      calls: readFileSync(calls, 'utf8')
+        .trimEnd()
+        .split('\n')
+        .map((call) => call.replace(` --booted ${booted}`, ' --booted BOOTED')),
       phases: readFileSync(join(out, 'phases.log'), 'utf8')
         .trimEnd()
         .split('\n')
@@ -424,8 +510,14 @@ printf '%s\\n' "$line" | ${realTee} "$@"
     process.kill(-(script.pid ?? 0), 'SIGKILL')
     await exited
 
+    const booted = /^BOOTED at (\d+)$/m.exec(
+      readFileSync(join(directory, 'android/out/timing.txt'), 'utf8'),
+    )?.[1]
     return {
-      calls: readFileSync(calls, 'utf8').trimEnd().split('\n'),
+      calls: readFileSync(calls, 'utf8')
+        .trimEnd()
+        .split('\n')
+        .map((call) => call.replace(` --booted ${booted}`, ' --booted BOOTED')),
       timing: readFileSync(join(directory, 'android/out/timing.txt'), 'utf8')
         .trimEnd()
         .split('\n')
@@ -434,6 +526,10 @@ printf '%s\\n' "$line" | ${realTee} "$@"
   } finally {
     rmSync(directory, {recursive: true, force: true})
   }
+}
+
+function shellString(text: string) {
+  return `'${text.replaceAll("'", "'\\''")}'`
 }
 
 function getStateAnswer(state: 'device' | 'none' | 'stalled' | 'hung') {

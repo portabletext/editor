@@ -1,6 +1,6 @@
 import {readFileSync, realpathSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
-import {deviceTestFileSeconds} from 'thumbjar/vitest'
+import {deviceTestFileSeconds, prepWorstSeconds} from 'thumbjar/vitest'
 
 // The caps `run-on-device.sh` runs its stages under, in seconds, each a `timeout -k <kill> <seconds>`.
 // `budget.test.ts` checks the script against them and the workflow's `timeout-minutes` against their sum.
@@ -22,8 +22,15 @@ const RUNNER_ALLOWANCE_SECONDS = 180
 export const CAP_READ_SECONDS = 10
 export const CAP_READ_KILL_SECONDS = 5
 
-/** `thumbjar prepare`, which runs its prep under `timeout -k 10 600`. */
-export const PREP_SECONDS = 610
+/**
+ * `thumbjar prepare` for `keyboard`, its kill-after included: the Play Store block, and for Japanese the dictionary wait.
+ *
+ * @param {'ja' | 'en'} keyboard
+ * @returns {number}
+ */
+export function prepSeconds(keyboard) {
+  return prepWorstSeconds(keyboard)
+}
 
 /** Stopping the test stage once it ran past `deviceTestFileSeconds`. */
 export const TESTS_KILL_SECONDS = 10
@@ -37,17 +44,19 @@ export const DIAGNOSTICS_SECONDS = 60
 export const DIAGNOSTICS_KILL_SECONDS = 5
 
 /**
- * The longest `run-on-device.sh` runs for a file of `testCount` tests, every stage's kill-after included. A
- * failed prep skips the tests, so the path through the tests is the longest.
+ * The longest `run-on-device.sh` runs for a file of `testCount` tests on a device prepared for `keyboard`,
+ * every stage's kill-after included. A failed prep skips the tests, so the path through the tests is the
+ * longest.
  *
+ * @param {'ja' | 'en'} keyboard
  * @param {number} testCount
  * @returns {number}
  */
-export function runOnDeviceWorstSeconds(testCount) {
+export function runOnDeviceWorstSeconds(keyboard, testCount) {
   return (
     CAP_READ_SECONDS +
     CAP_READ_KILL_SECONDS +
-    PREP_SECONDS +
+    prepSeconds(keyboard) +
     deviceTestFileSeconds(testCount) +
     TESTS_KILL_SECONDS +
     DEVICE_CHECK_SECONDS +
@@ -58,19 +67,32 @@ export function runOnDeviceWorstSeconds(testCount) {
 }
 
 /**
- * A run step's `timeout-minutes` for a file of `testCount` tests: the boot, the script and the runner.
+ * Time in each run step that no cap counts: the action starting the script, the shell and `pnpm` starting
+ * each stage, and the logging between stages. Without it the step's cap could stop the script before it
+ * logs the reason a stage of its own gave.
+ */
+export const RUN_STEP_HEADROOM_SECONDS = 60
+
+/**
+ * A run step's `timeout-minutes` for a file of `testCount` tests on a device prepared for `keyboard`: the
+ * boot, the script, the runner and the headroom.
  *
+ * @param {'ja' | 'en'} keyboard
  * @param {number} testCount
  * @returns {number}
  */
-export function runStepMinutes(testCount) {
+export function runStepMinutes(keyboard, testCount) {
   return Math.ceil(
     (BOOT_SECONDS +
-      runOnDeviceWorstSeconds(testCount) +
-      RUNNER_ALLOWANCE_SECONDS) /
+      runOnDeviceWorstSeconds(keyboard, testCount) +
+      RUNNER_ALLOWANCE_SECONDS +
+      RUN_STEP_HEADROOM_SECONDS) /
       60,
   )
 }
+
+/** The job's time beyond its steps' caps, for the runner to move between steps, so the Result step runs. */
+export const JOB_HEADROOM_MINUTES = 1
 
 /**
  * The number of tests in a device test file: its top-level `test(` and `test.fails(` calls. A unit test
