@@ -4005,6 +4005,182 @@ describe('event.patches', () => {
         ])
       })
     })
+    test('Scenario: a remote `insert` into an object array field keeps a key a sibling uses', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const itemKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'list'}]}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'list',
+            items: [{_key: itemKey, _type: 'item', title: 'foo'}],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'after',
+            path: [{_key: blockKey}, 'items', {_key: itemKey}],
+            items: [{_key: itemKey, _type: 'item', title: 'bar'}],
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'list',
+            items: [
+              {_key: itemKey, _type: 'item', title: 'foo'},
+              {_key: itemKey, _type: 'item', title: 'bar'},
+            ],
+          },
+        ])
+      })
+    })
+    test('Scenario: a remote `insert` into an object array field of a block object in a table cell keeps a key a sibling uses', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const tableKey = keyGenerator()
+      const rowKey = keyGenerator()
+      const cellKey = keyGenerator()
+      const textKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const listKey = keyGenerator()
+      const itemKey = keyGenerator()
+      const cell = (items: Array<object>) => ({
+        _key: tableKey,
+        _type: 'table',
+        rows: [
+          {
+            _key: rowKey,
+            _type: 'row',
+            cells: [
+              {
+                _key: cellKey,
+                _type: 'cell',
+                content: [
+                  {
+                    _key: textKey,
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_key: spanKey, _type: 'span', text: 'baz', marks: []},
+                    ],
+                  },
+                  {_key: listKey, _type: 'list', items},
+                ],
+              },
+            ],
+          },
+        ],
+      })
+      const itemsPath = [
+        {_key: tableKey},
+        'rows',
+        {_key: rowKey},
+        'cells',
+        {_key: cellKey},
+        'content',
+        {_key: listKey},
+        'items',
+      ]
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'list', fields: [{name: 'items', type: 'array'}]},
+            {
+              name: 'table',
+              fields: [
+                {
+                  name: 'rows',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'row',
+                      fields: [
+                        {
+                          name: 'cells',
+                          type: 'array',
+                          of: [
+                            {
+                              type: 'object',
+                              name: 'cell',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}, {type: 'list'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [cell([{_key: itemKey, _type: 'item', title: 'foo'}])],
+        children: (
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'table',
+                arrayField: 'rows',
+                of: [
+                  defineContainer({
+                    type: 'row',
+                    arrayField: 'cells',
+                    of: [
+                      defineContainer({type: 'cell', arrayField: 'content'}),
+                    ],
+                  }),
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            origin: 'remote',
+            type: 'insert',
+            position: 'after',
+            path: [...itemsPath, {_key: itemKey}],
+            items: [{_key: itemKey, _type: 'item', title: 'bar'}],
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          cell([
+            {_key: itemKey, _type: 'item', title: 'foo'},
+            {_key: itemKey, _type: 'item', title: 'bar'},
+          ]),
+        ])
+      })
+    })
   })
 
   describe('`setIfMissing`', () => {

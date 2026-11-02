@@ -18,6 +18,7 @@ import {serializePath} from '../../paths/serialize-path'
 import {getNode} from '../../traversal/get-node'
 import type {EditorSelection} from '../../types/editor'
 import type {KeyedSegment} from '../../types/paths'
+import {isRecord} from '../../utils/asserters'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
@@ -60,12 +61,29 @@ export function applyOperation(
       let {node} = op
 
       if (!targetsStructuralChildren(editor, path)) {
-        // The path addresses an element of a sidecar array (e.g.
-        // `span.marks` or `block.markDefs`) rather than a structural
-        // child. Apply the insert as a plain data patch on the root
-        // block so the result matches what the datastore computed.
-        // These operations only arrive from remote patches, so no
-        // inverse is needed.
+        // The path addresses an element of a non-structural array (e.g.
+        // `span.marks`, `block.markDefs` or a block object's array field)
+        // rather than a structural child. Apply the insert as a plain data
+        // patch on the root block so the result matches what the datastore
+        // computes.
+        const siblings = getValue(
+          editor.snapshot.context.value,
+          path.slice(0, -1),
+        )
+
+        if (
+          !keepsInsertedKeys(editor) &&
+          isRecord(node) &&
+          node._key !== undefined &&
+          Array.isArray(siblings) &&
+          siblings.some(
+            (sibling) => isRecord(sibling) && sibling['_key'] === node._key,
+          )
+        ) {
+          node = {...node, _key: editor.snapshot.context.keyGenerator()}
+          op.node = node
+        }
+
         applyOnRootBlock(editor, path, {
           type: 'insert',
           path: path.slice(1),
@@ -82,12 +100,7 @@ export function applyOperation(
       modifyChildren(editor, parentPath(path), (children, fieldName) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
         if (
-          !editor.applyContext.some(
-            (frame) =>
-              frame.kind === 'remote' ||
-              frame.kind === 'undo' ||
-              frame.kind === 'redo',
-          ) &&
+          !keepsInsertedKeys(editor) &&
           node._key !== undefined &&
           children.some((sibling) => sibling._key === node._key)
         ) {
@@ -630,6 +643,17 @@ function targetsStructuralChildren(editor: Editor, path: Path): boolean {
   )
 
   return structuralFieldName === fieldSegment
+}
+
+/**
+ * Remote changes, undos and redos replay nodes whose keys other
+ * operations and peers already refer to, so they must keep them.
+ */
+function keepsInsertedKeys(editor: Editor): boolean {
+  return editor.applyContext.some(
+    (frame) =>
+      frame.kind === 'remote' || frame.kind === 'undo' || frame.kind === 'redo',
+  )
 }
 
 /**

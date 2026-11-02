@@ -1,6 +1,6 @@
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema, type Patch} from '../src'
+import {defineSchema, type Patch, type Path} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -516,6 +516,375 @@ describe('event.insert', () => {
 
   test.each([
     {
+      name: 'a keyed path',
+      at: (blockKey: string, itemKey: string) => [
+        {_key: blockKey},
+        'items',
+        {_key: itemKey},
+      ],
+    },
+    {name: 'an index path', at: () => [0, 'items', 0]},
+    {name: 'a negative index path', at: () => [-1, 'items', -1]},
+  ])(
+    'Scenario: insert by $name of a node whose key a sibling uses generates a new key',
+    async ({at}) => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const itemKey = keyGenerator()
+      const patches: Array<Patch> = []
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'list'}]}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'list',
+            items: [{_key: itemKey, _type: 'item', title: 'foo'}],
+          },
+        ],
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'insert',
+        at: at(blockKey, itemKey),
+        position: 'after',
+        value: {_key: itemKey, _type: 'item', title: 'bar'},
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'list',
+            items: [
+              {_key: itemKey, _type: 'item', title: 'foo'},
+              {_key: 'k4', _type: 'item', title: 'bar'},
+            ],
+          },
+        ])
+        expect(patches).toEqual([
+          {
+            type: 'setIfMissing',
+            path: [{_key: blockKey}, 'items'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: blockKey}, 'items', {_key: itemKey}],
+            position: 'after',
+            items: [{_key: 'k4', _type: 'item', title: 'bar'}],
+            origin: 'local',
+          },
+        ])
+      })
+    },
+  )
+
+  test.each([
+    {
+      name: 'a block object in a table cell',
+      listPath: (keys: NestedKeys): Path => [
+        ...nestedCellPath(keys),
+        'content',
+        {_key: keys.list},
+      ],
+      wrap: (_keys: NestedKeys, list: object) => list,
+    },
+    {
+      name: 'a block object in a callout in a table cell',
+      listPath: (keys: NestedKeys): Path => [
+        ...nestedCellPath(keys),
+        'content',
+        {_key: keys.callout},
+        'content',
+        {_key: keys.list},
+      ],
+      wrap: (keys: NestedKeys, list: object) => ({
+        _key: keys.callout,
+        _type: 'callout',
+        content: [list],
+      }),
+    },
+  ])(
+    'Scenario: insert into an object array field of $name of a node whose key a sibling uses generates a new key',
+    async ({listPath, wrap}) => {
+      const keyGenerator = createTestKeyGenerator()
+      const keys = createNestedKeys(keyGenerator)
+      const patches: Array<Patch> = []
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: nestedTableSchema,
+        initialValue: [
+          nestedTable(
+            keys,
+            wrap(keys, {
+              _key: keys.list,
+              _type: 'list',
+              items: [{_key: keys.item, _type: 'item', title: 'foo'}],
+            }),
+          ),
+        ],
+        children: (
+          <>
+            <NodePlugin nodes={nestedTableContainers} />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  patches.push(event.patch)
+                }
+              }}
+            />
+          </>
+        ),
+      })
+      const itemsPath = [...listPath(keys), 'items']
+
+      editor.send({
+        type: 'insert',
+        at: [...itemsPath, {_key: keys.item}],
+        position: 'after',
+        value: {_key: keys.item, _type: 'item', title: 'bar'},
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          nestedTable(
+            keys,
+            wrap(keys, {
+              _key: keys.list,
+              _type: 'list',
+              items: [
+                {_key: keys.item, _type: 'item', title: 'foo'},
+                {_key: 'k10', _type: 'item', title: 'bar'},
+              ],
+            }),
+          ),
+        ])
+        expect(patches).toEqual([
+          {
+            type: 'setIfMissing',
+            path: itemsPath,
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [...itemsPath, {_key: keys.item}],
+            position: 'after',
+            items: [{_key: 'k10', _type: 'item', title: 'bar'}],
+            origin: 'local',
+          },
+        ])
+      })
+    },
+  )
+
+  test('Scenario: insert into an object array in an object field of a block object in a table cell of a node whose key a sibling uses generates a new key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = createNestedKeys(keyGenerator)
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedTableSchema,
+      initialValue: [
+        nestedTable(keys, {
+          _key: keys.list,
+          _type: 'list',
+          meta: {items: [{_key: keys.item, _type: 'item', title: 'foo'}]},
+        }),
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={nestedTableContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    const itemsPath: Path = [
+      ...nestedCellPath(keys),
+      'content',
+      {_key: keys.list},
+      'meta',
+      'items',
+    ]
+
+    editor.send({
+      type: 'insert',
+      at: [...itemsPath, {_key: keys.item}],
+      position: 'after',
+      value: {_key: keys.item, _type: 'item', title: 'bar'},
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        nestedTable(keys, {
+          _key: keys.list,
+          _type: 'list',
+          meta: {
+            items: [
+              {_key: keys.item, _type: 'item', title: 'foo'},
+              {_key: 'k10', _type: 'item', title: 'bar'},
+            ],
+          },
+        }),
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: itemsPath,
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [...itemsPath, {_key: keys.item}],
+          position: 'after',
+          items: [{_key: 'k10', _type: 'item', title: 'bar'}],
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: insert into a Portable Text field of a block object in a table cell of a block whose key a sibling uses generates a new key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = createNestedKeys(keyGenerator)
+    const bodyBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedTableSchema,
+      initialValue: [
+        nestedTable(keys, {
+          _key: keys.list,
+          _type: 'list',
+          body: [nestedTextBlock(bodyBlockKey, fooSpanKey, 'foo')],
+        }),
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={nestedTableContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    const bodyPath: Path = [
+      ...nestedCellPath(keys),
+      'content',
+      {_key: keys.list},
+      'body',
+    ]
+
+    editor.send({
+      type: 'insert',
+      at: [...bodyPath, {_key: bodyBlockKey}],
+      position: 'after',
+      value: nestedTextBlock(bodyBlockKey, barSpanKey, 'bar'),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        nestedTable(keys, {
+          _key: keys.list,
+          _type: 'list',
+          body: [
+            nestedTextBlock(bodyBlockKey, fooSpanKey, 'foo'),
+            nestedTextBlock('k13', barSpanKey, 'bar'),
+          ],
+        }),
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: bodyPath,
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [...bodyPath, {_key: bodyBlockKey}],
+          position: 'after',
+          items: [nestedTextBlock('k13', barSpanKey, 'bar')],
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: insert into an array of strings leaves a repeated string as given', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'list'}]}),
+      initialValue: [{_key: blockKey, _type: 'list', tags: ['foo']}],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'insert',
+      at: [{_key: blockKey}, 'tags', 0],
+      position: 'after',
+      value: 'foo' as never,
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: blockKey, _type: 'list', tags: ['foo', 'foo']},
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'setIfMissing',
+          path: [{_key: blockKey}, 'tags'],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'tags', 0],
+          position: 'after',
+          items: ['foo'],
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test.each([
+    {
       name: 'a block index below the first block',
       at: [-2],
       position: 'before' as const,
@@ -680,3 +1049,141 @@ describe('event.insert', () => {
     },
   )
 })
+
+const nestedTableSchema = defineSchema({
+  blockObjects: [
+    {
+      name: 'list',
+      fields: [
+        {name: 'items', type: 'array'},
+        {name: 'meta', type: 'object'},
+        {
+          name: 'body',
+          type: 'array',
+          of: [{type: 'block', decorators: [{name: 'strong'}]}],
+        },
+      ],
+    },
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'list'}],
+        },
+      ],
+    },
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [
+                            {type: 'block'},
+                            {type: 'list'},
+                            {type: 'callout'},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const nestedTableContainers = [
+  defineContainer({
+    type: 'table',
+    arrayField: 'rows',
+    of: [
+      defineContainer({
+        type: 'row',
+        arrayField: 'cells',
+        of: [defineContainer({type: 'cell', arrayField: 'content'})],
+      }),
+    ],
+  }),
+  defineContainer({type: 'callout', arrayField: 'content'}),
+]
+
+type NestedKeys = ReturnType<typeof createNestedKeys>
+
+function createNestedKeys(keyGenerator: () => string) {
+  return {
+    table: keyGenerator(),
+    row: keyGenerator(),
+    cell: keyGenerator(),
+    text: keyGenerator(),
+    span: keyGenerator(),
+    callout: keyGenerator(),
+    list: keyGenerator(),
+    item: keyGenerator(),
+  }
+}
+
+function nestedCellPath(keys: NestedKeys): Path {
+  return [
+    {_key: keys.table},
+    'rows',
+    {_key: keys.row},
+    'cells',
+    {_key: keys.cell},
+  ]
+}
+
+function nestedTable(keys: NestedKeys, cellBlockObject: object) {
+  return {
+    _key: keys.table,
+    _type: 'table',
+    rows: [
+      {
+        _key: keys.row,
+        _type: 'row',
+        cells: [
+          {
+            _key: keys.cell,
+            _type: 'cell',
+            content: [
+              nestedTextBlock(keys.text, keys.span, 'baz'),
+              cellBlockObject,
+            ],
+          },
+        ],
+      },
+    ],
+  }
+}
+
+function nestedTextBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [{_key: spanKey, _type: 'span', text, marks: []}],
+  }
+}
