@@ -8,7 +8,7 @@ import type {
   PortableTextTextBlock,
   Schema,
 } from '@portabletext/schema'
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, isTypedObject} from '@portabletext/schema'
 import type {
   Block,
   ContainerBlock,
@@ -17,6 +17,13 @@ import type {
   Block as TextspecBlock,
 } from '@textspec/notation'
 import {parse} from '@textspec/notation'
+import {
+  childArrayField,
+  containerPosition,
+  resolveTextspecContainer,
+  rootPosition,
+  type TextspecPosition,
+} from './textspec-position'
 
 /**
  * A registered container: the schema-declared field holding its children,
@@ -78,28 +85,12 @@ export function fromTextspec(
   const hasSelection = /(?<!\\)[|^]/.test(textspec)
   const input = hasSelection ? textspec : `${textspec}|`
   const state = parse(input)
-  const containers = context.containers ?? new Map()
-  const blocks: Array<PortableTextBlock> = []
-
-  for (const block of state.blocks) {
-    const pteBlocks = convertBlockToPTE(
-      context.schema,
-      containers,
-      block,
-      context.keyGenerator,
-      undefined,
-    )
-    for (const pteBlock of pteBlocks) {
-      blocks.push(pteBlock)
-    }
-  }
-
-  const selection = convertSelectionToPTE(
-    context.schema,
-    containers,
-    blocks,
-    state,
+  const position = rootPosition(context.schema, context.containers ?? new Map())
+  const blocks = state.blocks.flatMap((block) =>
+    convertBlockToPTE(position, block, context.keyGenerator),
   )
+
+  const selection = convertSelectionToPTE(position, state.blocks, blocks, state)
 
   return {blocks, selection}
 }
@@ -132,6 +123,7 @@ function containerTypeToListItem(type: string): string {
  * Returns an array of PTE children (spans and inline objects).
  */
 function flattenInlineNode(
+  schema: Schema,
   node: InlineNode,
   keyGenerator: () => string,
   parentMarks: Array<string>,
@@ -142,7 +134,7 @@ function flattenInlineNode(
       return [
         {
           _key: keyGenerator(),
-          _type: 'span',
+          _type: schema.span.name,
           text: node.text,
           marks: [...parentMarks],
         },
@@ -176,6 +168,7 @@ function flattenInlineNode(
 
       for (const child of node.children) {
         const flattened = flattenInlineNode(
+          schema,
           child,
           keyGenerator,
           childMarks,
@@ -215,7 +208,13 @@ function convertTextBlockToPTE(
   const children: Array<PortableTextSpan | PortableTextObject> = []
 
   for (const child of block.children) {
-    const flattened = flattenInlineNode(child, keyGenerator, [], markDefs)
+    const flattened = flattenInlineNode(
+      schema,
+      child,
+      keyGenerator,
+      [],
+      markDefs,
+    )
     for (const item of flattened) {
       children.push(item)
     }
@@ -224,7 +223,7 @@ function convertTextBlockToPTE(
   if (children.length === 0) {
     children.push({
       _key: keyGenerator(),
-      _type: 'span',
+      _type: schema.span.name,
       text: '',
       marks: [],
     })
@@ -249,48 +248,58 @@ function flattenContainer(
   schema: Schema,
   container: ContainerBlock,
   keyGenerator: () => string,
-  level: number,
 ): Array<PortableTextTextBlock> {
-  const listItem = containerTypeToListItem(container.type)
-  const results: Array<PortableTextTextBlock> = []
+  return listItems(container, 1).map((item) =>
+    convertTextBlockToPTE(
+      schema,
+      item.block,
+      keyGenerator,
+      item.style,
+      item.listItem,
+      item.level,
+    ),
+  )
+}
 
-  for (const child of container.children) {
+/**
+ * Conversion and selection both map list items through this, so they cannot
+ * disagree on which flat block a notation item becomes.
+ */
+function listItems(
+  container: ContainerBlock,
+  level: number,
+): Array<{
+  block: TextBlock
+  style: string
+  listItem: string
+  level: number
+  path: Array<number>
+}> {
+  const listItem = containerTypeToListItem(container.type)
+  const results: ReturnType<typeof listItems> = []
+
+  for (const [index, child] of container.children.entries()) {
     if (child.kind === 'textBlock' && child.type === 'LI') {
-      // Simple LI: LI is a text block directly (e.g., "LI: text")
-      results.push(
-        convertTextBlockToPTE(
-          schema,
-          child,
-          keyGenerator,
-          'normal',
-          listItem,
-          level,
-        ),
-      )
+      results.push({
+        block: child,
+        style: 'normal',
+        listItem,
+        level,
+        path: [index],
+      })
     } else if (child.kind === 'containerBlock' && child.type === 'LI') {
-      // LI container: can contain a text block and/or nested containers
-      for (const liChild of child.children) {
+      for (const [liIndex, liChild] of child.children.entries()) {
         if (liChild.kind === 'textBlock') {
-          results.push(
-            convertTextBlockToPTE(
-              schema,
-              liChild,
-              keyGenerator,
-              blockTypeToStyle(liChild.type),
-              listItem,
-              level,
-            ),
-          )
+          results.push({
+            block: liChild,
+            style: blockTypeToStyle(liChild.type),
+            listItem,
+            level,
+            path: [index, liIndex],
+          })
         } else if (liChild.kind === 'containerBlock') {
-          // Nested list
-          const nested = flattenContainer(
-            schema,
-            liChild,
-            keyGenerator,
-            level + 1,
-          )
-          for (const nestedBlock of nested) {
-            results.push(nestedBlock)
+          for (const nested of listItems(liChild, level + 1)) {
+            results.push({...nested, path: [index, liIndex, ...nested.path]})
           }
         }
       }
@@ -305,12 +314,15 @@ function flattenContainer(
  * A single textspec container block may produce multiple PTE blocks (flat list model).
  */
 function convertBlockToPTE(
-  schema: Schema,
-  containers: TextspecContainers,
+  position: TextspecPosition,
   block: Block,
   keyGenerator: () => string,
-  parentType: string | undefined,
 ): Array<PortableTextBlock> {
+  const explicitKey =
+    block.attrs && typeof block.attrs['_key'] === 'string'
+      ? block.attrs['_key']
+      : undefined
+
   switch (block.kind) {
     case 'textBlock': {
       let style = blockTypeToStyle(block.type)
@@ -329,14 +341,9 @@ function convertBlockToPTE(
         }
       }
 
-      const explicitKey =
-        block.attrs && typeof block.attrs['_key'] === 'string'
-          ? block.attrs['_key']
-          : undefined
-
       return [
         convertTextBlockToPTE(
-          schema,
+          position.schema,
           block,
           keyGenerator,
           style,
@@ -349,24 +356,23 @@ function convertBlockToPTE(
 
     case 'containerBlock': {
       if (isListContainer(block.type)) {
-        return flattenContainer(schema, block, keyGenerator, 1)
+        return flattenContainer(position.schema, block, keyGenerator)
       }
 
-      const resolvedType = resolveContainerType(
-        containers,
-        parentType,
-        block.type,
-      )
+      const registration = resolveTextspecContainer(position, block.type)
 
-      if (resolvedType) {
+      if (registration) {
+        const childPosition = containerPosition(position, registration)
+        const children = block.children.flatMap((child) =>
+          convertBlockToPTE(childPosition, child, keyGenerator),
+        )
+
         return [
-          convertContainerToPTE(
-            schema,
-            containers,
-            block,
-            keyGenerator,
-            resolvedType,
-          ),
+          {
+            _type: registration.type,
+            _key: explicitKey ?? keyGenerator(),
+            [registration.field.name]: children,
+          },
         ]
       }
 
@@ -393,88 +399,6 @@ function convertBlockToPTE(
 
 function isListContainer(type: string): boolean {
   return type === 'UL' || type === 'OL'
-}
-
-/**
- * Resolve the v2 `_type` for a textspec container block.
- *
- * For root-level containers (parentType=undefined): scan registered
- * container keys for one whose uppercased form matches the textspec
- * type.
- *
- * For nested containers: walk the parent container's `of` array for a
- * member whose uppercased type matches the textspec type. Returns the
- * member's bare type name if it's globally registered as a container
- * itself; otherwise the textspec lookup falls through to the unknown-
- * container fallback path.
- */
-function resolveContainerType(
-  containers: TextspecContainers,
-  parentType: string | undefined,
-  textspecType: string,
-): string | undefined {
-  if (parentType === undefined) {
-    for (const key of containers.keys()) {
-      if (key.toUpperCase() === textspecType) {
-        return key
-      }
-    }
-    return undefined
-  }
-
-  const parentField = containers.get(parentType)?.field
-  if (!parentField) {
-    return undefined
-  }
-
-  for (const ofMember of parentField.of) {
-    const memberType = ofMember.name ?? ofMember.type
-    if (memberType.toUpperCase() === textspecType) {
-      if (containers.has(memberType)) {
-        return memberType
-      }
-    }
-  }
-
-  return undefined
-}
-
-function convertContainerToPTE(
-  schema: Schema,
-  containers: TextspecContainers,
-  container: ContainerBlock,
-  keyGenerator: () => string,
-  resolvedType: string,
-): PortableTextObject {
-  const containerField = containers.get(resolvedType)?.field
-
-  if (!containerField) {
-    return {
-      _type: container.type.toLowerCase(),
-      _key: keyGenerator(),
-    }
-  }
-
-  const items: Array<PortableTextBlock> = []
-
-  for (const child of container.children) {
-    const pteBlocks = convertBlockToPTE(
-      schema,
-      containers,
-      child,
-      keyGenerator,
-      resolvedType,
-    )
-    for (const pteBlock of pteBlocks) {
-      items.push(pteBlock)
-    }
-  }
-
-  return {
-    _type: resolvedType,
-    _key: keyGenerator(),
-    [containerField.name]: items,
-  }
 }
 
 /**
@@ -506,19 +430,15 @@ export function selectionFromTextspec(
     return null
   }
 
-  const schemaContext = {schema: context.schema}
-  const containers = context.containers ?? new Map()
-
-  const anchor = resolveIndexedPoint(
-    schemaContext,
-    containers,
+  const position = rootPosition(context.schema, context.containers ?? new Map())
+  const anchor = resolvePatternPoint(
+    position,
     state.blocks,
     value,
     state.selection.anchor,
   )
-  const focus = resolveIndexedPoint(
-    schemaContext,
-    containers,
+  const focus = resolvePatternPoint(
+    position,
     state.blocks,
     value,
     state.selection.focus,
@@ -532,68 +452,197 @@ export function selectionFromTextspec(
 }
 
 /**
- * Resolve an indexed point from the textspec parse tree to a keyed point
- * against the PTE value. For text blocks, flattens the pattern's marks to
- * compute a block-local character offset, then walks the PTE block's flat
- * spans to find the span and offset.
+ * The value's spans may be split differently from the pattern's marks, so
+ * a point in a text block resolves through its block-local text offset.
  */
-function resolveIndexedPoint(
-  schemaContext: {schema: Schema},
-  containers: TextspecContainers,
+function resolvePatternPoint(
+  position: TextspecPosition,
   patternBlocks: ReadonlyArray<TextspecBlock>,
-  value: Array<PortableTextBlock>,
+  value: ReadonlyArray<unknown>,
   point: {path: Array<number>; offset: number},
 ): TextspecSelectionPoint | undefined {
-  const [blockIndex, ...rest] = point.path
+  const notationPoint = locateNotationPoint(patternBlocks, point.path)
+  const valueBlock = notationPoint
+    ? resolveValuePath(position, value, notationPoint.blockPath)
+    : undefined
 
-  if (typeof blockIndex !== 'number') {
+  if (!notationPoint || !valueBlock) {
     return undefined
   }
 
-  const patternBlock = patternBlocks[blockIndex]
-  const valueBlock = value[blockIndex] as Record<string, unknown> | undefined
+  if (!notationPoint.textBlock) {
+    return {path: valueBlock.path, offset: point.offset}
+  }
 
-  if (!patternBlock || !valueBlock) {
+  if (!isTextBlock({schema: valueBlock.position.schema}, valueBlock.node)) {
     return undefined
   }
 
-  const valueKey =
-    typeof valueBlock['_key'] === 'string' ? valueBlock['_key'] : undefined
-
-  if (!valueKey) {
-    return undefined
-  }
-
-  if (patternBlock.kind === 'textBlock') {
-    if (!isTextBlock(schemaContext, valueBlock as PortableTextBlock)) {
-      return undefined
-    }
-
-    const textOffset = computeTextOffset(
-      patternBlock.children,
-      rest,
-      point.offset,
-    )
-
-    if (textOffset === undefined) {
-      return undefined
-    }
-
-    return locateSpanAtOffset(
-      valueKey,
-      (valueBlock['children'] ?? []) as Array<Record<string, unknown>>,
-      textOffset,
-    )
-  }
-
-  // Non-text block (container or void). Walk by index.
-  return resolveContainerPoint(
-    schemaContext,
-    containers,
-    valueBlock,
-    rest,
+  const textOffset = computeTextOffset(
+    notationPoint.textBlock.children,
+    notationPoint.inlinePath,
     point.offset,
   )
+
+  if (textOffset === undefined) {
+    return undefined
+  }
+
+  return locateSpanAtOffset(
+    valueBlock.path,
+    valueBlock.node.children,
+    textOffset,
+  )
+}
+
+/**
+ * Map a notation path to the value's block indices. A UL/OL flattens into
+ * one sibling block per item, so the value index of a notation block counts
+ * the items of every list before it. `inlinePath` is the rest of the path
+ * below a text block, in notation (mark-nested) indices.
+ */
+function locateNotationPoint(
+  blocks: ReadonlyArray<TextspecBlock>,
+  path: ReadonlyArray<number>,
+):
+  | {
+      blockPath: Array<number>
+      textBlock: TextBlock | undefined
+      inlinePath: Array<number>
+    }
+  | undefined {
+  const blockPath: Array<number> = []
+  let siblings = blocks
+
+  for (let depth = 0; depth < path.length; depth++) {
+    const index = path[depth]
+    const block = index === undefined ? undefined : siblings[index]
+
+    if (index === undefined || !block) {
+      return undefined
+    }
+
+    const valueIndex = siblings
+      .slice(0, index)
+      .reduce((count, sibling) => count + flatBlockCount(sibling), 0)
+    const rest = path.slice(depth + 1)
+
+    if (block.kind === 'containerBlock' && isListContainer(block.type)) {
+      const items = listItems(block, 1)
+      const itemIndex = items.findIndex((item) =>
+        item.path.every((segment, i) => rest[i] === segment),
+      )
+      const item = items[itemIndex]
+
+      if (!item) {
+        return undefined
+      }
+
+      return {
+        blockPath: [...blockPath, valueIndex + itemIndex],
+        textBlock: item.block,
+        inlinePath: rest.slice(item.path.length),
+      }
+    }
+
+    blockPath.push(valueIndex)
+
+    if (block.kind === 'textBlock') {
+      return {blockPath, textBlock: block, inlinePath: rest}
+    }
+
+    if (block.kind !== 'containerBlock') {
+      return {blockPath, textBlock: undefined, inlinePath: rest}
+    }
+
+    siblings = block.children
+  }
+
+  return {blockPath, textBlock: undefined, inlinePath: []}
+}
+
+function flatBlockCount(block: TextspecBlock): number {
+  return block.kind === 'containerBlock' && isListContainer(block.type)
+    ? listItems(block, 1).length
+    : 1
+}
+
+/**
+ * Keep in sync with `flattenInlineNode`, which emits one child per text and
+ * inline object node and none for a mark, so a notation inline path maps to
+ * the number of those leaves before it. A path into an empty mark lands on
+ * the next leaf.
+ */
+function inlineLeafIndex(
+  children: ReadonlyArray<InlineNode>,
+  path: ReadonlyArray<number>,
+): number {
+  const [index, ...rest] = path
+
+  if (index === undefined) {
+    return 0
+  }
+
+  const before = children
+    .slice(0, index)
+    .reduce((count, child) => count + countInlineLeaves(child), 0)
+  const node = children[index]
+
+  return node?.kind === 'mark'
+    ? before + inlineLeafIndex(node.children, rest)
+    : before
+}
+
+function countInlineLeaves(node: InlineNode): number {
+  return node.kind === 'mark'
+    ? node.children.reduce(
+        (count, child) => count + countInlineLeaves(child),
+        0,
+      )
+    : 1
+}
+
+function resolveValuePath(
+  rootPosition: TextspecPosition,
+  value: ReadonlyArray<unknown>,
+  blockPath: ReadonlyArray<number>,
+):
+  | {
+      path: Array<TextspecSelectionPoint['path'][number]>
+      node: Record<string, unknown>
+      position: TextspecPosition
+    }
+  | undefined {
+  const path: Array<TextspecSelectionPoint['path'][number]> = []
+  let position = rootPosition
+  let siblings = value
+  let node: Record<string, unknown> | undefined
+
+  for (const index of blockPath) {
+    if (node) {
+      const child = childArrayField(position, node)
+      const field = child ? node[child.name] : undefined
+
+      if (!child || !Array.isArray(field)) {
+        return undefined
+      }
+
+      path.push(child.name)
+      position = child.position
+      siblings = field
+    }
+
+    const next = siblings[index]
+
+    if (!isTypedObject(next) || typeof next['_key'] !== 'string') {
+      return undefined
+    }
+
+    path.push({_key: next['_key']})
+    node = next
+  }
+
+  return node ? {path, node, position} : undefined
 }
 
 /**
@@ -677,8 +726,8 @@ function measureNodeText(node: Record<string, unknown> | undefined): number {
  * character offset. Returns a keyed selection point on that span.
  */
 function locateSpanAtOffset(
-  blockKey: string,
-  children: Array<Record<string, unknown>>,
+  blockPath: TextspecSelectionPoint['path'],
+  children: PortableTextTextBlock['children'],
   textOffset: number,
 ): TextspecSelectionPoint | undefined {
   // Empty text block in PTE always has at least one placeholder span after
@@ -691,17 +740,17 @@ function locateSpanAtOffset(
   let remaining = textOffset
 
   for (const child of children) {
-    const spanKey = child['_key']
+    const spanKey = child._key
 
     if (typeof spanKey !== 'string') {
       continue
     }
 
-    const text = typeof child['text'] === 'string' ? child['text'] : ''
+    const text = typeof child.text === 'string' ? child.text : ''
 
     if (remaining <= text.length) {
       return {
-        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        path: [...blockPath, 'children', {_key: spanKey}],
         offset: remaining,
       }
     }
@@ -711,12 +760,12 @@ function locateSpanAtOffset(
 
   // Offset overflows: place at end of last span if possible.
   const last = children[children.length - 1]
-  const lastKey = last ? last['_key'] : undefined
-  const lastText = last && typeof last['text'] === 'string' ? last['text'] : ''
+  const lastKey = last?._key
+  const lastText = typeof last?.text === 'string' ? last.text : ''
 
   if (typeof lastKey === 'string') {
     return {
-      path: [{_key: blockKey}, 'children', {_key: lastKey}],
+      path: [...blockPath, 'children', {_key: lastKey}],
       offset: lastText.length,
     }
   }
@@ -724,69 +773,9 @@ function locateSpanAtOffset(
   return undefined
 }
 
-/**
- * Resolve a point inside a container or void block by walking indices.
- */
-function resolveContainerPoint(
-  schemaContext: {schema: Schema},
-  containers: TextspecContainers,
-  block: Record<string, unknown>,
-  path: Array<number>,
-  leafOffset: number,
-): TextspecSelectionPoint | undefined {
-  const keyedPath: TextspecSelectionPoint['path'] = []
-  const blockKey = block['_key']
-
-  if (typeof blockKey !== 'string') {
-    return undefined
-  }
-
-  keyedPath.push({_key: blockKey})
-
-  let currentNode: Record<string, unknown> = block
-
-  for (const index of path) {
-    let arrayFieldName: string | undefined
-
-    if (isTextBlock(schemaContext, currentNode as PortableTextBlock)) {
-      arrayFieldName = 'children'
-    } else if (typeof currentNode['_type'] === 'string') {
-      for (const [, containerConfig] of containers) {
-        if (currentNode[containerConfig.field.name] !== undefined) {
-          arrayFieldName = containerConfig.field.name
-          break
-        }
-      }
-    }
-
-    if (!arrayFieldName) {
-      break
-    }
-
-    const field = currentNode[arrayFieldName]
-
-    if (!Array.isArray(field)) {
-      return undefined
-    }
-
-    keyedPath.push(arrayFieldName)
-
-    const child = field[index] as Record<string, unknown> | undefined
-
-    if (!child || typeof child['_key'] !== 'string') {
-      return undefined
-    }
-
-    keyedPath.push({_key: child['_key']})
-    currentNode = child
-  }
-
-  return {path: keyedPath, offset: leafOffset}
-}
-
 function convertSelectionToPTE(
-  schema: Schema,
-  containers: TextspecContainers,
+  position: TextspecPosition,
+  notationBlocks: ReadonlyArray<TextspecBlock>,
   blocks: Array<PortableTextBlock>,
   state: {
     selection: {
@@ -799,104 +788,102 @@ function convertSelectionToPTE(
     return null
   }
 
-  // Textspec represents a selected block object as a range from offset 0
-  // to offset 1 on a non-text block. PTE represents it as a collapsed
-  // selection at offset 0. Translate when the textspec selection points
-  // resolve to the same path of a non-text block.
-  const {anchor: anchorPoint} = state.selection
-  let {focus: focusPoint} = state.selection
-  if (
-    anchorPoint.offset === 0 &&
-    focusPoint.offset === 1 &&
-    anchorPoint.path.length === 1 &&
-    focusPoint.path.length === 1 &&
-    anchorPoint.path[0] === focusPoint.path[0]
-  ) {
-    const blockIndex = anchorPoint.path[0]
-    const block = blockIndex !== undefined ? blocks[blockIndex] : undefined
-
-    if (block && !isTextBlock({schema}, block)) {
-      focusPoint = {path: focusPoint.path, offset: 0}
-    }
-  }
-
-  const anchor = resolvePointToPTE(schema, containers, blocks, anchorPoint)
-  const focus = resolvePointToPTE(schema, containers, blocks, focusPoint)
+  const anchor = resolveConvertedPoint(
+    position,
+    notationBlocks,
+    blocks,
+    state.selection.anchor,
+  )
+  const focus = resolveConvertedPoint(
+    position,
+    notationBlocks,
+    blocks,
+    state.selection.focus,
+  )
 
   if (!anchor || !focus) {
     return null
   }
 
-  return {anchor, focus}
+  // Textspec represents a selected block object as a range from offset 0
+  // to offset 1. PTE represents it as a collapsed selection at offset 0.
+  if (
+    anchor.blockObject &&
+    anchor.point.offset === 0 &&
+    focus.point.offset === 1 &&
+    isEqualPaths(anchor.point.path, focus.point.path)
+  ) {
+    return {anchor: anchor.point, focus: {...focus.point, offset: 0}}
+  }
+
+  return {anchor: anchor.point, focus: focus.point}
 }
 
-function resolvePointToPTE(
-  schema: Schema,
-  containers: TextspecContainers,
+function resolveConvertedPoint(
+  position: TextspecPosition,
+  notationBlocks: ReadonlyArray<TextspecBlock>,
   blocks: Array<PortableTextBlock>,
   point: {path: Array<number>; offset: number},
-): TextspecSelectionPoint | undefined {
-  const keyedPath = indexedPathToKeyedPath(
-    point.path,
-    schema,
-    containers,
-    blocks as Array<Record<string, unknown>>,
-  )
+): {point: TextspecSelectionPoint; blockObject: boolean} | undefined {
+  const notationPoint = locateNotationPoint(notationBlocks, point.path)
+  const valueBlock = notationPoint
+    ? resolveValuePath(position, blocks, notationPoint.blockPath)
+    : undefined
 
-  if (!keyedPath) {
+  if (!notationPoint || !valueBlock) {
     return undefined
   }
 
-  return {path: keyedPath, offset: point.offset}
-}
+  const textBlock = isTextBlock(
+    {schema: valueBlock.position.schema},
+    valueBlock.node,
+  )
+    ? valueBlock.node
+    : undefined
 
-function indexedPathToKeyedPath(
-  indexedPath: Array<number>,
-  schema: Schema,
-  containers: TextspecContainers,
-  children: Array<Record<string, unknown>>,
-): TextspecSelectionPoint['path'] | undefined {
-  const schemaContext = {schema}
-  const keyedPath: TextspecSelectionPoint['path'] = []
-  let currentChildren = children
-
-  for (const index of indexedPath) {
-    const node = currentChildren[index]
-
-    if (!node || !('_key' in node) || typeof node['_key'] !== 'string') {
-      return undefined
-    }
-
-    keyedPath.push({_key: node['_key']})
-
-    let arrayFieldName: string | undefined
-
-    if (isTextBlock(schemaContext, node as PortableTextBlock)) {
-      arrayFieldName = 'children'
-    } else if (typeof node['_type'] === 'string') {
-      // Look up the field name from the containers map
-      for (const [, containerConfig] of containers) {
-        if (node[containerConfig.field.name] !== undefined) {
-          arrayFieldName = containerConfig.field.name
-          break
-        }
-      }
-    }
-
-    if (arrayFieldName) {
-      const field = node[arrayFieldName]
-
-      if (Array.isArray(field)) {
-        keyedPath.push(arrayFieldName)
-        currentChildren = field as Array<Record<string, unknown>>
-      }
-    } else {
-      // Leaf node (e.g., span). Remaining indices are mark nesting depth
-      // from the textspec parser and should be ignored since PTE uses
-      // flat marks.
-      break
+  if (!notationPoint.textBlock || !textBlock) {
+    return {
+      point: {path: valueBlock.path, offset: point.offset},
+      blockObject: !textBlock,
     }
   }
 
-  return keyedPath
+  const child =
+    textBlock.children[
+      inlineLeafIndex(
+        notationPoint.textBlock.children,
+        notationPoint.inlinePath,
+      )
+    ]
+
+  if (!child) {
+    return undefined
+  }
+
+  return {
+    point: {
+      path: [...valueBlock.path, 'children', {_key: child._key}],
+      offset: point.offset,
+    },
+    blockObject: false,
+  }
+}
+
+function isEqualPaths(
+  a: TextspecSelectionPoint['path'],
+  b: TextspecSelectionPoint['path'],
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every((segment, index) => {
+      const other = b[index]
+      return isKeyedSegment(segment) && isKeyedSegment(other)
+        ? segment._key === other._key
+        : segment === other
+    })
+  )
+}
+
+function isKeyedSegment(segment: unknown): segment is {_key: string} {
+  return typeof segment === 'object' && segment !== null && '_key' in segment
 }

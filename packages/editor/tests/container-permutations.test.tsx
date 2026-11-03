@@ -339,7 +339,7 @@ describe('container archetype permutations', () => {
 
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: [strong:^foo]', 'FACT-BOX:', '  B: [strong:bar]'].join('\n'),
+        ['B: [strong:^foo]', 'FACT-BOX:', '  B: [strong:bar|]'].join('\n'),
       )
     })
   })
