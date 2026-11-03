@@ -22,6 +22,7 @@ import {getEntireSoftLineDeleteEvents} from '../../../internal-utils/entire-soft
 import {getHardLineDeleteEvent} from '../../../internal-utils/hard-line-delete-event'
 import {isReplacementDelete} from '../../../internal-utils/is-replacement-delete'
 import {getAncestor} from '../../../traversal/get-ancestor'
+import {getEnclosingBlock} from '../../../traversal/get-enclosing-block'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
 import {getText} from '../../../traversal/get-text'
@@ -1554,9 +1555,17 @@ export const Editable = forwardRef(
                     }
 
                     const {selection} = editor.snapshot.context
-                    const blockSegment =
-                      selection !== null ? selection.focus.path[0]! : 0
-                    const elementText = getText(editor.snapshot, [blockSegment])
+                    const focusBlock =
+                      selection !== null
+                        ? getEnclosingBlock(
+                            editor.snapshot,
+                            selection.focus.path,
+                          )
+                        : undefined
+                    const elementText =
+                      focusBlock !== undefined
+                        ? getText(editor.snapshot, focusBlock.path)
+                        : undefined
                     const isRTL =
                       elementText !== undefined &&
                       getDirection(elementText) === 'rtl'
