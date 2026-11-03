@@ -570,7 +570,7 @@ describe('insert respects sub-schema', () => {
 
     await vi.waitFor(() => {
       return expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['CALLOUT:', '  B: [strong:hello]'].join('\n'),
+        ['CALLOUT:', '  B: [strong:^hello|]'].join('\n'),
       )
     })
   })
