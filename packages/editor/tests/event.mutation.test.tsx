@@ -1,4 +1,8 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {useState} from 'react'
@@ -11,7 +15,10 @@ import {
   type MutationEvent,
   type Patch,
 } from '../src'
+import type {Path} from '../src/engine/interfaces/path'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.mutation', () => {
@@ -263,6 +270,201 @@ describe('event.mutation', () => {
     })
   })
 })
+
+describe.each([
+  {depth: 'at the root', wrap: atRoot},
+  {depth: 'inside a callout', wrap: inCallout},
+  {depth: 'inside a callout inside a callout', wrap: inNestedCallout},
+  {depth: 'inside a field with its own sub-schema', wrap: inNote},
+])('event.mutation value $depth', ({wrap}) => {
+  test('Scenario: A remote patch applied while a local edit is pending is in the flushed mutation value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const {wrapValue, prefix} = wrap(keyGenerator)
+    const fooSpanPath = [
+      ...prefix,
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    const barSpanPath = [
+      ...prefix,
+      {_key: barBlockKey},
+      'children',
+      {_key: barSpanKey},
+    ]
+    const mutations: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestingSchemaDefinition,
+      initialValue: wrapValue([
+        block(fooBlockKey, fooSpanKey, 'foo'),
+        block(barBlockKey, barSpanKey, 'bar'),
+      ]),
+      children: (
+        <>
+          <NodePlugin nodes={nestingContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'baz'})
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          path: [...barSpanPath, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barbaz'))),
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(mutations).toEqual([
+        {
+          type: 'mutation',
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [...fooSpanPath, 'text'],
+              value: stringifyPatches(makePatches(makeDiff('foo', 'foobaz'))),
+            },
+          ],
+          value: wrapValue([
+            block(fooBlockKey, fooSpanKey, 'foobaz'),
+            block(barBlockKey, barSpanKey, 'barbaz'),
+          ]),
+        },
+      ])
+    })
+  })
+})
+
+const nestingSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'callout'}],
+        },
+      ],
+    },
+    {
+      name: 'note',
+      fields: [
+        {
+          name: 'body',
+          type: 'array',
+          of: [
+            {
+              type: 'block',
+              styles: [{name: 'normal'}, {name: 'h1'}],
+              decorators: [{name: 'em'}],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const nestingContainers = [
+  defineContainer({type: 'callout', arrayField: 'content'}),
+  defineContainer({type: 'note', arrayField: 'body'}),
+]
+
+type Wrap = (keyGenerator: () => string) => {
+  wrapValue: (blocks: Array<PortableTextBlock>) => Array<PortableTextBlock>
+  prefix: Path
+}
+
+function atRoot(): ReturnType<Wrap> {
+  return {wrapValue: (blocks) => blocks, prefix: []}
+}
+
+function inCallout(keyGenerator: () => string): ReturnType<Wrap> {
+  const calloutKey = keyGenerator()
+
+  return {
+    wrapValue: (blocks) => [
+      {_type: 'callout', _key: calloutKey, content: blocks},
+    ],
+    prefix: [{_key: calloutKey}, 'content'],
+  }
+}
+
+function inNestedCallout(keyGenerator: () => string): ReturnType<Wrap> {
+  const outerKey = keyGenerator()
+  const innerKey = keyGenerator()
+
+  return {
+    wrapValue: (blocks) => [
+      {
+        _type: 'callout',
+        _key: outerKey,
+        content: [{_type: 'callout', _key: innerKey, content: blocks}],
+      },
+    ],
+    prefix: [{_key: outerKey}, 'content', {_key: innerKey}, 'content'],
+  }
+}
+
+function inNote(keyGenerator: () => string): ReturnType<Wrap> {
+  const noteKey = keyGenerator()
+
+  return {
+    wrapValue: (blocks) => [{_type: 'note', _key: noteKey, body: blocks}],
+    prefix: [{_key: noteKey}, 'body'],
+  }
+}
+
+function block(
+  blockKey: string,
+  spanKey: string,
+  text: string,
+): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
 
 function insertTextSync(locator: Locator, text: string) {
   const element = locator.element()

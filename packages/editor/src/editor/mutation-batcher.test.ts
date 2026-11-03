@@ -1,4 +1,6 @@
 import type {Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {
   emitOperationEvent,
@@ -9,7 +11,7 @@ import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
-import {createRelay} from './relay'
+import {createRelay, type MutationEvent} from './relay'
 
 const FLUSH_INTERVAL = 500
 const TYPE_DEBOUNCE = 250
@@ -17,16 +19,16 @@ const TYPE_DEBOUNCE = 250
 function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   const editorEngine = createEditor() as PortableTextEditorEngine
   editorEngine.isDeferringMutations = false
+  editorEngine.snapshot = {
+    context: {value: []},
+  } as unknown as PortableTextEditorEngine['snapshot']
 
   let isReadOnly = readOnly
   let patchListener:
-    | ((event: {
-        patch: Patch
-        operationId?: string
-        value: Array<never>
-      }) => void)
+    | ((event: {patch: Patch; operationId?: string}) => void)
     | undefined
   const mutationSends: Array<{patches: Array<Patch>}> = []
+  const mutationValues: Array<Array<PortableTextBlock> | undefined> = []
 
   const editorActor = {
     getSnapshot: () => ({
@@ -48,17 +50,14 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
     }),
     on: (
       _type: 'internal.patch',
-      listener: (event: {
-        patch: Patch
-        operationId?: string
-        value: Array<never>
-      }) => void,
+      listener: (event: {patch: Patch; operationId?: string}) => void,
     ) => {
       patchListener = listener
       return {unsubscribe: () => {}}
     },
-    send: (event: {type: 'mutation'; patches: Array<Patch>}) => {
+    send: (event: MutationEvent) => {
       mutationSends.push({patches: event.patches})
+      mutationValues.push(event.value)
     },
   } as unknown as EditorActor
 
@@ -75,10 +74,11 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
   return {
     editorEngine,
     mutationSends,
+    mutationValues,
     relayedPatches,
     unsubscribe,
     sendPatch: (patch: Patch, operationId?: string) => {
-      patchListener?.({patch, operationId, value: []})
+      patchListener?.({patch, operationId})
     },
     setReadOnly: (value: boolean) => {
       isReadOnly = value
@@ -149,6 +149,31 @@ describe('mutation batcher', () => {
       {patches: [createPatch('c')]},
     ])
     expect(harness.editorEngine.isDeferringMutations).toBe(false)
+  })
+
+  test('every mutation of a flush carries the engine value at flush time', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    harness.sendPatch(createPatch('b'), 'op-2')
+
+    const flushTimeValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    harness.editorEngine.snapshot.context.value = flushTimeValue
+
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    expect(harness.mutationValues).toEqual([flushTimeValue, flushTimeValue])
   })
 
   test('relays individual patch events immediately while batching mutations', () => {

@@ -1,5 +1,4 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import {isNormalizing} from '../engine/editor/is-normalizing'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -8,7 +7,6 @@ import type {Relay} from './relay'
 
 type PendingMutation = {
   operationId?: string
-  value: Array<PortableTextBlock> | undefined
   patches: Array<Patch>
 }
 
@@ -63,11 +61,7 @@ export function createMutationBatcher({
     return editorActor.getSnapshot().matches({'edit mode': 'read only'})
   }
 
-  function handlePatch(event: {
-    patch: Patch
-    operationId?: string
-    value: Array<PortableTextBlock>
-  }) {
+  function handlePatch(event: {patch: Patch; operationId?: string}) {
     editorEngine.isDeferringMutations = true
 
     if (isReadOnly()) {
@@ -79,12 +73,10 @@ export function createMutationBatcher({
     const lastBulk = pendingMutations.at(-1)
 
     if (lastBulk && lastBulk.operationId === event.operationId) {
-      lastBulk.value = event.value
       lastBulk.patches.push(event.patch)
     } else {
       pendingMutations.push({
         operationId: event.operationId,
-        value: event.value,
         patches: [event.patch],
       })
     }
@@ -127,7 +119,7 @@ export function createMutationBatcher({
       editorActor.send({
         type: 'mutation',
         patches: bulk.patches,
-        value: bulk.value,
+        value: editorEngine.snapshot.context.value,
       })
     }
   }
