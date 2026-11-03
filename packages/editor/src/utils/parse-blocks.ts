@@ -11,6 +11,10 @@ import {
   type Schema,
   type TypedObject,
 } from '@portabletext/schema'
+import {
+  resolveOfMember,
+  type DeclarationScope,
+} from '../schema/declarations-in-scope'
 import {isRecord} from './asserters'
 
 /**
@@ -67,17 +71,20 @@ export function parseBlock({
   keyGenerator,
   block,
   profile,
+  scope,
 }: {
   schema: Schema
   keyGenerator: () => string
   block: unknown
   profile: ParseProfile
+  scope?: DeclarationScope
 }): PortableTextBlock | undefined {
   return parseBlockInternal({
     schema,
     keyGenerator,
     block,
     options: blockProfiles[profile],
+    scope,
   })
 }
 
@@ -171,6 +178,7 @@ function parseBlockInternal({
   keyGenerator,
   block,
   options,
+  scope,
 }: {
   schema: Schema
   keyGenerator: () => string
@@ -180,10 +188,11 @@ function parseBlockInternal({
     removeUnusedMarkDefs: boolean
     validateFields: boolean
   }
+  scope?: DeclarationScope
 }): PortableTextBlock | undefined {
   return (
     parseTextBlock({block, schema, keyGenerator, options}) ??
-    parseBlockObject({blockObject: block, schema, keyGenerator, options})
+    parseBlockObject({blockObject: block, schema, keyGenerator, options, scope})
   )
 }
 
@@ -192,11 +201,13 @@ function parseBlockObject({
   schema,
   keyGenerator,
   options,
+  scope,
 }: {
   blockObject: unknown
   schema: Schema
   keyGenerator: () => string
   options: {validateFields: boolean}
+  scope?: DeclarationScope
 }): PortableTextObject | undefined {
   if (!isTypedObject(blockObject)) {
     return undefined
@@ -215,6 +226,7 @@ function parseBlockObject({
     schema,
     keyGenerator,
     schemaType,
+    scope,
     options,
   })
 }
@@ -584,52 +596,6 @@ export function parseAnnotation({
 }
 
 /**
- * Resolve an `of` member against a runtime `_type`. Returns the schema-type
- * to use for parsing the item, or `undefined` if no member matches.
- *
- * Three forms (one branch each):
- * - Inline declaration `{type: 'object', name: 'X', fields: [...]}` -- name
- *   matches `_type`, fields are inline.
- * - Reference `{type: 'X'}` -- looks up in the ancestor chain first
- *   (inline-declared types are visible to descendants), then in the schema's
- *   root `blockObjects`. Mirrors `resolve-containers.ts`'s reference
- *   resolution.
- * - `{type: 'block'}` -- not a non-PTE object member, returns `undefined`.
- */
-function resolveOfMember(
-  of: ReadonlyArray<OfDefinition>,
-  typeName: string,
-  schema: Schema,
-  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>,
-): {name: string; fields: ReadonlyArray<FieldDefinition>} | undefined {
-  for (const member of of) {
-    if (member.type === 'block') {
-      continue
-    }
-    if (member.type === 'object' && 'name' in member && member.name) {
-      if (member.name === typeName && 'fields' in member && member.fields) {
-        return {name: member.name, fields: member.fields}
-      }
-      continue
-    }
-    if (member.type === typeName) {
-      const ancestorMatch = ancestorFields.get(typeName)
-      if (ancestorMatch) {
-        return {name: typeName, fields: ancestorMatch}
-      }
-      const rootMatch = schema.blockObjects.find(
-        (blockObject) => blockObject.name === typeName,
-      )
-      if (rootMatch && 'fields' in rootMatch && rootMatch.fields) {
-        return {name: rootMatch.name, fields: rootMatch.fields}
-      }
-      return undefined
-    }
-  }
-  return undefined
-}
-
-/**
  * Parse an object against a `{name, fields}` schema type. Validates top-level
  * fields and recurses into any array field whose `of` contains a block-like
  * member -- parsing the nested blocks against a child `Schema` built from
@@ -640,7 +606,7 @@ function parseObject({
   schema,
   keyGenerator,
   schemaType,
-  ancestorFields,
+  scope,
   options,
 }: {
   object: TypedObject
@@ -650,7 +616,7 @@ function parseObject({
     name: string
     fields: ReadonlyArray<FieldDefinition>
   }
-  ancestorFields?: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>
+  scope?: DeclarationScope
   options: {validateFields: boolean}
 }): PortableTextObject {
   const {_key, ...customFields} = object
@@ -659,8 +625,8 @@ function parseObject({
     schemaType.fields.map((field) => [field.name, field]),
   )
 
-  const nextAncestors = new Map(ancestorFields ?? [])
-  nextAncestors.set(schemaType.name, schemaType.fields)
+  const nextScope = new Map(scope ?? [])
+  nextScope.set(schemaType.name, schemaType.fields)
 
   const values: Record<string, unknown> = {}
 
@@ -685,7 +651,7 @@ function parseObject({
         keyGenerator,
         of: field.of,
         value,
-        ancestorFields: nextAncestors,
+        scope: nextScope,
         options,
       })
       continue
@@ -712,7 +678,7 @@ function parseObject({
  *
  * - Block objects (and structural objects sitting between containers and
  *   text blocks) are parsed via `resolveOfMember` against the `of` array,
- *   with `ancestorFields` carrying inline type declarations down to bare
+ *   with `scope` carrying inline type declarations down to bare
  *   references like `{type: 'list'}`. This lets nested containers resolve
  *   to their inline shapes at any depth.
  *
@@ -723,14 +689,14 @@ function parseContainerFieldValue({
   keyGenerator,
   of,
   value,
-  ancestorFields,
+  scope,
   options,
 }: {
   schema: Schema
   keyGenerator: () => string
   of: ReadonlyArray<OfDefinition>
   value: ReadonlyArray<unknown>
-  ancestorFields: ReadonlyMap<string, ReadonlyArray<FieldDefinition>>
+  scope: DeclarationScope
   options: {validateFields: boolean}
 }): Array<unknown> {
   const hasBlockMember = of.some((member) => member.type === 'block')
@@ -757,7 +723,7 @@ function parseContainerFieldValue({
       return parsed ? [parsed] : []
     }
 
-    const schemaType = resolveOfMember(of, item._type, schema, ancestorFields)
+    const schemaType = resolveOfMember(of, item._type, schema, scope)
     if (!schemaType) {
       return [item]
     }
@@ -767,7 +733,7 @@ function parseContainerFieldValue({
         schema,
         keyGenerator,
         schemaType,
-        ancestorFields,
+        scope,
         options,
       }),
     ]

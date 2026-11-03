@@ -963,3 +963,944 @@ describe('insert respects sub-schema', () => {
     consoleError.mockRestore()
   })
 })
+
+describe('bare type references resolve to the nearest enclosing declaration', () => {
+  test('Scenario: `insert.block` of a recursive type declared inline keeps every field two levels deep', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sectionKey = keyGenerator()
+    const outerSubsectionKey = keyGenerator()
+    const innerSubsectionKey = keyGenerator()
+    const insertedSubsectionKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: recursiveSectionSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  title: 'bar',
+                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={recursiveSectionContainers} />,
+    })
+
+    const caretPath = [
+      {_key: sectionKey},
+      'content',
+      {_key: outerSubsectionKey},
+      'content',
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: caretPath, offset: 3},
+        focus: {path: caretPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'subsection',
+        _key: insertedSubsectionKey,
+        title: 'baz',
+        content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'subsection',
+                  _key: insertedSubsectionKey,
+                  title: 'baz',
+                  content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                },
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  title: 'bar',
+                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `insert.blocks` of a recursive type declared inline keeps every field two levels deep', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sectionKey = keyGenerator()
+    const outerSubsectionKey = keyGenerator()
+    const innerSubsectionKey = keyGenerator()
+    const insertedSubsectionKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: recursiveSectionSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  title: 'bar',
+                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={recursiveSectionContainers} />,
+    })
+
+    const caretPath = [
+      {_key: sectionKey},
+      'content',
+      {_key: outerSubsectionKey},
+      'content',
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: caretPath, offset: 3},
+        focus: {path: caretPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        {
+          _type: 'subsection',
+          _key: insertedSubsectionKey,
+          title: 'baz',
+          content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+        },
+      ],
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'subsection',
+                  _key: insertedSubsectionKey,
+                  title: 'baz',
+                  content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                },
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  title: 'bar',
+                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `block.set` on a recursive type declared inline changes its field two levels deep', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sectionKey = keyGenerator()
+    const outerSubsectionKey = keyGenerator()
+    const innerSubsectionKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: recursiveSectionSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  title: 'bar',
+                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={recursiveSectionContainers} />,
+    })
+
+    editor.send({
+      type: 'block.set',
+      at: [
+        {_key: sectionKey},
+        'content',
+        {_key: outerSubsectionKey},
+        'content',
+        {_key: innerSubsectionKey},
+      ],
+      props: {title: 'baz'},
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  title: 'baz',
+                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `insert.block` of a recursive type declared inline keeps every field two levels deep inside another container', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const sectionKey = keyGenerator()
+    const outerSubsectionKey = keyGenerator()
+    const insertedSubsectionKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'section'}],
+              },
+            ],
+          },
+          ...recursiveSectionSchemaDefinition.blockObjects,
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'section',
+              _key: sectionKey,
+              content: [
+                {
+                  _type: 'subsection',
+                  _key: outerSubsectionKey,
+                  title: 'foo',
+                  content: [textBlock(fooBlockKey, fooSpanKey, 'foo')],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+            ...recursiveSectionContainers,
+          ]}
+        />
+      ),
+    })
+
+    const caretPath = [
+      {_key: calloutKey},
+      'content',
+      {_key: sectionKey},
+      'content',
+      {_key: outerSubsectionKey},
+      'content',
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: caretPath, offset: 3},
+        focus: {path: caretPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'subsection',
+        _key: insertedSubsectionKey,
+        title: 'baz',
+        content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'section',
+              _key: sectionKey,
+              content: [
+                {
+                  _type: 'subsection',
+                  _key: outerSubsectionKey,
+                  title: 'foo',
+                  content: [
+                    textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                    {
+                      _type: 'subsection',
+                      _key: insertedSubsectionKey,
+                      title: 'baz',
+                      content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `insert.block` of a recursive type declared inline in the array field of a block object with other fields keeps every field two levels deep', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const figureKey = keyGenerator()
+    const asideKey = keyGenerator()
+    const insertedAsideKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'figure',
+            fields: [
+              {name: 'src', type: 'string'},
+              {
+                name: 'caption',
+                type: 'array',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'aside',
+                    fields: [
+                      {name: 'note', type: 'string'},
+                      {
+                        name: 'body',
+                        type: 'array',
+                        of: [{type: 'block'}, {type: 'aside'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'figure',
+          _key: figureKey,
+          src: 'foo',
+          caption: [
+            {
+              _type: 'aside',
+              _key: asideKey,
+              note: 'bar',
+              body: [textBlock(fooBlockKey, fooSpanKey, 'foo')],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'figure',
+              arrayField: 'caption',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer({
+              type: 'aside',
+              arrayField: 'body',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    const caretPath = [
+      {_key: figureKey},
+      'caption',
+      {_key: asideKey},
+      'body',
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: caretPath, offset: 3},
+        focus: {path: caretPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'aside',
+        _key: insertedAsideKey,
+        note: 'baz',
+        body: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'figure',
+          _key: figureKey,
+          src: 'foo',
+          caption: [
+            {
+              _type: 'aside',
+              _key: asideKey,
+              note: 'bar',
+              body: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'aside',
+                  _key: insertedAsideKey,
+                  note: 'baz',
+                  body: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `insert.block` of a bare reference resolves against the nearest of two same-named enclosing declarations', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sectionKey = keyGenerator()
+    const outerBoxKey = keyGenerator()
+    const panelKey = keyGenerator()
+    const innerBoxKey = keyGenerator()
+    const insertedBoxKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'section',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'box',
+                    fields: [
+                      {name: 'title', type: 'string'},
+                      {
+                        name: 'content',
+                        type: 'array',
+                        of: [
+                          {type: 'block'},
+                          {
+                            type: 'object',
+                            name: 'panel',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [
+                                  {type: 'block'},
+                                  {
+                                    type: 'object',
+                                    name: 'box',
+                                    fields: [
+                                      {name: 'tone', type: 'string'},
+                                      {
+                                        name: 'content',
+                                        type: 'array',
+                                        of: [{type: 'block'}, {type: 'box'}],
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'box',
+              _key: outerBoxKey,
+              title: 'foo',
+              content: [
+                {
+                  _type: 'panel',
+                  _key: panelKey,
+                  content: [
+                    {
+                      _type: 'box',
+                      _key: innerBoxKey,
+                      tone: 'bar',
+                      content: [textBlock(fooBlockKey, fooSpanKey, 'foo')],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'section',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+              of: [
+                defineContainer({
+                  type: 'box',
+                  arrayField: 'content',
+                  render: ({children}) => <>{children}</>,
+                  of: [
+                    defineContainer({
+                      type: 'panel',
+                      arrayField: 'content',
+                      render: ({children}) => <>{children}</>,
+                      of: [
+                        defineContainer({
+                          type: 'box',
+                          arrayField: 'content',
+                          render: ({children}) => <>{children}</>,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+
+    const caretPath = [
+      {_key: sectionKey},
+      'content',
+      {_key: outerBoxKey},
+      'content',
+      {_key: panelKey},
+      'content',
+      {_key: innerBoxKey},
+      'content',
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: caretPath, offset: 3},
+        focus: {path: caretPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'box',
+        _key: insertedBoxKey,
+        title: 'baz',
+        tone: 'baz',
+        content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'box',
+              _key: outerBoxKey,
+              title: 'foo',
+              content: [
+                {
+                  _type: 'panel',
+                  _key: panelKey,
+                  content: [
+                    {
+                      _type: 'box',
+                      _key: innerBoxKey,
+                      tone: 'bar',
+                      content: [
+                        textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                        {
+                          _type: 'box',
+                          _key: insertedBoxKey,
+                          tone: 'baz',
+                          content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: `insert.block` of a type whose field references an enclosing declaration keeps the fields of the nested reference', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sectionKey = keyGenerator()
+    const boxKey = keyGenerator()
+    const insertedPanelKey = keyGenerator()
+    const nestedBoxKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'section',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'box',
+                    fields: [
+                      {name: 'title', type: 'string'},
+                      {
+                        name: 'content',
+                        type: 'array',
+                        of: [
+                          {type: 'block'},
+                          {
+                            type: 'object',
+                            name: 'panel',
+                            fields: [
+                              {
+                                name: 'content',
+                                type: 'array',
+                                of: [{type: 'block'}, {type: 'box'}],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'box',
+              _key: boxKey,
+              title: 'foo',
+              content: [textBlock(fooBlockKey, fooSpanKey, 'foo')],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'section',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer({
+              type: 'box',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer({
+              type: 'panel',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    const caretPath = [
+      {_key: sectionKey},
+      'content',
+      {_key: boxKey},
+      'content',
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: caretPath, offset: 3},
+        focus: {path: caretPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: {
+        _type: 'panel',
+        _key: insertedPanelKey,
+        content: [
+          {
+            _type: 'box',
+            _key: nestedBoxKey,
+            title: 'baz',
+            tone: 'baz',
+            content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+          },
+        ],
+      },
+      placement: 'after',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'box',
+              _key: boxKey,
+              title: 'foo',
+              content: [
+                textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                {
+                  _type: 'panel',
+                  _key: insertedPanelKey,
+                  content: [
+                    {
+                      _type: 'box',
+                      _key: nestedBoxKey,
+                      title: 'baz',
+                      content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+})
+
+const recursiveSectionSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'section',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [
+            {type: 'block'},
+            {
+              type: 'object',
+              name: 'subsection',
+              fields: [
+                {name: 'title', type: 'string'},
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'subsection'}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const recursiveSectionContainers = [
+  defineContainer({
+    type: 'section',
+    arrayField: 'content',
+    render: ({children}) => <>{children}</>,
+  }),
+  defineContainer({
+    type: 'subsection',
+    arrayField: 'content',
+    render: ({children}) => <>{children}</>,
+  }),
+]
+
+function textBlock(key: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: key,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}

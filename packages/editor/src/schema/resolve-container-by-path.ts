@@ -11,6 +11,11 @@ import type {
 } from '../renderers/renderer.types'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {ChildArrayField, ResolvedContainers} from './container-types'
+import {
+  collectDeclarations,
+  resolveOfMember,
+  type DeclarationScope,
+} from './declarations-in-scope'
 import {entryType} from './entry-type'
 
 /**
@@ -32,37 +37,15 @@ export type RichResolutionInput = {
 function schemaDeclarationFieldsAt(
   schema: EditorSchema,
   parentField: ChildArrayField | undefined,
+  scope: DeclarationScope,
   type: string,
 ): ReadonlyArray<FieldDefinition> | undefined {
   if (!parentField) {
-    const rootMatch = schema.blockObjects.find(
-      (blockObject) => blockObject.name === type,
-    )
-    if (!rootMatch) {
-      return undefined
-    }
-    return 'fields' in rootMatch && rootMatch.fields ? rootMatch.fields : []
+    return schema.blockObjects.find((blockObject) => blockObject.name === type)
+      ?.fields
   }
 
-  for (const member of parentField.of) {
-    if (member.type === 'object' && 'name' in member && member.name === type) {
-      return 'fields' in member && member.fields ? member.fields : []
-    }
-    if (
-      member.type !== 'object' &&
-      member.type !== 'block' &&
-      member.type === type
-    ) {
-      const rootMatch = schema.blockObjects.find(
-        (blockObject) => blockObject.name === type,
-      )
-      if (!rootMatch) {
-        return undefined
-      }
-      return 'fields' in rootMatch && rootMatch.fields ? rootMatch.fields : []
-    }
-  }
-  return undefined
+  return resolveOfMember(parentField.of, type, schema, scope)?.fields
 }
 
 /**
@@ -77,7 +60,13 @@ function schemaDeclarationFieldsAt(
 function richDescentToParent(
   input: RichResolutionInput,
   path: Path,
-): {parent: ContainerConfig; parentPath: Path} | undefined {
+):
+  | {
+      parent: ContainerConfig
+      parentPath: Path
+      ancestors: Array<{type: string; field: string}>
+    }
+  | undefined {
   // Collect keyed-segment indices.
   const keyedIndices: Array<number> = []
   for (let index = 0; index < path.length; index++) {
@@ -94,6 +83,7 @@ function richDescentToParent(
   let parent: ContainerConfig | undefined
   let parentPath: Path = []
   const resolvedPath: Path = []
+  const ancestors: Array<{type: string; field: string}> = []
   const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
 
   let segmentIndex = 0
@@ -151,11 +141,12 @@ function richDescentToParent(
     }
     parent = resolved
     parentPath = resolvedPath.slice()
+    ancestors.push({type: node._type, field: resolved.field.name})
     currentChildren = fieldValue as Array<Node>
     segmentIndex++
   }
 
-  return parent ? {parent, parentPath} : undefined
+  return parent ? {parent, parentPath, ancestors} : undefined
 }
 
 /**
@@ -214,6 +205,7 @@ export function resolveContainerByPath(
   const positionFields = schemaDeclarationFieldsAt(
     input.schema,
     parent?.field,
+    collectDeclarations(input.schema, descent?.ancestors ?? []),
     node._type,
   )
   if (!positionFields) {
