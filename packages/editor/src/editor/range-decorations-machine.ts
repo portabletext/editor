@@ -9,8 +9,9 @@ import {
 } from 'xstate'
 import {hasRemoteFrame} from '../engine/core/apply-context'
 import {
+  subscribeToOperationTransactions,
   subscribeToOperations,
-  type OperationEvent,
+  type OperationTransactionEvent,
 } from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
@@ -23,7 +24,7 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
-import {reanchorRange} from '../internal-utils/reanchor-range-decorations'
+import {createRangeReanchor} from '../internal-utils/reanchor-range-decorations'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {
@@ -39,34 +40,42 @@ import type {EditorSchema} from './editor-schema'
 
 const engineOperationCallback: CallbackLogicFunction<
   AnyEventObject,
-  {
-    type: 'engine operation batch'
-    operations: Array<OperationEvent>
-  },
+  | {
+      type: 'engine transaction start'
+    }
+  | {
+      type: 'engine operation'
+      operation: EngineOperation
+      origin: 'local' | 'remote'
+    },
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
-  let pendingOperations: Array<OperationEvent> = []
-  let scheduled = false
-
   return subscribeToOperations(
     input.editorEngine,
     (event) => {
+      if (input.editorEngine.operationTransactionEvents.length === 0) {
+        sendBack({type: 'engine transaction start'})
+      }
       if (event.operation.type !== 'set.selection') {
-        pendingOperations.push(event)
-        if (!scheduled) {
-          scheduled = true
-          Promise.resolve().then(() => {
-            const operations = pendingOperations
-            pendingOperations = []
-            scheduled = false
-            sendBack({type: 'engine operation batch', operations})
-          })
-        }
+        sendBack({
+          type: 'engine operation',
+          operation: event.operation,
+          origin: hasRemoteFrame(event.context) ? 'remote' : 'local',
+        })
       }
     },
     {phase: 'before'},
   )
 }
+
+const engineTransactionCallback: CallbackLogicFunction<
+  AnyEventObject,
+  {type: 'engine transaction end'; transaction: OperationTransactionEvent},
+  {editorEngine: PortableTextEditorEngine}
+> = ({input, sendBack}) =>
+  subscribeToOperationTransactions(input.editorEngine, (transaction) => {
+    sendBack({type: 'engine transaction end', transaction})
+  })
 
 export type DecoratedRange = Range & {
   rangeDecoration: RangeDecoration | Decoration
@@ -89,11 +98,6 @@ export type LeafRangeDecoration =
     }
 
 type RangeDecorationSourceKind = 'prop' | 'registered'
-
-type DecorationOperation = Pick<
-  OperationEvent,
-  'operation' | 'beforeValue' | 'context'
->
 
 /**
  * One source's decorations. `rangeDecorations` is the raw config last
@@ -373,10 +377,9 @@ function hasSameAnchorAndFocus(
 
 function movePropDecoratedRanges(
   decoratedRanges: Array<DecoratedRange>,
-  operations: Array<DecorationOperation>,
+  operation: EngineOperation,
   origin: 'local' | 'remote',
-  editorEngine: PortableTextEditorEngine,
-  shouldReanchor: boolean,
+  snapshotContext: PortableTextEditorEngine['snapshot']['context'],
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
 
@@ -393,22 +396,10 @@ function movePropDecoratedRanges(
       continue
     }
 
-    const mappedRange = mapRangeThroughOperations(
+    const newRange = transformRange(
       currentSelection,
-      operations,
-      editorEngine,
-    )
-    const reanchoredRange = shouldReanchor
-      ? reanchorRange(
-          operations[0]!.beforeValue,
-          editorEngine.snapshot.context.value,
-          currentSelection,
-        )
-      : undefined
-    const newRange = reconcileMappedRange(
-      currentSelection,
-      mappedRange,
-      reanchoredRange,
+      operation,
+      snapshotContext,
     )
 
     if (
@@ -447,7 +438,6 @@ function operationTouchesRange(
   operation: EngineOperation,
   range: NonNullable<EditorSelection>,
   editorEngine: PortableTextEditorEngine,
-  value: OperationEvent['beforeValue'],
 ): boolean {
   if (isCollapsedRange(range)) {
     return false
@@ -456,7 +446,7 @@ function operationTouchesRange(
   switch (operation.type) {
     case 'insert.text':
     case 'remove.text': {
-      const root = {value}
+      const root = {value: editorEngine.snapshot.context.value}
       const [start, end] = rangeEdges(range, root)
       const target = {path: operation.path, offset: operation.offset}
       const touchedEnd =
@@ -474,73 +464,10 @@ function operationTouchesRange(
     case 'set':
     case 'unset':
     case 'insert':
-      return rangeIntersects(
-        {
-          ...editorEngine.snapshot,
-          context: {...editorEngine.snapshot.context, value},
-        },
-        range,
-        operation.path,
-      )
+      return rangeIntersects(editorEngine.snapshot, range, operation.path)
     default:
       return false
   }
-}
-
-function mapRangeThroughOperations(
-  range: Range,
-  operations: Array<DecorationOperation>,
-  editorEngine: PortableTextEditorEngine,
-): Range | null {
-  let mappedRange: Range | null = range
-
-  for (const operationEvent of operations) {
-    if (!mappedRange) {
-      return null
-    }
-    mappedRange = transformRange(mappedRange, operationEvent.operation, {
-      ...editorEngine.snapshot.context,
-      value: operationEvent.beforeValue,
-    })
-  }
-
-  return mappedRange
-}
-
-function reconcileMappedRange(
-  currentRange: Range,
-  mappedRange: Range | null,
-  reanchoredRange: Range | null | undefined,
-): Range | null {
-  let candidate = mappedRange
-  let usedReanchor = false
-
-  if (
-    reanchoredRange &&
-    (mappedRange === null ||
-      (isCollapsedRange(mappedRange) && !isCollapsedRange(currentRange)) ||
-      endpointBlockKeysChanged(currentRange, reanchoredRange))
-  ) {
-    candidate = reanchoredRange
-    usedReanchor = true
-  }
-
-  return usedReanchor &&
-    candidate &&
-    hasSameAnchorAndFocus(candidate, currentRange)
-    ? currentRange
-    : candidate
-}
-
-function endpointBlockKeysChanged(
-  currentRange: Range,
-  nextRange: Range,
-): boolean {
-  return (
-    getBlockKey(currentRange.anchor.path) !==
-      getBlockKey(nextRange.anchor.path) ||
-    getBlockKey(currentRange.focus.path) !== getBlockKey(nextRange.focus.path)
-  )
 }
 
 function getBlockKey(path: Range['anchor']['path']): string | undefined {
@@ -550,11 +477,10 @@ function getBlockKey(path: Range['anchor']['path']): string | undefined {
 
 function moveRegisteredDecoratedRanges(
   decoratedRanges: Array<DecoratedRange>,
-  operations: Array<DecorationOperation>,
+  operation: EngineOperation,
   origin: 'local' | 'remote',
   editorEngine: PortableTextEditorEngine,
   deadSelections: Map<string, EditorSelection>,
-  shouldReanchor: boolean,
 ): {
   decoratedRanges: Array<DecoratedRange>
   mappings: Array<DecorationMapping>
@@ -566,22 +492,10 @@ function moveRegisteredDecoratedRanges(
     const liveRangeDecoration = decoratedRange.rangeDecoration as Decoration
     const currentRange = liveRangeDecoration.range
 
-    const mappedRange = mapRangeThroughOperations(
+    const newRange = transformRange(
       currentRange,
-      operations,
-      editorEngine,
-    )
-    const reanchoredRange = shouldReanchor
-      ? reanchorRange(
-          operations[0]!.beforeValue,
-          editorEngine.snapshot.context.value,
-          currentRange,
-        )
-      : undefined
-    const newRange = reconcileMappedRange(
-      currentRange,
-      mappedRange,
-      reanchoredRange,
+      operation,
+      editorEngine.snapshot.context,
     )
 
     const killedByCollapse =
@@ -589,13 +503,10 @@ function moveRegisteredDecoratedRanges(
       isCollapsedRange(newRange) &&
       !isCollapsedRange(currentRange)
 
-    const contentTouched = operations.some((operationEvent) =>
-      operationTouchesRange(
-        operationEvent.operation,
-        currentRange,
-        editorEngine,
-        operationEvent.beforeValue,
-      ),
+    const contentTouched = operationTouchesRange(
+      operation,
+      currentRange,
+      editorEngine,
     )
     const clonedCurrentRange = cloneRange(currentRange)
 
@@ -647,6 +558,187 @@ function flattenSources(
     .flatMap((source) => source.decoratedRanges)
 }
 
+function getStructuralTouchedBlockKeys(
+  transaction: OperationTransactionEvent,
+): Set<string> {
+  const keys = new Set<string>()
+  for (const {operation} of transaction.operations) {
+    if (
+      (operation.type !== 'insert' && operation.type !== 'unset') ||
+      operation.path.length !== 1
+    ) {
+      continue
+    }
+    const pathSegment = operation.path[0]
+    if (isKeyedSegment(pathSegment)) {
+      keys.add(pathSegment._key)
+    }
+    if (operation.type === 'insert' && '_key' in operation.node) {
+      keys.add(operation.node._key)
+    }
+    if (
+      operation.type === 'unset' &&
+      operation.inverse?.type === 'insert' &&
+      '_key' in operation.inverse.node
+    ) {
+      keys.add(operation.inverse.node._key)
+    }
+  }
+  return keys
+}
+
+function getTouchedBlockKeysWithNeighbors(
+  transaction: OperationTransactionEvent,
+  touchedBlockKeys: Set<string>,
+): Set<string> {
+  const keys = new Set(touchedBlockKeys)
+  for (const blocks of [transaction.beforeValue, transaction.afterValue]) {
+    const indexByKey = new Map(
+      blocks.map((block, index) => [block._key, index] as const),
+    )
+    for (const key of touchedBlockKeys) {
+      const index = indexByKey.get(key)
+      if (index === undefined) {
+        continue
+      }
+      const previousBlock = blocks[index - 1]
+      const nextBlock = blocks[index + 1]
+      if (previousBlock) {
+        keys.add(previousBlock._key)
+      }
+      if (nextBlock) {
+        keys.add(nextBlock._key)
+      }
+    }
+  }
+  return keys
+}
+
+function correctSourceRanges(
+  source: RangeDecorationSource,
+  beforeRanges: Array<DecoratedRange>,
+  reanchor: (range: Range) => Range | null | undefined,
+  touchedBlockKeys: Set<string>,
+  origin: 'local' | 'remote',
+): Array<DecoratedRange> {
+  const corrected = [...source.decoratedRanges]
+
+  for (let index = 0; index < beforeRanges.length; index++) {
+    const beforeDecoratedRange = beforeRanges[index]!
+    const beforeRange = getDecoratedRange(beforeDecoratedRange)
+    const anchorBlockKey = getBlockKey(beforeRange.anchor.path)
+    const focusBlockKey = getBlockKey(beforeRange.focus.path)
+    if (
+      (!anchorBlockKey || !touchedBlockKeys.has(anchorBlockKey)) &&
+      (!focusBlockKey || !touchedBlockKeys.has(focusBlockKey))
+    ) {
+      continue
+    }
+
+    const reanchoredRange = reanchor(beforeRange)
+    if (!reanchoredRange) {
+      continue
+    }
+    const currentIndex = findCurrentDecorationIndex(
+      source,
+      corrected,
+      beforeDecoratedRange,
+      index,
+    )
+    const currentDecoratedRange = corrected[currentIndex]
+    const currentRange = currentDecoratedRange
+      ? getDecoratedRange(currentDecoratedRange)
+      : null
+    if (
+      currentRange &&
+      (!endpointBlockKeysChanged(beforeRange, reanchoredRange) ||
+        endpointBlockKeysChanged(beforeRange, currentRange))
+    ) {
+      continue
+    }
+
+    const rangeDecoration = beforeDecoratedRange.rangeDecoration
+    if (source.kind === 'registered') {
+      const decoration = rangeDecoration as Decoration
+      const nextDecoratedRange: DecoratedRange = {
+        ...reanchoredRange,
+        rangeDecoration: {...decoration, range: reanchoredRange},
+        kind: 'registered',
+        merge: mergeRangeDecoration,
+      }
+      if (currentDecoratedRange) {
+        corrected[currentIndex] = nextDecoratedRange
+      } else {
+        corrected.splice(index, 0, nextDecoratedRange)
+      }
+      source.deadSelections.delete(decoration.id)
+      source.on?.([
+        {
+          id: decoration.id,
+          previousRange: cloneRange(currentRange ?? beforeRange),
+          newRange: cloneRange(reanchoredRange),
+          contentTouched: true,
+          origin,
+        },
+      ])
+    } else {
+      const rangeDecoration =
+        beforeDecoratedRange.rangeDecoration as RangeDecoration
+      const nextDecoratedRange: DecoratedRange = {
+        ...reanchoredRange,
+        rangeDecoration: {...rangeDecoration, selection: reanchoredRange},
+        kind: 'prop',
+        merge: mergeRangeDecoration,
+      }
+      if (currentDecoratedRange) {
+        corrected[currentIndex] = nextDecoratedRange
+      } else {
+        corrected.splice(index, 0, nextDecoratedRange)
+      }
+      rangeDecoration.onMoved?.({
+        newSelection: reanchoredRange,
+        rangeDecoration,
+        origin,
+      })
+    }
+  }
+
+  return corrected
+}
+
+function getDecoratedRange(decoratedRange: DecoratedRange): Range {
+  return decoratedRange.kind === 'registered'
+    ? (decoratedRange.rangeDecoration as Decoration).range
+    : (decoratedRange.rangeDecoration as RangeDecoration).selection!
+}
+
+function findCurrentDecorationIndex(
+  source: RangeDecorationSource,
+  decoratedRanges: Array<DecoratedRange>,
+  beforeDecoratedRange: DecoratedRange,
+  beforeIndex: number,
+): number {
+  if (source.kind === 'prop') {
+    return beforeIndex < decoratedRanges.length ? beforeIndex : -1
+  }
+  const id = (beforeDecoratedRange.rangeDecoration as Decoration).id
+  return decoratedRanges.findIndex(
+    (decoratedRange) =>
+      (decoratedRange.rangeDecoration as Decoration).id === id,
+  )
+}
+
+function endpointBlockKeysChanged(
+  currentRange: Range,
+  nextRange: Range,
+): boolean {
+  return (
+    getBlockKey(currentRange.anchor.path) !==
+      getBlockKey(nextRange.anchor.path) ||
+    getBlockKey(currentRange.focus.path) !== getBlockKey(nextRange.focus.path)
+  )
+}
+
 export const rangeDecorationsMachine = setup({
   types: {
     context: {} as {
@@ -666,6 +758,7 @@ export const rangeDecorationsMachine = setup({
        * `decorate.fn` reassignment go through a conditional `assign()`.
        */
       sourceUpdateChanged: boolean
+      transactionSources: Map<string, Array<DecoratedRange>>
     },
     input: {} as {
       readOnly: boolean
@@ -692,8 +785,7 @@ export const rangeDecorationsMachine = setup({
           sourceKey: string
         }
       | {
-          type: 'engine operation batch'
-          operations: Array<OperationEvent>
+          type: 'engine transaction start'
         }
       | {
           type: 'engine operation'
@@ -701,11 +793,26 @@ export const rangeDecorationsMachine = setup({
           origin: 'local' | 'remote'
         }
       | {
+          type: 'engine transaction end'
+          transaction: OperationTransactionEvent
+        }
+      | {
           type: 'update read only'
           readOnly: boolean
         },
   },
   actions: {
+    'capture transaction sources': ({context}) => {
+      context.transactionSources = new Map(
+        context.sources.map((source) => [
+          source.sourceKey,
+          source.decoratedRanges.map((decoratedRange) => ({
+            ...decoratedRange,
+            rangeDecoration: {...decoratedRange.rangeDecoration},
+          })),
+        ]),
+      )
+    },
     'assign readOnly': assign({
       readOnly: ({context, event}) => {
         if (event.type !== 'update read only') {
@@ -878,34 +985,9 @@ export const rangeDecorationsMachine = setup({
       )
     },
     'move range decorations': ({context, event}) => {
-      if (
-        event.type !== 'engine operation batch' &&
-        event.type !== 'engine operation'
-      ) {
+      if (event.type !== 'engine operation') {
         return
       }
-
-      const operations: Array<DecorationOperation> =
-        event.type === 'engine operation batch'
-          ? event.operations
-          : [
-              {
-                operation: event.operation,
-                beforeValue: context.editorEngine.snapshot.context.value,
-                context: [],
-              },
-            ]
-      if (operations.length === 0) {
-        return
-      }
-      const origin =
-        event.type === 'engine operation'
-          ? event.origin
-          : event.operations.some((operation) =>
-                hasRemoteFrame(operation.context),
-              )
-            ? 'remote'
-            : 'local'
 
       const pendingNotifications: Array<{
         on: (mappings: Array<DecorationMapping>) => void
@@ -916,11 +998,10 @@ export const rangeDecorationsMachine = setup({
         if (source.kind === 'registered') {
           const result = moveRegisteredDecoratedRanges(
             source.decoratedRanges,
-            operations,
-            origin,
+            event.operation,
+            event.origin,
             context.editorEngine,
             source.deadSelections,
-            event.type === 'engine operation batch',
           )
           source.decoratedRanges = result.decoratedRanges
           if (source.on && result.mappings.length > 0) {
@@ -932,10 +1013,9 @@ export const rangeDecorationsMachine = setup({
         } else if (!context.readOnly) {
           source.decoratedRanges = movePropDecoratedRanges(
             source.decoratedRanges,
-            operations,
-            origin,
-            context.editorEngine,
-            event.type === 'engine operation batch',
+            event.operation,
+            event.origin,
+            context.editorEngine.snapshot.context,
           )
         }
       }
@@ -950,9 +1030,46 @@ export const rangeDecorationsMachine = setup({
         }
       }
     },
+    'correct range decorations': ({context, event}) => {
+      if (event.type !== 'engine transaction end') {
+        return
+      }
+      const touchedBlockKeys = getStructuralTouchedBlockKeys(event.transaction)
+      if (touchedBlockKeys.size === 0) {
+        context.transactionSources.clear()
+        return
+      }
+      const matchedBlockKeys = getTouchedBlockKeysWithNeighbors(
+        event.transaction,
+        touchedBlockKeys,
+      )
+
+      const reanchor = createRangeReanchor(
+        event.transaction.beforeValue,
+        event.transaction.afterValue,
+        context.schema,
+        matchedBlockKeys,
+      )
+      for (const source of context.sources) {
+        const beforeRanges = context.transactionSources.get(source.sourceKey)
+        if (!beforeRanges) {
+          continue
+        }
+        source.decoratedRanges = correctSourceRanges(
+          source,
+          beforeRanges,
+          reanchor,
+          touchedBlockKeys,
+          event.transaction.origin === 'remote' ? 'remote' : 'local',
+        )
+      }
+      context.transactionSources.clear()
+      context.editorEngine.decoratedRanges = flattenSources(context.sources)
+    },
   },
   actors: {
     'engine operation listener': fromCallback(engineOperationCallback),
+    'engine transaction listener': fromCallback(engineTransactionCallback),
   },
   guards: {
     'has range decorations': ({context}) =>
@@ -969,11 +1086,18 @@ export const rangeDecorationsMachine = setup({
       fn: createDecorate(input.schema, input.editorEngine),
     },
     sourceUpdateChanged: false,
+    transactionSources: new Map(),
   }),
-  invoke: {
-    src: 'engine operation listener',
-    input: ({context}) => ({editorEngine: context.editorEngine}),
-  },
+  invoke: [
+    {
+      src: 'engine operation listener',
+      input: ({context}) => ({editorEngine: context.editorEngine}),
+    },
+    {
+      src: 'engine transaction listener',
+      input: ({context}) => ({editorEngine: context.editorEngine}),
+    },
+  ],
   on: {
     'update read only': {
       actions: ['assign readOnly'],
@@ -998,6 +1122,12 @@ export const rangeDecorationsMachine = setup({
     'ready': {
       initial: 'idle',
       on: {
+        'engine transaction start': {
+          actions: ['capture transaction sources'],
+        },
+        'engine transaction end': {
+          actions: ['correct range decorations', 'update decorate'],
+        },
         'source updated': {
           target: '.idle',
           actions: [
@@ -1020,14 +1150,10 @@ export const rangeDecorationsMachine = setup({
               target: 'moving range decorations',
               guard: 'has range decorations',
             },
-            'engine operation batch': {
-              target: 'moving range decorations',
-              guard: 'has range decorations',
-            },
           },
         },
         'moving range decorations': {
-          entry: ['move range decorations', 'update decorate'],
+          entry: ['move range decorations'],
           always: {
             target: 'idle',
           },

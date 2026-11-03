@@ -65,7 +65,76 @@ export type OperationEvent = {
 
 export type OperationListener = (event: OperationEvent) => void
 
+export type OperationTransactionEvent = {
+  operations: Array<OperationEvent>
+  beforeValue: Array<PortableTextBlock>
+  afterValue: Array<PortableTextBlock>
+  origin: OperationOrigin
+}
+
+export type OperationTransactionListener = (
+  event: OperationTransactionEvent,
+) => void
+
 export type OperationPhase = 'before' | 'after'
+
+export function subscribeToOperationTransactions(
+  editor: Editor,
+  listener: OperationTransactionListener,
+): () => void {
+  editor.operationListeners.transactionEnd = [
+    ...editor.operationListeners.transactionEnd,
+    listener,
+  ]
+
+  return () => {
+    const listeners = editor.operationListeners.transactionEnd
+    const index = listeners.indexOf(listener)
+
+    if (index !== -1) {
+      editor.operationListeners.transactionEnd = [
+        ...listeners.slice(0, index),
+        ...listeners.slice(index + 1),
+      ]
+    }
+  }
+}
+
+/**
+ * Brackets synchronous engine work into one transaction. `apply` and
+ * `withoutNormalizing` both participate, so nested normalization and behavior
+ * operations close only when their shared outermost frame returns.
+ */
+export function beginOperationTransaction(editor: Editor): void {
+  editor.operationTransactionDepth++
+}
+
+export function endOperationTransaction(editor: Editor): void {
+  editor.operationTransactionDepth--
+  if (
+    editor.operationTransactionDepth !== 0 ||
+    editor.operationTransactionEvents.length === 0
+  ) {
+    return
+  }
+
+  const operations = editor.operationTransactionEvents
+  editor.operationTransactionEvents = []
+  const firstOperation = operations[0]
+  if (!firstOperation) {
+    return
+  }
+
+  const event: OperationTransactionEvent = {
+    operations,
+    beforeValue: firstOperation.beforeValue,
+    afterValue: editor.snapshot.context.value,
+    origin: firstOperation.origin,
+  }
+  for (const listener of editor.operationListeners.transactionEnd) {
+    listener(event)
+  }
+}
 
 export function subscribeToOperations(
   editor: Editor,
@@ -130,4 +199,11 @@ export function emitOperationEvent(
   for (let index = 0; index < listeners.length; index++) {
     listeners[index]?.(event)
   }
+}
+
+export function recordOperationTransactionEvent(
+  editor: Editor,
+  event: OperationEvent,
+): void {
+  editor.operationTransactionEvents.push(event)
 }

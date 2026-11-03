@@ -17,7 +17,9 @@ function createEditorEngineStub(
   spanKey: string,
 ): PortableTextEditorEngine {
   return {
-    operationListeners: {before: [], after: []},
+    operationListeners: {before: [], after: [], transactionEnd: []},
+    operationTransactionDepth: 0,
+    operationTransactionEvents: [],
     decoratedRanges: [],
     snapshot: {
       context: {

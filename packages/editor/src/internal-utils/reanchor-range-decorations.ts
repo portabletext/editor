@@ -1,4 +1,10 @@
-import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
+import {
+  isSpan as isSchemaSpan,
+  isTextBlock as isSchemaTextBlock,
+  type PortableTextBlock,
+  type PortableTextSpan,
+  type Schema,
+} from '@portabletext/schema'
 import {makeDiff, type Diff} from '@sanity/diff-match-patch'
 import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
@@ -40,21 +46,52 @@ type TextEdit = {
 }
 
 // Ported from `sanity-labs/collaboration-platform-exploration`'s
-// `packages/reanchoring`; keep the client and mutation-layer guesses aligned.
+// `packages/reanchoring` at `e9c81e83874f9b736ebf91091f9f6c5f230100e9`; keep the client and mutation-layer guesses aligned.
 export function reanchorRange(
   beforeBlocks: Array<PortableTextBlock>,
   afterBlocks: Array<PortableTextBlock>,
   range: Range,
+  schema?: Schema,
 ): Range | null | undefined {
-  const anchor = pointToAbsolute(beforeBlocks, range.anchor)
-  const focus = pointToAbsolute(beforeBlocks, range.focus)
+  return createRangeReanchor(beforeBlocks, afterBlocks, schema)(range)
+}
 
-  if (!anchor || !focus) {
-    return undefined
-  }
-
-  const matches = matchBlocks(beforeBlocks, afterBlocks)
+export function createRangeReanchor(
+  beforeBlocks: Array<PortableTextBlock>,
+  afterBlocks: Array<PortableTextBlock>,
+  schema?: Schema,
+  touchedBlockKeys?: Set<string>,
+): (range: Range) => Range | null | undefined {
+  const matchedBeforeBlocks = touchedBlockKeys
+    ? selectTouchedBlocks(beforeBlocks, touchedBlockKeys)
+    : beforeBlocks
+  const matchedAfterBlocks = touchedBlockKeys
+    ? selectTouchedBlocks(afterBlocks, touchedBlockKeys)
+    : afterBlocks
+  const matches = matchBlocks(matchedBeforeBlocks, matchedAfterBlocks, schema)
   const matchByKey = new Map(matches.map((match) => [match.key, match]))
+  const addedMatches = matches.filter((match) => match.type === 'added')
+  for (const match of matches) {
+    if (match.type !== 'removed') {
+      continue
+    }
+    const beforeText = extractBlockText(match.before, schema)
+    const candidates = addedMatches.filter(
+      (candidate) => extractBlockText(candidate.after, schema) === beforeText,
+    )
+    if (candidates.length === 1) {
+      const candidate = candidates[0]!
+      matchByKey.set(match.key, {
+        type: 'split',
+        key: match.key,
+        before: match.before,
+        after: candidate.after,
+        splitIntoKey: candidate.key,
+        splitOffset: 0,
+        splitIntoOffset: 0,
+      })
+    }
+  }
   const editsByKey = new Map<string, Array<TextEdit>>()
 
   for (const match of matches) {
@@ -62,64 +99,101 @@ export function reanchorRange(
       continue
     }
 
-    const beforeText = extractBlockText(match.before)
-    const afterText = extractBlockText(match.after)
+    const beforeText = extractBlockText(match.before, schema)
+    const afterText = extractBlockText(match.after, schema)
     if (beforeText !== afterText) {
       editsByKey.set(match.key, parseDiffs(makeDiff(beforeText, afterText)))
     }
   }
 
-  let shiftedAnchor = shiftPoint(anchor, 'anchor', matchByKey, editsByKey)
-  let shiftedFocus = shiftPoint(focus, 'focus', matchByKey, editsByKey)
+  return (range) => {
+    const anchor = pointToAbsolute(beforeBlocks, range.anchor, schema)
+    const focus = pointToAbsolute(beforeBlocks, range.focus, schema)
 
-  if (shiftedAnchor.invalidated && !shiftedFocus.invalidated) {
-    shiftedAnchor =
-      recoverRemovedEndpoint(
-        anchor.blockKey,
-        'anchor',
-        beforeBlocks,
-        afterBlocks,
-        matchByKey,
-      ) ?? shiftedAnchor
-  }
-  if (shiftedFocus.invalidated && !shiftedAnchor.invalidated) {
-    shiftedFocus =
-      recoverRemovedEndpoint(
-        focus.blockKey,
-        'focus',
-        beforeBlocks,
-        afterBlocks,
-        matchByKey,
-      ) ?? shiftedFocus
-  }
+    if (!anchor || !focus) {
+      return undefined
+    }
 
-  if (shiftedAnchor.invalidated || shiftedFocus.invalidated) {
-    return null
-  }
+    let shiftedAnchor = shiftPoint(anchor, 'anchor', matchByKey, editsByKey)
+    let shiftedFocus = shiftPoint(focus, 'focus', matchByKey, editsByKey)
 
-  const collapsed =
-    shiftedAnchor.point.blockKey === shiftedFocus.point.blockKey &&
-    shiftedAnchor.point.offset === shiftedFocus.point.offset &&
-    (anchor.blockKey !== focus.blockKey || anchor.offset !== focus.offset)
-  if (collapsed) {
-    return null
-  }
+    if (shiftedAnchor.invalidated && !shiftedFocus.invalidated) {
+      shiftedAnchor =
+        recoverRemovedEndpoint(
+          anchor.blockKey,
+          'anchor',
+          beforeBlocks,
+          afterBlocks,
+          matchByKey,
+          schema,
+        ) ?? shiftedAnchor
+    }
+    if (shiftedFocus.invalidated && !shiftedAnchor.invalidated) {
+      shiftedFocus =
+        recoverRemovedEndpoint(
+          focus.blockKey,
+          'focus',
+          beforeBlocks,
+          afterBlocks,
+          matchByKey,
+          schema,
+        ) ?? shiftedFocus
+    }
 
-  const nextAnchor = absoluteToPoint(afterBlocks, shiftedAnchor.point)
-  const nextFocus = absoluteToPoint(afterBlocks, shiftedFocus.point)
-  if (!nextAnchor || !nextFocus) {
-    return null
-  }
+    if (shiftedAnchor.invalidated || shiftedFocus.invalidated) {
+      return null
+    }
 
-  return {anchor: nextAnchor, focus: nextFocus}
+    const collapsed =
+      shiftedAnchor.point.blockKey === shiftedFocus.point.blockKey &&
+      shiftedAnchor.point.offset === shiftedFocus.point.offset &&
+      (anchor.blockKey !== focus.blockKey || anchor.offset !== focus.offset)
+    if (collapsed) {
+      return null
+    }
+
+    const nextAnchor = absoluteToPoint(afterBlocks, shiftedAnchor.point, schema)
+    const nextFocus = absoluteToPoint(afterBlocks, shiftedFocus.point, schema)
+    if (!nextAnchor || !nextFocus) {
+      return null
+    }
+
+    return {anchor: nextAnchor, focus: nextFocus}
+  }
 }
 
-export function extractBlockText(block: PortableTextBlock): string {
-  if (!isTextBlock(block)) {
+function selectTouchedBlocks(
+  blocks: Array<PortableTextBlock>,
+  touchedBlockKeys: Set<string>,
+): Array<PortableTextBlock> {
+  const indexes = new Set<number>()
+  const indexByKey = new Map(
+    blocks.map((block, index) => [block._key, index] as const),
+  )
+  for (const key of touchedBlockKeys) {
+    const index = indexByKey.get(key)
+    if (index === undefined) {
+      continue
+    }
+    indexes.add(index)
+    if (index > 0) {
+      indexes.add(index - 1)
+    }
+    if (index + 1 < blocks.length) {
+      indexes.add(index + 1)
+    }
+  }
+  return [...indexes]
+    .sort((left, right) => left - right)
+    .map((index) => blocks[index]!)
+}
+
+function extractBlockText(block: PortableTextBlock, schema?: Schema): string {
+  if (!isTextBlock(block, schema)) {
     return ''
   }
   return block.children
-    .filter(isSpan)
+    .filter((child) => isSpan(child, schema))
     .map((span) => span.text)
     .join('')
 }
@@ -127,12 +201,16 @@ export function extractBlockText(block: PortableTextBlock): string {
 export function matchBlocks(
   beforeBlocks: Array<PortableTextBlock>,
   afterBlocks: Array<PortableTextBlock>,
+  schema?: Schema,
 ): Array<BlockMatch> {
   const beforeKeys = new Set(beforeBlocks.map((block) => block._key))
   const afterByKey = new Map(afterBlocks.map((block) => [block._key, block]))
+  const afterIndexByKey = new Map(
+    afterBlocks.map((block, index) => [block._key, index] as const),
+  )
   const matches: Array<BlockMatch> = []
   const handledNewKeys = new Set<string>()
-  const mergedRuns = findMergedRuns(beforeBlocks, afterByKey)
+  const mergedRuns = findMergedRuns(beforeBlocks, afterByKey, schema)
 
   for (let beforeIndex = 0; beforeIndex < beforeBlocks.length; beforeIndex++) {
     const beforeBlock = beforeBlocks[beforeIndex]!
@@ -150,7 +228,7 @@ export function matchBlocks(
         continue
       }
 
-      const removedText = extractBlockText(beforeBlock)
+      const removedText = extractBlockText(beforeBlock, schema)
       const previousBeforeBlock = beforeBlocks[beforeIndex - 1]
       const previousAfterBlock = previousBeforeBlock
         ? afterByKey.get(previousBeforeBlock._key)
@@ -160,15 +238,15 @@ export function matchBlocks(
         removedText &&
         previousBeforeBlock &&
         previousAfterBlock &&
-        extractBlockText(previousAfterBlock) ===
-          extractBlockText(previousBeforeBlock) + removedText
+        extractBlockText(previousAfterBlock, schema) ===
+          extractBlockText(previousBeforeBlock, schema) + removedText
       ) {
         matches.push({
           type: 'merged',
           key: beforeBlock._key,
           before: beforeBlock,
           mergedIntoKey: previousBeforeBlock._key,
-          mergeOffset: extractBlockText(previousBeforeBlock).length,
+          mergeOffset: extractBlockText(previousBeforeBlock, schema).length,
         })
       } else {
         matches.push({
@@ -180,15 +258,16 @@ export function matchBlocks(
       continue
     }
 
-    const beforeText = extractBlockText(beforeBlock)
-    const afterText = extractBlockText(afterBlock)
+    const beforeText = extractBlockText(beforeBlock, schema)
+    const afterText = extractBlockText(afterBlock, schema)
     if (afterText.length < beforeText.length) {
-      const afterIndex = afterBlocks.indexOf(afterBlock)
+      const afterIndex = afterIndexByKey.get(afterBlock._key)!
       const nextBlock = afterBlocks[afterIndex + 1]
       if (
         nextBlock &&
         !beforeKeys.has(nextBlock._key) &&
-        extractBlockText(nextBlock) === beforeText.slice(afterText.length)
+        extractBlockText(nextBlock, schema) ===
+          beforeText.slice(afterText.length)
       ) {
         matches.push({
           type: 'split',
@@ -207,16 +286,16 @@ export function matchBlocks(
     const commonPrefixLength = getCommonPrefixLength(beforeText, afterText)
     const oldTail = beforeText.slice(commonPrefixLength)
     if (oldTail && commonPrefixLength < beforeText.length) {
-      const afterIndex = afterBlocks.indexOf(afterBlock)
+      const afterIndex = afterIndexByKey.get(afterBlock._key)!
       const tailBlock = afterBlocks
         .slice(afterIndex + 1)
         .findLast(
           (candidate) =>
             !beforeKeys.has(candidate._key) &&
-            extractBlockText(candidate).endsWith(oldTail),
+            extractBlockText(candidate, schema).endsWith(oldTail),
         )
       if (tailBlock) {
-        const tailText = extractBlockText(tailBlock)
+        const tailText = extractBlockText(tailBlock, schema)
         matches.push({
           type: 'split',
           key: beforeBlock._key,
@@ -266,6 +345,7 @@ function getCommonPrefixLength(left: string, right: string): number {
 function findMergedRuns(
   beforeBlocks: Array<PortableTextBlock>,
   afterByKey: Map<string, PortableTextBlock>,
+  schema?: Schema,
 ): Map<string, {mergedIntoKey: string; mergeOffset: number}> {
   const mergedRuns = new Map<
     string,
@@ -293,26 +373,27 @@ function findMergedRuns(
 
     const run = beforeBlocks.slice(runStart, index + 1)
     if (
-      extractBlockText(survivingPredecessor) !==
-      extractBlockText(predecessor) + run.map(extractBlockText).join('')
+      extractBlockText(survivingPredecessor, schema) !==
+      extractBlockText(predecessor, schema) +
+        run.map((block) => extractBlockText(block, schema)).join('')
     ) {
       continue
     }
 
-    let mergeOffset = extractBlockText(predecessor).length
+    let mergeOffset = extractBlockText(predecessor, schema).length
     for (const block of run) {
       mergedRuns.set(block._key, {
         mergedIntoKey: predecessor._key,
         mergeOffset,
       })
-      mergeOffset += extractBlockText(block).length
+      mergeOffset += extractBlockText(block, schema).length
     }
   }
 
   return mergedRuns
 }
 
-export function parseDiffs(diffs: Array<Diff>): Array<TextEdit> {
+function parseDiffs(diffs: Array<Diff>): Array<TextEdit> {
   const edits: Array<TextEdit> = []
   let position = 0
   let newPosition = 0
@@ -464,6 +545,7 @@ function recoverRemovedEndpoint(
   beforeBlocks: Array<PortableTextBlock>,
   afterBlocks: Array<PortableTextBlock>,
   matchByKey: Map<string, BlockMatch>,
+  schema?: Schema,
 ): PointResult | undefined {
   const removedIndex = beforeBlocks.findIndex(
     (block) => block._key === removedBlockKey,
@@ -487,7 +569,7 @@ function recoverRemovedEndpoint(
         offset:
           side === 'anchor'
             ? 0
-            : extractBlockText(afterByKey.get(blockKey)!).length,
+            : extractBlockText(afterByKey.get(blockKey)!, schema).length,
       },
       invalidated: false,
     }
@@ -498,6 +580,7 @@ function recoverRemovedEndpoint(
 function pointToAbsolute(
   blocks: Array<PortableTextBlock>,
   point: Point,
+  schema?: Schema,
 ): AbsolutePoint | undefined {
   const blockSegment = point.path[0]
   const childSegment = point.path[2]
@@ -505,18 +588,18 @@ function pointToAbsolute(
     return undefined
   }
   const block = blocks.find((candidate) => candidate._key === blockSegment._key)
-  if (!block || !isTextBlock(block)) {
+  if (!block || !isTextBlock(block, schema)) {
     return undefined
   }
 
   let offset = 0
   for (const child of block.children) {
     if (child._key === childSegment._key) {
-      return isSpan(child)
+      return isSpan(child, schema)
         ? {blockKey: block._key, offset: offset + point.offset}
         : undefined
     }
-    if (isSpan(child)) {
+    if (isSpan(child, schema)) {
       offset += child.text.length
     }
   }
@@ -526,15 +609,16 @@ function pointToAbsolute(
 function absoluteToPoint(
   blocks: Array<PortableTextBlock>,
   point: AbsolutePoint,
+  schema?: Schema,
 ): Point | undefined {
   const block = blocks.find((candidate) => candidate._key === point.blockKey)
-  if (!block || !isTextBlock(block)) {
+  if (!block || !isTextBlock(block, schema)) {
     return undefined
   }
 
   const spans: Array<PortableTextSpan> = []
   for (const child of block.children) {
-    if (isSpan(child)) {
+    if (isSpan(child, schema)) {
       spans.push(child)
     }
   }
@@ -552,13 +636,22 @@ function absoluteToPoint(
   return undefined
 }
 
-function isTextBlock(block: PortableTextBlock): block is PortableTextBlock & {
+function isTextBlock(
+  block: PortableTextBlock,
+  schema?: Schema,
+): block is PortableTextBlock & {
   children: Array<PortableTextSpan | Record<string, unknown>>
 } {
+  if (schema) {
+    return isSchemaTextBlock({schema}, block)
+  }
   return block._type === 'block' && Array.isArray(block.children)
 }
 
-function isSpan(child: unknown): child is PortableTextSpan {
+function isSpan(child: unknown, schema?: Schema): child is PortableTextSpan {
+  if (schema) {
+    return isSchemaSpan({schema}, child)
+  }
   return (
     typeof child === 'object' &&
     child !== null &&

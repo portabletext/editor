@@ -1,5 +1,8 @@
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
-import type {OperationListener} from '../core/operation-channel'
+import type {
+  OperationListener,
+  OperationTransactionListener,
+} from '../core/operation-channel'
 import type {DOMEditor} from '../dom/plugin/dom-editor'
 import type {Location} from './location'
 import type {Node} from './node'
@@ -21,7 +24,10 @@ export interface BaseEditor {
   operationListeners: {
     before: Array<OperationListener>
     after: Array<OperationListener>
+    transactionEnd: Array<OperationTransactionListener>
   }
+  operationTransactionDepth: number
+  operationTransactionEvents: Array<Parameters<OperationListener>[0]>
   dirtyPaths: Path[]
   dirtyPathKeys: Set<string>
   flushing: boolean

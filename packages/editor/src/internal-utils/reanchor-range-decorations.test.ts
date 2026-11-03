@@ -8,6 +8,8 @@ import {
   shiftPointForReplace,
 } from './reanchor-range-decorations'
 
+// Keep these matcher fixtures aligned with `sanity-labs/collaboration-platform-exploration` at `e9c81e83874f9b736ebf91091f9f6c5f230100e9`.
+
 describe(reanchorRange.name, () => {
   test('moves a range suffix into a split block', () => {
     expect(

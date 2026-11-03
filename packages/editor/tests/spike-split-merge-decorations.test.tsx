@@ -16,6 +16,9 @@ function updateRangeDecorations({
   rangeDecorations: Array<RangeDecoration>
   details: RangeDecorationOnMovedDetails
 }) {
+  if (rangeDecorations.length === 0 && details.newSelection) {
+    return [{...details.rangeDecoration, selection: details.newSelection}]
+  }
   return rangeDecorations?.flatMap((rangeDecoration) => {
     if (
       rangeDecoration.payload?.['id'] ===
@@ -50,7 +53,7 @@ describe('RangeDecorations: Block Split Operations', () => {
       expectedDecoratedText: 'world',
     },
     {
-      name: 'Scenario 1.2: Split with decoration spanning entire line (Josef repro)',
+      name: 'Scenario 1.2: Split with decoration spanning the entire line',
       initialValue: [textBlock('b1', [['s1', 'hello dolly']])],
       selection: selection('b1', 's1', 0, 'b1', 's1', 11),
       splitAt: selection('b1', 's1', 6, 'b1', 's1', 6),
@@ -466,7 +469,7 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       selection: selection('b1', 's1', 0, 'b1', 's1', 5),
       edit: (editor: Editor) => splitBlock(editor, 'b1', 's1', 5),
       editedValue: ['Hello', ' there world'],
-      editedSelection: selection('b1', 's1', 0, 'b1', 's1', 5),
+      editedSelection: selection('b1', 's1', 0, 'k2', 's1', 0),
       undoneSelection: selection('b1', 's1', 0, 'b1', 's1', 5),
     },
     {

@@ -1403,4 +1403,203 @@ describe('RangeDecorations: multiple PortableTextEditables under one provider', 
       ).length,
     ).toEqual(1)
   })
+
+  test('Scenario: registered decorations move synchronously with an edit', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children' as const, {_key: spanKey}]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'Hello world', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+    const renderDecoration = (props: {children: ReactNode}) => (
+      <span>{props.children}</span>
+    )
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'decoration',
+          type: 'range',
+          render: renderDecoration,
+          range: {
+            anchor: {path: spanPath, offset: 6},
+            focus: {path: spanPath, offset: 11},
+          },
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()).toEqual([
+        {
+          id: 'decoration',
+          range: {
+            anchor: {path: spanPath, offset: 6},
+            focus: {path: spanPath, offset: 11},
+          },
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'XX'})
+
+    expect(registration.getDecorations()[0]!.range).toEqual({
+      anchor: {path: spanPath, offset: 8},
+      focus: {path: spanPath, offset: 13},
+    })
+  })
+
+  test('Scenario: updating a registered decoration after an edit does not move it twice', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children' as const, {_key: spanKey}]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'Hello world', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+    const renderDecoration = (props: {children: ReactNode}) => (
+      <span>{props.children}</span>
+    )
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'decoration',
+          type: 'range',
+          render: renderDecoration,
+          range: {
+            anchor: {path: spanPath, offset: 6},
+            focus: {path: spanPath, offset: 11},
+          },
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()[0]?.range).toEqual({
+        anchor: {path: spanPath, offset: 6},
+        focus: {path: spanPath, offset: 11},
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'XX'})
+    registration.update([
+      {
+        id: 'decoration',
+        type: 'range',
+        render: renderDecoration,
+        range: {
+          anchor: {path: spanPath, offset: 8},
+          focus: {path: spanPath, offset: 13},
+        },
+      },
+    ])
+
+    expect(registration.getDecorations()[0]!.range).toEqual({
+      anchor: {path: spanPath, offset: 8},
+      focus: {path: spanPath, offset: 13},
+    })
+  })
+
+  test('Scenario: operation mapping preserves a registered decoration when its block is rekeyed', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'decoration',
+          type: 'range',
+          render: (props) => <span>{props.children}</span>,
+          range: {
+            anchor: {
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+            },
+          },
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()[0]?.range).toEqual({
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 3,
+        },
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()[0]?.range).toEqual({
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 3,
+        },
+      })
+    })
+  })
 })
