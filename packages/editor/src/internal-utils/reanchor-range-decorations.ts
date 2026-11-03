@@ -71,6 +71,18 @@ export function createRangeReanchor(
     : afterBlocks
   const matches = matchBlocks(matchedBeforeBlocks, matchedAfterBlocks, schema)
   const matchByKey = new Map(matches.map((match) => [match.key, match]))
+  const afterByKey = new Map(afterBlocks.map((block) => [block._key, block]))
+  for (const beforeBlock of beforeBlocks) {
+    const afterBlock = afterByKey.get(beforeBlock._key)
+    if (!matchByKey.has(beforeBlock._key) && afterBlock) {
+      matchByKey.set(beforeBlock._key, {
+        type: 'matched',
+        key: beforeBlock._key,
+        before: beforeBlock,
+        after: afterBlock,
+      })
+    }
+  }
   const addedMatches = matches.filter((match) => match.type === 'added')
   for (const match of matches) {
     if (match.type !== 'removed') {

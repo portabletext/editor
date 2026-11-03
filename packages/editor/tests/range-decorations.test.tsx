@@ -1028,6 +1028,102 @@ describe('RangeDecorations', () => {
 })
 
 describe('RangeDecorations: transaction re-anchoring acceptance', () => {
+  test('Scenario: a controlled prop decoration keeps its anchor through repeated keyboard splits', async () => {
+    const editorRef: RefObject<Editor | null> = createRef()
+    const movedSelections: Array<
+      RangeDecorationOnMovedDetails['newSelection']
+    > = []
+
+    function App() {
+      const [, setValue] = useState<Array<PortableTextBlock> | undefined>()
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([
+        {
+          component: ({children}) => (
+            <span data-testid="controlled-decoration">{children}</span>
+          ),
+          payload: {id: 'controlled'},
+          selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+          onMoved: (details) => {
+            movedSelections.push(details.newSelection)
+            setRangeDecorations((decorations) =>
+              decorations.map((decoration) =>
+                decoration.payload?.['id'] === 'controlled'
+                  ? {...decoration, selection: details.newSelection}
+                  : decoration,
+              ),
+            )
+          },
+        },
+        {
+          component: ({children}) => <span>{children}</span>,
+          payload: {id: 'live'},
+          selection: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+        },
+      ])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator: createTestKeyGenerator(),
+            schemaDefinition: defineSchema({}),
+            initialValue: [
+              acceptanceBlock(
+                'b0',
+                's0',
+                'Alpha text then highlighted words move onward.',
+              ),
+            ],
+          }}
+        >
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'mutation') {
+                setValue(event.value)
+              }
+            }}
+          />
+          <NodePlugin
+            nodes={[
+              defineTextBlock({
+                type: 'block',
+                render: (props) => (
+                  <div {...props.attributes}>{props.children}</div>
+                ),
+              }),
+            ]}
+          />
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+          <EditorRefPlugin ref={editorRef} />
+        </EditorProvider>
+      )
+    }
+
+    await render(<App />)
+    const locator = page.getByRole('textbox')
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editorRef.current!.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+    })
+
+    for (const word of ['asd', 'as', 'd', 'asd', 'as']) {
+      await userEvent.keyboard('{Enter}')
+      await userEvent.type(locator, word)
+    }
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+        'B: Alpha text then highli\nB: asd\nB: as\nB: d\nB: asd\nB: as|ghted words move onward.',
+      )
+      expect(movedSelections.at(-1)).toEqual(
+        acceptanceSelection('b0', 's0', 16, 'k6', 's0', 13),
+      )
+    })
+  })
+
   test.each([
     {key: '{Backspace}', direction: 'backward' as const},
     {key: '{Delete}', direction: 'forward' as const},
