@@ -93,9 +93,10 @@ export function getSubSchema(
         // reference to a type declared elsewhere, and the only
         // representation a recursive type can have, since its fields
         // cannot be materialized inline without unrolling the cycle.
-        // Only root-declared block objects are resolved here; a reference
-        // to a type declared inline in another `of` tree stays
-        // unresolved with no fields. The `type !== 'object'` check keeps
+        // Only root block objects are visible here; a reference to a type
+        // declared inline by an enclosing object stays unresolved with no
+        // fields unless the caller, which knows the value path, passes it
+        // in already resolved. The `type !== 'object'` check keeps
         // fieldless inline declarations (`{type: 'object', name}`) from
         // taking a same-named root type's fields.
         const declared = schema.blockObjects.find(
