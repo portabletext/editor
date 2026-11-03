@@ -585,9 +585,11 @@ function targetsStructuralChildren(editor: Editor, path: Path): boolean {
 
   const fieldSegment = path[path.length - 2]
   if (typeof fieldSegment !== 'string') {
-    // Compact paths ([{_key}, {_key}] or numeric) always descend
-    // structurally.
-    return true
+    // A compact path ([{_key}, {_key}] or numeric) descends into the
+    // structural children of the node it ends at, which only a structural
+    // node has. Below an array in plain data (`rows: [['foo']]`), the
+    // parent is plain data too.
+    return targetsStructuralChildren(editor, path.slice(0, -1))
   }
 
   const structuralFieldName = getChildFieldName(
@@ -611,7 +613,7 @@ function targetsStructuralChildren(editor: Editor, path: Path): boolean {
  */
 function applyOnRootBlock(editor: Editor, path: Path, patch: Patch): void {
   const blockSegment = findBlockSegment(path)
-  if (!blockSegment) {
+  if (blockSegment === undefined) {
     return
   }
 

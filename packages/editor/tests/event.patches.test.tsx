@@ -4,6 +4,7 @@ import {
   set,
   setIfMissing,
   unset,
+  type JSONValue,
   type Patch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
@@ -4001,6 +4002,1129 @@ describe('event.patches', () => {
           blockA,
           newBlock,
           blockB,
+        ])
+      })
+    })
+    test('Scenario: an `insert` through a negative row index before an index past its items applies none of them', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const firstRowKey = keyGenerator()
+      const lastRowKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'grid',
+            rows: [
+              {_key: firstRowKey, tags: []},
+              {_key: lastRowKey, tags: ['foo', 'bar', 'baz']},
+            ],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: blockKey}, 'rows', -1, 'tags', -4],
+            position: 'before',
+            items: ['bar', 'baz'],
+            origin: 'remote',
+          },
+          {
+            type: 'set',
+            path: [{_key: blockKey}, 'title'],
+            value: 'foo',
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'grid',
+            title: 'foo',
+            rows: [
+              {_key: firstRowKey, tags: []},
+              {_key: lastRowKey, tags: ['foo', 'bar', 'baz']},
+            ],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: an `insert` through a negative row index into its empty items keeps every item', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const firstRowKey = keyGenerator()
+      const lastRowKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'grid',
+            rows: [
+              {_key: firstRowKey, items: [{title: 'foo'}]},
+              {_key: lastRowKey, items: []},
+            ],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: blockKey}, 'rows', -1, 'items', 0],
+            position: 'before',
+            items: [{title: 'bar'}, {title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'grid',
+            rows: [
+              {_key: firstRowKey, items: [{title: 'foo'}]},
+              {_key: lastRowKey, items: [{title: 'bar'}, {title: 'baz'}]},
+            ],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: keyless items `after` the first item of a plain-data array all land in order', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [{_key: blockKey, _type: 'grid', tags: ['foo']}],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: blockKey}, 'tags', 0],
+            position: 'after',
+            items: ['bar', 'baz'],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {_key: blockKey, _type: 'grid', tags: ['foo', 'bar', 'baz']},
+        ])
+      })
+    })
+
+    test('Scenario: keyless items `before` the last item of a plain-data array all land in order', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [{_key: blockKey, _type: 'grid', tags: ['foo', 'bar']}],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: blockKey}, 'tags', -1],
+            position: 'before',
+            items: ['baz', 'foo'],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'grid',
+            tags: ['foo', 'baz', 'foo', 'bar'],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: a `null` item ahead of a keyed item in a plain-data array lands with it', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'grid',
+            items: [{_key: fooKey, title: 'foo'}],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: blockKey}, 'items', 0],
+            position: 'after',
+            items: [
+              // `JSONValue` leaves out `null`, which a patch parsed from
+              // JSON can still carry.
+              null as unknown as JSONValue,
+              {_key: barKey, title: 'bar'},
+            ],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: blockKey,
+            _type: 'grid',
+            items: [
+              {_key: fooKey, title: 'foo'},
+              null,
+              {_key: barKey, title: 'bar'},
+            ],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: items sharing a key land in payload order', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const otherKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const fooKey = keyGenerator()
+      const sharedKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [
+          {_key: otherKey, _type: 'grid', title: 'baz'},
+          {
+            _key: blockKey,
+            _type: 'grid',
+            items: [{_key: fooKey, title: 'foo'}],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [-1, 'items', 0],
+            position: 'before',
+            items: [
+              {_key: sharedKey, title: 'bar'},
+              {_key: sharedKey, title: 'baz'},
+            ],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {_key: otherKey, _type: 'grid', title: 'baz'},
+          {
+            _key: blockKey,
+            _type: 'grid',
+            items: [
+              {_key: sharedKey, title: 'bar'},
+              {_key: sharedKey, title: 'baz'},
+              {_key: fooKey, title: 'foo'},
+            ],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: `after` the last block by `-1` appends', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+      const bazKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [
+          {_key: fooKey, _type: 'grid', title: 'foo'},
+          {_key: barKey, _type: 'grid', title: 'bar'},
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [-1],
+            position: 'after',
+            items: [{_key: bazKey, _type: 'grid', title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {_key: fooKey, _type: 'grid', title: 'foo'},
+          {_key: barKey, _type: 'grid', title: 'bar'},
+          {_key: bazKey, _type: 'grid', title: 'baz'},
+        ])
+      })
+    })
+
+    test.each([
+      {selector: -0.5, position: 'before' as const},
+      {selector: -1.5, position: 'after' as const},
+    ])(
+      'Scenario: `$position` a fractional block index $selector lands where `Array.prototype.splice` truncates it',
+      async ({selector, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const fooKey = keyGenerator()
+        const barKey = keyGenerator()
+        const bazKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+          initialValue: [
+            {_key: fooKey, _type: 'grid', title: 'foo'},
+            {_key: barKey, _type: 'grid', title: 'bar'},
+          ],
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [selector],
+              position,
+              items: [{_key: bazKey, _type: 'grid', title: 'baz'}],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {_key: fooKey, _type: 'grid', title: 'foo'},
+            {_key: bazKey, _type: 'grid', title: 'baz'},
+            {_key: barKey, _type: 'grid', title: 'bar'},
+          ])
+        })
+      },
+    )
+
+    test('Scenario: `after` a fractional index into a single block appends', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooKey = keyGenerator()
+      const bazKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+        initialValue: [{_key: fooKey, _type: 'grid', title: 'foo'}],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [0.5],
+            position: 'after',
+            items: [{_key: bazKey, _type: 'grid', title: 'baz'}],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {_key: fooKey, _type: 'grid', title: 'foo'},
+          {_key: bazKey, _type: 'grid', title: 'baz'},
+        ])
+      })
+    })
+
+    test.each([0, -1])(
+      'Scenario: `after` an item of a container addressed by %s lands in its content',
+      async (containerIndex) => {
+        const keyGenerator = createTestKeyGenerator()
+        const outerKey = keyGenerator()
+        const fooKey = keyGenerator()
+        const barKey = keyGenerator()
+        const bazKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'outer',
+                fields: [
+                  {name: 'content', type: 'array', of: [{type: 'grid'}]},
+                ],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: outerKey,
+              _type: 'outer',
+              content: [
+                {_key: fooKey, _type: 'grid', title: 'foo'},
+                {_key: barKey, _type: 'grid', title: 'bar'},
+              ],
+            },
+          ],
+          children: (
+            <NodePlugin
+              nodes={[defineContainer({type: 'outer', arrayField: 'content'})]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [containerIndex, 'content', 0],
+              position: 'after',
+              items: [{_key: bazKey, _type: 'grid', title: 'baz'}],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: outerKey,
+              _type: 'outer',
+              content: [
+                {_key: fooKey, _type: 'grid', title: 'foo'},
+                {_key: bazKey, _type: 'grid', title: 'baz'},
+                {_key: barKey, _type: 'grid', title: 'bar'},
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each([0, -1])(
+      'Scenario: `after` an item of a container in a container, both addressed by %s, lands in the inner content',
+      async (containerIndex) => {
+        const keyGenerator = createTestKeyGenerator()
+        const sectionKey = keyGenerator()
+        const boxKey = keyGenerator()
+        const fooKey = keyGenerator()
+        const barKey = keyGenerator()
+        const bazKey = keyGenerator()
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {name: 'content', type: 'array', of: [{type: 'grid'}]},
+                ],
+              },
+              {
+                name: 'section',
+                fields: [{name: 'content', type: 'array', of: [{type: 'box'}]}],
+              },
+            ],
+          }),
+          initialValue: [
+            {
+              _key: sectionKey,
+              _type: 'section',
+              content: [
+                {
+                  _key: boxKey,
+                  _type: 'box',
+                  content: [
+                    {_key: fooKey, _type: 'grid', title: 'foo'},
+                    {_key: barKey, _type: 'grid', title: 'bar'},
+                  ],
+                },
+              ],
+            },
+          ],
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'section', arrayField: 'content'}),
+                defineContainer({type: 'box', arrayField: 'content'}),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [containerIndex, 'content', containerIndex, 'content', 0],
+              position: 'after',
+              items: [{_key: bazKey, _type: 'grid', title: 'baz'}],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual([
+            {
+              _key: sectionKey,
+              _type: 'section',
+              content: [
+                {
+                  _key: boxKey,
+                  _type: 'box',
+                  content: [
+                    {_key: fooKey, _type: 'grid', title: 'foo'},
+                    {_key: bazKey, _type: 'grid', title: 'baz'},
+                    {_key: barKey, _type: 'grid', title: 'bar'},
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+      },
+    )
+
+    test.each(
+      ([false, true] as const).flatMap((nested) =>
+        (['before', 'after', 'replace'] as const).map((position) => ({
+          nested,
+          position,
+        })),
+      ),
+    )(
+      'Scenario: an `insert` $position into a container whose key a sibling took in the same batch lands in the first of them, nested: $nested',
+      async ({nested, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const sectionKey = keyGenerator()
+        const firstKey = keyGenerator()
+        const secondKey = keyGenerator()
+        const fooKey = keyGenerator()
+        const barKey = keyGenerator()
+        const bazKey = keyGenerator()
+        const first = {
+          _key: firstKey,
+          _type: 'box',
+          content: [{_key: fooKey, _type: 'grid', title: 'foo'}],
+        }
+        const second = {
+          _key: secondKey,
+          _type: 'box',
+          content: [{_key: barKey, _type: 'grid', title: 'bar'}],
+        }
+        const baz = {_key: bazKey, _type: 'grid', title: 'baz'}
+        const wrap = (boxes: Array<PortableTextBlock>) =>
+          nested ? [{_key: sectionKey, _type: 'section', boxes}] : boxes
+        const prefix = nested ? [{_key: sectionKey}, 'boxes'] : []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {name: 'content', type: 'array', of: [{type: 'grid'}]},
+                ],
+              },
+              {
+                name: 'section',
+                fields: [{name: 'boxes', type: 'array', of: [{type: 'box'}]}],
+              },
+            ],
+          }),
+          initialValue: wrap([first, second]),
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'section', arrayField: 'boxes'}),
+                defineContainer({type: 'box', arrayField: 'content'}),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'set',
+              path: [...prefix, {_key: secondKey}, '_key'],
+              value: firstKey,
+              origin: 'remote',
+            },
+            {
+              type: 'insert',
+              path: [...prefix, {_key: firstKey}, 'content', 0],
+              position,
+              items: [baz],
+              origin: 'remote',
+            },
+            {
+              type: 'set',
+              path: [...prefix, 1, '_key'],
+              value: secondKey,
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(
+            wrap([
+              {
+                ...first,
+                content:
+                  position === 'before'
+                    ? [baz, ...first.content]
+                    : position === 'after'
+                      ? [...first.content, baz]
+                      : [baz],
+              },
+              second,
+            ]),
+          )
+        })
+      },
+    )
+
+    test.each(
+      [false, true].flatMap((nested) =>
+        (['before', 'after', 'replace'] as const).map((position) => ({
+          nested,
+          position,
+        })),
+      ),
+    )(
+      'Scenario: an `insert` $position into plain data in a block object through an index after a `null` item lands in the indexed item, nested: $nested',
+      async ({nested, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const sectionKey = keyGenerator()
+        const boxKey = keyGenerator()
+        const gridKey = keyGenerator()
+        const rowKey = keyGenerator()
+        const bar = {_key: keyGenerator(), title: 'bar'}
+        const baz = {_key: keyGenerator(), title: 'baz'}
+        const wrap = (rows: Array<unknown>) => {
+          const grid = {_key: gridKey, _type: 'grid', rows}
+          return nested
+            ? [
+                {
+                  _key: sectionKey,
+                  _type: 'section',
+                  boxes: [{_key: boxKey, _type: 'box', content: [grid]}],
+                },
+              ]
+            : [grid]
+        }
+        const prefix = nested
+          ? [{_key: sectionKey}, 'boxes', {_key: boxKey}, 'content']
+          : []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {name: 'content', type: 'array', of: [{type: 'grid'}]},
+                ],
+              },
+              {
+                name: 'section',
+                fields: [{name: 'boxes', type: 'array', of: [{type: 'box'}]}],
+              },
+            ],
+          }),
+          initialValue: wrap([null, {_key: rowKey, items: ['foo']}]),
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'section', arrayField: 'boxes'}),
+                defineContainer({type: 'box', arrayField: 'content'}),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [...prefix, {_key: gridKey}, 'rows', 1, 'items', 0],
+              position,
+              items: [bar, baz],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(
+            wrap([
+              null,
+              {
+                _key: rowKey,
+                items:
+                  position === 'before'
+                    ? [bar, baz, 'foo']
+                    : position === 'after'
+                      ? ['foo', bar, baz]
+                      : [bar, baz],
+              },
+            ]),
+          )
+        })
+      },
+    )
+
+    test.each(
+      [false, true].flatMap((nested) =>
+        (['before', 'after', 'replace'] as const).map((position) => ({
+          nested,
+          position,
+        })),
+      ),
+    )(
+      'Scenario: an `insert` $position into an array directly inside a plain-data array in a block object lands in it, nested: $nested',
+      async ({nested, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const sectionKey = keyGenerator()
+        const boxKey = keyGenerator()
+        const gridKey = keyGenerator()
+        const wrap = (rows: Array<Array<string>>) => {
+          const grid = {_key: gridKey, _type: 'grid', rows}
+          return nested
+            ? [
+                {
+                  _key: sectionKey,
+                  _type: 'section',
+                  boxes: [{_key: boxKey, _type: 'box', content: [grid]}],
+                },
+              ]
+            : [grid]
+        }
+        const prefix = nested ? [0, 'boxes', 0, 'content'] : []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {name: 'content', type: 'array', of: [{type: 'grid'}]},
+                ],
+              },
+              {
+                name: 'section',
+                fields: [{name: 'boxes', type: 'array', of: [{type: 'box'}]}],
+              },
+            ],
+          }),
+          initialValue: wrap([['foo']]),
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'section', arrayField: 'boxes'}),
+                defineContainer({type: 'box', arrayField: 'content'}),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            {
+              type: 'insert',
+              path: [...prefix, 0, 'rows', 0, 0],
+              position,
+              items: ['bar', 'baz'],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(
+            wrap([
+              position === 'before'
+                ? ['bar', 'baz', 'foo']
+                : position === 'after'
+                  ? ['foo', 'bar', 'baz']
+                  : ['bar', 'baz'],
+            ]),
+          )
+        })
+      },
+    )
+
+    test.each(
+      [false, true].flatMap((nested) =>
+        (['set', 'unset'] as const).map((type) => ({nested, type})),
+      ),
+    )(
+      'Scenario: a `$type` of a member of an array directly inside a plain-data array in a block object applies, nested: $nested',
+      async ({nested, type}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const sectionKey = keyGenerator()
+        const boxKey = keyGenerator()
+        const gridKey = keyGenerator()
+        const wrap = (rows: Array<Array<string>>) => {
+          const grid = {_key: gridKey, _type: 'grid', rows}
+          return nested
+            ? [
+                {
+                  _key: sectionKey,
+                  _type: 'section',
+                  boxes: [{_key: boxKey, _type: 'box', content: [grid]}],
+                },
+              ]
+            : [grid]
+        }
+        const path = [...(nested ? [0, 'boxes', 0, 'content'] : []), 0, 'rows']
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: defineSchema({
+            blockObjects: [
+              {name: 'grid'},
+              {
+                name: 'box',
+                fields: [
+                  {name: 'content', type: 'array', of: [{type: 'grid'}]},
+                ],
+              },
+              {
+                name: 'section',
+                fields: [{name: 'boxes', type: 'array', of: [{type: 'box'}]}],
+              },
+            ],
+          }),
+          initialValue: wrap([['foo', 'bar']]),
+          children: (
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'section', arrayField: 'boxes'}),
+                defineContainer({type: 'box', arrayField: 'content'}),
+              ]}
+            />
+          ),
+        })
+
+        editor.send({
+          type: 'patches',
+          patches: [
+            type === 'set'
+              ? {
+                  type: 'set',
+                  path: [...path, 0, 0],
+                  value: 'baz',
+                  origin: 'remote',
+                }
+              : {type: 'unset', path: [...path, 0, 0], origin: 'remote'},
+          ],
+          snapshot: undefined,
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(
+            wrap([type === 'set' ? ['baz', 'bar'] : ['bar']]),
+          )
+        })
+      },
+    )
+
+    test('Scenario: keyless blocks `after` the last block of Portable Text in an object field all land in order', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const figureKey = keyGenerator()
+      const fooKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {
+              name: 'figure',
+              fields: [
+                {
+                  name: 'caption',
+                  type: 'object',
+                  fields: [
+                    {name: 'body', type: 'array', of: [{type: 'block'}]},
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: figureKey,
+            _type: 'figure',
+            caption: {
+              body: [
+                {
+                  _key: fooKey,
+                  _type: 'block',
+                  children: [
+                    {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: figureKey}, 'caption', 'body', 0],
+            position: 'after',
+            items: [
+              {
+                _type: 'block',
+                children: [
+                  {_key: barSpanKey, _type: 'span', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                children: [
+                  {_key: bazSpanKey, _type: 'span', text: 'baz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: figureKey,
+            _type: 'figure',
+            caption: {
+              body: [
+                {
+                  _key: fooKey,
+                  _type: 'block',
+                  children: [
+                    {_key: fooSpanKey, _type: 'span', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  children: [
+                    {_key: barSpanKey, _type: 'span', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  children: [
+                    {_key: bazSpanKey, _type: 'span', text: 'baz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          },
+        ])
+      })
+    })
+
+    test('Scenario: keyless blocks `before` the first block of a container each get a key', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const boxKey = keyGenerator()
+      const fooKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'grid'},
+            {
+              name: 'box',
+              fields: [{name: 'content', type: 'array', of: [{type: 'grid'}]}],
+            },
+          ],
+        }),
+        initialValue: [
+          {
+            _key: boxKey,
+            _type: 'box',
+            content: [{_key: fooKey, _type: 'grid', title: 'foo'}],
+          },
+        ],
+        children: (
+          <NodePlugin
+            nodes={[defineContainer({type: 'box', arrayField: 'content'})]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [{_key: boxKey}, 'content', 0],
+            position: 'before',
+            items: [
+              {_type: 'grid', title: 'bar'},
+              {_type: 'grid', title: 'baz'},
+              {_type: 'grid', title: 'foo'},
+            ],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: boxKey,
+            _type: 'box',
+            content: [
+              {_key: 'k6', _type: 'grid', title: 'bar'},
+              {_key: 'k5', _type: 'grid', title: 'baz'},
+              {_key: 'k4', _type: 'grid', title: 'foo'},
+              {_key: fooKey, _type: 'grid', title: 'foo'},
+            ],
+          },
+        ])
+      })
+    })
+
+    test('Scenario: blocks `after` the placeholder by `-1` replace it on an empty editor', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({blockObjects: [{name: 'grid'}]}),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'insert',
+            path: [-1],
+            position: 'after',
+            items: [
+              {_key: fooKey, _type: 'grid', title: 'foo'},
+              {_key: barKey, _type: 'grid', title: 'bar'},
+            ],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {_key: fooKey, _type: 'grid', title: 'foo'},
+          {_key: barKey, _type: 'grid', title: 'bar'},
         ])
       })
     })

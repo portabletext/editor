@@ -39,23 +39,27 @@ export function resolveContainerAt(
   value: ReadonlyArray<Node>,
   path: Path,
 ): RegisteredContainer | RegisteredPositional | undefined {
-  const keyedIndices: Array<number> = []
-  for (let index = 0; index < path.length; index++) {
-    if (isKeyedSegment(path[index])) {
-      keyedIndices.push(index)
+  // The target is the last node segment, keyed or numeric. A numeric
+  // segment addresses a node positionally, e.g. one of several siblings
+  // that share a key.
+  let targetIndex = -1
+  for (let index = path.length - 1; index >= 0; index--) {
+    const segment = path[index]
+    if (isKeyedSegment(segment) || typeof segment === 'number') {
+      targetIndex = index
+      break
     }
   }
-  if (keyedIndices.length === 0) {
+  if (targetIndex === -1) {
     return undefined
   }
 
   let currentChildren: ReadonlyArray<Node> = value
   let parent: RegisteredContainer | undefined
   let resolved: RegisteredContainer | RegisteredPositional | undefined
-  const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
 
   let segmentIndex = 0
-  while (segmentIndex <= targetKeyedIndex) {
+  while (segmentIndex <= targetIndex) {
     const segment = path[segmentIndex]!
     if (typeof segment === 'string') {
       segmentIndex++
@@ -79,7 +83,7 @@ export function resolveContainerAt(
       return undefined
     }
 
-    if (segmentIndex < targetKeyedIndex) {
+    if (segmentIndex < targetIndex) {
       // Walk one more level. The resolved entry must be a container
       // (have children) for descent to continue.
       if (!('field' in resolved)) {

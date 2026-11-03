@@ -10,6 +10,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {isRecord} from '../utils/asserters'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
 import {nodeSegment} from './node-segment'
@@ -279,6 +280,12 @@ export function getDirtyPaths(
       // inserts), not the inserted node's final location. Dirty the
       // ancestors of the reference path AND the inserted node's own path.
       const levels = pathLevels(path)
+
+      if (!isRecord(node)) {
+        // A remote patch can insert a primitive or `null` member into a
+        // plain-data array, which has no path of its own to dirty.
+        return levels
+      }
 
       const nodePath = [...path]
       for (let i = nodePath.length - 1; i >= 0; i--) {
