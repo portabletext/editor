@@ -3339,6 +3339,953 @@ describe('event.change', () => {
       },
     ])
   })
+  test('Scenario: Typing and splitting a text block inside a container emits local `change` events whose `operations` and `patches` replay to the editor’s value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      callout(calloutKey, [block(blockKey, spanKey, 'foo')]),
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue,
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const contentPath = [{_key: calloutKey}, 'content']
+    const spanPath = [
+      ...contentPath,
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+    const newSpanPath = [...contentPath, {_key: 'k5'}, 'children', {_key: 'k6'}]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+    const changes = collectChanges(editor)
+
+    editor.send({type: 'insert.text', text: '!'})
+    editor.send({type: 'insert.break'})
+    editor.send({type: 'insert.text', text: 'bar'})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [
+        block(blockKey, spanKey, 'foo!'),
+        block('k5', 'k6', 'bar'),
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
+        ],
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'foo!', [...spanPath, 'text']),
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert',
+            path: [...contentPath, {_key: blockKey}],
+            position: 'after',
+            node: block('k5', 'k6', ''),
+            inverse: {type: 'unset', path: [...contentPath, {_key: 'k5'}]},
+          },
+        ],
+        patches: [
+          {...setIfMissing([], contentPath), origin: 'local'},
+          {
+            ...insert([block('k5', 'k6', '')], 'after', [
+              ...contentPath,
+              {_key: blockKey},
+            ]),
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'insert.text', path: newSpanPath, offset: 0, text: 'bar'},
+        ],
+        patches: [
+          {
+            ...diffMatchPatch('', 'bar', [...newSpanPath, 'text']),
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(initialValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `update value` changing a text block inside a container emits one remote `change` whose `operations` replay to the editor’s value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const contentPath = [{_key: calloutKey}, 'content']
+    const hostValue = [callout(calloutKey, [block(blockKey, spanKey, 'bar')])]
+
+    editor.send({type: 'update value', value: hostValue})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [block(blockKey, spanKey, 'bar')]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: contentPath,
+            value: [block(blockKey, spanKey, 'bar')],
+            inverse: {
+              type: 'set',
+              path: contentPath,
+              value: [block(blockKey, spanKey, 'foo')],
+            },
+          },
+        ],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(hostValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `update value` repeating a span key in a text block inside a container emits the remote `change`, then a `correction` re-keying the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const duplicateKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const contentPath = [{_key: calloutKey}, 'content']
+    const duplicateKeyPath = [
+      ...contentPath,
+      {_key: blockKey},
+      'children',
+      1,
+      '_key',
+    ]
+    const duplicateKeyBlock = {
+      ...block(blockKey, spanKey, ''),
+      children: [
+        {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
+        {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['strong']},
+      ],
+    }
+    const hostValue = [callout(calloutKey, [duplicateKeyBlock])]
+
+    editor.send({type: 'update value', value: hostValue})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [
+        {
+          ...block(blockKey, spanKey, ''),
+          children: [
+            {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          ],
+        },
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: contentPath,
+            value: [duplicateKeyBlock],
+            inverse: {
+              type: 'set',
+              path: contentPath,
+              value: [block(blockKey, spanKey, 'foo')],
+            },
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: duplicateKeyPath,
+            value: 'k6',
+            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
+          },
+        ],
+        patches: [{...set('k6', duplicateKeyPath), origin: 'local'}],
+        correction: true,
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(hostValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: Typing and splitting a text block inside a container inside a container emits local `change` events whose `operations` and `patches` replay to the editor’s value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const outerCalloutKey = keyGenerator()
+    const innerCalloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [
+      callout(outerCalloutKey, [
+        callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
+      ]),
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedCalloutSchemaDefinition,
+      initialValue,
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const contentPath = [
+      {_key: outerCalloutKey},
+      'content',
+      {_key: innerCalloutKey},
+      'content',
+    ]
+    const spanPath = [
+      ...contentPath,
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+    const newSpanPath = [...contentPath, {_key: 'k6'}, 'children', {_key: 'k7'}]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+    const changes = collectChanges(editor)
+
+    editor.send({type: 'insert.text', text: '!'})
+    editor.send({type: 'insert.break'})
+    editor.send({type: 'insert.text', text: 'bar'})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(outerCalloutKey, [
+        callout(innerCalloutKey, [
+          block(blockKey, spanKey, 'foo!'),
+          block('k6', 'k7', 'bar'),
+        ]),
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
+        ],
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'foo!', [...spanPath, 'text']),
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert',
+            path: [...contentPath, {_key: blockKey}],
+            position: 'after',
+            node: block('k6', 'k7', ''),
+            inverse: {type: 'unset', path: [...contentPath, {_key: 'k6'}]},
+          },
+        ],
+        patches: [
+          {...setIfMissing([], contentPath), origin: 'local'},
+          {
+            ...insert([block('k6', 'k7', '')], 'after', [
+              ...contentPath,
+              {_key: blockKey},
+            ]),
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'insert.text', path: newSpanPath, offset: 0, text: 'bar'},
+        ],
+        patches: [
+          {
+            ...diffMatchPatch('', 'bar', [...newSpanPath, 'text']),
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(initialValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `update value` changing a text block inside a container inside a container emits one remote `change` whose `operations` replay to the editor’s value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const outerCalloutKey = keyGenerator()
+    const innerCalloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedCalloutSchemaDefinition,
+      initialValue: [
+        callout(outerCalloutKey, [
+          callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
+        ]),
+      ],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const outerContentPath = [{_key: outerCalloutKey}, 'content']
+    const hostValue = [
+      callout(outerCalloutKey, [
+        callout(innerCalloutKey, [block(blockKey, spanKey, 'bar')]),
+      ]),
+    ]
+
+    editor.send({type: 'update value', value: hostValue})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(outerCalloutKey, [
+        callout(innerCalloutKey, [block(blockKey, spanKey, 'bar')]),
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: outerContentPath,
+            value: [
+              callout(innerCalloutKey, [block(blockKey, spanKey, 'bar')]),
+            ],
+            inverse: {
+              type: 'set',
+              path: outerContentPath,
+              value: [
+                callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
+              ],
+            },
+          },
+        ],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(hostValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `update value` repeating a span key in a text block inside a container inside a container emits the remote `change`, then a `correction` re-keying the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const outerCalloutKey = keyGenerator()
+    const innerCalloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const duplicateKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedCalloutSchemaDefinition,
+      initialValue: [
+        callout(outerCalloutKey, [
+          callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
+        ]),
+      ],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const outerContentPath = [{_key: outerCalloutKey}, 'content']
+    const duplicateKeyPath = [
+      ...outerContentPath,
+      {_key: innerCalloutKey},
+      'content',
+      {_key: blockKey},
+      'children',
+      1,
+      '_key',
+    ]
+    const duplicateKeyBlock = {
+      ...block(blockKey, spanKey, ''),
+      children: [
+        {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
+        {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['strong']},
+      ],
+    }
+    const hostValue = [
+      callout(outerCalloutKey, [callout(innerCalloutKey, [duplicateKeyBlock])]),
+    ]
+
+    editor.send({type: 'update value', value: hostValue})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(outerCalloutKey, [
+        callout(innerCalloutKey, [
+          {
+            ...block(blockKey, spanKey, ''),
+            children: [
+              {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
+              {_type: 'span', _key: 'k7', text: 'bar', marks: ['strong']},
+            ],
+          },
+        ]),
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: outerContentPath,
+            value: [callout(innerCalloutKey, [duplicateKeyBlock])],
+            inverse: {
+              type: 'set',
+              path: outerContentPath,
+              value: [
+                callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
+              ],
+            },
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: duplicateKeyPath,
+            value: 'k7',
+            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
+          },
+        ],
+        patches: [{...set('k7', duplicateKeyPath), origin: 'local'}],
+        correction: true,
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(hostValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: Typing and splitting a text block in an object field with its own sub-schema emits local `change` events whose `operations` and `patches` replay to the editor’s value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const initialValue = [note(noteKey, [emBlock(blockKey, spanKey, 'foo')])]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: noteSchemaDefinition,
+      initialValue,
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'note', arrayField: 'body'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const bodyPath = [{_key: noteKey}, 'body']
+    const spanPath = [
+      ...bodyPath,
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+    ]
+    const newSpanPath = [...bodyPath, {_key: 'k5'}, 'children', {_key: 'k6'}]
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+    const changes = collectChanges(editor)
+
+    editor.send({type: 'insert.text', text: '!'})
+    editor.send({type: 'insert.break'})
+    editor.send({type: 'insert.text', text: 'bar'})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      note(noteKey, [
+        emBlock(blockKey, spanKey, 'foo!'),
+        block('k5', 'k6', 'bar'),
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
+        ],
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'foo!', [...spanPath, 'text']),
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert',
+            path: [...bodyPath, {_key: blockKey}],
+            position: 'after',
+            node: block('k5', 'k6', ''),
+            inverse: {type: 'unset', path: [...bodyPath, {_key: 'k5'}]},
+          },
+        ],
+        patches: [
+          {...setIfMissing([], bodyPath), origin: 'local'},
+          {
+            ...insert([block('k5', 'k6', '')], 'after', [
+              ...bodyPath,
+              {_key: blockKey},
+            ]),
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'insert.text', path: newSpanPath, offset: 0, text: 'bar'},
+        ],
+        patches: [
+          {
+            ...diffMatchPatch('', 'bar', [...newSpanPath, 'text']),
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(initialValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `update value` changing a text block in an object field with its own sub-schema emits one remote `change` whose `operations` replay to the editor’s value', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: noteSchemaDefinition,
+      initialValue: [note(noteKey, [emBlock(blockKey, spanKey, 'foo')])],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'note', arrayField: 'body'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const bodyPath = [{_key: noteKey}, 'body']
+    const hostValue = [note(noteKey, [emBlock(blockKey, spanKey, 'bar')])]
+
+    editor.send({type: 'update value', value: hostValue})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      note(noteKey, [emBlock(blockKey, spanKey, 'bar')]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: bodyPath,
+            value: [emBlock(blockKey, spanKey, 'bar')],
+            inverse: {
+              type: 'set',
+              path: bodyPath,
+              value: [emBlock(blockKey, spanKey, 'foo')],
+            },
+          },
+        ],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(hostValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: `update value` repeating a span key in a text block in an object field with its own sub-schema emits the remote `change`, then a `correction` re-keying the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const duplicateKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: noteSchemaDefinition,
+      initialValue: [note(noteKey, [emBlock(blockKey, spanKey, 'foo')])],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'note', arrayField: 'body'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const bodyPath = [{_key: noteKey}, 'body']
+    const duplicateKeyPath = [
+      ...bodyPath,
+      {_key: blockKey},
+      'children',
+      1,
+      '_key',
+    ]
+    const duplicateKeyBlock = {
+      ...block(blockKey, spanKey, ''),
+      children: [
+        {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
+        {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['em']},
+      ],
+    }
+    const hostValue = [note(noteKey, [duplicateKeyBlock])]
+
+    editor.send({type: 'update value', value: hostValue})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      note(noteKey, [
+        {
+          ...block(blockKey, spanKey, ''),
+          children: [
+            {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
+            {_type: 'span', _key: 'k6', text: 'bar', marks: ['em']},
+          ],
+        },
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: bodyPath,
+            value: [duplicateKeyBlock],
+            inverse: {
+              type: 'set',
+              path: bodyPath,
+              value: [emBlock(blockKey, spanKey, 'foo')],
+            },
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: duplicateKeyPath,
+            value: 'k6',
+            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
+          },
+        ],
+        patches: [{...set('k6', duplicateKeyPath), origin: 'local'}],
+        correction: true,
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+    expect(replayLocalPatches(hostValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: A remote patch that removes `markDefs` from a text block inside a container emits a remote `change` with the removal', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const markDefsPath = [
+      {_key: calloutKey},
+      'content',
+      {_key: blockKey},
+      'markDefs',
+    ]
+
+    editor.send({
+      type: 'patches',
+      patches: [{...unset(markDefsPath), origin: 'remote'}],
+      snapshot: undefined,
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [{type: 'unset', path: markDefsPath}],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: A remote patch that removes `markDefs` from a text block inside a container inside a container emits a remote `change` with the removal', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const outerKey = keyGenerator()
+    const innerKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedCalloutSchemaDefinition,
+      initialValue: [
+        callout(outerKey, [
+          callout(innerKey, [block(blockKey, spanKey, 'foo')]),
+        ]),
+      ],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const markDefsPath = [
+      {_key: outerKey},
+      'content',
+      {_key: innerKey},
+      'content',
+      {_key: blockKey},
+      'markDefs',
+    ]
+
+    editor.send({
+      type: 'patches',
+      patches: [{...unset(markDefsPath), origin: 'remote'}],
+      snapshot: undefined,
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(outerKey, [
+        callout(innerKey, [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ]),
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [{type: 'unset', path: markDefsPath}],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+
+  test('Scenario: A remote patch that removes `markDefs` from a text block in an object field with its own sub-schema emits a remote `change` with the removal', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: noteSchemaDefinition,
+      initialValue: [note(noteKey, [emBlock(blockKey, spanKey, 'foo')])],
+    })
+    editor.registerNode({
+      node: defineContainer({type: 'note', arrayField: 'body'}),
+    })
+    const initialSnapshotValue = editor.getSnapshot().context.value
+    const changes = collectChanges(editor)
+    const markDefsPath = [{_key: noteKey}, 'body', {_key: blockKey}, 'markDefs']
+
+    editor.send({
+      type: 'patches',
+      patches: [{...unset(markDefsPath), origin: 'remote'}],
+      snapshot: undefined,
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      note(noteKey, [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo', marks: ['em']},
+          ],
+        },
+      ]),
+    ])
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [{type: 'unset', path: markDefsPath}],
+      },
+    ])
+    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
+      editor.getSnapshot().context.value,
+    )
+  })
+})
+
+const calloutSchemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}],
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+    },
+  ],
+})
+
+const nestedCalloutSchemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}],
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'callout'}],
+        },
+      ],
+    },
+  ],
+})
+
+const noteSchemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}],
+  blockObjects: [
+    {
+      name: 'note',
+      fields: [
+        {
+          name: 'body',
+          type: 'array',
+          of: [{type: 'block', decorators: [{name: 'em'}]}],
+        },
+      ],
+    },
+  ],
 })
 
 function collectChanges(editor: Editor): Array<ChangeEvent> {
@@ -3376,6 +4323,31 @@ function block(
     style: 'normal',
     markDefs: [],
     children: [{_type: 'span', _key: spanKey, text, marks: []}],
+  }
+}
+
+function callout(
+  calloutKey: string,
+  content: Array<PortableTextBlock>,
+): PortableTextBlock {
+  return {_type: 'callout', _key: calloutKey, content}
+}
+
+function note(
+  noteKey: string,
+  body: Array<PortableTextBlock>,
+): PortableTextBlock {
+  return {_type: 'note', _key: noteKey, body}
+}
+
+function emBlock(
+  blockKey: string,
+  spanKey: string,
+  text: string,
+): PortableTextBlock {
+  return {
+    ...block(blockKey, spanKey, text),
+    children: [{_type: 'span', _key: spanKey, text, marks: ['em']}],
   }
 }
 
@@ -3455,22 +4427,19 @@ function getTextAt(
   value: Array<PortableTextBlock>,
   path: ChangeEvent['operations'][number]['path'],
 ): string {
-  const [blockSegment, , spanSegment] = path
-  const textBlock = value.find(
-    (candidate) =>
-      typeof blockSegment === 'object' &&
-      !Array.isArray(blockSegment) &&
-      candidate._key === blockSegment._key,
-  )
-  const children = (textBlock?.['children'] ?? []) as Array<{
-    _key: string
-    text?: string
-  }>
-  const span = children.find(
-    (child) =>
-      typeof spanSegment === 'object' &&
-      !Array.isArray(spanSegment) &&
-      child._key === spanSegment._key,
-  )
-  return span?.text ?? ''
+  const span = path.reduce<unknown>((node, segment) => {
+    if (typeof segment === 'string' || typeof segment === 'number') {
+      return (node as Record<string | number, unknown> | undefined)?.[segment]
+    }
+
+    if (Array.isArray(segment) || !Array.isArray(node)) {
+      return undefined
+    }
+
+    return node.find(
+      (candidate: {_key?: string}) => candidate._key === segment._key,
+    )
+  }, value)
+
+  return (span as {text?: string} | undefined)?.text ?? ''
 }
