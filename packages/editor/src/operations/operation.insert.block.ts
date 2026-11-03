@@ -27,6 +27,7 @@ import {
   isEqualMarks,
 } from '../internal-utils/equality'
 import {toEngineBlock} from '../internal-utils/values'
+import {getDeclarationsInScope} from '../schema/declarations-in-scope'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
@@ -105,6 +106,9 @@ export const insertBlockOperationImplementation: OperationImplementation<
     keyGenerator: context.keyGenerator,
     profile: 'strict',
     schema,
+    scope: destinationPath
+      ? getDeclarationsInScope(snapshot, destinationPath)
+      : undefined,
   })
 
   if (!parsedBlock) {

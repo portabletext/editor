@@ -1334,6 +1334,118 @@ describe('container normalization', () => {
     })
   })
 
+  test('Scenario: A recursive type declared inline with an empty child array two levels deep normalizes to a placeholder block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const sectionKey = keyGenerator()
+    const outerSubsectionKey = keyGenerator()
+    const innerSubsectionKey = keyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const fooBlock = {
+      _type: 'block',
+      _key: fooBlockKey,
+      children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'section',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [
+                  {type: 'block'},
+                  {
+                    type: 'object',
+                    name: 'subsection',
+                    fields: [
+                      {
+                        name: 'content',
+                        type: 'array',
+                        of: [{type: 'block'}, {type: 'subsection'}],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              content: [
+                fooBlock,
+                {_type: 'subsection', _key: innerSubsectionKey, content: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'section',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+            defineContainer({
+              type: 'subsection',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'subsection',
+              _key: outerSubsectionKey,
+              content: [
+                fooBlock,
+                {
+                  _type: 'subsection',
+                  _key: innerSubsectionKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k7',
+                      children: [
+                        {_type: 'span', _key: 'k8', text: '', marks: []},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
   test('Scenario: Removing the last child from a container triggers normalization', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
