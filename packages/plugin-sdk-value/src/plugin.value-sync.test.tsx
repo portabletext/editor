@@ -118,7 +118,7 @@ type MockPatchStore = ReturnType<typeof createMockPatchStore>
 
 async function createSyncedEditor(options: {
   initialValue?: PortableTextBlock[]
-  store: MockStore | MockPatchStore
+  store: MockStore | MockPatchStore | Omit<MockPatchStore, 'pushPatches'>
   schemaDefinition?: ReturnType<typeof defineSchema>
 }) {
   const editorRef = createRef<Editor>()
@@ -159,11 +159,15 @@ async function createSyncedEditor(options: {
 
 // ---- Helpers ----
 
-function makeBlock(key: string, text: string): PortableTextBlock {
+function makeBlock(
+  key: string,
+  text: string,
+  spanKey = `${key}-span`,
+): PortableTextBlock {
   return {
     _type: 'block',
     _key: key,
-    children: [{_type: 'span', _key: `${key}-span`, text, marks: []}],
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
     markDefs: [],
     style: 'normal',
   }
@@ -263,7 +267,7 @@ describe(ValueSyncPlugin.name, () => {
       await userEvent.keyboard('{Backspace}')
       await vi.advanceTimersByTimeAsync(250)
 
-      expect(pushedValues).toEqual([[typedBlock('abc')], [typedBlock('ab')]])
+      expect(pushedValues).toEqual([[typedBlock('ab')], [typedBlock('ab')]])
 
       store.setRemoteValue(pushedValues.at(-1)!)
       await vi.advanceTimersByTimeAsync(1000)
@@ -1072,6 +1076,59 @@ describe(ValueSyncPlugin.name, () => {
       // mirroring the store value
       await vi.waitFor(() => {
         expect(editor.getSnapshot().context.value).toEqual(store.getValue())
+      })
+    })
+
+    test('Scenario: a remote patch applied while a local edit is pending is in the pushed value', async () => {
+      const keyGenerator = createTestKeyGenerator('stored-')
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const {pushPatches: _, ...store} = createMockPatchStore([
+        makeBlock(fooBlockKey, 'foo', fooSpanKey),
+        makeBlock(barBlockKey, 'bar', barSpanKey),
+      ])
+      const {editor, unmount} = await createSyncedEditor({store})
+      cleanup = unmount
+
+      const fooSpanPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(['B: foo', 'B: bar'].join('\n'))
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: fooSpanPath, offset: 3},
+          focus: {path: fooSpanPath, offset: 3},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(getEditorText(editor)).toEqual(['B: foo|', 'B: bar'].join('\n'))
+      })
+
+      editor.send({type: 'insert.text', text: 'baz'})
+      store.receiveRemotePatches([
+        {
+          type: 'diffMatchPatch',
+          origin: 'remote',
+          path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+        },
+      ])
+
+      await vi.waitFor(() => {
+        expect(store.pushValue.mock.calls).toEqual([
+          [
+            [
+              makeBlock(fooBlockKey, 'foobaz', fooSpanKey),
+              makeBlock(barBlockKey, 'barbaz', barSpanKey),
+            ],
+          ],
+        ])
       })
     })
 
