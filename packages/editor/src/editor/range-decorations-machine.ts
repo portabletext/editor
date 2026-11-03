@@ -181,10 +181,12 @@ function mergeRangeDecoration(
 
 function buildPropDecoratedRangesFromScratch(
   rangeDecorations: Array<RangeDecoration>,
+  previousDecoratedRanges: Array<DecoratedRange> = [],
 ): Array<DecoratedRange> {
   const decoratedRanges: Array<DecoratedRange> = []
 
-  for (const rangeDecoration of rangeDecorations) {
+  for (let index = 0; index < rangeDecorations.length; index++) {
+    const rangeDecoration = rangeDecorations[index]!
     if (!rangeDecoration.selection) {
       continue
     }
@@ -193,7 +195,8 @@ function buildPropDecoratedRangesFromScratch(
       rangeDecoration,
       kind: 'prop',
       merge: mergeRangeDecoration,
-      propIdentity: rangeDecoration,
+      propIdentity:
+        previousDecoratedRanges[index]?.propIdentity ?? rangeDecoration,
       ...rangeDecoration.selection,
     })
   }
@@ -222,6 +225,7 @@ function buildRegisteredDecoratedRangesFromScratch(
 function buildDecoratedRangesFromScratch(
   kind: RangeDecorationSourceKind,
   rangeDecorations: Array<RangeDecoration | Decoration>,
+  previousDecoratedRanges: Array<DecoratedRange> = [],
 ): Array<DecoratedRange> {
   if (kind === 'registered') {
     return buildRegisteredDecoratedRangesFromScratch(
@@ -231,6 +235,7 @@ function buildDecoratedRangesFromScratch(
 
   return buildPropDecoratedRangesFromScratch(
     rangeDecorations as Array<RangeDecoration>,
+    previousDecoratedRanges,
   )
 }
 
@@ -690,7 +695,6 @@ function correctSourceRanges(
       source,
       corrected,
       beforeDecoratedRange,
-      index,
     )
     const currentDecoratedRange = corrected[currentIndex]
     const currentRange = currentDecoratedRange
@@ -779,10 +783,12 @@ function findCurrentDecorationIndex(
   source: RangeDecorationSource,
   decoratedRanges: Array<DecoratedRange>,
   beforeDecoratedRange: DecoratedRange,
-  beforeIndex: number,
 ): number {
   if (source.kind === 'prop') {
-    return beforeIndex < decoratedRanges.length ? beforeIndex : -1
+    return decoratedRanges.findIndex(
+      (decoratedRange) =>
+        decoratedRange.propIdentity === beforeDecoratedRange.propIdentity,
+    )
   }
   const id = (beforeDecoratedRange.rangeDecoration as Decoration).id
   return decoratedRanges.findIndex(
@@ -994,10 +1000,12 @@ export const rangeDecorationsMachine = setup({
         )
 
         if (changed) {
+          const previousDecoratedRanges = source.decoratedRanges
           source.rangeDecorations = event.rangeDecorations
           source.decoratedRanges = buildDecoratedRangesFromScratch(
             source.kind,
             event.rangeDecorations,
+            previousDecoratedRanges,
           )
         }
       } else {

@@ -13,6 +13,7 @@ import {page, userEvent} from 'vitest/browser'
 import {
   defineContainer,
   defineSchema,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
   useEditor,
@@ -1027,6 +1028,146 @@ describe('RangeDecorations', () => {
 })
 
 describe('RangeDecorations: transaction re-anchoring acceptance', () => {
+  test.each([
+    {key: '{Backspace}', direction: 'backward' as const},
+    {key: '{Delete}', direction: 'forward' as const},
+  ])(
+    'Scenario: a controlled prop decoration survives keyboard split then $direction merge',
+    async ({key, direction}) => {
+      const editorRef: RefObject<Editor | null> = createRef()
+      const movedSelections: Array<
+        RangeDecorationOnMovedDetails['newSelection']
+      > = []
+
+      function App() {
+        const [, setValue] = useState<Array<PortableTextBlock> | undefined>()
+        const [rangeDecorations, setRangeDecorations] = useState<
+          Array<RangeDecoration>
+        >([
+          {
+            component: ({children}) => (
+              <span data-testid="controlled-decoration">{children}</span>
+            ),
+            payload: {id: 'controlled'},
+            selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+            onMoved: (details) => {
+              movedSelections.push(details.newSelection)
+              setRangeDecorations((decorations) =>
+                decorations.map((decoration) =>
+                  decoration.payload?.['id'] === 'controlled'
+                    ? {...decoration, selection: details.newSelection}
+                    : decoration,
+                ),
+              )
+            },
+          },
+          {
+            component: ({children}) => <span>{children}</span>,
+            payload: {id: 'other'},
+            selection: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+          },
+        ])
+
+        return (
+          <EditorProvider
+            initialConfig={{
+              keyGenerator: createTestKeyGenerator(),
+              schemaDefinition: defineSchema({}),
+              initialValue: [
+                acceptanceBlock(
+                  'b0',
+                  's0',
+                  'Alpha text then highlighted words move onward.',
+                ),
+              ],
+            }}
+          >
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'mutation') {
+                  setValue(event.value)
+                }
+              }}
+            />
+            <NodePlugin
+              nodes={[
+                defineTextBlock({
+                  type: 'block',
+                  render: (props) => (
+                    <div {...props.attributes}>{props.children}</div>
+                  ),
+                }),
+              ]}
+            />
+            <PortableTextEditable rangeDecorations={rangeDecorations} />
+            <EditorRefPlugin ref={editorRef} />
+          </EditorProvider>
+        )
+      }
+
+      await render(<App />)
+      const locator = page.getByRole('textbox')
+      await expect.element(locator).toBeVisible()
+      await userEvent.click(locator)
+      editorRef.current!.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+      })
+      await userEvent.keyboard('{Enter}')
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+          'B: Alpha text then highli\nB: |ghted words move onward.',
+        )
+        expect(movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 22),
+          acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
+        ])
+      })
+
+      editorRef.current!.send({
+        type: 'child.unset',
+        at: [{_key: 'k2'}, 'children', {_key: 's0'}],
+        props: ['_key'],
+      })
+
+      await vi.waitFor(() => {
+        expect(movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 22),
+          acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
+          acceptanceSelection('b0', 's0', 16, 'k2', 'k3', 11),
+        ])
+      })
+
+      if (direction === 'forward') {
+        editorRef.current!.send({
+          type: 'select',
+          at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+        })
+      }
+      await userEvent.keyboard(key)
+
+      await vi.waitFor(() => {
+        expect(editorRef.current!.getSnapshot().context.value).toEqual([
+          acceptanceBlock(
+            'b0',
+            's0',
+            'Alpha text then highlighted words move onward.',
+          ),
+        ])
+        expect(movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 22),
+          acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
+          acceptanceSelection('b0', 's0', 16, 'k2', 'k3', 11),
+          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+        ])
+        expect(page.getByTestId('controlled-decoration')).toHaveTextContent(
+          'highlighted words',
+        )
+      })
+    },
+  )
+
   test.each([
     {kind: 'prop' as const, direction: 'backward' as const},
     {kind: 'prop' as const, direction: 'forward' as const},
