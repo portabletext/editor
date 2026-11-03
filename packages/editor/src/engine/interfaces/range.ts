@@ -14,4 +14,5 @@ export interface Range {
 
 export interface RangeTransformOptions {
   affinity?: RangeDirection | null
+  relocateUnset?: boolean
 }

@@ -34,6 +34,7 @@ type BlockMatch =
       before: PortableTextBlock
       mergedIntoKey: string
       mergeOffset: number
+      sourceOffset: number
     }
 
 type AbsolutePoint = {blockKey: string; offset: number}
@@ -247,13 +248,42 @@ export function matchBlocks(
           before: beforeBlock,
           mergedIntoKey: previousBeforeBlock._key,
           mergeOffset: extractBlockText(previousBeforeBlock, schema).length,
+          sourceOffset: 0,
         })
       } else {
-        matches.push({
-          type: 'removed',
-          key: beforeBlock._key,
-          before: beforeBlock,
-        })
+        const previousBeforeText = previousBeforeBlock
+          ? extractBlockText(previousBeforeBlock, schema)
+          : ''
+        const previousAfterText = previousAfterBlock
+          ? extractBlockText(previousAfterBlock, schema)
+          : ''
+        const commonSuffixLength = getCommonSuffixLength(
+          removedText,
+          previousAfterText,
+        )
+        const sourceOffset = removedText.length - commonSuffixLength
+        const mergeOffset = previousAfterText.length - commonSuffixLength
+        if (
+          previousBeforeBlock &&
+          previousAfterBlock &&
+          commonSuffixLength >= 3 &&
+          getCommonPrefixLength(previousBeforeText, previousAfterText) >= 3
+        ) {
+          matches.push({
+            type: 'merged',
+            key: beforeBlock._key,
+            before: beforeBlock,
+            mergedIntoKey: previousBeforeBlock._key,
+            mergeOffset,
+            sourceOffset,
+          })
+        } else {
+          matches.push({
+            type: 'removed',
+            key: beforeBlock._key,
+            before: beforeBlock,
+          })
+        }
       }
       continue
     }
@@ -342,14 +372,29 @@ function getCommonPrefixLength(left: string, right: string): number {
   return index
 }
 
+function getCommonSuffixLength(left: string, right: string): number {
+  let length = 0
+  while (
+    length < left.length &&
+    length < right.length &&
+    left[left.length - length - 1] === right[right.length - length - 1]
+  ) {
+    length++
+  }
+  return length
+}
+
 function findMergedRuns(
   beforeBlocks: Array<PortableTextBlock>,
   afterByKey: Map<string, PortableTextBlock>,
   schema?: Schema,
-): Map<string, {mergedIntoKey: string; mergeOffset: number}> {
+): Map<
+  string,
+  {mergedIntoKey: string; mergeOffset: number; sourceOffset: number}
+> {
   const mergedRuns = new Map<
     string,
-    {mergedIntoKey: string; mergeOffset: number}
+    {mergedIntoKey: string; mergeOffset: number; sourceOffset: number}
   >()
 
   for (let index = 1; index < beforeBlocks.length; index++) {
@@ -385,6 +430,7 @@ function findMergedRuns(
       mergedRuns.set(block._key, {
         mergedIntoKey: predecessor._key,
         mergeOffset,
+        sourceOffset: 0,
       })
       mergeOffset += extractBlockText(block, schema).length
     }
@@ -482,7 +528,8 @@ function shiftPoint(
     return {
       point: {
         blockKey: match.mergedIntoKey,
-        offset: point.offset + match.mergeOffset,
+        offset:
+          match.mergeOffset + Math.max(0, point.offset - match.sourceOffset),
       },
       invalidated: false,
     }

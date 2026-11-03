@@ -47,6 +47,7 @@ const engineOperationCallback: CallbackLogicFunction<
       type: 'engine operation'
       operation: EngineOperation
       origin: 'local' | 'remote'
+      relocateUnset: boolean
     },
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
@@ -61,6 +62,7 @@ const engineOperationCallback: CallbackLogicFunction<
           type: 'engine operation',
           operation: event.operation,
           origin: hasRemoteFrame(event.context) ? 'remote' : 'local',
+          relocateUnset: event.origin !== 'undo' && event.origin !== 'redo',
         })
       }
     },
@@ -380,6 +382,7 @@ function movePropDecoratedRanges(
   operation: EngineOperation,
   origin: 'local' | 'remote',
   snapshotContext: PortableTextEditorEngine['snapshot']['context'],
+  relocateUnset: boolean,
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
 
@@ -400,6 +403,7 @@ function movePropDecoratedRanges(
       currentSelection,
       operation,
       snapshotContext,
+      {relocateUnset},
     )
 
     if (
@@ -481,6 +485,7 @@ function moveRegisteredDecoratedRanges(
   origin: 'local' | 'remote',
   editorEngine: PortableTextEditorEngine,
   deadSelections: Map<string, EditorSelection>,
+  relocateUnset: boolean,
 ): {
   decoratedRanges: Array<DecoratedRange>
   mappings: Array<DecorationMapping>
@@ -496,6 +501,7 @@ function moveRegisteredDecoratedRanges(
       currentRange,
       operation,
       editorEngine.snapshot.context,
+      {relocateUnset},
     )
 
     const killedByCollapse =
@@ -560,9 +566,28 @@ function flattenSources(
 
 function getStructuralTouchedBlockKeys(
   transaction: OperationTransactionEvent,
-): Set<string> {
+): {blockKeys: Set<string>; sameBlockCorrectionKeys: Set<string>} {
   const keys = new Set<string>()
+  const textRemovalBlockKeys = new Set<string>()
+  const childStructureBlockKeys = new Set<string>()
+  let hasTopLevelStructure = false
   for (const {operation} of transaction.operations) {
+    if (operation.type === 'remove.text') {
+      const blockSegment = operation.path[0]
+      if (!isKeyedSegment(blockSegment)) {
+        continue
+      }
+      textRemovalBlockKeys.add(blockSegment._key)
+    }
+    if (
+      (operation.type === 'insert' || operation.type === 'unset') &&
+      operation.path[1] === 'children'
+    ) {
+      const blockSegment = operation.path[0]
+      if (isKeyedSegment(blockSegment)) {
+        childStructureBlockKeys.add(blockSegment._key)
+      }
+    }
     if (
       (operation.type !== 'insert' && operation.type !== 'unset') ||
       operation.path.length !== 1
@@ -570,6 +595,7 @@ function getStructuralTouchedBlockKeys(
       continue
     }
     const pathSegment = operation.path[0]
+    hasTopLevelStructure = true
     if (isKeyedSegment(pathSegment)) {
       keys.add(pathSegment._key)
     }
@@ -584,7 +610,16 @@ function getStructuralTouchedBlockKeys(
       keys.add(operation.inverse.node._key)
     }
   }
-  return keys
+  const sameBlockCorrectionKeys = new Set<string>()
+  if (!hasTopLevelStructure) {
+    for (const key of textRemovalBlockKeys) {
+      if (childStructureBlockKeys.has(key)) {
+        keys.add(key)
+        sameBlockCorrectionKeys.add(key)
+      }
+    }
+  }
+  return {blockKeys: keys, sameBlockCorrectionKeys}
 }
 
 function getTouchedBlockKeysWithNeighbors(
@@ -620,6 +655,7 @@ function correctSourceRanges(
   reanchor: (range: Range) => Range | null | undefined,
   touchedBlockKeys: Set<string>,
   origin: 'local' | 'remote',
+  sameBlockCorrectionKeys: Set<string>,
 ): Array<DecoratedRange> {
   const corrected = [...source.decoratedRanges]
 
@@ -628,6 +664,11 @@ function correctSourceRanges(
     const beforeRange = getDecoratedRange(beforeDecoratedRange)
     const anchorBlockKey = getBlockKey(beforeRange.anchor.path)
     const focusBlockKey = getBlockKey(beforeRange.focus.path)
+    const correctSameBlock =
+      (anchorBlockKey !== undefined &&
+        sameBlockCorrectionKeys.has(anchorBlockKey)) ||
+      (focusBlockKey !== undefined &&
+        sameBlockCorrectionKeys.has(focusBlockKey))
     if (
       (!anchorBlockKey || !touchedBlockKeys.has(anchorBlockKey)) &&
       (!focusBlockKey || !touchedBlockKeys.has(focusBlockKey))
@@ -651,7 +692,8 @@ function correctSourceRanges(
       : null
     if (
       currentRange &&
-      (!endpointBlockKeysChanged(beforeRange, reanchoredRange) ||
+      ((!correctSameBlock &&
+        !endpointBlockKeysChanged(beforeRange, reanchoredRange)) ||
         endpointBlockKeysChanged(beforeRange, currentRange))
     ) {
       continue
@@ -791,6 +833,7 @@ export const rangeDecorationsMachine = setup({
           type: 'engine operation'
           operation: EngineOperation
           origin: 'local' | 'remote'
+          relocateUnset?: boolean
         }
       | {
           type: 'engine transaction end'
@@ -1002,6 +1045,7 @@ export const rangeDecorationsMachine = setup({
             event.origin,
             context.editorEngine,
             source.deadSelections,
+            event.relocateUnset ?? false,
           )
           source.decoratedRanges = result.decoratedRanges
           if (source.on && result.mappings.length > 0) {
@@ -1016,6 +1060,7 @@ export const rangeDecorationsMachine = setup({
             event.operation,
             event.origin,
             context.editorEngine.snapshot.context,
+            event.relocateUnset ?? false,
           )
         }
       }
@@ -1034,7 +1079,8 @@ export const rangeDecorationsMachine = setup({
       if (event.type !== 'engine transaction end') {
         return
       }
-      const touchedBlockKeys = getStructuralTouchedBlockKeys(event.transaction)
+      const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
+        getStructuralTouchedBlockKeys(event.transaction)
       if (touchedBlockKeys.size === 0) {
         context.transactionSources.clear()
         return
@@ -1061,6 +1107,7 @@ export const rangeDecorationsMachine = setup({
           reanchor,
           touchedBlockKeys,
           event.transaction.origin === 'remote' ? 'remote' : 'local',
+          sameBlockCorrectionKeys,
         )
       }
       context.transactionSources.clear()

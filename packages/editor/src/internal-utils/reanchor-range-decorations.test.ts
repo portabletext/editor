@@ -49,6 +49,64 @@ describe(reanchorRange.name, () => {
     })
   })
 
+  test('maps a removed block through a replacement between kept prefix and suffix', () => {
+    expect(
+      reanchorRange(
+        [
+          block('b1', 's1', 'Bravo highlight'),
+          block('b2', 's2', ' crosses the line'),
+        ],
+        [block('b1', 's1', 'Bravo highXosses the line')],
+        range('b1', 's1', 6, 'b2', 's2', 8),
+      ),
+    ).toEqual({
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 6,
+      },
+      focus: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 16,
+      },
+    })
+  })
+
+  test('collapses a point in the removed prefix to the replacement boundary', () => {
+    expect(
+      reanchorRange(
+        [block('b1', 's1', 'Alpha'), block('b2', 's2', 'Bravo charlie')],
+        [block('b1', 's1', 'AlpYavo charlie')],
+        range('b2', 's2', 1, 'b2', 's2', 8),
+      ),
+    ).toEqual({
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 4,
+      },
+      focus: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 10,
+      },
+    })
+  })
+
+  test('does not guess a partial merge from a short common suffix', () => {
+    expect(
+      matchBlocks(
+        [block('b1', 's1', 'Alpha'), block('b2', 's2', 'Bravo')],
+        [block('b1', 's1', 'AlpYo')],
+      ),
+    ).toEqual([
+      {
+        type: 'matched',
+        key: 'b1',
+        before: block('b1', 's1', 'Alpha'),
+        after: block('b1', 's1', 'AlpYo'),
+      },
+      {type: 'removed', key: 'b2', before: block('b2', 's2', 'Bravo')},
+    ])
+  })
+
   test('leaves a point on an inline object to operation mapping', () => {
     const before = block('b1', 's1', 'foo')
     if (Array.isArray(before.children)) {
