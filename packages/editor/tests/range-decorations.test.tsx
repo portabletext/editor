@@ -1026,6 +1026,250 @@ describe('RangeDecorations', () => {
   })
 })
 
+describe('RangeDecorations: transaction re-anchoring acceptance', () => {
+  test.each([
+    {
+      name: 'P1 text/plain single line pasted inside a decoration',
+      text: 'XX',
+      value: ['HeXXllo world'],
+      expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 7),
+    },
+    {
+      name: 'P2 text/plain single newline pasted inside a decoration',
+      text: 'one\ntwo',
+      value: ['Heone\ntwollo world'],
+      expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 12),
+    },
+    {
+      name: 'P3 text/plain blank line pasted inside a decoration',
+      text: 'a\n\nb',
+      value: ['Hea', 'bllo world'],
+      expected: acceptanceSelection('b1', 's1', 0, 'k8', 'k6', 4),
+    },
+  ])('Scenario: $name', async ({text, value, expected}) => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b1', 's1', 'Hello world')],
+      decoration: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 5),
+    })
+
+    pasteAcceptanceText(harness.editor, 'b1', 's1', 2, text)
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(value)
+      expect(harness.getSelection()).toEqual(expected)
+    })
+  })
+
+  test.each([
+    {
+      name: 'X1 typing over only a block break keeps a decoration in the second block',
+      decoration: acceptanceSelection('b2', 's2', 0, 'b2', 's2', 5),
+      editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
+      text: 'Z',
+      value: ['AlphaZBravo charlie'],
+      expected: acceptanceSelection('b1', 's1', 6, 'b1', 's1', 11),
+    },
+    {
+      name: 'X2 typing over text across a block break keeps a later decoration',
+      decoration: acceptanceSelection('b2', 's2', 3, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
+      text: 'Y',
+      value: ['AlpYavo charlie'],
+      expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+    },
+    {
+      name: 'X3 typing inside a decoration across a block break preserves both tails',
+      decoration: acceptanceSelection('b1', 's1', 6, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 10, 'b2', 's2', 3),
+      text: 'X',
+      value: ['Bravo highXosses the line'],
+      expected: acceptanceSelection('b1', 's1', 6, 'b1', 's1', 16),
+      initialValue: [
+        acceptanceBlock('b1', 's1', 'Bravo highlight'),
+        acceptanceBlock('b2', 's2', ' crosses the line'),
+      ],
+    },
+  ])('Scenario: $name', async (scenario) => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: scenario.initialValue ?? [
+        acceptanceBlock('b1', 's1', 'Alpha'),
+        acceptanceBlock('b2', 's2', 'Bravo charlie'),
+      ],
+      decoration: scenario.decoration,
+    })
+
+    harness.editor.send({type: 'select', at: scenario.editSelection})
+    harness.editor.send({type: 'insert.text', text: scenario.text})
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(scenario.value)
+      expect(harness.getSelection()).toEqual(scenario.expected)
+    })
+  })
+
+  test.each([
+    {
+      name: 'X4 backspace over only a block break',
+      direction: 'backward' as const,
+      decoration: acceptanceSelection('b2', 's2', 0, 'b2', 's2', 5),
+      editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
+      value: ['AlphaBravo charlie'],
+      expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+    },
+    {
+      name: 'X4 delete over only a block break',
+      direction: 'forward' as const,
+      decoration: acceptanceSelection('b2', 's2', 0, 'b2', 's2', 5),
+      editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
+      value: ['AlphaBravo charlie'],
+      expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+    },
+    {
+      name: 'X4 backspace over text across a block break',
+      direction: 'backward' as const,
+      decoration: acceptanceSelection('b2', 's2', 3, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
+      value: ['Alpavo charlie'],
+      expected: acceptanceSelection('b1', 's1', 4, 'b1', 's1', 9),
+    },
+    {
+      name: 'X4 delete over text across a block break',
+      direction: 'forward' as const,
+      decoration: acceptanceSelection('b2', 's2', 3, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
+      value: ['Alpavo charlie'],
+      expected: acceptanceSelection('b1', 's1', 4, 'b1', 's1', 9),
+    },
+  ])(
+    'Scenario: $name keeps a decoration in the second block',
+    async (scenario) => {
+      const harness = await createAcceptanceDecorationHarness({
+        initialValue: [
+          acceptanceBlock('b1', 's1', 'Alpha'),
+          acceptanceBlock('b2', 's2', 'Bravo charlie'),
+        ],
+        decoration: scenario.decoration,
+      })
+
+      harness.editor.send({
+        type: 'select',
+        at: scenario.editSelection,
+      })
+      harness.editor.send({type: 'delete', direction: scenario.direction})
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(scenario.value)
+        expect(harness.getSelection()).toEqual(scenario.expected)
+      })
+    },
+  )
+})
+
+function acceptanceBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+  }
+}
+
+function acceptanceSelection(
+  anchorBlockKey: string,
+  anchorSpanKey: string,
+  anchorOffset: number,
+  focusBlockKey: string,
+  focusSpanKey: string,
+  focusOffset: number,
+) {
+  return {
+    anchor: {
+      path: [
+        {_key: anchorBlockKey},
+        'children' as const,
+        {_key: anchorSpanKey},
+      ],
+      offset: anchorOffset,
+    },
+    focus: {
+      path: [{_key: focusBlockKey}, 'children' as const, {_key: focusSpanKey}],
+      offset: focusOffset,
+    },
+  }
+}
+
+async function createAcceptanceDecorationHarness(args: {
+  initialValue: Array<ReturnType<typeof acceptanceBlock>>
+  decoration: ReturnType<typeof acceptanceSelection>
+}) {
+  let rangeDecorations: Array<RangeDecoration> = [
+    {
+      component: ({children}) => <span>{children}</span>,
+      payload: {id: 'acceptance'},
+      selection: args.decoration,
+      onMoved: (details) => {
+        rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+      },
+    },
+  ]
+  const result = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: args.initialValue,
+    editableProps: {rangeDecorations},
+  })
+
+  return {
+    ...result,
+    getSelection: () => rangeDecorations[0]?.selection,
+    getText: () =>
+      result.editor
+        .getSnapshot()
+        .context.value.map((block) =>
+          isTextBlock(
+            {schema: result.editor.getSnapshot().context.schema},
+            block,
+          )
+            ? block.children
+                .map((child) =>
+                  isSpan(
+                    {schema: result.editor.getSnapshot().context.schema},
+                    child,
+                  )
+                    ? child.text
+                    : '',
+                )
+                .join('')
+            : '',
+        ),
+  }
+}
+
+function pasteAcceptanceText(
+  editor: Editor,
+  blockKey: string,
+  spanKey: string,
+  offset: number,
+  text: string,
+) {
+  const at = acceptanceSelection(
+    blockKey,
+    spanKey,
+    offset,
+    blockKey,
+    spanKey,
+    offset,
+  )
+  editor.send({type: 'select', at})
+  const dataTransfer = new DataTransfer()
+  dataTransfer.setData('text/plain', text)
+  editor.send({
+    type: 'clipboard.paste',
+    originEvent: {dataTransfer},
+    position: {selection: at},
+  })
+}
+
 describe('RangeDecorations inside editable containers', () => {
   test('Scenario: Drawing a collapsed Range Decoration inside a callout', async () => {
     const schemaDefinition = defineSchema({
