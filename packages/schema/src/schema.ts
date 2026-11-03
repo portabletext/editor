@@ -81,8 +81,9 @@ export type InlineObjectSchemaType = BaseDefinition & {
  * - `InlineObjectOfDefinition` (`type: 'object'`) - inline-declares an
  *   object shape at this position. `name` is the type identity; `fields`
  *   defines the shape.
- * - `ReferenceOfDefinition` (`type: <name>`) - a bare reference to a type
- *   declared in `blockObjects` or `inlineObjects` at the schema root.
+ * - `ReferenceOfDefinition` (`type: <name>`) - a bare reference to the
+ *   nearest enclosing declaration of the type, or to the block object of
+ *   that name in `blockObjects` at the schema root.
  */
 export type OfDefinition =
   | BlockOfDefinition
@@ -134,9 +135,10 @@ export type InlineObjectOfDefinition = {
  * @public
  * An `of` member referencing a type declared elsewhere by name.
  *
- * `type` is the lookup key. Resolves to the matching entry in the schema's
- * `blockObjects` or `inlineObjects`. Self-references and cycles are
- * supported via cycle detection on the resolver walk.
+ * `type` is the lookup key. Resolves to the nearest enclosing declaration
+ * of that type along the value path, then to the matching entry in the
+ * schema's `blockObjects`. Self-references and cycles are supported via
+ * cycle detection on the resolver walk.
  *
  * Throws at `compileSchema` time when the referenced type isn't declared.
  */
