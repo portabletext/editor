@@ -1,4 +1,4 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
+import {isSpan, isTextBlock, isTypedObject} from '@portabletext/schema'
 import type {
   PortableTextBlock,
   PortableTextObject,
@@ -8,18 +8,22 @@ import type {
 import {serialize} from '@textspec/notation'
 import type {
   Block,
-  ContainerBlock,
   EditorState,
   InlineNode,
   TextBlock,
   Selection as NotationSelection,
 } from '@textspec/notation'
 import type {
-  TextspecContainerRegistration,
   TextspecContainers,
   TextspecSelection,
   TextspecSelectionPoint,
 } from './from-textspec'
+import {
+  childArrayField,
+  getPathEntries,
+  rootPosition,
+  type TextspecPosition,
+} from './textspec-position'
 
 /**
  * Serialize Portable Text blocks and a selection back to textspec
@@ -37,28 +41,16 @@ export function toTextspec(
   },
   options?: {singleLine?: boolean; keys?: boolean | Set<string>},
 ): string {
-  const containers = context.containers ?? new Map()
-  const annotationKeys = context.annotationKeys
-  const textspecBlocks: Array<Block> = []
-
-  for (const block of context.value) {
-    const converted = convertBlockToTextspec(
-      context.schema,
-      containers,
-      annotationKeys,
-      block,
-    )
-    if (options?.keys) {
-      addKeys(block as Record<string, unknown>, converted, options.keys)
-    }
-    textspecBlocks.push(converted)
+  const position = rootPosition(context.schema, context.containers ?? new Map())
+  const conversion: Conversion = {
+    annotationKeys: context.annotationKeys,
+    keys: options?.keys || undefined,
   }
-
-  const selection = convertSelection(
-    context.schema,
-    context.value,
-    context.selection,
+  const textspecBlocks = context.value.map((block) =>
+    convertBlockToTextspec(position, conversion, block),
   )
+
+  const selection = convertSelection(position, context.value, context.selection)
 
   const state: EditorState = {
     blocks: textspecBlocks,
@@ -66,6 +58,11 @@ export function toTextspec(
   }
 
   return serialize(state, options?.singleLine ? {singleLine: true} : undefined)
+}
+
+type Conversion = {
+  annotationKeys: Map<string, string> | undefined
+  keys: true | Set<string> | undefined
 }
 
 function extractPrimitiveAttrs(
@@ -87,35 +84,25 @@ function extractPrimitiveAttrs(
   return attrs
 }
 
-/**
- * Add a `_key` attribute to a top-level block in the converted textspec
- * tree. When `keys` is `true`, all blocks get their keys emitted. When
- * `keys` is a Set, only blocks whose key is in the set get it emitted —
- * this lets callers assert preservation of specific keys without churn
- * from every other block.
- */
 function addKeys(
-  source: Record<string, unknown>,
-  target: Block | InlineNode,
-  keys: true | Set<string>,
-): void {
+  source: PortableTextBlock,
+  target: Block,
+  keys: true | Set<string> | undefined,
+): Block {
   const key = source['_key']
-  if (typeof key !== 'string') {
-    return
+  if (keys === undefined || typeof key !== 'string') {
+    return target
   }
 
   if (keys !== true && !keys.has(key)) {
-    return
+    return target
   }
 
-  if (
-    target.kind === 'textBlock' ||
-    target.kind === 'blockObject' ||
-    target.kind === 'containerBlock' ||
-    target.kind === 'inlineObject'
-  ) {
-    target.attrs = {_key: key, ...(target.attrs ?? {})}
+  if (target.kind === 'rawBlock') {
+    return target
   }
+
+  return {...target, attrs: {_key: key, ...(target.attrs ?? {})}}
 }
 
 function isDecoratorMark(schema: Schema, mark: string): boolean {
@@ -127,6 +114,33 @@ function findMarkDef(
   key: string,
 ): PortableTextObject | undefined {
   return block.markDefs?.find((md) => md._key === key)
+}
+
+/**
+ * The marks of a span that render as textspec mark nodes: decorators the
+ * schema declares, and annotations with a markDef on the block. Any other
+ * mark is dropped, so selection paths count only these.
+ */
+function renderedMarks(
+  schema: Schema,
+  block: PortableTextTextBlock,
+  marks: ReadonlyArray<string>,
+): {decorators: Array<string>; annotations: Array<PortableTextObject>} {
+  const decorators: Array<string> = []
+  const annotations: Array<PortableTextObject> = []
+
+  for (const mark of marks) {
+    if (isDecoratorMark(schema, mark)) {
+      decorators.push(mark)
+    } else {
+      const markDef = findMarkDef(block, mark)
+      if (markDef) {
+        annotations.push(markDef)
+      }
+    }
+  }
+
+  return {decorators, annotations}
 }
 
 /**
@@ -144,19 +158,7 @@ function wrapInMarks(
     return inner
   }
 
-  const decorators: Array<string> = []
-  const annotations: Array<PortableTextObject> = []
-
-  for (const mark of marks) {
-    if (isDecoratorMark(schema, mark)) {
-      decorators.push(mark)
-    } else {
-      const markDef = findMarkDef(block, mark)
-      if (markDef) {
-        annotations.push(markDef)
-      }
-    }
-  }
+  const {decorators, annotations} = renderedMarks(schema, block, marks)
 
   let result = inner
 
@@ -260,119 +262,79 @@ function convertTextBlock(
 }
 
 function resolveSelectionPoint(
-  schema: Schema,
+  position: TextspecPosition,
   blocks: Array<PortableTextBlock>,
   point: TextspecSelectionPoint,
 ): {path: Array<number>; offset: number} | undefined {
-  const indexedPath = keyedPathToIndexedPath(
-    point.path,
-    blocks as Array<Record<string, unknown>>,
-  )
+  const entries = getPathEntries(position, blocks, point.path)
 
-  if (!indexedPath) {
+  if (!entries) {
     return undefined
   }
 
-  // Account for mark nesting depth in textspec.
-  // PTE has flat spans with marks array. Textspec nests marks as wrapper nodes.
-  // Each mark on a span adds one level of nesting, so the text node is
-  // at depth = number of marks below the child index.
-  const markDepth = getMarkDepth(schema, blocks, indexedPath)
+  const indexedPath = entries.map((entry) => entry.index)
 
-  for (let i = 0; i < markDepth; i++) {
-    indexedPath.push(0)
+  // PTE has flat spans with a marks array; textspec nests each rendered mark
+  // as a wrapper node, so the text node sits one level deeper per mark.
+  const leaf = entries.at(-1)
+  const parent = entries.at(-2)
+
+  if (
+    leaf &&
+    parent &&
+    isTextBlock({schema: parent.position.schema}, parent.node) &&
+    isSpan({schema: leaf.position.schema}, leaf.node)
+  ) {
+    const {decorators, annotations} = renderedMarks(
+      leaf.position.schema,
+      parent.node,
+      leaf.node.marks ?? [],
+    )
+
+    for (let i = 0; i < decorators.length + annotations.length; i++) {
+      indexedPath.push(0)
+    }
   }
 
   return {path: indexedPath, offset: point.offset}
 }
 
-function getMarkDepth(
-  schema: Schema,
-  blocks: Array<PortableTextBlock>,
-  indexedPath: Array<number>,
-): number {
-  if (indexedPath.length < 2) {
-    return 0
-  }
-
-  const blockIndex = indexedPath[0]
-  const childIndex = indexedPath[1]
-
-  if (blockIndex === undefined || childIndex === undefined) {
-    return 0
-  }
-
-  const block = blocks[blockIndex]
-
-  if (!block || !isTextBlock({schema}, block)) {
-    return 0
-  }
-
-  const child = block.children[childIndex]
-
-  if (!child || !isSpan({schema}, child)) {
-    return 0
-  }
-
-  return child.marks?.length ?? 0
-}
-
-function keyedPathToIndexedPath(
-  keyedPath: TextspecSelectionPoint['path'],
-  children: Array<Record<string, unknown>>,
-): Array<number> | undefined {
-  const indexedPath: Array<number> = []
-  let currentChildren = children
-  let currentNode: Record<string, unknown> | undefined
-
-  for (const segment of keyedPath) {
-    if (typeof segment === 'object' && segment !== null && '_key' in segment) {
-      const index = currentChildren.findIndex(
-        (child) => child['_key'] === segment._key,
-      )
-
-      if (index === -1) {
-        return undefined
-      }
-
-      indexedPath.push(index)
-      currentNode = currentChildren[index]
-    } else if (typeof segment === 'string' && currentNode) {
-      const field = currentNode[segment]
-
-      if (Array.isArray(field)) {
-        currentChildren = field as Array<Record<string, unknown>>
-      } else {
-        return undefined
-      }
-    } else {
-      return undefined
-    }
-  }
-
-  return indexedPath
-}
-
 function convertBlockToTextspec(
-  schema: Schema,
-  containers: TextspecContainers,
-  annotationKeys: Map<string, string> | undefined,
+  position: TextspecPosition,
+  conversion: Conversion,
   block: PortableTextBlock,
-  parent?: TextspecContainerRegistration,
 ): Block {
-  if (isTextBlock({schema}, block)) {
-    return convertTextBlock(schema, block, annotationKeys)
+  return addKeys(
+    block,
+    convertBlockWithoutKey(position, conversion, block),
+    conversion.keys,
+  )
+}
+
+function convertBlockWithoutKey(
+  position: TextspecPosition,
+  conversion: Conversion,
+  block: PortableTextBlock,
+): Block {
+  if (isTextBlock({schema: position.schema}, block)) {
+    return convertTextBlock(position.schema, block, conversion.annotationKeys)
   }
 
-  const resolved = resolveChildContainer(containers, parent, block._type)
-  if (resolved) {
-    return convertContainerBlock(
-      schema,
-      containers,
-      annotationKeys,
-      block,
-      resolved,
-    )
+  const container = childArrayField(position, block)
+  if (container) {
+    const fieldValue = block[container.name]
+
+    return {
+      kind: 'containerBlock',
+      type: block._type.toUpperCase(),
+      children: Array.isArray(fieldValue)
+        ? fieldValue
+            .filter((item): item is PortableTextBlock => isTypedObject(item))
+            .map((item) =>
+              convertBlockToTextspec(container.position, conversion, item),
+            )
+        : [],
+    }
   }
 
   return {
@@ -382,88 +344,8 @@ function convertBlockToTextspec(
   }
 }
 
-/**
- * Resolve which {@link TextspecContainerRegistration} applies to a child
- * of type `childType` under `parent`. Positional override (parent.of) wins;
- * otherwise fall back to the top-level `containers` map. Returns
- * undefined when the type is not registered at this position.
- */
-function resolveChildContainer(
-  containers: TextspecContainers,
-  parent: TextspecContainerRegistration | undefined,
-  childType: string,
-): TextspecContainerRegistration | undefined {
-  if (parent?.of) {
-    for (const entry of parent.of) {
-      if (entry.type === childType && entry.kind === 'container') {
-        return entry
-      }
-    }
-  }
-  return containers.get(childType)
-}
-
-function convertContainerBlock(
-  schema: Schema,
-  containers: TextspecContainers,
-  annotationKeys: Map<string, string> | undefined,
-  block: Record<string, unknown>,
-  parent: TextspecContainerRegistration,
-): ContainerBlock {
-  const containerField = parent.field
-
-  const fieldValue = block[containerField.name]
-  const children: Array<Block> = []
-  const schemaContext = {schema}
-
-  if (Array.isArray(fieldValue)) {
-    for (const item of fieldValue) {
-      if (isTextBlock(schemaContext, item)) {
-        children.push(convertTextBlock(schema, item, annotationKeys))
-      } else if (
-        typeof item === 'object' &&
-        item !== null &&
-        '_type' in item &&
-        typeof item._type === 'string'
-      ) {
-        const typedItem = item as Record<string, unknown>
-        const childContainer = resolveChildContainer(
-          containers,
-          parent,
-          item._type,
-        )
-
-        if (childContainer) {
-          children.push(
-            convertContainerBlock(
-              schema,
-              containers,
-              annotationKeys,
-              typedItem,
-              childContainer,
-            ),
-          )
-        } else {
-          children.push({
-            kind: 'blockObject',
-            type: item._type.toUpperCase(),
-            attrs: extractPrimitiveAttrs(typedItem),
-          })
-        }
-      }
-    }
-  }
-
-  return {
-    kind: 'containerBlock',
-    type:
-      typeof block['_type'] === 'string' ? block['_type'].toUpperCase() : '',
-    children,
-  }
-}
-
 function convertSelection(
-  schema: Schema,
+  position: TextspecPosition,
   blocks: Array<PortableTextBlock>,
   selection: TextspecSelection,
 ): NotationSelection | null {
@@ -471,8 +353,8 @@ function convertSelection(
     return null
   }
 
-  const anchor = resolveSelectionPoint(schema, blocks, selection.anchor)
-  const focus = resolveSelectionPoint(schema, blocks, selection.focus)
+  const anchor = resolveSelectionPoint(position, blocks, selection.anchor)
+  const focus = resolveSelectionPoint(position, blocks, selection.focus)
 
   if (!anchor || !focus) {
     return null
@@ -480,23 +362,22 @@ function convertSelection(
 
   // PTE represents a selected block object as a collapsed selection at
   // offset 0 of the block's path. Textspec represents it as a range from
-  // offset 0 to offset 1. Translate when both points resolve to the same
-  // non-text block at any depth (root-level or inside an editable
-  // container). The parent check excludes inline nodes whose path sits
-  // inside a text block's `children`, where offset 0 means "caret before
-  // this child", not "this child is selected".
+  // offset 0 to offset 1. The parent check excludes inline nodes whose path
+  // sits inside a text block's `children`, where offset 0 means "caret
+  // before this child", not "this child is selected".
   if (
     anchor.offset === 0 &&
     focus.offset === 0 &&
     isEqualIndexedPaths(anchor.path, focus.path)
   ) {
-    const entry = nodeAtKeyedPath(blocks, selection.anchor.path)
-    const schemaContext = {schema}
+    const entries = getPathEntries(position, blocks, selection.anchor.path)
+    const node = entries?.at(-1)
+    const parent = entries?.at(-2)
 
     if (
-      entry &&
-      !isTextBlock(schemaContext, entry.node) &&
-      (!entry.parent || !isTextBlock(schemaContext, entry.parent))
+      node &&
+      !isTextBlock({schema: node.position.schema}, node.node) &&
+      (!parent || !isTextBlock({schema: parent.position.schema}, parent.node))
     ) {
       return {anchor, focus: {path: focus.path, offset: 1}}
     }
@@ -518,57 +399,4 @@ function isEqualIndexedPaths(
     }
   }
   return true
-}
-
-/**
- * Walk a keyed path through `blocks` and the editable container fields it
- * traverses, returning the node it points to and the node that contains
- * it. Used to distinguish a block-object-as-block (its parent is an
- * editable container field) from an inline node inside a text block (its
- * parent IS a text block).
- */
-function nodeAtKeyedPath(
-  blocks: Array<PortableTextBlock>,
-  keyedPath: TextspecSelectionPoint['path'],
-):
-  | {
-      node: PortableTextBlock | PortableTextObject
-      parent: PortableTextBlock | PortableTextObject | undefined
-    }
-  | undefined {
-  let currentChildren: Array<Record<string, unknown>> = blocks as Array<
-    Record<string, unknown>
-  >
-  let currentNode: Record<string, unknown> | undefined
-  let parentNode: Record<string, unknown> | undefined
-
-  for (const segment of keyedPath) {
-    if (typeof segment === 'object' && segment !== null && '_key' in segment) {
-      const next = currentChildren.find(
-        (child) => child['_key'] === segment._key,
-      )
-      if (!next) {
-        return undefined
-      }
-      parentNode = currentNode
-      currentNode = next
-    } else if (typeof segment === 'string' && currentNode) {
-      const field = currentNode[segment]
-      if (!Array.isArray(field)) {
-        return undefined
-      }
-      currentChildren = field as Array<Record<string, unknown>>
-    } else {
-      return undefined
-    }
-  }
-
-  if (!currentNode) {
-    return undefined
-  }
-
-  return {
-    node: currentNode as PortableTextBlock | PortableTextObject,
-    parent: parentNode as PortableTextBlock | PortableTextObject | undefined,
-  }
 }
