@@ -1,5 +1,9 @@
 import type {Patch} from '@portabletext/patches'
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createActor} from 'xstate'
@@ -13,7 +17,7 @@ import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {createMutationBatcher} from './mutation-batcher'
-import {createRelay} from './relay'
+import {createRelay, type MutationEvent} from './relay'
 import {syncMachine} from './sync-machine'
 
 const FLUSH_INTERVAL = 500
@@ -40,7 +44,7 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
       }) => void)
     | undefined
   const mutationSends: Array<{patches: Array<Patch>}> = []
-  const mutationValues: Array<unknown> = []
+  const mutationValues: Array<Array<PortableTextBlock> | undefined> = []
 
   const editorActor = {
     getSnapshot: () => ({
@@ -72,11 +76,7 @@ function createTestHarness({readOnly = false}: {readOnly?: boolean} = {}) {
       patchListener = listener
       return {unsubscribe: () => {}}
     },
-    send: (event: {
-      type: 'mutation'
-      patches: Array<Patch>
-      value: unknown
-    }) => {
+    send: (event: MutationEvent) => {
       mutationSends.push({patches: event.patches})
       mutationValues.push(event.value)
     },
@@ -352,6 +352,31 @@ describe('mutation batcher', () => {
     vi.advanceTimersByTime(FLUSH_INTERVAL)
 
     expect(harness.mutationSends).toEqual([{patches: [createPatch('a')]}])
+  })
+
+  test('every mutation of a flush carries the engine value at flush time', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const harness = createTestHarness()
+
+    harness.sendPatch(createPatch('a'), 'op-1')
+    harness.sendPatch(createPatch('b'), 'op-2')
+
+    const flushTimeValue: Array<PortableTextBlock> = [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    harness.editorEngine.snapshot.context.value = flushTimeValue
+
+    vi.advanceTimersByTime(FLUSH_INTERVAL)
+
+    expect(harness.mutationValues).toEqual([flushTimeValue, flushTimeValue])
   })
 
   test('relays individual patch events immediately while batching mutations', () => {

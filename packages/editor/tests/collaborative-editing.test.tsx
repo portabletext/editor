@@ -1,13 +1,22 @@
 import {applyAll, diffMatchPatch, type Patch} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import React, {useEffect, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {userEvent, type Locator} from 'vitest/browser'
-import type {Editor} from '../src'
+import {render} from 'vitest-browser-react'
+import {page, userEvent, type Locator} from 'vitest/browser'
+import {
+  EditorProvider,
+  PortableTextEditable,
+  type Editor,
+  type MutationEvent,
+} from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {EventListenerPlugin} from '../src/plugins'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
@@ -1926,4 +1935,224 @@ describe('Collaborative editing', () => {
       expect(getTersePt(editorB.getSnapshot().context)).toEqual(['fooab'])
     })
   })
+
+  describe('Host that stores `mutation.value` as the document', () => {
+    test('Scenario: Text typed after clearing survives a peer flushing a mutation it held across that text', async () => {
+      const {editorA, editorB, locatorA, shared, delivered, nextMutation} =
+        await renderValueEchoingEditors()
+
+      await userEvent.click(locatorA)
+      await userEvent.type(locatorA, 'foo')
+
+      await vi.waitFor(
+        () => {
+          expect(getTersePt(editorA.getSnapshot().context)).toEqual(['foo'])
+          expect(getTersePt(editorB.getSnapshot().context)).toEqual(['foo'])
+          expect(shared.value).toEqual([echoedBlock('foo')])
+          expect(delivered.a).toBe(shared.value)
+          expect(delivered.b).toBe(shared.value)
+        },
+        {timeout: 3_000},
+      )
+
+      await userEvent.keyboard(
+        IS_MAC ? '{Meta>}a{/Meta}' : '{Control>}a{/Control}',
+      )
+      await userEvent.keyboard('{Backspace}')
+
+      await vi.waitFor(
+        () => {
+          expect(editorA.getSnapshot().context.value).toEqual([echoedBlock('')])
+          expect(editorB.getSnapshot().context.value).toEqual([echoedBlock('')])
+          expect(shared.value).toEqual([echoedBlock('')])
+          expect(delivered.a).toBe(shared.value)
+          expect(delivered.b).toBe(shared.value)
+        },
+        {timeout: 3_000},
+      )
+
+      const colonMutation = nextMutation('a')
+      await userEvent.keyboard(':')
+      await colonMutation
+      await vi.waitFor(() => {
+        expect(delivered.a).toBe(shared.value)
+        expect(delivered.b).toBe(shared.value)
+      })
+
+      const afterColon = getSelectionAfterText(
+        editorB.getSnapshot().context,
+        ':',
+      )
+      editorB.send({type: 'select', at: afterColon})
+      await vi.waitFor(() => {
+        expect(editorB.getSnapshot().context.selection).toEqual(afterColon)
+      })
+      editorB.send({type: 'insert.text', text: 'b'})
+
+      // Read-only holds editor B's pending mutation until editor A's next
+      // edit has reached it, the order the two flush intervals produce in
+      // a live session.
+      editorB.send({type: 'update readOnly', readOnly: true})
+
+      const eaMutation = nextMutation('a')
+      editorA.send({type: 'insert.text', text: 'ea'})
+      await eaMutation
+
+      expect(shared.value).toEqual([echoedBlock(':ea')])
+      expect(editorB.getSnapshot().context.value).toEqual([echoedBlock(':bea')])
+
+      const heldMutation = nextMutation('b')
+      editorB.send({type: 'update readOnly', readOnly: false})
+      await heldMutation
+
+      await vi.waitFor(
+        () => {
+          expect(editorA.getSnapshot().context.value).toEqual(shared.value)
+          expect(editorB.getSnapshot().context.value).toEqual(shared.value)
+        },
+        {timeout: 3_000},
+      )
+
+      expect({
+        editorA: editorA.getSnapshot().context.value,
+        editorB: editorB.getSnapshot().context.value,
+        shared: shared.value,
+      }).toEqual({
+        editorA: [echoedBlock(':bea')],
+        editorB: [echoedBlock(':bea')],
+        shared: [echoedBlock(':bea')],
+      })
+    })
+  })
 })
+
+function echoedBlock(text: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: 'a-k0',
+    children: [{_type: 'span', _key: 'a-k1', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+/**
+ * Two editors wired like the playground: every mutation is sent to both
+ * editors as patches (`local` for the sender, `remote` for the peer), and
+ * the mutation's own `value` becomes the shared document, which reaches
+ * both editors as `update value` once React renders it. `delivered` records
+ * the shared document each editor was last sent.
+ */
+async function renderValueEchoingEditors() {
+  const editorARef = React.createRef<Editor>()
+  const editorBRef = React.createRef<Editor>()
+  const keyGeneratorA = createTestKeyGenerator('a-')
+  const keyGeneratorB = createTestKeyGenerator('b-')
+  const shared: {value: Array<PortableTextBlock> | undefined} = {
+    value: undefined,
+  }
+  const delivered: Record<'a' | 'b', Array<PortableTextBlock> | undefined> = {
+    a: undefined,
+    b: undefined,
+  }
+  const mutationWaiters: Array<{editorId: 'a' | 'b'; resolve: () => void}> = []
+  let setSharedValue: (
+    value: Array<PortableTextBlock> | undefined,
+  ) => void = () => {}
+
+  function relayMutation(editorId: 'a' | 'b', event: MutationEvent) {
+    for (const [peerId, peerRef] of [
+      ['a', editorARef],
+      ['b', editorBRef],
+    ] as const) {
+      peerRef.current?.send({
+        type: 'patches',
+        patches: event.patches.map((patch) => ({
+          ...patch,
+          origin: peerId === editorId ? 'local' : 'remote',
+        })),
+        snapshot: event.value,
+      })
+    }
+
+    shared.value = event.value
+    setSharedValue(event.value)
+
+    for (const waiter of mutationWaiters.splice(0)) {
+      if (waiter.editorId === editorId) {
+        waiter.resolve()
+      } else {
+        mutationWaiters.push(waiter)
+      }
+    }
+  }
+
+  function SharedValueSubscription(props: {
+    editorId: 'a' | 'b'
+    editorRef: React.RefObject<Editor | null>
+    value: Array<PortableTextBlock> | undefined
+  }) {
+    useEffect(() => {
+      props.editorRef.current?.send({type: 'update value', value: props.value})
+      delivered[props.editorId] = props.value
+    }, [props.editorId, props.editorRef, props.value])
+
+    return null
+  }
+
+  function Host() {
+    const [value, setValue] = useState<Array<PortableTextBlock> | undefined>(
+      undefined,
+    )
+    setSharedValue = setValue
+
+    return (
+      <>
+        {(
+          [
+            ['a', editorARef, keyGeneratorA],
+            ['b', editorBRef, keyGeneratorB],
+          ] as const
+        ).map(([editorId, editorRef, keyGenerator]) => (
+          <EditorProvider
+            key={editorId}
+            initialConfig={{keyGenerator, schemaDefinition: defineSchema({})}}
+          >
+            <EditorRefPlugin ref={editorRef} />
+            <PortableTextEditable data-testid={`editor-${editorId}`} />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'mutation') {
+                  relayMutation(editorId, event)
+                }
+              }}
+            />
+            <SharedValueSubscription
+              editorId={editorId}
+              editorRef={editorRef}
+              value={value}
+            />
+          </EditorProvider>
+        ))}
+      </>
+    )
+  }
+
+  render(<Host />)
+
+  const locatorA = page.getByTestId('editor-a')
+  await expect.element(locatorA).toBeInTheDocument()
+  await expect.element(page.getByTestId('editor-b')).toBeInTheDocument()
+
+  return {
+    editorA: editorARef.current!,
+    editorB: editorBRef.current!,
+    locatorA,
+    shared,
+    delivered,
+    nextMutation: (editorId: 'a' | 'b') =>
+      new Promise<void>((resolve) => {
+        mutationWaiters.push({editorId, resolve})
+      }),
+  }
+}
