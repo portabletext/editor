@@ -53,7 +53,7 @@ describe('run-on-device.sh', () => {
         ],
         phases: [
           'http server',
-          'tests start, tests/ja.test.ts under 1825 seconds',
+          'tests start, tests/ja.test.ts under 1735 seconds',
           'tests rc=0',
         ],
         timing: ['BOOTED', 'CHECKED skipped', 'DONE'],
@@ -69,7 +69,7 @@ describe('run-on-device.sh', () => {
         ],
         phases: [
           'http server',
-          'tests start, tests/en-textarea.test.ts under 675 seconds',
+          'tests start, tests/en-textarea.test.ts under 645 seconds',
           'tests rc=0',
         ],
         timing: ['BOOTED', 'CHECKED skipped', 'DONE'],
@@ -98,7 +98,7 @@ describe('run-on-device.sh', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1825 seconds',
+        'tests start, tests/en.test.ts under 1735 seconds',
         'tests rc=1',
         'device check: device',
       ],
@@ -127,7 +127,7 @@ describe('run-on-device.sh', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1825 seconds',
+        'tests start, tests/en.test.ts under 1735 seconds',
         'tests rc=1',
         'device check: lost',
       ],
@@ -309,7 +309,7 @@ describe('run-on-device.sh with a device check that never completes', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1825 seconds',
+        'tests start, tests/en.test.ts under 1735 seconds',
         'tests rc=1',
         'device check: unchecked',
       ],
@@ -338,7 +338,7 @@ describe('run-on-device.sh with a device check that never completes', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1825 seconds',
+        'tests start, tests/en.test.ts under 1735 seconds',
         'tests rc=1',
         'device check: unchecked',
       ],
