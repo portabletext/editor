@@ -1,3 +1,4 @@
+import {applyAll} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -1755,6 +1756,113 @@ describe('event.update value with containers: intake repairs', () => {
         tableKeyRepairPatch,
       ])
     })
+  })
+
+  test('Scenario: a container moved up with a deep keyless span publishes its repair once', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const tableKey = keyGenerator()
+    const rowKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const bar = {
+      _key: barKey,
+      _type: 'block',
+      children: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const keylessTable = deepTable({
+      tableKey,
+      rowKey,
+      cellKey,
+      blockKey,
+      text: 'deep',
+    })
+    const patches: Array<Patch> = []
+    const mutations: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: tableSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={tableContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+      initialValue: [
+        bar,
+        deepTable({tableKey, rowKey, cellKey, blockKey, text: 'deep', spanKey}),
+      ],
+    })
+
+    editor.send({type: 'update value', value: [keylessTable, bar]})
+
+    const repairPatch = deepSpanKeyRepairPatch({
+      tableKey,
+      rowKey,
+      cellKey,
+      blockKey,
+      mintedKey: 'k9',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        deepTable({
+          tableKey,
+          rowKey,
+          cellKey,
+          blockKey,
+          text: 'deep',
+          spanKey: 'k9',
+        }),
+        bar,
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: barKey}, 'children', {_key: barSpanKey}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'insert.text', text: '!'})
+
+    const sentinelPatch: Patch = {
+      type: 'diffMatchPatch',
+      path: [{_key: barKey}, 'children', {_key: barSpanKey}, 'text'],
+      value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+      origin: 'local',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([repairPatch, sentinelPatch])
+      expect(mutations.map((mutation) => mutation.patches)).toEqual([
+        [repairPatch, sentinelPatch],
+      ])
+    })
+    expect(applyAll([keylessTable, bar], patches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
   })
 })
 
