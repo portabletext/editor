@@ -2,7 +2,6 @@ import type {
   EditorSelection,
   EditorSelectionPoint,
   EditorSnapshot,
-  PortableTextBlock,
   Path,
 } from '@portabletext/editor'
 import {defineBehavior, raise} from '@portabletext/editor/behaviors'
@@ -12,21 +11,26 @@ import {
   isSelectionCollapsed,
 } from '@portabletext/editor/selectors'
 import {
+  getAncestors,
   getChildren,
   getEnclosingBlock,
   getFirstChild,
   getLastChild,
+  getLeaf,
+  getParent,
   getSibling,
+  pathContains,
 } from '@portabletext/editor/traversal'
 import {
   getBlockEndPoint,
   getBlockStartPoint,
   isEqualPaths,
+  isSpan,
 } from '@portabletext/editor/utils'
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
-import {cellEndPoint, cellStartPoint} from '../cell-points'
+import {cellStartPoint} from '../cell-points'
 import {resolveCell} from '../resolve-cell'
-import type {TableConfig} from '../table-config'
+import {createTableGuards, type TableConfig} from '../table-config'
 
 type Dom = {
   getSelectionRect: (snapshot: EditorSnapshot) => DOMRect | null
@@ -53,6 +57,20 @@ const arrowUp = createKeyboardShortcut({
     {key: 'ArrowUp', alt: false, ctrl: false, meta: false, shift: false},
   ],
 })
+const shiftArrow = {
+  down: createKeyboardShortcut({
+    default: [
+      {key: 'ArrowDown', alt: false, ctrl: false, meta: false, shift: true},
+    ],
+  }),
+  up: createKeyboardShortcut({
+    default: [
+      {key: 'ArrowUp', alt: false, ctrl: false, meta: false, shift: true},
+    ],
+  }),
+}
+
+type SelectionExtension = {at: NonNullable<EditorSelection>} | {stay: true}
 
 export function createNavBehaviors(config: TableConfig) {
   return [
@@ -156,8 +174,9 @@ export function createNavBehaviors(config: TableConfig) {
             // Native ArrowDown at the bottom row walks forward through the
             // cells instead of exiting, so the plugin owns the move into
             // the sibling below.
-            const at = blockEntrySelection(snapshot, dom, siblingBelow, 'first')
-            return at ? {at} : false
+            return {
+              at: blockEntrySelection(snapshot, dom, siblingBelow, 'first'),
+            }
           }
           // Nothing below the table: escape it, the way block objects do.
           return {escapeTablePath: position.table.path}
@@ -169,8 +188,7 @@ export function createNavBehaviors(config: TableConfig) {
           rowBelow,
         )
         const at =
-          target &&
-          cellEntrySelection(config, snapshot, dom, target.path, 'first')
+          target && cellEntrySelection(snapshot, dom, target.path, 'first')
         if (!at) {
           return false
         }
@@ -222,8 +240,9 @@ export function createNavBehaviors(config: TableConfig) {
             // Native ArrowUp at the top row walks backwards through the
             // cells instead of exiting, so the plugin owns the move into
             // the sibling above.
-            const at = blockEntrySelection(snapshot, dom, siblingAbove, 'last')
-            return at ? {at} : false
+            return {
+              at: blockEntrySelection(snapshot, dom, siblingAbove, 'last'),
+            }
           }
           // Nothing above the table: escape it, the way block objects do.
           return {escapeTablePath: position.table.path}
@@ -235,8 +254,7 @@ export function createNavBehaviors(config: TableConfig) {
           rowAbove,
         )
         const at =
-          target &&
-          cellEntrySelection(config, snapshot, dom, target.path, 'last')
+          target && cellEntrySelection(snapshot, dom, target.path, 'last')
         if (!at) {
           return false
         }
@@ -249,7 +267,198 @@ export function createNavBehaviors(config: TableConfig) {
             : [escapeTableAction(snapshot, result.escapeTablePath, 'before')],
       ],
     }),
+
+    ...(['down', 'up'] as const).map((direction) =>
+      defineBehavior<
+        Record<string, never>,
+        'keyboard.keydown',
+        SelectionExtension
+      >({
+        on: 'keyboard.keydown',
+        guard: ({snapshot, event, dom}) => {
+          if (!shiftArrow[direction].guard(event.originEvent)) {
+            return false
+          }
+          if (getFocusBlockObject(snapshot)) {
+            return false
+          }
+          return (
+            resolveSelectionExtension(config, snapshot, dom, direction) ?? false
+          )
+        },
+        actions: [
+          (_, result) =>
+            'at' in result ? [raise({type: 'select', at: result.at})] : [],
+        ],
+      }),
+    ),
   ]
+}
+
+/**
+ * Where a move that ran off the table lands: the nearest block beside the
+ * table or an enclosing container, or, when the table sits in a cell, the
+ * outer table's next cell in the column. Returns `'edge'` only at the
+ * document edge.
+ */
+function resolveContainerExit(
+  config: TableConfig,
+  focusSnapshot: EditorSnapshot,
+  dom: Dom,
+  tablePath: Path,
+  direction: 'up' | 'down',
+): NonNullable<EditorSelection> | 'edge' | undefined {
+  const {isCell} = createTableGuards(config)
+  const siblingDirection = direction === 'down' ? 'next' : 'previous'
+  const entryEdge = direction === 'down' ? 'first' : 'last'
+  const tableAndAncestors = [
+    {path: tablePath},
+    ...getAncestors(focusSnapshot, tablePath),
+  ]
+  for (const ancestor of tableAndAncestors) {
+    if ('node' in ancestor && isCell(ancestor.node)) {
+      const outerPosition = resolveCell(focusSnapshot, ancestor.path, config)
+      if (!outerPosition) {
+        return undefined
+      }
+      const neighborRow = getSibling(focusSnapshot, outerPosition.row.path, {
+        direction: siblingDirection,
+      })
+      if (!neighborRow) {
+        return resolveContainerExit(
+          config,
+          focusSnapshot,
+          dom,
+          outerPosition.table.path,
+          direction,
+        )
+      }
+      const target = sameColumnCell(
+        focusSnapshot,
+        outerPosition.cell,
+        outerPosition.row,
+        neighborRow,
+      )
+      return (
+        (target &&
+          cellEntrySelection(focusSnapshot, dom, target.path, entryEdge)) ??
+        undefined
+      )
+    }
+    const siblingBlock = getSibling(focusSnapshot, ancestor.path, {
+      direction: siblingDirection,
+    })
+    if (siblingBlock) {
+      return blockEntrySelection(focusSnapshot, dom, siblingBlock, entryEdge)
+    }
+  }
+  return 'edge'
+}
+
+function resolveSelectionExtension(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+  dom: Dom,
+  direction: 'up' | 'down',
+): SelectionExtension | undefined {
+  const selection = snapshot.context.selection
+  if (!selection) {
+    return undefined
+  }
+  const focusPosition = resolveCell(snapshot, selection.focus.path, config)
+  const sharedTable = enclosingSharedTable(config, snapshot, selection)
+  const anchorCell =
+    sharedTable &&
+    cellInTable(config, snapshot, selection.anchor.path, sharedTable.path)
+  const focusCell =
+    sharedTable &&
+    cellInTable(config, snapshot, selection.focus.path, sharedTable.path)
+  if (!focusPosition || !anchorCell || !focusCell) {
+    return undefined
+  }
+  const exitEdge = direction === 'down' ? 'last' : 'first'
+  const entryEdge = direction === 'down' ? 'first' : 'last'
+  const siblingDirection = direction === 'down' ? 'next' : 'previous'
+  const focusSnapshot = collapsedAt(snapshot, selection.focus)
+  if (
+    isEqualPaths(focusCell.path, anchorCell.path) &&
+    !(
+      focusAtCellEdge(focusSnapshot, focusPosition.cell.path, exitEdge) &&
+      focusOnVisualEdge(focusSnapshot, dom, exitEdge)
+    )
+  ) {
+    return undefined
+  }
+  const neighborRow = getSibling(snapshot, focusPosition.row.path, {
+    direction: siblingDirection,
+  })
+  if (!neighborRow) {
+    const entry = resolveContainerExit(
+      config,
+      focusSnapshot,
+      dom,
+      focusPosition.table.path,
+      direction,
+    )
+    if (entry === 'edge') {
+      return {stay: true}
+    }
+    return entry
+      ? {at: {anchor: selection.anchor, focus: entry.focus}}
+      : undefined
+  }
+  const target = sameColumnCell(
+    snapshot,
+    focusPosition.cell,
+    focusPosition.row,
+    neighborRow,
+  )
+  const entry =
+    target && cellEntrySelection(focusSnapshot, dom, target.path, entryEdge)
+  return entry
+    ? {at: {anchor: selection.anchor, focus: entry.focus}}
+    : undefined
+}
+
+/**
+ * The innermost table holding both the anchor and the focus. Leaving an
+ * inner table moves the focus into a table in the next outer cell, so the
+ * endpoints' innermost tables can differ while one table still spans both.
+ */
+function enclosingSharedTable(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+  selection: NonNullable<EditorSelection>,
+) {
+  const {isTable} = createTableGuards(config)
+  return getEnclosingBlock(snapshot, selection.focus.path, {
+    match: (node, path) =>
+      isTable(node) && pathContains(path, selection.anchor.path),
+  })
+}
+
+/** The cell of the table at `tablePath` that holds `path`, at any depth. */
+function cellInTable(
+  config: TableConfig,
+  snapshot: EditorSnapshot,
+  path: Path,
+  tablePath: Path,
+) {
+  let position = resolveCell(snapshot, path, config)
+  while (position && !isEqualPaths(position.table.path, tablePath)) {
+    position = resolveCell(snapshot, position.table.path, config)
+  }
+  return position?.cell
+}
+
+function collapsedAt(
+  snapshot: EditorSnapshot,
+  point: EditorSelectionPoint,
+): EditorSnapshot {
+  return {
+    ...snapshot,
+    context: {...snapshot.context, selection: {anchor: point, focus: point}},
+  }
 }
 
 /**
@@ -295,15 +504,6 @@ function cellStart(
   return point && {anchor: point, focus: point}
 }
 
-/** A collapsed selection at the end of the cell's last block. */
-function cellEnd(
-  snapshot: EditorSnapshot,
-  cellPath: Path,
-): EditorSelection | undefined {
-  const point = cellEndPoint(snapshot, cellPath)
-  return point && {anchor: point, focus: point}
-}
-
 /**
  * A collapsed selection in the cell, at the caret's current x where possible:
  * hit-tests the caret's x on the cell's first (or last) line and uses the
@@ -311,60 +511,15 @@ function cellEnd(
  * end) of the cell, e.g. when the cell is narrower than the caret's x.
  */
 function cellEntrySelection(
-  config: TableConfig,
   snapshot: EditorSnapshot,
   dom: Dom,
   cellPath: Path,
   edge: 'first' | 'last',
 ): EditorSelection | undefined {
-  const fallback =
-    edge === 'first'
-      ? cellStart(snapshot, cellPath)
-      : cellEnd(snapshot, cellPath)
-  if (!fallback) {
+  const edgePoint = edgeLeafPoint(snapshot, cellPath, edge)
+  if (!edgePoint || isEqualPaths(edgePoint.path, cellPath)) {
     return undefined
   }
-  const caretRect = dom.getSelectionRect(snapshot)
-  const entryLineRect = dom.getSelectionRect({
-    ...snapshot,
-    context: {...snapshot.context, selection: fallback},
-  })
-  if (!caretRect || !entryLineRect) {
-    return fallback
-  }
-  const point = dom.getPointAtCoordinates({
-    x: caretRect.left,
-    y: entryLineRect.top + entryLineRect.height / 2,
-  })
-  const resolved = point && resolveCell(snapshot, point.path, config)
-  if (!resolved || !isEqualPaths(resolved.cell.path, cellPath)) {
-    return fallback
-  }
-  return {anchor: point, focus: point}
-}
-
-/**
- * A collapsed selection in a sibling block outside the table, at the
- * caret's current x where possible, the same hit-testing idiom as
- * `cellEntrySelection`. Falls back to the block's edge point, e.g. when
- * the rects cannot be measured.
- */
-function blockEntrySelection(
-  snapshot: EditorSnapshot,
-  dom: Dom,
-  sibling: {node: unknown; path: Path},
-  edge: 'first' | 'last',
-): EditorSelection | undefined {
-  const block = {
-    // A root-level sibling is a block by the data model; the traversal
-    // node union cannot prove it.
-    node: sibling.node as PortableTextBlock,
-    path: sibling.path,
-  }
-  const edgePoint =
-    edge === 'first'
-      ? getBlockStartPoint({context: snapshot.context, block})
-      : getBlockEndPoint({context: snapshot.context, block})
   const fallback = {anchor: edgePoint, focus: edgePoint}
   const caretRect = dom.getSelectionRect(snapshot)
   const entryLineRect = dom.getSelectionRect({
@@ -378,20 +533,76 @@ function blockEntrySelection(
     x: caretRect.left,
     y: entryLineRect.top + entryLineRect.height / 2,
   })
-  const pointRootSegment = point?.path[0]
-  const blockRootSegment = block.path[0]
-  if (
-    !point ||
-    pointRootSegment === undefined ||
-    blockRootSegment === undefined ||
-    !isEqualPaths([pointRootSegment], [blockRootSegment])
-  ) {
+  if (!point || !pathContains(cellPath, point.path)) {
     return fallback
   }
   return {anchor: point, focus: point}
 }
 
-/** Whether the focus sits in the cell's first (or last) block. */
+/**
+ * The point on the first (or last) line of the node at `path`: the start
+ * (or end) of its first (or last) leaf, descending through any containers
+ * at its edge so a cell or block ending in a table measures the table's
+ * bottom row, not the whole table.
+ */
+function edgeLeafPoint(
+  snapshot: EditorSnapshot,
+  path: Path,
+  edge: 'first' | 'last',
+): EditorSelectionPoint | undefined {
+  const leaf = getLeaf(snapshot, path, {
+    edge: edge === 'first' ? 'start' : 'end',
+  })
+  if (!leaf) {
+    return undefined
+  }
+  const offset =
+    edge === 'last' && isSpan(snapshot.context, leaf.node)
+      ? leaf.node.text.length
+      : 0
+  return {path: leaf.path, offset}
+}
+
+/**
+ * A collapsed selection in a sibling block outside the table, at the
+ * caret's current x where possible, the same hit-testing idiom as
+ * `cellEntrySelection`. Falls back to the block's edge leaf, e.g. when
+ * the rects cannot be measured.
+ */
+function blockEntrySelection(
+  snapshot: EditorSnapshot,
+  dom: Dom,
+  block: Entry,
+  edge: 'first' | 'last',
+): NonNullable<EditorSelection> {
+  const edgePoint = edgeLeafPoint(snapshot, block.path, edge) ?? {
+    path: block.path,
+    offset: 0,
+  }
+  const fallback = {anchor: edgePoint, focus: edgePoint}
+  const caretRect = dom.getSelectionRect(snapshot)
+  const entryLineRect = dom.getSelectionRect({
+    ...snapshot,
+    context: {...snapshot.context, selection: fallback},
+  })
+  if (!caretRect || !entryLineRect) {
+    return fallback
+  }
+  const point = dom.getPointAtCoordinates({
+    x: caretRect.left,
+    y: entryLineRect.top + entryLineRect.height / 2,
+  })
+  if (!point || !pathContains(block.path, point.path)) {
+    return fallback
+  }
+  return {anchor: point, focus: point}
+}
+
+/**
+ * Whether the focus sits in the cell's first (or last) block, at any depth:
+ * the focus block and every container between it and the cell are the
+ * first (or last) child of their parent.
+ */
 function focusAtCellEdge(
   snapshot: EditorSnapshot,
   cellPath: Path,
@@ -401,14 +612,20 @@ function focusAtCellEdge(
   if (!selection) {
     return false
   }
-  const focusBlock = getEnclosingBlock(snapshot, selection.focus.path)
-  const edgeBlock =
-    edge === 'first'
-      ? getFirstChild(snapshot, cellPath)
-      : getLastChild(snapshot, cellPath)
-  return (
-    !!focusBlock && !!edgeBlock && isEqualPaths(focusBlock.path, edgeBlock.path)
-  )
+  let block = getEnclosingBlock(snapshot, selection.focus.path)
+  while (block && !isEqualPaths(block.path, cellPath)) {
+    const parent = getParent(snapshot, block.path)
+    const edgeChild =
+      parent &&
+      (edge === 'first'
+        ? getFirstChild(snapshot, parent.path)
+        : getLastChild(snapshot, parent.path))
+    if (!edgeChild || !isEqualPaths(edgeChild.path, block.path)) {
+      return false
+    }
+    block = parent
+  }
+  return !!block
 }
 
 /**
