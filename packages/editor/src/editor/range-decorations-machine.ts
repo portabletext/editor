@@ -83,6 +83,7 @@ export type DecoratedRange = Range & {
   rangeDecoration: RangeDecoration | Decoration
   kind: RangeDecorationSourceKind
   merge: (leaf: PortableTextSpan, decoration: object) => void
+  propIdentity?: object
 }
 
 export type LeafRangeDecoration =
@@ -117,6 +118,13 @@ type RangeDecorationSource = {
   rangeDecorations: Array<RangeDecoration | Decoration>
   decoratedRanges: Array<DecoratedRange>
   deadSelections: Map<string, EditorSelection>
+  deadPropSelections: Map<
+    object,
+    {
+      rangeDecoration: RangeDecoration
+      origin: 'local' | 'remote'
+    }
+  >
   initialized: boolean
   /**
    * Only meaningful for a `registered` source; fixed at registration.
@@ -178,11 +186,6 @@ function buildPropDecoratedRangesFromScratch(
 
   for (const rangeDecoration of rangeDecorations) {
     if (!rangeDecoration.selection) {
-      rangeDecoration.onMoved?.({
-        newSelection: null,
-        rangeDecoration,
-        origin: 'local',
-      })
       continue
     }
 
@@ -190,6 +193,7 @@ function buildPropDecoratedRangesFromScratch(
       rangeDecoration,
       kind: 'prop',
       merge: mergeRangeDecoration,
+      propIdentity: rangeDecoration,
       ...rangeDecoration.selection,
     })
   }
@@ -383,6 +387,7 @@ function movePropDecoratedRanges(
   origin: 'local' | 'remote',
   snapshotContext: PortableTextEditorEngine['snapshot']['context'],
   relocateUnset: boolean,
+  deadPropSelections: RangeDecorationSource['deadPropSelections'],
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
 
@@ -391,11 +396,6 @@ function movePropDecoratedRanges(
     const currentSelection = rangeDecoration.selection
 
     if (!currentSelection) {
-      rangeDecoration.onMoved?.({
-        newSelection: null,
-        rangeDecoration,
-        origin,
-      })
       continue
     }
 
@@ -406,10 +406,7 @@ function movePropDecoratedRanges(
       {relocateUnset},
     )
 
-    if (
-      (newRange && newRange !== currentSelection) ||
-      (newRange === null && currentSelection)
-    ) {
+    if (newRange && newRange !== currentSelection) {
       rangeDecoration.onMoved?.({
         newSelection: newRange,
         rangeDecoration,
@@ -418,11 +415,20 @@ function movePropDecoratedRanges(
     }
 
     if (newRange !== null) {
+      if (decoratedRange.propIdentity) {
+        deadPropSelections.delete(decoratedRange.propIdentity)
+      }
       next.push({
         ...newRange,
         rangeDecoration: {...rangeDecoration, selection: newRange},
         kind: 'prop',
         merge: mergeRangeDecoration,
+        propIdentity: decoratedRange.propIdentity,
+      })
+    } else if (decoratedRange.propIdentity) {
+      deadPropSelections.set(decoratedRange.propIdentity, {
+        rangeDecoration,
+        origin,
       })
     }
   }
@@ -731,6 +737,7 @@ function correctSourceRanges(
         rangeDecoration: {...rangeDecoration, selection: reanchoredRange},
         kind: 'prop',
         merge: mergeRangeDecoration,
+        propIdentity: beforeDecoratedRange.propIdentity,
       }
       if (currentDecoratedRange) {
         corrected[currentIndex] = nextDecoratedRange
@@ -742,10 +749,24 @@ function correctSourceRanges(
         rangeDecoration,
         origin,
       })
+      if (beforeDecoratedRange.propIdentity) {
+        source.deadPropSelections.delete(beforeDecoratedRange.propIdentity)
+      }
     }
   }
 
   return corrected
+}
+
+function notifyDeadPropSelections(source: RangeDecorationSource) {
+  for (const {rangeDecoration, origin} of source.deadPropSelections.values()) {
+    rangeDecoration.onMoved?.({
+      newSelection: null,
+      rangeDecoration,
+      origin,
+    })
+  }
+  source.deadPropSelections.clear()
 }
 
 function getDecoratedRange(decoratedRange: DecoratedRange): Range {
@@ -906,6 +927,7 @@ export const rangeDecorationsMachine = setup({
         rangeDecorations,
         decoratedRanges: [],
         deadSelections: new Map(),
+        deadPropSelections: new Map(),
         initialized: false,
         on: event.on,
       })
@@ -960,6 +982,7 @@ export const rangeDecorationsMachine = setup({
             event.rangeDecorations,
           ),
           deadSelections: new Map(),
+          deadPropSelections: new Map(),
           initialized: true,
           on: event.on,
         }
@@ -1061,6 +1084,7 @@ export const rangeDecorationsMachine = setup({
             event.origin,
             context.editorEngine.snapshot.context,
             event.relocateUnset ?? false,
+            source.deadPropSelections,
           )
         }
       }
@@ -1082,6 +1106,9 @@ export const rangeDecorationsMachine = setup({
       const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
         getStructuralTouchedBlockKeys(event.transaction)
       if (touchedBlockKeys.size === 0) {
+        for (const source of context.sources) {
+          notifyDeadPropSelections(source)
+        }
         context.transactionSources.clear()
         return
       }
@@ -1109,6 +1136,7 @@ export const rangeDecorationsMachine = setup({
           event.transaction.origin === 'remote' ? 'remote' : 'local',
           sameBlockCorrectionKeys,
         )
+        notifyDeadPropSelections(source)
       }
       context.transactionSources.clear()
       context.editorEngine.decoratedRanges = flattenSources(context.sources)

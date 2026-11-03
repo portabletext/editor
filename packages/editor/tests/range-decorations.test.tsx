@@ -1028,6 +1028,123 @@ describe('RangeDecorations', () => {
 
 describe('RangeDecorations: transaction re-anchoring acceptance', () => {
   test.each([
+    {kind: 'prop' as const, direction: 'backward' as const},
+    {kind: 'prop' as const, direction: 'forward' as const},
+    {kind: 'registered' as const, direction: 'backward' as const},
+    {kind: 'registered' as const, direction: 'forward' as const},
+  ])(
+    'Scenario: a $kind decoration survives split then $direction merge',
+    async ({kind, direction}) => {
+      const harness = await createSplitMergeDecorationHarness(kind)
+
+      harness.editor.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6),
+      })
+      harness.editor.send({type: 'insert.break'})
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(['highli', 'ghted words'])
+      })
+
+      const value = harness.editor.getSnapshot().context.value
+      const firstBlock = value[0]!
+      const secondBlock = value[1]!
+      if (
+        !isTextBlock(
+          {schema: harness.editor.getSnapshot().context.schema},
+          firstBlock,
+        ) ||
+        !isTextBlock(
+          {schema: harness.editor.getSnapshot().context.schema},
+          secondBlock,
+        )
+      ) {
+        throw new Error('Expected text blocks')
+      }
+      const firstSpan = firstBlock.children[0]!
+      const secondSpan = secondBlock.children[0]!
+      if (
+        !isSpan(
+          {schema: harness.editor.getSnapshot().context.schema},
+          firstSpan,
+        ) ||
+        !isSpan(
+          {schema: harness.editor.getSnapshot().context.schema},
+          secondSpan,
+        )
+      ) {
+        throw new Error('Expected spans')
+      }
+
+      harness.editor.send({
+        type: 'select',
+        at:
+          direction === 'backward'
+            ? acceptanceSelection(
+                secondBlock._key,
+                secondSpan._key,
+                0,
+                secondBlock._key,
+                secondSpan._key,
+                0,
+              )
+            : acceptanceSelection(
+                firstBlock._key,
+                firstSpan._key,
+                firstSpan.text.length,
+                firstBlock._key,
+                firstSpan._key,
+                firstSpan.text.length,
+              ),
+      })
+      harness.editor.send({type: 'delete', direction})
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(['highlighted words'])
+        expect(harness.getSelection()).toEqual(
+          acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
+        )
+      })
+    },
+  )
+
+  test('Scenario: a controlled null prop decoration does not call `onMoved`', async () => {
+    const onMoved = vi.fn()
+
+    function App() {
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([
+        {
+          component: ({children}) => <span>{children}</span>,
+          selection: null,
+          onMoved: (details) => {
+            onMoved(details)
+            setRangeDecorations((decorations) => [...decorations])
+          },
+        },
+      ])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator: createTestKeyGenerator(),
+            schemaDefinition: defineSchema({}),
+            initialValue: [acceptanceBlock('b0', 's0', 'highlighted words')],
+          }}
+        >
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+        </EditorProvider>
+      )
+    }
+
+    await render(<App />)
+    await expect.element(page.getByRole('textbox')).toBeVisible()
+    expect(onMoved).toHaveBeenCalledTimes(0)
+  })
+
+  test.each([
     {
       name: 'P1 text/plain single line pasted inside a decoration',
       text: 'XX',
@@ -1243,6 +1360,55 @@ async function createAcceptanceDecorationHarness(args: {
             : '',
         ),
   }
+}
+
+async function createSplitMergeDecorationHarness(kind: 'prop' | 'registered') {
+  const decoration = acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17)
+  if (kind === 'registered') {
+    const result = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      initialValue: [acceptanceBlock('b0', 's0', 'highlighted words')],
+    })
+    const registration = result.editor.registerDecorations({
+      decorations: [
+        {
+          id: 'acceptance',
+          type: 'range',
+          render: ({children}) => <span>{children}</span>,
+          range: decoration,
+        },
+      ],
+    })
+    return {
+      ...result,
+      getSelection: () => registration.getDecorations()[0]?.range,
+      getText: () =>
+        result.editor
+          .getSnapshot()
+          .context.value.map((block) =>
+            isTextBlock(
+              {schema: result.editor.getSnapshot().context.schema},
+              block,
+            )
+              ? block.children
+                  .map((child) =>
+                    isSpan(
+                      {schema: result.editor.getSnapshot().context.schema},
+                      child,
+                    )
+                      ? child.text
+                      : '',
+                  )
+                  .join('')
+              : '',
+          ),
+    }
+  }
+
+  return createAcceptanceDecorationHarness({
+    initialValue: [acceptanceBlock('b0', 's0', 'highlighted words')],
+    decoration,
+  })
 }
 
 function pasteAcceptanceText(
