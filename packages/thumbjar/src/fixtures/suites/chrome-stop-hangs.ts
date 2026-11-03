@@ -12,5 +12,4 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
     }),
   dumpFailure: async () => {},
   closeChrome: () => new Promise<void>(() => {}),
-  clearChromeTabs: async () => {},
 }))

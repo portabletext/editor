@@ -12,14 +12,14 @@ export const FAILURE_DUMP_SECONDS = 30
 /** Stopping the uiautomator2 servers an attempt started. */
 export const SERVER_CLOSE_SECONDS = 10
 
-/** Each adb call that stops Chrome or clears its tabs. */
+/** Each adb call that stops Chrome. */
 export const CHROME_ADB_SECONDS = 15
 
 /** Stopping Chrome between the two attempts. */
 export const RESTART_SECONDS = CHROME_ADB_SECONDS + 5
 
-/** Stopping Chrome and clearing its tabs after the test. */
-export const CLEANUP_SECONDS = 2 * CHROME_ADB_SECONDS + 5
+/** Stopping Chrome after the test. */
+export const CLEANUP_SECONDS = CHROME_ADB_SECONDS + 5
 
 /** How long an adb process gets to exit after SIGTERM, and again after SIGKILL. */
 export const KILL_GRACE_SECONDS = 2

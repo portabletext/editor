@@ -21,7 +21,6 @@ test('Scenario: Typing kyou after a driver fault', async () => {
       'close chrome',
       'attempt 2',
       'close chrome',
-      'clear tabs',
     ],
   })
 })

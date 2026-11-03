@@ -27,7 +27,7 @@ import {
   openScratchKeyboard,
   scratchKeyboard,
 } from '../gboard/scratch-keyboard.ts'
-import {clearChromeTabs, closeChrome} from '../gboard/typing.ts'
+import {closeChrome} from '../gboard/typing.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 // Each adb call of the wait, so its last read, the version query included, ends within `DICTIONARY_WAIT_TAIL_SECONDS`.
@@ -117,7 +117,6 @@ async function check(out: string, pageUrl: string): Promise<void> {
     }
   } finally {
     await closeChrome()
-    await clearChromeTabs()
     await device?.close().catch(() => {})
   }
 }
