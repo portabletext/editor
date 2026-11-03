@@ -113,7 +113,7 @@ describe(runOnDeviceWorstSeconds.name, () => {
     })
   })
 
-  test('a Japanese file of three tests is capped at 1825 seconds and its script ends within 2819, an English one within 2562, and a file of two within 2244 and 1987', () => {
+  test('a Japanese file of three tests is capped at 1735 seconds and its script ends within 2729, an English one within 2472, and a file of two within 2184 and 1927', () => {
     expect({
       threeTests: {
         tests: deviceTestFileSeconds(3),
@@ -126,8 +126,8 @@ describe(runOnDeviceWorstSeconds.name, () => {
         en: runOnDeviceWorstSeconds('en', 2),
       },
     }).toEqual({
-      threeTests: {tests: 1825, ja: 2819, en: 2562},
-      twoTests: {tests: 1250, ja: 2244, en: 1987},
+      threeTests: {tests: 1735, ja: 2729, en: 2472},
+      twoTests: {tests: 1190, ja: 2184, en: 1927},
     })
   })
 
@@ -180,8 +180,8 @@ describe(runStepMinutes.name, () => {
       },
     }).toEqual({
       headroom: 60,
-      ja: {minutes: 57, spare: 61},
-      en: {minutes: 53, spare: 78},
+      ja: {minutes: 56, spare: 91},
+      en: {minutes: 52, spare: 108},
     })
   })
 })
@@ -218,8 +218,8 @@ describe('budget.mjs run as `node`’s entry whose file is removed once loaded',
         'removed',
       ),
     ]).toEqual([
-      {status: 0, stdout: '1825\n', stderr: '', removed: true},
-      {status: 0, stdout: '1825\n', stderr: '', removed: true},
+      {status: 0, stdout: '1735\n', stderr: '', removed: true},
+      {status: 0, stdout: '1735\n', stderr: '', removed: true},
     ])
   })
 })
@@ -312,7 +312,7 @@ describe('the workflow', () => {
     )
   })
 
-  test('caps the Japanese run steps at 57 minutes and its job at 163, the English run steps at 53 and its job at 155', () => {
+  test('caps the Japanese run steps at 56 minutes and its job at 161, the English run steps at 52 and its job at 153', () => {
     expect(
       rows.map(({lang, runMinutes, jobMinutes}) => ({
         lang,
@@ -320,8 +320,8 @@ describe('the workflow', () => {
         jobMinutes,
       })),
     ).toEqual([
-      {lang: 'ja', runMinutes: 57, jobMinutes: 163},
-      {lang: 'en', runMinutes: 53, jobMinutes: 155},
+      {lang: 'ja', runMinutes: 56, jobMinutes: 161},
+      {lang: 'en', runMinutes: 52, jobMinutes: 153},
     ])
   })
 })
