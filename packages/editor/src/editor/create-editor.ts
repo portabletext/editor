@@ -284,7 +284,6 @@ function createActors(config: {
           config.editorActor.send({
             ...event,
             type: 'internal.patch',
-            value: config.editorEngine.snapshot.context.value,
           })
           break
 

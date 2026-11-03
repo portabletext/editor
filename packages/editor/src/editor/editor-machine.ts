@@ -57,7 +57,6 @@ export type ExternalEditorEvent =
 
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
   operationId?: string
-  value: Array<PortableTextBlock>
 }
 
 /**

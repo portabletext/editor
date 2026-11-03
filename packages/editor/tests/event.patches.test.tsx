@@ -6417,11 +6417,12 @@ describe('event.patches', () => {
     })
 
     // Unlike the single-flush clear above, a character-by-character clear
-    // spreads across flushes, so the mirrored echoes race the ongoing
-    // edits: a stale echo differs from the engine by then, syncs as a
-    // genuine write, and records the placeholder as the last synced
-    // value. The editor's own `unset([])` emission must override that:
-    // its stream destroyed the field, so the retype must rebuild it.
+    // spreads across flushes, so a host whose echoes trail the edits (as
+    // React state echoes do) delivers values the engine has moved past: a
+    // stale echo syncs as a genuine write and records the placeholder as
+    // the last synced value. The editor's own `unset([])` emission must
+    // override that: its stream destroyed the field, so the retype must
+    // rebuild it.
     let lastMutationValue: Array<PortableTextBlock> | undefined
     editor.on('mutation', (event) => {
       lastMutationValue = event.value
@@ -6445,6 +6446,7 @@ describe('event.patches', () => {
         origin: 'local',
       })
     })
+    const typedValue = editor.getSnapshot().context.value
 
     await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
 
@@ -6455,11 +6457,25 @@ describe('event.patches', () => {
         origin: 'local',
       })
     })
+    const clearedValue = editor.getSnapshot().context.value
+    await vi.waitFor(() => {
+      expect(lastMutationValue).toEqual(clearedValue)
+    })
 
-    // The echo cascade settles when a stale echo has written into the
-    // engine (a remote-origin operation) and the last write restored the
-    // placeholder. Only then has the poisoned value been recorded, which
-    // is the state the retype below must survive.
+    // The trailing echoes: first the value from before the clear, which
+    // the engine has moved past, then the cleared value. Each must sync
+    // before the next is sent, since a newer `update value` replaces a
+    // pending one.
+    editor.send({type: 'update value', value: typedValue})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(typedValue)
+    })
+    editor.send({type: 'update value', value: clearedValue})
+
+    // The stale echo has written into the engine (a remote-origin
+    // operation) and the last write restored the placeholder. Only then
+    // has the poisoned value been recorded, which is the state the retype
+    // below must survive.
     await vi.waitFor(() => {
       expect(remoteOperations).toBeGreaterThan(0)
       expect(editor.getSnapshot().context.value).toEqual([
@@ -6594,12 +6610,13 @@ describe('event.patches', () => {
     })
 
     // Build the same poisoned recording as 'Retyping after a
-    // character-by-character clear when the host mirrors values': a
-    // stale mirrored echo lands after the editor's own `unset([])` and
-    // records the placeholder as the last synced value. A remote root
-    // `insert` must override that recording the same way the local
-    // retype does.
+    // character-by-character clear when the host mirrors values': trailing
+    // echoes land after the editor's own `unset([])` and record the
+    // placeholder as the last synced value. A remote root `insert` must
+    // override that recording the same way the local retype does.
+    let lastMutationValue: Array<PortableTextBlock> | undefined
     editor.on('mutation', (event) => {
+      lastMutationValue = event.value
       editor.send({type: 'update value', value: event.value})
     })
     let remoteOperations = 0
@@ -6620,6 +6637,7 @@ describe('event.patches', () => {
         origin: 'local',
       })
     })
+    const typedValue = editor.getSnapshot().context.value
 
     await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
 
@@ -6630,6 +6648,20 @@ describe('event.patches', () => {
         origin: 'local',
       })
     })
+    const clearedValue = editor.getSnapshot().context.value
+    await vi.waitFor(() => {
+      expect(lastMutationValue).toEqual(clearedValue)
+    })
+
+    // The trailing echoes: first the value from before the clear, which
+    // the engine has moved past, then the cleared value. Each must sync
+    // before the next is sent, since a newer `update value` replaces a
+    // pending one.
+    editor.send({type: 'update value', value: typedValue})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(typedValue)
+    })
+    editor.send({type: 'update value', value: clearedValue})
 
     await vi.waitFor(() => {
       expect(remoteOperations).toBeGreaterThan(0)

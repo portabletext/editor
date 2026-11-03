@@ -51,7 +51,6 @@ export function subscribePatchGeneration({
         type: 'internal.patch',
         patch: {...patch, origin: 'local'},
         operationId: event.undoStepId,
-        value: editor.snapshot.context.value,
       })
     }
   })
