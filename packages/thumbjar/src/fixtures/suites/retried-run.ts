@@ -42,13 +42,7 @@ test('Scenario: Pressing Enter after a driver fault', async (context) => {
 
   expect({text: run.text, calls: globalThis.deviceCalls}).toEqual({
     text: 'foo\n',
-    calls: [
-      'attempt 1',
-      'close chrome',
-      'attempt 2',
-      'close chrome',
-      'clear tabs',
-    ],
+    calls: ['attempt 1', 'close chrome', 'attempt 2', 'close chrome'],
   })
 })
 
@@ -89,13 +83,7 @@ test('Scenario: The device saw only the case Gboard can drive', () => {
     calls: globalThis.deviceCalls,
     runs: driverRuns.map((run) => run.test),
   }).toEqual({
-    calls: [
-      'attempt 1',
-      'close chrome',
-      'attempt 2',
-      'close chrome',
-      'clear tabs',
-    ],
+    calls: ['attempt 1', 'close chrome', 'attempt 2', 'close chrome'],
     runs: ['Scenario: Pressing Enter after a driver fault'],
   })
 })

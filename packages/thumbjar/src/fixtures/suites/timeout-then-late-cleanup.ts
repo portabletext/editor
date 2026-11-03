@@ -14,7 +14,7 @@ test.fails('Scenario: Typing kyou into an empty block times out while Chrome sto
 
 test('Scenario: Chrome finishes stopping during the next test', async () => {
   globalThis.finishChromeStop()
-  await vi.waitFor(() => expect(globalThis.chromeTabsCleared).toEqual(true))
+  await vi.waitFor(() => expect(globalThis.chromeStopReturned).toEqual(true))
 
   expect(driverRuns.map((run) => run.state)).toEqual(['aborted'])
 })

@@ -32,10 +32,6 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
       calls.push('close chrome')
       return Promise.resolve()
     },
-    clearChromeTabs: () => {
-      calls.push('clear tabs')
-      return Promise.resolve()
-    },
   }
 })
 

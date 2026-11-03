@@ -30,7 +30,6 @@ import {
 } from './device/util.ts'
 import {unsupportedNote} from './gboard/support.ts'
 import {
-  clearChromeTabs,
   closeChrome,
   dumpFailure,
   outDir,
@@ -85,8 +84,9 @@ export const driverRuns: DriverRun[] = []
 let previousRun: Promise<void> = Promise.resolve()
 
 /**
- * Open `url` in a fresh Chrome, type `words` on Gboard and read back what the page holds. A driver fault
- * restarts Chrome and types everything again once. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
+ * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
+ * URL. Type `words` on Gboard and read back what the page holds. A driver fault restarts Chrome and types
+ * everything again once. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
  */
 export async function typeOnDevice(
   options: TypeOnDeviceOptions,
@@ -108,8 +108,8 @@ export async function typeOnDevice(
 }
 
 /**
- * Open `url` in a fresh Chrome, drive `steps` on Gboard and return a record of each and what the page
- * holds after the last.
+ * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
+ * URL. Drive `steps` on Gboard and return a record of each and what the page holds after the last.
  *
  * `context` is the context Vitest passes to the test that calls it. The skip, the timeout, the artifact
  * names and the `driverRuns` record all belong to that test, also in a concurrent test. Only the context's
@@ -399,15 +399,12 @@ async function timedAttempt<T>(
 }
 
 /**
- * Stop Chrome and delete its saved tabs, so the next test opens its page in a fresh Chrome. It runs under
- * a signal of its own, so it also runs after the test's timeout aborted the attempt.
+ * Stop Chrome. It runs under a signal of its own, so it also runs after the test's timeout aborted the
+ * attempt.
  */
 function cleanUpChrome(): Promise<void> {
   return runAbortable(new AbortController().signal, () =>
-    withDeadline('cleanup', CLEANUP_SECONDS, async () => {
-      await closeChrome()
-      await clearChromeTabs()
-    }),
+    withDeadline('cleanup', CLEANUP_SECONDS, closeChrome),
   )
 }
 
