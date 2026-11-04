@@ -1,5 +1,61 @@
 # @portabletext/markdown
 
+## 2.9.2
+
+### Patch Changes
+
+- [#3583](https://github.com/portabletext/editor/pull/3583) [`6cfdf5b`](https://github.com/portabletext/editor/commit/6cfdf5b8c0fe9827d68ce527b0f26bee5961ab62) Thanks [@rexxars](https://github.com/rexxars)! - fix: use the schema text block name when importing markdown
+  
+  `markdownToPortableText` now gives text blocks the name the schema declares for them. A schema with a renamed text block previously got `_type: 'block'` back:
+  
+  ```ts
+  import {markdownToPortableText} from '@portabletext/markdown'
+  import {compileSchema, defineSchema} from '@portabletext/schema'
+  
+  const schema = compileSchema(defineSchema({block: {name: 'myBlock'}}))
+  
+  markdownToPortableText('Hello', {schema})[0]?._type
+  // 'myBlock' (previously 'block')
+  ```
+  
+  This applies to every text block the import creates, including blocks inside table cells and list items.
+
+- [#3584](https://github.com/portabletext/editor/pull/3584) [`5de0636`](https://github.com/portabletext/editor/commit/5de0636a7a62aa1b9ee1b5fa66efdab739467211) Thanks [@rexxars](https://github.com/rexxars)! - fix: stop comparing text block names to `block` when serializing markdown
+  
+  `portableTextToMarkdown` now renders text blocks with a custom `_type`, such as `myBlock`, the same way it renders `block`. Numbered list items with a custom name previously all got the `1.` marker:
+  
+  ```ts
+  import {portableTextToMarkdown} from '@portabletext/markdown'
+  
+  portableTextToMarkdown([
+    {
+      _type: 'myBlock',
+      _key: 'a',
+      style: 'normal',
+      listItem: 'number',
+      level: 1,
+      markDefs: [],
+      children: [{_type: 'span', _key: 'a1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'myBlock',
+      _key: 'b',
+      style: 'normal',
+      listItem: 'number',
+      level: 1,
+      markDefs: [],
+      children: [{_type: 'span', _key: 'b1', text: 'bar', marks: []}],
+    },
+  ])
+  // '1. foo\n2. bar' (previously '1. foo\n1. bar')
+  ```
+  
+  A list starting deeper than level 1 is no longer indented into a code block, and text blocks in the `blockquote` style inside a callout or a structured blockquote no longer get a second `> ` prefix. An empty line between hard breaks also renders as a backslash break instead of a whitespace-only line that splits the paragraph when the markdown is parsed again.
+
+- [#3569](https://github.com/portabletext/editor/pull/3569) [`cacd2c9`](https://github.com/portabletext/editor/commit/cacd2c9b6a3aa6dd45282a634345bd4b3ea3ea7e) Thanks [@christianhg](https://github.com/christianhg)! - fix: write an `h1` or `h2` with a hard break as a setext heading when the document parses back unchanged
+  
+  `portableTextToMarkdown` now writes an `h1` or `h2` whose text holds a line break as a setext heading (`foo  \nbar\n===`), so reading the markdown back gives the same heading instead of a heading plus a paragraph.
+
 ## 2.9.1
 
 ### Patch Changes

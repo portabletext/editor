@@ -1,5 +1,11 @@
 # @portabletext/test
 
+## 2.1.3
+
+### Patch Changes
+
+- [#3580](https://github.com/portabletext/editor/pull/3580) [`0ddb091`](https://github.com/portabletext/editor/commit/0ddb0916d6792cf7be267863b0ab423d05cb3def) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve the schema and container registration at every depth in `toTextspec` and `fromTextspec`
+
 ## 2.1.2
 
 ### Patch Changes
