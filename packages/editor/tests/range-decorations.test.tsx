@@ -1657,6 +1657,95 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
     },
   )
 
+  test('Scenario: typing repeated copies over a decoration does not revive it on the first copy', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'a')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 1),
+    })
+
+    await userEvent.click(harness.locator)
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 1),
+    })
+    await vi.waitFor(() => {
+      expect(harness.editor.getSnapshot().context.selection).toEqual({
+        ...acceptanceSelection('b0', 's0', 0, 'b0', 's0', 1),
+        backward: false,
+      })
+    })
+    harness.locator.element().dispatchEvent(
+      new InputEvent('beforeinput', {
+        inputType: 'insertText',
+        data: 'banana',
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['banana'])
+      expect(harness.getSelection()).toEqual(undefined)
+      expect(harness.movedSelections).toEqual([null])
+      expect(getDecoratedText()).toEqual([])
+    })
+  })
+
+  test('Scenario: local paste-shaped replacement currently revives the decoration on the pasted block', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'foo')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 3),
+    })
+    harness.editor.send({
+      type: 'patches',
+      patches: [
+        {
+          ...diffMatchPatch('foo', '', [
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ]),
+          origin: 'remote' as const,
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}],
+          position: 'before',
+          items: [acceptanceBlock('pasted-block', 'pasted-span', 'foo')],
+          origin: 'remote',
+        },
+        {type: 'unset', path: [{_key: 'b0'}], origin: 'remote'},
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['foo'])
+      expect(harness.getSelection()).toEqual(
+        acceptanceSelection(
+          'pasted-block',
+          'pasted-span',
+          0,
+          'pasted-block',
+          'pasted-span',
+          3,
+        ),
+      )
+      expect(harness.movedSelections).toEqual([
+        acceptanceSelection(
+          'pasted-block',
+          'pasted-span',
+          0,
+          'pasted-block',
+          'pasted-span',
+          3,
+        ),
+      ])
+      expect(getDecoratedText()).toEqual(['foo'])
+    })
+  })
+
   test('Scenario: typing reports one registered decoration mapping per keystroke', async () => {
     const harness = await createRegisteredDecorationHarness({
       initialValue: [acceptanceBlock('b0', 's0', 'foo')],
