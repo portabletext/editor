@@ -10,6 +10,8 @@ So on `main`, a highlight can shrink, die, or end up on the wrong text after a s
 The spike keeps the per-operation moving, but adds one more step at the end of each engine transaction: it remembers each decoration before the transaction, compares the document before and after, and re-finds the decoration's text if per-operation moving lost it.
 It also tightens when a decoration dies, and reports deaths to `onMoved` only once the transaction is over.
 
+See section 8 for how this differs from the closed PRs #2413 and #3208.
+
 ## 2. The current system (`main`)
 
 ### How a decoration is stored
@@ -236,3 +238,29 @@ npx vitest --run --project "browser (chromium)" --maxWorkers=1 tests/range-decor
 ```
 
 To try it by hand, use the playground: a preview build of this branch (plain editor plus `rangeDecorations`, current ranges and an `onMoved` log under it). It is hosted privately in the Horizon "Split/merge highlight preview" mod (entry "re-anchoring v3"), not publicly. Highlight some text, then press Enter, Backspace across a block break, or paste inside the highlight.
+
+## 8. How this differs from the closed attempts
+
+### #2413 `fix/range-decoration-split-merge` (closed unmerged 2026-04-01)
+
+[#2413](https://github.com/portabletext/editor/pull/2413) ("fix: pre-transform range decorations during split and merge", head `025c01cb5`) addressed the same bug in two places:
+
+- **Inside `applySplitNode` and `applyMergeNode`**, it pre-transformed `editor.decoratedRanges` before the decomposed operations ran, the same way those functions already handle refs and the selection. It used inward affinity for splits.
+- **In the range-decorations machine**, when a `remove_text` collapsed a decoration that sat entirely inside the removed text, it stored the decoration as "displaced", with offsets relative to that text. A later `insert_node` whose block *contained the same text* re-attached it. Displaced decorations that were never re-attached were reported as removed.
+
+What this branch does differently:
+
+| | #2413 | This branch |
+|---|---|---|
+| Where it hooks in | Two specific paths: the split/merge apply functions and the machine's `remove_text` → `insert_node` sequence | One transaction-end pass over every operation, so it doesn't matter which behavior or code path made the edit |
+| Deciding a decoration survives | Text match: any inserted block that contains the removed text | Operation provenance: the same transaction must re-insert the removed text under the removed span's key (any key for undo/redo). Identical text elsewhere doesn't count, which is Argus's blocker 1 and also the hole in #2413's text match |
+| Paste, custom behaviors, undo/redo, remote edits | Only what flows through those two paths | Covered by the same pass |
+| Partly covered decorations | Only re-attached decorations fully inside the removed text | Re-anchors ends that land on moved text through the matcher, including partial overlaps |
+| `onMoved` | Per operation, including intermediate states | Once per decoration per transaction, with the final range |
+| Engine changes | None beyond the two apply functions | An internal transaction-end channel (`operation-channel`, `apply`/`withoutNormalizing` brackets). No public API |
+
+### #3208 `feat/steps-package` and #3154 (closed unmerged 2026-09-08)
+
+[#3208](https://github.com/portabletext/editor/pull/3208) didn't fix decorations directly. It proposed a shared `@portabletext/steps` package: an interpreter from Sanity patches to eight semantic steps (including `move.text` and `move.node`), plus `mapPoint` and inward-affinity `mapRange`. The idea was one position-mapping implementation shared by the caret, comment anchors and server-side re-anchoring. It came out of [#3154](https://github.com/portabletext/editor/pull/3154), which fixed remote caret recovery only.
+
+This branch is local and narrower: it works on the editor's own operations during a local transaction, not on wire patches, and it needs no new package. An earlier spike that wired #3208's steps into the editor passed 9 of 23 shared split/merge/undo tests, against 23 of 23 for this approach. If maintainers want the steps layer, this pass could later take its moves as input in place of the matcher.
