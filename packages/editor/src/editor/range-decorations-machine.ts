@@ -733,10 +733,12 @@ type InsertedCopy = {
 type TransactionCopies = {
   inserted: Array<InsertedCopy>
   blockIndexByKey: Map<string, number>
+  afterBlockIndexByKey: Map<string, number>
   mergeTargetByBlockKey: Map<string, string>
   removedBlockKeys: Set<string>
   touchedBlockKeys: Set<string>
-  preserveLocalPasteOverDecoratedText: boolean
+  isUpdateValue: boolean
+  isLocalSelectionReplacement: boolean
   bypassAmbiguity: boolean
 }
 
@@ -917,6 +919,9 @@ function buildTransactionCopies(
     blockIndexByKey: new Map(
       transaction.beforeValue.map((block, index) => [block._key, index]),
     ),
+    afterBlockIndexByKey: new Map(
+      transaction.afterValue.map((block, index) => [block._key, index]),
+    ),
     mergeTargetByBlockKey,
     removedBlockKeys: new Set(
       transaction.operations.flatMap(({operation}) =>
@@ -934,7 +939,18 @@ function buildTransactionCopies(
         return blockKey ? [blockKey] : []
       }),
     ),
-    preserveLocalPasteOverDecoratedText: true,
+    isUpdateValue: transaction.operations.some((operationEvent) =>
+      operationEvent.context.some(
+        (frame) => frame.kind === 'remote' && frame.source === 'update-value',
+      ),
+    ),
+    isLocalSelectionReplacement:
+      transaction.origin === 'local' &&
+      transaction.operations.some(
+        (operationEvent) =>
+          operationEvent.beforeSelection !== null &&
+          !isCollapsedRange(operationEvent.beforeSelection),
+      ),
     bypassAmbiguity:
       transaction.origin === 'undo' || transaction.origin === 'redo',
   }
@@ -982,6 +998,7 @@ function pickDestination(
         isKeyedSegment(spanSegment) &&
         spanSegment._key === removedEndpoint.spanKey
       const adjacent = isAdjacentCopy(copy, removedEndpoint, copies)
+      const updateValueRekey = isUpdateValueRekey(copy, removedEndpoint, copies)
       destinations.push({
         operation: copy.operation,
         point: {
@@ -989,7 +1006,11 @@ function pickDestination(
           offset: copy.offset + textOffset + removedEndpoint.offset,
         },
         adjacent,
-        eligible: copy.operation.type === 'insert.text' || sameKey || adjacent,
+        eligible:
+          copy.operation.type === 'insert.text' ||
+          sameKey ||
+          (adjacent && !copies.isLocalSelectionReplacement) ||
+          updateValueRekey,
         sameKey,
       })
       textOffset = copy.text.indexOf(
@@ -1046,7 +1067,7 @@ function isAdjacentCopy(
     return false
   }
   if (!copy.sourceSegment) {
-    return copies.preserveLocalPasteOverDecoratedText
+    return false
   }
   if (!isKeyedSegment(copy.sourceSegment)) {
     return false
@@ -1065,6 +1086,29 @@ function isAdjacentCopy(
   return (
     (copy.position === 'after' && sourceBlockIndex === removedBlockIndex - 1) ||
     (copy.position === 'before' && sourceBlockIndex === removedBlockIndex + 1)
+  )
+}
+
+function isUpdateValueRekey(
+  copy: InsertedCopy,
+  removedEndpoint: RemovedEndpoint,
+  copies: TransactionCopies,
+): boolean {
+  if (
+    !copies.isUpdateValue ||
+    copy.operation.type !== 'insert' ||
+    copy.sourceSegment ||
+    copy.text !== removedEndpoint.text
+  ) {
+    return false
+  }
+  const destinationBlockKey = getBlockKey(copy.path)
+  if (!destinationBlockKey) {
+    return false
+  }
+  return (
+    copies.blockIndexByKey.get(removedEndpoint.blockKey) ===
+    copies.afterBlockIndexByKey.get(destinationBlockKey)
   )
 }
 

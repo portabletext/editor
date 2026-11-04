@@ -1691,60 +1691,62 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
     })
   })
 
-  test('Scenario: local paste-shaped replacement currently revives the decoration on the pasted block', async () => {
-    const harness = await createAcceptanceDecorationHarness({
-      initialValue: [acceptanceBlock('b0', 's0', 'foo')],
-      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 3),
-    })
-    harness.editor.send({
-      type: 'patches',
-      patches: [
-        {
-          ...diffMatchPatch('foo', '', [
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ]),
-          origin: 'remote' as const,
-        },
-        {
-          type: 'insert',
-          path: [{_key: 'b0'}],
-          position: 'before',
-          items: [acceptanceBlock('pasted-block', 'pasted-span', 'foo')],
-          origin: 'remote',
-        },
-        {type: 'unset', path: [{_key: 'b0'}], origin: 'remote'},
+  test.each([
+    {
+      name: 'one block',
+      blocks: [acceptanceBlock('pasted-b0', 'pasted-s0', 'foo')],
+    },
+    {
+      name: 'two blocks',
+      blocks: [
+        acceptanceBlock('pasted-b0', 'pasted-s0', 'foo'),
+        acceptanceBlock('pasted-b1', 'pasted-s1', 'bar'),
       ],
-      snapshot: undefined,
-    })
+    },
+  ])(
+    'Scenario: local paste of $name over decorated text removes the decoration',
+    async ({blocks}) => {
+      const harness = await createAcceptanceDecorationHarness({
+        initialValue: [
+          acceptanceBlock('b0', 's0', 'hello'),
+          acceptanceBlock('b1', 's1', 'foo'),
+          acceptanceBlock('b2', 's2', 'bye'),
+        ],
+        decoration: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 3),
+      })
+      harness.editor.send({
+        type: 'select',
+        at: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 3),
+      })
+      harness.editor.send({
+        type: 'insert.blocks',
+        blocks,
+        placement: 'auto',
+      })
 
-    await vi.waitFor(() => {
-      expect(harness.getText()).toEqual(['foo'])
-      expect(harness.getSelection()).toEqual(
-        acceptanceSelection(
-          'pasted-block',
-          'pasted-span',
-          0,
-          'pasted-block',
-          'pasted-span',
-          3,
-        ),
-      )
-      expect(harness.movedSelections).toEqual([
-        acceptanceSelection(
-          'pasted-block',
-          'pasted-span',
-          0,
-          'pasted-block',
-          'pasted-span',
-          3,
-        ),
-      ])
-      expect(getDecoratedText()).toEqual(['foo'])
-    })
-  })
+      await vi.waitFor(() => {
+        expect(harness.getSelection()).toEqual(undefined)
+        expect(harness.movedSelections).toEqual([null])
+        expect(getDecoratedText()).toEqual([])
+      })
+    },
+  )
+
+  test.each(['one', 'one\ntwo'])(
+    'Scenario: plain-text paste of %s at the start of decorated text preserves the original words',
+    async (text) => {
+      const harness = await createAcceptanceDecorationHarness({
+        initialValue: [acceptanceBlock('b0', 's0', 'hello foo bye')],
+        decoration: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 9),
+      })
+
+      pasteAcceptanceText(harness.editor, 'b0', 's0', 6, text)
+
+      await vi.waitFor(() => {
+        expect(getDecoratedText()).toEqual(['foo'])
+      })
+    },
+  )
 
   test('Scenario: typing reports one registered decoration mapping per keystroke', async () => {
     const harness = await createRegisteredDecorationHarness({
