@@ -127,8 +127,12 @@ export function createRangeReanchor(
       return undefined
     }
 
+    const collapsedInput =
+      anchor.blockKey === focus.blockKey && anchor.offset === focus.offset
     let shiftedAnchor = shiftPoint(anchor, 'anchor', matchByKey, editsByKey)
-    let shiftedFocus = shiftPoint(focus, 'focus', matchByKey, editsByKey)
+    let shiftedFocus = collapsedInput
+      ? shiftedAnchor
+      : shiftPoint(focus, 'focus', matchByKey, editsByKey)
 
     if (shiftedAnchor.invalidated && !shiftedFocus.invalidated) {
       shiftedAnchor =
@@ -164,7 +168,7 @@ export function createRangeReanchor(
     const collapsed =
       shiftedAnchor.point.blockKey === shiftedFocus.point.blockKey &&
       shiftedAnchor.point.offset === shiftedFocus.point.offset &&
-      (anchor.blockKey !== focus.blockKey || anchor.offset !== focus.offset)
+      !collapsedInput
     if (collapsed) {
       return null
     }
@@ -195,6 +199,37 @@ export function getRangeDirection(
     return undefined
   }
   return compareAbsolutePoints(blocks, focus, anchor)
+}
+
+/**
+ * The text `range` covers in `blocks`, with block boundaries joined
+ * without a separator, or `undefined` when an endpoint does not resolve.
+ */
+export function getRangeText(
+  blocks: Array<PortableTextBlock>,
+  range: Range,
+  schema?: Schema,
+): string | undefined {
+  const anchor = pointToAbsolute(blocks, range.anchor, schema)
+  const focus = pointToAbsolute(blocks, range.focus, schema)
+  if (!anchor || !focus) {
+    return undefined
+  }
+  const [start, end] =
+    compareAbsolutePoints(blocks, focus, anchor) < 0
+      ? [focus, anchor]
+      : [anchor, focus]
+  const startIndex = blocks.findIndex((block) => block._key === start.blockKey)
+  const endIndex = blocks.findIndex((block) => block._key === end.blockKey)
+  let text = ''
+  for (let index = startIndex; index <= endIndex; index++) {
+    const blockText = extractBlockText(blocks[index]!, schema)
+    text += blockText.slice(
+      index === startIndex ? start.offset : 0,
+      index === endIndex ? end.offset : blockText.length,
+    )
+  }
+  return text
 }
 
 function selectTouchedBlocks(

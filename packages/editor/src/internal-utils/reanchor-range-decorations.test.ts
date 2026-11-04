@@ -193,6 +193,16 @@ describe(reanchorRange.name, () => {
     })
   })
 
+  test('keeps a collapsed point collapsed at an insertion boundary', () => {
+    expect(
+      reanchorRange(
+        [block('b1', 's1', 'foo')],
+        [block('b1', 's1', 'foo bar')],
+        range('b1', 's1', 3, 'b1', 's1', 3),
+      ),
+    ).toEqual(range('b1', 's1', 7, 'b1', 's1', 7))
+  })
+
   test('treats a rekeyed block as removed and added', () => {
     expect(
       matchBlocks([block('b1', 's1', 'foo')], [block('b2', 's2', 'foo')]),

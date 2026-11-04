@@ -27,6 +27,7 @@ import {isDeepEqual} from '../internal-utils/equality'
 import {
   createRangeReanchor,
   getRangeDirection,
+  getRangeText,
 } from '../internal-utils/reanchor-range-decorations'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
@@ -128,6 +129,12 @@ type RangeDecorationSource = {
       origin: 'local' | 'remote'
     }
   >
+  /**
+   * Decorations (prop identities and registered ids) that collapsed during
+   * the current transaction. Transaction correction only revives them onto
+   * the exact text they covered before it.
+   */
+  collapsedInTransaction: Set<object | string>
   initialized: boolean
   /**
    * Only meaningful for a `registered` source; fixed at registration.
@@ -396,6 +403,7 @@ function movePropDecoratedRanges(
   snapshotContext: PortableTextEditorEngine['snapshot']['context'],
   relocateUnset: boolean,
   deadPropSelections: RangeDecorationSource['deadPropSelections'],
+  collapsedInTransaction: RangeDecorationSource['collapsedInTransaction'],
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
 
@@ -423,6 +431,7 @@ function movePropDecoratedRanges(
           rangeDecoration,
           origin,
         })
+        collapsedInTransaction.add(decoratedRange.propIdentity)
       }
       continue
     }
@@ -433,6 +442,21 @@ function movePropDecoratedRanges(
       snapshotContext,
       {relocateUnset},
     )
+
+    if (
+      newRange &&
+      isCollapsedRange(newRange) &&
+      !isCollapsedRange(currentSelection)
+    ) {
+      if (decoratedRange.propIdentity) {
+        deadPropSelections.set(decoratedRange.propIdentity, {
+          rangeDecoration,
+          origin,
+        })
+        collapsedInTransaction.add(decoratedRange.propIdentity)
+      }
+      continue
+    }
 
     if (newRange && newRange !== currentSelection) {
       rangeDecoration.onMoved?.({
@@ -520,6 +544,7 @@ function moveRegisteredDecoratedRanges(
   editorEngine: PortableTextEditorEngine,
   deadSelections: Map<string, EditorSelection>,
   relocateUnset: boolean,
+  collapsedInTransaction: RangeDecorationSource['collapsedInTransaction'],
 ): {
   decoratedRanges: Array<DecoratedRange>
   mappings: Array<DecorationMapping>
@@ -559,6 +584,9 @@ function moveRegisteredDecoratedRanges(
         origin,
       })
       deadSelections.set(liveRangeDecoration.id, currentRange)
+      if (killedByCollapse) {
+        collapsedInTransaction.add(liveRangeDecoration.id)
+      }
       continue
     }
 
@@ -690,6 +718,8 @@ function correctSourceRanges(
   touchedBlockKeys: Set<string>,
   origin: 'local' | 'remote',
   sameBlockCorrectionKeys: Set<string>,
+  transaction: OperationTransactionEvent,
+  schema: EditorSchema,
 ): Array<DecoratedRange> {
   const corrected = [...source.decoratedRanges]
 
@@ -711,7 +741,22 @@ function correctSourceRanges(
     }
 
     const reanchoredRange = reanchor(beforeRange)
-    if (!reanchoredRange) {
+    if (
+      !reanchoredRange ||
+      (isCollapsedRange(beforeRange) && !isCollapsedRange(reanchoredRange))
+    ) {
+      continue
+    }
+    if (
+      source.collapsedInTransaction.has(
+        getDecorationIdentity(beforeDecoratedRange),
+      ) &&
+      !coversSameText(transaction, beforeRange, reanchoredRange, schema)
+    ) {
+      // Operation mapping saw all of the decoration's text removed. Only a
+      // move of that same text (a split or merge rewrites blocks through
+      // removals) may bring it back; anything else would put it on text
+      // it never covered.
       continue
     }
     const currentIndex = findCurrentDecorationIndex(
@@ -785,6 +830,51 @@ function correctSourceRanges(
   return corrected
 }
 
+/**
+ * Kills prop decorations that were not collapsed before the transaction
+ * but are now: either collapsed, or zero-width across a span boundary,
+ * which the last operation can leave behind without a later operation
+ * noticing.
+ */
+function killCollapsedPropRanges(
+  source: RangeDecorationSource,
+  beforeRanges: Array<DecoratedRange>,
+  transaction: OperationTransactionEvent,
+  schema: EditorSchema,
+  origin: 'local' | 'remote',
+) {
+  if (source.kind !== 'prop') {
+    return
+  }
+  source.decoratedRanges = source.decoratedRanges.filter((decoratedRange) => {
+    const beforeDecoratedRange = beforeRanges.find(
+      (candidate) => candidate.propIdentity === decoratedRange.propIdentity,
+    )
+    if (!beforeDecoratedRange || !decoratedRange.propIdentity) {
+      return true
+    }
+    const beforeRange = getDecoratedRange(beforeDecoratedRange)
+    if (
+      isCollapsedRange(beforeRange) ||
+      getRangeDirection(transaction.beforeValue, beforeRange, schema) === 0
+    ) {
+      return true
+    }
+    const range = getDecoratedRange(decoratedRange)
+    if (
+      !isCollapsedRange(range) &&
+      getRangeDirection(transaction.afterValue, range, schema) !== 0
+    ) {
+      return true
+    }
+    source.deadPropSelections.set(decoratedRange.propIdentity, {
+      rangeDecoration: decoratedRange.rangeDecoration as RangeDecoration,
+      origin,
+    })
+    return false
+  })
+}
+
 function notifyDeadPropSelections(source: RangeDecorationSource) {
   for (const {rangeDecoration, origin} of source.deadPropSelections.values()) {
     rangeDecoration.onMoved?.({
@@ -794,6 +884,27 @@ function notifyDeadPropSelections(source: RangeDecorationSource) {
     })
   }
   source.deadPropSelections.clear()
+}
+
+function coversSameText(
+  transaction: OperationTransactionEvent,
+  beforeRange: Range,
+  afterRange: Range,
+  schema: EditorSchema,
+): boolean {
+  const beforeText = getRangeText(transaction.beforeValue, beforeRange, schema)
+  return (
+    beforeText !== undefined &&
+    beforeText === getRangeText(transaction.afterValue, afterRange, schema)
+  )
+}
+
+function getDecorationIdentity(
+  decoratedRange: DecoratedRange,
+): object | string {
+  return decoratedRange.kind === 'registered'
+    ? (decoratedRange.rangeDecoration as Decoration).id
+    : (decoratedRange.propIdentity ?? decoratedRange.rangeDecoration)
 }
 
 function getDecoratedRange(decoratedRange: DecoratedRange): Range {
@@ -957,6 +1068,7 @@ export const rangeDecorationsMachine = setup({
         decoratedRanges: [],
         deadSelections: new Map(),
         deadPropSelections: new Map(),
+        collapsedInTransaction: new Set(),
         initialized: false,
         on: event.on,
       })
@@ -1012,6 +1124,7 @@ export const rangeDecorationsMachine = setup({
           ),
           deadSelections: new Map(),
           deadPropSelections: new Map(),
+          collapsedInTransaction: new Set(),
           initialized: true,
           on: event.on,
         }
@@ -1100,6 +1213,7 @@ export const rangeDecorationsMachine = setup({
             context.editorEngine,
             source.deadSelections,
             event.relocateUnset ?? false,
+            source.collapsedInTransaction,
           )
           source.decoratedRanges = result.decoratedRanges
           if (source.on && result.mappings.length > 0) {
@@ -1116,6 +1230,7 @@ export const rangeDecorationsMachine = setup({
             context.editorEngine.snapshot.context,
             event.relocateUnset ?? false,
             source.deadPropSelections,
+            source.collapsedInTransaction,
           )
         }
       }
@@ -1136,11 +1251,21 @@ export const rangeDecorationsMachine = setup({
       }
       const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
         getStructuralTouchedBlockKeys(event.transaction)
+      const origin = event.transaction.origin === 'remote' ? 'remote' : 'local'
       if (touchedBlockKeys.size === 0) {
         for (const source of context.sources) {
+          killCollapsedPropRanges(
+            source,
+            context.transactionSources.get(source.sourceKey) ?? [],
+            event.transaction,
+            context.schema,
+            origin,
+          )
           notifyDeadPropSelections(source)
+          source.collapsedInTransaction.clear()
         }
         context.transactionSources.clear()
+        context.editorEngine.decoratedRanges = flattenSources(context.sources)
         return
       }
       const matchedBlockKeys = getTouchedBlockKeysWithNeighbors(
@@ -1157,6 +1282,7 @@ export const rangeDecorationsMachine = setup({
       for (const source of context.sources) {
         const beforeRanges = context.transactionSources.get(source.sourceKey)
         if (!beforeRanges) {
+          source.collapsedInTransaction.clear()
           continue
         }
         source.decoratedRanges = correctSourceRanges(
@@ -1164,10 +1290,20 @@ export const rangeDecorationsMachine = setup({
           beforeRanges,
           reanchor,
           touchedBlockKeys,
-          event.transaction.origin === 'remote' ? 'remote' : 'local',
+          origin,
           sameBlockCorrectionKeys,
+          event.transaction,
+          context.schema,
+        )
+        killCollapsedPropRanges(
+          source,
+          beforeRanges,
+          event.transaction,
+          context.schema,
+          origin,
         )
         notifyDeadPropSelections(source)
+        source.collapsedInTransaction.clear()
       }
       context.transactionSources.clear()
       context.editorEngine.decoratedRanges = flattenSources(context.sources)

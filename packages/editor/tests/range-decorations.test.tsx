@@ -1141,10 +1141,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       name: 'single block',
       words: [],
       highlight: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
-      movedWhileTyping: [
-        acceptanceSelection('b0', 's0', 16, 'b0', 's0', 16),
-        acceptanceSelection('b0', 's0', 17, 'b0', 's0', 17),
-      ],
+      movedWhileTyping: [null],
     },
   ])(
     'Scenario: typing over a whole controlled prop decoration ($name) does not revive it',
@@ -1244,6 +1241,117 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       })
     },
   )
+
+  test('Scenario: replacing a split controlled prop decoration from one character before it never grows it back', async () => {
+    const editorRef: RefObject<Editor | null> = createRef()
+    const movedSelections: Array<
+      RangeDecorationOnMovedDetails['newSelection']
+    > = []
+
+    function App() {
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([
+        {
+          component: ({children}) => (
+            <span data-testid="controlled-decoration">{children}</span>
+          ),
+          payload: {id: 'controlled'},
+          selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 41),
+          onMoved: (details) => {
+            movedSelections.push(details.newSelection)
+            setRangeDecorations((decorations) =>
+              decorations.map((decoration) =>
+                decoration.payload?.['id'] === 'controlled'
+                  ? {...decoration, selection: details.newSelection}
+                  : decoration,
+              ),
+            )
+          },
+        },
+      ])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator: createTestKeyGenerator(),
+            schemaDefinition: defineSchema({}),
+            initialValue: [
+              acceptanceBlock(
+                'b0',
+                's0',
+                'Paste into this highlighted middle phrase today.',
+              ),
+              acceptanceBlock('b1', 's1', 'Selection begins in this block.'),
+            ],
+          }}
+        >
+          <NodePlugin
+            nodes={[
+              defineTextBlock({
+                type: 'block',
+                render: (props) => (
+                  <div {...props.attributes}>{props.children}</div>
+                ),
+              }),
+            ]}
+          />
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+          <EditorRefPlugin ref={editorRef} />
+        </EditorProvider>
+      )
+    }
+
+    await render(<App />)
+    const locator = page.getByRole('textbox')
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editorRef.current!.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 21, 'b0', 's0', 21),
+    })
+
+    for (const word of ['asd', 'as', 'd']) {
+      await userEvent.keyboard('{Enter}')
+      await userEvent.type(locator, word)
+    }
+
+    await vi.waitFor(() => {
+      expect(movedSelections.at(-1)).toEqual(
+        acceptanceSelection('b0', 's0', 16, 'k4', 's0', 21),
+      )
+    })
+
+    editorRef.current!.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 15, 'k4', 's0', 21),
+    })
+    const movedSelectionsBeforeReplacing = movedSelections.length
+    await userEvent.keyboard('l')
+    editorRef.current!.send({type: 'insert.text', text: 'jlkaj sdck.'})
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'jlkaj sdck.')
+    editorRef.current!.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editorRef.current!.getSnapshot().context.selection!,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+        'B: Paste into thisljlkaj sdck.jlkaj sdck.| today.\nB: Selection begins in this block.',
+      )
+      expect(movedSelections.slice(movedSelectionsBeforeReplacing)).toEqual([
+        acceptanceSelection('b0', 's0', 15, 'k4', 's0', 21),
+        acceptanceSelection('b0', 's0', 15, 'k4', 's0', 0),
+        acceptanceSelection('b0', 's0', 15, 'k4', 'k5', 0),
+        acceptanceSelection('b0', 's0', 15, 'b0', 'k5', 0),
+        null,
+      ])
+    })
+  })
 
   test.each([
     {key: '{Backspace}', direction: 'backward' as const},
