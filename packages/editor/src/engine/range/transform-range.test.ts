@@ -59,37 +59,4 @@ describe(transformRange.name, () => {
     }
     expect(transformRange(range, op, root)).toBe(range)
   })
-
-  test('moves an endpoint to a uniquely duplicated child before its block is unset', () => {
-    expect(
-      transformRange(
-        {
-          anchor: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 1},
-          focus: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 3},
-        },
-        {type: 'unset', path: [{_key: 'b2'}]},
-        {
-          value: [
-            {
-              _type: 'block',
-              _key: 'b1',
-              children: [
-                {_type: 'span', _key: 's1', text: 'foo'},
-                {_type: 'span', _key: 's2', text: 'bar'},
-              ],
-            },
-            {
-              _type: 'block',
-              _key: 'b2',
-              children: [{_type: 'span', _key: 's2', text: 'bar'}],
-            },
-          ],
-        },
-        {relocateUnset: true},
-      ),
-    ).toEqual({
-      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 1},
-      focus: {path: [{_key: 'b1'}, 'children', {_key: 's2'}], offset: 3},
-    })
-  })
 })

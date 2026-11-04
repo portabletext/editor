@@ -19,16 +19,19 @@ import {
 } from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
+import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
 import {isAfterPoint} from '../engine/point/is-after-point'
 import {isBeforePoint} from '../engine/point/is-before-point'
+import {transformPoint} from '../engine/point/transform-point'
 import {cloneRange} from '../engine/range/clone-range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import {isForwardRange} from '../engine/range/is-forward-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
+import {resolveRangeAffinities} from '../engine/range/resolve-range-affinities'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
-import {createRangeReanchor} from '../internal-utils/reanchor-range-decorations'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {
@@ -51,7 +54,6 @@ const engineOperationCallback: CallbackLogicFunction<
       type: 'engine operation'
       operation: EngineOperation
       origin: 'local' | 'remote'
-      relocateUnset: boolean
     },
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
@@ -66,7 +68,6 @@ const engineOperationCallback: CallbackLogicFunction<
           type: 'engine operation',
           operation: event.operation,
           origin: hasRemoteFrame(event.context) ? 'remote' : 'local',
-          relocateUnset: event.origin !== 'undo' && event.origin !== 'redo',
         })
       }
     },
@@ -132,8 +133,8 @@ type RangeDecorationSource = {
   /**
    * Decorations (prop identities and registered ids) that collapsed during
    * the current transaction, keyed to the `remove.text` that collapsed them.
-   * Transaction correction only revives one whose removed text a later
-   * `insert` in the same transaction carried back in the same span.
+   * Transaction correction only revives one when the operation sequence
+   * records that removal's text being inserted again.
    */
   collapsedInTransaction: Map<object | string, CollapseProvenance>
   /**
@@ -431,7 +432,6 @@ function movePropDecoratedRanges(
   operation: EngineOperation,
   origin: 'local' | 'remote',
   snapshotContext: PortableTextEditorEngine['snapshot']['context'],
-  relocateUnset: boolean,
   deadPropSelections: RangeDecorationSource['deadPropSelections'],
   collapsedInTransaction: RangeDecorationSource['collapsedInTransaction'],
   movedProps: RangeDecorationSource['movedProps'],
@@ -466,7 +466,6 @@ function movePropDecoratedRanges(
       currentSelection,
       operation,
       snapshotContext,
-      {relocateUnset},
     )
 
     if (
@@ -576,7 +575,6 @@ function moveRegisteredDecoratedRanges(
   operation: EngineOperation,
   editorEngine: PortableTextEditorEngine,
   deadSelections: Map<string, EditorSelection>,
-  relocateUnset: boolean,
   collapsedInTransaction: RangeDecorationSource['collapsedInTransaction'],
   movedRegistered: RangeDecorationSource['movedRegistered'],
 ): Array<DecoratedRange> {
@@ -590,7 +588,6 @@ function moveRegisteredDecoratedRanges(
       currentRange,
       operation,
       editorEngine.snapshot.context,
-      {relocateUnset},
     )
 
     const killedByCollapse =
@@ -712,98 +709,423 @@ function flattenSources(
     .flatMap((source) => source.decoratedRanges)
 }
 
-function getStructuralTouchedBlockKeys(
-  transaction: OperationTransactionEvent,
-): {blockKeys: Set<string>; sameBlockCorrectionKeys: Set<string>} {
-  const keys = new Set<string>()
-  const textRemovalBlockKeys = new Set<string>()
-  const childStructureBlockKeys = new Set<string>()
-  let hasTopLevelStructure = false
-  for (const {operation} of transaction.operations) {
-    if (operation.type === 'remove.text') {
-      const blockSegment = operation.path[0]
-      if (!isKeyedSegment(blockSegment)) {
-        continue
-      }
-      textRemovalBlockKeys.add(blockSegment._key)
-    }
-    if (
-      (operation.type === 'insert' || operation.type === 'unset') &&
-      operation.path[1] === 'children'
-    ) {
-      const blockSegment = operation.path[0]
-      if (isKeyedSegment(blockSegment)) {
-        childStructureBlockKeys.add(blockSegment._key)
-      }
-    }
-    if (
-      (operation.type !== 'insert' && operation.type !== 'unset') ||
-      operation.path.length !== 1
-    ) {
-      continue
-    }
-    const pathSegment = operation.path[0]
-    hasTopLevelStructure = true
-    if (isKeyedSegment(pathSegment)) {
-      keys.add(pathSegment._key)
-    }
-    if (operation.type === 'insert' && '_key' in operation.node) {
-      keys.add(operation.node._key)
-    }
-    if (
-      operation.type === 'unset' &&
-      operation.inverse?.type === 'insert' &&
-      '_key' in operation.inverse.node
-    ) {
-      keys.add(operation.inverse.node._key)
-    }
-  }
-  const sameBlockCorrectionKeys = new Set<string>()
-  if (!hasTopLevelStructure) {
-    for (const key of textRemovalBlockKeys) {
-      if (childStructureBlockKeys.has(key)) {
-        keys.add(key)
-        sameBlockCorrectionKeys.add(key)
-      }
-    }
-  }
-  return {blockKeys: keys, sameBlockCorrectionKeys}
+type RemovedEndpoint = {
+  path: Point['path']
+  spanKey: string
+  blockKey: string
+  text: string
+  offset: number
+  allowDifferentKey: boolean
 }
 
-function getTouchedBlockKeysWithNeighbors(
+type TextSpanNode = {_key: string; _type: string; text: string}
+
+function mapRangeThroughRecordedMoves(
+  range: Range,
   transaction: OperationTransactionEvent,
-  touchedBlockKeys: Set<string>,
-): Set<string> {
-  const keys = new Set(touchedBlockKeys)
-  for (const blocks of [transaction.beforeValue, transaction.afterValue]) {
-    const indexByKey = new Map(
-      blocks.map((block, index) => [block._key, index] as const),
-    )
-    for (const key of touchedBlockKeys) {
-      const index = indexByKey.get(key)
-      if (index === undefined) {
-        continue
-      }
-      const previousBlock = blocks[index - 1]
-      const nextBlock = blocks[index + 1]
-      if (previousBlock) {
-        keys.add(previousBlock._key)
-      }
-      if (nextBlock) {
-        keys.add(nextBlock._key)
+): Range | null | undefined {
+  const [anchorAffinity, focusAffinity] = resolveRangeAffinities(
+    range,
+    {value: transaction.beforeValue},
+    'inward',
+  )
+  const anchor = mapPointThroughRecordedMoves(
+    range.anchor,
+    anchorAffinity,
+    transaction,
+  )
+  const focus = mapPointThroughRecordedMoves(
+    range.focus,
+    focusAffinity,
+    transaction,
+  )
+  if (!anchor.moved && !focus.moved) {
+    return undefined
+  }
+  if (!anchor.point || !focus.point) {
+    return null
+  }
+  return {anchor: anchor.point, focus: focus.point}
+}
+
+function mapPointThroughRecordedMoves(
+  initialPoint: Point,
+  affinity: 'forward' | 'backward' | null,
+  transaction: OperationTransactionEvent,
+): {point: Point | null; moved: boolean} {
+  let point: Point | null = initialPoint
+  let removedEndpoint: RemovedEndpoint | undefined
+  let moved = false
+  const insertedText: Array<Extract<EngineOperation, {type: 'insert.text'}>> =
+    []
+  const insertedNodes: Array<Extract<EngineOperation, {type: 'insert'}>> = []
+
+  for (const operationEvent of transaction.operations) {
+    const operation = operationEvent.operation
+    if (operation.type === 'insert.text') {
+      insertedText.push(operation)
+      if (removedEndpoint) {
+        const textOffset = operation.text.indexOf(removedEndpoint.text)
+        if (textOffset !== -1) {
+          point = {
+            path: operation.path,
+            offset: operation.offset + textOffset + removedEndpoint.offset,
+          }
+          removedEndpoint = undefined
+          moved = true
+          continue
+        }
       }
     }
+    if (operation.type === 'insert') {
+      insertedNodes.push(operation)
+    }
+
+    if (point && operation.type === 'remove.text') {
+      removedEndpoint = getRemovedEndpoint(point, operation)
+      if (removedEndpoint) {
+        const removal = removedEndpoint
+        const insertedPoint = insertedNodes
+          .map((insertedNode) => findInsertedPoint(insertedNode, removal))
+          .filter(
+            (candidate) =>
+              candidate !== undefined &&
+              !isDeepEqual(candidate.path, point?.path),
+          )
+          .at(-1)
+        if (insertedPoint) {
+          point = insertedPoint
+          removedEndpoint = undefined
+          moved = true
+          continue
+        }
+      }
+    }
+
+    if (removedEndpoint && operation.type === 'insert') {
+      const insertedPoint = findInsertedPoint(operation, removedEndpoint)
+      if (insertedPoint) {
+        point = insertedPoint
+        removedEndpoint = undefined
+        moved = true
+        continue
+      }
+    }
+
+    if (point && operation.type === 'unset') {
+      const relocatedPoint = relocateUnsetPointFromOperations(
+        point,
+        operationEvent.beforeValue,
+        operation,
+        insertedText,
+      )
+      if (relocatedPoint) {
+        point = relocatedPoint
+        moved = true
+        continue
+      }
+      removedEndpoint = getUnsetEndpoint(
+        point,
+        operationEvent.beforeValue,
+        operation,
+      )
+    }
+
+    point = transformPoint(point, operation, {affinity})
   }
-  return keys
+
+  return {
+    point:
+      point && moved
+        ? canonicalizeForwardStart(point, affinity, transaction.afterValue)
+        : point,
+    moved,
+  }
+}
+
+function getRemovedEndpoint(
+  point: Point,
+  operation: Extract<EngineOperation, {type: 'remove.text'}>,
+): RemovedEndpoint | undefined {
+  if (!isDeepEqual(point.path, operation.path)) {
+    return undefined
+  }
+  const removalEnd = operation.offset + operation.text.length
+  const followsRemoval =
+    (point.offset > operation.offset && point.offset < removalEnd) ||
+    point.offset === operation.offset ||
+    point.offset === removalEnd
+  const blockSegment = point.path[0]
+  const spanSegment = point.path.at(-1)
+  if (
+    !followsRemoval ||
+    !isKeyedSegment(blockSegment) ||
+    !isKeyedSegment(spanSegment)
+  ) {
+    return undefined
+  }
+  return {
+    path: operation.path,
+    blockKey: blockSegment._key,
+    spanKey: spanSegment._key,
+    text: operation.text,
+    offset: point.offset - operation.offset,
+    allowDifferentKey: false,
+  }
+}
+
+function findInsertedPoint(
+  operation: Extract<EngineOperation, {type: 'insert'}>,
+  removedEndpoint: RemovedEndpoint,
+): Point | undefined {
+  const spans = getTextSpans(operation.node)
+  const sourceSegment = operation.path.at(-1)
+  const isAdjacentTransfer =
+    operation.position === 'after' &&
+    isKeyedSegment(sourceSegment) &&
+    (sourceSegment._key === removedEndpoint.spanKey ||
+      sourceSegment._key === removedEndpoint.blockKey)
+  const candidates = spans.flatMap((span) => {
+    const textOffset = span.text.indexOf(removedEndpoint.text)
+    if (
+      textOffset === -1 ||
+      (span._key !== removedEndpoint.spanKey &&
+        (span.text !== removedEndpoint.text ||
+          (!removedEndpoint.allowDifferentKey && !isAdjacentTransfer)))
+    ) {
+      return []
+    }
+    const blockKey = hasTextBlockChildren(operation.node)
+      ? operation.node._key
+      : getBlockKey(operation.path)
+    return blockKey
+      ? [
+          {
+            path: [{_key: blockKey}, 'children' as const, {_key: span._key}],
+            offset: textOffset + removedEndpoint.offset,
+          },
+        ]
+      : []
+  })
+  return candidates.length === 1 ? candidates[0] : undefined
+}
+
+function canonicalizeForwardStart(
+  point: Point,
+  affinity: 'forward' | 'backward' | null,
+  value: Array<PortableTextBlock>,
+): Point {
+  const blockSegment = point.path[0]
+  const spanSegment = point.path[2]
+  if (
+    point.offset !== 0 ||
+    affinity !== 'forward' ||
+    !isKeyedSegment(blockSegment) ||
+    !isKeyedSegment(spanSegment)
+  ) {
+    return point
+  }
+  const block = value.find((candidate) => candidate._key === blockSegment._key)
+  if (!hasTextBlockChildren(block)) {
+    return point
+  }
+  const spanIndex = block.children.findIndex(
+    (child) => child._key === spanSegment._key,
+  )
+  const precedingSpan = block.children[spanIndex - 1]
+  return isPortableTextSpan(precedingSpan)
+    ? {
+        path: [
+          {_key: blockSegment._key},
+          'children',
+          {_key: precedingSpan._key},
+        ],
+        offset: precedingSpan.text.length,
+      }
+    : point
+}
+
+function relocateUnsetPointFromOperations(
+  point: Point,
+  beforeValue: Array<PortableTextBlock>,
+  operation: Extract<EngineOperation, {type: 'unset'}>,
+  insertedText: Array<Extract<EngineOperation, {type: 'insert.text'}>>,
+): Point | undefined {
+  const pointBlockSegment = point.path[0]
+  const pointSpanSegment = point.path[2]
+  const unsetSegment = operation.path.at(-1)
+  if (
+    !isKeyedSegment(pointBlockSegment) ||
+    !isKeyedSegment(pointSpanSegment) ||
+    !isKeyedSegment(unsetSegment)
+  ) {
+    return undefined
+  }
+
+  if (
+    operation.path.length === 1 &&
+    unsetSegment._key === pointBlockSegment._key
+  ) {
+    const removedBlock = beforeValue.find(
+      (candidate) => candidate._key === pointBlockSegment._key,
+    )
+    const removedSpan = findTextSpan(removedBlock, pointSpanSegment._key)
+    const candidates = beforeValue.flatMap((block) => {
+      if (
+        block._key === pointBlockSegment._key ||
+        !hasTextBlockChildren(block)
+      ) {
+        return []
+      }
+      return block.children.some(
+        (child) =>
+          isPortableTextSpan(child) &&
+          child._key === pointSpanSegment._key &&
+          child.text === removedSpan?.text,
+      )
+        ? [block]
+        : []
+    })
+    if (candidates.length === 1) {
+      const candidate = candidates[0]!
+      return {
+        path: [
+          {_key: candidate._key},
+          'children',
+          {_key: pointSpanSegment._key},
+        ],
+        offset: point.offset,
+      }
+    }
+    const copy = removedSpan
+      ? insertedText
+          .filter(
+            (candidate) =>
+              candidate.text === removedSpan.text &&
+              !isDeepEqual(candidate.path, point.path),
+          )
+          .at(-1)
+      : undefined
+    return copy
+      ? {path: copy.path, offset: copy.offset + point.offset}
+      : undefined
+  }
+
+  if (
+    operation.path.length !== 3 ||
+    unsetSegment._key !== pointSpanSegment._key
+  ) {
+    return undefined
+  }
+  const block = beforeValue.find(
+    (candidate) => candidate._key === pointBlockSegment._key,
+  )
+  const span = findTextSpan(block, pointSpanSegment._key)
+  if (!span) {
+    return undefined
+  }
+  const copies = insertedText.filter(
+    (candidate) =>
+      candidate.text === span.text && !isDeepEqual(candidate.path, point.path),
+  )
+  const copy = copies.at(-1)
+  return copy
+    ? {path: copy.path, offset: copy.offset + point.offset}
+    : undefined
+}
+
+function getUnsetEndpoint(
+  point: Point,
+  beforeValue: Array<PortableTextBlock>,
+  operation: Extract<EngineOperation, {type: 'unset'}>,
+): RemovedEndpoint | undefined {
+  const blockSegment = point.path[0]
+  const spanSegment = point.path[2]
+  const unsetSegment = operation.path.at(-1)
+  if (
+    !isKeyedSegment(blockSegment) ||
+    !isKeyedSegment(spanSegment) ||
+    !isKeyedSegment(unsetSegment) ||
+    (operation.path.length === 1 && unsetSegment._key !== blockSegment._key) ||
+    (operation.path.length === 3 &&
+      (unsetSegment._key !== spanSegment._key ||
+        getBlockKey(operation.path) !== blockSegment._key))
+  ) {
+    return undefined
+  }
+  const block = beforeValue.find(
+    (candidate) => candidate._key === blockSegment._key,
+  )
+  const span = findTextSpan(block, spanSegment._key)
+  return span
+    ? {
+        path: point.path,
+        blockKey: blockSegment._key,
+        spanKey: spanSegment._key,
+        text: span.text,
+        offset: point.offset,
+        allowDifferentKey: operation.path.length === 1,
+      }
+    : undefined
+}
+
+function isPortableTextSpan(node: unknown): node is TextSpanNode {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    '_type' in node &&
+    node._type === 'span' &&
+    'text' in node &&
+    typeof node.text === 'string'
+  )
+}
+
+function getTextSpans(node: Node): Array<TextSpanNode> {
+  if (isPortableTextSpan(node)) {
+    return [node]
+  }
+  if (!hasTextBlockChildren(node)) {
+    return []
+  }
+  const spans: Array<TextSpanNode> = []
+  for (const child of node.children) {
+    if (isPortableTextSpan(child)) {
+      spans.push(child)
+    }
+  }
+  return spans
+}
+
+function findTextSpan(
+  block: PortableTextBlock | undefined,
+  spanKey: string,
+): TextSpanNode | undefined {
+  if (!hasTextBlockChildren(block)) {
+    return undefined
+  }
+  for (const child of block.children) {
+    if (child._key === spanKey && isPortableTextSpan(child)) {
+      return child
+    }
+  }
+  return undefined
+}
+
+function hasTextBlockChildren(
+  node: unknown,
+): node is PortableTextBlock & {children: Array<Node>} {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    'children' in node &&
+    Array.isArray(node.children)
+  )
 }
 
 function correctSourceRanges(
   source: RangeDecorationSource,
   beforeRanges: Array<DecoratedRange>,
-  reanchor: (range: Range) => Range | null | undefined,
-  touchedBlockKeys: Set<string>,
   origin: 'local' | 'remote',
-  sameBlockCorrectionKeys: Set<string>,
   transaction: OperationTransactionEvent,
 ): Array<DecoratedRange> {
   const corrected = [...source.decoratedRanges]
@@ -811,36 +1133,24 @@ function correctSourceRanges(
   for (let index = 0; index < beforeRanges.length; index++) {
     const beforeDecoratedRange = beforeRanges[index]!
     const beforeRange = getDecoratedRange(beforeDecoratedRange)
-    const anchorBlockKey = getBlockKey(beforeRange.anchor.path)
-    const focusBlockKey = getBlockKey(beforeRange.focus.path)
-    const correctSameBlock =
-      (anchorBlockKey !== undefined &&
-        sameBlockCorrectionKeys.has(anchorBlockKey)) ||
-      (focusBlockKey !== undefined &&
-        sameBlockCorrectionKeys.has(focusBlockKey))
-    if (
-      (!anchorBlockKey || !touchedBlockKeys.has(anchorBlockKey)) &&
-      (!focusBlockKey || !touchedBlockKeys.has(focusBlockKey))
-    ) {
-      continue
-    }
-
-    const reanchoredRange = reanchor(beforeRange)
+    const reanchoredRange = mapRangeThroughRecordedMoves(
+      beforeRange,
+      transaction,
+    )
     if (
       !reanchoredRange ||
-      (isCollapsedRange(beforeRange) && !isCollapsedRange(reanchoredRange))
+      (isCollapsedRange(beforeRange) && !isCollapsedRange(reanchoredRange)) ||
+      (!isCollapsedRange(beforeRange) &&
+        !isCollapsedRange(reanchoredRange) &&
+        isForwardRange(beforeRange, {value: transaction.beforeValue}) !==
+          isForwardRange(reanchoredRange, {value: transaction.afterValue}))
     ) {
       continue
     }
     const collapse = source.collapsedInTransaction.get(
       getDecorationIdentity(beforeDecoratedRange),
     )
-    if (collapse && !isReinserted(transaction, collapse)) {
-      // Operation mapping saw all of the decoration's text removed. Only an
-      // insert carrying that removed text, such as a split writing its tail
-      // as `remove.text` before inserting the same span in the new block,
-      // proves the text moved. Text that merely reads the same elsewhere in
-      // the document is different text.
+    if (collapse && !wasRemovedTextReinserted(transaction, collapse)) {
       continue
     }
     const currentIndex = findCurrentDecorationIndex(
@@ -852,12 +1162,7 @@ function correctSourceRanges(
     const currentRange = currentDecoratedRange
       ? getDecoratedRange(currentDecoratedRange)
       : null
-    if (
-      currentRange &&
-      ((!correctSameBlock &&
-        !endpointBlockKeysChanged(beforeRange, reanchoredRange)) ||
-        endpointBlockKeysChanged(beforeRange, currentRange))
-    ) {
+    if (currentRange && endpointBlockKeysChanged(beforeRange, currentRange)) {
       continue
     }
 
@@ -921,39 +1226,22 @@ function correctSourceRanges(
 function correctTransaction(
   context: {
     sources: Array<RangeDecorationSource>
-    schema: EditorSchema
   },
   transaction: OperationTransactionEvent,
   beforeRangesBySource: Map<string, Array<DecoratedRange>>,
 ): boolean {
-  const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
-    getStructuralTouchedBlockKeys(transaction)
   const origin = transaction.origin === 'remote' ? 'remote' : 'local'
   const previousDecoratedRanges = context.sources.map(
     (source) => source.decoratedRanges,
   )
-  const reanchor =
-    touchedBlockKeys.size > 0
-      ? createRangeReanchor(
-          transaction.beforeValue,
-          transaction.afterValue,
-          context.schema,
-          getTouchedBlockKeysWithNeighbors(transaction, touchedBlockKeys),
-        )
-      : undefined
   for (const source of context.sources) {
     const beforeRanges = beforeRangesBySource.get(source.sourceKey) ?? []
-    if (reanchor) {
-      source.decoratedRanges = correctSourceRanges(
-        source,
-        beforeRanges,
-        reanchor,
-        touchedBlockKeys,
-        origin,
-        sameBlockCorrectionKeys,
-        transaction,
-      )
-    }
+    source.decoratedRanges = correctSourceRanges(
+      source,
+      beforeRanges,
+      origin,
+      transaction,
+    )
     killCollapsedPropRanges(source, beforeRanges, transaction, origin)
   }
   return context.sources.some(
@@ -1116,13 +1404,7 @@ function getCollapsingRemoval(
   return operation.type === 'remove.text' ? operation : undefined
 }
 
-/**
- * Whether an `insert` in the same transaction carries the text `collapse`'s
- * `remove.text` removed, in a span with the same key. Undo and redo replay
- * the inverse of an earlier move, which can carry the text back under the
- * key of the span it was originally moved out of.
- */
-function isReinserted(
+function wasRemovedTextReinserted(
   transaction: OperationTransactionEvent,
   collapse: CollapseProvenance,
 ): boolean {
@@ -1130,31 +1412,24 @@ function isReinserted(
   if (!removal || removal.type !== 'remove.text' || removal.text.length === 0) {
     return false
   }
+  const blockSegment = removal.path[0]
   const spanSegment = removal.path.at(-1)
-  const removalEvent = transaction.operations.find(
-    ({operation}) => operation === removal,
-  )
-  if (!isKeyedSegment(spanSegment) || !removalEvent) {
+  if (!isKeyedSegment(blockSegment) || !isKeyedSegment(spanSegment)) {
     return false
   }
-  const anySpanKey =
-    removalEvent.origin === 'undo' || removalEvent.origin === 'redo'
-  return transaction.operations.some(({operation}) => {
-    if (operation.type !== 'insert') {
-      return false
-    }
-    const spans =
-      'children' in operation.node && Array.isArray(operation.node.children)
-        ? operation.node.children
-        : [operation.node]
-    return spans.some(
-      (span) =>
-        (anySpanKey || span._key === spanSegment._key) &&
-        'text' in span &&
-        typeof span.text === 'string' &&
-        span.text.includes(removal.text),
-    )
-  })
+  const removedEndpoint: RemovedEndpoint = {
+    path: removal.path,
+    blockKey: blockSegment._key,
+    spanKey: spanSegment._key,
+    text: removal.text,
+    offset: 0,
+    allowDifferentKey: false,
+  }
+  return transaction.operations.some(
+    ({operation}) =>
+      operation.type === 'insert' &&
+      findInsertedPoint(operation, removedEndpoint) !== undefined,
+  )
 }
 
 function areSameDecoratedRanges(
@@ -1267,7 +1542,6 @@ export const rangeDecorationsMachine = setup({
           type: 'engine operation'
           operation: EngineOperation
           origin: 'local' | 'remote'
-          relocateUnset?: boolean
         }
       | {
           type: 'engine transaction end'
@@ -1482,7 +1756,6 @@ export const rangeDecorationsMachine = setup({
             event.operation,
             context.editorEngine,
             source.deadSelections,
-            event.relocateUnset ?? false,
             source.collapsedInTransaction,
             source.movedRegistered,
           )
@@ -1492,7 +1765,6 @@ export const rangeDecorationsMachine = setup({
             event.operation,
             event.origin,
             context.editorEngine.snapshot.context,
-            event.relocateUnset ?? false,
             source.deadPropSelections,
             source.collapsedInTransaction,
             source.movedProps,
