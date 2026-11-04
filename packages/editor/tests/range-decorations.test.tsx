@@ -716,6 +716,60 @@ describe('RangeDecorations', () => {
     })
   })
 
+  test.each([{order: 'text first' as const}, {order: 'insert first' as const}])(
+    'Scenario: A remote split inside a Range Decoration ($order) calls `onMoved` once with the final selection',
+    async ({order}) => {
+      const onMoved = vi.fn()
+      const rangeDecoration: RangeDecoration = {
+        component: ({children}) => <span>{children}</span>,
+        onMoved,
+        selection: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 17),
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        initialValue: [acceptanceBlock('b0', 's0', 'Hello highlighted words')],
+        editableProps: {rangeDecorations: [rangeDecoration]},
+      })
+      const textPatch = diffMatchPatch(
+        'Hello highlighted words',
+        'Hello highl',
+        [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+      )
+      const insertPatch = {
+        type: 'insert' as const,
+        path: [{_key: 'b0'}],
+        position: 'after' as const,
+        items: [acceptanceBlock('b1', 's1', 'ighted words')],
+        origin: 'remote' as const,
+      }
+
+      editor.send({
+        type: 'patches',
+        patches:
+          order === 'text first'
+            ? [textPatch, insertPatch]
+            : [insertPatch, textPatch],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          acceptanceBlock('b0', 's0', 'Hello highl'),
+          acceptanceBlock('b1', 's1', 'ighted words'),
+        ])
+        expect(onMoved.mock.calls).toEqual([
+          [
+            {
+              newSelection: acceptanceSelection('b0', 's0', 6, 'b1', 's1', 6),
+              rangeDecoration,
+              origin: 'remote',
+            },
+          ],
+        ])
+      })
+    },
+  )
+
   test('Scenario: A repair triggered by a remote patch reports a remote origin', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -1129,23 +1183,15 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       name: 'split across blocks',
       words: ['asd', 'as', 'd'],
       highlight: acceptanceSelection('b0', 's0', 16, 'k4', 's0', 12),
-      movedWhileTyping: [
-        acceptanceSelection('b0', 's0', 16, 'k4', 's0', 12),
-        acceptanceSelection('b0', 's0', 16, 'k4', 's0', 0),
-        acceptanceSelection('b0', 's0', 16, 'k4', 'k5', 0),
-        acceptanceSelection('b0', 's0', 16, 'b0', 'k5', 0),
-        null,
-      ],
     },
     {
       name: 'single block',
       words: [],
       highlight: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
-      movedWhileTyping: [null],
     },
   ])(
     'Scenario: typing over a whole controlled prop decoration ($name) does not revive it',
-    async ({words, highlight, movedWhileTyping}) => {
+    async ({words, highlight}) => {
       const editorRef: RefObject<Editor | null> = createRef()
       const movedSelections: Array<
         RangeDecorationOnMovedDetails['newSelection']
@@ -1235,10 +1281,11 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
         expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
           'B: Alpha text then a| move onward.',
         )
-        expect(movedSelections.slice(movedSelectionsBeforeTyping)).toEqual(
-          movedWhileTyping,
-        )
+        expect(movedSelections.slice(movedSelectionsBeforeTyping)).toEqual([
+          null,
+        ])
       })
+      expect(page.getByTestId('controlled-decoration').elements()).toEqual([])
     },
   )
 
@@ -1344,13 +1391,10 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
         'B: Paste into thisljlkaj sdck.jlkaj sdck.| today.\nB: Selection begins in this block.',
       )
       expect(movedSelections.slice(movedSelectionsBeforeReplacing)).toEqual([
-        acceptanceSelection('b0', 's0', 15, 'k4', 's0', 21),
-        acceptanceSelection('b0', 's0', 15, 'k4', 's0', 0),
-        acceptanceSelection('b0', 's0', 15, 'k4', 'k5', 0),
-        acceptanceSelection('b0', 's0', 15, 'b0', 'k5', 0),
         null,
       ])
     })
+    expect(page.getByTestId('controlled-decoration').elements()).toEqual([])
   })
 
   test.each([
@@ -1444,10 +1488,9 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
         expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
           'B: Alpha text then highli\nB: |ghted words move onward.',
         )
-        expect(movedSelections).toEqual([
-          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 22),
+        expect(movedSelections.at(-1)).toEqual(
           acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
-        ])
+        )
       })
 
       editorRef.current!.send({
@@ -1457,11 +1500,9 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       })
 
       await vi.waitFor(() => {
-        expect(movedSelections).toEqual([
-          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 22),
-          acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
+        expect(movedSelections.at(-1)).toEqual(
           acceptanceSelection('b0', 's0', 16, 'k2', 'k3', 11),
-        ])
+        )
       })
 
       if (direction === 'forward') {
@@ -1481,7 +1522,6 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
           ),
         ])
         expect(movedSelections).toEqual([
-          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 22),
           acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
           acceptanceSelection('b0', 's0', 16, 'k2', 'k3', 11),
           acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),

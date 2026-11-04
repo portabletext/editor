@@ -136,6 +136,20 @@ type RangeDecorationSource = {
    * `insert` in the same transaction carried back in the same span.
    */
   collapsedInTransaction: Map<object | string, CollapseProvenance>
+  /**
+   * Prop identities that operation mapping or correction moved during the
+   * current transaction: the decoration as it was when the transaction
+   * started, its latest selection and the origin of the latest move.
+   * `onMoved` is called once per decoration at transaction end.
+   */
+  movedProps: Map<
+    object,
+    {
+      rangeDecoration: RangeDecoration
+      selection: Range
+      origin: 'local' | 'remote'
+    }
+  >
   initialized: boolean
   /**
    * Only meaningful for a `registered` source; fixed at registration.
@@ -413,6 +427,7 @@ function movePropDecoratedRanges(
   relocateUnset: boolean,
   deadPropSelections: RangeDecorationSource['deadPropSelections'],
   collapsedInTransaction: RangeDecorationSource['collapsedInTransaction'],
+  movedProps: RangeDecorationSource['movedProps'],
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
 
@@ -464,12 +479,18 @@ function movePropDecoratedRanges(
       continue
     }
 
-    if (newRange && newRange !== currentSelection) {
-      rangeDecoration.onMoved?.({
-        newSelection: newRange,
+    if (
+      newRange &&
+      newRange !== currentSelection &&
+      decoratedRange.propIdentity
+    ) {
+      recordPropMove(
+        movedProps,
+        decoratedRange.propIdentity,
         rangeDecoration,
+        newRange,
         origin,
-      })
+      )
     }
 
     if (newRange !== null) {
@@ -822,18 +843,69 @@ function correctSourceRanges(
       } else {
         corrected.splice(index, 0, nextDecoratedRange)
       }
-      rangeDecoration.onMoved?.({
-        newSelection: reanchoredRange,
-        rangeDecoration,
-        origin,
-      })
       if (beforeDecoratedRange.propIdentity) {
         source.deadPropSelections.delete(beforeDecoratedRange.propIdentity)
+        recordPropMove(
+          source.movedProps,
+          beforeDecoratedRange.propIdentity,
+          rangeDecoration,
+          reanchoredRange,
+          origin,
+        )
       }
     }
   }
 
   return corrected
+}
+
+function correctTransaction(
+  context: {
+    sources: Array<RangeDecorationSource>
+    schema: EditorSchema
+    transactionChanged: boolean
+  },
+  transaction: OperationTransactionEvent,
+  beforeRangesBySource: Map<string, Array<DecoratedRange>>,
+) {
+  const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
+    getStructuralTouchedBlockKeys(transaction)
+  const origin = transaction.origin === 'remote' ? 'remote' : 'local'
+  const previousDecoratedRanges = context.sources.map(
+    (source) => source.decoratedRanges,
+  )
+  const reanchor =
+    touchedBlockKeys.size > 0
+      ? createRangeReanchor(
+          transaction.beforeValue,
+          transaction.afterValue,
+          context.schema,
+          getTouchedBlockKeysWithNeighbors(transaction, touchedBlockKeys),
+        )
+      : undefined
+  for (const source of context.sources) {
+    const beforeRanges = beforeRangesBySource.get(source.sourceKey) ?? []
+    if (reanchor) {
+      source.decoratedRanges = correctSourceRanges(
+        source,
+        beforeRanges,
+        reanchor,
+        touchedBlockKeys,
+        origin,
+        sameBlockCorrectionKeys,
+        transaction,
+      )
+    }
+    killCollapsedPropRanges(source, beforeRanges, transaction, origin)
+    context.transactionChanged ||= source.deadPropSelections.size > 0
+  }
+  context.transactionChanged ||= context.sources.some(
+    (source, index) =>
+      !areSameDecoratedRanges(
+        source.decoratedRanges,
+        previousDecoratedRanges[index],
+      ),
+  )
 }
 
 /**
@@ -886,7 +958,12 @@ function killCollapsedPropRanges(
   })
 }
 
-function notifyDeadPropSelections(source: RangeDecorationSource) {
+/**
+ * Calls `onMoved` once per prop decoration that the transaction killed or
+ * moved: deaths first, then each moved decoration whose final selection
+ * differs from its selection when the transaction started.
+ */
+function notifyPropMoves(source: RangeDecorationSource) {
   for (const {rangeDecoration, origin} of source.deadPropSelections.values()) {
     rangeDecoration.onMoved?.({
       newSelection: null,
@@ -894,7 +971,42 @@ function notifyDeadPropSelections(source: RangeDecorationSource) {
       origin,
     })
   }
+  for (const [propIdentity, moved] of source.movedProps) {
+    const {rangeDecoration, selection, origin} = moved
+    if (
+      source.deadPropSelections.has(propIdentity) ||
+      (rangeDecoration.selection &&
+        hasSameAnchorAndFocus(rangeDecoration.selection, selection))
+    ) {
+      continue
+    }
+    rangeDecoration.onMoved?.({
+      newSelection: selection,
+      rangeDecoration,
+      origin,
+    })
+  }
   source.deadPropSelections.clear()
+  source.movedProps.clear()
+}
+
+/**
+ * Keeps the decoration from the first move in a transaction, which is the
+ * one the consumer holds, and the selection and origin of the latest move.
+ */
+function recordPropMove(
+  movedProps: RangeDecorationSource['movedProps'],
+  propIdentity: object,
+  rangeDecoration: RangeDecoration,
+  selection: Range,
+  origin: 'local' | 'remote',
+) {
+  movedProps.set(propIdentity, {
+    rangeDecoration:
+      movedProps.get(propIdentity)?.rangeDecoration ?? rangeDecoration,
+    selection,
+    origin,
+  })
 }
 
 /**
@@ -1186,6 +1298,7 @@ export const rangeDecorationsMachine = setup({
         deadSelections: new Map(),
         deadPropSelections: new Map(),
         collapsedInTransaction: new Map(),
+        movedProps: new Map(),
         initialized: false,
         on: event.on,
       })
@@ -1242,6 +1355,7 @@ export const rangeDecorationsMachine = setup({
           deadSelections: new Map(),
           deadPropSelections: new Map(),
           collapsedInTransaction: new Map(),
+          movedProps: new Map(),
           initialized: true,
           on: event.on,
         }
@@ -1348,6 +1462,7 @@ export const rangeDecorationsMachine = setup({
             event.relocateUnset ?? false,
             source.deadPropSelections,
             source.collapsedInTransaction,
+            source.movedProps,
           )
         }
       }
@@ -1367,88 +1482,32 @@ export const rangeDecorationsMachine = setup({
         return
       }
       context.transactionChanged = false
+      const beforeRangesBySource = context.transactionSources
+      context.transactionSources = new Map()
       if (
-        event.transaction.operations.every(
+        !event.transaction.operations.every(
           ({operation}) =>
             operation.type === 'insert.text' ||
             operation.type === 'set.selection',
-        ) &&
-        context.sources.every(
+        ) ||
+        context.sources.some(
           (source) =>
-            source.deadPropSelections.size === 0 &&
-            source.collapsedInTransaction.size === 0,
+            source.deadPropSelections.size > 0 ||
+            source.collapsedInTransaction.size > 0,
         )
       ) {
         // Inserting text can neither collapse a range nor move text between
-        // blocks, so per-operation mapping is already final.
-        context.transactionSources.clear()
-        return
+        // blocks, so per-operation mapping is final for such a transaction.
+        correctTransaction(context, event.transaction, beforeRangesBySource)
       }
-      const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
-        getStructuralTouchedBlockKeys(event.transaction)
-      const origin = event.transaction.origin === 'remote' ? 'remote' : 'local'
-      const previousDecoratedRanges = context.sources.map(
-        (source) => source.decoratedRanges,
-      )
-      if (touchedBlockKeys.size === 0) {
-        for (const source of context.sources) {
-          killCollapsedPropRanges(
-            source,
-            context.transactionSources.get(source.sourceKey) ?? [],
-            event.transaction,
-            origin,
-          )
-          context.transactionChanged ||= source.deadPropSelections.size > 0
-          notifyDeadPropSelections(source)
-          source.collapsedInTransaction.clear()
-        }
-      } else {
-        const matchedBlockKeys = getTouchedBlockKeysWithNeighbors(
-          event.transaction,
-          touchedBlockKeys,
-        )
-        const reanchor = createRangeReanchor(
-          event.transaction.beforeValue,
-          event.transaction.afterValue,
-          context.schema,
-          matchedBlockKeys,
-        )
-        for (const source of context.sources) {
-          const beforeRanges = context.transactionSources.get(source.sourceKey)
-          if (!beforeRanges) {
-            source.collapsedInTransaction.clear()
-            continue
-          }
-          source.decoratedRanges = correctSourceRanges(
-            source,
-            beforeRanges,
-            reanchor,
-            touchedBlockKeys,
-            origin,
-            sameBlockCorrectionKeys,
-            event.transaction,
-          )
-          killCollapsedPropRanges(
-            source,
-            beforeRanges,
-            event.transaction,
-            origin,
-          )
-          context.transactionChanged ||= source.deadPropSelections.size > 0
-          notifyDeadPropSelections(source)
-          source.collapsedInTransaction.clear()
-        }
+      for (const source of context.sources) {
+        source.collapsedInTransaction.clear()
       }
-      context.transactionSources.clear()
-      context.transactionChanged ||= context.sources.some(
-        (source, index) =>
-          !areSameDecoratedRanges(
-            source.decoratedRanges,
-            previousDecoratedRanges[index],
-          ),
-      )
       if (context.transactionChanged) {
         context.editorEngine.decoratedRanges = flattenSources(context.sources)
+      }
+      for (const source of context.sources) {
+        notifyPropMoves(source)
       }
     },
   },
