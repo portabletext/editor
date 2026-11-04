@@ -131,8 +131,15 @@ export function endOperationTransaction(editor: Editor): void {
     afterValue: editor.snapshot.context.value,
     origin: firstOperation.origin,
   }
+  // A listener runs from the `finally` of the outermost `apply` or
+  // `withoutNormalizing`, so a throw here would replace an error already
+  // propagating from the transaction.
   for (const listener of editor.operationListeners.transactionEnd) {
-    listener(event)
+    try {
+      listener(event)
+    } catch (error) {
+      console.error(error)
+    }
   }
 }
 

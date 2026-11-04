@@ -9,16 +9,16 @@ import {setNormalizing} from './set-normalizing'
 
 export function withoutNormalizing(editor: Editor, fn: () => void): void {
   beginOperationTransaction(editor)
-  const value = isNormalizing(editor)
-  setNormalizing(editor, false)
   try {
-    fn()
-  } finally {
-    setNormalizing(editor, value)
+    const value = isNormalizing(editor)
+    setNormalizing(editor, false)
     try {
-      normalize(editor)
+      fn()
     } finally {
-      endOperationTransaction(editor)
+      setNormalizing(editor, value)
     }
+    normalize(editor)
+  } finally {
+    endOperationTransaction(editor)
   }
 }

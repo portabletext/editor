@@ -5,7 +5,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {withRemoteChanges} from '../../engine-plugins/engine-plugin.remote-changes'
 import {pluginUndoing} from '../../engine-plugins/engine-plugin.undoing'
 import {pluginWithoutHistory} from '../../engine-plugins/engine-plugin.without-history'
@@ -19,10 +19,15 @@ import {
 } from '../../schema/resolve-containers-batch'
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import {createEditor} from '../create-editor'
+import {withoutNormalizing} from '../editor/without-normalizing'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
 import {isInNormalization} from './apply-context'
-import {subscribeToOperations, type OperationEvent} from './operation-channel'
+import {
+  subscribeToOperationTransactions,
+  subscribeToOperations,
+  type OperationEvent,
+} from './operation-channel'
 
 const schema = compileSchema(defineSchema({}))
 
@@ -646,5 +651,62 @@ describe('operation channel', () => {
     ).toThrow('boom')
 
     expect(editor.applyContext).toEqual([])
+  })
+
+  test('a throw inside `withoutNormalizing` skips normalization and keeps the original error', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const normalizeNode = vi.fn(() => {
+      throw new Error('normalize')
+    })
+    editor.normalizeNode = normalizeNode
+
+    expect(() =>
+      withoutNormalizing(editor, () => {
+        editor.apply({
+          type: 'set',
+          path: [{_key: 'b1'}, 'style'],
+          value: 'h1',
+        })
+        throw new Error('boom')
+      }),
+    ).toThrow('boom')
+
+    expect(normalizeNode).toHaveBeenCalledTimes(0)
+    expect(editor.operationTransactionDepth).toEqual(0)
+  })
+
+  test('a throwing transaction listener neither masks an apply error nor escapes on success', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const transactionOperationCounts: Array<number> = []
+
+    subscribeToOperationTransactions(editor, () => {
+      throw new Error('listener')
+    })
+    subscribeToOperationTransactions(editor, (transaction) => {
+      transactionOperationCounts.push(transaction.operations.length)
+    })
+
+    editor.normalizeNode = () => {
+      throw new Error('boom')
+    }
+    expect(() =>
+      editor.apply({
+        type: 'set',
+        path: [{_key: 'b1'}, 'style'],
+        value: 'h1',
+      }),
+    ).toThrow('boom')
+
+    editor.normalizeNode = () => {}
+    expect(() => editor.apply(insertTextOperation)).not.toThrow()
+
+    expect(transactionOperationCounts).toEqual([1, 1])
+    expect(consoleError.mock.calls).toEqual([
+      [new Error('listener')],
+      [new Error('listener')],
+    ])
+    expect(editor.operationTransactionDepth).toEqual(0)
+    consoleError.mockRestore()
   })
 })

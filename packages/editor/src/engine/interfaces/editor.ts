@@ -1,5 +1,6 @@
 import type {PortableTextEditorEngine} from '../../types/editor-engine'
 import type {
+  OperationEvent,
   OperationListener,
   OperationTransactionListener,
 } from '../core/operation-channel'
@@ -27,7 +28,7 @@ export interface BaseEditor {
     transactionEnd: Array<OperationTransactionListener>
   }
   operationTransactionDepth: number
-  operationTransactionEvents: Array<Parameters<OperationListener>[0]>
+  operationTransactionEvents: Array<OperationEvent>
   dirtyPaths: Path[]
   dirtyPathKeys: Set<string>
   flushing: boolean
