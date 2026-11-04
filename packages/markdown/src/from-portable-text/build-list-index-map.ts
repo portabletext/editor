@@ -1,12 +1,6 @@
-import {
-  compileSchema,
-  defineSchema,
-  isTextBlock,
-  type PortableTextBlock,
-} from '@portabletext/schema'
+import type {PortableTextBlock} from '@portabletext/schema'
+import {isPortableTextBlock} from '@portabletext/toolkit'
 import type {ArbitraryTypedObject, TypedObject} from '@portabletext/types'
-
-const schema = compileSchema(defineSchema({}))
 
 /**
  * Builds a map of list item `_key`s to their index, and a map of list item
@@ -62,7 +56,7 @@ export function buildListIndexMap<
     }
 
     // Clear the state if we encounter a non-text block
-    if (!isTextBlock({schema}, block)) {
+    if (!isPortableTextBlock(block)) {
       levelIndexMaps.clear()
       previousListItem = undefined
       levelStack = []

@@ -335,7 +335,7 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
   const renderedContent = options.value.content
     .map((block, index) =>
       renderNode({
-        node: block._type === 'block' ? {...block, style: 'normal'} : block,
+        node: isPortableTextBlock(block) ? {...block, style: 'normal'} : block,
         index,
         isInline: false,
         renderNode,
@@ -382,7 +382,7 @@ export const DefaultBlockquoteObjectRenderer: PortableTextTypeRenderer<{
   const renderedContent = value.content
     .map((block, index) =>
       renderNode({
-        node: block._type === 'block' ? {...block, style: 'normal'} : block,
+        node: isPortableTextBlock(block) ? {...block, style: 'normal'} : block,
         index,
         isInline: false,
         renderNode,

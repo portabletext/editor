@@ -35,6 +35,372 @@ describe(markdownToPortableText.name, () => {
     expect(markdownToPortableText('', {keyGenerator})).toEqual([])
   })
 
+  describe('custom block name', () => {
+    const schema = compileSchema(
+      defineSchema({
+        ...defaultSchema,
+        block: {...defaultSchema.block, name: 'myBlock'},
+      }),
+    )
+
+    test('marked paragraph', () => {
+      expect(
+        markdownToPortableText('foo **bar**', {
+          schema,
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'myBlock',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo ', marks: []},
+            {_type: 'span', _key: 'k2', text: 'bar', marks: ['strong']},
+          ],
+        },
+      ])
+    })
+
+    test('heading and nested list', () => {
+      expect(
+        markdownToPortableText('## foo\n\n- bar\n  - baz', {
+          schema,
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'myBlock',
+          _key: 'k0',
+          style: 'h2',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'myBlock',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          listItem: 'bullet',
+          level: 1,
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'myBlock',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          listItem: 'bullet',
+          level: 2,
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ])
+    })
+
+    test('declined blockquote restyles paragraphs', () => {
+      expect(
+        markdownToPortableText('> foo', {
+          schema: {
+            ...schema,
+            blockObjects: [
+              ...schema.blockObjects,
+              {
+                name: 'blockquote',
+                fields: [{name: 'content', type: 'array'}],
+              },
+            ],
+          },
+          keyGenerator: createTestKeyGenerator(),
+          types: {blockquote: () => undefined},
+        }),
+      ).toEqual([
+        {
+          _type: 'myBlock',
+          _key: 'k0',
+          style: 'blockquote',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+      ])
+    })
+
+    test('declined structural list merges and stamps paragraphs', () => {
+      expect(
+        markdownToPortableText('- foo\n\n  bar', {
+          schema: {
+            ...schema,
+            blockObjects: [
+              ...schema.blockObjects,
+              {
+                name: 'list',
+                fields: [{name: 'items', type: 'array'}],
+              },
+            ],
+          },
+          keyGenerator: createTestKeyGenerator(),
+          types: {list: () => undefined},
+        }),
+      ).toEqual([
+        {
+          _type: 'myBlock',
+          _key: 'k1',
+          style: 'normal',
+          markDefs: [],
+          listItem: 'bullet',
+          level: 1,
+          children: [
+            {_type: 'span', _key: 'k2', text: 'foo', marks: []},
+            {_type: 'span', _key: 'k4', text: 'bar', marks: []},
+          ],
+        },
+      ])
+    })
+
+    test('table cells lift images without renaming the image object', () => {
+      expect(
+        markdownToPortableText(
+          '| foo |\n| --- |\n| ![bar](https://example.com/bar.png) |',
+          {
+            schema,
+            keyGenerator: createTestKeyGenerator(),
+          },
+        ),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k8',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k3',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'k7',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  value: [
+                    {
+                      _type: 'image',
+                      _key: 'k5',
+                      src: 'https://example.com/bar.png',
+                      alt: 'bar',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('table cells report block images demoted beside text', () => {
+      const onDegradation = vi.fn()
+
+      expect(
+        markdownToPortableText(
+          '| foo |\n| --- |\n| bar ![baz](https://example.com/baz.png) |',
+          {
+            schema: compileSchema(
+              defineSchema({
+                ...schema,
+                inlineObjects: schema.inlineObjects.filter(
+                  (inlineObject) => inlineObject.name !== 'image',
+                ),
+              }),
+            ),
+            keyGenerator: createTestKeyGenerator(),
+            onDegradation,
+          },
+        ),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k9',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k3',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'k8',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k7',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k4',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k5', text: 'bar ', marks: []},
+                        {
+                          _type: 'image',
+                          _key: 'k6',
+                          src: 'https://example.com/baz.png',
+                          alt: 'baz',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'image-block-to-inline',
+                message:
+                  "The image became inline: a table cell can't hold a block-level `image`",
+                line: 1,
+                snippet: 'baz',
+              },
+            ],
+            message:
+              'Markdown could not be converted without loss:\n- line 1: The image became inline: a table cell can\'t hold a block-level `image` ("baz")',
+          },
+        ],
+      ])
+    })
+
+    test('table cells retain text and create an empty text block', () => {
+      expect(
+        markdownToPortableText('| foo | bar |\n| --- | --- |\n| baz | |', {
+          schema,
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: 'k14',
+          headerRows: 1,
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k6',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k2',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k5',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k3',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k4', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'row',
+              _key: 'k13',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k9',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k7',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k8', text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+                {
+                  _type: 'cell',
+                  _key: 'k12',
+                  value: [
+                    {
+                      _type: 'myBlock',
+                      _key: 'k10',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k11', text: '', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
   describe('style', () => {
     describe('normal', () => {
       test('default definition', () => {

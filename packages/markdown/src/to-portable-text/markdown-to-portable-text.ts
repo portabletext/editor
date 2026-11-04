@@ -1007,7 +1007,7 @@ function convertMarkdown(
   ) => {
     flushBlock()
     currentBlock = {
-      _type: 'block' as const,
+      _type: consolidatedOptions.schema.block.name,
       style,
       children: [],
       _key: consolidatedOptions.keyGenerator(),
@@ -1414,11 +1414,11 @@ function convertMarkdown(
               const fallbackStyle = resolvedStyle ?? 'blockquote'
               for (const block of contentBlocks) {
                 if (
-                  block._type === 'block' &&
-                  plainParagraphBlocks.has(block as PortableTextTextBlock)
+                  isTextBlock({schema: consolidatedOptions.schema}, block) &&
+                  plainParagraphBlocks.has(block)
                 ) {
                   const restyledBlock: PortableTextTextBlock = {
-                    ...(block as PortableTextTextBlock),
+                    ...block,
                     style: fallbackStyle,
                   }
                   // The spread above makes a new object, so the enclosing
@@ -1613,12 +1613,10 @@ function convertMarkdown(
               for (const block of item.content) {
                 const isStampable =
                   itemListType !== null &&
-                  block._type === 'block' &&
+                  isTextBlock({schema: consolidatedOptions.schema}, block) &&
                   !('listItem' in block) &&
-                  !/^h[1-6]$/.test(
-                    (block as PortableTextTextBlock).style ?? '',
-                  ) &&
-                  plainParagraphBlocks.has(block as PortableTextTextBlock)
+                  !/^h[1-6]$/.test(block.style ?? '') &&
+                  plainParagraphBlocks.has(block)
 
                 if (!isStampable) {
                   mergeTarget = null
@@ -1626,18 +1624,17 @@ function convertMarkdown(
                   continue
                 }
 
-                const textBlock = block as PortableTextTextBlock
-                if (mergeTarget && mergeTarget.style === textBlock.style) {
-                  mergeTarget.children.push(...textBlock.children)
+                if (mergeTarget && mergeTarget.style === block.style) {
+                  mergeTarget.children.push(...block.children)
                   mergeTarget.markDefs = [
                     ...(mergeTarget.markDefs ?? []),
-                    ...(textBlock.markDefs ?? []),
+                    ...(block.markDefs ?? []),
                   ]
                   continue
                 }
 
                 mergeTarget = {
-                  ...textBlock,
+                  ...block,
                   listItem: itemListType as string,
                   level,
                   ...(itemChecked === undefined ? {} : {checked: itemChecked}),
@@ -2134,15 +2131,19 @@ function convertMarkdown(
         // Check if we have blocks to extract (added after table_open)
         if (target.length > 0) {
           const lastBlock = target.at(-1)
-          if (lastBlock && lastBlock._type === 'block') {
-            cellBlocks.push(target.pop()! as PortableTextBlock)
+          if (
+            lastBlock &&
+            isTextBlock({schema: consolidatedOptions.schema}, lastBlock)
+          ) {
+            target.pop()
+            cellBlocks.push(lastBlock)
           }
         }
 
         // If no blocks were created (empty cell), create an empty block
         if (cellBlocks.length === 0) {
           cellBlocks.push({
-            _type: 'block' as const,
+            _type: consolidatedOptions.schema.block.name,
             style:
               consolidatedOptions.block.normal({
                 context: {schema: consolidatedOptions.schema},
@@ -2167,11 +2168,7 @@ function convertMarkdown(
         // decide whether the demotion actually degraded anything.
         const demotedInlineImages: Array<PortableTextObject> = []
         for (const block of cellBlocks) {
-          if (
-            block._type === 'block' &&
-            'children' in block &&
-            Array.isArray(block.children)
-          ) {
+          if (isTextBlock({schema: consolidatedOptions.schema}, block)) {
             for (const child of block.children) {
               if (
                 typeof child === 'object' &&
@@ -2196,9 +2193,7 @@ function convertMarkdown(
         if (
           cellBlocks.length === 1 &&
           firstBlock &&
-          firstBlock._type === 'block' &&
-          'children' in firstBlock &&
-          Array.isArray(firstBlock.children) &&
+          isTextBlock({schema: consolidatedOptions.schema}, firstBlock) &&
           firstBlock.children.length === 1
         ) {
           const onlyChild = firstBlock.children[0]

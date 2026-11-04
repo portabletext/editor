@@ -5,6 +5,7 @@ import type {
   PortableTextBlock,
   TypedObject,
 } from '@portabletext/types'
+import {defaultSchema} from '../default-schema'
 import {defaultKeyGenerator} from '../key-generator'
 import {neutralForm, type Node} from '../neutral-form'
 import {markdownToPortableTextWithBlockLines} from '../to-portable-text/markdown-to-portable-text'
@@ -433,6 +434,7 @@ function failingCandidates(
     spacings,
     schema,
   )
+  const parsedTextBlockName = (schema ?? defaultSchema).block.name
   const failing = new Set<number>()
   // A node holds the bytes from the line it starts in onward, so a block
   // without a candidate that parses differently was changed by a candidate
@@ -441,7 +443,7 @@ function failingCandidates(
   let blamingLaterCandidates = false
   parsedByBlock.forEach((parsed, position) => {
     const expected = candidates.has(position)
-      ? [neutralForm(nodes[position] as unknown as Node)]
+      ? [neutralForm({...nodes[position], _type: parsedTextBlockName})]
       : expectedByBlock[position]!
     const matches =
       parsed.length === expected.length &&

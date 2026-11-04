@@ -43,6 +43,135 @@ describe(portableTextToMarkdown.name, () => {
     expect(portableTextToMarkdown(portableText)).toBe(markdown)
   })
 
+  describe('custom block name', () => {
+    test('numbered list starting deeper than level 1', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'myBlock',
+            _key: keyGenerator(),
+            style: 'normal',
+            listItem: 'number',
+            level: 3,
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+            ],
+          },
+          {
+            _type: 'myBlock',
+            _key: keyGenerator(),
+            style: 'normal',
+            listItem: 'number',
+            level: 3,
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+            ],
+          },
+          {
+            _type: 'myBlock',
+            _key: keyGenerator(),
+            style: 'normal',
+            listItem: 'number',
+            level: 4,
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+            ],
+          },
+        ]),
+      ).toBe('1. foo\n2. bar\n   1. baz')
+    })
+
+    test('callout content in the blockquote style', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              {
+                _type: 'myBlock',
+                _key: keyGenerator(),
+                style: 'blockquote',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: keyGenerator(),
+                    text: 'foo',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ]),
+      ).toBe('> [!NOTE]\n> foo')
+    })
+
+    test('structured blockquote content in the blockquote style', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [
+                {
+                  _type: 'myBlock',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          {types: {blockquote: DefaultBlockquoteObjectRenderer}},
+        ),
+      ).toBe('> foo')
+    })
+
+    test('an empty line between hard breaks uses a backslash break', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'myBlock',
+            _key: keyGenerator(),
+            style: 'blockquote',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'foo\n\nbar',
+                marks: [],
+              },
+            ],
+          },
+        ]),
+      ).toBe('> foo  \n> \\\n> bar')
+    })
+  })
+
   describe('paragraph', () => {
     test('one paragraph', () => {
       const markdown = 'foo'
