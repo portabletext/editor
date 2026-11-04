@@ -156,6 +156,43 @@ describe(reanchorRange.name, () => {
     })
   })
 
+  test('does not recover a removed endpoint onto text after a fully replaced range', () => {
+    expect(
+      reanchorRange(
+        [
+          block('b1', 's1', 'foo ba'),
+          block('b2', 's2', 'r'),
+          block('b3', 's3', 'baz qux'),
+        ],
+        [block('b1', 's1', 'foo x qux')],
+        range('b1', 's1', 4, 'b3', 's3', 3),
+      ),
+    ).toEqual(null)
+  })
+
+  test('recovers a removed endpoint onto surviving text inside the range', () => {
+    expect(
+      reanchorRange(
+        [
+          block('b1', 's1', 'foo ba'),
+          block('b2', 's2', 'r'),
+          block('b3', 's3', 'baz qux'),
+        ],
+        [block('b1', 's1', 'foo x'), block('b3', 's3', 'baz qux')],
+        range('b1', 's1', 4, 'b3', 's3', 3),
+      ),
+    ).toEqual({
+      anchor: {
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 4,
+      },
+      focus: {
+        path: [{_key: 'b3'}, 'children', {_key: 's3'}],
+        offset: 3,
+      },
+    })
+  })
+
   test('treats a rekeyed block as removed and added', () => {
     expect(
       matchBlocks([block('b1', 's1', 'foo')], [block('b2', 's2', 'foo')]),

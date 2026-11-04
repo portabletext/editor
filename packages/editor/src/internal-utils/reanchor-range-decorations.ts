@@ -133,22 +133,26 @@ export function createRangeReanchor(
     if (shiftedAnchor.invalidated && !shiftedFocus.invalidated) {
       shiftedAnchor =
         recoverRemovedEndpoint(
-          anchor.blockKey,
+          anchor,
+          focus,
           'anchor',
           beforeBlocks,
           afterBlocks,
           matchByKey,
+          editsByKey,
           schema,
         ) ?? shiftedAnchor
     }
     if (shiftedFocus.invalidated && !shiftedAnchor.invalidated) {
       shiftedFocus =
         recoverRemovedEndpoint(
-          focus.blockKey,
+          focus,
+          anchor,
           'focus',
           beforeBlocks,
           afterBlocks,
           matchByKey,
+          editsByKey,
           schema,
         ) ?? shiftedFocus
     }
@@ -173,6 +177,24 @@ export function createRangeReanchor(
 
     return {anchor: nextAnchor, focus: nextFocus}
   }
+}
+
+/**
+ * The sign of the range's direction in text order (`1` forward, `-1`
+ * backward, `0` when both endpoints sit at the same block offset), or
+ * `undefined` when an endpoint does not resolve in `blocks`.
+ */
+export function getRangeDirection(
+  blocks: Array<PortableTextBlock>,
+  range: Range,
+  schema?: Schema,
+): number | undefined {
+  const anchor = pointToAbsolute(blocks, range.anchor, schema)
+  const focus = pointToAbsolute(blocks, range.focus, schema)
+  if (!anchor || !focus) {
+    return undefined
+  }
+  return compareAbsolutePoints(blocks, focus, anchor)
 }
 
 function selectTouchedBlocks(
@@ -599,26 +621,51 @@ function shiftPoint(
 }
 
 function recoverRemovedEndpoint(
-  removedBlockKey: string,
+  removedPoint: AbsolutePoint,
+  otherPoint: AbsolutePoint,
   side: 'anchor' | 'focus',
   beforeBlocks: Array<PortableTextBlock>,
   afterBlocks: Array<PortableTextBlock>,
   matchByKey: Map<string, BlockMatch>,
+  editsByKey: Map<string, Array<TextEdit>>,
   schema?: Schema,
 ): PointResult | undefined {
   const removedIndex = beforeBlocks.findIndex(
-    (block) => block._key === removedBlockKey,
+    (block) => block._key === removedPoint.blockKey,
+  )
+  const otherIndex = beforeBlocks.findIndex(
+    (block) => block._key === otherPoint.blockKey,
   )
   const afterByKey = new Map(afterBlocks.map((block) => [block._key, block]))
   const increment = side === 'anchor' ? 1 : -1
 
   for (
     let index = removedIndex + increment;
-    index >= 0 && index < beforeBlocks.length;
+    index >= 0 &&
+    index < beforeBlocks.length &&
+    (index - otherIndex) * increment <= 0;
     index += increment
   ) {
-    const match = matchByKey.get(beforeBlocks[index]!._key)
+    const beforeBlock = beforeBlocks[index]!
+    const match = matchByKey.get(beforeBlock._key)
     if (!match || match.type === 'removed') {
+      continue
+    }
+    const beforeLength = extractBlockText(beforeBlock, schema).length
+    const segmentStart =
+      side === 'focus' && index === otherIndex ? otherPoint.offset : 0
+    const segmentEnd =
+      side === 'anchor' && index === otherIndex
+        ? otherPoint.offset
+        : beforeLength
+    if (
+      match.type === 'matched' &&
+      !hasRetainedText(
+        editsByKey.get(match.key),
+        Math.min(segmentStart, segmentEnd),
+        Math.max(segmentStart, segmentEnd),
+      )
+    ) {
       continue
     }
     const blockKey = match.type === 'merged' ? match.mergedIntoKey : match.key
@@ -634,6 +681,35 @@ function recoverRemovedEndpoint(
     }
   }
   return undefined
+}
+
+function hasRetainedText(
+  edits: Array<TextEdit> | undefined,
+  start: number,
+  end: number,
+): boolean {
+  if (!edits) {
+    return end > start
+  }
+  return edits.some(
+    (edit) =>
+      edit.type === 'retain' &&
+      edit.position < end &&
+      edit.position + edit.text.length > start,
+  )
+}
+
+function compareAbsolutePoints(
+  blocks: Array<PortableTextBlock>,
+  left: AbsolutePoint,
+  right: AbsolutePoint,
+): number {
+  if (left.blockKey === right.blockKey) {
+    return Math.sign(left.offset - right.offset)
+  }
+  const leftIndex = blocks.findIndex((block) => block._key === left.blockKey)
+  const rightIndex = blocks.findIndex((block) => block._key === right.blockKey)
+  return Math.sign(leftIndex - rightIndex)
 }
 
 function pointToAbsolute(

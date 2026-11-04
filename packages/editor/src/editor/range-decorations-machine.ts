@@ -24,7 +24,10 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
-import {createRangeReanchor} from '../internal-utils/reanchor-range-decorations'
+import {
+  createRangeReanchor,
+  getRangeDirection,
+} from '../internal-utils/reanchor-range-decorations'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {
@@ -401,6 +404,26 @@ function movePropDecoratedRanges(
     const currentSelection = rangeDecoration.selection
 
     if (!currentSelection) {
+      continue
+    }
+
+    if (
+      !isCollapsedRange(currentSelection) &&
+      getRangeDirection(
+        snapshotContext.value,
+        currentSelection,
+        snapshotContext.schema,
+      ) === 0
+    ) {
+      // The endpoints sit on either side of a span boundary at the same
+      // block offset, so the range covers no text. Transforming it further
+      // lets inserted text push the endpoints apart in reverse order.
+      if (decoratedRange.propIdentity) {
+        deadPropSelections.set(decoratedRange.propIdentity, {
+          rangeDecoration,
+          origin,
+        })
+      }
       continue
     }
 
