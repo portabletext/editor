@@ -12,7 +12,7 @@ It also tightens when a decoration dies. A prop decoration gets one `onMoved` pe
 
 **Status (2026-11-04):** Argus's three blockers are fixed. On 1000 blocks with 1000 decorations, typing runs at 1.0–1.1× `main` and Enter at 1.1–1.2×. The range-decoration, shared, registration, undo/redo, collaboration, machine and unit suites pass, and types, lint and formatting are clean. A re-review is pending. What's still open is in section 6.
 
-See section 8 for how this differs from the closed PRs #2413 and #3208.
+See section 8 for how this differs from the closed PRs #2410, #2413 and #3208.
 
 ## 2. The current system (`main`)
 
@@ -243,9 +243,28 @@ To try it by hand, use the playground: a preview build of this branch (plain edi
 
 ## 8. How this differs from the closed attempts
 
+### #2410 `fix/range-decoration-paste-tracking` (Josef, closed unmerged 2026-04-01)
+
+[#2410](https://github.com/portabletext/editor/pull/2410) ("Make range decorations a bit sturdier [WIP]", head `6465b91fb`, about 9,000 lines added, 5,850 of them tests) was the first attempt. #2413 was cut down from it the same week. It worked by telling the decoration code what the behavior *meant*:
+
+- **Intent from the behaviors.** `behavior.abstract.split` and `behavior.abstract.delete` set a `SplitContext` or `MergeContext` (offset, block and span keys) on the editor through a new `effect` action before raising their events. `moveRangeBySplitAwareOperation` and `moveRangeByMergeAwareOperation` used it to hold points still during the `remove` and place them in the new or target block on the `insert`.
+- **Paste rewritten as split + merge.** `behavior.abstract.insert` pasted mid-block as split, insert, merge instead of delete and re-insert, so the split and merge contexts applied.
+- **Remote batches.** On the first remote operation it snapshotted the decorations, suppressed `onMoved` until a microtask, then sent one `onMoved` per changed decoration.
+- **Public API changes.** `onMoved` could return a selection to override the position; it gained `previousSelection` and `reason` (`'moved' | 'contentChanged'`); `RangeDecoration` gained an `id`; `effect` became a behavior action; overlapping decorations all render. (Overlap rendering later landed separately in #3170.)
+- **Undo/redo.** A pre-transform of decorations for history steps.
+
+| | #2410 | This branch |
+|---|---|---|
+| Where the knowledge comes from | Behaviors announce the split/merge through a context; only behaviors that do so are covered | Inferred at the end of each transaction from the operations and the before/after document; any behavior, paste path, undo/redo or remote batch is covered with no behavior changes |
+| Behaviors touched | split, delete, insert (paste rewritten), perform-event, history | None |
+| Public API | Several changes (`onMoved` return value and new fields, `id`, `effect`) | None. Behaviour changes only, listed in the changeset |
+| When consumers hear | Per operation locally; one call per decoration after a microtask for remote batches | One `onMoved` per decoration per transaction, local or remote, synchronously at the end of the edit |
+| Engine | Slate-era code (`apply-split-node`, `apply-merge-node`, `slate-plugin.history`) | The current engine, plus an internal transaction-end channel |
+| Size | About 9,000 lines added across 32 files (5,850 of them tests) | About 4,200 lines added across 15 files in `packages/editor` (most of them tests) |
+
 ### #2413 `fix/range-decoration-split-merge` (closed unmerged 2026-04-01)
 
-[#2413](https://github.com/portabletext/editor/pull/2413) ("fix: pre-transform range decorations during split and merge", head `025c01cb5`) addressed the same bug in two places:
+[#2413](https://github.com/portabletext/editor/pull/2413) ("fix: pre-transform range decorations during split and merge", head `025c01cb5`, by Christian) was a smaller follow-up to #2410. It addressed the same bug in two places:
 
 - **Inside `applySplitNode` and `applyMergeNode`**, it pre-transformed `editor.decoratedRanges` before the decomposed operations ran, the same way those functions already handle refs and the selection. It used inward affinity for splits.
 - **In the range-decorations machine**, when a `remove_text` collapsed a decoration that sat entirely inside the removed text, it stored the decoration as "displaced", with offsets relative to that text. A later `insert_node` whose block *contained the same text* re-attached it. Displaced decorations that were never re-attached were reported as removed.
