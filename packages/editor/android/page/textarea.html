@@ -1,0 +1,15 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>textarea</title>
+<textarea
+  id="ed"
+  style="border: 1px solid #888; min-height: 3em; font-size: 20px"
+></textarea>
+<pre id="log" style="font-size: 10px"></pre>
+<script type="module">
+  import {recordInput} from 'thumbjar/page'
+
+  const field = document.getElementById('ed')
+  recordInput({getText: () => field.value, field})
+  field.focus()
+</script>

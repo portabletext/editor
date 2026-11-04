@@ -532,8 +532,13 @@ function safeGetOf(schemaType: SchemaType): readonly SchemaType[] | undefined {
       const arrayOf = (schemaType as ArraySchemaType).of
       return Array.isArray(arrayOf) ? arrayOf : undefined
     }
-  } catch {
-    // Sanity schema getters can throw -- ignore
+  } catch (error) {
+    // Sanity schema getters can throw, which is ignored. A stack overflow
+    // is rethrown: swallowing it lets the recursion return early and hides
+    // the overflow the cycle scenario expects.
+    if (error instanceof RangeError) {
+      throw error
+    }
   }
   return undefined
 }

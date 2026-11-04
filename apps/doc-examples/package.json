@@ -45,6 +45,7 @@
     "emojilib": "^4.0.2",
     "racejar": "workspace:*",
     "react": "catalog:",
+    "thumbjar": "workspace:*",
     "typescript": "catalog:tooling",
     "vitest": "catalog:tooling"
   }
