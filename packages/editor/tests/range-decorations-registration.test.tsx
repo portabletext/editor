@@ -1102,7 +1102,7 @@ describe('registerDecorations: death by collapse', () => {
     })
   })
 
-  test('Scenario: a decoration collapsed by configuration never dies from an edit that keeps it collapsed', async () => {
+  test('Scenario: a decoration collapsed by configuration emits no mapping when an edit leaves it at the same range', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1182,19 +1182,7 @@ describe('registerDecorations: death by collapse', () => {
       at: getTextSelection(editor.getSnapshot().context, 'bar'),
     })
 
-    await vi.waitFor(() => {
-      expect(onMapped).toHaveBeenCalledTimes(1)
-    })
-
-    expect(onMapped.mock.calls[0]?.[0]).toEqual([
-      {
-        id: 'caret',
-        previousRange: movedRange,
-        newRange: movedRange,
-        contentTouched: false,
-        origin: 'local',
-      },
-    ])
+    expect(onMapped).toHaveBeenCalledTimes(0)
     expect(registration.getDecorations()).toEqual([
       {id: 'caret', range: movedRange},
     ])
@@ -1418,7 +1406,7 @@ describe('registerDecorations: onMapped and getDecorations', () => {
     expect(mappings[0].newRange).not.toBe(mappings[0].previousRange)
   })
 
-  test('Scenario: newRange keeps the previousRange reference when a same-length edit touches content without moving either endpoint', async () => {
+  test('Scenario: a transaction that touches content without changing the range emits no mapping', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1462,21 +1450,7 @@ describe('registerDecorations: onMapped and getDecorations', () => {
       snapshot: undefined,
     })
 
-    await vi.waitFor(() => {
-      expect(onMapped).toHaveBeenCalledTimes(1)
-    })
-
-    const mappings = onMapped.mock.calls[0]?.[0]
-    expect(mappings).toEqual([
-      {
-        id: 'a',
-        previousRange: range,
-        newRange: range,
-        contentTouched: true,
-        origin: 'remote',
-      },
-    ])
-    expect(mappings[0].newRange).toBe(mappings[0].previousRange)
+    expect(onMapped).toHaveBeenCalledTimes(0)
   })
 
   test('Scenario: death delivers `newRange: null` with the same mapping shape, whether by direct destruction or by collapse', async () => {

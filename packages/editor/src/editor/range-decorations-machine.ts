@@ -150,11 +150,18 @@ type RangeDecorationSource = {
       origin: 'local' | 'remote'
     }
   >
+  movedRegistered: Map<
+    string,
+    {
+      previousRange: Range
+      newRange: Range | null
+      contentTouched: boolean
+    }
+  >
   initialized: boolean
   /**
    * Only meaningful for a `registered` source; fixed at registration.
-   * Receives this source's mappings for one engine operation, one entry
-   * per affected decoration, in this source's array order.
+   * Receives this source's net mappings at the end of one transaction.
    */
   on?: (mappings: Array<DecorationMapping>) => void
 }
@@ -567,17 +574,13 @@ function getBlockKey(path: Range['anchor']['path']): string | undefined {
 function moveRegisteredDecoratedRanges(
   decoratedRanges: Array<DecoratedRange>,
   operation: EngineOperation,
-  origin: 'local' | 'remote',
   editorEngine: PortableTextEditorEngine,
   deadSelections: Map<string, EditorSelection>,
   relocateUnset: boolean,
   collapsedInTransaction: RangeDecorationSource['collapsedInTransaction'],
-): {
-  decoratedRanges: Array<DecoratedRange>
-  mappings: Array<DecorationMapping>
-} {
+  movedRegistered: RangeDecorationSource['movedRegistered'],
+): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
-  const mappings: Array<DecorationMapping> = []
 
   for (const decoratedRange of decoratedRanges) {
     const liveRangeDecoration = decoratedRange.rangeDecoration as Decoration
@@ -600,16 +603,14 @@ function moveRegisteredDecoratedRanges(
       currentRange,
       editorEngine,
     )
-    const clonedCurrentRange = cloneRange(currentRange)
-
     if (newRange === null || killedByCollapse) {
-      mappings.push({
-        id: liveRangeDecoration.id,
-        previousRange: clonedCurrentRange,
-        newRange: null,
+      recordRegisteredMove(
+        movedRegistered,
+        liveRangeDecoration.id,
+        currentRange,
+        null,
         contentTouched,
-        origin,
-      })
+      )
       deadSelections.set(liveRangeDecoration.id, currentRange)
       if (killedByCollapse) {
         collapsedInTransaction.set(liveRangeDecoration.id, {
@@ -622,13 +623,13 @@ function moveRegisteredDecoratedRanges(
     const moved = newRange !== currentRange
 
     if (moved || contentTouched) {
-      mappings.push({
-        id: liveRangeDecoration.id,
-        previousRange: clonedCurrentRange,
-        newRange: moved ? cloneRange(newRange) : clonedCurrentRange,
+      recordRegisteredMove(
+        movedRegistered,
+        liveRangeDecoration.id,
+        currentRange,
+        newRange,
         contentTouched,
-        origin,
-      })
+      )
     }
 
     next.push({
@@ -639,7 +640,55 @@ function moveRegisteredDecoratedRanges(
     })
   }
 
-  return {decoratedRanges: next, mappings}
+  return next
+}
+
+function recordRegisteredMove(
+  movedRegistered: RangeDecorationSource['movedRegistered'],
+  id: string,
+  previousRange: Range,
+  newRange: Range | null,
+  contentTouched: boolean,
+) {
+  const pending = movedRegistered.get(id)
+  if (pending) {
+    pending.newRange = newRange
+    pending.contentTouched ||= contentTouched
+    return
+  }
+  movedRegistered.set(id, {previousRange, newRange, contentTouched})
+}
+
+function notifyRegisteredMoves(
+  source: RangeDecorationSource,
+  origin: 'local' | 'remote',
+) {
+  if (!source.on || source.movedRegistered.size === 0) {
+    source.movedRegistered.clear()
+    return
+  }
+  const mappings: Array<DecorationMapping> = []
+  for (const [id, pending] of source.movedRegistered) {
+    if (isDeepEqual(pending.previousRange, pending.newRange)) {
+      continue
+    }
+    mappings.push({
+      id,
+      previousRange: cloneRange(pending.previousRange),
+      newRange: pending.newRange ? cloneRange(pending.newRange) : null,
+      contentTouched: pending.contentTouched,
+      origin,
+    })
+  }
+  source.movedRegistered.clear()
+  if (mappings.length === 0) {
+    return
+  }
+  try {
+    source.on(mappings)
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 function flattenSources(
@@ -819,15 +868,13 @@ function correctSourceRanges(
         corrected.splice(index, 0, nextDecoratedRange)
       }
       source.deadSelections.delete(decoration.id)
-      source.on?.([
-        {
-          id: decoration.id,
-          previousRange: cloneRange(currentRange ?? beforeRange),
-          newRange: cloneRange(reanchoredRange),
-          contentTouched: true,
-          origin,
-        },
-      ])
+      recordRegisteredMove(
+        source.movedRegistered,
+        decoration.id,
+        beforeRange,
+        reanchoredRange,
+        true,
+      )
     } else {
       const rangeDecoration =
         beforeDecoratedRange.rangeDecoration as RangeDecoration
@@ -1287,6 +1334,7 @@ export const rangeDecorationsMachine = setup({
         deadPropSelections: new Map(),
         collapsedInTransaction: new Map(),
         movedProps: new Map(),
+        movedRegistered: new Map(),
         initialized: false,
         on: event.on,
       })
@@ -1344,6 +1392,7 @@ export const rangeDecorationsMachine = setup({
           deadPropSelections: new Map(),
           collapsedInTransaction: new Map(),
           movedProps: new Map(),
+          movedRegistered: new Map(),
           initialized: true,
           on: event.on,
         }
@@ -1418,29 +1467,17 @@ export const rangeDecorationsMachine = setup({
         return
       }
 
-      const pendingNotifications: Array<{
-        on: (mappings: Array<DecorationMapping>) => void
-        mappings: Array<DecorationMapping>
-      }> = []
-
       for (const source of context.sources) {
         if (source.kind === 'registered') {
-          const result = moveRegisteredDecoratedRanges(
+          source.decoratedRanges = moveRegisteredDecoratedRanges(
             source.decoratedRanges,
             event.operation,
-            event.origin,
             context.editorEngine,
             source.deadSelections,
             event.relocateUnset ?? false,
             source.collapsedInTransaction,
+            source.movedRegistered,
           )
-          source.decoratedRanges = result.decoratedRanges
-          if (source.on && result.mappings.length > 0) {
-            pendingNotifications.push({
-              on: source.on,
-              mappings: result.mappings,
-            })
-          }
         } else if (!context.readOnly) {
           source.decoratedRanges = movePropDecoratedRanges(
             source.decoratedRanges,
@@ -1456,14 +1493,6 @@ export const rangeDecorationsMachine = setup({
       }
 
       context.editorEngine.decoratedRanges = flattenSources(context.sources)
-
-      for (const notification of pendingNotifications) {
-        try {
-          notification.on(notification.mappings)
-        } catch (error) {
-          console.error(error)
-        }
-      }
     },
     'correct range decorations': ({context, event}) => {
       if (event.type !== 'engine transaction end') {
@@ -1502,6 +1531,10 @@ export const rangeDecorationsMachine = setup({
       }
       for (const source of context.sources) {
         notifyPropMoves(source)
+        notifyRegisteredMoves(
+          source,
+          event.transaction.origin === 'remote' ? 'remote' : 'local',
+        )
       }
     },
   },

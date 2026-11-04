@@ -1551,6 +1551,9 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
 
       await vi.waitFor(() => {
         expect(harness.getText()).toEqual(['highli', 'ghted words'])
+        expect(harness.movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 0, 'k2', 's0', 11),
+        ])
       })
 
       const value = harness.editor.getSnapshot().context.value
@@ -1611,14 +1614,10 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
         expect(harness.getSelection()).toEqual(
           acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
         )
-        expect(harness.movedSelections.at(-1)).toEqual(
+        expect(harness.movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 0, 'k2', 's0', 11),
           acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
-        )
-        if (kind === 'prop') {
-          // Registered sources still receive a mapping per operation, so
-          // their transient death before transaction correction is visible.
-          expect(harness.movedSelections.includes(null)).toEqual(false)
-        }
+        ])
         expect(getDecoratedText()).toEqual(['highlighted words'])
       })
     },
@@ -1657,6 +1656,56 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       })
     },
   )
+
+  test('Scenario: typing reports one registered decoration mapping per keystroke', async () => {
+    const harness = await createRegisteredDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'foo')],
+      decoration: acceptanceSelection('b0', 's0', 1, 'b0', 's0', 3),
+    })
+
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 0),
+    })
+    harness.editor.send({type: 'insert.text', text: 'x'})
+    harness.editor.send({type: 'insert.text', text: 'y'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 2, 'b0', 's0', 4),
+      acceptanceSelection('b0', 's0', 3, 'b0', 's0', 5),
+    ])
+  })
+
+  test('Scenario: undo and redo of a split each report one registered decoration mapping', async () => {
+    const harness = await createRegisteredDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'hello dolly')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 11),
+    })
+
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6),
+    })
+    harness.editor.send({type: 'insert.break'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 0, 'k2', 's0', 5),
+    ])
+    harness.movedSelections.length = 0
+
+    harness.editor.send({type: 'history.undo'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 0, 'b0', 's0', 11),
+    ])
+    harness.movedSelections.length = 0
+
+    harness.editor.send({type: 'history.redo'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 0, 'k2', 's0', 5),
+    ])
+  })
 
   test('Scenario: a controlled null prop decoration does not call `onMoved`', async () => {
     const onMoved = vi.fn()

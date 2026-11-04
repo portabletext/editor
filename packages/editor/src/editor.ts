@@ -109,10 +109,12 @@ export type Editor = {
   registerDecorations: (config: {
     decorations: Array<Decoration>
     /**
-     * Synchronous, per engine operation that moved, touched, or
-     * destroyed at least one of this registration's decorations, one
-     * entry per affected decoration. Fires mid-apply: do not dispatch
-     * editor events from it. Fixed at registration. No calls before
+     * Synchronous, once at the end of an edit that changed at least one of
+     * this registration's decoration ranges. Each entry maps the range at
+     * the start of the edit to its final range; intermediate operation ranges
+     * are not reported. Decorations whose final range equals their starting
+     * range are omitted, and no callback is made when none changed. Do not
+     * dispatch editor events from it. Fixed at registration. No calls before
      * `ready`, none from `update()` reconciliation.
      */
     onMapped?: (mappings: Array<DecorationMapping>) => void

@@ -246,9 +246,9 @@ export interface RangeDecoration {
    */
   selection: EditorSelection
   /**
-   * Called when edits move the decorated range. The details carry the new
-   * selection (`null` when the range is lost) and whether the edit was
-   * `local` or `remote`.
+   * Called once at the end of an edit when the decorated range moved or was
+   * lost. The details carry its final selection (`null` when the range is
+   * lost) and whether the edit was `local` or `remote`.
    */
   onMoved?: (details: RangeDecorationOnMovedDetails) => void
   /**
@@ -307,23 +307,24 @@ export interface Decoration {
 }
 
 /**
- * What one engine operation did to one registered decoration's range.
+ * How one edit changed one registered decoration's range. Intermediate
+ * ranges from the edit's individual engine operations are not reported.
  * @beta
  */
 export type DecorationMapping = {
   /** The decoration's `id`, matching the `Decoration` it describes. */
   id: string
-  /** The range the decoration held before the operation. */
+  /** The range the decoration held before the edit. */
   previousRange: NonNullable<EditorSelection>
   /**
-   * The range after the operation. `null` means the operation destroyed
+   * The final range after the edit. `null` means the edit destroyed
    * the decoration. Undo does not revive it: an `update()` with a
    * different range (or a drop and re-add) is required.
    */
   newRange: NonNullable<EditorSelection> | null
-  /** Whether the operation changed content inside `previousRange`. */
+  /** Whether any operation in the edit changed content inside the range. */
   contentTouched: boolean
-  /** Whether the operation came from a local edit or a remote one. */
+  /** Whether the edit was local or remote. */
   origin: 'local' | 'remote'
 }
 
@@ -350,7 +351,7 @@ export interface DecorationRegistration {
    * Live decorations at call time: id + edit-adjusted range. Destroyed and
    * removed decorations are absent. Fresh array per call, with no
    * reference stability or change cadence. Reflects a completed `update()`
-   * immediately and a burst of `onMapped` calls as of the latest one.
+   * immediately and the latest completed edit before `onMapped` is called.
    * Empty before the editor's `ready` event.
    */
   getDecorations(): Array<DecorationPosition>
