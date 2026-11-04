@@ -1,6 +1,6 @@
 # Range decoration re-anchoring spike
 
-Branch `spike/reanchor-range-decorations`, reviewed snapshot `dd5591b60` plus review fixes, base `origin/main` `cacd2c9b6`.
+Branch `spike/reanchor-range-decorations`, base `origin/main` `cacd2c9b6`. Argus reviewed `dd5591b60`. The code fixes for his review are `7d9c13056`..`d9dc4d54b`, and this README describes the code as of `d9dc4d54b`.
 
 ## 1. TL;DR
 
@@ -8,7 +8,9 @@ Range decorations (highlights, comment ranges) are stored as a selection and mov
 That works for typing, but Enter, Backspace-merge and paste are each several operations, and the first operation often removes the highlighted text before a later one puts it back somewhere else.
 So on `main`, a highlight can shrink, die, or end up on the wrong text after a split or merge.
 The spike keeps the per-operation moving, but adds one more step at the end of each engine transaction: it remembers each decoration before the transaction, compares the document before and after, and re-finds the decoration's text if per-operation moving lost it.
-It also tightens when a decoration dies, and reports deaths to `onMoved` only once the transaction is over.
+It also tightens when a decoration dies. A prop decoration gets one `onMoved` per transaction, with its final range or `null`.
+
+**Status (2026-11-04):** Argus's three blockers are fixed. On 1000 blocks with 1000 decorations, typing runs at 1.0–1.1× `main` and Enter at 1.1–1.2×. The range-decoration, shared, registration, undo/redo, collaboration, machine and unit suites pass, and types, lint and formatting are clean. A re-review is pending. What's still open is in section 6.
 
 See section 8 for how this differs from the closed PRs #2413 and #3208.
 
@@ -98,21 +100,21 @@ An earlier version of the spike (`f85fac1f6`) waited for the asynchronous `onCha
 In the machine:
 
 1. **Snapshot.** The operation listener sends `engine transaction start` when it sees the first operation of a transaction (`operationTransactionEvents` is still empty). The action `capture transaction sources` copies every source's ranges into `context.transactionSources`.
-2. **Per-operation moving stays.** `engine operation` still runs `transformRange` per operation, so typing behaves exactly as before. New option: `relocateUnset` (on for everything except undo and redo). When an `unset` removes the node a point sits in, `relocateUnsetPoint` tries one destination:
-   - a block was removed and exactly one other block contains a child with the same `_key`, or
-   - a span was removed and exactly one other span's text **ends with** the removed span's text.
+2. **Per-operation moving stays.** `engine operation` still runs `transformRange` per operation, so the live ranges (what renders and what `getDecorations()` returns) behave exactly as before during typing. New option: `relocateUnset` (on for everything except undo and redo). When an `unset` removes a block that a point sits in, `relocateUnsetPoint` moves the point only if exactly one other block contains a child with the point's span `_key`. There is no text-based guess.
 3. **Correction.** `engine transaction end` runs `correct range decorations`:
+   - **Fast path.** A transaction made only of `insert.text` and `set.selection` skips correction entirely, unless something collapsed or died in it. Inserting text can't collapse a range or move text between blocks, so per-operation moving is already final. This keeps typing at `main`'s speed.
    - `getStructuralTouchedBlockKeys` decides if the transaction was structural: a top-level block `insert`/`unset`, or (with no top-level change) a block that had both `remove.text` and a child `insert`/`unset`, which is how a same-block paste looks. If nothing was structural, it skips straight to the death checks.
    - Otherwise `createRangeReanchor(beforeValue, afterValue, schema, blocks)` builds the **matcher** (`src/internal-utils/reanchor-range-decorations.ts`). It only compares the touched blocks plus their neighbours (`getTouchedBlockKeysWithNeighbors`).
    - The matcher works on plain text. `matchBlocks` labels each old block `matched`, `split`, `merged`, `removed` or `added`, by comparing block keys and text (for example: "the old block got shorter and the new block right after it is exactly the missing tail" means `split`). Inside a block, a text diff (`@sanity/diff-match-patch`) shifts offsets. `shiftPoint` maps a point through that, and `recoverRemovedEndpoint` tries to rescue an endpoint whose block is gone. The matcher is a port of the labs `packages/reanchoring` algorithm, and has since diverged from it.
-   - `correctSourceRanges` takes each snapshotted range in a touched block, re-anchors it, and replaces the live range when the matcher moved an endpoint to a different block (or, for the same-block paste case, whenever the matcher has a result). It then calls `onMoved` (prop) or `on` with one mapping (registered).
+   - `correctSourceRanges` takes each snapshotted range in a touched block, re-anchors it, and replaces the live range when the matcher moved an endpoint to a different block (or, for the same-block paste case, whenever the matcher has a result). Registered decorations get `on` with one mapping. Before-ranges are found through a Map, and the snapshot holds range arrays by reference rather than cloning them.
+   - **Notify.** For prop decorations, `onMoved` runs once per decoration at the very end: `null` for deaths, then the final range for every decoration whose range differs from its starting range. The intermediate per-operation ranges are never reported.
 
 ### (c) When a decoration dies, and keeps its direction
 
 - **Collapsed means dead.** If an operation turns a non-collapsed range into a collapsed one, it dies. This is new for prop decorations; `main` kept them as a collapsed range.
-- **Zero width means dead.** If the endpoints sit on two different spans but at the same block offset (no text in between), `movePropDecoratedRanges` treats it as dead. Otherwise later inserts could push the endpoints apart in reverse order.
-- **Prop deaths wait for the transaction end.** A prop death goes into `deadPropSelections`. If correction revives the range, the death is cancelled. Otherwise `notifyDeadPropSelections` calls `onMoved({newSelection: null})` at transaction end. Registered deaths are still reported per operation, so a revived registered decoration gets `null` and then its new range.
-- **Revival only onto identical text.** Every decoration that collapsed in this transaction is put in `collapsedInTransaction`. Correction may only bring it back if `coversSameText` holds: the text under the new range equals the text under the old range. A range that was collapsed before never becomes non-collapsed.
+- **Zero width means dead.** If the endpoints sit on two different spans but at the same block offset (no text in between), `movePropDecoratedRanges` treats it as dead. Otherwise later inserts could push the endpoints apart in reverse order. The check compares paths and offsets only; it doesn't scan the document.
+- **Prop deaths wait for the transaction end.** A prop death goes into `deadPropSelections`. If correction revives the range, the death is cancelled. Otherwise `onMoved({newSelection: null})` is called at transaction end. Registered deaths are still reported per operation, so a revived registered decoration gets `null` and then its new range (see section 6).
+- **Revival only when the transaction moved the text.** Every decoration that collapsed in this transaction is put in `collapsedInTransaction` with its `CollapseProvenance`: the `remove.text` that collapsed it. Correction may only bring it back if `isReinserted` holds: an `insert` in the same transaction carries that removed text in a span with the **same key** as the span it was removed from. That is what a split does when it writes the tail into the new block. For undo and redo any span key counts, because they replay an earlier move. Identical text elsewhere in the document doesn't count. A range that was collapsed before the transaction never becomes non-collapsed.
 - **Fully deleted stays dead.** `recoverRemovedEndpoint` skips blocks where none of the range's text survived, so a fully replaced range gets `null` instead of landing on neighbouring text. `killCollapsedPropRanges` makes a final sweep for prop ranges that end the transaction collapsed or zero width.
 - **Direction.** The matcher maps `anchor` and `focus` separately, each with its own insert affinity, so a backward range stays backward. A collapsed input point is mapped once and used for both ends, so it can't open up into a range.
 
@@ -132,17 +134,18 @@ Across a prop **update** from the consumer, the identity is still copied by arra
 | File | Role |
 |---|---|
 | `src/engine/core/operation-channel.ts` | New transaction API: `beginOperationTransaction`, `endOperationTransaction`, `recordOperationTransactionEvent`, `subscribeToOperationTransactions`, and the `OperationTransactionEvent` type. |
-| `src/engine/core/apply.ts` | Wraps the whole body in begin/`try`/`finally` end. Builds and records an `OperationEvent` when any transaction listener exists. The rest is re-indentation. |
-| `src/engine/editor/without-normalizing.ts` | Wraps `fn` and the trailing `normalize` in one transaction. `normalize` moved into the `finally` (see blocker 3). |
+| `src/engine/core/operation-channel.test.ts` | Unit tests for transaction brackets, including that a throwing listener or `fn` doesn't hide an error. |
+| `src/engine/core/apply.ts` | Wraps the whole body in begin/`try`/`finally` end. Builds and records an `OperationEvent` when any transaction listener exists. The rest is re-indentation. Each transaction-end listener runs in its own try/catch and logs with `console.error`. |
+| `src/engine/editor/without-normalizing.ts` | Wraps `fn` and the trailing `normalize` in one transaction, in `main`'s order: `normalize` runs only if `fn` didn't throw. |
 | `src/engine/interfaces/editor.ts`, `src/engine/create-editor.ts` | New editor fields: `operationListeners.transactionEnd`, `operationTransactionDepth`, `operationTransactionEvents`. |
 | `src/engine/interfaces/range.ts` | Adds `relocateUnset?` to `RangeTransformOptions`. |
-| `src/engine/range/transform-range.ts` | `relocateUnsetPoint`: moves a point across an `unset` to its only possible destination. |
+| `src/engine/range/transform-range.ts` | `relocateUnsetPoint`: moves a point across a block `unset` to the only block that still has its span key. |
 | `src/internal-utils/reanchor-range-decorations.ts` | The matcher: `createRangeReanchor`, `matchBlocks`, `shiftPoint`, `recoverRemovedEndpoint`, plus `getRangeDirection` and `getRangeText`. Pure functions. |
-| `src/editor/range-decorations-machine.ts` | New events `engine transaction start`/`end`, the snapshot, `correct range decorations`, the death rules, `propIdentity`. `update decorate` now runs after every transaction. |
+| `src/editor/range-decorations-machine.ts` | New events `engine transaction start`/`end`, the snapshot, `correct range decorations` with the text-only fast path, `CollapseProvenance` and `isReinserted`, the death rules, one `onMoved` per transaction, `propIdentity`. `decorate.fn` is still only recreated when a source changes, as on `main`. |
 | `src/editor/range-decorations-machine.test.ts` | The engine stub gets the new fields. |
 | `src/engine/range/transform-range.test.ts` | Unit tests for `relocateUnset`. |
 | `src/internal-utils/reanchor-range-decorations.test.ts` | Unit tests for the matcher. |
-| `tests/range-decorations.test.tsx` | Browser regressions found in the playground (repeated splits, replace after split, null selection, registered updates, duplicate-key rekey). |
+| `tests/range-decorations.test.tsx` | Browser regressions found in the playground and in review (repeated splits, replace after split, null selection, registered updates, duplicate-key rekey, duplicate text not reviving, one `onMoved` per transaction). Tests assert the final range, text and callbacks, not every intermediate step. |
 | `tests/spike-split-merge-decorations.test.tsx` | Shared acceptance scenarios: split, merge, line break, overlap, undo/redo, paste (P1–P3), cross-block replace and delete (X1–X4). |
 | `.changeset/reanchor-range-decorations.md` | A patch changeset. Its first line still reads "spike: ...". |
 
@@ -161,19 +164,18 @@ sequenceDiagram
   E->>C: apply(remove.text): before listeners
   C->>M: engine transaction start → snapshot ranges
   C->>M: engine operation → transformRange per decoration
-  M-->>R: onMoved(intermediate range) or defer a death
+  M->>M: update live range, defer onMoved / death
   E->>C: apply(insert block): before listeners
   C->>M: engine operation → transformRange
   E->>E: normalize
   E->>C: endOperationTransaction (depth 0)
   C->>M: engine transaction end {operations, beforeValue, afterValue}
   M->>M: correct range decorations (matcher on touched blocks)
-  M-->>R: onMoved(corrected range) / on([mapping]) / onMoved(null) for deaths
-  M->>M: update decorate (new decorate.fn)
-  R->>R: re-render with corrected ranges
+  M-->>R: one onMoved(final range or null) per prop decoration, on([mapping]) for registered
+  R->>R: touched blocks re-render with corrected ranges
 ```
 
-A plain keystroke follows the same path. It has a single operation, `getStructuralTouchedBlockKeys` finds nothing structural, and only the death checks run.
+A plain keystroke follows the same path up to the transaction end. It only has `insert.text`, so correction is skipped and the per-operation result stands.
 
 ## 5. Walkthrough: Enter inside a highlight
 
@@ -183,20 +185,20 @@ Same document as before. This is acceptance scenario 1.2 in `tests/spike-split-m
 **Before:** `b1: "hello dolly"`, highlight `b1/s1:0 → b1/s1:11`, caret at `b1/s1:6`.
 
 1. **Transaction opens.** The split behavior raises `delete` and `insert.block`, and `performEvent` runs them inside one `withoutNormalizing` (`withoutNormalizingConditional` in `behavior.perform-event.ts`), so the depth goes to 1.
-2. **`remove.text` (offset 6, `"dolly"`).** The machine sees `engine transaction start` first and snapshots `b1/s1:0 → b1/s1:11`. Then `transformRange` moves the focus back to 6. The range `0 → 6` is still non-collapsed, so it stays alive. A prop decoration gets `onMoved(b1/s1:0 → b1/s1:6)`, and a registered one gets a mapping to the same range. Both are intermediate values.
+2. **`remove.text` (offset 6, `"dolly"`).** The machine sees `engine transaction start` first and snapshots `b1/s1:0 → b1/s1:11`. Then `transformRange` moves the focus back to 6. The range `0 → 6` is still non-collapsed, so it stays alive. The live range is now `b1/s1:0 → b1/s1:6`. A prop decoration isn't told yet. A registered one gets a mapping to this intermediate range.
 3. **`insert` block `bN` with `"dolly"`.** The new block comes after `b1`, so the range doesn't change.
 4. **Transaction ends.** `getStructuralTouchedBlockKeys` sees a top-level `insert`, so the touched keys are `{b1, bN}`.
 5. **Matcher.** `matchBlocks` sees that `b1` went from `"hello dolly"` to `"hello "` and that the new next block `bN` is exactly `"dolly"`. That is a `split` at offset 6. `shiftPoint` leaves the anchor (offset 0 < 6) in `b1`, and moves the focus (offset 11 ≥ 6) to `bN` offset 11 − 6 = 5.
-6. **Correction.** The re-anchored focus is in a different block than before, so `correctSourceRanges` replaces the live range and calls `onMoved(b1/s1:0 → bN/sN:5)`. A registered decoration gets one more `on([...])` mapping with the corrected range, after the per-operation mapping it already got in step 2.
-7. **Render.** `update decorate` creates a new `decorate.fn`, and both blocks render highlighted.
+6. **Correction.** The re-anchored focus is in a different block than before, so `correctSourceRanges` replaces the live range. A prop decoration gets its only `onMoved` for this edit: `b1/s1:0 → bN/sN:5`. A registered decoration gets one more `on([...])` mapping with the corrected range, after the per-operation mapping it already got in step 2.
+7. **Render.** Both blocks were touched by the edit, so they re-render with the corrected range and show as highlighted.
 
 **After:** `b1: "hello "`, `bN: "dolly"`, highlight `b1/s1:0 → bN/sN:5` covering `"hello dolly"`.
 
-If the highlight had covered only `"dolly"` (`6 → 11`), step 2 would collapse it to `6 → 6`. That is a provisional death: it goes to `deadPropSelections` and `collapsedInTransaction`. In step 6, the matcher maps it to `bN/sN:0 → 5`, `coversSameText` sees `"dolly"` both before and after, so the death is cancelled and no `null` is sent.
+If the highlight had covered only `"dolly"` (`6 → 11`), step 2 would collapse it to `6 → 6`. That is a provisional death: it goes to `deadPropSelections` and `collapsedInTransaction`. In step 6, the matcher maps it to `bN/sN:0 → 5`. `isReinserted` finds the `insert` of `bN`, whose span carries `"dolly"` under the key `s1` that the `remove.text` removed it from, so the death is cancelled and no `null` is sent. In the duplicate-text case from Argus's review, no insert carries the removed text, so the decoration stays dead.
 
 ## 6. Known limitations and open items
 
-Argus reviewed `dd5591b60`. The commits after the README commit fix his three blockers and two of his should-fix items. Section 4 still describes the shape at `dd5591b60`. The fixes below change details inside it, not its overall structure.
+Argus reviewed `dd5591b60`. The commits after it fix his three blockers and should-fix items 4 and 7. Sections 3 to 5 above describe the fixed code.
 
 ### Fixed after the review
 
