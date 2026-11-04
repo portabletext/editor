@@ -1,6 +1,6 @@
 # Range decoration re-anchoring spike
 
-Branch `spike/reanchor-range-decorations`, reviewed snapshot `dd5591b60`, base `origin/main` `cacd2c9b6`.
+Branch `spike/reanchor-range-decorations`, reviewed snapshot `dd5591b60` plus review fixes, base `origin/main` `cacd2c9b6`.
 
 ## 1. TL;DR
 
@@ -194,29 +194,30 @@ If the highlight had covered only `"dolly"` (`6 → 11`), step 2 would collapse 
 
 ## 6. Known limitations and open items
 
-Argus reviewed `dd5591b60`. **A fix job for these is in progress on a separate branch. This branch is the reviewed snapshot `dd5591b60`, and none of these fixes are in it.**
+Argus reviewed `dd5591b60`. The commits after the README commit fix his three blockers and two of his should-fix items. Section 4 still describes the shape at `dd5591b60`. The fixes below change details inside it, not its overall structure.
 
-### Blockers
+### Fixed after the review
 
-1. **Revival onto identical text is unsound with duplicate text.** Setup: `b0: "foo"`, `b1: "foo"`, decoration on all of `b1`. Select from the end of `b0` to the end of `b1` and press Backspace. On `main` the decoration dies. On this branch it comes back on `b0`'s `"foo"`, which it never covered. This affects both prop and registered decorations. `coversSameText` cannot tell "this text moved" from "other text that reads the same". `relocateUnsetPoint`'s `endsWith` branch is the same kind of guess. Suggested fix: decide survival from the transaction's own operations. A collapse is only provisional if an insert in the same transaction re-inserts the removed text. Drop the `endsWith` branch.
-2. **Performance: about 7× slower typing on a large document.** 1000 blocks × 1000 decorations, 50 keystrokes: `main` 334 ms, this branch 2387 ms (about 48 ms per keystroke). Causes: the per-operation zero-width check calls `getRangeDirection`, which scans the document; the snapshot clones every decoration on every transaction; `killCollapsedPropRanges` does an O(D²) `find`; `decorate.fn` is recreated after every transaction; and the engine keeps every `OperationEvent` until the transaction ends.
-3. **`finally` blocks can mask errors.** `withoutNormalizing` now runs `normalize` in `finally`, so a throwing `fn` normalizes a half-applied tree, and a second throw hides the first. `apply` runs transaction listeners in `finally`, so a listener error can hide an apply error, and listener errors aren't caught at all.
+1. **Revival onto identical text** (`7d9c13056`). A collapse now records the `remove.text` that caused it. Correction only revives the decoration if an insert in the same transaction carries the removed text in a span with the removed span's key, which is how a split writes its tail into the new block. Undo and redo accept any span key, because they replay an earlier move. `coversSameText` and the `endsWith` branch of `relocateUnsetPoint` are gone. Case: `b0: "foo"`, `b1: "foo"`, decoration on `b1`. Select from the end of `b0` to the end of `b1` and press Backspace or Delete: the decoration now dies, as on `main`. Tested for prop and registered decorations.
+2. **Performance** (`22af18320`, `d9dc4d54b`). The zero-width check works from paths alone. The transaction snapshot keeps range arrays by reference. Before-ranges are looked up by identity in a Map. A transaction of only `insert.text` and `set.selection` skips correction. Transaction end never recreates `decorate.fn`. 1000 blocks × 1000 decorations, measured in the same container: 50 keystrokes take 218–231 ms against `main`'s 202–218 ms, and 20 Enters 261–329 ms against 246–271 ms. That is 1.0–1.2× `main`, down from about 7×.
+3. **Masked errors** (`45509a34e`). `withoutNormalizing` follows `main`'s order again, so a throwing `fn` is not normalized and keeps its error. Transaction-end listeners are each wrapped in try/catch. Covered by unit tests in `operation-channel.test.ts`.
+4. **One `onMoved` per transaction** (`6f7f8158b`). The live range still updates per operation, for rendering and `getDecorations()`. Consumers get deaths, then one `onMoved` per decoration whose final range differs from its starting range.
+5. **Tests assert outcomes** (`8d3aebc86`). The acceptance tests check the final callback and the rendered text instead of full `onMoved` sequences.
 
-### Should-fix
+### Still open
 
-4. Prop `onMoved` still fires per operation, so consumers see an intermediate range before the corrected one (step 2 above). For a remote edit, that is a write the other client didn't intend. Fix: emit one `onMoved` (and one `on` batch) per decoration per transaction.
-5. Prop identity is copied by array index across consumer updates, so removing or reordering an entry can hand one decoration's identity to another.
-6. The skip condition in `correctSourceRanges` and the `relocateUnset` and same-block gates are hard to reason about. They should become a short rule table once blocker 1 is fixed.
-7. Several tests pin full `onMoved` sequences, including temporary span keys. They should assert the final range and text plus invariants (nothing after `null`, never reversed, never on foreign text). `spike-split-merge-decorations.test.tsx` should be merged into `range-decorations.test.tsx`.
-8. The changeset still says "spike:" and doesn't mention the behaviour changes: collapsed prop decorations now die, prop `null` arrives at transaction end, and `selection: null` no longer loops.
-9. The matcher is described as a port of labs, but it has diverged. Either make this the canonical copy or document the difference.
-
-There are also nits: the transaction origin is the first operation's origin, `apply`'s re-indent should become an extracted function, and `relocateUnset?` should be required. One open question: is every behavior action one transaction? A custom behavior that mixes `execute` and `effect` might split a split/merge across two transactions. This is untested.
+- Registered decorations still get one `on(mappings)` batch per operation, so they can report a short-lived `null` before correction revives them. Batching them per transaction changes the `onMapped` contract.
+- Prop identity is still copied by array index across consumer updates (Argus #5).
+- The survival gates in `correctSourceRanges` should become a short rule table (#6). `spike-split-merge-decorations.test.tsx` should be merged into `range-decorations.test.tsx`.
+- The changeset still says "spike:" and doesn't describe the behaviour changes (#8).
+- The matcher has diverged from labs. Either make it the canonical copy or document the difference (#9).
+- Undo and redo revival is still a text check, though limited to history replays. A precise version would link the undo step to the original split or merge.
+- Nits: the transaction origin is the first operation's origin, `apply`'s inner body should be extracted, and `relocateUnset?` should be required. Custom behaviors that mix `execute` and `effect` across transactions are untested.
 
 ### Suggested PR split (Argus)
 
 1. `fix:` a controlled prop decoration with `selection: null` loops on `onMoved`. It's small, independent, and a real bug on `main`.
-2. Engine: the internal transaction-end channel (`operation-channel`, the `apply`/`withoutNormalizing` brackets), with blocker 3 fixed and unit tests. No behaviour change. This is the piece maintainers must agree to.
+2. Engine: the internal transaction-end channel (`operation-channel`, the `apply`/`withoutNormalizing` brackets), with unit tests and no behaviour change. This is the piece maintainers must agree to.
 3. Range decorations follow split/merge/paste: the correction pass, matcher, operation-based survival, one `onMoved` per transaction, the performance fixes, a benchmark, and a changeset that describes the behaviour changes.
 
 ## 7. How to try it
