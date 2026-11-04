@@ -859,15 +859,18 @@ function correctSourceRanges(
   return corrected
 }
 
+/**
+ * Corrects every source against the transaction and reports whether any
+ * source's decorated ranges changed.
+ */
 function correctTransaction(
   context: {
     sources: Array<RangeDecorationSource>
     schema: EditorSchema
-    transactionChanged: boolean
   },
   transaction: OperationTransactionEvent,
   beforeRangesBySource: Map<string, Array<DecoratedRange>>,
-) {
+): boolean {
   const {blockKeys: touchedBlockKeys, sameBlockCorrectionKeys} =
     getStructuralTouchedBlockKeys(transaction)
   const origin = transaction.origin === 'remote' ? 'remote' : 'local'
@@ -897,10 +900,10 @@ function correctTransaction(
       )
     }
     killCollapsedPropRanges(source, beforeRanges, transaction, origin)
-    context.transactionChanged ||= source.deadPropSelections.size > 0
   }
-  context.transactionChanged ||= context.sources.some(
+  return context.sources.some(
     (source, index) =>
+      source.deadPropSelections.size > 0 ||
       !areSameDecoratedRanges(
         source.decoratedRanges,
         previousDecoratedRanges[index],
@@ -1177,12 +1180,6 @@ export const rangeDecorationsMachine = setup({
        */
       sourceUpdateChanged: boolean
       transactionSources: Map<string, Array<DecoratedRange>>
-      /**
-       * Set by `correct range decorations` when transaction-end correction
-       * or a death changed a source, read by `update decorate if transaction
-       * changed` for the same reason as `sourceUpdateChanged`.
-       */
-      transactionChanged: boolean
     },
     input: {} as {
       readOnly: boolean
@@ -1255,15 +1252,6 @@ export const rangeDecorationsMachine = setup({
     }),
     'update decorate if source changed': assign(({context}) => {
       if (!context.sourceUpdateChanged) {
-        return {}
-      }
-
-      return {
-        decorate: {fn: createDecorate(context.schema, context.editorEngine)},
-      }
-    }),
-    'update decorate if transaction changed': assign(({context}) => {
-      if (!context.transactionChanged) {
         return {}
       }
 
@@ -1481,7 +1469,7 @@ export const rangeDecorationsMachine = setup({
       if (event.type !== 'engine transaction end') {
         return
       }
-      context.transactionChanged = false
+      let changed = false
       const beforeRangesBySource = context.transactionSources
       context.transactionSources = new Map()
       if (
@@ -1498,12 +1486,18 @@ export const rangeDecorationsMachine = setup({
       ) {
         // Inserting text can neither collapse a range nor move text between
         // blocks, so per-operation mapping is final for such a transaction.
-        correctTransaction(context, event.transaction, beforeRangesBySource)
+        changed = correctTransaction(
+          context,
+          event.transaction,
+          beforeRangesBySource,
+        )
       }
       for (const source of context.sources) {
         source.collapsedInTransaction.clear()
       }
-      if (context.transactionChanged) {
+      // `decorate.fn` is kept: correction and deaths only change ranges in
+      // blocks the transaction modified, and those re-render anyway.
+      if (changed) {
         context.editorEngine.decoratedRanges = flattenSources(context.sources)
       }
       for (const source of context.sources) {
@@ -1531,7 +1525,6 @@ export const rangeDecorationsMachine = setup({
     },
     sourceUpdateChanged: false,
     transactionSources: new Map(),
-    transactionChanged: false,
   }),
   invoke: [
     {
@@ -1571,10 +1564,7 @@ export const rangeDecorationsMachine = setup({
           actions: ['capture transaction sources'],
         },
         'engine transaction end': {
-          actions: [
-            'correct range decorations',
-            'update decorate if transaction changed',
-          ],
+          actions: ['correct range decorations'],
         },
         'source updated': {
           target: '.idle',
