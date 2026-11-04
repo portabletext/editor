@@ -12,7 +12,7 @@ It also tightens when a decoration dies. A prop decoration gets one `onMoved` pe
 
 **Status (2026-11-04):** Argus's three blockers are fixed. On 1000 blocks with 1000 decorations, typing runs at 1.0–1.1× `main` and Enter at 1.1–1.2×. The range-decoration, shared, registration, undo/redo, collaboration, machine and unit suites pass, and types, lint and formatting are clean. A re-review is pending. What's still open is in section 6.
 
-See section 8 for how this differs from the closed PRs #2410, #2413 and #3208.
+See section 8 for how this differs from the closed `@portabletext/steps` PR #3208 and the earlier attempts #2410 and #2413.
 
 ## 2. The current system (`main`)
 
@@ -243,6 +243,31 @@ To try it by hand, use the playground: a preview build of this branch (plain edi
 
 ## 8. How this differs from the closed attempts
 
+### #3208 `feat/steps-package`: `@portabletext/steps` (closed unmerged 2026-09-08)
+
+[#3208](https://github.com/portabletext/editor/pull/3208) (Christian, head `0ebddf040`) added a standalone package, [`@portabletext/steps`](https://github.com/portabletext/editor/blob/0ebddf040ae47d1e083848da865bafd736123af3/packages/steps/README.md): "map a position across a transaction". It came out of the remote-caret prototype in [#3154](https://github.com/portabletext/editor/pull/3154). It has three parts:
+
+- `interpretTransaction(base, patches)` replays a transaction's **Sanity patches** on a copy of the document and turns them into eight primitive steps: `insert.text`, `remove.text`, `move.text`, `remove.node`, `move.node`, `set.text`, `set.children`, `set.key`.
+- Moves are recognised by **pairing a removal with an insertion**. A new node pairs with a removal whose text is exactly the same and at least 2 characters long. Text folded onto the end of a span pairs with a whole-span removal of the same text. If more than one candidate fits, nothing pairs and the edit stays a plain remove plus insert. The stated rule is that a wrong pairing is worse than a missed one. Identical text inserted and removed in the same batch can still be read as a move, and the design accepts that.
+- `mapPoint(steps, point, {affinity})` and `mapRange(steps, range)`. `mapRange` maps the anchor forward and the focus backward, so text typed at an edge stays outside. A collapsed range stays collapsed, and if either end is lost the result is `null`. It assumes a forward range.
+
+Its README says it is for positions that live **outside** the editor, such as a server relaying another client's edits or an offline client rebasing its selection. Inside the editor, "you don't need to map anything yourself". It was never wired into range decorations.
+
+| | #3208 `@portabletext/steps` | This branch |
+|---|---|---|
+| Input | Sanity patches plus the value they apply to (the wire format) | The engine's own operations within one transaction, plus the document before and after |
+| Where it runs | Anywhere: server, offline client, editor | Inside the editor's range-decorations machine, at the end of each engine transaction |
+| How a move is found | Pairs a removal and an insertion with identical text (2+ characters, exactly one candidate) into `move.text` or `move.node` | Per-operation `transformRange` first. For structural edits, the matcher (`matchBlocks` plus a text diff on the touched blocks) labels blocks split, merged, matched, removed or added. A collapsed decoration revives only if the same transaction re-inserts its removed text **under the removed span's key** (any key for undo/redo) |
+| Identical text elsewhere | Can pair by coincidence when exactly one candidate matches; backs off when more than one does | Never revives on text that wasn't re-inserted under the original span key. Argus's duplicate-text probes pass |
+| Range edges | Inward affinity (anchor forward, focus backward); null if an end is lost | Inward per operation. The matcher maps anchor and focus separately, so backward ranges stay backward. A range that collapses during the edit dies unless it's revived |
+| What consumers get | A mapped `Point` or `Range`, which they apply themselves | `onMoved` / `onMapped` and rendered highlights, updated automatically |
+| Public API | A new package with 3 functions and 8 public step types | None, only behaviour changes (see the changeset) |
+| Size | About 5,300 lines (1,500 source, 3,300 tests) in a new package | About 4,200 lines in `packages/editor`, 2,300 of them tests |
+
+**Why this branch didn't build on it.** An earlier spike wired #3208's steps into the editor's decorations and passed 9 of the 23 shared split/merge/undo tests. This approach passes 23 of 23. The steps model is built for patches arriving from somewhere else. Inside the editor, the operations and both versions of the document are already there, so the matcher can use block keys and span keys, which the patch pairing doesn't rely on.
+
+**How they could fit together.** The two solve neighbouring problems: this branch handles local edits inside the editor, and steps handle stored positions outside it. Two move-recognisers that might disagree is a real cost. If maintainers revive `@portabletext/steps`, this pass could take its `move.text` steps as hints alongside the matcher, or the matcher could become the recogniser behind `interpretTransaction`. That is an open question for the maintainers, not something this branch decides.
+
 ### #2410 `fix/range-decoration-paste-tracking` (Josef, closed unmerged 2026-04-01)
 
 [#2410](https://github.com/portabletext/editor/pull/2410) ("Make range decorations a bit sturdier [WIP]", head `6465b91fb`, about 9,000 lines added, 5,850 of them tests) was the first attempt. #2413 was cut down from it the same week. It worked by telling the decoration code what the behavior *meant*:
@@ -280,8 +305,3 @@ What this branch does differently:
 | `onMoved` | Per operation, including intermediate states | Once per decoration per transaction, with the final range |
 | Engine changes | None beyond the two apply functions | An internal transaction-end channel (`operation-channel`, `apply`/`withoutNormalizing` brackets). No public API |
 
-### #3208 `feat/steps-package` and #3154 (closed unmerged 2026-09-08)
-
-[#3208](https://github.com/portabletext/editor/pull/3208) didn't fix decorations directly. It proposed a shared `@portabletext/steps` package: an interpreter from Sanity patches to eight semantic steps (including `move.text` and `move.node`), plus `mapPoint` and inward-affinity `mapRange`. The idea was one position-mapping implementation shared by the caret, comment anchors and server-side re-anchoring. It came out of [#3154](https://github.com/portabletext/editor/pull/3154), which fixed remote caret recovery only.
-
-This branch is local and narrower: it works on the editor's own operations during a local transaction, not on wire patches, and it needs no new package. An earlier spike that wired #3208's steps into the editor passed 9 of 23 shared split/merge/undo tests, against 23 of 23 for this approach. If maintainers want the steps layer, this pass could later take its moves as input in place of the matcher.
