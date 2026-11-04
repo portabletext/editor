@@ -39,7 +39,7 @@ export const table = defineTable({containers: referenceContainers})
 
 Mount its plugin inside the editor and import the stylesheet:
 
-```tsx
+```tsx nocheck
 // app.tsx
 import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
 import '@portabletext/plugin-table/ui/styles.css'
@@ -109,7 +109,7 @@ leave it out if you don't need headers.
 
 Finally, you need a way to insert a table. For example a toolbar button:
 
-```tsx
+```tsx nocheck
 import {useEditor} from '@portabletext/editor'
 import {table} from './table'
 
@@ -223,7 +223,7 @@ colors in JavaScript), pass the same token names per instance through the
 its own roots, including the portal layers, so they reach the chrome no
 matter where it renders:
 
-```tsx
+```tsx nocheck
 render: (props) => (
   <Table
     {...props}
@@ -259,7 +259,7 @@ table is three of them, table → row → cell). Bringing your own
 definitions is how you rename types and fields, plug in your own renders,
 and decide what's allowed inside cells:
 
-```tsx
+```tsx nocheck
 import {defineContainer} from '@portabletext/editor'
 import {defineTable} from '@portabletext/plugin-table'
 import {Table, TableCell} from '@portabletext/plugin-table/ui'
@@ -317,7 +317,7 @@ a container definition renders it, so start from `referenceContainers` and
 override the table role, restating its canonical values (`type: 'table'`,
 `arrayField: 'rows'`):
 
-```tsx
+```tsx nocheck
 import {defineContainer} from '@portabletext/editor'
 import {defineTable} from '@portabletext/plugin-table'
 import {referenceContainers, Table} from '@portabletext/plugin-table/ui'
@@ -343,7 +343,7 @@ system's menu can take its place. The plugin keeps what only it knows: the
 anchor position above the table's top-right corner, the hover reveal, and
 editor-focus preservation.
 
-```tsx
+```tsx nocheck
 render: (props) => (
   <Table
     {...props}
@@ -376,7 +376,7 @@ renders.
 menu's icons travel with `renderMenu`). Icons sized in `em`s render at the
 built-in scale:
 
-```tsx
+```tsx nocheck
 render: (props) => <Table {...props} icons={{trash: <MyTrashIcon />}} />
 ```
 
@@ -387,7 +387,7 @@ defaults. Hosts with their own i18n resolve translations and pass the
 final strings. The `menu-*` keys only render when the built-in menu does;
 a `renderMenu` widget carries its own strings:
 
-```tsx
+```tsx nocheck
 render: (props) => (
   <Table
     {...props}
@@ -430,7 +430,7 @@ The usual source for `at` is the caret's own path (`Path` is exported
 from `@portabletext/editor`). A toolbar button that inserts a row below
 the current one:
 
-```tsx
+```tsx nocheck
 const selection = editor.getSnapshot().context.selection
 if (selection) {
   editor.send({
@@ -449,7 +449,7 @@ the table.
 
 To read the current rectangle, the table definition carries a selector:
 
-```ts
+```ts nocheck
 const tableSelection = table.getTableSelection(editor.getSnapshot())
 // undefined, or:
 // {

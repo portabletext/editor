@@ -17,6 +17,8 @@ import type {
  *
  * @example
  * ```ts
+ * import type {AutoCompleteMatch} from '@portabletext/plugin-typeahead-picker'
+ *
  * // With delimiter - type field required for auto-completion
  * type EmojiMatch = AutoCompleteMatch & {
  *   key: string
@@ -42,7 +44,9 @@ export type AutoCompleteMatch = {
  * - `mode: 'async'` - Must return `Promise<Array<TMatch>>`
  *
  * @example
- * ```ts
+ * ```ts nocheck
+ * import type {GetMatches} from '@portabletext/plugin-typeahead-picker'
+ *
  * // Sync: filter a local array
  * const getEmojis: GetMatches<EmojiMatch> = ({keyword}) =>
  *   emojis.filter(e => e.shortcode.includes(keyword))
@@ -122,7 +126,7 @@ export type TypeaheadTriggerEvent = {
  * Return `false` to block activation, or `true` to allow it.
  *
  * @example
- * ```ts
+ * ```ts nocheck
  * guard: ({snapshot, event, dom}) => {
  *   // Block activation if another picker is open
  *   if (anotherPickerIsOpen()) return false
@@ -179,7 +183,7 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
    * Returns behavior actions to execute (e.g., delete trigger text, insert content).
    *
    * @example
-   * ```ts
+   * ```ts nocheck
    * onSelect: [
    *   ({event}) => [
    *     raise({type: 'delete', at: event.patternSelection}),
@@ -203,7 +207,10 @@ type TypeaheadPickerDefinitionBase<TMatch extends object> = {
  * Create using {@link (defineTypeaheadPicker:1)} and pass to {@link useTypeaheadPicker}.
  *
  * @example
- * ```ts
+ * ```ts nocheck
+ * import {raise} from '@portabletext/editor/behaviors'
+ * import {defineTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+ *
  * const emojiPicker = defineTypeaheadPicker({
  *   trigger: /:/,
  *   keyword: /[\S]+/,
@@ -277,7 +284,7 @@ export type TypeaheadPickerEvent =
  * - `{active: {'showing matches': 'loading'}}` - Displaying results, fetching in background
  *
  * @example
- * ```ts
+ * ```ts nocheck
  * if (picker.snapshot.matches('idle')) return null
  * if (picker.snapshot.matches({active: 'loading'})) return <Spinner />
  * if (picker.snapshot.matches({active: 'showing matches'})) return <MatchList />
@@ -322,7 +329,9 @@ export type TypeaheadPickerContext<TMatch> = {
  * - Use `send()` to dispatch events like select, dismiss, or navigate
  *
  * @example
- * ```tsx
+ * ```tsx nocheck
+ * import {useTypeaheadPicker} from '@portabletext/plugin-typeahead-picker'
+ *
  * function EmojiPicker() {
  *   const picker = useTypeaheadPicker(emojiPickerDefinition)
  *

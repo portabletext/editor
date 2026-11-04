@@ -113,7 +113,7 @@ const codeBlock = defineBlockObject({
 
 Mount registrations through `NodePlugin`, alongside a `defineTextBlock` registration for your text blocks (a bare wrapper is enough if you don't customize them further):
 
-```tsx
+```tsx continue
 import {defineTextBlock} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 
@@ -184,7 +184,7 @@ function BlockObjectButton(props: {schemaType: ToolbarBlockObjectSchemaType}) {
 
 Clicking the button moves the hook into its `showing dialog` state. Render the dialog for that state, and send `insert` from the dialog's submit handler:
 
-```tsx
+```tsx continue
 import {useState} from 'react'
 
 function ImageButton(props: {schemaType: ToolbarBlockObjectSchemaType}) {
@@ -236,7 +236,7 @@ function ImageButton(props: {schemaType: ToolbarBlockObjectSchemaType}) {
 
 For a block type that needs no user input at all, skip the dialog states and insert straight from `useEditor`:
 
-```tsx
+```tsx continue
 import {useEditor} from '@portabletext/editor'
 
 function InsertButton(props: {schemaType: ToolbarBlockObjectSchemaType}) {
@@ -266,6 +266,8 @@ Inline objects work the same way as block objects, but they appear inside text b
 ### Step 1: define in schema
 
 ```tsx
+import {defineSchema} from '@portabletext/editor'
+
 const schemaDefinition = defineSchema({
   // ... styles, decorators, annotations, lists, blockObjects
   inlineObjects: [{name: 'stock-ticker'}],
@@ -312,7 +314,9 @@ const stockTicker = defineInlineObject({
 
 Add it to the same `NodePlugin`:
 
-```tsx
+```tsx nocheck
+import {NodePlugin} from '@portabletext/editor/plugins'
+
 const nodes = [textBlock, imageBlock, codeBlock, stockTicker]
 
 ;<NodePlugin nodes={nodes} />
@@ -355,7 +359,9 @@ function InlineObjectButton(props: {
 
 Add the inline object buttons to your toolbar alongside the block object buttons:
 
-```tsx
+```tsx nocheck
+import {useToolbarSchema} from '@portabletext/toolbar'
+
 function Toolbar() {
   const toolbarSchema = useToolbarSchema({
     extendBlockObject,

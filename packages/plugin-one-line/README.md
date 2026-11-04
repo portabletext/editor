@@ -41,8 +41,14 @@ The plugin keeps the value to one block, but Shift+Enter still inserts a soft li
 To disallow soft line breaks as well, register a Behavior that drops `insert.soft break`:
 
 ```tsx
+import {
+  defineSchema,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
 import {defineBehavior} from '@portabletext/editor/behaviors'
 import {BehaviorPlugin} from '@portabletext/editor/plugins'
+import {OneLinePlugin} from '@portabletext/plugin-one-line'
 
 const noSoftBreakBehavior = defineBehavior({
   on: 'insert.soft break',

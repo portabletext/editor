@@ -13,6 +13,8 @@
  *
  * @example
  * ```typescript
+ * import type {KeyboardEventDefinition} from '@portabletext/keyboard-shortcuts'
+ *
  * const boldEvent: KeyboardEventDefinition = {
  *   key: 'B',
  *   alt: false,

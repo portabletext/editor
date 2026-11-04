@@ -19,7 +19,8 @@ Each hook accepts an individual schema item and returns a `send` method and a `s
 
 For example, a button can use `useDecoratorButton` to create interactive buttons for decorators. The hook accepts details about the decorator, provided by the `useToolbarSchema` hook.
 
-```tsx
+```tsx nocheck
+import {EditorProvider} from '@portabletext/editor'
 import {
   useDecoratorButton,
   useToolbarSchema,
@@ -74,8 +75,12 @@ The toolbar library is more closely linked to parts of the PTE—like decorators
 
 You can send [synthetic events](/editor/reference/behavior-api/) from within the toolbar using `editor.send`.
 
-```tsx
-import {useEditor, useEditorSelector} from '@portabletext/editor'
+```tsx nocheck
+import {
+  EditorProvider,
+  useEditor,
+  useEditorSelector,
+} from '@portabletext/editor'
 
 function Toolbar() {
   const editor = useEditor()
@@ -128,6 +133,9 @@ Sometimes you need to enhance your schema to change a label or add a shortcut be
 ### Extend the schema
 
 ```tsx
+import {bold} from '@portabletext/keyboard-shortcuts'
+import type {ExtendDecoratorSchemaType} from '@portabletext/toolbar'
+
 const extendDecorator: ExtendDecoratorSchemaType = (decorator) => {
   if (decorator.name === 'strong') {
     return {
@@ -157,7 +165,9 @@ Repeat this same approach for styles, annotations, blocks, etc. as needed using 
 
 The `useToolbarSchema` hook accepts these extended schemas. Each one is optional, so pass an empty object when you don't extend any.
 
-```tsx
+```tsx nocheck
+import {useToolbarSchema} from '@portabletext/toolbar'
+
 const toolbarSchema = useToolbarSchema({
   extendDecorator,
   extendAnnotation,
@@ -180,6 +190,7 @@ Import the keyboard shortcut you want to use from the library, and extend your s
 
 ```tsx
 import {bold} from '@portabletext/keyboard-shortcuts'
+import type {ExtendDecoratorSchemaType} from '@portabletext/toolbar'
 
 const extendDecorator: ExtendDecoratorSchemaType = (decorator) => {
   if (decorator.name === 'strong') {
@@ -231,7 +242,7 @@ function HistoryButtons() {
 
 Then, render the buttons in a toolbar component.
 
-```tsx
+```tsx continue
 function ToolbarPlugin() {
   // ...
   return (

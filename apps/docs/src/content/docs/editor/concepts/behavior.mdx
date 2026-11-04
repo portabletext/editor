@@ -18,6 +18,8 @@ This pattern is influenced by [Statecharts](https://statecharts.dev/).
 Behaviors are defined with the `defineBehavior` helper. Here's an example event from the [behavior guide](/editor/guides/create-behavior/):
 
 ```tsx
+import {defineBehavior} from '@portabletext/editor/behaviors'
+
 defineBehavior({
   on: 'insert.text',
   guard: ({snapshot, event}) => event.text === 'a',
@@ -63,13 +65,13 @@ A guard is a condition that helps the behavior determine if it should perform th
 
 The `guard` key expects a response or `false`. The example above shows a simple _truthy_ guard. Here it is again:
 
-```js
+```js nocheck
 guard: ({snapshot, event}) => event.text === 'a'
 ```
 
 Guards can also return parameters that you can access when firing an action.
 
-```js
+```js nocheck
 guard: ({snapshot, event}) => {
     if (event.text === 'a') {
         return {

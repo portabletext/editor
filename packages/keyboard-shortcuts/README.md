@@ -49,7 +49,7 @@ At least one of `key` or `code` must be provided.
 
 Defines a complete keyboard shortcut with platform-specific configurations.
 
-```typescript
+```typescript continue
 type KeyboardShortcutDefinition = {
   default: ReadonlyArray<KeyboardEventDefinition>
   apple?: ReadonlyArray<KeyboardEventDefinition>
@@ -66,7 +66,15 @@ type KeyboardShortcutDefinition = {
 A resolved keyboard shortcut for the current platform.
 
 ```typescript
-type KeyboardShortcut<TKeyboardEvent> = {
+type KeyboardShortcut<
+  TKeyboardEvent extends Pick<
+    KeyboardEvent,
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+  > = Pick<
+    KeyboardEvent,
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+  >,
+> = {
   guard: (event: TKeyboardEvent) => boolean
   keys: ReadonlyArray<string>
 }
@@ -83,10 +91,16 @@ type KeyboardShortcut<TKeyboardEvent> = {
 
 Creates a `KeyboardShortcut` from a `KeyboardShortcutDefinition`.
 
-```typescript
-function createKeyboardShortcut<TKeyboardEvent>(
-  definition: KeyboardShortcutDefinition,
-): KeyboardShortcut<TKeyboardEvent>
+```typescript nocheck
+function createKeyboardShortcut<
+  TKeyboardEvent extends Pick<
+    KeyboardEvent,
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+  > = Pick<
+    KeyboardEvent,
+    'key' | 'code' | 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey'
+  >,
+>(definition: KeyboardShortcutDefinition): KeyboardShortcut<TKeyboardEvent>
 ```
 
 **Example:**
@@ -146,7 +160,7 @@ import {
 
 #### Basic usage
 
-```typescript
+```typescript nocheck
 import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
 
 const saveShortcut = createKeyboardShortcut({
@@ -184,7 +198,7 @@ console.log(saveShortcut.keys.join('+')) // "Ctrl+S" or "⌘+S"
 
 #### Using pre-defined shortcuts
 
-```typescript
+```typescript nocheck
 import {bold, italic} from '@portabletext/keyboard-shortcuts'
 
 document.addEventListener('keydown', (event) => {
@@ -201,6 +215,8 @@ document.addEventListener('keydown', (event) => {
 #### Multiple key combinations
 
 ```typescript
+import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+
 const deleteShortcut = createKeyboardShortcut({
   default: [
     {key: 'Delete', ctrl: false, meta: false, alt: false, shift: false},

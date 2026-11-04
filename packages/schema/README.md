@@ -25,7 +25,7 @@ const schemaDefinition = defineSchema({
 
 ### Compile schema
 
-```ts
+```ts continue
 import {compileSchema} from '@portabletext/schema'
 
 const schema = compileSchema(schemaDefinition)
@@ -39,6 +39,8 @@ allowed inside it. This is how a code block, callout, or table cell restricts
 what can be typed within it.
 
 ```ts
+import {defineSchema} from '@portabletext/schema'
+
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}, {name: 'em'}, {name: 'code'}],
   styles: [{name: 'normal'}, {name: 'h1'}],
@@ -63,7 +65,7 @@ const schemaDefinition = defineSchema({
 Use `getSubSchema` to resolve what is allowed at a position inside a
 container. It returns a `Schema` you can treat like any top-level one:
 
-```ts
+```ts continue
 import {compileSchema, getSubSchema} from '@portabletext/schema'
 
 const schema = compileSchema(schemaDefinition)
