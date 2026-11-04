@@ -1732,6 +1732,36 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
     },
   )
 
+  test('Scenario: pasting two blocks over text preserves a decoration on the unselected tail', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'ab foo')],
+      decoration: acceptanceSelection('b0', 's0', 3, 'b0', 's0', 6),
+    })
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 1, 'b0', 's0', 2),
+    })
+    harness.editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        acceptanceBlock('p1', 'q1', 'x'),
+        acceptanceBlock('p2', 'q2', 'y'),
+      ],
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['ax', 'y foo'])
+      expect(harness.getSelection()).toEqual(
+        acceptanceSelection('p2', 'q2', 2, 'p2', 'q2', 5),
+      )
+      expect(harness.movedSelections).toEqual([
+        acceptanceSelection('p2', 'q2', 2, 'p2', 'q2', 5),
+      ])
+      expect(getDecoratedText()).toEqual(['foo'])
+    })
+  })
+
   test.each(['one', 'one\ntwo'])(
     'Scenario: plain-text paste of %s at the start of decorated text preserves the original words',
     async (text) => {

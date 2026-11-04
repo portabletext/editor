@@ -717,6 +717,7 @@ type RemovedEndpoint = {
   text: string
   offset: number
   allowDifferentKey: boolean
+  removedInsideSelection?: boolean
 }
 
 type TextSpanNode = {_key: string; _type: string; text: string}
@@ -738,7 +739,7 @@ type TransactionCopies = {
   removedBlockKeys: Set<string>
   touchedBlockKeys: Set<string>
   isUpdateValue: boolean
-  isLocalSelectionReplacement: boolean
+  localReplacementRange: Range | undefined
   bypassAmbiguity: boolean
 }
 
@@ -812,7 +813,20 @@ function mapPointThroughRecordedMoves(
     }
 
     if (point && operation.type === 'remove.text') {
-      removedEndpoint = getRemovedEndpoint(point, operation)
+      const nextRemovedEndpoint = getRemovedEndpoint(
+        point,
+        operation,
+        transaction.beforeValue,
+        copies.localReplacementRange,
+      )
+      if (
+        nextRemovedEndpoint &&
+        (!removedEndpoint ||
+          removedEndpoint.removedInsideSelection ||
+          !nextRemovedEndpoint.removedInsideSelection)
+      ) {
+        removedEndpoint = nextRemovedEndpoint
+      }
       if (removedEndpoint) {
         const destination = pickDestination(removedEndpoint, copies, {
           allowedOperations: seenInsertions,
@@ -944,13 +958,7 @@ function buildTransactionCopies(
         (frame) => frame.kind === 'remote' && frame.source === 'update-value',
       ),
     ),
-    isLocalSelectionReplacement:
-      transaction.origin === 'local' &&
-      transaction.operations.some(
-        (operationEvent) =>
-          operationEvent.beforeSelection !== null &&
-          !isCollapsedRange(operationEvent.beforeSelection),
-      ),
+    localReplacementRange: getLocalReplacementRange(transaction),
     bypassAmbiguity:
       transaction.origin === 'undo' || transaction.origin === 'redo',
   }
@@ -1009,7 +1017,7 @@ function pickDestination(
         eligible:
           copy.operation.type === 'insert.text' ||
           sameKey ||
-          (adjacent && !copies.isLocalSelectionReplacement) ||
+          (adjacent && !removedEndpoint.removedInsideSelection) ||
           updateValueRekey,
         sameKey,
       })
@@ -1028,6 +1036,7 @@ function pickDestination(
       (!options.excludedPath ||
         !isDeepEqual(candidate.point.path, options.excludedPath)),
   )
+  // Every fresh copy vetoes identity inference because adjacency cannot prove which copy retained the removed content.
   const freshSpanKeys = new Set(
     candidates.flatMap((candidate) => {
       const spanSegment = candidate.point.path.at(-1)
@@ -1115,6 +1124,8 @@ function isUpdateValueRekey(
 function getRemovedEndpoint(
   point: Point,
   operation: Extract<EngineOperation, {type: 'remove.text'}>,
+  beforeValue: Array<PortableTextBlock>,
+  localReplacementRange: Range | undefined,
 ): RemovedEndpoint | undefined {
   if (!isDeepEqual(point.path, operation.path)) {
     return undefined
@@ -1140,7 +1151,47 @@ function getRemovedEndpoint(
     text: operation.text,
     offset: point.offset - operation.offset,
     allowDifferentKey: false,
+    removedInsideSelection: isRemovalInsideRange(
+      operation,
+      beforeValue,
+      localReplacementRange,
+    ),
   }
+}
+
+function getLocalReplacementRange(
+  transaction: OperationTransactionEvent,
+): Range | undefined {
+  if (transaction.origin !== 'local') {
+    return undefined
+  }
+  return (
+    transaction.operations.find(
+      (operationEvent) =>
+        operationEvent.beforeSelection !== null &&
+        !isCollapsedRange(operationEvent.beforeSelection),
+    )?.beforeSelection ?? undefined
+  )
+}
+
+function isRemovalInsideRange(
+  operation: Extract<EngineOperation, {type: 'remove.text'}>,
+  value: Array<PortableTextBlock>,
+  range: Range | undefined,
+): boolean {
+  if (!range) {
+    return false
+  }
+  const [start, end] = rangeEdges(range, {value})
+  const removalStart = {path: operation.path, offset: operation.offset}
+  const removalEnd = {
+    path: operation.path,
+    offset: operation.offset + operation.text.length,
+  }
+  return (
+    !isBeforePoint(removalStart, start, {value}) &&
+    !isAfterPoint(removalEnd, end, {value})
+  )
 }
 
 function canonicalizeForwardStart(
