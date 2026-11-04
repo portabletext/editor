@@ -1,4 +1,5 @@
 import {
+  isSpan,
   isTextBlock,
   type PortableTextBlock,
   type PortableTextSpan,
@@ -723,6 +724,7 @@ type TextSpanNode = {_key: string; _type: string; text: string}
 function mapRangeThroughRecordedMoves(
   range: Range,
   transaction: OperationTransactionEvent,
+  schema: EditorSchema,
 ): Range | null | undefined {
   const [anchorAffinity, focusAffinity] = resolveRangeAffinities(
     range,
@@ -733,11 +735,13 @@ function mapRangeThroughRecordedMoves(
     range.anchor,
     anchorAffinity,
     transaction,
+    schema,
   )
   const focus = mapPointThroughRecordedMoves(
     range.focus,
     focusAffinity,
     transaction,
+    schema,
   )
   if (!anchor.moved && !focus.moved) {
     return undefined
@@ -748,10 +752,13 @@ function mapRangeThroughRecordedMoves(
   return {anchor: anchor.point, focus: focus.point}
 }
 
+// Disambiguate by same key, then adjacency, then unique substring; otherwise
+// the endpoint dies instead of following an unrelated copy.
 function mapPointThroughRecordedMoves(
   initialPoint: Point,
   affinity: 'forward' | 'backward' | null,
   transaction: OperationTransactionEvent,
+  schema: EditorSchema,
 ): {point: Point | null; moved: boolean} {
   let point: Point | null = initialPoint
   let removedEndpoint: RemovedEndpoint | undefined
@@ -765,11 +772,21 @@ function mapPointThroughRecordedMoves(
     if (operation.type === 'insert.text') {
       insertedText.push(operation)
       if (removedEndpoint) {
-        const textOffset = operation.text.indexOf(removedEndpoint.text)
-        if (textOffset !== -1) {
+        const copy = findUniqueTextCopy(
+          transaction.operations.map(({operation: candidate}) => candidate),
+          transaction.beforeValue,
+          removedEndpoint,
+          transaction.operations.some(
+            ({operation: candidate}) =>
+              candidate.type === 'unset' &&
+              candidate.path.length === 1 &&
+              getBlockKey(candidate.path) === removedEndpoint?.blockKey,
+          ),
+        )
+        if (copy?.operation === operation) {
           point = {
             path: operation.path,
-            offset: operation.offset + textOffset + removedEndpoint.offset,
+            offset: copy.offset,
           }
           removedEndpoint = undefined
           moved = true
@@ -785,14 +802,36 @@ function mapPointThroughRecordedMoves(
       removedEndpoint = getRemovedEndpoint(point, operation)
       if (removedEndpoint) {
         const removal = removedEndpoint
-        const insertedPoint = insertedNodes
-          .map((insertedNode) => findInsertedPoint(insertedNode, removal))
+        const sameKeyPoint = insertedNodes
+          .map((insertedNode) =>
+            findInsertedPoint(
+              insertedNode,
+              removal,
+              transaction.beforeValue,
+              schema,
+            ),
+          )
           .filter(
             (candidate) =>
               candidate !== undefined &&
+              (!removal.allowDifferentKey ||
+                transaction.origin === 'undo' ||
+                transaction.origin === 'redo' ||
+                (isKeyedSegment(candidate.path[2]) &&
+                  candidate.path[2]._key === removal.spanKey)) &&
               !isDeepEqual(candidate.path, point?.path),
           )
           .at(-1)
+        const freshInsertion = findUniqueFreshInsertion(
+          transaction,
+          removal,
+          schema,
+        )
+        const insertedPoint =
+          sameKeyPoint ??
+          (freshInsertion && insertedNodes.includes(freshInsertion.operation)
+            ? freshInsertion.point
+            : undefined)
         if (insertedPoint) {
           point = insertedPoint
           removedEndpoint = undefined
@@ -803,7 +842,28 @@ function mapPointThroughRecordedMoves(
     }
 
     if (removedEndpoint && operation.type === 'insert') {
-      const insertedPoint = findInsertedPoint(operation, removedEndpoint)
+      const directPoint = findInsertedPoint(
+        operation,
+        removedEndpoint,
+        transaction.beforeValue,
+        schema,
+      )
+      const freshInsertion = findUniqueFreshInsertion(
+        transaction,
+        removedEndpoint,
+        schema,
+      )
+      const insertedPoint =
+        !removedEndpoint.allowDifferentKey ||
+        transaction.origin === 'undo' ||
+        transaction.origin === 'redo'
+          ? directPoint
+          : isKeyedSegment(directPoint?.path[2]) &&
+              directPoint.path[2]._key === removedEndpoint.spanKey
+            ? directPoint
+            : freshInsertion?.operation === operation
+              ? freshInsertion.point
+              : undefined
       if (insertedPoint) {
         point = insertedPoint
         removedEndpoint = undefined
@@ -818,6 +878,8 @@ function mapPointThroughRecordedMoves(
         operationEvent.beforeValue,
         operation,
         insertedText,
+        schema,
+        transaction.origin,
       )
       if (relocatedPoint) {
         point = relocatedPoint
@@ -828,6 +890,7 @@ function mapPointThroughRecordedMoves(
         point,
         operationEvent.beforeValue,
         operation,
+        schema,
       )
     }
 
@@ -837,10 +900,111 @@ function mapPointThroughRecordedMoves(
   return {
     point:
       point && moved
-        ? canonicalizeForwardStart(point, affinity, transaction.afterValue)
+        ? canonicalizeForwardStart(
+            point,
+            affinity,
+            transaction.afterValue,
+            schema,
+          )
         : point,
     moved,
   }
+}
+
+function findUniqueFreshInsertion(
+  transaction: OperationTransactionEvent,
+  removedEndpoint: RemovedEndpoint,
+  schema: EditorSchema,
+):
+  | {
+      operation: Extract<EngineOperation, {type: 'insert'}>
+      point: Point
+    }
+  | undefined {
+  const matchingOperations = transaction.operations.flatMap(({operation}) => {
+    if (operation.type !== 'insert') {
+      return []
+    }
+    const hasMatchingFreshSpan = getTextSpans(operation.node, schema).some(
+      (span) =>
+        span._key !== removedEndpoint.spanKey &&
+        span.text === removedEndpoint.text,
+    )
+    return hasMatchingFreshSpan ? [operation] : []
+  })
+  if (matchingOperations.length !== 1) {
+    return undefined
+  }
+  const candidates = matchingOperations.flatMap((operation) => {
+    const point = findInsertedPoint(
+      operation,
+      removedEndpoint,
+      transaction.beforeValue,
+      schema,
+    )
+    return point &&
+      isKeyedSegment(point.path[2]) &&
+      point.path[2]._key !== removedEndpoint.spanKey
+      ? [{operation, point}]
+      : []
+  })
+  const uniqueCandidates = candidates.filter(
+    (candidate, index) =>
+      candidates.findIndex((other) =>
+        isDeepEqual(other.point, candidate.point),
+      ) === index,
+  )
+  return uniqueCandidates.length === 1 ? uniqueCandidates[0] : undefined
+}
+
+function findUniqueTextCopy(
+  operations: Array<EngineOperation>,
+  beforeValue: Array<PortableTextBlock>,
+  removedEndpoint: RemovedEndpoint,
+  allowMergeTarget = false,
+  allowAmbiguous = false,
+):
+  | {
+      operation: Extract<EngineOperation, {type: 'insert.text'}>
+      offset: number
+    }
+  | undefined {
+  if (removedEndpoint.text.length === 0) {
+    return undefined
+  }
+  const sourceIndex = beforeValue.findIndex(
+    (block) => block._key === removedEndpoint.blockKey,
+  )
+  const mergeTargetKey = beforeValue[sourceIndex - 1]?._key
+  const candidates = operations.flatMap((operation) => {
+    if (operation.type !== 'insert.text') {
+      return []
+    }
+    const destinationBlockKey = getBlockKey(operation.path)
+    const textOffset = operation.text.indexOf(removedEndpoint.text)
+    return textOffset !== -1 &&
+      (destinationBlockKey === removedEndpoint.blockKey ||
+        (allowMergeTarget && destinationBlockKey === mergeTargetKey))
+      ? [
+          {
+            operation,
+            offset: operation.offset + textOffset + removedEndpoint.offset,
+          },
+        ]
+      : []
+  })
+  const sameKeyCandidates = candidates.filter(
+    ({operation}) =>
+      isKeyedSegment(operation.path[2]) &&
+      operation.path[2]._key === removedEndpoint.spanKey,
+  )
+  if (sameKeyCandidates.length > 0) {
+    return sameKeyCandidates.at(-1)
+  }
+  if (allowAmbiguous) {
+    return candidates.at(-1)
+  }
+  return candidates.length === 1 ? candidates[0] : undefined
 }
 
 function getRemovedEndpoint(
@@ -877,25 +1041,36 @@ function getRemovedEndpoint(
 function findInsertedPoint(
   operation: Extract<EngineOperation, {type: 'insert'}>,
   removedEndpoint: RemovedEndpoint,
+  beforeValue: Array<PortableTextBlock>,
+  schema: EditorSchema,
 ): Point | undefined {
-  const spans = getTextSpans(operation.node)
+  const spans = getTextSpans(operation.node, schema)
   const sourceSegment = operation.path.at(-1)
+  const removedBlockIndex = beforeValue.findIndex(
+    (block) => block._key === removedEndpoint.blockKey,
+  )
+  const sourceBlockIndex = isKeyedSegment(sourceSegment)
+    ? beforeValue.findIndex((block) => block._key === sourceSegment._key)
+    : -1
   const isAdjacentTransfer =
-    operation.position === 'after' &&
-    isKeyedSegment(sourceSegment) &&
-    (sourceSegment._key === removedEndpoint.spanKey ||
-      sourceSegment._key === removedEndpoint.blockKey)
+    (!sourceSegment && beforeValue.length === 1) ||
+    (isKeyedSegment(sourceSegment) &&
+      (sourceSegment._key === removedEndpoint.spanKey ||
+        sourceSegment._key === removedEndpoint.blockKey ||
+        (operation.position === 'after' &&
+          sourceBlockIndex === removedBlockIndex - 1) ||
+        (operation.position === 'before' &&
+          sourceBlockIndex === removedBlockIndex + 1)))
   const candidates = spans.flatMap((span) => {
     const textOffset = span.text.indexOf(removedEndpoint.text)
     if (
       textOffset === -1 ||
       (span._key !== removedEndpoint.spanKey &&
-        (span.text !== removedEndpoint.text ||
-          (!removedEndpoint.allowDifferentKey && !isAdjacentTransfer)))
+        (span.text !== removedEndpoint.text || !isAdjacentTransfer))
     ) {
       return []
     }
-    const blockKey = hasTextBlockChildren(operation.node)
+    const blockKey = hasTextBlockChildren(operation.node, schema)
       ? operation.node._key
       : getBlockKey(operation.path)
     return blockKey
@@ -914,6 +1089,7 @@ function canonicalizeForwardStart(
   point: Point,
   affinity: 'forward' | 'backward' | null,
   value: Array<PortableTextBlock>,
+  schema: EditorSchema,
 ): Point {
   const blockSegment = point.path[0]
   const spanSegment = point.path[2]
@@ -926,14 +1102,14 @@ function canonicalizeForwardStart(
     return point
   }
   const block = value.find((candidate) => candidate._key === blockSegment._key)
-  if (!hasTextBlockChildren(block)) {
+  if (!hasTextBlockChildren(block, schema)) {
     return point
   }
   const spanIndex = block.children.findIndex(
     (child) => child._key === spanSegment._key,
   )
   const precedingSpan = block.children[spanIndex - 1]
-  return isPortableTextSpan(precedingSpan)
+  return isPortableTextSpan(precedingSpan, schema)
     ? {
         path: [
           {_key: blockSegment._key},
@@ -950,6 +1126,8 @@ function relocateUnsetPointFromOperations(
   beforeValue: Array<PortableTextBlock>,
   operation: Extract<EngineOperation, {type: 'unset'}>,
   insertedText: Array<Extract<EngineOperation, {type: 'insert.text'}>>,
+  schema: EditorSchema,
+  origin: OperationTransactionEvent['origin'],
 ): Point | undefined {
   const pointBlockSegment = point.path[0]
   const pointSpanSegment = point.path[2]
@@ -969,17 +1147,21 @@ function relocateUnsetPointFromOperations(
     const removedBlock = beforeValue.find(
       (candidate) => candidate._key === pointBlockSegment._key,
     )
-    const removedSpan = findTextSpan(removedBlock, pointSpanSegment._key)
+    const removedSpan = findTextSpan(
+      removedBlock,
+      pointSpanSegment._key,
+      schema,
+    )
     const candidates = beforeValue.flatMap((block) => {
       if (
         block._key === pointBlockSegment._key ||
-        !hasTextBlockChildren(block)
+        !hasTextBlockChildren(block, schema)
       ) {
         return []
       }
       return block.children.some(
         (child) =>
-          isPortableTextSpan(child) &&
+          isPortableTextSpan(child, schema) &&
           child._key === pointSpanSegment._key &&
           child.text === removedSpan?.text,
       )
@@ -998,17 +1180,22 @@ function relocateUnsetPointFromOperations(
       }
     }
     const copy = removedSpan
-      ? insertedText
-          .filter(
-            (candidate) =>
-              candidate.text === removedSpan.text &&
-              !isDeepEqual(candidate.path, point.path),
-          )
-          .at(-1)
+      ? findUniqueTextCopy(
+          insertedText,
+          beforeValue,
+          {
+            path: point.path,
+            blockKey: pointBlockSegment._key,
+            spanKey: pointSpanSegment._key,
+            text: removedSpan.text,
+            offset: point.offset,
+            allowDifferentKey: true,
+          },
+          true,
+          origin === 'undo' || origin === 'redo',
+        )
       : undefined
-    return copy
-      ? {path: copy.path, offset: copy.offset + point.offset}
-      : undefined
+    return copy ? {path: copy.operation.path, offset: copy.offset} : undefined
   }
 
   if (
@@ -1020,24 +1207,32 @@ function relocateUnsetPointFromOperations(
   const block = beforeValue.find(
     (candidate) => candidate._key === pointBlockSegment._key,
   )
-  const span = findTextSpan(block, pointSpanSegment._key)
+  const span = findTextSpan(block, pointSpanSegment._key, schema)
   if (!span) {
     return undefined
   }
-  const copies = insertedText.filter(
-    (candidate) =>
-      candidate.text === span.text && !isDeepEqual(candidate.path, point.path),
+  const copy = findUniqueTextCopy(
+    insertedText,
+    beforeValue,
+    {
+      path: point.path,
+      blockKey: pointBlockSegment._key,
+      spanKey: pointSpanSegment._key,
+      text: span.text,
+      offset: point.offset,
+      allowDifferentKey: false,
+    },
+    true,
+    origin === 'undo' || origin === 'redo',
   )
-  const copy = copies.at(-1)
-  return copy
-    ? {path: copy.path, offset: copy.offset + point.offset}
-    : undefined
+  return copy ? {path: copy.operation.path, offset: copy.offset} : undefined
 }
 
 function getUnsetEndpoint(
   point: Point,
   beforeValue: Array<PortableTextBlock>,
   operation: Extract<EngineOperation, {type: 'unset'}>,
+  schema: EditorSchema,
 ): RemovedEndpoint | undefined {
   const blockSegment = point.path[0]
   const spanSegment = point.path[2]
@@ -1056,8 +1251,8 @@ function getUnsetEndpoint(
   const block = beforeValue.find(
     (candidate) => candidate._key === blockSegment._key,
   )
-  const span = findTextSpan(block, spanSegment._key)
-  return span
+  const span = findTextSpan(block, spanSegment._key, schema)
+  return span && span.text.length > 0
     ? {
         path: point.path,
         blockKey: blockSegment._key,
@@ -1069,27 +1264,23 @@ function getUnsetEndpoint(
     : undefined
 }
 
-function isPortableTextSpan(node: unknown): node is TextSpanNode {
-  return (
-    typeof node === 'object' &&
-    node !== null &&
-    '_type' in node &&
-    node._type === 'span' &&
-    'text' in node &&
-    typeof node.text === 'string'
-  )
+function isPortableTextSpan(
+  node: unknown,
+  schema: EditorSchema,
+): node is TextSpanNode {
+  return isSpan({schema}, node)
 }
 
-function getTextSpans(node: Node): Array<TextSpanNode> {
-  if (isPortableTextSpan(node)) {
+function getTextSpans(node: Node, schema: EditorSchema): Array<TextSpanNode> {
+  if (isPortableTextSpan(node, schema)) {
     return [node]
   }
-  if (!hasTextBlockChildren(node)) {
+  if (!hasTextBlockChildren(node, schema)) {
     return []
   }
   const spans: Array<TextSpanNode> = []
   for (const child of node.children) {
-    if (isPortableTextSpan(child)) {
+    if (isPortableTextSpan(child, schema)) {
       spans.push(child)
     }
   }
@@ -1099,12 +1290,13 @@ function getTextSpans(node: Node): Array<TextSpanNode> {
 function findTextSpan(
   block: PortableTextBlock | undefined,
   spanKey: string,
+  schema: EditorSchema,
 ): TextSpanNode | undefined {
-  if (!hasTextBlockChildren(block)) {
+  if (!hasTextBlockChildren(block, schema)) {
     return undefined
   }
   for (const child of block.children) {
-    if (child._key === spanKey && isPortableTextSpan(child)) {
+    if (child._key === spanKey && isPortableTextSpan(child, schema)) {
       return child
     }
   }
@@ -1113,13 +1305,9 @@ function findTextSpan(
 
 function hasTextBlockChildren(
   node: unknown,
+  schema: EditorSchema,
 ): node is PortableTextBlock & {children: Array<Node>} {
-  return (
-    typeof node === 'object' &&
-    node !== null &&
-    'children' in node &&
-    Array.isArray(node.children)
-  )
+  return isTextBlock({schema}, node)
 }
 
 function correctSourceRanges(
@@ -1127,15 +1315,32 @@ function correctSourceRanges(
   beforeRanges: Array<DecoratedRange>,
   origin: 'local' | 'remote',
   transaction: OperationTransactionEvent,
+  schema: EditorSchema,
 ): Array<DecoratedRange> {
   const corrected = [...source.decoratedRanges]
+  const touchedBlockKeys = new Set(
+    transaction.operations.flatMap(({operation}) => {
+      if (operation.type !== 'remove.text' && operation.type !== 'unset') {
+        return []
+      }
+      const blockKey = getBlockKey(operation.path)
+      return blockKey ? [blockKey] : []
+    }),
+  )
 
   for (let index = 0; index < beforeRanges.length; index++) {
     const beforeDecoratedRange = beforeRanges[index]!
     const beforeRange = getDecoratedRange(beforeDecoratedRange)
+    if (
+      !touchedBlockKeys.has(getBlockKey(beforeRange.anchor.path) ?? '') &&
+      !touchedBlockKeys.has(getBlockKey(beforeRange.focus.path) ?? '')
+    ) {
+      continue
+    }
     const reanchoredRange = mapRangeThroughRecordedMoves(
       beforeRange,
       transaction,
+      schema,
     )
     if (
       !reanchoredRange ||
@@ -1150,7 +1355,7 @@ function correctSourceRanges(
     const collapse = source.collapsedInTransaction.get(
       getDecorationIdentity(beforeDecoratedRange),
     )
-    if (collapse && !wasRemovedTextReinserted(transaction, collapse)) {
+    if (collapse && !wasRemovedTextReinserted(transaction, collapse, schema)) {
       continue
     }
     const currentIndex = findCurrentDecorationIndex(
@@ -1226,6 +1431,7 @@ function correctSourceRanges(
 function correctTransaction(
   context: {
     sources: Array<RangeDecorationSource>
+    schema: EditorSchema
   },
   transaction: OperationTransactionEvent,
   beforeRangesBySource: Map<string, Array<DecoratedRange>>,
@@ -1241,6 +1447,7 @@ function correctTransaction(
       beforeRanges,
       origin,
       transaction,
+      context.schema,
     )
     killCollapsedPropRanges(source, beforeRanges, transaction, origin)
   }
@@ -1407,6 +1614,7 @@ function getCollapsingRemoval(
 function wasRemovedTextReinserted(
   transaction: OperationTransactionEvent,
   collapse: CollapseProvenance,
+  schema: EditorSchema,
 ): boolean {
   const removal = collapse.removal
   if (!removal || removal.type !== 'remove.text' || removal.text.length === 0) {
@@ -1425,10 +1633,19 @@ function wasRemovedTextReinserted(
     offset: 0,
     allowDifferentKey: false,
   }
-  return transaction.operations.some(
-    ({operation}) =>
-      operation.type === 'insert' &&
-      findInsertedPoint(operation, removedEndpoint) !== undefined,
+  return (
+    findUniqueTextCopy(
+      transaction.operations.map(({operation}) => operation),
+      transaction.beforeValue,
+      removedEndpoint,
+    ) !== undefined ||
+    transaction.operations.some(
+      ({operation}) =>
+        operation.type === 'insert' &&
+        getTextSpans(operation.node, schema).some(
+          (span) => span.text.indexOf(removedEndpoint.text) !== -1,
+        ),
+    )
   )
 }
 
