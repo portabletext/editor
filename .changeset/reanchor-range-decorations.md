@@ -2,6 +2,8 @@
 '@portabletext/editor': patch
 ---
 
-spike: re-anchor range decorations after structural edit transactions
+fix: keep range decorations attached through split, merge and paste
 
-Range decorations now stay attached to their text when splitting, merging, pasting, undoing, or redoing top-level blocks. This includes plain-text paste inside a decoration and replacing a selection that crosses a block break. Ordinary text edits continue to move decorations synchronously.
+Range decorations now follow their text through Enter, Backspace and Delete merges, paste, cross-block replacement, undo, and redo.
+
+A prop decoration whose text is fully deleted, even when its block remains, is removed and receives `onMoved({newSelection: null})` instead of remaining as a collapsed range. Prop decorations receive one `onMoved` call per edit with the final range, and deaths are reported at the end of the edit. Registered decorations receive one `onMapped` call per edit with net mappings and no longer receive a transient `null` for a decoration that survives. A controlled prop decoration with `selection: null` no longer calls `onMoved` on every update.
