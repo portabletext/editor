@@ -1732,6 +1732,30 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
     },
   )
 
+  test('Scenario: pasting two blocks inside a decoration stretches it over the pasted text', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'ab foo')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 6),
+    })
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 1, 'b0', 's0', 2),
+    })
+    harness.editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        acceptanceBlock('p1', 'q1', 'x'),
+        acceptanceBlock('p2', 'q2', 'y'),
+      ],
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['ax', 'y foo'])
+      expect(getDecoratedText()).toEqual(['ax', 'y foo'])
+    })
+  })
+
   test('Scenario: pasting two blocks over text preserves a decoration on the unselected tail', async () => {
     const harness = await createAcceptanceDecorationHarness({
       initialValue: [acceptanceBlock('b0', 's0', 'ab foo')],
