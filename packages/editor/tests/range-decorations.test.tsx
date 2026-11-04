@@ -1575,6 +1575,38 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
     },
   )
 
+  test.each([
+    {kind: 'prop' as const, key: '{Backspace}'},
+    {kind: 'prop' as const, key: '{Delete}'},
+    {kind: 'registered' as const, key: '{Backspace}'},
+    {kind: 'registered' as const, key: '{Delete}'},
+  ])(
+    'Scenario: a $kind decoration whose text is deleted with $key does not revive on identical text',
+    async ({kind, key}) => {
+      const initialValue = [
+        acceptanceBlock('b0', 's0', 'foo'),
+        acceptanceBlock('b1', 's1', 'foo'),
+      ]
+      const decoration = acceptanceSelection('b1', 's1', 0, 'b1', 's1', 3)
+      const harness =
+        kind === 'prop'
+          ? await createAcceptanceDecorationHarness({initialValue, decoration})
+          : await createRegisteredDecorationHarness({initialValue, decoration})
+
+      await userEvent.click(harness.locator)
+      harness.editor.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 3, 'b1', 's1', 3),
+      })
+      await userEvent.keyboard(key)
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(['foo'])
+        expect(harness.getSelection()).toEqual(undefined)
+      })
+    },
+  )
+
   test('Scenario: a controlled null prop decoration does not call `onMoved`', async () => {
     const onMoved = vi.fn()
 
@@ -1828,53 +1860,56 @@ async function createAcceptanceDecorationHarness(args: {
   }
 }
 
-async function createSplitMergeDecorationHarness(kind: 'prop' | 'registered') {
+function createSplitMergeDecorationHarness(kind: 'prop' | 'registered') {
+  const initialValue = [acceptanceBlock('b0', 's0', 'highlighted words')]
   const decoration = acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17)
-  if (kind === 'registered') {
-    const result = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      initialValue: [acceptanceBlock('b0', 's0', 'highlighted words')],
-    })
-    const registration = result.editor.registerDecorations({
-      decorations: [
-        {
-          id: 'acceptance',
-          type: 'range',
-          render: ({children}) => <span>{children}</span>,
-          range: decoration,
-        },
-      ],
-    })
-    return {
-      ...result,
-      getSelection: () => registration.getDecorations()[0]?.range,
-      getText: () =>
-        result.editor
-          .getSnapshot()
-          .context.value.map((block) =>
-            isTextBlock(
-              {schema: result.editor.getSnapshot().context.schema},
-              block,
-            )
-              ? block.children
-                  .map((child) =>
-                    isSpan(
-                      {schema: result.editor.getSnapshot().context.schema},
-                      child,
-                    )
-                      ? child.text
-                      : '',
-                  )
-                  .join('')
-              : '',
-          ),
-    }
-  }
+  return kind === 'registered'
+    ? createRegisteredDecorationHarness({initialValue, decoration})
+    : createAcceptanceDecorationHarness({initialValue, decoration})
+}
 
-  return createAcceptanceDecorationHarness({
-    initialValue: [acceptanceBlock('b0', 's0', 'highlighted words')],
-    decoration,
+async function createRegisteredDecorationHarness(args: {
+  initialValue: Array<ReturnType<typeof acceptanceBlock>>
+  decoration: ReturnType<typeof acceptanceSelection>
+}) {
+  const result = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: args.initialValue,
   })
+  const registration = result.editor.registerDecorations({
+    decorations: [
+      {
+        id: 'acceptance',
+        type: 'range',
+        render: ({children}) => <span>{children}</span>,
+        range: args.decoration,
+      },
+    ],
+  })
+  return {
+    ...result,
+    getSelection: () => registration.getDecorations()[0]?.range,
+    getText: () =>
+      result.editor
+        .getSnapshot()
+        .context.value.map((block) =>
+          isTextBlock(
+            {schema: result.editor.getSnapshot().context.schema},
+            block,
+          )
+            ? block.children
+                .map((child) =>
+                  isSpan(
+                    {schema: result.editor.getSnapshot().context.schema},
+                    child,
+                  )
+                    ? child.text
+                    : '',
+                )
+                .join('')
+            : '',
+        ),
+  }
 }
 
 function pasteAcceptanceText(

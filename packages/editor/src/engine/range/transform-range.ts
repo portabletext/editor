@@ -50,7 +50,7 @@ function relocateUnsetPoint(
   op: EngineOperation,
   root: {value: Array<Node>},
 ): Range['anchor'] | null {
-  if (op.type !== 'unset') {
+  if (op.type !== 'unset' || op.path.length !== 1) {
     return null
   }
   const pointBlockSegment = point.path[0]
@@ -62,77 +62,26 @@ function relocateUnsetPoint(
     return null
   }
 
-  if (op.path.length === 1) {
-    const candidates = root.value.flatMap((block) => {
-      if (
-        block._key === pointBlockSegment._key ||
-        !('children' in block) ||
-        !Array.isArray(block.children)
-      ) {
-        return []
-      }
-      return block.children.some(
-        (child) => child._key === pointChildSegment._key,
-      )
-        ? [block]
-        : []
-    })
-    return candidates.length === 1
-      ? {
-          path: [
-            {_key: candidates[0]!._key},
-            'children',
-            {_key: pointChildSegment._key},
-          ],
-          offset: point.offset,
-        }
-      : null
-  }
-
-  const sourceBlock = root.value.find(
-    (block) => block._key === pointBlockSegment._key,
-  )
-  const removedNode =
-    sourceBlock &&
-    'children' in sourceBlock &&
-    Array.isArray(sourceBlock.children)
-      ? sourceBlock.children.find(
-          (child) => child._key === pointChildSegment._key,
-        )
-      : undefined
-  if (
-    op.path[1] !== 'children' ||
-    !removedNode ||
-    !('text' in removedNode) ||
-    typeof removedNode.text !== 'string' ||
-    removedNode.text.length === 0
-  ) {
-    return null
-  }
   const candidates = root.value.flatMap((block) => {
-    if (!('children' in block) || !Array.isArray(block.children)) {
+    if (
+      block._key === pointBlockSegment._key ||
+      !('children' in block) ||
+      !Array.isArray(block.children)
+    ) {
       return []
     }
-    return block.children.flatMap((child) =>
-      child._key !== pointChildSegment._key &&
-      'text' in child &&
-      typeof child.text === 'string' &&
-      child.text.endsWith(removedNode.text)
-        ? [{block, child}]
-        : [],
-    )
+    return block.children.some((child) => child._key === pointChildSegment._key)
+      ? [block]
+      : []
   })
-  if (candidates.length !== 1) {
-    return null
-  }
-  const candidate = candidates[0]!
-  return {
-    path: [
-      {_key: candidate.block._key},
-      'children',
-      {_key: candidate.child._key},
-    ],
-    offset:
-      candidate.child.text.length - removedNode.text.length + point.offset,
-  }
+  return candidates.length === 1
+    ? {
+        path: [
+          {_key: candidates[0]!._key},
+          'children',
+          {_key: pointChildSegment._key},
+        ],
+        offset: point.offset,
+      }
+    : null
 }

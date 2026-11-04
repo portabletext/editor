@@ -27,7 +27,6 @@ import {isDeepEqual} from '../internal-utils/equality'
 import {
   createRangeReanchor,
   getRangeDirection,
-  getRangeText,
 } from '../internal-utils/reanchor-range-decorations'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
@@ -131,10 +130,11 @@ type RangeDecorationSource = {
   >
   /**
    * Decorations (prop identities and registered ids) that collapsed during
-   * the current transaction. Transaction correction only revives them onto
-   * the exact text they covered before it.
+   * the current transaction, keyed to the `remove.text` that collapsed them.
+   * Transaction correction only revives one whose removed text a later
+   * `insert` in the same transaction carried back in the same span.
    */
-  collapsedInTransaction: Set<object | string>
+  collapsedInTransaction: Map<object | string, CollapseProvenance>
   initialized: boolean
   /**
    * Only meaningful for a `registered` source; fixed at registration.
@@ -142,6 +142,14 @@ type RangeDecorationSource = {
    * per affected decoration, in this source's array order.
    */
   on?: (mappings: Array<DecorationMapping>) => void
+}
+
+/**
+ * `removal` is the `remove.text` that collapsed a decoration, or `undefined`
+ * when another operation collapsed it.
+ */
+type CollapseProvenance = {
+  removal: EngineOperation | undefined
 }
 
 /**
@@ -431,7 +439,9 @@ function movePropDecoratedRanges(
           rangeDecoration,
           origin,
         })
-        collapsedInTransaction.add(decoratedRange.propIdentity)
+        collapsedInTransaction.set(decoratedRange.propIdentity, {
+          removal: undefined,
+        })
       }
       continue
     }
@@ -453,7 +463,9 @@ function movePropDecoratedRanges(
           rangeDecoration,
           origin,
         })
-        collapsedInTransaction.add(decoratedRange.propIdentity)
+        collapsedInTransaction.set(decoratedRange.propIdentity, {
+          removal: getCollapsingRemoval(operation),
+        })
       }
       continue
     }
@@ -585,7 +597,9 @@ function moveRegisteredDecoratedRanges(
       })
       deadSelections.set(liveRangeDecoration.id, currentRange)
       if (killedByCollapse) {
-        collapsedInTransaction.add(liveRangeDecoration.id)
+        collapsedInTransaction.set(liveRangeDecoration.id, {
+          removal: getCollapsingRemoval(operation),
+        })
       }
       continue
     }
@@ -719,7 +733,6 @@ function correctSourceRanges(
   origin: 'local' | 'remote',
   sameBlockCorrectionKeys: Set<string>,
   transaction: OperationTransactionEvent,
-  schema: EditorSchema,
 ): Array<DecoratedRange> {
   const corrected = [...source.decoratedRanges]
 
@@ -747,16 +760,15 @@ function correctSourceRanges(
     ) {
       continue
     }
-    if (
-      source.collapsedInTransaction.has(
-        getDecorationIdentity(beforeDecoratedRange),
-      ) &&
-      !coversSameText(transaction, beforeRange, reanchoredRange, schema)
-    ) {
-      // Operation mapping saw all of the decoration's text removed. Only a
-      // move of that same text (a split or merge rewrites blocks through
-      // removals) may bring it back; anything else would put it on text
-      // it never covered.
+    const collapse = source.collapsedInTransaction.get(
+      getDecorationIdentity(beforeDecoratedRange),
+    )
+    if (collapse && !isReinserted(transaction, collapse)) {
+      // Operation mapping saw all of the decoration's text removed. Only an
+      // insert carrying that removed text, such as a split writing its tail
+      // as `remove.text` before inserting the same span in the new block,
+      // proves the text moved. Text that merely reads the same elsewhere in
+      // the document is different text.
       continue
     }
     const currentIndex = findCurrentDecorationIndex(
@@ -886,17 +898,51 @@ function notifyDeadPropSelections(source: RangeDecorationSource) {
   source.deadPropSelections.clear()
 }
 
-function coversSameText(
+function getCollapsingRemoval(
+  operation: EngineOperation,
+): EngineOperation | undefined {
+  return operation.type === 'remove.text' ? operation : undefined
+}
+
+/**
+ * Whether an `insert` in the same transaction carries the text `collapse`'s
+ * `remove.text` removed, in a span with the same key. Undo and redo replay
+ * the inverse of an earlier move, which can carry the text back under the
+ * key of the span it was originally moved out of.
+ */
+function isReinserted(
   transaction: OperationTransactionEvent,
-  beforeRange: Range,
-  afterRange: Range,
-  schema: EditorSchema,
+  collapse: CollapseProvenance,
 ): boolean {
-  const beforeText = getRangeText(transaction.beforeValue, beforeRange, schema)
-  return (
-    beforeText !== undefined &&
-    beforeText === getRangeText(transaction.afterValue, afterRange, schema)
+  const removal = collapse.removal
+  if (!removal || removal.type !== 'remove.text' || removal.text.length === 0) {
+    return false
+  }
+  const spanSegment = removal.path.at(-1)
+  const removalEvent = transaction.operations.find(
+    ({operation}) => operation === removal,
   )
+  if (!isKeyedSegment(spanSegment) || !removalEvent) {
+    return false
+  }
+  const anySpanKey =
+    removalEvent.origin === 'undo' || removalEvent.origin === 'redo'
+  return transaction.operations.some(({operation}) => {
+    if (operation.type !== 'insert') {
+      return false
+    }
+    const spans =
+      'children' in operation.node && Array.isArray(operation.node.children)
+        ? operation.node.children
+        : [operation.node]
+    return spans.some(
+      (span) =>
+        (anySpanKey || span._key === spanSegment._key) &&
+        'text' in span &&
+        typeof span.text === 'string' &&
+        span.text.includes(removal.text),
+    )
+  })
 }
 
 function getDecorationIdentity(
@@ -1068,7 +1114,7 @@ export const rangeDecorationsMachine = setup({
         decoratedRanges: [],
         deadSelections: new Map(),
         deadPropSelections: new Map(),
-        collapsedInTransaction: new Set(),
+        collapsedInTransaction: new Map(),
         initialized: false,
         on: event.on,
       })
@@ -1124,7 +1170,7 @@ export const rangeDecorationsMachine = setup({
           ),
           deadSelections: new Map(),
           deadPropSelections: new Map(),
-          collapsedInTransaction: new Set(),
+          collapsedInTransaction: new Map(),
           initialized: true,
           on: event.on,
         }
@@ -1293,7 +1339,6 @@ export const rangeDecorationsMachine = setup({
           origin,
           sameBlockCorrectionKeys,
           event.transaction,
-          context.schema,
         )
         killCollapsedPropRanges(
           source,
