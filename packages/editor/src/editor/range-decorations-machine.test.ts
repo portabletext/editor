@@ -1,3 +1,4 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {createActor} from 'xstate'
@@ -151,6 +152,73 @@ describe(rangeDecorationsMachine.id, () => {
     expect(actor.getSnapshot().context.decorate.fn).not.toBe(
       decorateAfterFirstSupply,
     )
+  })
+
+  test('Scenario: a transaction that only inserts text skips reassigning `decorate.fn`', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const editorEngine = createEditorEngineStub(blockKey, spanKey)
+    const actor = createActor(rangeDecorationsMachine, {
+      input: {
+        readOnly: false,
+        schema: compileSchema(defineSchema({})),
+        editorEngine,
+      },
+    })
+    actor.start()
+    actor.send({type: 'ready'})
+
+    actor.send({
+      type: 'source updated',
+      sourceKey: 'prop',
+      kind: 'prop',
+      rangeDecorations: [
+        {
+          component: () => null as never,
+          selection: {
+            anchor: {path: spanPath, offset: 3},
+            focus: {path: spanPath, offset: 6},
+          },
+        },
+      ],
+    })
+    const decorateAfterUpdate = actor.getSnapshot().context.decorate.fn
+    const value =
+      actor.getSnapshot().context.editorEngine.snapshot.context.value
+    const operation = {
+      type: 'insert.text' as const,
+      path: spanPath,
+      offset: 0,
+      text: 'x',
+    }
+
+    actor.send({type: 'engine transaction start'})
+    actor.send({type: 'engine operation', operation, origin: 'local'})
+    actor.send({
+      type: 'engine transaction end',
+      transaction: {
+        operations: [
+          {
+            operation,
+            beforeValue: value,
+            beforeSelection: null,
+            operationsInProgress: false,
+            isPatching: false,
+            withHistory: true,
+            undoStepId: undefined,
+            origin: 'local',
+            context: [],
+          },
+        ],
+        beforeValue: value,
+        afterValue: value,
+        origin: 'local',
+      },
+    })
+
+    expect(actor.getSnapshot().context.decorate.fn).toBe(decorateAfterUpdate)
   })
 
   test('Scenario: removing a source that contributed no decorated ranges skips reassigning `decorate.fn`', () => {
