@@ -1611,6 +1611,15 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
         expect(harness.getSelection()).toEqual(
           acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
         )
+        expect(harness.movedSelections.at(-1)).toEqual(
+          acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
+        )
+        if (kind === 'prop') {
+          // Registered sources still receive a mapping per operation, so
+          // their transient death before transaction correction is visible.
+          expect(harness.movedSelections.includes(null)).toEqual(false)
+        }
+        expect(getDecoratedText()).toEqual(['highlighted words'])
       })
     },
   )
@@ -1643,6 +1652,8 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       await vi.waitFor(() => {
         expect(harness.getText()).toEqual(['foo'])
         expect(harness.getSelection()).toEqual(undefined)
+        expect(harness.movedSelections).toEqual([null])
+        expect(getDecoratedText()).toEqual([])
       })
     },
   )
@@ -1688,20 +1699,23 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       text: 'XX',
       value: ['HeXXllo world'],
       expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 7),
+      decoratedText: ['HeXXllo'],
     },
     {
       name: 'P2 text/plain single newline pasted inside a decoration',
       text: 'one\ntwo',
       value: ['Heone\ntwollo world'],
       expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 12),
+      decoratedText: ['Heone\ntwollo'],
     },
     {
       name: 'P3 text/plain blank line pasted inside a decoration',
       text: 'a\n\nb',
       value: ['Hea', 'bllo world'],
       expected: acceptanceSelection('b1', 's1', 0, 'k8', 'k6', 4),
+      decoratedText: ['Hea', 'bllo'],
     },
-  ])('Scenario: $name', async ({text, value, expected}) => {
+  ])('Scenario: $name', async ({text, value, expected, decoratedText}) => {
     const harness = await createAcceptanceDecorationHarness({
       initialValue: [acceptanceBlock('b1', 's1', 'Hello world')],
       decoration: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 5),
@@ -1711,7 +1725,8 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
 
     await vi.waitFor(() => {
       expect(harness.getText()).toEqual(value)
-      expect(harness.getSelection()).toEqual(expected)
+      expect(harness.movedSelections).toEqual([expected])
+      expect(getDecoratedText()).toEqual(decoratedText)
     })
   })
 
@@ -1723,6 +1738,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       text: 'Z',
       value: ['AlphaZBravo charlie'],
       expected: acceptanceSelection('b1', 's1', 6, 'b1', 's1', 11),
+      decoratedText: ['Bravo'],
     },
     {
       name: 'X2 typing over text across a block break keeps a later decoration',
@@ -1731,6 +1747,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       text: 'Y',
       value: ['AlpYavo charlie'],
       expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+      decoratedText: ['vo ch'],
     },
     {
       name: 'X3 typing inside a decoration across a block break preserves both tails',
@@ -1739,6 +1756,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       text: 'X',
       value: ['Bravo highXosses the line'],
       expected: acceptanceSelection('b1', 's1', 6, 'b1', 's1', 16),
+      decoratedText: ['highXosses'],
       initialValue: [
         acceptanceBlock('b1', 's1', 'Bravo highlight'),
         acceptanceBlock('b2', 's2', ' crosses the line'),
@@ -1758,7 +1776,8 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
 
     await vi.waitFor(() => {
       expect(harness.getText()).toEqual(scenario.value)
-      expect(harness.getSelection()).toEqual(scenario.expected)
+      expect(harness.movedSelections).toEqual([scenario.expected])
+      expect(getDecoratedText()).toEqual(scenario.decoratedText)
     })
   })
 
@@ -1770,6 +1789,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
       value: ['AlphaBravo charlie'],
       expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+      decoratedText: ['Bravo'],
     },
     {
       name: 'X4 delete over only a block break',
@@ -1778,6 +1798,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
       value: ['AlphaBravo charlie'],
       expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+      decoratedText: ['Bravo'],
     },
     {
       name: 'X4 backspace over text across a block break',
@@ -1786,6 +1807,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
       value: ['Alpavo charlie'],
       expected: acceptanceSelection('b1', 's1', 4, 'b1', 's1', 9),
+      decoratedText: ['vo ch'],
     },
     {
       name: 'X4 delete over text across a block break',
@@ -1794,6 +1816,7 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
       editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
       value: ['Alpavo charlie'],
       expected: acceptanceSelection('b1', 's1', 4, 'b1', 's1', 9),
+      decoratedText: ['vo ch'],
     },
   ])(
     'Scenario: $name keeps a decoration in the second block',
@@ -1814,11 +1837,19 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
 
       await vi.waitFor(() => {
         expect(harness.getText()).toEqual(scenario.value)
-        expect(harness.getSelection()).toEqual(scenario.expected)
+        expect(harness.movedSelections).toEqual([scenario.expected])
+        expect(getDecoratedText()).toEqual(scenario.decoratedText)
       })
     },
   )
 })
+
+function getDecoratedText() {
+  return page
+    .getByTestId('acceptance-decoration')
+    .elements()
+    .map((element) => element.textContent)
+}
 
 function acceptanceBlock(blockKey: string, spanKey: string, text: string) {
   return {
@@ -1858,12 +1889,17 @@ async function createAcceptanceDecorationHarness(args: {
   initialValue: Array<ReturnType<typeof acceptanceBlock>>
   decoration: ReturnType<typeof acceptanceSelection>
 }) {
+  const movedSelections: Array<RangeDecorationOnMovedDetails['newSelection']> =
+    []
   let rangeDecorations: Array<RangeDecoration> = [
     {
-      component: ({children}) => <span>{children}</span>,
+      component: ({children}) => (
+        <span data-testid="acceptance-decoration">{children}</span>
+      ),
       payload: {id: 'acceptance'},
       selection: args.decoration,
       onMoved: (details) => {
+        movedSelections.push(details.newSelection)
         rangeDecorations = updateRangeDecorations({rangeDecorations, details})
       },
     },
@@ -1876,6 +1912,7 @@ async function createAcceptanceDecorationHarness(args: {
 
   return {
     ...result,
+    movedSelections,
     getSelection: () => rangeDecorations[0]?.selection,
     getText: () =>
       result.editor
@@ -1916,18 +1953,28 @@ async function createRegisteredDecorationHarness(args: {
     keyGenerator: createTestKeyGenerator(),
     initialValue: args.initialValue,
   })
+  const movedSelections: Array<RangeDecorationOnMovedDetails['newSelection']> =
+    []
   const registration = result.editor.registerDecorations({
     decorations: [
       {
         id: 'acceptance',
         type: 'range',
-        render: ({children}) => <span>{children}</span>,
+        render: ({children}) => (
+          <span data-testid="acceptance-decoration">{children}</span>
+        ),
         range: args.decoration,
       },
     ],
+    onMapped: (mappings) => {
+      for (const mapping of mappings) {
+        movedSelections.push(mapping.newRange)
+      }
+    },
   })
   return {
     ...result,
+    movedSelections,
     getSelection: () => registration.getDecorations()[0]?.range,
     getText: () =>
       result.editor
