@@ -1,5 +1,149 @@
 # Changelog
 
+## 8.2.11
+
+### Patch Changes
+
+- [#3571](https://github.com/portabletext/editor/pull/3571) [`930ade7`](https://github.com/portabletext/editor/commit/930ade729dae0f3ea6c2961ad252f3a8602bdd74) Thanks [@christianhg](https://github.com/christianhg)! - fix: disconnect the editable's `MutationObserver` when its element detaches
+  
+  Callback refs passed to `PortableTextEditable` now run their returned cleanup when the element detaches, instead of receiving `null`.
+
+- [#3573](https://github.com/portabletext/editor/pull/3573) [`e847a96`](https://github.com/portabletext/editor/commit/e847a9695fa1273dbb54fe9140af90db2e65e66f) Thanks [@christianhg](https://github.com/christianhg)! - fix: drop dead handler forwarding between the editable layers
+
+- [#3572](https://github.com/portabletext/editor/pull/3572) [`f9a21fc`](https://github.com/portabletext/editor/commit/f9a21fcfd7dd6474a69dc0238a83ada8c4947328) Thanks [@christianhg](https://github.com/christianhg)! - fix: drop the dead invalid-value hide from `PortableTextEditable`
+
+- [#3581](https://github.com/portabletext/editor/pull/3581) [`e369537`](https://github.com/portabletext/editor/commit/e3695373c474b0f4e976e8f10a9e2c7661c16067) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit the editor value at flush time as `mutation.value`, so remote changes applied before the flush are included
+
+- [#3578](https://github.com/portabletext/editor/pull/3578) [`29a0a14`](https://github.com/portabletext/editor/commit/29a0a14d58fe13c7c662c58a4299ee1d50e84b28) Thanks [@christianhg](https://github.com/christianhg)! - fix: read arrow key text direction from the focused block inside containers
+  
+  Arrow keys inside a container now follow the direction of the block holding the caret, instead of the first strong character of the outermost container's text. A selected block object inside a container now moves the same way as one at the root.
+
+- [#3531](https://github.com/portabletext/editor/pull/3531) [`944de88`](https://github.com/portabletext/editor/commit/944de886b75a0f1371a2652306fc8a3093ead746) Thanks [@christianhg](https://github.com/christianhg)! - fix: raise `select` on line moves and on word moves at the document edge
+  
+  Extending the selection by line (Option+Shift+ArrowUp/ArrowDown), moving an expanded selection by line at the start or end of the document (Option+ArrowUp/ArrowDown), and moving by word at the end or start of the document (Ctrl+ArrowRight/ArrowLeft, Option+ArrowRight/ArrowLeft on Apple) now raise a `select` event when they change the selection, so Behaviors on `select` see these changes and can override or prevent them. Before, these moves bypassed `select`, and a word move could land a selection that a Behavior had just prevented.
+
+- [#3579](https://github.com/portabletext/editor/pull/3579) [`17b82cb`](https://github.com/portabletext/editor/commit/17b82cbeb424c43313d0ddd2732d7e5476d57853) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve bare type references to the nearest enclosing declaration at any depth
+  
+  A bare type reference in a container's `of` now resolves to the nearest enclosing declaration of that type, then to the schema's root block object of that name. A recursive container declared inline keeps its fields when it's inserted below its first level:
+  
+  ```tsx
+  import {
+    defineContainer,
+    defineSchema,
+    EditorProvider,
+    type Editor,
+  } from '@portabletext/editor'
+  import {EditorRefPlugin, NodePlugin} from '@portabletext/editor/plugins'
+  import {createRef} from 'react'
+  import {createRoot} from 'react-dom/client'
+  
+  const schemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'section',
+        fields: [
+          {
+            name: 'content',
+            type: 'array',
+            of: [
+              {type: 'block'},
+              {
+                type: 'object',
+                name: 'subsection',
+                fields: [
+                  {name: 'title', type: 'string'},
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'subsection'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+  
+  const initialValue = [
+    {
+      _type: 'section',
+      _key: 's1',
+      content: [
+        {
+          _type: 'subsection',
+          _key: 'ss1',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 'sp1', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  
+  const editorRef = createRef<Editor>()
+  
+  createRoot(document.getElementById('root')!).render(
+    <EditorProvider initialConfig={{schemaDefinition, initialValue}}>
+      <EditorRefPlugin ref={editorRef} />
+      <NodePlugin
+        nodes={[
+          defineContainer({
+            type: 'section',
+            arrayField: 'content',
+            render: ({children}) => <>{children}</>,
+          }),
+          defineContainer({
+            type: 'subsection',
+            arrayField: 'content',
+            render: ({children}) => <>{children}</>,
+          }),
+        ]}
+      />
+    </EditorProvider>,
+  )
+  
+  // Once the editor has mounted:
+  const editor = editorRef.current!
+  const caret = {
+    path: [
+      {_key: 's1'},
+      'content',
+      {_key: 'ss1'},
+      'content',
+      {_key: 'b1'},
+      'children',
+      {_key: 'sp1'},
+    ],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: caret, focus: caret}})
+  editor.send({
+    type: 'insert.block',
+    block: {_type: 'subsection', _key: 'ss2', title: 'Details', content: []},
+    placement: 'after',
+  })
+  // Inserts {_type: 'subsection', _key: 'ss2', title: 'Details', content: [<empty text block>]}
+  // Previously inserted: {_type: 'subsection', _key: 'ss2'}
+  ```
+  
+  When the same type name is declared at two depths, a reference resolves to the nearer declaration. `block.set` on a nested block declared this way now keeps the props its declaration lists instead of dropping them all, and an empty child array on such a block gets an empty text block during normalization.
+
+- [#3568](https://github.com/portabletext/editor/pull/3568) [`0d95229`](https://github.com/portabletext/editor/commit/0d95229a5760f5eafa67b0c7fd1a9b2ed9cbe2e9) Thanks [@christianhg](https://github.com/christianhg)! - fix: leave the selection alone on `insert.text` at an explicit position
+
+- [#3574](https://github.com/portabletext/editor/pull/3574) [`7662ed6`](https://github.com/portabletext/editor/commit/7662ed66e939a0435fda3158bb81803fed646b5f) Thanks [@christianhg](https://github.com/christianhg)! - fix: reconcile `update value` blocks by key
+  
+  Reordering blocks in the value passed to `update value`, for example swapping two blocks, no longer gives a moved block a new `_key`. Previously the next local edit sent a `set` patch renaming that block, and a host that already held the reordered value renamed the wrong block, so the host and the editor diverged. A block that moves now keeps its key and its content, and the sync emits no patches of its own.
+  
+  The `operation` event for a reorder now shows each moved block removed and inserted at its new index, with no key renames in between. A caret or range with either end inside a moved block now keeps covering the same text in the block's new position instead of jumping to the start of the document. When a block later in the value fails validation, the blocks synced before it no longer include a renamed copy of a moved block. When the editor repairs a new block, for example by giving a child its missing `_key`, it now sends the repair patch for that block wherever it lands, including at the end of the value.
+
 ## 8.2.10
 
 ### Patch Changes

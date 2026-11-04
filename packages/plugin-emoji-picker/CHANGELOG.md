@@ -1,5 +1,13 @@
 # @portabletext/plugin-emoji-picker
 
+## 8.0.25
+
+### Patch Changes
+
+- [#3570](https://github.com/portabletext/editor/pull/3570) [`4278c79`](https://github.com/portabletext/editor/commit/4278c790dac16378e0cfbc422e83e64f358636ad) Thanks [@christianhg](https://github.com/christianhg)! - fix: ignore `insert.text` at an explicit position when dismissing the emoji picker
+- Updated dependencies [[`22bf5a9`](https://github.com/portabletext/editor/commit/22bf5a902b3201e6a324cde61f300fca3f5318d6)]:
+  - @portabletext/plugin-input-rule@7.0.25
+
 ## 8.0.24
 
 ### Patch Changes

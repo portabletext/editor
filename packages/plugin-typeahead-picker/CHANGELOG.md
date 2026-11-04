@@ -1,5 +1,13 @@
 # @portabletext/plugin-typeahead-picker
 
+## 7.0.25
+
+### Patch Changes
+
+- [#3570](https://github.com/portabletext/editor/pull/3570) [`a8c9d8d`](https://github.com/portabletext/editor/commit/a8c9d8d51aec9228c3972bd767bb879bc32e4266) Thanks [@christianhg](https://github.com/christianhg)! - fix: ignore `insert.text` at an explicit position when closing the typeahead picker
+- Updated dependencies [[`22bf5a9`](https://github.com/portabletext/editor/commit/22bf5a902b3201e6a324cde61f300fca3f5318d6)]:
+  - @portabletext/plugin-input-rule@7.0.25
+
 ## 7.0.24
 
 ### Patch Changes
