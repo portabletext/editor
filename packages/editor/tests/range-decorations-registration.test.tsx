@@ -1406,7 +1406,7 @@ describe('registerDecorations: onMapped and getDecorations', () => {
     expect(mappings[0].newRange).not.toBe(mappings[0].previousRange)
   })
 
-  test('Scenario: a transaction that touches content without changing the range emits no mapping', async () => {
+  test('Scenario: newRange keeps the previousRange reference when a same-length edit touches content without moving either endpoint', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1450,7 +1450,21 @@ describe('registerDecorations: onMapped and getDecorations', () => {
       snapshot: undefined,
     })
 
-    expect(onMapped).toHaveBeenCalledTimes(0)
+    await vi.waitFor(() => {
+      expect(onMapped).toHaveBeenCalledTimes(1)
+    })
+
+    const mappings = onMapped.mock.calls[0]?.[0]
+    expect(mappings).toEqual([
+      {
+        id: 'a',
+        previousRange: range,
+        newRange: range,
+        contentTouched: true,
+        origin: 'remote',
+      },
+    ])
+    expect(mappings[0].newRange).toBe(mappings[0].previousRange)
   })
 
   test('Scenario: death delivers `newRange: null` with the same mapping shape, whether by direct destruction or by collapse', async () => {

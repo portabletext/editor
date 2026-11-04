@@ -669,13 +669,21 @@ function notifyRegisteredMoves(
   }
   const mappings: Array<DecorationMapping> = []
   for (const [id, pending] of source.movedRegistered) {
-    if (isDeepEqual(pending.previousRange, pending.newRange)) {
+    const unmoved = isDeepEqual(pending.previousRange, pending.newRange)
+    if (unmoved && !pending.contentTouched) {
       continue
     }
+    const previousRange = cloneRange(pending.previousRange)
     mappings.push({
       id,
-      previousRange: cloneRange(pending.previousRange),
-      newRange: pending.newRange ? cloneRange(pending.newRange) : null,
+      previousRange,
+      // An unmoved range keeps the `previousRange` reference, so consumers
+      // can tell "content changed in place" from "moved" by identity.
+      newRange: unmoved
+        ? previousRange
+        : pending.newRange
+          ? cloneRange(pending.newRange)
+          : null,
       contentTouched: pending.contentTouched,
       origin,
     })
