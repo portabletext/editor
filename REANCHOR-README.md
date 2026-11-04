@@ -262,7 +262,7 @@ Its README says it is for positions that live **outside** the editor, such as a 
 | Range edges | Inward affinity (anchor forward, focus backward); null if an end is lost | Inward per operation. The matcher maps anchor and focus separately, so backward ranges stay backward. A range that collapses during the edit dies unless it's revived |
 | What consumers get | A mapped `Point` or `Range`, which they apply themselves | `onMoved` / `onMapped` and rendered highlights, updated automatically |
 | Public API | A new package with 3 functions and 8 public step types | None, only behaviour changes (see the changeset) |
-| Size | About 5,300 lines (1,500 source, 3,300 tests) in a new package | About 4,200 lines in `packages/editor`, 2,300 of them tests |
+| Size | About 5,300 lines (1,700 source, 3,500 tests and fixtures), mostly in a new package | About 4,200 lines in `packages/editor`, 2,300 of them tests |
 
 **Why this branch didn't build on it.** An earlier spike wired #3208's steps into the editor's decorations and passed 9 of the 23 shared split/merge/undo tests. This approach passes 23 of 23. The steps model is built for patches arriving from somewhere else. Inside the editor, the operations and both versions of the document are already there, so the matcher can use block keys and span keys, which the patch pairing doesn't rely on.
 
