@@ -1,3 +1,4 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
 import type {Node} from '../interfaces/node'
 import type {InsertTextOperation} from '../interfaces/operation'
@@ -11,7 +12,7 @@ const value: Array<Node> = [
     children: [{_type: 'span', _key: 's1', text: 'hello'}],
   },
 ]
-const root = {value}
+const root = {schema: compileSchema(defineSchema({})), value}
 
 describe(transformRange.name, () => {
   test('returns null when range is null', () => {

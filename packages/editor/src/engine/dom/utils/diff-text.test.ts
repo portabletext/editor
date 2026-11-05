@@ -72,6 +72,27 @@ describe.each([
     ).toEqual({path: spanPath, offset: 0})
   })
 
+  test('a caret after a pending deletion stays at the deletion when a children replacement shrinks the span', () => {
+    const {editor, blockPath, spanPath, spanKey} = setUp(wrap)
+    editor.pendingDiffs = [
+      {id: 0, path: spanPath, diff: {start: 0, end: 6, text: ''}},
+    ]
+
+    expect(
+      transformPendingPoint(
+        editor,
+        {path: spanPath, offset: 3},
+        {
+          type: 'set',
+          path: [...blockPath, 'children'],
+          value: [
+            {_type: schema.span.name, _key: spanKey, text: 'foo', marks: []},
+          ],
+        },
+      ),
+    ).toEqual({path: spanPath, offset: 0})
+  })
+
   test('a caret after a pending insertion stays after the insertion when a text set shrinks the span', () => {
     const {editor, spanPath} = setUp(wrap)
     editor.pendingDiffs = [
@@ -118,9 +139,13 @@ function setUp(wrap: Wrap) {
     },
   })
 
+  const blockPath = [...prefix, {_key: blockKey}]
+
   return {
     editor,
-    spanPath: [...prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    blockPath,
+    spanPath: [...blockPath, 'children', {_key: spanKey}],
+    spanKey,
   }
 }
 
