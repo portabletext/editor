@@ -1,7 +1,19 @@
 import {spawnSync} from 'node:child_process'
-import {appendFileSync, readFileSync, realpathSync} from 'node:fs'
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
+// `install-paths.txt` records the paths present before the first install, which cleanup never removes.
+//
 // `timing.txt` holds one block of lines per emulator run, the retry's after a `RETRY` line. Each block
 // opens with `EMULATOR_START`, written just before its run step. A run prints `BOOTED` once its emulator
 // is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes, and, when
@@ -150,10 +162,101 @@ export function bootSeconds(timing) {
   })
 }
 
+/**
+ * Paths created by the first install attempt. Only paths absent before that attempt may be removed.
+ *
+ * @param {string[]} before SDK paths present before the first install attempt
+ * @param {string[]} after SDK paths present after the failed attempt
+ * @returns {string[]}
+ */
+export function installCleanupPaths(before, after) {
+  return after.filter((path) => !before.includes(path))
+}
+
+/**
+ * The job's result from the job status, two install steps and last emulator run. The run line is
+ * `runResult`'s, and an install retry gets its own line before it.
+ *
+ * @param {string} timing The emulator runs' `timing.txt` contents, empty when no run started
+ * @param {string} outcome The last emulator run step's outcome, `skipped` when no run started
+ * @param {string | undefined} first The first install step's outcome
+ * @param {string | undefined} second The install retry step's outcome
+ * @param {string | undefined} [jobStatus] The job's status when Result starts
+ * @returns {{passed: boolean, line: string, installLine?: string}}
+ */
+export function installResult(
+  timing,
+  outcome,
+  first,
+  second,
+  jobStatus = undefined,
+) {
+  if (jobStatus === 'cancelled' && !/^EMULATOR_START /m.test(timing)) {
+    return {passed: false, line: 'run outcome: cancelled'}
+  }
+  if (first === 'failure' && second === 'failure') {
+    return {
+      passed: false,
+      line: 'run outcome: the emulator install failed twice, infrastructure failure, not a test result',
+    }
+  }
+  if (first !== 'success' && second !== 'success') {
+    if (first === 'cancelled' || second === 'cancelled') {
+      return {passed: false, line: 'run outcome: cancelled'}
+    }
+    if (first === 'skipped' && second === 'skipped') {
+      return {
+        passed: false,
+        line: 'run outcome: no emulator run, a step before the emulator install failed',
+      }
+    }
+  }
+  const result = runResult(timing, outcome)
+  return first === 'failure' && second === 'success'
+    ? {
+        ...result,
+        installLine: 'install outcome: retried once after a failed install',
+      }
+    : result
+}
+
 const [command, file, outcome] = process.argv.slice(2)
 
 if (!isMain()) {
   // Imported by its unit test.
+} else if (
+  command === 'install-start' &&
+  file !== undefined &&
+  outcome !== undefined
+) {
+  mkdirSync('android/out', {recursive: true})
+  writeFileSync(
+    'android/out/install-paths.txt',
+    installPaths(file, outcome).join('\n'),
+  )
+} else if (
+  command === 'install-retry' &&
+  file !== undefined &&
+  outcome !== undefined
+) {
+  if (existsSync('android/out/install-paths.txt')) {
+    const before = readFileSync('android/out/install-paths.txt', 'utf8').split(
+      '\n',
+    )
+    for (const path of installCleanupPaths(
+      before,
+      installPaths(file, outcome),
+    )) {
+      rmSync(join(file, path), {recursive: true, force: true})
+    }
+    report(
+      'INSTALL_RETRY: the emulator install failed, retrying once after clearing its downloads and incomplete packages',
+    )
+  } else {
+    report(
+      'INSTALL_RETRY: no install snapshot existed, retrying once without clearing paths',
+    )
+  }
 } else if (command === 'device-state' && file !== undefined) {
   const adb = spawnSync('adb', ['get-state'], {
     encoding: 'utf8',
@@ -189,14 +292,25 @@ if (!isMain()) {
   }
 } else if (command === 'boot-seconds' && file !== undefined) {
   process.stdout.write(
-    `${bootSeconds(readFileSync(file, 'utf8')).join('\n')}\n`,
+    existsSync(file)
+      ? `${bootSeconds(readFileSync(file, 'utf8')).join('\n')}\n`
+      : '',
   )
 } else if (
   command === 'result' &&
   file !== undefined &&
   outcome !== undefined
 ) {
-  const result = runResult(readFileSync(file, 'utf8'), outcome)
+  const result = installResult(
+    existsSync(file) ? readFileSync(file, 'utf8') : '',
+    outcome,
+    process.env.INSTALL1_OUTCOME,
+    process.env.INSTALL2_OUTCOME,
+    process.env.JOB_STATUS,
+  )
+  if (result.installLine !== undefined) {
+    report(result.installLine)
+  }
   report(result.line)
   process.exitCode = result.passed ? 0 : 1
 } else {
@@ -204,6 +318,33 @@ if (!isMain()) {
     'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
   )
   process.exitCode = 2
+}
+
+/**
+ * The install's possible download and package paths, relative to the SDK root. Comparing these with the
+ * first attempt's snapshot limits cleanup to paths absent before that attempt.
+ *
+ * @param {string} sdk The Android SDK root
+ * @param {string} api The Android API level of the requested platform and system image
+ * @returns {string[]}
+ */
+function installPaths(sdk, api) {
+  const packages = [
+    'platform-tools',
+    'emulator',
+    `platforms/android-${api}`,
+    `system-images/android-${api}/google_apis_playstore/x86_64`,
+  ]
+  const temporary = '.temp'
+  const downloads = existsSync(join(sdk, temporary))
+    ? readdirSync(join(sdk, temporary))
+        .filter((name) => /^PackageOperation\d+$/.test(name))
+        .map((name) => `${temporary}/${name}`)
+    : []
+  return [
+    ...downloads,
+    ...packages.filter((path) => existsSync(join(sdk, path))),
+  ]
 }
 
 /**
