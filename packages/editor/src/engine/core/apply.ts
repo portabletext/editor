@@ -31,7 +31,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   }
 
   for (const ref of editor.pointRefs) {
-    PointRef.transform(ref, op)
+    PointRef.transform(editor.snapshot.context, ref, op)
   }
 
   for (const ref of editor.rangeRefs) {

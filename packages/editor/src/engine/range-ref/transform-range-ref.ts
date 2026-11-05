@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import type {Node} from '../interfaces/node'
 import type {EngineOperation} from '../interfaces/operation'
 import type {RangeRef} from '../interfaces/range-ref'
@@ -6,7 +7,7 @@ import {transformRange} from '../range/transform-range'
 export function transformRangeRef(
   ref: RangeRef,
   op: EngineOperation,
-  root: {value: Array<Node>},
+  root: {schema: Schema; value: Array<Node>},
 ): void {
   const {current, affinity} = ref
 

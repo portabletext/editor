@@ -1,6 +1,11 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import type {EngineOperation} from '../interfaces/operation'
+import type {Path} from '../interfaces/path'
 import {transformPoint} from './transform-point'
+
+const context = {schema: compileSchema(defineSchema({}))}
 
 describe(transformPoint.name, () => {
   test('null point returns null', () => {
@@ -10,7 +15,7 @@ describe(transformPoint.name, () => {
       offset: 0,
       text: 'hello',
     }
-    expect(transformPoint(null, op)).toEqual(null)
+    expect(transformPoint(context, null, op)).toEqual(null)
   })
 
   test('insert.text adjusts offset forward', () => {
@@ -24,7 +29,7 @@ describe(transformPoint.name, () => {
       offset: 3,
       text: 'abc',
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 8,
     })
@@ -41,7 +46,7 @@ describe(transformPoint.name, () => {
       offset: 5,
       text: 'abc',
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
     })
@@ -58,7 +63,7 @@ describe(transformPoint.name, () => {
       offset: 0,
       text: 'abc',
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 5,
     })
@@ -75,7 +80,7 @@ describe(transformPoint.name, () => {
       offset: 2,
       text: 'ab',
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     })
@@ -90,7 +95,7 @@ describe(transformPoint.name, () => {
       type: 'unset',
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
     }
-    expect(transformPoint(point, op)).toEqual(null)
+    expect(transformPoint(context, point, op)).toEqual(null)
   })
 
   test('unset (node removal) ancestor of point returns null', () => {
@@ -102,7 +107,7 @@ describe(transformPoint.name, () => {
       type: 'unset',
       path: [{_key: 'b1'}],
     }
-    expect(transformPoint(point, op)).toEqual(null)
+    expect(transformPoint(context, point, op)).toEqual(null)
   })
 
   test('unset (node removal) different path is no-op', () => {
@@ -114,7 +119,7 @@ describe(transformPoint.name, () => {
       type: 'unset',
       path: [{_key: 'b2'}],
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     })
@@ -131,7 +136,7 @@ describe(transformPoint.name, () => {
       node: {_key: 's2', _type: 'span', text: ''},
       position: 'after' as const,
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     })
@@ -150,7 +155,7 @@ describe(transformPoint.name, () => {
         focus: {path: [], offset: 0},
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     })
@@ -171,7 +176,7 @@ describe(transformPoint.name, () => {
         value: 's1',
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's2'}],
       offset: 3,
     })
@@ -192,7 +197,7 @@ describe(transformPoint.name, () => {
         value: 'normal',
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 3,
     })
@@ -213,7 +218,7 @@ describe(transformPoint.name, () => {
         value: 'hi',
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set text: offset beyond new length is clamped', () => {
@@ -231,7 +236,7 @@ describe(transformPoint.name, () => {
         value: 'hello',
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 2,
     })
@@ -252,7 +257,7 @@ describe(transformPoint.name, () => {
         value: 'hello',
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 0,
     })
@@ -272,7 +277,7 @@ describe(transformPoint.name, () => {
         value: 'hello',
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 's1'}],
       offset: 0,
     })
@@ -297,7 +302,7 @@ describe(transformPoint.name, () => {
         value: [{_type: 'span', _key: 's1', text: 'foobarbaz', marks: []}],
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 'n2'}],
       offset: 2,
     })
@@ -321,7 +326,7 @@ describe(transformPoint.name, () => {
         value: [{_type: 'span', _key: 's1', text: 'foobarbaz', marks: []}],
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 'n1'}],
       offset: 3,
     })
@@ -350,7 +355,7 @@ describe(transformPoint.name, () => {
         ],
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [{_key: 'b1'}, 'children', {_key: 'n3'}],
       offset: 1,
     })
@@ -377,7 +382,7 @@ describe(transformPoint.name, () => {
         ],
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set children: a text-changing replacement leaves the point untransformed', () => {
@@ -395,7 +400,7 @@ describe(transformPoint.name, () => {
         value: [{_type: 'span', _key: 's1', text: 'foobarbaz', marks: []}],
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set children: no inverse leaves the point untransformed', () => {
@@ -408,7 +413,7 @@ describe(transformPoint.name, () => {
       path: [{_key: 'b1'}, 'children'],
       value: [{_type: 'span', _key: 'n1', text: 'foobarbaz', marks: []}],
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set children: a point in another block is untouched', () => {
@@ -426,7 +431,7 @@ describe(transformPoint.name, () => {
         value: [{_type: 'span', _key: 's1', text: 'foobarbaz', marks: []}],
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set children: container blocks in a field named `children` are not offset-mapped', () => {
@@ -459,7 +464,7 @@ describe(transformPoint.name, () => {
         ],
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set children: a point deeper inside replaced container blocks is untouched', () => {
@@ -495,7 +500,7 @@ describe(transformPoint.name, () => {
         ],
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 
   test('set children: remaps span points of a text block nested in a container', () => {
@@ -545,7 +550,7 @@ describe(transformPoint.name, () => {
         value: [{_type: 'span', _key: 's1', text: 'foobarbaz', marks: []}],
       },
     }
-    expect(transformPoint(point, op)).toEqual({
+    expect(transformPoint(context, point, op)).toEqual({
       path: [
         {_key: 'table1'},
         'rows',
@@ -580,6 +585,127 @@ describe(transformPoint.name, () => {
         value: [{_type: 'span', _key: 's1', text: 'foobarbaz', marks: []}],
       },
     }
-    expect(transformPoint(point, op)).toBe(point)
+    expect(transformPoint(context, point, op)).toBe(point)
   })
 })
+
+describe.each([
+  {depth: 'at the root', prefix: atRoot},
+  {depth: 'inside a container', prefix: inContainer},
+  {depth: 'inside a container inside a container', prefix: inNestedContainer},
+  {depth: 'inside a field with its own sub-schema', prefix: inSubSchemaField},
+])('$depth', ({prefix}) => {
+  test('set children: a surviving span that shrinks clamps the offset to its new length', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockPath = [...prefix(keyGenerator), {_key: keyGenerator()}]
+    const spanKey = keyGenerator()
+    const point = {
+      path: [...blockPath, 'children', {_key: spanKey}],
+      offset: 6,
+    }
+    const op: EngineOperation = {
+      type: 'set',
+      path: [...blockPath, 'children'],
+      value: [
+        {
+          _type: context.schema.span.name,
+          _key: spanKey,
+          text: 'foo',
+          marks: [],
+        },
+      ],
+      inverse: {
+        type: 'set',
+        path: [...blockPath, 'children'],
+        value: [
+          {
+            _type: context.schema.span.name,
+            _key: spanKey,
+            text: 'foobarbaz',
+            marks: [],
+          },
+        ],
+      },
+    }
+    expect(transformPoint(context, point, op)).toEqual({
+      path: [...blockPath, 'children', {_key: spanKey}],
+      offset: 3,
+    })
+  })
+
+  test('set children: a surviving span that shrinks clamps the offset to its new length without an inverse', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockPath = [...prefix(keyGenerator), {_key: keyGenerator()}]
+    const spanKey = keyGenerator()
+    const point = {
+      path: [...blockPath, 'children', {_key: spanKey}],
+      offset: 6,
+    }
+    const op: EngineOperation = {
+      type: 'set',
+      path: [...blockPath, 'children'],
+      value: [
+        {
+          _type: context.schema.span.name,
+          _key: spanKey,
+          text: 'foo',
+          marks: [],
+        },
+      ],
+    }
+    expect(transformPoint(context, point, op)).toEqual({
+      path: [...blockPath, 'children', {_key: spanKey}],
+      offset: 3,
+    })
+  })
+
+  test("set children: a text block's own `text` field never clamps a point on the block", () => {
+    const keyGenerator = createTestKeyGenerator()
+    const schema = compileSchema(
+      defineSchema({block: {fields: [{name: 'text', type: 'string'}]}}),
+    )
+    const containerPath = [...prefix(keyGenerator), {_key: keyGenerator()}]
+    const blockKey = keyGenerator()
+    const block = {
+      _type: schema.block.name,
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      text: '',
+      children: [
+        {
+          _type: schema.span.name,
+          _key: keyGenerator(),
+          text: 'foobar',
+          marks: [],
+        },
+      ],
+    }
+    const point = {
+      path: [...containerPath, 'children', {_key: blockKey}],
+      offset: 3,
+    }
+    const op: EngineOperation = {
+      type: 'set',
+      path: [...containerPath, 'children'],
+      value: [block],
+    }
+    expect(transformPoint({schema}, point, op)).toBe(point)
+  })
+})
+
+function atRoot(): Path {
+  return []
+}
+
+function inContainer(keyGenerator: () => string): Path {
+  return [{_key: keyGenerator()}, 'content']
+}
+
+function inNestedContainer(keyGenerator: () => string): Path {
+  return [{_key: keyGenerator()}, 'content', {_key: keyGenerator()}, 'content']
+}
+
+function inSubSchemaField(keyGenerator: () => string): Path {
+  return [{_key: keyGenerator()}, 'body']
+}
