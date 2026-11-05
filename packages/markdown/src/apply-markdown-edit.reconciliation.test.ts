@@ -431,6 +431,9 @@ describe('the reconciliation report', () => {
 
   test('a whole-document skip of key matching reports round-trip-mismatch with no preserved keys', () => {
     const keyGenerator = createTestKeyGenerator()
+    const serialize = {
+      block: {h3: ({children}: {children?: string}) => `### ${children}`},
+    }
     const stored = [
       block('b1', 's1', 'foo'),
       {
@@ -441,9 +444,10 @@ describe('the reconciliation report', () => {
         children: [{_type: 'span', _key: 's2', text: 'bar\nbaz', marks: []}],
       },
     ]
-    const markdown = portableTextToMarkdown(structuredClone(stored))
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
     let report!: ReconciliationReport
     const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
       deserialize: {keyGenerator},
       onReconciliation: (r) => {
         report = r
@@ -918,6 +922,9 @@ describe('the reconciliation report', () => {
 
   test('a round-trip-mismatch on a keyless block reports indexes in the stored value, counting empty blocks', () => {
     const keyGenerator = createTestKeyGenerator()
+    const serialize = {
+      block: {h1: ({children}: {children?: string}) => `# ${children}`},
+    }
     const stored = [
       block('b1', 's1', 'foo'),
       block('e1', 'es1', ''),
@@ -931,9 +938,10 @@ describe('the reconciliation report', () => {
         ],
       } as unknown as PortableTextBlock,
     ]
-    const markdown = portableTextToMarkdown(structuredClone(stored))
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
     let report!: ReconciliationReport
     const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
       deserialize: {keyGenerator},
       onReconciliation: (r) => {
         report = r
@@ -2175,6 +2183,9 @@ describe('the reconciliation report', () => {
 
   test('a whole-document skip of key matching reports every stored loss as a hidden loss', () => {
     const keyGenerator = createTestKeyGenerator()
+    const serialize = {
+      block: {h3: ({children}: {children?: string}) => `### ${children}`},
+    }
     const stored = [
       internalLinkBlock('b1'),
       {
@@ -2185,9 +2196,10 @@ describe('the reconciliation report', () => {
         children: [{_type: 'span', _key: 's4', text: 'bar\nqux', marks: []}],
       },
     ]
-    const markdown = portableTextToMarkdown(structuredClone(stored))
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
     let report!: ReconciliationReport
     const result = applyMarkdownEdit(stored, markdown, {
+      serialize,
       deserialize: {keyGenerator},
       onReconciliation: (r) => {
         report = r
@@ -3447,6 +3459,9 @@ describe('the reconciliation report', () => {
   })
 
   test('onReconciliation fires exactly once, including when key matching is skipped', () => {
+    const serialize = {
+      block: {h3: ({children}: {children?: string}) => `### ${children}`},
+    }
     const onReconciliation = vi.fn()
     const stored = [block('b1', 's1', 'alpha'), block('b2', 's2', 'beta')]
     applyMarkdownEdit(stored, 'beta\n\nalpha', {
@@ -3467,8 +3482,9 @@ describe('the reconciliation report', () => {
     ]
     applyMarkdownEdit(
       refusingStored,
-      portableTextToMarkdown(structuredClone(refusingStored)),
+      portableTextToMarkdown(structuredClone(refusingStored), serialize),
       {
+        serialize,
         deserialize: {keyGenerator: createTestKeyGenerator()},
         onReconciliation,
       },
@@ -3927,6 +3943,9 @@ describe('the reconciliation report', () => {
 
   test('a skipped report carries markdown losses and undeclared objects', () => {
     const keyGenerator = createTestKeyGenerator()
+    const serialize = {
+      block: {h4: ({children}: {children?: string}) => `#### ${children}`},
+    }
     const stored = [
       {
         _type: 'block',
@@ -3937,7 +3956,7 @@ describe('the reconciliation report', () => {
       },
     ]
     const markdown = [
-      portableTextToMarkdown(structuredClone(stored)),
+      portableTextToMarkdown(structuredClone(stored), serialize),
       '### baz',
       '```json:object',
       '{"_type": "product", "_key": "p1"}',
@@ -3945,6 +3964,7 @@ describe('the reconciliation report', () => {
     ].join('\n\n')
     let report!: ReconciliationReport
     applyMarkdownEdit(stored, markdown, {
+      serialize,
       schema: compileSchema(
         defineSchema({styles: [{name: 'normal'}, {name: 'h4'}]}),
       ),

@@ -955,8 +955,11 @@ describe(applyMarkdownEdit.name, () => {
     ])
   })
 
-  test('an h3 with a hard break cannot be traced, so keys reset', () => {
+  test('an h3 with a hard break written by a custom h3 renderer cannot be traced, so keys reset', () => {
     const keyGenerator = createTestKeyGenerator()
+    const serialize = {
+      block: {h3: ({children}: {children?: string}) => `### ${children}`},
+    }
     const stored = [
       {
         _type: 'block',
@@ -966,9 +969,12 @@ describe(applyMarkdownEdit.name, () => {
         children: [{_type: 'span', _key: 's1', text: 'one\ntwo', marks: []}],
       },
     ]
-    const markdown = portableTextToMarkdown(structuredClone(stored))
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
     expect(
-      applyMarkdownEdit(stored, markdown, {deserialize: {keyGenerator}}),
+      applyMarkdownEdit(stored, markdown, {
+        serialize,
+        deserialize: {keyGenerator},
+      }),
     ).toEqual([
       {
         _type: 'block',
@@ -985,6 +991,139 @@ describe(applyMarkdownEdit.name, () => {
         children: [{_type: 'span', _key: 'k3', text: 'two', marks: []}],
       },
     ])
+  })
+
+  test('an h3 with a hard break written as a paragraph keeps its style and keys, and its removal is a hidden loss', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const stored = [
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+        ],
+      },
+    ]
+    const markdown = portableTextToMarkdown(structuredClone(stored))
+    expect(markdown).toBe('foo  \nbar\n\nbaz')
+
+    let editReport!: ReconciliationReport
+    expect(
+      applyMarkdownEdit(stored, markdown.replace('bar', 'qux'), {
+        deserialize: {keyGenerator},
+        onReconciliation: (report) => {
+          editReport = report
+        },
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'h3',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo\nqux', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
+      },
+    ])
+    expect(editReport).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'same-position',
+          key: 'k0',
+          path: [{_key: 'k0'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'same-position',
+          key: 'k1',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          valueChanged: true,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k2',
+          path: [{_key: 'k2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k3',
+          path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
+
+    let removalReport!: ReconciliationReport
+    expect(
+      applyMarkdownEdit(stored, 'baz', {
+        deserialize: {keyGenerator},
+        onReconciliation: (report) => {
+          removalReport = report
+        },
+      }),
+    ).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
+      },
+    ])
+    expect(removalReport).toEqual({
+      keyMatching: 'performed',
+      preservedKeys: [
+        {
+          basis: 'content-unchanged',
+          key: 'k2',
+          path: [{_key: 'k2'}],
+          valueChanged: false,
+        },
+        {
+          basis: 'content-unchanged',
+          key: 'k3',
+          path: [{_key: 'k2'}, 'children', {_key: 'k3'}],
+          valueChanged: false,
+        },
+      ],
+      keyFallbacks: [],
+      renamedKeys: [],
+      hiddenLosses: [
+        {
+          type: 'style-fallback',
+          message:
+            'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+          path: [{_key: 'k0'}],
+          snippet: 'foo\\nbar',
+        },
+      ],
+      markdownLosses: [],
+      undeclaredObjects: [],
+    })
   })
 
   test('an empty line between hard breaks round-trips with its keys', () => {
@@ -1711,6 +1850,9 @@ describe(applyMarkdownEdit.name, () => {
 
   test('a count-preserving scramble of the serialization adopts nothing', () => {
     const keyGenerator = createTestKeyGenerator()
+    const serialize = {
+      block: {h3: ({children}: {children?: string}) => `### ${children}`},
+    }
     const stored = [
       {
         _type: 'block',
@@ -1722,8 +1864,9 @@ describe(applyMarkdownEdit.name, () => {
       block('b2', 's2', 'plain text'),
       block('b3', 's3', ''),
     ]
-    const markdown = portableTextToMarkdown(structuredClone(stored))
+    const markdown = portableTextToMarkdown(structuredClone(stored), serialize)
     const reconciled = applyMarkdownEdit(stored, markdown, {
+      serialize,
       deserialize: {keyGenerator},
     })
     expect(reconciled).toEqual([

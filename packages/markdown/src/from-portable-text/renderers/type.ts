@@ -364,8 +364,7 @@ function isCalloutShaped(
 }
 
 // `blockquote` would quote the text twice. A heading marker after a list
-// marker, or on a block whose text, link titles or image text hold a line
-// break, reads back as different content.
+// marker reads back as different content.
 function toContainerContent<T extends TypedObject>(block: T): T {
   if (!isPortableTextBlock(block)) {
     return block
@@ -373,23 +372,9 @@ function toContainerContent<T extends TypedObject>(block: T): T {
   return !block.style ||
     block.style === 'blockquote' ||
     block.listItem !== undefined ||
-    hasLineBreak(block) ||
     toPlainText(block).trim() === ''
     ? {...block, style: 'normal'}
     : block
-}
-
-function hasLineBreak(value: unknown): boolean {
-  if (typeof value === 'string') {
-    return /[\r\n]/.test(value)
-  }
-  if (Array.isArray(value)) {
-    return value.some(hasLineBreak)
-  }
-  if (typeof value === 'object' && value !== null) {
-    return Object.values(value).some(hasLineBreak)
-  }
-  return false
 }
 
 /**
