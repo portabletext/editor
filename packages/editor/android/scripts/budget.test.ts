@@ -312,7 +312,7 @@ describe('the workflow', () => {
     )
   })
 
-  test('caps the Japanese run steps at 56 minutes and its job at 169, the English run steps at 52 and its job at 161', () => {
+  test('caps the Japanese run steps at 56 minutes and its job at 183, the English run steps at 52 and its job at 175', () => {
     expect(
       rows.map(({lang, runMinutes, jobMinutes}) => ({
         lang,
@@ -320,8 +320,8 @@ describe('the workflow', () => {
         jobMinutes,
       })),
     ).toEqual([
-      {lang: 'ja', runMinutes: 56, jobMinutes: 169},
-      {lang: 'en', runMinutes: 52, jobMinutes: 161},
+      {lang: 'ja', runMinutes: 56, jobMinutes: 183},
+      {lang: 'en', runMinutes: 52, jobMinutes: 175},
     ])
   })
 })

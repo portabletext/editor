@@ -2,6 +2,7 @@ import {spawnSync} from 'node:child_process'
 import {
   appendFileSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -12,7 +13,8 @@ import {
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-// `install-paths.txt` records the paths present before the first install, which cleanup never removes.
+// `install-paths.txt` records the paths present before the first install, which cleanup never removes,
+// apart from the packages restored from the cache that `cache-restored.txt` lists.
 //
 // `timing.txt` holds one block of lines per emulator run, the retry's after a `RETRY` line. Each block
 // opens with `EMULATOR_START`, written just before its run step. A run prints `BOOTED` once its emulator
@@ -163,14 +165,78 @@ export function bootSeconds(timing) {
 }
 
 /**
- * Paths created by the first install attempt. Only paths absent before that attempt may be removed.
+ * Paths the install retry clears: those created by the first install attempt, and the packages restored
+ * from the cache, which a failed attempt may have left broken or half replaced.
  *
  * @param {string[]} before SDK paths present before the first install attempt
  * @param {string[]} after SDK paths present after the failed attempt
+ * @param {string[]} [restored] Packages restored from the cache that its check kept
  * @returns {string[]}
  */
-export function installCleanupPaths(before, after) {
-  return after.filter((path) => !before.includes(path))
+export function installCleanupPaths(before, after, restored = []) {
+  return after.filter(
+    (path) => !before.includes(path) || restored.includes(path),
+  )
+}
+
+/**
+ * The emulator version and the system image revision a fresh `sdkmanager --install` picks, read from the
+ * `Available Packages` table of `sdkmanager --list`, or `undefined` when it lists either not. An installed
+ * package is listed above that table with its own version, which is not what a fresh install picks.
+ *
+ * @param {string} list The output of `sdkmanager --list`
+ * @param {string} api The Android API level of the system image
+ * @returns {{emulator: string, image: string} | undefined}
+ */
+export function cacheRevisions(list, api) {
+  const available = list.split(/^Available Packages:$/m)[1] ?? ''
+  const version = (/** @type {string} */ name) =>
+    available
+      .split('\n')
+      .map((line) => line.split('|').map((cell) => cell.trim()))
+      .find((cells) => cells[0] === name)?.[1]
+  const emulator = version('emulator')
+  const image = version(
+    `system-images;android-${api};google_apis_playstore;x86_64`,
+  )
+  return emulator === undefined ||
+    emulator === '' ||
+    image === undefined ||
+    image === ''
+    ? undefined
+    : {emulator, image}
+}
+
+/**
+ * Why a restored package does not match its manifest entry, or `undefined` when it has exactly its files
+ * with their sizes.
+ *
+ * @param {Map<string, number> | undefined} manifest The package's files and sizes when it was saved
+ * @param {Map<string, number>} files The package's files and sizes after the restore
+ * @returns {string | undefined}
+ */
+export function packageMismatch(manifest, files) {
+  if (manifest === undefined) {
+    return 'the manifest has no entry for it'
+  }
+  const differences = [
+    ...[...manifest].map(([path, size]) =>
+      !files.has(path)
+        ? `\`${path}\` is missing`
+        : files.get(path) === size
+          ? undefined
+          : `\`${path}\` has ${files.get(path)} bytes, the manifest ${size}`,
+    ),
+    ...[...files.keys()]
+      .filter((path) => !manifest.has(path))
+      .map((path) => `\`${path}\` is not in the manifest`),
+  ].filter((difference) => difference !== undefined)
+  if (differences.length === 0) {
+    return undefined
+  }
+  return differences.length === 1
+    ? differences[0]
+    : `${differences[0]}, and ${differences.length - 1} more differences`
 }
 
 /**
@@ -220,7 +286,7 @@ export function installResult(
     : result
 }
 
-const [command, file, outcome] = process.argv.slice(2)
+const [command, file, outcome, manifestFile, key] = process.argv.slice(2)
 
 if (!isMain()) {
   // Imported by its unit test.
@@ -243,9 +309,13 @@ if (!isMain()) {
     const before = readFileSync('android/out/install-paths.txt', 'utf8').split(
       '\n',
     )
+    const restored = existsSync('android/out/cache-restored.txt')
+      ? readFileSync('android/out/cache-restored.txt', 'utf8').split('\n')
+      : []
     for (const path of installCleanupPaths(
       before,
       installPaths(file, outcome),
+      restored,
     )) {
       rmSync(join(file, path), {recursive: true, force: true})
     }
@@ -256,6 +326,119 @@ if (!isMain()) {
     report(
       'INSTALL_RETRY: no install snapshot existed, retrying once without clearing paths',
     )
+  }
+} else if (
+  command === 'cache-revisions' &&
+  file !== undefined &&
+  outcome !== undefined &&
+  manifestFile !== undefined
+) {
+  const revisions = cacheRevisions(readFileSync(0, 'utf8'), outcome)
+  const present = cachedPackages(outcome).filter((path) =>
+    existsSync(join(file, path)),
+  )
+  if (revisions === undefined) {
+    log(
+      `CACHE_REVISIONS: \`sdkmanager --list\` did not list ${cachedPackageNames(
+        outcome,
+      )
+        .map((name) => `\`${name}\``)
+        .join(' and ')}, skipping the cache`,
+    )
+  } else if (present.length > 0) {
+    // The runner image now ships a package the cache holds, and a restore would overwrite it.
+    log(
+      `CACHE_REVISIONS: the SDK already has ${present
+        .map((path) => `\`${path}\``)
+        .join(' and ')}, skipping the cache`,
+    )
+  } else {
+    appendFileSync(
+      process.env.GITHUB_OUTPUT ?? '/dev/null',
+      [
+        `emulator=${revisions.emulator}`,
+        `image=${revisions.image}`,
+        `key=android-sdk-${process.env.RUNNER_OS}-api${outcome}-google_apis_playstore-x86_64-image${revisions.image}-emulator${revisions.emulator}`,
+        'paths<<PATHS',
+        ...cachedPackages(outcome).map((path) => join(file, path)),
+        manifestFile,
+        'PATHS',
+        '',
+      ].join('\n'),
+    )
+  }
+} else if (
+  command === 'cache-manifest' &&
+  file !== undefined &&
+  outcome !== undefined &&
+  manifestFile !== undefined &&
+  key !== undefined
+) {
+  const missing = cachedPackages(outcome).find(
+    (path) => !existsSync(join(file, path)),
+  )
+  const lines = (missing === undefined ? cachedPackages(outcome) : []).flatMap(
+    (path) =>
+      [...packageFiles(join(file, path))].map(([entry, size]) => ({
+        path: `${path}/${entry}`,
+        line: `${path}\t${entry}\t${size}\n`,
+      })),
+  )
+  // A tab or a line break in a name would split its manifest line, and the next check would delete both
+  // packages on every hit.
+  const unsupported = lines.find(({path}) => /[\t\n\r]/.test(path))
+  if (missing !== undefined) {
+    console.error(
+      `CACHE_MANIFEST: \`${missing}\` is not installed, not saving the cache`,
+    )
+    process.exitCode = 1
+  } else if (unsupported !== undefined) {
+    console.error(
+      `CACHE_MANIFEST: \`${unsupported.path.replace(/[\t\n\r]/g, (character) => ({'\t': '\\t', '\n': '\\n', '\r': '\\r'})[character] ?? character)}\` has a tab, a newline or a carriage return in its name, not saving the cache`,
+    )
+    process.exitCode = 1
+  } else {
+    writeFileSync(
+      manifestFile,
+      `${key}\n${lines.map(({line}) => line).join('')}`,
+    )
+  }
+} else if (
+  command === 'cache-check' &&
+  file !== undefined &&
+  outcome !== undefined &&
+  manifestFile !== undefined &&
+  key !== undefined
+) {
+  const restored = cachedPackages(outcome).filter((path) =>
+    existsSync(join(file, path)),
+  )
+  if (restored.length > 0) {
+    const manifest = readManifest(manifestFile)
+    const kept = []
+    for (const path of restored) {
+      const files = packageFiles(join(file, path))
+      // A manifest saved for another key describes other packages, whatever their files match.
+      const mismatch =
+        manifest !== undefined && manifest.key !== key
+          ? "the manifest does not name this cache's key"
+          : packageMismatch(manifest?.packages.get(path), files)
+      if (mismatch === undefined) {
+        kept.push(path)
+        log(
+          `CACHE_CHECK: kept \`${path}\`, its ${files.size} files match the manifest`,
+        )
+      } else {
+        rmSync(join(file, path), {recursive: true, force: true})
+        log(
+          `CACHE_CHECK: deleted \`${path}\`, ${mismatch}, so the install downloads it`,
+        )
+      }
+    }
+    if (kept.length > 0) {
+      mkdirSync('android/out', {recursive: true})
+      writeFileSync('android/out/cache-restored.txt', kept.join('\n'))
+    }
   }
 } else if (command === 'device-state' && file !== undefined) {
   const adb = spawnSync('adb', ['get-state'], {
@@ -348,6 +531,92 @@ function installPaths(sdk, api) {
 }
 
 /**
+ * The packages the cache holds, relative to the SDK root. The runner image ships platform-tools and the
+ * platform, and the cache would only pin older copies of them.
+ *
+ * @param {string} api The Android API level of the system image
+ * @returns {string[]}
+ */
+function cachedPackages(api) {
+  return [
+    'emulator',
+    `system-images/android-${api}/google_apis_playstore/x86_64`,
+  ]
+}
+
+/**
+ * The `sdkmanager` names of `cachedPackages`.
+ *
+ * @param {string} api The Android API level of the system image
+ * @returns {string[]}
+ */
+function cachedPackageNames(api) {
+  return [
+    'emulator',
+    `system-images;android-${api};google_apis_playstore;x86_64`,
+  ]
+}
+
+/**
+ * Every entry under a package with its size, relative to the package. A symlink counts as a file of its
+ * own size, so a restore that turns it into its target or drops it is a mismatch.
+ *
+ * @param {string} directory
+ * @returns {Map<string, number>}
+ */
+function packageFiles(directory) {
+  /** @type {Map<string, number>} */
+  const files = new Map()
+  for (const entry of readdirSync(directory, {
+    recursive: true,
+    withFileTypes: true,
+  })) {
+    if (!entry.isDirectory()) {
+      const path = join(entry.parentPath, entry.name)
+      files.set(path.slice(directory.length + 1), lstatSync(path).size)
+    }
+  }
+  return files
+}
+
+/**
+ * The manifest saved with the cache, the cache's key on its first line and then one
+ * `<package>\t<path>\t<size>` line per file, or `undefined` when it is missing or has a line of another
+ * shape.
+ *
+ * @param {string} manifestFile
+ * @returns {{key: string, packages: Map<string, Map<string, number>>} | undefined}
+ */
+function readManifest(manifestFile) {
+  if (!existsSync(manifestFile)) {
+    return undefined
+  }
+  const [key = '', ...lines] = readFileSync(manifestFile, 'utf8').split('\n')
+  /** @type {Map<string, Map<string, number>>} */
+  const packages = new Map()
+  for (const line of lines) {
+    if (line === '') {
+      continue
+    }
+    const [path, entry, size, ...rest] = line.split('\t')
+    if (
+      !path ||
+      !entry ||
+      size === undefined ||
+      rest.length > 0 ||
+      !/^\d+$/.test(size)
+    ) {
+      return undefined
+    }
+    packages.set(
+      path,
+      new Map([...(packages.get(path) ?? []), [entry, Number(size)]]),
+    )
+  }
+  return {key, packages}
+}
+
+/**
  * @param {string} timing
  * @returns {string[]}
  */
@@ -406,6 +675,15 @@ function infrastructureFailure(last, first) {
   return first === last
     ? `${failure} twice`
     : `${failure} on the retry after ${retryReason(first)}`
+}
+
+/**
+ * Writes a cache line to the log only, so the job summary reads as it does without the cache.
+ *
+ * @param {string} line
+ */
+function log(line) {
+  process.stdout.write(`${line}\n`)
 }
 
 /** @param {string} line */
