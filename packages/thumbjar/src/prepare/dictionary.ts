@@ -8,7 +8,8 @@
 //   node dist/prepare/dictionary.js wait <outdir> <booted>     wait for the load line until `DICTIONARY_LOAD_SECONDS` after `booted`, host epoch seconds
 //   node dist/prepare/dictionary.js check <outdir> <page url>  switch to Japanese, type `kyou` in the page's field and delete it, never committing
 // Both read `<outdir>/boot-logcat.txt`, and exit non-zero with a `DICTIONARY FAILED:` line when the
-// dictionary is not ready.
+// dictionary is not ready: `wait` exits `NOT_LOADED_STATUS`, 3, when no load line came by its deadline, and
+// every other failure exits 1.
 
 import {readFileSync} from 'node:fs'
 import {adb, adbOutput} from '../device/adb.ts'
@@ -30,6 +31,9 @@ import {
 import {closeChrome} from '../gboard/typing.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
+// The status `wait` exits with when no load line came by its deadline. `prepare.sh` exits with it too, as
+// its `DICTIONARY_NOT_LOADED_STATUS`, keep the two in sync.
+const NOT_LOADED_STATUS = 3
 // Each adb call of the wait, so its last read, the version query included, ends within `DICTIONARY_WAIT_TAIL_SECONDS`.
 const ADB_SECONDS = 10
 
@@ -73,6 +77,9 @@ async function wait(out: string, booted: number): Promise<void> {
     },
     booted,
   )
+  if (outcome.kind === 'not-loaded') {
+    throw new NotLoadedError(outcome.reason)
+  }
   if (outcome.kind === 'failed') {
     throw new Error(outcome.reason)
   }
@@ -121,6 +128,10 @@ async function check(out: string, pageUrl: string): Promise<void> {
   }
 }
 
+class NotLoadedError extends Error {
+  override name = 'NotLoadedError'
+}
+
 function readCapture(out: string): Capture {
   return parseCapture(readFileSync(`${out}/boot-logcat.txt`, 'utf8'))
 }
@@ -166,6 +177,6 @@ main().then(
     console.error(
       `DICTIONARY FAILED: ${error instanceof Error ? error.message : String(error)}`,
     )
-    process.exit(1)
+    process.exit(error instanceof NotLoadedError ? NOT_LOADED_STATUS : 1)
   },
 )

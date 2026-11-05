@@ -289,13 +289,16 @@ export type WaitSource = {
  * Read the capture every 2 seconds until it shows this boot's dictionary load, or until
  * `DICTIONARY_LOAD_SECONDS` after `booted`, the host time the emulator came online. Every load logged by
  * then counts, however late a read first sees it, and a load up to the adb round trip plus 1 second later
- * can count too (see the cutoff below). A capture of another boot or without a header fails at once.
+ * can count too (see the cutoff below). A capture of another boot or without a header fails at once. A
+ * load that never came is `not-loaded`, apart from that failure, so the prep can exit with its own status.
  */
 export async function waitForDictionary(
   source: WaitSource,
   booted: number,
 ): Promise<
-  {kind: 'loaded'; line: CaptureLine} | {kind: 'failed'; reason: string}
+  | {kind: 'loaded'; line: CaptureLine}
+  | {kind: 'not-loaded'; reason: string}
+  | {kind: 'failed'; reason: string}
 > {
   const deadline = booted + DICTIONARY_LOAD_SECONDS
   // The capture's lines carry device time and `booted` host time, so the deadline is moved onto the device's
@@ -333,7 +336,7 @@ export async function waitForDictionary(
       }
       if (outcome.kind === 'not-loaded') {
         return {
-          kind: 'failed',
+          kind: 'not-loaded',
           reason: notLoadedMessage(
             await source.gboardVersion(),
             dictionaryLines(capture, source.bootId),
