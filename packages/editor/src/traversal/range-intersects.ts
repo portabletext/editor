@@ -1,4 +1,8 @@
 import {comparePaths} from '../engine/path/compare-paths'
+import {
+  isCompactPath,
+  selectionHasCompactPath,
+} from '../engine/path/is-compact-path'
 import {isAfterPoint} from '../engine/point/is-after-point'
 import {isBeforePoint} from '../engine/point/is-before-point'
 import {isPoint} from '../engine/point/is-point'
@@ -23,7 +27,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Pass `snapshot.context.selection` as `range` to ask the question against
  * the editor's current selection.
  *
- * Returns `false` when either `range` or `target` is `null`.
+ * Returns `false` when either `range` or `target` is `null`, or carries a
+ * compact path, which addresses nothing.
  *
  * @public
  */
@@ -33,6 +38,17 @@ export function rangeIntersects(
   target: Path | EditorSelectionPoint | EditorSelection,
 ): boolean {
   if (!range || target === null) {
+    return false
+  }
+
+  if (
+    selectionHasCompactPath(range) ||
+    (Array.isArray(target)
+      ? isCompactPath(target)
+      : isPoint(target)
+        ? isCompactPath(target.path)
+        : selectionHasCompactPath(target))
+  ) {
     return false
   }
 

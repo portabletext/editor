@@ -10,8 +10,10 @@ import {resolveContainers} from '../schema/resolve-containers'
 import {getNodeDescendants, getNodes} from './get-nodes'
 import {
   createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
   resolveTestbedContainers,
   tableContainers,
+  textBlockDepths,
 } from './node-traversal-testbed'
 
 describe(getNodes.name, () => {
@@ -822,3 +824,67 @@ describe(getNodes.name, () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getNodes.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full block path as `at` yields its spans', () => {
+      expect(
+        Array.from(getNodes(testbed.snapshot, {at: testbed.blockPath})),
+      ).toEqual([
+        {node: testbed.fooSpan, path: testbed.spanPath},
+        {
+          node: testbed.barSpan,
+          path: [
+            ...testbed.blockPath,
+            'children',
+            {_key: testbed.barSpan._key},
+          ],
+        },
+      ])
+    })
+
+    test('the full span path as `from` and `to` yields the span', () => {
+      expect(
+        Array.from(
+          getNodes(testbed.snapshot, {
+            from: testbed.spanPath,
+            to: testbed.spanPath,
+            match: (node) => node === testbed.fooSpan,
+          }),
+        ),
+      ).toEqual([{node: testbed.fooSpan, path: testbed.spanPath}])
+    })
+
+    test.each(testbed.compactBlockPaths)(
+      'a compact block path ($form) as `at` yields nothing',
+      ({path}) => {
+        expect(Array.from(getNodes(testbed.snapshot, {at: path}))).toEqual([])
+      },
+    )
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) as `from` yields nothing',
+      ({path}) => {
+        expect(
+          Array.from(
+            getNodes(testbed.snapshot, {from: path, to: testbed.spanPath}),
+          ),
+        ).toEqual([])
+      },
+    )
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) as `to` yields nothing',
+      ({path}) => {
+        expect(
+          Array.from(
+            getNodes(testbed.snapshot, {from: testbed.spanPath, to: path}),
+          ),
+        ).toEqual([])
+      },
+    )
+  },
+)

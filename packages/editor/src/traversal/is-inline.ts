@@ -1,4 +1,5 @@
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {isBlock} from './is-block'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -11,5 +12,9 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * @public
  */
 export function isInline(snapshot: TraversalSnapshot, path: Path): boolean {
+  if (isCompactPath(path)) {
+    return false
+  }
+
   return !isBlock(snapshot, path)
 }

@@ -1,6 +1,7 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import type {
   Containers,
   RegisteredContainer,
@@ -23,6 +24,10 @@ export function getChildFieldName(
   },
   path: Path,
 ): string | undefined {
+  if (isCompactPath(path)) {
+    return undefined
+  }
+
   let nodeChildren = getNodeChildren(context, {value: context.value})
   let currentParent: RegisteredContainer | undefined = nodeChildren?.parent
 

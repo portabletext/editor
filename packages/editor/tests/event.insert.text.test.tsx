@@ -1,15 +1,24 @@
 import {isSpan} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {defineSchema, type Patch} from '../src'
 import {effect, execute, forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import type {BehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {getActiveDecorators} from '../src/selectors/selector.get-active-decorators'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  compactSpanPaths,
+  textBlock,
+  textBlockDepths,
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('event.insert.text', () => {
@@ -1048,3 +1057,352 @@ describe('event.insert.text', () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  'event.insert.text with a compact path $depth',
+  ({wrap}) => {
+    test.each(compactSpanPaths)(
+      'Scenario: `insert.text` at a compact span path ($form) changes nothing',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const barBlockKey = keyGenerator()
+        const barSpanKey = keyGenerator()
+        const barSpanPath = [
+          ...depth.keyedPrefix,
+          {_key: barBlockKey},
+          'children',
+          {_key: barSpanKey},
+        ]
+        const patches: Array<Patch> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+          ]),
+          children: (
+            <>
+              <NodePlugin nodes={textBlockDepthsContainers} />
+              <EventListenerPlugin
+                on={(event) => {
+                  if (event.type === 'patch') {
+                    patches.push(event.patch)
+                  }
+                }}
+              />
+            </>
+          ),
+        })
+
+        editor.send({
+          type: 'insert.text',
+          at: compactPath(depth, fooBlockKey, fooSpanKey),
+          offset: 3,
+          text: 'baz',
+        })
+        editor.send({
+          type: 'insert.text',
+          at: barSpanPath,
+          offset: 3,
+          text: 'baz',
+        })
+
+        await vi.waitFor(() => {
+          expect(patches).toEqual([
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [...barSpanPath, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ])
+        })
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'barbaz'),
+          ]),
+        )
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+  },
+)
+
+describe.each(textBlockDepths)(
+  'event.insert.text without `offset` with a compact path $depth',
+  ({wrap}) => {
+    test.each(compactSpanPaths)(
+      'Scenario: `insert.text` without `offset` at a compact span path ($form) leaves an expanded selection alone',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const barBlockKey = keyGenerator()
+        const barSpanKey = keyGenerator()
+        const fooSpanPath = [
+          ...depth.keyedPrefix,
+          {_key: fooBlockKey},
+          'children',
+          {_key: fooSpanKey},
+        ]
+        const barSpanPath = [
+          ...depth.keyedPrefix,
+          {_key: barBlockKey},
+          'children',
+          {_key: barSpanKey},
+        ]
+        const patches: Array<Patch> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+          ]),
+          children: (
+            <>
+              <NodePlugin nodes={textBlockDepthsContainers} />
+              <EventListenerPlugin
+                on={(event) => {
+                  if (event.type === 'patch') {
+                    patches.push(event.patch)
+                  }
+                }}
+              />
+            </>
+          ),
+        })
+
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: barSpanPath, offset: 0},
+            focus: {path: barSpanPath, offset: 3},
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).toEqual({
+            anchor: {path: barSpanPath, offset: 0},
+            focus: {path: barSpanPath, offset: 3},
+            backward: false,
+          })
+        })
+
+        editor.send({
+          type: 'insert.text',
+          at: compactPath(depth, fooBlockKey, fooSpanKey),
+          text: 'baz',
+        })
+        editor.send({
+          type: 'insert.text',
+          at: fooSpanPath,
+          offset: 3,
+          text: 'baz',
+        })
+
+        await vi.waitFor(() => {
+          expect(patches).toEqual([
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [...fooSpanPath, 'text'],
+              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+            },
+          ])
+        })
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foobaz'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+          ]),
+        )
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: barSpanPath, offset: 0},
+          focus: {path: barSpanPath, offset: 3},
+          backward: false,
+        })
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+
+    test.each(compactSpanPaths)(
+      'Scenario: `insert.text` without `offset` at a compact span path ($form) leaves the caret alone',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const fooSpanPath = [
+          ...depth.keyedPrefix,
+          {_key: fooBlockKey},
+          'children',
+          {_key: fooSpanKey},
+        ]
+        const patches: Array<Patch> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+          ]),
+          children: (
+            <>
+              <NodePlugin nodes={textBlockDepthsContainers} />
+              <EventListenerPlugin
+                on={(event) => {
+                  if (event.type === 'patch') {
+                    patches.push(event.patch)
+                  }
+                }}
+              />
+            </>
+          ),
+        })
+
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: fooSpanPath, offset: 1},
+            focus: {path: fooSpanPath, offset: 1},
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).toEqual({
+            anchor: {path: fooSpanPath, offset: 1},
+            focus: {path: fooSpanPath, offset: 1},
+            backward: false,
+          })
+        })
+
+        editor.send({
+          type: 'insert.text',
+          at: compactPath(depth, fooBlockKey, fooSpanKey),
+          text: 'bar',
+        })
+        editor.send({
+          type: 'insert.text',
+          at: fooSpanPath,
+          offset: 3,
+          text: 'baz',
+        })
+
+        await vi.waitFor(() => {
+          expect(patches).toEqual([
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [...fooSpanPath, 'text'],
+              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+            },
+          ])
+        })
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foobaz'),
+          ]),
+        )
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: fooSpanPath, offset: 1},
+          focus: {path: fooSpanPath, offset: 1},
+          backward: false,
+        })
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+
+    test('Scenario: `insert.text` without `offset` at a full span path replaces an expanded selection', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const depth = wrap(keyGenerator)
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const fooSpanPath = [
+        ...depth.keyedPrefix,
+        {_key: fooBlockKey},
+        'children',
+        {_key: fooSpanKey},
+      ]
+      const barSpanPath = [
+        ...depth.keyedPrefix,
+        {_key: barBlockKey},
+        'children',
+        {_key: barSpanKey},
+      ]
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: textBlockDepthsSchemaDefinition,
+        initialValue: depth.wrapValue([
+          textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+          textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+        ]),
+        children: <NodePlugin nodes={textBlockDepthsContainers} />,
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: barSpanPath, offset: 0},
+          focus: {path: barSpanPath, offset: 3},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: barSpanPath, offset: 0},
+          focus: {path: barSpanPath, offset: 3},
+          backward: false,
+        })
+      })
+
+      editor.send({type: 'insert.text', at: fooSpanPath, text: 'baz'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'baz'),
+          ]),
+        )
+      })
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: barSpanPath, offset: 3},
+        focus: {path: barSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+  },
+)

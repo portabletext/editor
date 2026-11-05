@@ -12,6 +12,7 @@ import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
+import {selectionHasCompactPath} from '../engine/path/is-compact-path'
 import {isAfterPoint} from '../engine/point/is-after-point'
 import {isBeforePoint} from '../engine/point/is-before-point'
 import {cloneRange} from '../engine/range/clone-range'
@@ -20,6 +21,7 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
+import {getChildren} from '../traversal/get-children'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {
@@ -153,6 +155,16 @@ function mergeRangeDecoration(
   ]
 }
 
+/**
+ * Whether a configured decoration range can become live. A range with a
+ * compact endpoint addresses nothing, so it stays in its source's
+ * configuration (and unregisters with it) but never renders and is never
+ * mapped by an edit.
+ */
+function addressesContent(range: NonNullable<EditorSelection>): boolean {
+  return !selectionHasCompactPath(range)
+}
+
 function buildPropDecoratedRangesFromScratch(
   rangeDecorations: Array<RangeDecoration>,
 ): Array<DecoratedRange> {
@@ -165,6 +177,10 @@ function buildPropDecoratedRangesFromScratch(
         rangeDecoration,
         origin: 'local',
       })
+      continue
+    }
+
+    if (!addressesContent(rangeDecoration.selection)) {
       continue
     }
 
@@ -182,14 +198,20 @@ function buildPropDecoratedRangesFromScratch(
 function buildRegisteredDecoratedRangesFromScratch(
   rangeDecorations: Array<Decoration>,
 ): Array<DecoratedRange> {
-  return rangeDecorations.map((rangeDecoration) => {
-    const range = cloneRange(rangeDecoration.range)
-    return {
-      rangeDecoration: {...rangeDecoration, range},
-      kind: 'registered',
-      merge: mergeRangeDecoration,
-      ...range,
+  return rangeDecorations.flatMap((rangeDecoration) => {
+    if (!addressesContent(rangeDecoration.range)) {
+      return []
     }
+
+    const range = cloneRange(rangeDecoration.range)
+    return [
+      {
+        rangeDecoration: {...rangeDecoration, range},
+        kind: 'registered',
+        merge: mergeRangeDecoration,
+        ...range,
+      },
+    ]
   })
 }
 
@@ -329,6 +351,10 @@ function reconcileRegisteredSource(
         continue
       }
       deadSelections.delete(rangeDecoration.id)
+    }
+
+    if (!addressesContent(rangeDecoration.range)) {
+      continue
     }
 
     const range = cloneRange(rangeDecoration.range)
@@ -908,15 +934,19 @@ function createDecorate(
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
       !firstBlock.listItem
 
-    if (editorOnlyContainsEmptyParagraph) {
+    const placeholderSpan = editorOnlyContainsEmptyParagraph
+      ? getChildren(editorEngine.snapshot, [{_key: firstBlock._key}]).at(0)
+      : undefined
+
+    if (placeholderSpan) {
       return [
         {
           anchor: {
-            path: [0, 0],
+            path: placeholderSpan.path,
             offset: 0,
           },
           focus: {
-            path: [0, 0],
+            path: placeholderSpan.path,
             offset: 0,
           },
           placeholder: true,

@@ -1,6 +1,10 @@
 import {describe, expect, test} from 'vitest'
 import {getLeaf} from './get-leaf'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
+  textBlockDepths,
+} from './node-traversal-testbed'
 
 describe(getLeaf.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -143,3 +147,34 @@ describe(getLeaf.name, () => {
     ])
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getLeaf.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full block path returns its first span', () => {
+      expect(
+        getLeaf(testbed.snapshot, testbed.blockPath, {edge: 'start'}),
+      ).toEqual({node: testbed.fooSpan, path: testbed.spanPath})
+    })
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) returns no leaf',
+      ({path}) => {
+        expect(getLeaf(testbed.snapshot, path, {edge: 'start'})).toEqual(
+          undefined,
+        )
+      },
+    )
+
+    test.each(testbed.compactBlockPaths)(
+      'a compact block path ($form) returns no leaf',
+      ({path}) => {
+        expect(getLeaf(testbed.snapshot, path, {edge: 'start'})).toEqual(
+          undefined,
+        )
+      },
+    )
+  },
+)

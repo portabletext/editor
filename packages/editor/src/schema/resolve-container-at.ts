@@ -1,5 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {
   Containers,
@@ -39,6 +40,10 @@ export function resolveContainerAt(
   value: ReadonlyArray<Node>,
   path: Path,
 ): RegisteredContainer | RegisteredPositional | undefined {
+  if (isCompactPath(path)) {
+    return undefined
+  }
+
   const keyedIndices: Array<number> = []
   for (let index = 0; index < path.length; index++) {
     if (isKeyedSegment(path[index])) {

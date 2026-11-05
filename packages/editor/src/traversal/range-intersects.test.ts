@@ -1,5 +1,9 @@
 import {describe, expect, test} from 'vitest'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
+  textBlockDepths,
+} from './node-traversal-testbed'
 import {rangeIntersects} from './range-intersects'
 
 describe(rangeIntersects.name, () => {
@@ -205,3 +209,43 @@ describe(rangeIntersects.name, () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  `${rangeIntersects.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+    const fullRange = {
+      anchor: {path: testbed.spanPath, offset: 0},
+      focus: {path: testbed.spanPath, offset: 3},
+    }
+
+    test('a full range intersects its own span path, point and range', () => {
+      expect([
+        rangeIntersects(testbed.snapshot, fullRange, testbed.spanPath),
+        rangeIntersects(testbed.snapshot, fullRange, {
+          path: testbed.spanPath,
+          offset: 1,
+        }),
+        rangeIntersects(testbed.snapshot, fullRange, fullRange),
+      ]).toEqual([true, true, true])
+    })
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) intersects nothing as a target or as a range',
+      ({path}) => {
+        const compactRange = {
+          anchor: {path, offset: 0},
+          focus: {path, offset: 3},
+        }
+
+        expect([
+          rangeIntersects(testbed.snapshot, fullRange, path),
+          rangeIntersects(testbed.snapshot, fullRange, {path, offset: 1}),
+          rangeIntersects(testbed.snapshot, fullRange, compactRange),
+          rangeIntersects(testbed.snapshot, compactRange, testbed.spanPath),
+          rangeIntersects(testbed.snapshot, compactRange, fullRange),
+        ]).toEqual([false, false, false, false, false])
+      },
+    )
+  },
+)

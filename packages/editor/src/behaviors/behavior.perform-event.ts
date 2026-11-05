@@ -4,6 +4,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {createEditorSnapshot} from '../editor/editor-snapshot'
 import {withPerformingBehaviorOperation} from '../engine-plugins/engine-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../engine-plugins/engine-plugin.without-normalizing-conditional'
+import {eventHasCompactPath} from '../engine/path/is-compact-path'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
 import {performOperation} from '../operations/operation.perform'
@@ -90,6 +91,10 @@ export function performEvent({
   sendBack,
   depth,
 }: PerformEventArgs) {
+  if (eventHasCompactPath(event)) {
+    return
+  }
+
   if (depth > maxEventDepth) {
     console.error(
       new Error(

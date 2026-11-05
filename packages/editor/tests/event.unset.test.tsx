@@ -1,9 +1,17 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
+import {defineSchema, type Patch} from '../src'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  compactSpanPaths,
+  textBlock,
+  textBlockDepths,
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 
 describe('event.unset', () => {
   test('Scenario: unset a property on a block', async () => {
@@ -519,3 +527,75 @@ describe('event.unset', () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  'event.unset with a compact path $depth',
+  ({wrap}) => {
+    test.each(compactSpanPaths)(
+      'Scenario: `unset` at a compact span path ($form) changes nothing',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const barBlockKey = keyGenerator()
+        const barSpanKey = keyGenerator()
+        const barBlockPath = [...depth.keyedPrefix, {_key: barBlockKey}]
+        const patches: Array<Patch> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+          ]),
+          children: (
+            <>
+              <NodePlugin nodes={textBlockDepthsContainers} />
+              <EventListenerPlugin
+                on={(event) => {
+                  if (event.type === 'patch') {
+                    patches.push(event.patch)
+                  }
+                }}
+              />
+            </>
+          ),
+        })
+
+        editor.send({
+          type: 'unset',
+          at: compactPath(depth, fooBlockKey, fooSpanKey),
+        })
+        editor.send({
+          type: 'unset',
+          at: barBlockPath,
+        })
+
+        await vi.waitFor(() => {
+          expect(patches).toEqual([
+            {
+              origin: 'local',
+              type: 'unset',
+              path: barBlockPath,
+            },
+          ])
+        })
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+          ]),
+        )
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+  },
+)

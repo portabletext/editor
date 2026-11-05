@@ -1,6 +1,10 @@
 import {describe, expect, test} from 'vitest'
 import {getAncestors} from './get-ancestors'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
+  textBlockDepths,
+} from './node-traversal-testbed'
 
 describe(getAncestors.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -179,3 +183,31 @@ describe(getAncestors.name, () => {
     ])
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getAncestors.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full span path returns the text block and its containers', () => {
+      expect(getAncestors(testbed.snapshot, testbed.spanPath)).toEqual([
+        {node: testbed.textBlock, path: testbed.blockPath},
+        ...testbed.containerAncestors,
+      ])
+    })
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) returns no ancestors',
+      ({path}) => {
+        expect(getAncestors(testbed.snapshot, path)).toEqual([])
+      },
+    )
+
+    test.each(testbed.compactBlockPaths)(
+      'a compact block path ($form) returns no ancestors',
+      ({path}) => {
+        expect(getAncestors(testbed.snapshot, path)).toEqual([])
+      },
+    )
+  },
+)

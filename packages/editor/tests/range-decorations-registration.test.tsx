@@ -14,7 +14,15 @@ import {
   type EditorSelection,
   type RangeDecoration,
 } from '../src'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  compactSpanPaths,
+  textBlock,
+  textBlockDepths,
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 import {
   getSelectionBeforeText,
   getTextSelection,
@@ -2458,3 +2466,115 @@ function RegisteredDecorationsProbe(props: {decorations: Array<Decoration>}) {
   )
   return null
 }
+
+describe.each(textBlockDepths)(
+  'registerDecorations with a compact range $depth',
+  ({wrap}) => {
+    describe.each(compactSpanPaths)(
+      'compact span path ($form)',
+      ({path: compactPath}) => {
+        test.each([
+          {shape: 'collapsed', anchorOffset: 1, focusOffset: 1},
+          {shape: 'expanded', anchorOffset: 0, focusOffset: 3},
+        ])(
+          'Scenario: a $shape compact decoration never renders, is never mapped, and unregisters with its registration',
+          async ({anchorOffset, focusOffset}) => {
+            const keyGenerator = createTestKeyGenerator()
+            const depth = wrap(keyGenerator)
+            const blockKey = keyGenerator()
+            const spanKey = keyGenerator()
+            const spanPath = [
+              ...depth.keyedPrefix,
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+            ]
+            const compactSpanPath = compactPath(depth, blockKey, spanKey)
+            const onMapped = vi.fn()
+
+            const {editor} = await createTestEditor({
+              keyGenerator,
+              schemaDefinition: textBlockDepthsSchemaDefinition,
+              initialValue: depth.wrapValue([
+                textBlock(depth.blockName, blockKey, spanKey, 'foo'),
+              ]),
+              children: <NodePlugin nodes={textBlockDepthsContainers} />,
+            })
+
+            const registration = editor.registerDecorations({
+              decorations: [
+                {
+                  id: 'compact',
+                  type: 'range',
+                  render: (props) => (
+                    <span data-testid="compact">{props.children}</span>
+                  ),
+                  range: {
+                    anchor: {path: compactSpanPath, offset: anchorOffset},
+                    focus: {path: compactSpanPath, offset: focusOffset},
+                  },
+                },
+                {
+                  id: 'full',
+                  type: 'range',
+                  render: (props) => (
+                    <span data-testid="full">{props.children}</span>
+                  ),
+                  range: {
+                    anchor: {path: spanPath, offset: 0},
+                    focus: {path: spanPath, offset: 3},
+                  },
+                },
+              ],
+              onMapped,
+            })
+
+            editor.send({
+              type: 'insert.text',
+              at: spanPath,
+              offset: 0,
+              text: 'X',
+            })
+
+            await vi.waitFor(() => {
+              expect(onMapped.mock.calls).toEqual([
+                [
+                  [
+                    {
+                      id: 'full',
+                      previousRange: {
+                        anchor: {path: spanPath, offset: 0},
+                        focus: {path: spanPath, offset: 3},
+                      },
+                      newRange: {
+                        anchor: {path: spanPath, offset: 1},
+                        focus: {path: spanPath, offset: 4},
+                      },
+                      contentTouched: false,
+                      origin: 'local',
+                    },
+                  ],
+                ],
+              ])
+            })
+            await vi.waitFor(() => {
+              expect([
+                document.querySelectorAll('[data-testid="compact"]').length,
+                document.querySelectorAll('[data-testid="full"]').length,
+              ]).toEqual([0, 1])
+            })
+
+            registration.unregister()
+
+            await vi.waitFor(() => {
+              expect(
+                document.querySelectorAll('[data-testid="full"]').length,
+              ).toEqual(0)
+            })
+            expect(registration.getDecorations()).toEqual([])
+          },
+        )
+      },
+    )
+  },
+)

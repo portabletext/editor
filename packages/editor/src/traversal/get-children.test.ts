@@ -4,8 +4,10 @@ import {getChildren} from './get-children'
 import {
   codeBlockContainer,
   createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
   resolveTestbedContainers,
   tableContainers,
+  textBlockDepths,
 } from './node-traversal-testbed'
 
 describe(getChildren.name, () => {
@@ -222,3 +224,31 @@ describe(getChildren.name, () => {
     ])
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getChildren.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full block path returns its spans', () => {
+      expect(getChildren(testbed.snapshot, testbed.blockPath)).toEqual([
+        {node: testbed.fooSpan, path: testbed.spanPath},
+        {
+          node: testbed.barSpan,
+          path: [
+            ...testbed.blockPath,
+            'children',
+            {_key: testbed.barSpan._key},
+          ],
+        },
+      ])
+    })
+
+    test.each(testbed.compactBlockPaths)(
+      'a compact block path ($form) returns no children',
+      ({path}) => {
+        expect(getChildren(testbed.snapshot, path)).toEqual([])
+      },
+    )
+  },
+)

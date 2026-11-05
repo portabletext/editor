@@ -1,5 +1,6 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getTextBlock} from './get-text-block'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -19,6 +20,10 @@ export function getAnnotation(
   snapshot: TraversalSnapshot,
   path: Path,
 ): {node: PortableTextObject; path: Path} | undefined {
+  if (isCompactPath(path)) {
+    return undefined
+  }
+
   // A path may cross multiple `'markDefs'` segments if a consumer
   // registers a container whose array field is named `markDefs`. Try
   // each position and pick the one whose prefix resolves to a text

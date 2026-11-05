@@ -1,6 +1,12 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {EditorSchema} from '../editor/editor-schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import type {RegisteredContainer} from '../schema/container-types'
@@ -309,5 +315,280 @@ export function createNodeTraversalTestbed() {
     cell3,
     emptyBlock,
     emptySpan,
+  }
+}
+
+/**
+ * The depths a text block can sit at: at the root, inside a container,
+ * inside a container inside a container, and inside an object field whose
+ * `of` declares its own text block sub-schema.
+ */
+export const textBlockDepths = [
+  'at the root',
+  'inside a callout',
+  'inside a callout inside a callout',
+  'inside a field with its own sub-schema',
+] as const
+
+/**
+ * A fixture holding one text block (spans `foo` and `bar`) at the given
+ * depth. Besides the full paths to the block and its `foo` span, it carries
+ * compact variants of them: the same node segments with one or more child
+ * field names left out. A compact path addresses nothing.
+ */
+export function createTextBlockDepthTestbed(
+  depth: (typeof textBlockDepths)[number],
+) {
+  const keyGenerator = createTestKeyGenerator()
+
+  const schema = compileSchema(
+    defineSchema({
+      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}, {type: 'callout'}],
+            },
+          ],
+        },
+        {
+          name: 'note',
+          fields: [
+            {
+              name: 'body',
+              type: 'array',
+              of: [
+                {
+                  type: 'block',
+                  styles: [{name: 'normal'}, {name: 'h1'}],
+                  decorators: [{name: 'em'}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }),
+  )
+
+  const outerKey = keyGenerator()
+  const innerKey = keyGenerator()
+  const fooSpan = {_key: keyGenerator(), _type: 'span', text: 'foo'}
+  const barSpan = {_key: keyGenerator(), _type: 'span', text: 'bar'}
+  const link = {_key: keyGenerator(), _type: 'link', href: 'https://a'}
+  const textBlock = {
+    _key: keyGenerator(),
+    _type: schema.block.name,
+    children: [fooSpan, barSpan],
+    markDefs: [link],
+  }
+
+  const innerCallout = {
+    _key: innerKey,
+    _type: 'callout',
+    content: [textBlock],
+  }
+  const outerCallout = {
+    _key: outerKey,
+    _type: 'callout',
+    content: depth === 'inside a callout' ? [textBlock] : [innerCallout],
+  }
+  const note = {_key: outerKey, _type: 'note', body: [textBlock]}
+
+  const {
+    value,
+    containerAncestors,
+    keyedPrefix,
+    indexedPrefix,
+  }: {
+    value: Array<PortableTextBlock>
+    containerAncestors: Array<{node: Node; path: Path}>
+    keyedPrefix: Path
+    indexedPrefix: Path
+  } =
+    depth === 'at the root'
+      ? {
+          value: [textBlock],
+          containerAncestors: [],
+          keyedPrefix: [],
+          indexedPrefix: [],
+        }
+      : depth === 'inside a callout'
+        ? {
+            value: [outerCallout],
+            containerAncestors: [
+              {node: outerCallout, path: [{_key: outerKey}]},
+            ],
+            keyedPrefix: [{_key: outerKey}, 'content'],
+            indexedPrefix: [0, 'content'],
+          }
+        : depth === 'inside a callout inside a callout'
+          ? {
+              value: [outerCallout],
+              containerAncestors: [
+                {
+                  node: innerCallout,
+                  path: [{_key: outerKey}, 'content', {_key: innerKey}],
+                },
+                {node: outerCallout, path: [{_key: outerKey}]},
+              ],
+              keyedPrefix: [
+                {_key: outerKey},
+                'content',
+                {_key: innerKey},
+                'content',
+              ],
+              indexedPrefix: [0, 'content', 0, 'content'],
+            }
+          : {
+              value: [note],
+              containerAncestors: [{node: note, path: [{_key: outerKey}]}],
+              keyedPrefix: [{_key: outerKey}, 'body'],
+              indexedPrefix: [0, 'body'],
+            }
+
+  const publicContainers = [
+    defineContainer({type: 'callout', arrayField: 'content'}),
+    defineContainer({type: 'note', arrayField: 'body'}),
+  ]
+  const containers = resolveTestbedContainers(schema, publicContainers)
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps({schema, containers, value}, {blockIndexMap})
+
+  const blockPath: Path = [...keyedPrefix, {_key: textBlock._key}]
+  const spanPath: Path = [...blockPath, 'children', {_key: fooSpan._key}]
+  const indexedSpanPath: Path = [...indexedPrefix, 0, 'children', 0]
+  const compactKeyedPrefix = keyedPrefix.filter(
+    (segment) => typeof segment !== 'string',
+  )
+  const compactIndexedPrefix = indexedPrefix.filter(
+    (segment) => typeof segment !== 'string',
+  )
+
+  const compactSpanPaths: Array<{form: string; path: Path}> = [
+    {
+      form: 'keyed',
+      path: [...keyedPrefix, {_key: textBlock._key}, {_key: fooSpan._key}],
+    },
+    {form: 'indexed', path: [...indexedPrefix, 0, 0]},
+    {
+      form: 'keyed then indexed',
+      path: [...keyedPrefix, {_key: textBlock._key}, 0],
+    },
+    {
+      form: 'missing key then indexed',
+      path: [...keyedPrefix, {_key: `${textBlock._key}-missing`}, 0],
+    },
+    {
+      form: 'missing block prefix',
+      path: [
+        ...keyedPrefix,
+        {_key: `${textBlock._key}-missing`},
+        'children',
+        {_key: textBlock._key},
+        0,
+      ],
+    },
+    {
+      form: 'missing container after a missing text block',
+      path: [
+        ...keyedPrefix,
+        {_key: `${textBlock._key}-missing`},
+        'children',
+        {_key: `${textBlock._key}-missing-container`},
+        'content',
+        {_key: textBlock._key},
+        0,
+      ],
+    },
+    {
+      form: 'missing container prefix',
+      path:
+        keyedPrefix.length === 0
+          ? [
+              {_key: `${textBlock._key}-missing`},
+              'children',
+              {_key: textBlock._key},
+              0,
+            ]
+          : [
+              {_key: `${textBlock._key}-missing`},
+              ...keyedPrefix.slice(1),
+              {_key: textBlock._key},
+              0,
+            ],
+    },
+    ...(keyedPrefix.length === 0
+      ? []
+      : [
+          {
+            form: 'keyed, missing only the container field',
+            path: [
+              ...compactKeyedPrefix,
+              {_key: textBlock._key},
+              'children',
+              {_key: fooSpan._key},
+            ],
+          },
+          {
+            form: 'indexed, missing every field',
+            path: [...compactIndexedPrefix, 0, 0],
+          },
+        ]),
+  ]
+
+  const compactBlockPaths: Array<{form: string; path: Path}> =
+    keyedPrefix.length === 0
+      ? []
+      : [
+          {
+            form: 'keyed',
+            path: [...compactKeyedPrefix, {_key: textBlock._key}],
+          },
+          {form: 'indexed', path: [...compactIndexedPrefix, 0]},
+        ]
+
+  const annotationPath: Path = [...blockPath, 'markDefs', {_key: link._key}]
+  const compactAnnotationPaths: Array<{form: string; path: Path}> = [
+    {
+      form: 'keyed, with a compact block prefix',
+      path: [...blockPath, {_key: fooSpan._key}, 'markDefs', {_key: link._key}],
+    },
+    {form: 'numeric suffix', path: [...annotationPath, 0]},
+    {form: 'keyed suffix', path: [...annotationPath, {_key: link._key}]},
+  ]
+  const innermostContainerPath = containerAncestors.at(0)?.path
+  const compactContainerPaths: Array<{form: string; path: Path}> =
+    innermostContainerPath === undefined || innermostContainerPath.length < 3
+      ? []
+      : [
+          {
+            form: 'keyed',
+            path: innermostContainerPath.filter(
+              (segment) => typeof segment !== 'string',
+            ),
+          },
+        ]
+
+  return {
+    snapshot: {context: {schema, containers, value}, blockIndexMap},
+    publicContainers,
+    containerAncestors,
+    textBlock,
+    link,
+    fooSpan,
+    barSpan,
+    annotationPath,
+    compactAnnotationPaths,
+    compactContainerPaths,
+    blockPath,
+    spanPath,
+    indexedSpanPath,
+    compactSpanPaths,
+    compactBlockPaths,
   }
 }

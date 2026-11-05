@@ -2,7 +2,11 @@ import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
-import {createNodeTraversalTestbed} from '../traversal/node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
+  textBlockDepths,
+} from '../traversal/node-traversal-testbed'
 import {resolveSelection} from './apply-selection'
 
 describe(resolveSelection.name, () => {
@@ -402,3 +406,38 @@ describe(resolveSelection.name, () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  `${resolveSelection.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+    const snapshot = createTestSnapshot({context: testbed.snapshot.context})
+
+    test('a point at the full span path resolves to itself', () => {
+      expect(
+        resolveSelection(
+          {snapshot},
+          {
+            anchor: {path: testbed.spanPath, offset: 1},
+            focus: {path: testbed.spanPath, offset: 1},
+          },
+        ),
+      ).toEqual({
+        anchor: {path: testbed.spanPath, offset: 1},
+        focus: {path: testbed.spanPath, offset: 1},
+      })
+    })
+
+    test.each(testbed.compactSpanPaths)(
+      'a point at a compact span path ($form) resolves to nothing',
+      ({path}) => {
+        expect(
+          resolveSelection(
+            {snapshot},
+            {anchor: {path, offset: 1}, focus: {path, offset: 1}},
+          ),
+        ).toEqual(null)
+      },
+    )
+  },
+)

@@ -1,5 +1,5 @@
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import type {BehaviorEvent} from '../src/behaviors'
@@ -15,6 +15,13 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  compactSpanPaths,
+  textBlock,
+  textBlockDepths,
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('Behavior API', () => {
@@ -1111,3 +1118,259 @@ describe('Behavior API', () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  'Behavior API with a compact path $depth',
+  ({wrap}) => {
+    test.each(compactSpanPaths)(
+      'Scenario: Behaviors never see a raised event at a compact path ($form)',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const barBlockKey = keyGenerator()
+        const barSpanKey = keyGenerator()
+        const fooBlockPath = [...depth.keyedPrefix, {_key: fooBlockKey}]
+        const compactFooSpanPath = compactPath(depth, fooBlockKey, fooSpanKey)
+        const fooSpanPath = [...fooBlockPath, 'children', {_key: fooSpanKey}]
+        const seenEvents: Array<BehaviorEvent> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+          ]),
+          children: (
+            <>
+              <NodePlugin nodes={textBlockDepthsContainers} />
+              <BehaviorPlugin
+                behaviors={[
+                  defineBehavior({
+                    on: '*',
+                    actions: [
+                      ({event}) => [
+                        effect(() => {
+                          seenEvents.push(event)
+                        }),
+                        forward(event),
+                      ],
+                    ],
+                  }),
+                  defineBehavior({
+                    on: 'custom.edit',
+                    actions: [
+                      () => [
+                        raise({
+                          type: 'insert.text',
+                          at: compactFooSpanPath,
+                          text: 'baz',
+                        }),
+                        raise({
+                          type: 'set',
+                          at: [...compactFooSpanPath, 'text'],
+                          value: 'baz',
+                        }),
+                        raise({
+                          type: 'select',
+                          at: {
+                            anchor: {path: compactFooSpanPath, offset: 0},
+                            focus: {path: compactFooSpanPath, offset: 0},
+                          },
+                        }),
+                        raise({
+                          type: 'insert.text',
+                          at: fooSpanPath,
+                          offset: 3,
+                          text: 'baz',
+                        }),
+                      ],
+                    ],
+                  }),
+                ]}
+              />
+            </>
+          ),
+        })
+
+        editor.send({type: 'custom.edit'})
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(
+            depth.wrapValue([
+              textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foobaz'),
+              textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+            ]),
+          )
+        })
+        expect(seenEvents).toEqual([
+          {type: 'custom.edit'},
+          {type: 'insert.text', at: fooSpanPath, offset: 3, text: 'baz'},
+        ])
+        expect(editor.getSnapshot().context.selection).toEqual(null)
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+  },
+)
+
+describe('Behavior API with custom event payloads', () => {
+  test.each([
+    {field: 'at', payload: [0, 0]},
+    {field: 'to', payload: [0, 0]},
+    {
+      field: 'position',
+      payload: {
+        selection: {
+          anchor: {path: [0, 0], offset: 0},
+          focus: {path: [0, 0], offset: 0},
+        },
+      },
+    },
+    {
+      field: 'dragOrigin',
+      payload: {
+        selection: {
+          anchor: {path: [0, 0], offset: 0},
+          focus: {path: [0, 0], offset: 0},
+        },
+      },
+    },
+  ])(
+    'Scenario: a custom event with a `$field` payload reaches its Behavior unchanged',
+    async ({field, payload}) => {
+      const receivedEvents: Array<BehaviorEvent> = []
+
+      const {editor} = await createTestEditor({
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.review',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      receivedEvents.push(event)
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({type: 'custom.review', [field]: payload})
+
+      await vi.waitFor(() => {
+        expect(receivedEvents).toEqual([
+          {type: 'custom.review', [field]: payload},
+        ])
+      })
+    },
+  )
+})
+
+describe.each(textBlockDepths)(
+  'Behavior API with a compact native origin $depth',
+  ({wrap}) => {
+    test.each(compactSpanPaths)(
+      'Scenario: `deserialization.success` whose native origin is at a compact path ($form) changes nothing',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const pastedBlockKey = keyGenerator()
+        const pastedSpanKey = keyGenerator()
+        const fooSpanPath = [
+          ...depth.keyedPrefix,
+          {_key: fooBlockKey},
+          'children',
+          {_key: fooSpanKey},
+        ]
+        const compactFooSpanPath = compactPath(depth, fooBlockKey, fooSpanKey)
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+          ]),
+          children: <NodePlugin nodes={textBlockDepthsContainers} />,
+        })
+
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: fooSpanPath, offset: 0},
+            focus: {path: fooSpanPath, offset: 3},
+          },
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.selection).toEqual({
+            anchor: {path: fooSpanPath, offset: 0},
+            focus: {path: fooSpanPath, offset: 3},
+            backward: false,
+          })
+        })
+
+        editor.send({
+          type: 'deserialization.success',
+          mimeType: 'text/plain',
+          data: [
+            textBlock(depth.blockName, pastedBlockKey, pastedSpanKey, 'bar'),
+          ],
+          originEvent: {
+            type: 'clipboard.paste',
+            originEvent: {dataTransfer: new DataTransfer()},
+            position: {
+              selection: {
+                anchor: {path: compactFooSpanPath, offset: 0},
+                focus: {path: compactFooSpanPath, offset: 3},
+                backward: false,
+              },
+            },
+          },
+        })
+        editor.send({
+          type: 'insert.text',
+          at: fooSpanPath,
+          offset: 3,
+          text: 'baz',
+        })
+
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(
+            depth.wrapValue([
+              textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foobaz'),
+            ]),
+          )
+        })
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: fooSpanPath, offset: 0},
+          focus: {path: fooSpanPath, offset: 6},
+          backward: false,
+        })
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+  },
+)
