@@ -61,13 +61,13 @@ jobs:
               lang: ja,
               file: tests/ja.test.ts,
               run_minutes: 56,
-              job_minutes: 169,
+              job_minutes: 183,
             }
           - {
               lang: en,
               file: tests/en.test.ts,
               run_minutes: 52,
-              job_minutes: 161,
+              job_minutes: 175,
             }
         api: [36]
 
@@ -115,6 +115,45 @@ jobs:
         timeout-minutes: 2
         run: pnpm --filter @portabletext/editor exec thumbjar fetch-u2-jar
 
+      # The emulator and its system image come from the actions cache when it holds the versions a fresh
+      # install picks today, see the SDK cache in `packages/editor/android/README.md`. A failed lookup,
+      # restore or save is a miss, which installs as before.
+      - name: Look up the SDK cache key
+        id: sdk-key
+        continue-on-error: true
+        timeout-minutes: 1
+        working-directory: packages/editor
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node android/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"
+
+      - name: Restore the SDK cache
+        id: sdk-restore
+        if: steps.sdk-key.outputs.key != ''
+        continue-on-error: true
+        timeout-minutes: 5
+        uses: actions/cache/restore@v6
+        with:
+          key: ${{ steps.sdk-key.outputs.key }}
+          path: ${{ steps.sdk-key.outputs.paths }}
+
+      # A restored package whose files differ from the manifest saved with it is deleted, so the install
+      # downloads it. A partial restore is checked too.
+      - name: Check the SDK cache
+        id: sdk-check
+        if: steps.sdk-key.outputs.key != ''
+        continue-on-error: true
+        timeout-minutes: 1
+        working-directory: packages/editor
+        env:
+          SDK_CACHE_KEY: ${{ steps.sdk-key.outputs.key }}
+        run: node android/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"
+
+      # A restore the check could not vouch for never reaches the install, so this step may fail the job.
+      - name: Clear an unchecked SDK cache
+        if: steps.sdk-check.outcome == 'failure'
+        timeout-minutes: 1
+        run: rm -rf "$ANDROID_HOME/emulator" "$ANDROID_HOME/system-images/android-${{ matrix.api }}/google_apis_playstore/x86_64"
+
       # The emulator steps install the same packages again, which only checks them once they are here.
       - name: Install the emulator and its system image
         id: install1
@@ -136,6 +175,27 @@ jobs:
           node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+
+      # Only runs on main save, the nightly schedule and a manual dispatch on main, so pull requests read
+      # its entry and add none.
+      - name: Record the SDK cache manifest
+        id: sdk-manifest
+        if: github.ref == 'refs/heads/main' && steps.sdk-key.outputs.key != '' && steps.sdk-restore.outputs.cache-hit != 'true' && (steps.install1.outcome == 'success' || steps.install2.outcome == 'success')
+        continue-on-error: true
+        timeout-minutes: 1
+        working-directory: packages/editor
+        env:
+          SDK_CACHE_KEY: ${{ steps.sdk-key.outputs.key }}
+        run: node android/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"
+
+      - name: Save the SDK cache
+        if: steps.sdk-manifest.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 5
+        uses: actions/cache/save@v6
+        with:
+          key: ${{ steps.sdk-key.outputs.key }}
+          path: ${{ steps.sdk-key.outputs.paths }}
 
       - name: Record start
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
