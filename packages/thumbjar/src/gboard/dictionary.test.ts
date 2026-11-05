@@ -156,10 +156,12 @@ describe(waitForDictionary.name, () => {
     expect({
       kind: outcome.kind,
       reason:
-        outcome.kind === 'failed' ? outcome.reason.split('\n')[0] : undefined,
+        outcome.kind === 'not-loaded'
+          ? outcome.reason.split('\n')[0]
+          : undefined,
       readsUntil: source.hostTime() - booted,
     }).toEqual({
-      kind: 'failed',
+      kind: 'not-loaded',
       reason:
         "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 1 download of `__MOZCPACK_mozcmain_ja_JP` was cancelled. The capture may also lack the line: the capture's last line is from 233s ago, so its reader stopped.",
       readsUntil: 360,
@@ -184,9 +186,11 @@ describe(waitForDictionary.name, () => {
     expect({
       kind: outcome.kind,
       reason:
-        outcome.kind === 'failed' ? outcome.reason.split('\n')[0] : undefined,
+        outcome.kind === 'not-loaded'
+          ? outcome.reason.split('\n')[0]
+          : undefined,
     }).toEqual({
-      kind: 'failed',
+      kind: 'not-loaded',
       reason:
         "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 1 download of `__MOZCPACK_mozcmain_ja_JP` was cancelled.",
     })
@@ -300,7 +304,7 @@ describe('the dictionary wait on a sampled device clock', () => {
     async ({hostBefore, deviceSecond, hostAfter, load}) => {
       expect(
         await waitOnSampledClock({hostBefore, deviceSecond, hostAfter, load}),
-      ).toEqual('failed')
+      ).toEqual('not-loaded')
     },
   )
 })
@@ -518,7 +522,7 @@ async function waitOnSampledClock({
   deviceSecond: number
   hostAfter: number
   load: number
-}): Promise<'loaded' | 'failed'> {
+}): Promise<'loaded' | 'not-loaded' | 'failed'> {
   const hostReads = [hostBefore, hostAfter]
   const line = `         ${load.toFixed(3)}  1749  5830 I native  : I0000 data_loader.cc:121] New data is loaded: file_path=/data/user/0/com.google.android.inputmethod.latin/files/mozcdata-24.20241006.9.data`
   const outcome = await waitForDictionary(
