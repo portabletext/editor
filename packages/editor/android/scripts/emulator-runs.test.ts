@@ -3,6 +3,7 @@ import {
   chmodSync,
   copyFileSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -16,6 +17,8 @@ import {describe, expect, test} from 'vitest'
 import {
   bootSeconds,
   deviceVerdict,
+  installCleanupPaths,
+  installResult,
   retryAfter,
   runResult,
 } from './emulator-runs.mjs'
@@ -462,6 +465,498 @@ describe(runResult.name, () => {
   })
 })
 
+describe(installCleanupPaths.name, () => {
+  test('removes only paths created by the install, preserving existing packages and downloads', () => {
+    expect(
+      installCleanupPaths(
+        ['.temp/PackageOperation01', 'platform-tools'],
+        [
+          '.temp/PackageOperation01',
+          '.temp/PackageOperation02',
+          'platform-tools',
+          'system-images/android-36/google_apis_playstore/x86_64',
+        ],
+      ),
+    ).toEqual([
+      '.temp/PackageOperation02',
+      'system-images/android-36/google_apis_playstore/x86_64',
+    ])
+    expect(installCleanupPaths(['emulator'], ['emulator'])).toEqual([])
+  })
+})
+
+describe(installResult.name, () => {
+  test('fails two failed installs as infrastructure, regardless of timing or run outcome', () => {
+    expect(installResult(booted, 'success', 'failure', 'failure')).toEqual({
+      passed: false,
+      line: 'run outcome: the emulator install failed twice, infrastructure failure, not a test result',
+    })
+  })
+
+  test('names a successful install retry beside the unchanged run result', () => {
+    expect(installResult(booted, 'success', 'failure', 'success')).toEqual({
+      passed: true,
+      line: 'run outcome: success',
+      installLine: 'install outcome: retried once after a failed install',
+    })
+    expect(
+      installResult(lostInTests + retryLost, 'failure', 'failure', 'success'),
+    ).toEqual({
+      passed: false,
+      line: 'run outcome: device lost twice, infrastructure failure, not a test result',
+      installLine: 'install outcome: retried once after a failed install',
+    })
+  })
+
+  test('preserves a first install success', () => {
+    expect(installResult(booted, 'success', 'success', 'skipped')).toEqual({
+      passed: true,
+      line: 'run outcome: success',
+    })
+  })
+
+  test('reports cancellation during the first install when the emulator runs were skipped', () => {
+    expect(installResult('', 'skipped', 'cancelled', 'skipped')).toEqual({
+      passed: false,
+      line: 'run outcome: cancelled',
+    })
+  })
+
+  test('reports cancellation during the install retry when the emulator runs were skipped', () => {
+    expect(installResult('', 'skipped', 'failure', 'cancelled')).toEqual({
+      passed: false,
+      line: 'run outcome: cancelled',
+    })
+  })
+
+  test('overrides a cancelled job only before an emulator run started', () => {
+    expect([
+      installResult('', 'skipped', 'skipped', 'skipped', 'cancelled'),
+      installResult('', 'skipped', 'failure', 'skipped', 'cancelled'),
+      installResult(
+        'INSTALL_RETRY\n',
+        'skipped',
+        'success',
+        'skipped',
+        'cancelled',
+      ),
+      installResult(booted, 'success', 'failure', 'failure', 'cancelled'),
+      installResult(booted, 'success', 'failure', 'success', 'cancelled'),
+      installResult(booted, 'success', 'success', 'skipped', 'cancelled'),
+    ]).toEqual([
+      {passed: false, line: 'run outcome: cancelled'},
+      {passed: false, line: 'run outcome: cancelled'},
+      {passed: false, line: 'run outcome: cancelled'},
+      {
+        passed: false,
+        line: 'run outcome: the emulator install failed twice, infrastructure failure, not a test result',
+      },
+      {
+        passed: true,
+        line: 'run outcome: success',
+        installLine: 'install outcome: retried once after a failed install',
+      },
+      {passed: true, line: 'run outcome: success'},
+    ])
+    expect(
+      installResult('', 'skipped', 'skipped', 'skipped', 'failure'),
+    ).toEqual({
+      passed: false,
+      line: 'run outcome: no emulator run, a step before the emulator install failed',
+    })
+  })
+
+  test('names an earlier step failure when neither install ran', () => {
+    expect(installResult('', 'skipped', 'skipped', 'skipped')).toEqual({
+      passed: false,
+      line: 'run outcome: no emulator run, a step before the emulator install failed',
+    })
+  })
+})
+
+describe('emulator-runs.mjs install-retry', () => {
+  test('clears new download and package paths, retaining preexisting and unrelated SDK files', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-paths-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(directory, 'android/out'), {recursive: true})
+      mkdirSync(join(sdk, '.temp/PackageOperation01'), {recursive: true})
+      mkdirSync(join(sdk, '.temp/unrelated'), {recursive: true})
+      mkdirSync(join(sdk, 'platform-tools'), {recursive: true})
+      const start = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'install-start',
+          sdk,
+          '36',
+        ],
+        {cwd: directory, encoding: 'utf8'},
+      )
+      expect({
+        status: start.status,
+        stdout: start.stdout,
+        stderr: start.stderr,
+      }).toEqual({status: 0, stdout: '', stderr: ''})
+      mkdirSync(join(sdk, '.temp/PackageOperation02/unzip'), {recursive: true})
+      mkdirSync(
+        join(
+          sdk,
+          'system-images/android-36/google_apis_playstore/x86_64/.installer',
+        ),
+        {recursive: true},
+      )
+      mkdirSync(
+        join(sdk, 'system-images/android-35/google_apis_playstore/x86_64'),
+        {recursive: true},
+      )
+      const retry = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'install-retry',
+          sdk,
+          '36',
+        ],
+        {
+          cwd: directory,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+          },
+        },
+      )
+      expect({
+        status: retry.status,
+        stdout: retry.stdout,
+        stderr: retry.stderr,
+        summary: readFileSync(join(directory, 'summary'), 'utf8'),
+      }).toEqual({
+        status: 0,
+        stdout:
+          'INSTALL_RETRY: the emulator install failed, retrying once after clearing its downloads and incomplete packages\n',
+        stderr: '',
+        summary:
+          'INSTALL_RETRY: the emulator install failed, retrying once after clearing its downloads and incomplete packages\n',
+      })
+      expect([
+        existsSync(join(sdk, '.temp/PackageOperation01')),
+        existsSync(join(sdk, '.temp/unrelated')),
+        existsSync(join(sdk, 'platform-tools')),
+        existsSync(join(sdk, '.temp/PackageOperation02')),
+        existsSync(
+          join(sdk, 'system-images/android-36/google_apis_playstore/x86_64'),
+        ),
+        existsSync(
+          join(sdk, 'system-images/android-35/google_apis_playstore/x86_64'),
+        ),
+      ]).toEqual([true, true, true, false, false, true])
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('retries without clearing any paths when no snapshot exists', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-retry-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, '.temp/PackageOperation01'), {recursive: true})
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      const retry = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'install-retry',
+          sdk,
+          '36',
+        ],
+        {
+          cwd: directory,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+          },
+        },
+      )
+      expect({
+        status: retry.status,
+        stdout: retry.stdout,
+        stderr: retry.stderr,
+        summary: existsSync(join(directory, 'summary'))
+          ? readFileSync(join(directory, 'summary'), 'utf8')
+          : '',
+      }).toEqual({
+        status: 0,
+        stdout:
+          'INSTALL_RETRY: no install snapshot existed, retrying once without clearing paths\n',
+        stderr: '',
+        summary:
+          'INSTALL_RETRY: no install snapshot existed, retrying once without clearing paths\n',
+      })
+      expect([
+        existsSync(join(sdk, '.temp/PackageOperation01')),
+        existsSync(join(sdk, 'emulator')),
+      ]).toEqual([true, true])
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+})
+
+describe('emulator-runs.mjs install-start', () => {
+  test('records no paths for an SDK that does not exist', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-start-'))
+    try {
+      const emptySdk = join(directory, 'empty-sdk')
+      const empty = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'install-start',
+          emptySdk,
+          '36',
+        ],
+        {cwd: directory, encoding: 'utf8'},
+      )
+      expect({
+        status: empty.status,
+        paths: readFileSync(
+          join(directory, 'android/out/install-paths.txt'),
+          'utf8',
+        ),
+      }).toEqual({status: 0, paths: ''})
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+})
+
+describe('emulator-runs.mjs boot-seconds', () => {
+  test('prints no boot time without timing.txt', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-result-'))
+    try {
+      const boot = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'boot-seconds',
+          'missing.txt',
+        ],
+        {cwd: directory, encoding: 'utf8'},
+      )
+      expect({
+        status: boot.status,
+        stdout: boot.stdout,
+        stderr: boot.stderr,
+      }).toEqual({status: 0, stdout: '', stderr: ''})
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+})
+
+describe('emulator-runs.mjs result after the emulator install', () => {
+  test('keeps the run retry reason when a job is cancelled during the retry run', () => {
+    expect(
+      workflowCommand(
+        ['result', 'timing.txt', 'cancelled'],
+        lostInTests + retryInterrupted,
+        {
+          INSTALL1_OUTCOME: 'failure',
+          INSTALL2_OUTCOME: 'success',
+          JOB_STATUS: 'cancelled',
+        },
+      ),
+    ).toEqual({
+      status: 1,
+      stdout:
+        'install outcome: retried once after a failed install\nrun outcome: cancelled, on the retry after adb lost the device\n',
+      output: '',
+      summary:
+        'install outcome: retried once after a failed install\nrun outcome: cancelled, on the retry after adb lost the device\n',
+      timing: lostInTests + retryInterrupted,
+    })
+  })
+
+  test('reports cancellation after installation before Record start without timing.txt', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-result-'))
+    try {
+      const result = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'result',
+          'missing.txt',
+          'skipped',
+        ],
+        {
+          cwd: directory,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            INSTALL1_OUTCOME: 'success',
+            INSTALL2_OUTCOME: 'skipped',
+            JOB_STATUS: 'cancelled',
+            GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+          },
+        },
+      )
+      expect({
+        status: result.status,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        summary: readFileSync(join(directory, 'summary'), 'utf8'),
+      }).toEqual({
+        status: 1,
+        stdout: 'run outcome: cancelled\n',
+        stderr: '',
+        summary: 'run outcome: cancelled\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('reports two install failures without timing.txt', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-result-'))
+    try {
+      const result = spawnSync(
+        'node',
+        [
+          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          'result',
+          'missing.txt',
+          'skipped',
+        ],
+        {
+          cwd: directory,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            INSTALL1_OUTCOME: 'failure',
+            INSTALL2_OUTCOME: 'failure',
+            GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+          },
+        },
+      )
+      expect({
+        status: result.status,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        summary: readFileSync(join(directory, 'summary'), 'utf8'),
+      }).toEqual({
+        status: 1,
+        stdout:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        stderr: '',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('reports a successful install retry before the unchanged run line in stdout and the summary', () => {
+    expect(
+      workflowCommand(
+        ['result', 'timing.txt', 'success'],
+        lostInTests + retryBooted,
+        {INSTALL1_OUTCOME: 'failure', INSTALL2_OUTCOME: 'success'},
+      ),
+    ).toEqual({
+      status: 0,
+      stdout:
+        'install outcome: retried once after a failed install\nrun outcome: success, on the retry after adb lost the device\n',
+      output: '',
+      summary:
+        'install outcome: retried once after a failed install\nrun outcome: success, on the retry after adb lost the device\n',
+      timing: lostInTests + retryBooted,
+    })
+  })
+
+  test('reports first install cancellation using the workflow result argument', () => {
+    expect(
+      workflowCommand(['result', 'timing.txt', 'skipped'], '', {
+        INSTALL1_OUTCOME: 'cancelled',
+        INSTALL2_OUTCOME: 'skipped',
+      }),
+    ).toEqual({
+      status: 1,
+      stdout: 'run outcome: cancelled\n',
+      output: '',
+      summary: 'run outcome: cancelled\n',
+      timing: '',
+    })
+  })
+
+  test('reports install retry cancellation using the workflow result argument', () => {
+    expect(
+      workflowCommand(['result', 'timing.txt', 'skipped'], '', {
+        INSTALL1_OUTCOME: 'failure',
+        INSTALL2_OUTCOME: 'cancelled',
+      }),
+    ).toEqual({
+      status: 1,
+      stdout: 'run outcome: cancelled\n',
+      output: '',
+      summary: 'run outcome: cancelled\n',
+      timing: '',
+    })
+  })
+
+  test('reports a job cancelled before installation', () => {
+    expect(
+      workflowCommand(['result', 'timing.txt', 'skipped'], '', {
+        INSTALL1_OUTCOME: 'skipped',
+        INSTALL2_OUTCOME: 'skipped',
+        JOB_STATUS: 'cancelled',
+      }),
+    ).toEqual({
+      status: 1,
+      stdout: 'run outcome: cancelled\n',
+      output: '',
+      summary: 'run outcome: cancelled\n',
+      timing: '',
+    })
+  })
+
+  test('reports a job cancelled between the install attempts', () => {
+    expect(
+      workflowCommand(['result', 'timing.txt', 'skipped'], '', {
+        INSTALL1_OUTCOME: 'failure',
+        INSTALL2_OUTCOME: 'skipped',
+        JOB_STATUS: 'cancelled',
+      }),
+    ).toEqual({
+      status: 1,
+      stdout: 'run outcome: cancelled\n',
+      output: '',
+      summary: 'run outcome: cancelled\n',
+      timing: '',
+    })
+  })
+
+  test('reports an earlier step failure using the workflow result argument', () => {
+    expect(
+      workflowCommand(['result', 'timing.txt', 'skipped'], '', {
+        INSTALL1_OUTCOME: 'skipped',
+        INSTALL2_OUTCOME: 'skipped',
+      }),
+    ).toEqual({
+      status: 1,
+      stdout:
+        'run outcome: no emulator run, a step before the emulator install failed\n',
+      output: '',
+      summary:
+        'run outcome: no emulator run, a step before the emulator install failed\n',
+      timing: '',
+    })
+  })
+})
+
 describe('emulator-runs.mjs device-state', () => {
   test('reads a device that prints `device` as reachable, whatever adb prints on stderr', () => {
     expect(
@@ -671,6 +1166,84 @@ describe('emulator-runs.mjs result after a failed prep', () => {
 })
 
 describe('the workflow', () => {
+  test('wires the first install to its snapshot command and step outcome', () => {
+    const install =
+      workflow
+        .split('      - name: Install the emulator and its system image\n')[1]
+        ?.split('\n      - ')[0] ?? ''
+    expect({
+      id: /^ {8}id: (.*)$/m.exec(install)?.[1],
+      continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(install)?.[1],
+      command:
+        /^ {10}(node android\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
+          install,
+        )?.[1],
+    }).toEqual({
+      id: 'install1',
+      continueOnError: 'true',
+      command:
+        'node android/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"',
+    })
+  })
+
+  test('wires the install retry to its snapshot command and step outcome', () => {
+    const install =
+      workflow
+        .split(
+          '      - name: Install the emulator and its system image (retry)\n',
+        )[1]
+        ?.split('\n      - ')[0] ?? ''
+    expect({
+      id: /^ {8}id: (.*)$/m.exec(install)?.[1],
+      continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(install)?.[1],
+      condition: /^ {8}if: (.*)$/m.exec(install)?.[1],
+      command:
+        /^ {10}(node android\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
+          install,
+        )?.[1],
+    }).toEqual({
+      id: 'install2',
+      continueOnError: 'true',
+      condition: "steps.install1.outcome == 'failure'",
+      command:
+        'node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"',
+    })
+  })
+
+  test('gates Record start on a successful install', () => {
+    const step =
+      workflow
+        .split('      - name: Record start\n')[1]
+        ?.split('\n      - ')[0] ?? ''
+    expect(/^ {8}if: (.*)$/m.exec(step)?.[1]).toEqual(
+      "steps.install1.outcome == 'success' || steps.install2.outcome == 'success'",
+    )
+  })
+
+  test('gates Run on emulator on a successful install', () => {
+    const step =
+      workflow
+        .split('      - name: Run on emulator\n')[1]
+        ?.split('\n      - ')[0] ?? ''
+    expect(/^ {8}if: (.*)$/m.exec(step)?.[1]).toEqual(
+      "steps.install1.outcome == 'success' || steps.install2.outcome == 'success'",
+    )
+  })
+
+  test('passes the install step outcomes and job status to Result', () => {
+    const result =
+      workflow.split('      - name: Result\n')[1]?.split('\n      - ')[0] ?? ''
+    expect({
+      first: /^ {10}INSTALL1_OUTCOME: (.*)$/m.exec(result)?.[1],
+      second: /^ {10}INSTALL2_OUTCOME: (.*)$/m.exec(result)?.[1],
+      job: /^ {10}JOB_STATUS: (.*)$/m.exec(result)?.[1],
+    }).toEqual({
+      first: '${{ steps.install1.outcome }}',
+      second: '${{ steps.install2.outcome }}',
+      job: '${{ job.status }}',
+    })
+  })
+
   test('decides the retry and the result with `emulator-runs.mjs`', () => {
     expect({
       retry:
@@ -788,7 +1361,15 @@ function runRemovedAfterLoad(
   }
 }
 
-function workflowCommand(args: string[], timing: string) {
+function workflowCommand(
+  args: string[],
+  timing: string,
+  workflowOutcomes: {
+    INSTALL1_OUTCOME?: string
+    INSTALL2_OUTCOME?: string
+    JOB_STATUS?: string
+  } = {},
+) {
   const directory = mkdtempSync(join(tmpdir(), 'emulator-runs-'))
   try {
     writeFileSync(join(directory, 'timing.txt'), timing)
@@ -802,6 +1383,7 @@ function workflowCommand(args: string[], timing: string) {
         encoding: 'utf8',
         env: {
           ...process.env,
+          ...workflowOutcomes,
           GITHUB_OUTPUT: join(directory, 'output'),
           GITHUB_STEP_SUMMARY: join(directory, 'summary'),
         },

@@ -6,9 +6,10 @@ name: Android IME
 # Each job prepares a fresh emulator for its row's language and runs that
 # row's device test file. A job is red when a prep step failed or a test
 # failed, an editor assertion included, or as an infrastructure failure when
-# the emulator never booted, adb lost the device or Gboard's Japanese
-# dictionary never loaded on the retry too. This workflow is not a required
-# check, so a red job blocks nothing.
+# the SDK install failed twice, the emulator never booted, adb lost the
+# device or Gboard's Japanese dictionary never loaded on the retry too. A
+# failed SDK install is retried once. This workflow is not a required check,
+# so a red job blocks nothing.
 
 on:
   pull_request:
@@ -60,13 +61,13 @@ jobs:
               lang: ja,
               file: tests/ja.test.ts,
               run_minutes: 56,
-              job_minutes: 161,
+              job_minutes: 169,
             }
           - {
               lang: en,
               file: tests/en.test.ts,
               run_minutes: 52,
-              job_minutes: 153,
+              job_minutes: 161,
             }
         api: [36]
 
@@ -116,12 +117,28 @@ jobs:
 
       # The emulator steps install the same packages again, which only checks them once they are here.
       - name: Install the emulator and its system image
+        id: install1
+        continue-on-error: true
         timeout-minutes: 8
+        working-directory: packages/editor
         run: |
+          node android/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+
+      - name: Install the emulator and its system image (retry)
+        id: install2
+        if: steps.install1.outcome == 'failure'
+        continue-on-error: true
+        timeout-minutes: 8
+        working-directory: packages/editor
+        run: |
+          node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
 
       - name: Record start
+        if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
         timeout-minutes: 1
         working-directory: packages/editor
         run: mkdir -p android/out && echo "EMULATOR_START at $(date +%s)" | tee android/out/timing.txt
@@ -129,6 +146,7 @@ jobs:
       # Boot, device prep and the tests, see the budget in `packages/editor/android/README.md`.
       - name: Run on emulator
         id: run1
+        if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
         continue-on-error: true
         timeout-minutes: ${{ matrix.suite.run_minutes }}
         env:
@@ -193,6 +211,10 @@ jobs:
       # turns the job red when the last run failed, and names a failure of the
       # emulator apart from a test result.
       - name: Result
+        env:
+          INSTALL1_OUTCOME: ${{ steps.install1.outcome }}
+          INSTALL2_OUTCOME: ${{ steps.install2.outcome }}
+          JOB_STATUS: ${{ job.status }}
         if: always()
         timeout-minutes: 1
         working-directory: packages/editor
