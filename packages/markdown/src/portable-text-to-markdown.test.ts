@@ -5924,6 +5924,614 @@ describe(portableTextToMarkdown.name, () => {
     })
   })
 
+  describe('styles inside containers', () => {
+    const blockquoteObjectDefinition = {
+      name: 'blockquote',
+      fields: [{name: 'content', type: 'array'}],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaDefinition = {
+      ...defaultSchema,
+      blockObjects: [...defaultSchema.blockObjects, blockquoteObjectDefinition],
+    }
+
+    const schemas = [
+      ['block', compileSchema(defineSchema(schemaDefinition))],
+      [
+        'myBlock',
+        compileSchema(
+          defineSchema({
+            ...schemaDefinition,
+            block: {...defaultSchema.block, name: 'myBlock'},
+          }),
+        ),
+      ],
+    ] as const
+
+    const types = {blockquote: buildObjectMatcher(blockquoteObjectDefinition)}
+    const renderers = {blockquote: DefaultBlockquoteObjectRenderer}
+
+    for (const [blockName, schema] of schemas) {
+      describe(`text block named \`${blockName}\``, () => {
+        test('a heading in a callout round-trips', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'callout',
+                _key: keyGenerator(),
+                tone: 'note',
+                content: [
+                  textBlock(keyGenerator, blockName, 'h1', 'foo'),
+                  textBlock(keyGenerator, blockName, 'blockquote', 'bar'),
+                ],
+              },
+            ],
+            {schema},
+          )
+
+          expect(markdown).toBe('> [!NOTE]\n> # foo\n>\n> bar')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+            }),
+          ).toEqual([
+            {
+              _type: 'callout',
+              _key: 'k4',
+              tone: 'note',
+              content: [
+                {
+                  _type: blockName,
+                  _key: 'k0',
+                  style: 'h1',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: blockName,
+                  _key: 'k2',
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+
+        test('a heading in a blockquote round-trips', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'blockquote',
+                _key: keyGenerator(),
+                content: [
+                  textBlock(keyGenerator, blockName, 'h2', 'foo'),
+                  textBlock(keyGenerator, blockName, 'normal', 'bar'),
+                ],
+              },
+            ],
+            {schema, types: renderers},
+          )
+
+          expect(markdown).toBe('> ## foo\n>\n> bar')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+              types,
+            }),
+          ).toEqual([
+            {
+              _type: 'blockquote',
+              _key: 'k4',
+              content: [
+                {
+                  _type: blockName,
+                  _key: 'k0',
+                  style: 'h2',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: blockName,
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+
+        test('a heading in a blockquote in a blockquote in a blockquote round-trips', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'blockquote',
+                _key: keyGenerator(),
+                content: [
+                  {
+                    _type: 'blockquote',
+                    _key: keyGenerator(),
+                    content: [
+                      {
+                        _type: 'blockquote',
+                        _key: keyGenerator(),
+                        content: [
+                          textBlock(keyGenerator, blockName, 'h6', 'foo'),
+                          textBlock(keyGenerator, blockName, 'normal', 'bar'),
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            {schema, types: renderers},
+          )
+
+          expect(markdown).toBe('> > > ###### foo\n> > >\n> > > bar')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+              types,
+            }),
+          ).toEqual([
+            {
+              _type: 'blockquote',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'blockquote',
+                  _key: 'k5',
+                  content: [
+                    {
+                      _type: 'blockquote',
+                      _key: 'k4',
+                      content: [
+                        {
+                          _type: blockName,
+                          _key: 'k0',
+                          style: 'h6',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                          ],
+                        },
+                        {
+                          _type: blockName,
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+
+        test('a heading in a callout in a blockquote in a blockquote keeps its style', () => {
+          const keyGenerator = createTestKeyGenerator()
+
+          expect(
+            portableTextToMarkdown(
+              [
+                {
+                  _type: 'blockquote',
+                  _key: keyGenerator(),
+                  content: [
+                    {
+                      _type: 'blockquote',
+                      _key: keyGenerator(),
+                      content: [
+                        {
+                          _type: 'callout',
+                          _key: keyGenerator(),
+                          tone: 'tip',
+                          content: [
+                            textBlock(keyGenerator, blockName, 'h3', 'foo'),
+                            textBlock(
+                              keyGenerator,
+                              blockName,
+                              'blockquote',
+                              'bar',
+                            ),
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+              {schema, types: renderers},
+            ),
+          ).toBe('> > > [!TIP]\n> > > ### foo\n> > >\n> > > bar')
+        })
+      })
+    }
+
+    test('a heading in a callout inside an object field keeps its style', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'aside',
+              _key: keyGenerator(),
+              body: [
+                {
+                  _type: 'callout',
+                  _key: keyGenerator(),
+                  tone: 'note',
+                  content: [
+                    textBlock(keyGenerator, 'block', 'h1', 'foo'),
+                    textBlock(keyGenerator, 'block', 'blockquote', 'bar'),
+                  ],
+                },
+              ],
+            },
+          ],
+          {
+            types: {
+              aside: ({value, renderNode}) =>
+                (value as {body: Array<TypedObject>}).body
+                  .map((node, index) =>
+                    renderNode({node, index, isInline: false, renderNode}),
+                  )
+                  .join('\n\n'),
+            },
+          },
+        ),
+      ).toBe('> [!NOTE]\n> # foo\n>\n> bar')
+    })
+
+    test('a custom style renderer runs inside a callout and a blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [textBlock(keyGenerator, 'block', 'fancy', 'foo')],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [textBlock(keyGenerator, 'block', 'fancy', 'bar')],
+            },
+          ],
+          {
+            block: {fancy: ({children}) => `~${children}~`},
+            types: renderers,
+          },
+        ),
+      ).toBe('> [!NOTE]\n> ~foo~\n\n> ~bar~')
+    })
+
+    test('a block renderer function gets the style of callout content', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const styles: Array<string | undefined> = []
+
+      portableTextToMarkdown(
+        [
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              textBlock(keyGenerator, 'block', 'fancy', 'foo'),
+              textBlock(keyGenerator, 'block', 'h2', 'bar'),
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+        {
+          block: ({value, children}) => {
+            styles.push(value.style)
+            return children ?? ''
+          },
+        },
+      )
+
+      expect(styles).toEqual(['fancy', 'h2', 'normal'])
+    })
+
+    test('a heading list item in a callout keeps the plain list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              {
+                ...textBlock(keyGenerator, 'block', 'h1', 'foo'),
+                listItem: 'task',
+                level: 1,
+                checked: true,
+              },
+            ],
+          },
+        ]),
+      ).toBe('> [!NOTE]\n> - [x] foo')
+    })
+
+    test('a multi-line heading in a callout keeps its text in one block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = portableTextToMarkdown([
+        {
+          _type: 'callout',
+          _key: keyGenerator(),
+          tone: 'note',
+          content: [textBlock(keyGenerator, 'block', 'h1', 'foo\nbar')],
+        },
+      ])
+
+      expect(markdown).toBe('> [!NOTE]\n> foo  \n> bar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k2',
+          tone: 'note',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a heading with a carriage return in a blockquote stays inside it', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [textBlock(keyGenerator, 'block', 'h1', 'foo\rbar')],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [textBlock(keyGenerator, 'block', 'h1', 'baz\rqux')],
+            },
+          ],
+          {types: renderers},
+        ),
+      ).toBe('> [!NOTE]\n> foo\rbar\n\n> baz\rqux')
+    })
+
+    test('a heading with a line break in a link title or image text in a blockquote keeps the plain paragraph', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const linkKey = keyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'h1',
+                  markDefs: [
+                    {
+                      _type: 'link',
+                      _key: linkKey,
+                      href: 'https://example.com',
+                      title: 'foo\nbar',
+                    },
+                  ],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'baz',
+                      marks: [linkKey],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'h1',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'qux ',
+                      marks: [],
+                    },
+                    {
+                      _type: 'image',
+                      _key: keyGenerator(),
+                      src: 'https://example.com/foo.png',
+                      alt: 'foo\nbar',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          {types: renderers},
+        ),
+      ).toBe(
+        [
+          '> [!NOTE]',
+          '> [baz](https://example.com "foo',
+          '> bar")',
+          '',
+          '> qux ![foo',
+          '> bar](https://example.com/foo.png)',
+        ].join('\n'),
+      )
+    })
+
+    test('a whitespace-only heading in a callout leaves the callout intact', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              textBlock(keyGenerator, 'block', 'h1', ' '),
+              textBlock(keyGenerator, 'block', 'blockquote', 'foo'),
+            ],
+          },
+        ]),
+      ).toBe('> [!NOTE]\n> foo')
+    })
+
+    test('a block style renderer gets the `normal` style for content without a style', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const styles: Array<string | undefined> = []
+
+      portableTextToMarkdown(
+        [
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+        {
+          block: {
+            normal: ({value, children}) => {
+              styles.push(value.style)
+              return children ?? ''
+            },
+          },
+        },
+      )
+
+      expect(styles).toEqual(['normal'])
+    })
+
+    test('a style with no renderer in a callout is reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [textBlock(keyGenerator, 'block', 'fancy', 'foo')],
+            },
+          ],
+          {onDegradation},
+        ),
+      ).toBe('> [!NOTE]\n> foo')
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `fancy` style, kept the text: no `fancy` block renderer',
+                path: [{_key: 'k0'}, 'content', {_key: 'k1'}],
+                snippet: 'foo',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `fancy` style, kept the text: no `fancy` block renderer ("foo")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    function textBlock(
+      keyGenerator: () => string,
+      _type: string,
+      style: string,
+      text: string,
+    ) {
+      return {
+        _type,
+        _key: keyGenerator(),
+        style,
+        markDefs: [],
+        children: [{_type: 'span', _key: keyGenerator(), text, marks: []}],
+      }
+    }
+  })
+
   describe('plain text escaping', () => {
     // Each string round-trips as the sole text of a single span in a
     // `normal` block: PT -> MD -> PT should reproduce the same block, with
