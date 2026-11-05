@@ -58,7 +58,17 @@ const reachableThenStalled =
 // The prep failure `run-on-device.sh` records for a real CI boot whose Gboard never loaded the dictionary.
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
-const dictionaryNeverLoaded = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nCHECKED device at 700\n`
+const dictionaryNeverLoaded = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED device at 700\n`
+const dictionaryNeverLoadedLost = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED lost at 700\n`
+const dictionaryNeverLoadedUnchecked = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\n`
+// The prep failure `run-on-device.sh` records when the dictionary loaded but Gboard did not convert with it.
+const dictionaryCheckFailed =
+  'EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: japanese dictionary check, see ja-dictionary.log\nCHECKED device at 700\n'
+const retryDictionaryNeverLoaded = `RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED device at 1600\n`
+const retryDictionaryCheckFailed =
+  'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nPREP FAILED: japanese dictionary check, see ja-dictionary.log\nCHECKED device at 1600\n'
+const retryFailedReachable =
+  'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nCHECKED device at 1780\nDONE at 1800\n'
 const retryNeverBooted = 'RETRY\nEMULATOR_START at 1000\n'
 const retryBooted =
   'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nCHECKED skipped at 1780\nDONE at 1800\n'
@@ -159,8 +169,42 @@ describe(retryAfter.name, () => {
     ])
   })
 
-  test('does not retry a prep that failed on a reachable device because the Japanese dictionary never loaded', () => {
-    expect(retryAfter(dictionaryNeverLoaded)).toEqual({retry: false})
+  test("retries a first run whose prep failed on a reachable device because Gboard's Japanese dictionary never loaded", () => {
+    expect(retryAfter(dictionaryNeverLoaded)).toEqual({
+      retry: true,
+      line: "DICTIONARY_RETRY: Gboard's Japanese dictionary never loaded, retrying once on a fresh emulator",
+    })
+  })
+
+  test('retries a first run whose dictionary never loaded and whose device adb then lost as a lost device', () => {
+    expect(retryAfter(dictionaryNeverLoadedLost)).toEqual({
+      retry: true,
+      line: 'DEVICE_LOST_RETRY: adb lost the device after boot, retrying once on a fresh emulator',
+    })
+  })
+
+  test('does not retry a first run whose dictionary never loaded but that ended without a completed device check', () => {
+    expect(retryAfter(dictionaryNeverLoadedUnchecked)).toEqual({retry: false})
+  })
+
+  test('does not retry a prep that failed on a reachable device for any other reason, the dictionary check after the load included', () => {
+    expect(retryAfter(dictionaryCheckFailed)).toEqual({retry: false})
+  })
+
+  test('does not run a third time after a retry, whatever the dictionary did on either run', () => {
+    expect([
+      retryAfter(dictionaryNeverLoaded + retryDictionaryNeverLoaded),
+      retryAfter(dictionaryNeverLoaded + retryLost),
+      retryAfter(dictionaryNeverLoaded + retryNeverBooted),
+      retryAfter(lostInTests + retryDictionaryNeverLoaded),
+      retryAfter(neverBooted + retryDictionaryNeverLoaded),
+    ]).toEqual([
+      {retry: false},
+      {retry: false},
+      {retry: false},
+      {retry: false},
+      {retry: false},
+    ])
   })
 
   test('does not retry a first run that ended after boot without a completed device check', () => {
@@ -257,16 +301,86 @@ describe(runResult.name, () => {
 
   test("fails a prep that failed on a reachable device with the prep's own reason, on the first run and on the retry", () => {
     expect([
-      runResult(dictionaryNeverLoaded, 'failure'),
-      runResult(`${lostInTests}RETRY\n${dictionaryNeverLoaded}`, 'failure'),
+      runResult(dictionaryCheckFailed, 'failure'),
+      runResult(lostInTests + retryDictionaryCheckFailed, 'failure'),
     ]).toEqual([
       {
         passed: false,
-        line: `run outcome: failure, the prep failed: ${NEVER_LOADED}`,
+        line: 'run outcome: failure, the prep failed: japanese dictionary check, see ja-dictionary.log',
       },
       {
         passed: false,
-        line: `run outcome: failure, on the retry after adb lost the device, the prep failed: ${NEVER_LOADED}`,
+        line: 'run outcome: failure, on the retry after adb lost the device, the prep failed: japanese dictionary check, see ja-dictionary.log',
+      },
+    ])
+  })
+
+  test("fails a first run whose dictionary never loaded with the prep's own reason when it could not retry", () => {
+    expect(runResult(dictionaryNeverLoaded, 'failure')).toEqual({
+      passed: false,
+      line: `run outcome: failure, the prep failed: ${NEVER_LOADED}`,
+    })
+  })
+
+  test('names the dictionary that never loaded in the result of its retry', () => {
+    expect([
+      runResult(dictionaryNeverLoaded + retryBooted, 'success'),
+      runResult(dictionaryNeverLoaded + retryFailedReachable, 'failure'),
+      runResult(dictionaryNeverLoaded + retryDictionaryCheckFailed, 'failure'),
+      runResult(dictionaryNeverLoaded + retryInterrupted, 'failure'),
+    ]).toEqual([
+      {
+        passed: true,
+        line: "run outcome: success, on the retry after Gboard's Japanese dictionary never loaded",
+      },
+      {
+        passed: false,
+        line: "run outcome: failure, on the retry after Gboard's Japanese dictionary never loaded",
+      },
+      {
+        passed: false,
+        line: "run outcome: failure, on the retry after Gboard's Japanese dictionary never loaded, the prep failed: japanese dictionary check, see ja-dictionary.log",
+      },
+      {
+        passed: false,
+        line: "run outcome: the run ended after boot without a completed device check, on the retry after Gboard's Japanese dictionary never loaded, not a test result",
+      },
+    ])
+  })
+
+  test('fails a retry after a dictionary that never loaded that lost its device or never booted as an infrastructure failure', () => {
+    expect([
+      runResult(dictionaryNeverLoaded + retryLost, 'failure'),
+      runResult(dictionaryNeverLoaded + retryNeverBooted, 'failure'),
+    ]).toEqual([
+      {
+        passed: false,
+        line: "run outcome: device lost on the retry after Gboard's Japanese dictionary never loaded, infrastructure failure, not a test result",
+      },
+      {
+        passed: false,
+        line: "run outcome: the emulator never booted on the retry after Gboard's Japanese dictionary never loaded, infrastructure failure, not a test result",
+      },
+    ])
+  })
+
+  test('fails a retry whose dictionary never loaded on a reachable device as an infrastructure failure, not a test result', () => {
+    expect([
+      runResult(dictionaryNeverLoaded + retryDictionaryNeverLoaded, 'failure'),
+      runResult(lostInTests + retryDictionaryNeverLoaded, 'failure'),
+      runResult(neverBooted + retryDictionaryNeverLoaded, 'failure'),
+    ]).toEqual([
+      {
+        passed: false,
+        line: "run outcome: Gboard's Japanese dictionary never loaded twice, infrastructure failure, not a test result",
+      },
+      {
+        passed: false,
+        line: "run outcome: Gboard's Japanese dictionary never loaded on the retry after adb lost the device, infrastructure failure, not a test result",
+      },
+      {
+        passed: false,
+        line: "run outcome: Gboard's Japanese dictionary never loaded on the retry after the emulator never booted, infrastructure failure, not a test result",
       },
     ])
   })
@@ -473,6 +587,7 @@ describe('emulator-runs.mjs retry', () => {
   test('writes the retry decision to the step output, and its line to the log and the job summary', () => {
     expect([
       workflowCommand(['retry', 'timing.txt'], lostInTests),
+      workflowCommand(['retry', 'timing.txt'], dictionaryNeverLoaded),
       workflowCommand(['retry', 'timing.txt'], booted),
     ]).toEqual([
       {
@@ -483,6 +598,15 @@ describe('emulator-runs.mjs retry', () => {
         summary:
           'DEVICE_LOST_RETRY: adb lost the device after boot, retrying once on a fresh emulator\n',
         timing: `${lostInTests}RETRY\nEMULATOR_START\n`,
+      },
+      {
+        status: 0,
+        stdout:
+          "DICTIONARY_RETRY: Gboard's Japanese dictionary never loaded, retrying once on a fresh emulator\n",
+        output: 'retry=yes\n',
+        summary:
+          "DICTIONARY_RETRY: Gboard's Japanese dictionary never loaded, retrying once on a fresh emulator\n",
+        timing: `${dictionaryNeverLoaded}RETRY\nEMULATOR_START\n`,
       },
       {
         status: 0,

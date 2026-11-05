@@ -6,8 +6,9 @@ name: Android IME
 # Each job prepares a fresh emulator for its row's language and runs that
 # row's device test file. A job is red when a prep step failed or a test
 # failed, an editor assertion included, or as an infrastructure failure when
-# the emulator never booted or adb lost the device on the retry too. This
-# workflow is not a required check, so a red job blocks nothing.
+# the emulator never booted, adb lost the device or Gboard's Japanese
+# dictionary never loaded on the retry too. This workflow is not a required
+# check, so a red job blocks nothing.
 
 on:
   pull_request:
@@ -147,9 +148,10 @@ jobs:
           working-directory: packages/editor
           script: android/run-on-device.sh ${{ matrix.suite.file }}
 
-      # The emulator sometimes never comes online, or adb loses it after boot.
-      # Retry once on a fresh emulator then, never after a failure on a
-      # reachable device.
+      # The emulator sometimes never comes online, adb loses it after boot, or
+      # Gboard's Japanese dictionary never loads on that boot. Retry once on a
+      # fresh emulator then, never after any other failure on a reachable
+      # device.
       - name: Decide the retry
         id: retry
         if: steps.run1.outcome == 'failure'

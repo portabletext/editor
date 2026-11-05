@@ -4,18 +4,19 @@ import {fileURLToPath} from 'node:url'
 
 // `timing.txt` holds one block of lines per emulator run, the retry's after a `RETRY` line. Each block
 // opens with `EMULATOR_START`, written just before its run step. A run prints `BOOTED` once its emulator
-// is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes. Once its last
-// stage has ended, it adds one `CHECKED <verdict>` line in a single write: `skipped`
-// when no check was needed, or the verdict of the device check after a failed stage, `device` or `lost`,
-// which the check writes itself before it does anything else. A booted run without that line ended before
-// a check reached a verdict, by its run step's timeout, the check's own, or an `adb get-state` that proved
-// nothing, and nothing proves what happened to its device: the action shuts the emulator down before any
-// later step could look.
+// is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes, and, when
+// Gboard's Japanese dictionary never loaded, a `PREP DICTIONARY_NOT_LOADED` line, which `thumbjar prepare`'s
+// exit status decides, never the reason. Once its last stage has ended, it adds one `CHECKED <verdict>`
+// line in a single write: `skipped` when no check was needed, or the verdict of the device check after a
+// failed stage, `device` or `lost`, which the check writes itself before it does anything else. A booted
+// run without that line ended before a check reached a verdict, by its run step's timeout, the check's own,
+// or an `adb get-state` that proved nothing, and nothing proves what happened to its device: the action
+// shuts the emulator down before any later step could look.
 
 /** The `adb get-state` read after a failed stage. Its process gets the rest of the script's cap to stop. */
 const DEVICE_STATE_MILLISECONDS = 5_000
 
-/** @typedef {'never booted' | 'unchecked' | 'lost' | 'reachable'} RunState */
+/** @typedef {'never booted' | 'unchecked' | 'lost' | 'dictionary not loaded' | 'reachable'} RunState */
 
 /**
  * What one `adb get-state` proves about the device, or `undefined` when it proves nothing. Only `device` on
@@ -51,8 +52,9 @@ export function deviceVerdict(adb) {
 }
 
 /**
- * Whether to run once more after a failed first run: only when its emulator never booted or adb lost the
- * device after boot, and never after a retry.
+ * Whether to run once more after a failed first run: only when its emulator never booted, adb lost the
+ * device after boot, or Gboard's Japanese dictionary never loaded on a device the check found reachable,
+ * and never after a retry.
  *
  * @param {string} timing
  * @returns {{retry: false} | {retry: true, line: string}}
@@ -76,12 +78,19 @@ export function retryAfter(timing) {
       line: 'DEVICE_LOST_RETRY: adb lost the device after boot, retrying once on a fresh emulator',
     }
   }
+  if (state === 'dictionary not loaded') {
+    return {
+      retry: true,
+      line: "DICTIONARY_RETRY: Gboard's Japanese dictionary never loaded, retrying once on a fresh emulator",
+    }
+  }
   return {retry: false}
 }
 
 /**
  * The job's result from the last run's step `outcome`. A last run whose emulator never booted or lost its
- * device fails as infrastructure, apart from any test result.
+ * device fails as infrastructure, apart from any test result, and so does a retry whose dictionary never
+ * loaded. A first run whose dictionary never loaded and that could not retry quotes the prep's reason.
  *
  * @param {string} timing
  * @param {string} outcome
@@ -106,7 +115,12 @@ export function runResult(timing, outcome) {
       line: `run outcome: the run ended after boot without a completed device check${retry}, not a test result`,
     }
   }
-  if (outcome !== 'success' && (last === 'lost' || last === 'never booted')) {
+  if (
+    outcome !== 'success' &&
+    (last === 'lost' ||
+      last === 'never booted' ||
+      (last === 'dictionary not loaded' && first !== undefined))
+  ) {
     return {
       passed: false,
       line: `run outcome: ${infrastructureFailure(last, first)}, infrastructure failure, not a test result`,
@@ -212,7 +226,12 @@ function runState(run) {
   if (verdict === undefined) {
     return 'unchecked'
   }
-  return verdict === 'lost' ? 'lost' : 'reachable'
+  if (verdict === 'lost') {
+    return 'lost'
+  }
+  return verdict === 'device' && /^PREP DICTIONARY_NOT_LOADED$/m.test(run)
+    ? 'dictionary not loaded'
+    : 'reachable'
 }
 
 /**
@@ -220,18 +239,26 @@ function runState(run) {
  * @returns {string}
  */
 function retryReason(state) {
-  return state === 'never booted'
-    ? 'the emulator never booted'
+  if (state === 'never booted') {
+    return 'the emulator never booted'
+  }
+  return state === 'dictionary not loaded'
+    ? "Gboard's Japanese dictionary never loaded"
     : 'adb lost the device'
 }
 
 /**
- * @param {'lost' | 'never booted'} last
+ * @param {'lost' | 'never booted' | 'dictionary not loaded'} last
  * @param {RunState | undefined} first
  * @returns {string}
  */
 function infrastructureFailure(last, first) {
-  const failure = last === 'lost' ? 'device lost' : 'the emulator never booted'
+  const failure =
+    last === 'lost'
+      ? 'device lost'
+      : last === 'never booted'
+        ? 'the emulator never booted'
+        : "Gboard's Japanese dictionary never loaded"
   if (first === undefined) {
     return failure
   }
