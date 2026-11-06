@@ -98,6 +98,7 @@
     "@portabletext/patches": "workspace:^",
     "@portabletext/repair": "workspace:^",
     "@portabletext/schema": "workspace:^",
+    "@portabletext/steps": "workspace:^",
     "@portabletext/to-html": "^6.0.0",
     "@sanity/diff-match-patch": "catalog:",
     "@xstate/react": "catalog:",

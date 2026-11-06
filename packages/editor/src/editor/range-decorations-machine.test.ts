@@ -1,6 +1,9 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
-import {createActor} from 'xstate'
+import {createActor, type ActorRefFrom} from 'xstate'
+import type {OperationEvent} from '../engine/core/operation-channel'
+import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Decoration} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSchema} from './editor-schema'
@@ -16,11 +19,17 @@ function createEditorEngineStub(
   blockKey: string,
   spanKey: string,
 ): PortableTextEditorEngine {
+  const schema = compileSchema(defineSchema({}))
   return {
-    operationListeners: {before: [], after: []},
+    changeListeners: [],
+    operationListeners: {before: [], after: [], transactionEnd: []},
+    operationTransactionDepth: 0,
+    operationTransactionEvents: [],
     decoratedRanges: [],
     snapshot: {
       context: {
+        schema,
+        containers: new Map(),
         value: [
           {
             _type: 'block',
@@ -39,8 +48,82 @@ function startReadyActor(blockKey: string, spanKey: string) {
     input: {readOnly: false, schema: {} as EditorSchema, editorEngine},
   })
   actor.start()
-  actor.send({type: 'ready'})
+  send(actor, {type: 'ready'})
   return actor
+}
+
+function send(
+  actor: ActorRefFrom<typeof rangeDecorationsMachine>,
+  event: {
+    type: string
+    operation?: EngineOperation
+    origin?: 'local' | 'remote'
+    [key: string]: unknown
+  },
+) {
+  if (event.type === 'engine transaction start') {
+    return
+  }
+
+  if (event.type === 'engine transaction end') {
+    return
+  }
+
+  if (event.type !== 'engine operation') {
+    actor.send(event as Parameters<typeof actor.send>[0])
+    return
+  }
+
+  const operation = event.operation!
+  const editorEngine = actor.getSnapshot().context.editorEngine
+  const beforeValue = editorEngine.snapshot.context.value
+
+  if (
+    (operation.type === 'insert.text' || operation.type === 'remove.text') &&
+    operation.path &&
+    operation.offset !== undefined &&
+    operation.text !== undefined
+  ) {
+    const afterValue = structuredClone(beforeValue)
+    const blockKey = (operation.path[0] as {_key: string})._key
+    const spanKey = (operation.path.at(-1) as {_key: string})._key
+    const block = afterValue.find((candidate) => candidate._key === blockKey)
+    const span = (
+      block as {children?: Array<{_key?: string; text?: string}>} | undefined
+    )?.children?.find((candidate) => candidate._key === spanKey)
+
+    if (span && span.text !== undefined) {
+      span.text =
+        operation.type === 'insert.text'
+          ? `${span.text.slice(0, operation.offset)}${operation.text}${span.text.slice(operation.offset)}`
+          : `${span.text.slice(0, operation.offset)}${span.text.slice(operation.offset + operation.text.length)}`
+      editorEngine.snapshot.context.value = afterValue
+    }
+  }
+
+  const operationEvent: OperationEvent = {
+    operation,
+    beforeValue,
+    beforeSelection: null,
+    operationsInProgress: false,
+    isPatching: false,
+    withHistory: true,
+    undoStepId: undefined,
+    origin: event.origin ?? 'local',
+    context: [],
+  }
+  actor.send({
+    type: 'engine change',
+    change: {
+      cause:
+        event.origin === 'remote'
+          ? {type: 'remote patches'}
+          : {type: 'behavior event'},
+      entries: [{event: operationEvent, patches: []}],
+      entryByEvent: new Map(),
+      committed: true,
+    },
+  })
 }
 
 function decoratedRangeIds(actor: ReturnType<typeof startReadyActor>) {
@@ -69,7 +152,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     const decorateAtReady = actor.getSnapshot().context.decorate.fn
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'prop',
       kind: 'prop',
@@ -80,7 +163,7 @@ describe(rangeDecorationsMachine.id, () => {
     const decorateAfterFirstSupply = actor.getSnapshot().context.decorate.fn
     expect(decorateAfterFirstSupply).not.toBe(decorateAtReady)
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'prop',
       kind: 'prop',
@@ -92,7 +175,7 @@ describe(rangeDecorationsMachine.id, () => {
       decorateAfterFirstSupply,
     )
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'prop',
       kind: 'prop',
@@ -122,7 +205,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     const render = () => null as never
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -130,7 +213,7 @@ describe(rangeDecorationsMachine.id, () => {
     })
     const decorateAfterFirstSupply = actor.getSnapshot().context.decorate.fn
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -140,7 +223,7 @@ describe(rangeDecorationsMachine.id, () => {
       decorateAfterFirstSupply,
     )
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -151,13 +234,80 @@ describe(rangeDecorationsMachine.id, () => {
     )
   })
 
+  test('Scenario: a transaction that only inserts text skips reassigning `decorate.fn`', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const editorEngine = createEditorEngineStub(blockKey, spanKey)
+    const actor = createActor(rangeDecorationsMachine, {
+      input: {
+        readOnly: false,
+        schema: compileSchema(defineSchema({})),
+        editorEngine,
+      },
+    })
+    actor.start()
+    send(actor, {type: 'ready'})
+
+    send(actor, {
+      type: 'source updated',
+      sourceKey: 'prop',
+      kind: 'prop',
+      rangeDecorations: [
+        {
+          component: () => null as never,
+          selection: {
+            anchor: {path: spanPath, offset: 3},
+            focus: {path: spanPath, offset: 6},
+          },
+        },
+      ],
+    })
+    const decorateAfterUpdate = actor.getSnapshot().context.decorate.fn
+    const value =
+      actor.getSnapshot().context.editorEngine.snapshot.context.value
+    const operation = {
+      type: 'insert.text' as const,
+      path: spanPath,
+      offset: 0,
+      text: 'x',
+    }
+
+    send(actor, {type: 'engine transaction start'})
+    send(actor, {type: 'engine operation', operation, origin: 'local'})
+    send(actor, {
+      type: 'engine transaction end',
+      transaction: {
+        operations: [
+          {
+            operation,
+            beforeValue: value,
+            beforeSelection: null,
+            operationsInProgress: false,
+            isPatching: false,
+            withHistory: true,
+            undoStepId: undefined,
+            origin: 'local',
+            context: [],
+          },
+        ],
+        beforeValue: value,
+        afterValue: value,
+        origin: 'local',
+      },
+    })
+
+    expect(actor.getSnapshot().context.decorate.fn).toBe(decorateAfterUpdate)
+  })
+
   test('Scenario: removing a source that contributed no decorated ranges skips reassigning `decorate.fn`', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
     const actor = startReadyActor(blockKey, spanKey)
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'empty',
       kind: 'registered',
@@ -165,7 +315,7 @@ describe(rangeDecorationsMachine.id, () => {
     })
     const decorateAfterEmptySupply = actor.getSnapshot().context.decorate.fn
 
-    actor.send({type: 'source removed', sourceKey: 'empty'})
+    send(actor, {type: 'source removed', sourceKey: 'empty'})
 
     expect(actor.getSnapshot().context.decorate.fn).toBe(
       decorateAfterEmptySupply,
@@ -185,7 +335,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     const render = () => null as never
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'live',
       kind: 'registered',
@@ -193,7 +343,7 @@ describe(rangeDecorationsMachine.id, () => {
     })
     const decorateAfterLiveSupply = actor.getSnapshot().context.decorate.fn
 
-    actor.send({type: 'source removed', sourceKey: 'live'})
+    send(actor, {type: 'source removed', sourceKey: 'live'})
 
     expect(actor.getSnapshot().context.decorate.fn).not.toBe(
       decorateAfterLiveSupply,
@@ -224,7 +374,7 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -232,7 +382,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'unset',
@@ -255,7 +405,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // A redundant `update()` resupplying the same (now stale) selection,
     // before the consumer has observed the `newRange: null` mapping.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -266,7 +416,7 @@ describe(rangeDecorationsMachine.id, () => {
     expect(on).toHaveBeenCalledTimes(1)
 
     // A deliberate re-anchor (a genuinely different selection) revives it.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -296,7 +446,7 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -307,7 +457,7 @@ describe(rangeDecorationsMachine.id, () => {
     // Move it: inserting text before the range shifts both endpoints, so
     // the live range (unbeknownst to the consumer) is no longer
     // `selectionA`.
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -334,7 +484,7 @@ describe(rangeDecorationsMachine.id, () => {
       },
     ])
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'unset',
@@ -357,7 +507,7 @@ describe(rangeDecorationsMachine.id, () => {
     // A redundant `update()` resupplying the original (never-moved)
     // range: the consumer never observed the intervening mapping that
     // moved it, so this isn't a deliberate re-anchor either.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -391,7 +541,7 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -400,7 +550,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // Move it: inserting text before the range shifts both endpoints away
     // from `selectionA`, the range this `id` was registered with.
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -416,7 +566,7 @@ describe(rangeDecorationsMachine.id, () => {
       focus: {path: spanPath, offset: 5},
     }
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'unset',
@@ -428,7 +578,7 @@ describe(rangeDecorationsMachine.id, () => {
     // A redundant `update()` resupplying the range it died under - not the
     // originally configured `selectionA`, but the live position at time of
     // death - is exactly as stale.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -439,7 +589,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // A range different from both the configured and the died-under one
     // is a deliberate re-anchor: it revives.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -469,14 +619,14 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
       rangeDecorations: [registration],
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -492,7 +642,7 @@ describe(rangeDecorationsMachine.id, () => {
       focus: {path: spanPath, offset: 5},
     }
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'unset',
@@ -506,7 +656,7 @@ describe(rangeDecorationsMachine.id, () => {
     // The exact death range, but with `backward: true` added back (as a
     // freshly captured editor selection would carry): same anchor and
     // focus, one extra own key.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -538,7 +688,7 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -546,7 +696,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'unset',
@@ -556,7 +706,7 @@ describe(rangeDecorationsMachine.id, () => {
     })
 
     // Drop it: the next `update()` omits `a` entirely, not just its range.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -566,7 +716,7 @@ describe(rangeDecorationsMachine.id, () => {
     // Re-add it with the same range it died under. Coming back after a
     // drop is a fresh registration, not a redundant resupply, so it
     // revives even though the range matches the tombstone.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -590,7 +740,7 @@ describe(rangeDecorationsMachine.id, () => {
     const renderOne = () => null as never
     const renderTwo = () => null as never
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -601,7 +751,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // Move it: inserting text before the range shifts both endpoints away
     // from `selectionA`, the range this `id` was registered with.
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -620,7 +770,7 @@ describe(rangeDecorationsMachine.id, () => {
     // Resupply the original (still-configured) range with a new `render`:
     // the range half of the reconciliation carries the live, moved
     // position over; the render half still adopts the new reference.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -654,7 +804,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     const render = () => null as never
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -663,7 +813,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // Move it: inserting text before the range shifts both endpoints away
     // from `selectionA`, the range this `id` was registered with.
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -681,7 +831,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // Same anchor/focus as the original config, but with `backward: true`
     // added, as a captured editor selection would carry: not a re-anchor.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -733,14 +883,14 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'first',
       kind: 'registered',
       rangeDecorations: [firstRegistration],
       on: onFirst,
     })
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'second',
       kind: 'registered',
@@ -748,7 +898,7 @@ describe(rangeDecorationsMachine.id, () => {
       on: onSecond,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -801,7 +951,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -809,7 +959,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'remove.text',
@@ -852,7 +1002,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -860,7 +1010,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'remove.text',
@@ -903,7 +1053,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -911,7 +1061,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'remove.text',
@@ -954,7 +1104,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -962,7 +1112,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -1005,7 +1155,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1013,7 +1163,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -1042,7 +1192,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1050,7 +1200,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'remove.text',
@@ -1089,7 +1239,7 @@ describe(rangeDecorationsMachine.id, () => {
     }
     const actor = startReadyActor(blockKey, spanKey)
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'late-prop',
       kind: 'prop',
@@ -1121,7 +1271,7 @@ describe(rangeDecorationsMachine.id, () => {
 
     // Arrival order: registration first, prop second - the opposite of the
     // promised render order.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1134,7 +1284,7 @@ describe(rangeDecorationsMachine.id, () => {
         },
       ],
     })
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'prop',
       kind: 'prop',
@@ -1161,7 +1311,7 @@ describe(rangeDecorationsMachine.id, () => {
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1213,7 +1363,7 @@ describe(rangeDecorationsMachine.id, () => {
       },
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1227,7 +1377,7 @@ describe(rangeDecorationsMachine.id, () => {
     // mirror that aliases the consumer's own object would see it as
     // `previousConfig.range === incoming.range` and skip the
     // reconciliation this mutation is meant to trigger.
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1268,7 +1418,7 @@ describe(rangeDecorationsMachine.id, () => {
       range: selectionA,
     }
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1276,7 +1426,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {type: 'insert.text', path: spanPath, offset: 0, text: 'XY'},
       origin: 'local',
@@ -1300,7 +1450,7 @@ describe(rangeDecorationsMachine.id, () => {
     firstMapping.previousRange.anchor.path.splice(0)
     firstMapping.newRange.anchor.path[0] = {_key: 'mutated'}
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -1342,13 +1492,13 @@ describe(rangeDecorationsMachine.id, () => {
       input: {readOnly: true, schema: {} as EditorSchema, editorEngine},
     })
     actor.start()
-    actor.send({type: 'ready'})
+    send(actor, {type: 'ready'})
 
     const on = vi.fn()
     const render = () => null as never
     const registration: Decoration = {id: 'a', type: 'range', render, range}
 
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'registered',
       kind: 'registered',
@@ -1356,7 +1506,7 @@ describe(rangeDecorationsMachine.id, () => {
       on,
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
@@ -1399,10 +1549,10 @@ describe(rangeDecorationsMachine.id, () => {
       input: {readOnly: true, schema: {} as EditorSchema, editorEngine},
     })
     actor.start()
-    actor.send({type: 'ready'})
+    send(actor, {type: 'ready'})
 
     const onMoved = vi.fn()
-    actor.send({
+    send(actor, {
       type: 'source updated',
       sourceKey: 'prop',
       kind: 'prop',
@@ -1411,7 +1561,7 @@ describe(rangeDecorationsMachine.id, () => {
       ],
     })
 
-    actor.send({
+    send(actor, {
       type: 'engine operation',
       operation: {
         type: 'insert.text',
