@@ -1,4 +1,4 @@
-import type {Path} from '@portabletext/editor'
+import {defineContainer, type Path} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
@@ -43,6 +43,11 @@ function ListIndexProbe(props: {
       {listIndex === undefined ? 'none' : listIndex}
     </div>
   )
+}
+
+function ListIndexPathProbe(props: {path: Path}) {
+  const listIndex = useListIndex(props.path)
+  return <div data-testid="path-probe">{listIndex ?? 'none'}</div>
 }
 
 function probes(
@@ -149,5 +154,69 @@ describe(ListIndexProvider.name, () => {
     expect(page.getByTestId('probe-b1').element().textContent).toBe('1')
     expect(page.getByTestId('probe-b2').element().textContent).toBe('2')
     expect(renders).toEqual([])
+  })
+
+  test('Scenario: Emptying the value removes indices', async () => {
+    const {editor} = await createTestEditor({
+      schemaDefinition,
+      initialValue: [numberBlock('b1', 'one')],
+      children: probes(['b1'], () => {}),
+    })
+
+    await vi.waitFor(() => {
+      expect(page.getByTestId('probe-b1').element().textContent).toBe('1')
+    })
+
+    editor.send({type: 'update value', value: []})
+
+    await vi.waitFor(() => {
+      expect(page.getByTestId('probe-b1').element().textContent).toBe('none')
+    })
+  })
+
+  test('Scenario: Registering a container rebuilds indices after normalization repairs its list item', async () => {
+    const containerPath: Path = [{_key: 'callout'}, 'content', {_key: 'nested'}]
+    const {editor} = await createTestEditor({
+      schemaDefinition: defineSchema({
+        lists: [{name: 'number'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'callout',
+          content: [
+            {
+              _type: 'block',
+              _key: 'nested',
+              listItem: 'number',
+              level: 1,
+            },
+          ],
+        } as unknown as PortableTextBlock,
+      ],
+      children: (
+        <ListIndexProvider>
+          <ListIndexPathProbe path={containerPath} />
+        </ListIndexProvider>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(page.getByTestId('path-probe').element().textContent).toBe('none')
+    })
+
+    editor.registerNode({
+      node: defineContainer({type: 'callout', arrayField: 'content'}),
+    })
+
+    await vi.waitFor(() => {
+      expect(page.getByTestId('path-probe').element().textContent).toBe('1')
+    })
   })
 })
