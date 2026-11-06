@@ -479,7 +479,7 @@ function createWorkingCopy(
       return structuredClone(base) as Array<PortableTextBlock>
     }
 
-    if (blockIndex >= 0 && !clonedBlockIndexes.has(blockIndex)) {
+    if (!clonedBlockIndexes.has(blockIndex)) {
       workingCopy[blockIndex] = structuredClone(base[blockIndex]!)
       clonedBlockIndexes.add(blockIndex)
     }

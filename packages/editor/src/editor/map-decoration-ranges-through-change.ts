@@ -112,9 +112,13 @@ function rangeTouchesBlocks(
 
   const startIndex = Math.min(anchorIndex, focusIndex)
   const endIndex = Math.max(anchorIndex, focusIndex)
-  return [...touchedBlocks.baseIndexes].some(
-    (index) => index >= startIndex && index <= endIndex,
-  )
+  for (const index of touchedBlocks.baseIndexes) {
+    if (index >= startIndex && index <= endIndex) {
+      return true
+    }
+  }
+
+  return false
 }
 
 function pointBlockIndex(
