@@ -1,4 +1,10 @@
-import {diffMatchPatch, set, type Patch} from '@portabletext/patches'
+import {
+  diffMatchPatch,
+  set,
+  unset,
+  type Patch,
+  type Path,
+} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createIo} from './create-io'
@@ -16,6 +22,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.restoreAllMocks()
 })
 
 describe(createIo.name, () => {
@@ -182,6 +189,263 @@ describe(createIo.name, () => {
       context: {rev: 'r150', inFlight: undefined, pending: 0},
     })
   })
+
+  test('sends an unsent edit in one table cell rebased over a remote edit in another cell of the same table', () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '00000000-0000-4000-8000-000000000001',
+    )
+    const {io, editor, editorMessages, events} = setup()
+    const loaded = [
+      table('t1', [
+        row('r1', [
+          cell('c1', [textBlock('b1', 's1', 'foo')]),
+          cell('c2', [textBlock('b2', 's2', 'bar')]),
+        ]),
+      ]),
+    ]
+
+    io.send({type: 'load', value: loaded, rev: 'r1'})
+    editor.emit({type: 'ready'})
+    const localEdit = diffMatchPatch(
+      'foo',
+      'foox',
+      cellSpanTextPath('c1', 'b1', 's1'),
+    )
+    const remoteEdit = diffMatchPatch(
+      'bar',
+      'bary',
+      cellSpanTextPath('c2', 'b2', 's2'),
+    )
+    editor.emit({type: 'change', patches: [localEdit]})
+    io.send(transaction('r1', 'r2', [remoteEdit]))
+    vi.advanceTimersByTime(1_000)
+    io.send({
+      ...transaction('r2', 'r3', [localEdit]),
+      transactionId: '00000000-0000-4000-8000-000000000001',
+    })
+
+    expect({
+      editorMessages,
+      events,
+      snapshot: io.getSnapshot(),
+    }).toEqual({
+      editorMessages: [
+        {type: 'load', value: loaded},
+        {type: 'apply', patches: [remoteEdit]},
+      ],
+      events: [
+        {
+          type: 'mutation',
+          id: '1',
+          transactionId: '00000000-0000-4000-8000-000000000001',
+          patches: [localEdit],
+        },
+      ],
+      snapshot: {
+        value: {ready: 'synced'},
+        matches: io.getSnapshot().matches,
+        context: {rev: 'r3', inFlight: undefined, pending: 0},
+      },
+    })
+  })
+
+  test('keeps an unsent span edit on top of a remote edit to the same span', () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '00000000-0000-4000-8000-000000000001',
+    )
+    const {io, editor, editorMessages, events} = setup()
+    const spanPath = [{_key: 'b1'}, 'children', {_key: 's1'}, 'text']
+
+    io.send({
+      type: 'load',
+      value: [textBlock('b1', 's1', 'foo bar')],
+      rev: 'r1',
+    })
+    editor.emit({type: 'ready'})
+    const localEdit = diffMatchPatch('foo bar', 'foo bar baz', spanPath)
+    editor.emit({type: 'change', patches: [localEdit]})
+    io.send(
+      transaction('r1', 'r2', [
+        diffMatchPatch('foo bar', 'qux foo bar', spanPath),
+      ]),
+    )
+    vi.advanceTimersByTime(1_000)
+
+    expect({editorMessages, events}).toEqual({
+      editorMessages: [
+        {type: 'load', value: [textBlock('b1', 's1', 'foo bar')]},
+        {
+          type: 'apply',
+          patches: [diffMatchPatch('foo bar baz', 'qux foo bar baz', spanPath)],
+        },
+      ],
+      events: [
+        {
+          type: 'mutation',
+          id: '1',
+          transactionId: '00000000-0000-4000-8000-000000000001',
+          patches: [localEdit],
+        },
+      ],
+    })
+  })
+
+  test('keeps an unsent span edit inside a table cell on top of a remote edit to the same span', () => {
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+      '00000000-0000-4000-8000-000000000001',
+    )
+    const {io, editor, editorMessages, events} = setup()
+    const spanPath = cellSpanTextPath('c1', 'b1', 's1')
+    const loaded = [
+      table('t1', [
+        row('r1', [cell('c1', [textBlock('b1', 's1', 'foo bar')])]),
+      ]),
+    ]
+
+    io.send({type: 'load', value: loaded, rev: 'r1'})
+    editor.emit({type: 'ready'})
+    const localEdit = diffMatchPatch('foo bar', 'foo bar baz', spanPath)
+    editor.emit({type: 'change', patches: [localEdit]})
+    io.send(
+      transaction('r1', 'r2', [
+        diffMatchPatch('foo bar', 'qux foo bar', spanPath),
+      ]),
+    )
+    vi.advanceTimersByTime(1_000)
+
+    expect({editorMessages, events}).toEqual({
+      editorMessages: [
+        {type: 'load', value: loaded},
+        {
+          type: 'apply',
+          patches: [diffMatchPatch('foo bar baz', 'qux foo bar baz', spanPath)],
+        },
+      ],
+      events: [
+        {
+          type: 'mutation',
+          id: '1',
+          transactionId: '00000000-0000-4000-8000-000000000001',
+          patches: [localEdit],
+        },
+      ],
+    })
+  })
+
+  test('sends no mutation when another writer removed the table cell of the pending change', () => {
+    const {io, editor, editorMessages, events} = setup()
+    const loaded = [
+      table('t1', [
+        row('r1', [
+          cell('c1', [textBlock('b1', 's1', 'foo')]),
+          cell('c2', [textBlock('b2', 's2', 'bar')]),
+        ]),
+      ]),
+    ]
+
+    io.send({type: 'load', value: loaded, rev: 'r1'})
+    editor.emit({type: 'ready'})
+    const edit = diffMatchPatch(
+      'foo',
+      'foox',
+      cellSpanTextPath('c1', 'b1', 's1'),
+    )
+    editor.emit({type: 'change', patches: [edit]})
+    io.send(
+      transaction('r1', 'r2', [
+        unset([{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}]),
+      ]),
+    )
+    vi.advanceTimersByTime(5_000)
+
+    expect({
+      editorMessages,
+      events,
+      value: io.getSnapshot().value,
+    }).toEqual({
+      editorMessages: [
+        {type: 'load', value: loaded},
+        {
+          type: 'apply',
+          patches: [
+            unset([{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}]),
+          ],
+        },
+      ],
+      events: [{type: 'work dropped', patches: [edit], reason: 'no target'}],
+      value: {ready: 'synced'},
+    })
+  })
+
+  test('skips a remote patch into a table cell that is not there', () => {
+    const {io, editor, editorMessages} = setup()
+    const loaded = [
+      table('t1', [row('r1', [cell('c1', [textBlock('b1', 's1', 'foo')])])]),
+    ]
+
+    io.send({type: 'load', value: loaded, rev: 'r1'})
+    editor.emit({type: 'ready'})
+    io.send(
+      transaction('r1', 'r2', [
+        diffMatchPatch('foo', 'foox', cellSpanTextPath('c9', 'b1', 's1')),
+        set('h1', [
+          {_key: 't1'},
+          'rows',
+          {_key: 'r1'},
+          'cells',
+          {_key: 'c9'},
+          'content',
+          {_key: 'b1'},
+          'style',
+        ]),
+        unset([{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c9'}]),
+      ]),
+    )
+
+    expect({
+      value: io.getSnapshot().value,
+      rev: io.getSnapshot().context.rev,
+      editorMessages,
+    }).toEqual({
+      value: {ready: 'synced'},
+      rev: 'r2',
+      editorMessages: [{type: 'load', value: loaded}],
+    })
+  })
+
+  test('skips a remote patch into an inner callout block that is not there', () => {
+    const {io, editor, editorMessages} = setup()
+    const loaded = [
+      callout('o1', [callout('o2', [textBlock('b1', 's1', 'foo')])]),
+    ]
+
+    io.send({type: 'load', value: loaded, rev: 'r1'})
+    editor.emit({type: 'ready'})
+    io.send(
+      transaction('r1', 'r2', [
+        diffMatchPatch('foo', 'foox', [
+          {_key: 'o1'},
+          'content',
+          {_key: 'o2'},
+          'content',
+          {_key: 'b9'},
+          'children',
+          {_key: 's1'},
+          'text',
+        ]),
+      ]),
+    )
+
+    expect({
+      value: io.getSnapshot().value,
+      rev: io.getSnapshot().context.rev,
+      editorMessages,
+    }).toEqual({
+      value: {ready: 'synced'},
+      rev: 'r2',
+      editorMessages: [{type: 'load', value: loaded}],
+    })
+  })
 })
 
 function setup() {
@@ -256,4 +520,45 @@ function textBlock(
     markDefs: [],
     children: [{_type: 'span', _key: spanKey, text, marks: []}],
   }
+}
+
+function cellSpanTextPath(
+  cellKey: string,
+  blockKey: string,
+  spanKey: string,
+): Path {
+  return [
+    {_key: 't1'},
+    'rows',
+    {_key: 'r1'},
+    'cells',
+    {_key: cellKey},
+    'content',
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+    'text',
+  ]
+}
+
+function table(
+  key: string,
+  rows: Array<ReturnType<typeof row>>,
+): PortableTextBlock {
+  return {_type: 'table', _key: key, rows}
+}
+
+function row(key: string, cells: Array<ReturnType<typeof cell>>) {
+  return {_type: 'row', _key: key, cells}
+}
+
+function cell(key: string, content: Array<PortableTextBlock>) {
+  return {_type: 'cell', _key: key, content}
+}
+
+function callout(
+  key: string,
+  content: Array<PortableTextBlock>,
+): PortableTextBlock {
+  return {_type: 'callout', _key: key, tone: 'info', content}
 }
