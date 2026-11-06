@@ -117,6 +117,7 @@
         "@portabletext/repair",
         "@portabletext/sanity-bridge",
         "@portabletext/schema",
+        "@portabletext/steps",
         "@portabletext/test",
         "@portabletext/to-html",
         "@portabletext/toolbar",
