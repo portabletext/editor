@@ -34,5 +34,27 @@ export const article = defineType({
         callout,
       ],
     }),
+    defineField({
+      name: 'testHighlights',
+      title: 'Test highlights',
+      description:
+        'Manual multiplayer test data for registered decorations: ranges into `body`, written by the test highlight toolbar.',
+      type: 'array',
+      hidden: true,
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'testHighlight',
+          fields: [
+            defineField({name: 'color', type: 'string'}),
+            defineField({
+              name: 'range',
+              type: 'string',
+              description: 'JSON-encoded editor range relative to `body`',
+            }),
+          ],
+        }),
+      ],
+    }),
   ],
 })
