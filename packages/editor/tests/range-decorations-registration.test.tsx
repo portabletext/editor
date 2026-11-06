@@ -1102,7 +1102,7 @@ describe('registerDecorations: death by collapse', () => {
     })
   })
 
-  test('Scenario: a decoration collapsed by configuration never dies from an edit that keeps it collapsed', async () => {
+  test('Scenario: a decoration collapsed by configuration emits no mapping when an edit leaves it at the same range', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1182,19 +1182,7 @@ describe('registerDecorations: death by collapse', () => {
       at: getTextSelection(editor.getSnapshot().context, 'bar'),
     })
 
-    await vi.waitFor(() => {
-      expect(onMapped).toHaveBeenCalledTimes(1)
-    })
-
-    expect(onMapped.mock.calls[0]?.[0]).toEqual([
-      {
-        id: 'caret',
-        previousRange: movedRange,
-        newRange: movedRange,
-        contentTouched: false,
-        origin: 'local',
-      },
-    ])
+    expect(onMapped).toHaveBeenCalledTimes(0)
     expect(registration.getDecorations()).toEqual([
       {id: 'caret', range: movedRange},
     ])
