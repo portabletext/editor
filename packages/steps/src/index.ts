@@ -1,5 +1,6 @@
 export {interpretTransaction} from './interpret-transaction'
 export {mapPoint, mapRange} from './step-mapper'
+export {normalizeRangeBoundary} from './normalize-range-boundary'
 export type {
   InsertTextStep,
   MoveNodeStep,
