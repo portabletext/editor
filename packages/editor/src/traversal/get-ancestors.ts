@@ -1,6 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
@@ -31,6 +32,10 @@ export function getAncestors(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: PortableTextBlock; path: Path}> {
+  if (isCompactPath(path)) {
+    return []
+  }
+
   // Collect node-segment indices (keyed or numeric) to know where each
   // ancestor's path ends.
   const keyedIndices: Array<number> = []

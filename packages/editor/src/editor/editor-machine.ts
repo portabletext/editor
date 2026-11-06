@@ -19,6 +19,7 @@ import type {Converter} from '../converters/converter.types'
 import {isInNormalization} from '../engine/core/apply-context'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {normalize} from '../engine/editor/normalize'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
@@ -317,7 +318,9 @@ export const editorMachine = setup({
           return context.pendingEvents
         }
 
-        const incomingPaths = event.patches.map((patch) => patch.path)
+        const incomingPaths = event.patches
+          .map((patch) => patch.path)
+          .filter((path) => !isCompactPath(path))
 
         return context.pendingEvents.filter((pendingEvent) => {
           if (pendingEvent.type !== 'internal.patch') {

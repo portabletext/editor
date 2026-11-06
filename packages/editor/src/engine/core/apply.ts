@@ -6,6 +6,7 @@ import {normalize} from '../editor/normalize'
 import type {Editor} from '../interfaces/editor'
 import {PathRef} from '../interfaces/path-ref'
 import {PointRef} from '../interfaces/point-ref'
+import {operationHasCompactPath} from '../path/is-compact-path'
 import {parentPath} from '../path/parent-path'
 import {pathEquals} from '../path/path-equals'
 import {transformRangeRef} from '../range-ref/transform-range-ref'
@@ -16,6 +17,10 @@ import {createOperationEvent, emitOperationEvent} from './operation-channel'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
+  if (operationHasCompactPath(op)) {
+    return
+  }
+
   const beforeListeners = editor.operationListeners.before
   const operationEvent =
     beforeListeners.length > 0 || editor.operationListeners.after.length > 0

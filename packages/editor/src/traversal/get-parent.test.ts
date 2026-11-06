@@ -1,6 +1,10 @@
 import {describe, expect, test} from 'vitest'
 import {getParent} from './get-parent'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {
+  createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
+  textBlockDepths,
+} from './node-traversal-testbed'
 
 describe(getParent.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -99,3 +103,31 @@ describe(getParent.name, () => {
     expect(getParent(testbed.snapshot, [])).toBeUndefined()
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getParent.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full span path returns the text block', () => {
+      expect(getParent(testbed.snapshot, testbed.spanPath)).toEqual({
+        node: testbed.textBlock,
+        path: testbed.blockPath,
+      })
+    })
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) returns no parent',
+      ({path}) => {
+        expect(getParent(testbed.snapshot, path)).toEqual(undefined)
+      },
+    )
+
+    test.each(testbed.compactBlockPaths)(
+      'a compact block path ($form) returns no parent',
+      ({path}) => {
+        expect(getParent(testbed.snapshot, path)).toEqual(undefined)
+      },
+    )
+  },
+)

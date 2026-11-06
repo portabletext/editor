@@ -1,5 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
@@ -10,10 +11,12 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 /**
  * Get the node at a given path.
  *
- * The path can be either keyed (KeyedSegment + field name strings) or
- * indexed (numbers). Keyed segments are resolved by matching `_key`,
- * field name strings name a structural descent into the previous
- * node's children, and numbers are resolved by index.
+ * Node segments can be keyed (`{_key}`, resolved by matching `_key`) or
+ * indexed (numbers, resolved by index). Either way, a field name string
+ * names the structural descent between every two node segments:
+ * `[{_key:'b1'}, 'children', {_key:'s1'}]` and `[0, 'children', 0]`
+ * both address the first block's span. A compact path that leaves the
+ * field out, such as `[0, 0]`, addresses nothing and returns `undefined`.
  *
  * The returned `path` always identifies the returned node: segments
  * are keyed wherever the node has a usable `_key` (numeric indices are
@@ -61,7 +64,7 @@ export function resolveNode(
   snapshot: TraversalSnapshot,
   path: Path,
 ): ResolveNodeResult {
-  if (path.length === 0) {
+  if (path.length === 0 || isCompactPath(path)) {
     return {status: 'missing'}
   }
 

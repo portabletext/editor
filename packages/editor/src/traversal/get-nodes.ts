@@ -2,6 +2,7 @@ import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {
@@ -38,6 +39,13 @@ export function* getNodes(
   } = {},
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {at = [], from, to, match, reverse = false} = options
+
+  if (
+    (from !== undefined && isCompactPath(from)) ||
+    (to !== undefined && isCompactPath(to))
+  ) {
+    return
+  }
 
   if (from === undefined && to === undefined) {
     yield* getNodesSimple(snapshot, at, {match, reverse})

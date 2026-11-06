@@ -2,8 +2,10 @@ import {describe, expect, test} from 'vitest'
 import {getNode} from './get-node'
 import {
   createNodeTraversalTestbed,
+  createTextBlockDepthTestbed,
   resolveTestbedContainers,
   tableContainers,
+  textBlockDepths,
 } from './node-traversal-testbed'
 
 describe(getNode.name, () => {
@@ -423,3 +425,39 @@ describe(`${getNode.name} keeps numeric segments for keyless nodes`, () => {
     expect(entry?.path).toEqual([0, 'children', {_key: 'k100'}])
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getNode.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full keyed and indexed span paths resolve the span', () => {
+      expect(getNode(testbed.snapshot, testbed.spanPath)).toEqual({
+        node: testbed.fooSpan,
+        path: testbed.spanPath,
+      })
+      expect(getNode(testbed.snapshot, testbed.indexedSpanPath)).toEqual({
+        node: testbed.fooSpan,
+        path: testbed.spanPath,
+      })
+    })
+
+    test.each(testbed.compactSpanPaths)(
+      'a compact span path ($form) resolves nothing',
+      ({path}) => {
+        expect(getNode(testbed.snapshot, path)).toEqual(undefined)
+      },
+    )
+
+    test.each(testbed.compactBlockPaths)(
+      'a compact block path ($form) resolves nothing',
+      ({path}) => {
+        expect(getNode(testbed.snapshot, testbed.blockPath)).toEqual({
+          node: testbed.textBlock,
+          path: testbed.blockPath,
+        })
+        expect(getNode(testbed.snapshot, path)).toEqual(undefined)
+      },
+    )
+  },
+)

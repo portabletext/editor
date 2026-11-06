@@ -4,6 +4,7 @@ import {start as editorStart} from '../engine/editor/start'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {isPoint} from '../engine/point/is-point'
 import {pointEquals} from '../engine/point/point-equals'
 import {isRange} from '../engine/range/is-range'
@@ -91,6 +92,10 @@ function resolveSelectionPoint(
       value: editor.snapshot.context.value,
     },
     blockIndexMap: editor.snapshot.blockIndexMap,
+  }
+
+  if (isCompactPath(selectionPoint.path)) {
+    return undefined
   }
 
   const entry = getNode(snapshot, selectionPoint.path)

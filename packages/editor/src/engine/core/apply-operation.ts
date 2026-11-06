@@ -596,8 +596,6 @@ function targetsStructuralChildren(editor: Editor, path: Path): boolean {
 
   const fieldSegment = path[path.length - 2]
   if (typeof fieldSegment !== 'string') {
-    // Compact paths ([{_key}, {_key}] or numeric) always descend
-    // structurally.
     return true
   }
 

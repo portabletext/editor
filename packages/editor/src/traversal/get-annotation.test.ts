@@ -4,7 +4,11 @@ import {describe, expect, test} from 'vitest'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {defineContainer} from '../renderers/renderer.types'
 import {getAnnotation} from './get-annotation'
-import {resolveTestbedContainers} from './node-traversal-testbed'
+import {
+  createTextBlockDepthTestbed,
+  resolveTestbedContainers,
+  textBlockDepths,
+} from './node-traversal-testbed'
 
 function createAnnotationTestbed() {
   const keyGenerator = createTestKeyGenerator()
@@ -205,3 +209,30 @@ describe(getAnnotation.name, () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  `${getAnnotation.name} with a compact path to a text block %s`,
+  (depth) => {
+    const testbed = createTextBlockDepthTestbed(depth)
+
+    test('the full annotation path returns the annotation', () => {
+      expect(getAnnotation(testbed.snapshot, testbed.annotationPath)).toEqual({
+        node: testbed.link,
+        path: testbed.annotationPath,
+      })
+    })
+
+    test('a full annotation path with a property suffix returns the annotation', () => {
+      expect(
+        getAnnotation(testbed.snapshot, [...testbed.annotationPath, 'href']),
+      ).toEqual({node: testbed.link, path: testbed.annotationPath})
+    })
+
+    test.each(testbed.compactAnnotationPaths)(
+      'a compact annotation path ($form) returns no annotation',
+      ({path}) => {
+        expect(getAnnotation(testbed.snapshot, path)).toEqual(undefined)
+      },
+    )
+  },
+)

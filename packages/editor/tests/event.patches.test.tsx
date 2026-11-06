@@ -9,16 +9,28 @@ import {
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {describe, expect, test, vi} from 'vitest'
+import React from 'react'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import type {Path} from '../src/engine/interfaces/path'
+import {createApplyPatch} from '../src/internal-utils/applyPatch'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {
+  compactSpanPaths,
+  textBlock,
+  textBlockDepths,
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 
 // `createTestEditors` forwards A's `mutation` events to B, and the batcher
 // flushes those on a 500ms interval, which leaves little of `vi.waitFor`'s
@@ -7609,3 +7621,308 @@ describe('event.patches', () => {
     })
   })
 })
+
+describe.each(textBlockDepths)(
+  'event.patches with a compact path $depth',
+  ({wrap}) => {
+    describe.each(compactSpanPaths)(
+      'compact span path ($form)',
+      ({path: compactPath}) => {
+        test.each(compactPatches)(
+          'Scenario: an incoming `$type` patch at the compact path changes nothing',
+          async ({patch}) => {
+            const consoleError = vi.spyOn(console, 'error')
+            const consoleWarn = vi.spyOn(console, 'warn')
+            onTestFinished(() => {
+              consoleError.mockRestore()
+              consoleWarn.mockRestore()
+            })
+            const keyGenerator = createTestKeyGenerator()
+            const depth = wrap(keyGenerator)
+            const fooBlockKey = keyGenerator()
+            const fooSpanKey = keyGenerator()
+            const barBlockKey = keyGenerator()
+            const barSpanKey = keyGenerator()
+            const remoteSpanKey = keyGenerator()
+            const barSpanPath = [
+              ...depth.keyedPrefix,
+              {_key: barBlockKey},
+              'children',
+              {_key: barSpanKey},
+            ]
+            const patches: Array<Patch> = []
+
+            const {editor} = await createTestEditor({
+              keyGenerator,
+              schemaDefinition: textBlockDepthsSchemaDefinition,
+              initialValue: depth.wrapValue([
+                textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+                textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+              ]),
+              children: (
+                <>
+                  <NodePlugin nodes={textBlockDepthsContainers} />
+                  <EventListenerPlugin
+                    on={(event) => {
+                      if (event.type === 'patch') {
+                        patches.push(event.patch)
+                      }
+                    }}
+                  />
+                </>
+              ),
+            })
+
+            editor.send({
+              type: 'patches',
+              patches: [
+                patch(
+                  compactPath(depth, fooBlockKey, fooSpanKey),
+                  remoteSpanKey,
+                ),
+              ],
+              snapshot: undefined,
+            })
+            editor.send({
+              type: 'insert.text',
+              at: barSpanPath,
+              offset: 3,
+              text: 'baz',
+            })
+
+            await vi.waitFor(() => {
+              expect(patches).toEqual([
+                {
+                  origin: 'local',
+                  type: 'diffMatchPatch',
+                  path: [...barSpanPath, 'text'],
+                  value: stringifyPatches(
+                    makePatches(makeDiff('bar', 'barbaz')),
+                  ),
+                },
+              ])
+            })
+            expect(editor.getSnapshot().context.value).toEqual(
+              depth.wrapValue([
+                textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+                textBlock(depth.blockName, barBlockKey, barSpanKey, 'barbaz'),
+              ]),
+            )
+            expect(consoleError.mock.calls).toEqual([])
+            expect(consoleWarn.mock.calls).toEqual([])
+          },
+        )
+
+        test.each(compactPatches)(
+          'Scenario: applying an incoming `$type` patch at the compact path reports no change and applies no operation',
+          async ({patch}) => {
+            const keyGenerator = createTestKeyGenerator()
+            const depth = wrap(keyGenerator)
+            const fooBlockKey = keyGenerator()
+            const fooSpanKey = keyGenerator()
+            const remoteSpanKey = keyGenerator()
+            const initialValue = depth.wrapValue([
+              textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            ])
+            const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+            const {editor} = await createTestEditor({
+              keyGenerator,
+              schemaDefinition: textBlockDepthsSchemaDefinition,
+              initialValue,
+              children: (
+                <>
+                  <NodePlugin nodes={textBlockDepthsContainers} />
+                  <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+                </>
+              ),
+            })
+
+            const editorEngine = editorEngineRef.current!
+            const apply = vi.spyOn(editorEngine, 'apply')
+            onTestFinished(() => {
+              apply.mockRestore()
+            })
+            const applyPatch = createApplyPatch({
+              ...editor.getSnapshot().context,
+              initialValue,
+            })
+
+            expect(
+              applyPatch(
+                editorEngine,
+                patch(
+                  compactPath(depth, fooBlockKey, fooSpanKey),
+                  remoteSpanKey,
+                ),
+              ),
+            ).toEqual(false)
+            expect(apply.mock.calls).toEqual([])
+            expect(editor.getSnapshot().context.value).toEqual(initialValue)
+          },
+        )
+      },
+    )
+  },
+)
+
+const compactPatches: Array<{
+  type: string
+  patch: (spanPath: Path, remoteSpanKey: string) => Patch
+}> = [
+  {
+    type: 'set',
+    patch: (spanPath) => ({
+      type: 'set',
+      path: [...spanPath, 'text'],
+      value: 'baz',
+      origin: 'remote',
+    }),
+  },
+  {
+    type: 'unset',
+    patch: (spanPath) => ({
+      type: 'unset',
+      path: spanPath,
+      origin: 'remote',
+    }),
+  },
+  {
+    type: 'insert',
+    patch: (spanPath, remoteSpanKey) => ({
+      type: 'insert',
+      path: spanPath,
+      position: 'after',
+      items: [{_type: 'span', _key: remoteSpanKey, text: 'baz', marks: []}],
+      origin: 'remote',
+    }),
+  },
+  {
+    type: 'diffMatchPatch',
+    patch: (spanPath) => ({
+      type: 'diffMatchPatch',
+      path: [...spanPath, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('foo', 'foobaz'))),
+      origin: 'remote',
+    }),
+  },
+  {
+    type: 'setIfMissing',
+    patch: (spanPath) => ({
+      type: 'setIfMissing',
+      path: [...spanPath, 'marks'],
+      value: ['strong'],
+      origin: 'remote',
+    }),
+  },
+]
+
+const propertyDataSchemaDefinition = defineSchema({
+  blockObjects: [
+    {name: 'image', fields: [{name: 'data', type: 'object'}]},
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'image'}],
+        },
+      ],
+    },
+  ],
+})
+
+const propertyDataPlacements: Array<{
+  placement: string
+  wrap: (keyGenerator: () => string) => {
+    wrapValue: (image: PortableTextBlock) => Array<PortableTextBlock>
+    prefix: Path
+  }
+}> = [
+  {
+    placement: 'at the root',
+    wrap: () => ({
+      wrapValue: (image) => [image],
+      prefix: [],
+    }),
+  },
+  {
+    placement: 'inside a callout',
+    wrap: (keyGenerator: () => string) => {
+      const calloutKey = keyGenerator()
+
+      return {
+        wrapValue: (image) => [
+          {_type: 'callout', _key: calloutKey, content: [image]},
+        ],
+        prefix: [{_key: calloutKey}, 'content'],
+      }
+    },
+  },
+]
+
+describe.each(propertyDataPlacements)(
+  'event.patches with a path into an array inside an array $placement',
+  ({wrap}) => {
+    test('Scenario: an incoming `set` patch at a path into an array inside an array changes nothing', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const imageKey = keyGenerator()
+      const {wrapValue, prefix} = wrap(keyGenerator)
+      const dataPath = [...prefix, {_key: imageKey}, 'data']
+      const patches: Array<Patch> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: propertyDataSchemaDefinition,
+        initialValue: wrapValue(imageWithMatrix(imageKey, 'foo')),
+        children: (
+          <>
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'callout', arrayField: 'content'}),
+              ]}
+            />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  patches.push(event.patch)
+                }
+              }}
+            />
+          </>
+        ),
+      })
+
+      editor.send({
+        type: 'patches',
+        patches: [
+          {
+            type: 'set',
+            path: [...dataPath, 'matrix', 0, 0, 'text'],
+            value: 'bar',
+            origin: 'remote',
+          },
+          {
+            type: 'set',
+            path: [...dataPath, 'matrix'],
+            value: [[{text: 'baz'}]],
+            origin: 'remote',
+          },
+        ],
+        snapshot: undefined,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(
+          wrapValue(imageWithMatrix(imageKey, 'baz')),
+        )
+      })
+      expect(patches).toEqual([])
+    })
+  },
+)
+
+function imageWithMatrix(imageKey: string, text: string): PortableTextBlock {
+  return {_type: 'image', _key: imageKey, data: {matrix: [[{text}]]}}
+}

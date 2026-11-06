@@ -2,6 +2,7 @@ import type {FieldDefinition} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import type {
   BlockObjectConfig,
   ContainerConfig,
@@ -187,6 +188,10 @@ export function resolveContainerByPath(
   | InlineObjectConfig
   | TextBlockConfig
   | undefined {
+  if (isCompactPath(path)) {
+    return undefined
+  }
+
   const descent = richDescentToParent(input, path)
   const parent = descent?.parent
 

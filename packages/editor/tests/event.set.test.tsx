@@ -1,11 +1,19 @@
 import {compileSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
+import {defineSchema, type Patch} from '../src'
 import type {Path} from '../src/engine/interfaces/path'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  compactSpanPaths,
+  textBlock,
+  textBlockDepths,
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 
 describe('event.set', () => {
   test('Scenario: set on a block property', async () => {
@@ -495,4 +503,194 @@ function block(
     markDefs: [],
     style: 'normal',
   }
+}
+
+describe.each(textBlockDepths)(
+  'event.set with a compact path $depth',
+  ({wrap}) => {
+    test.each(compactSpanPaths)(
+      'Scenario: `set` at a compact span path ($form) changes nothing',
+      async ({path: compactPath}) => {
+        const consoleError = vi.spyOn(console, 'error')
+        const consoleWarn = vi.spyOn(console, 'warn')
+        onTestFinished(() => {
+          consoleError.mockRestore()
+          consoleWarn.mockRestore()
+        })
+        const keyGenerator = createTestKeyGenerator()
+        const depth = wrap(keyGenerator)
+        const fooBlockKey = keyGenerator()
+        const fooSpanKey = keyGenerator()
+        const barBlockKey = keyGenerator()
+        const barSpanKey = keyGenerator()
+        const barSpanPath = [
+          ...depth.keyedPrefix,
+          {_key: barBlockKey},
+          'children',
+          {_key: barSpanKey},
+        ]
+        const patches: Array<Patch> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: textBlockDepthsSchemaDefinition,
+          initialValue: depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'bar'),
+          ]),
+          children: (
+            <>
+              <NodePlugin nodes={textBlockDepthsContainers} />
+              <EventListenerPlugin
+                on={(event) => {
+                  if (event.type === 'patch') {
+                    patches.push(event.patch)
+                  }
+                }}
+              />
+            </>
+          ),
+        })
+
+        editor.send({
+          type: 'set',
+          at: [...compactPath(depth, fooBlockKey, fooSpanKey), 'text'],
+          value: 'baz',
+        })
+        editor.send({
+          type: 'set',
+          at: [...barSpanPath, 'text'],
+          value: 'baz',
+        })
+
+        await vi.waitFor(() => {
+          expect(patches).toEqual([
+            {
+              origin: 'local',
+              type: 'set',
+              path: [...barSpanPath, 'text'],
+              value: 'baz',
+            },
+          ])
+        })
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrapValue([
+            textBlock(depth.blockName, fooBlockKey, fooSpanKey, 'foo'),
+            textBlock(depth.blockName, barBlockKey, barSpanKey, 'baz'),
+          ]),
+        )
+        expect(consoleError.mock.calls).toEqual([])
+        expect(consoleWarn.mock.calls).toEqual([])
+      },
+    )
+  },
+)
+
+const propertyDataSchemaDefinition = defineSchema({
+  blockObjects: [
+    {name: 'image', fields: [{name: 'data', type: 'object'}]},
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'image'}],
+        },
+      ],
+    },
+  ],
+})
+
+const propertyDataPlacements: Array<{
+  placement: string
+  wrap: (keyGenerator: () => string) => {
+    wrapValue: (image: PortableTextBlock) => Array<PortableTextBlock>
+    prefix: Path
+  }
+}> = [
+  {
+    placement: 'at the root',
+    wrap: () => ({
+      wrapValue: (image) => [image],
+      prefix: [],
+    }),
+  },
+  {
+    placement: 'inside a callout',
+    wrap: (keyGenerator: () => string) => {
+      const calloutKey = keyGenerator()
+
+      return {
+        wrapValue: (image) => [
+          {_type: 'callout', _key: calloutKey, content: [image]},
+        ],
+        prefix: [{_key: calloutKey}, 'content'],
+      }
+    },
+  },
+]
+
+describe.each(propertyDataPlacements)(
+  'event.set with a path into an array inside an array $placement',
+  ({wrap}) => {
+    test('Scenario: `set` at a path into an array inside an array changes nothing', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const imageKey = keyGenerator()
+      const {wrapValue, prefix} = wrap(keyGenerator)
+      const dataPath = [...prefix, {_key: imageKey}, 'data']
+      const patches: Array<Patch> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: propertyDataSchemaDefinition,
+        initialValue: wrapValue(imageWithMatrix(imageKey, 'foo')),
+        children: (
+          <>
+            <NodePlugin
+              nodes={[
+                defineContainer({type: 'callout', arrayField: 'content'}),
+              ]}
+            />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  patches.push(event.patch)
+                }
+              }}
+            />
+          </>
+        ),
+      })
+
+      editor.send({
+        type: 'set',
+        at: [...dataPath, 'matrix', 0, 0, 'text'],
+        value: 'bar',
+      })
+      editor.send({
+        type: 'set',
+        at: dataPath,
+        value: {matrix: [[{text: 'baz'}]]},
+      })
+
+      await vi.waitFor(() => {
+        expect(patches).toEqual([
+          {
+            origin: 'local',
+            type: 'set',
+            path: dataPath,
+            value: {matrix: [[{text: 'baz'}]]},
+          },
+        ])
+      })
+      expect(editor.getSnapshot().context.value).toEqual(
+        wrapValue(imageWithMatrix(imageKey, 'baz')),
+      )
+    })
+  },
+)
+
+function imageWithMatrix(imageKey: string, text: string): PortableTextBlock {
+  return {_type: 'image', _key: imageKey, data: {matrix: [[{text}]]}}
 }

@@ -1,4 +1,5 @@
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {selectionHasCompactPath} from '../engine/path/is-compact-path'
 import {
   applyDeselect,
   applySelect,
@@ -10,6 +11,10 @@ import type {OperationImplementation} from './operation.types'
 export const selectOperationImplementation: OperationImplementation<
   'select'
 > = ({operation}) => {
+  if (selectionHasCompactPath(operation.at)) {
+    return
+  }
+
   let newSelection = resolveSelection(operation.editor, operation.at)
 
   if (newSelection) {

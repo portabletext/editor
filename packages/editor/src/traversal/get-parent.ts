@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {parentPath} from '../engine/path/parent-path'
 import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -39,7 +40,7 @@ export function getParent(
     match?: (node: PortableTextBlock, path: Path) => boolean
   },
 ): {node: PortableTextBlock; path: Path} | undefined {
-  if (path.length === 0) {
+  if (path.length === 0 || isCompactPath(path)) {
     return undefined
   }
 

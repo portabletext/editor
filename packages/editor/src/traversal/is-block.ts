@@ -1,6 +1,7 @@
 import {isSpanNode, isTextBlockNode} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {getNode} from './get-node'
 import {getParent} from './get-parent'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -16,6 +17,10 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * @public
  */
 export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
+  if (isCompactPath(path)) {
+    return false
+  }
+
   const parent = getParent(snapshot, path)
 
   if (!parent) {

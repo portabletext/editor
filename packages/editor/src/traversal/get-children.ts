@@ -2,6 +2,7 @@ import {isTextBlock, isTypedObject} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {nodeSegment} from '../paths/node-segment'
 import {serializePath} from '../paths/serialize-path'
 import type {
@@ -21,6 +22,10 @@ export function getChildren(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: Node; path: Path}> {
+  if (isCompactPath(path)) {
+    return []
+  }
+
   let currentChildren: Array<Node> = snapshot.context.value
   let currentFieldName = 'value'
   let currentPath: Path = []

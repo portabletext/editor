@@ -1,5 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {parentPath} from '../engine/path/parent-path'
 import {getChildren} from './get-children'
 import {resolveChildEntryIndex} from './resolve-child-entry-index'
@@ -45,7 +46,7 @@ export function getSibling(
 ): {node: Node; path: Path} | undefined {
   const {direction, match} = options
 
-  if (path.length === 0) {
+  if (path.length === 0 || isCompactPath(path)) {
     return undefined
   }
 

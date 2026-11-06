@@ -18,6 +18,7 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
+import {isCompactPath} from '../engine/path/is-compact-path'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDeselect} from './apply-selection'
@@ -34,6 +35,10 @@ export function createApplyPatch(
   },
 ): (editor: PortableTextEditorEngine, patch: Patch) => boolean {
   return (editor: PortableTextEditorEngine, patch: Patch): boolean => {
+    if (isCompactPath(patch.path)) {
+      return false
+    }
+
     let changed = false
 
     try {
