@@ -2,7 +2,9 @@
 # Runs inside android-emulator-runner's script block, emulator already booted.
 # Usage: android/run-on-device.sh tests/<file>.test.ts, with IME_LANG the keyboard to prepare.
 # Prepares the device with `thumbjar prepare`, then runs the one device test file it is given. A prep step
-# that breaks exits before any test runs, with a PREP FAILED line naming the step.
+# that breaks exits before any test runs, with a PREP FAILED line naming the step, which goes to timing.txt
+# for the job summary. A prep that exits 3, Gboard's Japanese dictionary never loaded on this boot, also
+# writes a `PREP DICTIONARY_NOT_LOADED` line there, which the workflow retries once on a reachable device.
 # Every stage runs under `timeout -k`, with the caps `scripts/budget.mjs` sums into the workflow's step
 # timeout: reading the test stage's cap for the file, prep, the tests under that cap, the device check
 # after a failed prep or test stage and the diagnostics after the tests.
@@ -33,11 +35,15 @@ server=$!
 trap 'kill $server 2>/dev/null' EXIT
 
 earlier_phases=$(cat "$out/phases.log" 2>/dev/null | wc -l)
-if ! pnpm exec thumbjar prepare --keyboard "$lang" --page-url http://localhost:8765/editor.html --out-dir "$out" --booted "$booted"; then
-  # The prep's own reason, for the job summary. Only the device check below decides a retry. A retry's
-  # `phases.log` still holds the lost boot's lines, so only the lines this prep appended count.
+pnpm exec thumbjar prepare --keyboard "$lang" --page-url http://localhost:8765/editor.html --out-dir "$out" --booted "$booted"
+prep_status=$?
+if [ "$prep_status" -ne 0 ]; then
+  # The prep's own reason, for the job summary. A retry's `phases.log` still holds the earlier boot's
+  # lines, so only the lines this prep appended count. The retry keys on the prep's status, never on the
+  # reason, and only together with the device check below.
   reason=$(tail -n +$((earlier_phases + 1)) "$out/phases.log" 2>/dev/null | grep -o 'PREP FAILED: .*' | tail -n 1)
   [ -n "$reason" ] && echo "$reason" >> "$out/timing.txt"
+  [ "$prep_status" -eq 3 ] && echo "PREP DICTIONARY_NOT_LOADED" >> "$out/timing.txt"
   device_check
   exit 1
 fi

@@ -1,21 +1,36 @@
 import {spawnSync} from 'node:child_process'
-import {appendFileSync, readFileSync, realpathSync} from 'node:fs'
+import {
+  appendFileSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
+// `install-paths.txt` records the paths present before the first install, which cleanup never removes,
+// apart from the packages restored from the cache that `cache-restored.txt` lists.
+//
 // `timing.txt` holds one block of lines per emulator run, the retry's after a `RETRY` line. Each block
 // opens with `EMULATOR_START`, written just before its run step. A run prints `BOOTED` once its emulator
-// is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes. Once its last
-// stage has ended, it adds one `CHECKED <verdict>` line in a single write: `skipped`
-// when no check was needed, or the verdict of the device check after a failed stage, `device` or `lost`,
-// which the check writes itself before it does anything else. A booted run without that line ended before
-// a check reached a verdict, by its run step's timeout, the check's own, or an `adb get-state` that proved
-// nothing, and nothing proves what happened to its device: the action shuts the emulator down before any
-// later step could look.
+// is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes, and, when
+// Gboard's Japanese dictionary never loaded, a `PREP DICTIONARY_NOT_LOADED` line, which `thumbjar prepare`'s
+// exit status decides, never the reason. Once its last stage has ended, it adds one `CHECKED <verdict>`
+// line in a single write: `skipped` when no check was needed, or the verdict of the device check after a
+// failed stage, `device` or `lost`, which the check writes itself before it does anything else. A booted
+// run without that line ended before a check reached a verdict, by its run step's timeout, the check's own,
+// or an `adb get-state` that proved nothing, and nothing proves what happened to its device: the action
+// shuts the emulator down before any later step could look.
 
 /** The `adb get-state` read after a failed stage. Its process gets the rest of the script's cap to stop. */
 const DEVICE_STATE_MILLISECONDS = 5_000
 
-/** @typedef {'never booted' | 'unchecked' | 'lost' | 'reachable'} RunState */
+/** @typedef {'never booted' | 'unchecked' | 'lost' | 'dictionary not loaded' | 'reachable'} RunState */
 
 /**
  * What one `adb get-state` proves about the device, or `undefined` when it proves nothing. Only `device` on
@@ -51,8 +66,9 @@ export function deviceVerdict(adb) {
 }
 
 /**
- * Whether to run once more after a failed first run: only when its emulator never booted or adb lost the
- * device after boot, and never after a retry.
+ * Whether to run once more after a failed first run: only when its emulator never booted, adb lost the
+ * device after boot, or Gboard's Japanese dictionary never loaded on a device the check found reachable,
+ * and never after a retry.
  *
  * @param {string} timing
  * @returns {{retry: false} | {retry: true, line: string}}
@@ -76,12 +92,19 @@ export function retryAfter(timing) {
       line: 'DEVICE_LOST_RETRY: adb lost the device after boot, retrying once on a fresh emulator',
     }
   }
+  if (state === 'dictionary not loaded') {
+    return {
+      retry: true,
+      line: "DICTIONARY_RETRY: Gboard's Japanese dictionary never loaded, retrying once on a fresh emulator",
+    }
+  }
   return {retry: false}
 }
 
 /**
  * The job's result from the last run's step `outcome`. A last run whose emulator never booted or lost its
- * device fails as infrastructure, apart from any test result.
+ * device fails as infrastructure, apart from any test result, and so does a retry whose dictionary never
+ * loaded. A first run whose dictionary never loaded and that could not retry quotes the prep's reason.
  *
  * @param {string} timing
  * @param {string} outcome
@@ -106,7 +129,12 @@ export function runResult(timing, outcome) {
       line: `run outcome: the run ended after boot without a completed device check${retry}, not a test result`,
     }
   }
-  if (outcome !== 'success' && (last === 'lost' || last === 'never booted')) {
+  if (
+    outcome !== 'success' &&
+    (last === 'lost' ||
+      last === 'never booted' ||
+      (last === 'dictionary not loaded' && first !== undefined))
+  ) {
     return {
       passed: false,
       line: `run outcome: ${infrastructureFailure(last, first)}, infrastructure failure, not a test result`,
@@ -136,10 +164,282 @@ export function bootSeconds(timing) {
   })
 }
 
-const [command, file, outcome] = process.argv.slice(2)
+/**
+ * Paths the install retry clears: those created by the first install attempt, and the packages restored
+ * from the cache, which a failed attempt may have left broken or half replaced.
+ *
+ * @param {string[]} before SDK paths present before the first install attempt
+ * @param {string[]} after SDK paths present after the failed attempt
+ * @param {string[]} [restored] Packages restored from the cache that its check kept
+ * @returns {string[]}
+ */
+export function installCleanupPaths(before, after, restored = []) {
+  return after.filter(
+    (path) => !before.includes(path) || restored.includes(path),
+  )
+}
+
+/**
+ * The emulator version and the system image revision a fresh `sdkmanager --install` picks, read from the
+ * `Available Packages` table of `sdkmanager --list`, or `undefined` when it lists either not. An installed
+ * package is listed above that table with its own version, which is not what a fresh install picks.
+ *
+ * @param {string} list The output of `sdkmanager --list`
+ * @param {string} api The Android API level of the system image
+ * @returns {{emulator: string, image: string} | undefined}
+ */
+export function cacheRevisions(list, api) {
+  const available = list.split(/^Available Packages:$/m)[1] ?? ''
+  const version = (/** @type {string} */ name) =>
+    available
+      .split('\n')
+      .map((line) => line.split('|').map((cell) => cell.trim()))
+      .find((cells) => cells[0] === name)?.[1]
+  const emulator = version('emulator')
+  const image = version(
+    `system-images;android-${api};google_apis_playstore;x86_64`,
+  )
+  return emulator === undefined ||
+    emulator === '' ||
+    image === undefined ||
+    image === ''
+    ? undefined
+    : {emulator, image}
+}
+
+/**
+ * Why a restored package does not match its manifest entry, or `undefined` when it has exactly its files
+ * with their sizes.
+ *
+ * @param {Map<string, number> | undefined} manifest The package's files and sizes when it was saved
+ * @param {Map<string, number>} files The package's files and sizes after the restore
+ * @returns {string | undefined}
+ */
+export function packageMismatch(manifest, files) {
+  if (manifest === undefined) {
+    return 'the manifest has no entry for it'
+  }
+  const differences = [
+    ...[...manifest].map(([path, size]) =>
+      !files.has(path)
+        ? `\`${path}\` is missing`
+        : files.get(path) === size
+          ? undefined
+          : `\`${path}\` has ${files.get(path)} bytes, the manifest ${size}`,
+    ),
+    ...[...files.keys()]
+      .filter((path) => !manifest.has(path))
+      .map((path) => `\`${path}\` is not in the manifest`),
+  ].filter((difference) => difference !== undefined)
+  if (differences.length === 0) {
+    return undefined
+  }
+  return differences.length === 1
+    ? differences[0]
+    : `${differences[0]}, and ${differences.length - 1} more differences`
+}
+
+/**
+ * The job's result from the job status, two install steps and last emulator run. The run line is
+ * `runResult`'s, and an install retry gets its own line before it.
+ *
+ * @param {string} timing The emulator runs' `timing.txt` contents, empty when no run started
+ * @param {string} outcome The last emulator run step's outcome, `skipped` when no run started
+ * @param {string | undefined} first The first install step's outcome
+ * @param {string | undefined} second The install retry step's outcome
+ * @param {string | undefined} [jobStatus] The job's status when Result starts
+ * @returns {{passed: boolean, line: string, installLine?: string}}
+ */
+export function installResult(
+  timing,
+  outcome,
+  first,
+  second,
+  jobStatus = undefined,
+) {
+  if (jobStatus === 'cancelled' && !/^EMULATOR_START /m.test(timing)) {
+    return {passed: false, line: 'run outcome: cancelled'}
+  }
+  if (first === 'failure' && second === 'failure') {
+    return {
+      passed: false,
+      line: 'run outcome: the emulator install failed twice, infrastructure failure, not a test result',
+    }
+  }
+  if (first !== 'success' && second !== 'success') {
+    if (first === 'cancelled' || second === 'cancelled') {
+      return {passed: false, line: 'run outcome: cancelled'}
+    }
+    if (first === 'skipped' && second === 'skipped') {
+      return {
+        passed: false,
+        line: 'run outcome: no emulator run, a step before the emulator install failed',
+      }
+    }
+  }
+  const result = runResult(timing, outcome)
+  return first === 'failure' && second === 'success'
+    ? {
+        ...result,
+        installLine: 'install outcome: retried once after a failed install',
+      }
+    : result
+}
+
+const [command, file, outcome, manifestFile, key] = process.argv.slice(2)
 
 if (!isMain()) {
   // Imported by its unit test.
+} else if (
+  command === 'install-start' &&
+  file !== undefined &&
+  outcome !== undefined
+) {
+  mkdirSync('android/out', {recursive: true})
+  writeFileSync(
+    'android/out/install-paths.txt',
+    installPaths(file, outcome).join('\n'),
+  )
+} else if (
+  command === 'install-retry' &&
+  file !== undefined &&
+  outcome !== undefined
+) {
+  if (existsSync('android/out/install-paths.txt')) {
+    const before = readFileSync('android/out/install-paths.txt', 'utf8').split(
+      '\n',
+    )
+    const restored = existsSync('android/out/cache-restored.txt')
+      ? readFileSync('android/out/cache-restored.txt', 'utf8').split('\n')
+      : []
+    for (const path of installCleanupPaths(
+      before,
+      installPaths(file, outcome),
+      restored,
+    )) {
+      rmSync(join(file, path), {recursive: true, force: true})
+    }
+    report(
+      'INSTALL_RETRY: the emulator install failed, retrying once after clearing its downloads and incomplete packages',
+    )
+  } else {
+    report(
+      'INSTALL_RETRY: no install snapshot existed, retrying once without clearing paths',
+    )
+  }
+} else if (
+  command === 'cache-revisions' &&
+  file !== undefined &&
+  outcome !== undefined &&
+  manifestFile !== undefined
+) {
+  const revisions = cacheRevisions(readFileSync(0, 'utf8'), outcome)
+  const present = cachedPackages(outcome).filter((path) =>
+    existsSync(join(file, path)),
+  )
+  if (revisions === undefined) {
+    log(
+      `CACHE_REVISIONS: \`sdkmanager --list\` did not list ${cachedPackageNames(
+        outcome,
+      )
+        .map((name) => `\`${name}\``)
+        .join(' and ')}, skipping the cache`,
+    )
+  } else if (present.length > 0) {
+    // The runner image now ships a package the cache holds, and a restore would overwrite it.
+    log(
+      `CACHE_REVISIONS: the SDK already has ${present
+        .map((path) => `\`${path}\``)
+        .join(' and ')}, skipping the cache`,
+    )
+  } else {
+    appendFileSync(
+      process.env.GITHUB_OUTPUT ?? '/dev/null',
+      [
+        `emulator=${revisions.emulator}`,
+        `image=${revisions.image}`,
+        `key=android-sdk-${process.env.RUNNER_OS}-api${outcome}-google_apis_playstore-x86_64-image${revisions.image}-emulator${revisions.emulator}`,
+        'paths<<PATHS',
+        ...cachedPackages(outcome).map((path) => join(file, path)),
+        manifestFile,
+        'PATHS',
+        '',
+      ].join('\n'),
+    )
+  }
+} else if (
+  command === 'cache-manifest' &&
+  file !== undefined &&
+  outcome !== undefined &&
+  manifestFile !== undefined &&
+  key !== undefined
+) {
+  const missing = cachedPackages(outcome).find(
+    (path) => !existsSync(join(file, path)),
+  )
+  const lines = (missing === undefined ? cachedPackages(outcome) : []).flatMap(
+    (path) =>
+      [...packageFiles(join(file, path))].map(([entry, size]) => ({
+        path: `${path}/${entry}`,
+        line: `${path}\t${entry}\t${size}\n`,
+      })),
+  )
+  // A tab or a line break in a name would split its manifest line, and the next check would delete both
+  // packages on every hit.
+  const unsupported = lines.find(({path}) => /[\t\n\r]/.test(path))
+  if (missing !== undefined) {
+    console.error(
+      `CACHE_MANIFEST: \`${missing}\` is not installed, not saving the cache`,
+    )
+    process.exitCode = 1
+  } else if (unsupported !== undefined) {
+    console.error(
+      `CACHE_MANIFEST: \`${unsupported.path.replace(/[\t\n\r]/g, (character) => ({'\t': '\\t', '\n': '\\n', '\r': '\\r'})[character] ?? character)}\` has a tab, a newline or a carriage return in its name, not saving the cache`,
+    )
+    process.exitCode = 1
+  } else {
+    writeFileSync(
+      manifestFile,
+      `${key}\n${lines.map(({line}) => line).join('')}`,
+    )
+  }
+} else if (
+  command === 'cache-check' &&
+  file !== undefined &&
+  outcome !== undefined &&
+  manifestFile !== undefined &&
+  key !== undefined
+) {
+  const restored = cachedPackages(outcome).filter((path) =>
+    existsSync(join(file, path)),
+  )
+  if (restored.length > 0) {
+    const manifest = readManifest(manifestFile)
+    const kept = []
+    for (const path of restored) {
+      const files = packageFiles(join(file, path))
+      // A manifest saved for another key describes other packages, whatever their files match.
+      const mismatch =
+        manifest !== undefined && manifest.key !== key
+          ? "the manifest does not name this cache's key"
+          : packageMismatch(manifest?.packages.get(path), files)
+      if (mismatch === undefined) {
+        kept.push(path)
+        log(
+          `CACHE_CHECK: kept \`${path}\`, its ${files.size} files match the manifest`,
+        )
+      } else {
+        rmSync(join(file, path), {recursive: true, force: true})
+        log(
+          `CACHE_CHECK: deleted \`${path}\`, ${mismatch}, so the install downloads it`,
+        )
+      }
+    }
+    if (kept.length > 0) {
+      mkdirSync('android/out', {recursive: true})
+      writeFileSync('android/out/cache-restored.txt', kept.join('\n'))
+    }
+  }
 } else if (command === 'device-state' && file !== undefined) {
   const adb = spawnSync('adb', ['get-state'], {
     encoding: 'utf8',
@@ -175,14 +475,25 @@ if (!isMain()) {
   }
 } else if (command === 'boot-seconds' && file !== undefined) {
   process.stdout.write(
-    `${bootSeconds(readFileSync(file, 'utf8')).join('\n')}\n`,
+    existsSync(file)
+      ? `${bootSeconds(readFileSync(file, 'utf8')).join('\n')}\n`
+      : '',
   )
 } else if (
   command === 'result' &&
   file !== undefined &&
   outcome !== undefined
 ) {
-  const result = runResult(readFileSync(file, 'utf8'), outcome)
+  const result = installResult(
+    existsSync(file) ? readFileSync(file, 'utf8') : '',
+    outcome,
+    process.env.INSTALL1_OUTCOME,
+    process.env.INSTALL2_OUTCOME,
+    process.env.JOB_STATUS,
+  )
+  if (result.installLine !== undefined) {
+    report(result.installLine)
+  }
   report(result.line)
   process.exitCode = result.passed ? 0 : 1
 } else {
@@ -190,6 +501,119 @@ if (!isMain()) {
     'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
   )
   process.exitCode = 2
+}
+
+/**
+ * The install's possible download and package paths, relative to the SDK root. Comparing these with the
+ * first attempt's snapshot limits cleanup to paths absent before that attempt.
+ *
+ * @param {string} sdk The Android SDK root
+ * @param {string} api The Android API level of the requested platform and system image
+ * @returns {string[]}
+ */
+function installPaths(sdk, api) {
+  const packages = [
+    'platform-tools',
+    'emulator',
+    `platforms/android-${api}`,
+    `system-images/android-${api}/google_apis_playstore/x86_64`,
+  ]
+  const temporary = '.temp'
+  const downloads = existsSync(join(sdk, temporary))
+    ? readdirSync(join(sdk, temporary))
+        .filter((name) => /^PackageOperation\d+$/.test(name))
+        .map((name) => `${temporary}/${name}`)
+    : []
+  return [
+    ...downloads,
+    ...packages.filter((path) => existsSync(join(sdk, path))),
+  ]
+}
+
+/**
+ * The packages the cache holds, relative to the SDK root. The runner image ships platform-tools and the
+ * platform, and the cache would only pin older copies of them.
+ *
+ * @param {string} api The Android API level of the system image
+ * @returns {string[]}
+ */
+function cachedPackages(api) {
+  return [
+    'emulator',
+    `system-images/android-${api}/google_apis_playstore/x86_64`,
+  ]
+}
+
+/**
+ * The `sdkmanager` names of `cachedPackages`.
+ *
+ * @param {string} api The Android API level of the system image
+ * @returns {string[]}
+ */
+function cachedPackageNames(api) {
+  return [
+    'emulator',
+    `system-images;android-${api};google_apis_playstore;x86_64`,
+  ]
+}
+
+/**
+ * Every entry under a package with its size, relative to the package. A symlink counts as a file of its
+ * own size, so a restore that turns it into its target or drops it is a mismatch.
+ *
+ * @param {string} directory
+ * @returns {Map<string, number>}
+ */
+function packageFiles(directory) {
+  /** @type {Map<string, number>} */
+  const files = new Map()
+  for (const entry of readdirSync(directory, {
+    recursive: true,
+    withFileTypes: true,
+  })) {
+    if (!entry.isDirectory()) {
+      const path = join(entry.parentPath, entry.name)
+      files.set(path.slice(directory.length + 1), lstatSync(path).size)
+    }
+  }
+  return files
+}
+
+/**
+ * The manifest saved with the cache, the cache's key on its first line and then one
+ * `<package>\t<path>\t<size>` line per file, or `undefined` when it is missing or has a line of another
+ * shape.
+ *
+ * @param {string} manifestFile
+ * @returns {{key: string, packages: Map<string, Map<string, number>>} | undefined}
+ */
+function readManifest(manifestFile) {
+  if (!existsSync(manifestFile)) {
+    return undefined
+  }
+  const [key = '', ...lines] = readFileSync(manifestFile, 'utf8').split('\n')
+  /** @type {Map<string, Map<string, number>>} */
+  const packages = new Map()
+  for (const line of lines) {
+    if (line === '') {
+      continue
+    }
+    const [path, entry, size, ...rest] = line.split('\t')
+    if (
+      !path ||
+      !entry ||
+      size === undefined ||
+      rest.length > 0 ||
+      !/^\d+$/.test(size)
+    ) {
+      return undefined
+    }
+    packages.set(
+      path,
+      new Map([...(packages.get(path) ?? []), [entry, Number(size)]]),
+    )
+  }
+  return {key, packages}
 }
 
 /**
@@ -212,7 +636,12 @@ function runState(run) {
   if (verdict === undefined) {
     return 'unchecked'
   }
-  return verdict === 'lost' ? 'lost' : 'reachable'
+  if (verdict === 'lost') {
+    return 'lost'
+  }
+  return verdict === 'device' && /^PREP DICTIONARY_NOT_LOADED$/m.test(run)
+    ? 'dictionary not loaded'
+    : 'reachable'
 }
 
 /**
@@ -220,24 +649,41 @@ function runState(run) {
  * @returns {string}
  */
 function retryReason(state) {
-  return state === 'never booted'
-    ? 'the emulator never booted'
+  if (state === 'never booted') {
+    return 'the emulator never booted'
+  }
+  return state === 'dictionary not loaded'
+    ? "Gboard's Japanese dictionary never loaded"
     : 'adb lost the device'
 }
 
 /**
- * @param {'lost' | 'never booted'} last
+ * @param {'lost' | 'never booted' | 'dictionary not loaded'} last
  * @param {RunState | undefined} first
  * @returns {string}
  */
 function infrastructureFailure(last, first) {
-  const failure = last === 'lost' ? 'device lost' : 'the emulator never booted'
+  const failure =
+    last === 'lost'
+      ? 'device lost'
+      : last === 'never booted'
+        ? 'the emulator never booted'
+        : "Gboard's Japanese dictionary never loaded"
   if (first === undefined) {
     return failure
   }
   return first === last
     ? `${failure} twice`
     : `${failure} on the retry after ${retryReason(first)}`
+}
+
+/**
+ * Writes a cache line to the log only, so the job summary reads as it does without the cache.
+ *
+ * @param {string} line
+ */
+function log(line) {
+  process.stdout.write(`${line}\n`)
 }
 
 /** @param {string} line */

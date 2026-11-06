@@ -181,6 +181,35 @@ describe('run-on-device.sh after a prep that named its failure', () => {
         lang: 'ja',
         file: 'tests/ja.test.ts',
         prep: 1,
+        prepFailure: 'japanese dictionary check, see ja-dictionary.log',
+        tests: 0,
+        getState: 'device',
+      }),
+    ).toEqual({
+      status: 1,
+      calls: [
+        'pnpm exec thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
+        'adb get-state',
+      ],
+      phases: [
+        'http server',
+        'PREP FAILED: japanese dictionary check, see ja-dictionary.log',
+        'device check: device',
+      ],
+      timing: [
+        'BOOTED',
+        'PREP FAILED: japanese dictionary check, see ja-dictionary.log',
+        'CHECKED device',
+      ],
+    })
+  })
+
+  test("marks a prep that exited 3, Gboard's Japanese dictionary never loaded, after its reason and before the device check, and runs no tests", () => {
+    expect(
+      runOnDevice({
+        lang: 'ja',
+        file: 'tests/ja.test.ts',
+        prep: 3,
         prepFailure: NEVER_LOADED,
         tests: 0,
         getState: 'device',
@@ -196,7 +225,12 @@ describe('run-on-device.sh after a prep that named its failure', () => {
         `PREP FAILED: ${NEVER_LOADED}`,
         'device check: device',
       ],
-      timing: ['BOOTED', `PREP FAILED: ${NEVER_LOADED}`, 'CHECKED device'],
+      timing: [
+        'BOOTED',
+        `PREP FAILED: ${NEVER_LOADED}`,
+        'PREP DICTIONARY_NOT_LOADED',
+        'CHECKED device',
+      ],
     })
   })
 })

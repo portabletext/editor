@@ -1,3 +1,4 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {
   mapPointThroughStep,
@@ -379,6 +380,11 @@ describe(mapPointThroughStep.name, () => {
           {_type: 'span', _key: 'n2', text: 'bar', marks: ['strong']},
           {_type: 'span', _key: 'n3', text: 'baz', marks: []},
         ],
+        newSpanTexts: new Map([
+          ['n1', 'foo'],
+          ['n2', 'bar'],
+          ['n3', 'baz'],
+        ]),
       }
       expect(mapPointThroughStep(step, point)).toEqual({
         path: [{_key: 'b1'}, 'children', {_key: 'n2'}],
@@ -401,6 +407,10 @@ describe(mapPointThroughStep.name, () => {
           {_type: 'span', _key: 'n1', text: 'foo', marks: []},
           {_type: 'span', _key: 'n2', text: 'barbaz', marks: []},
         ],
+        newSpanTexts: new Map([
+          ['n1', 'foo'],
+          ['n2', 'barbaz'],
+        ]),
       }
       expect(mapPointThroughStep(step, point)).toEqual({
         path: [{_key: 'b1'}, 'children', {_key: 'n1'}],
@@ -426,6 +436,10 @@ describe(mapPointThroughStep.name, () => {
           {_type: 'stock-ticker', _key: 'n2'},
           {_type: 'span', _key: 'n3', text: 'bar', marks: []},
         ],
+        newSpanTexts: new Map([
+          ['n1', 'foo'],
+          ['n3', 'bar'],
+        ]),
       }
       expect(mapPointThroughStep(step, point)).toEqual({
         path: [{_key: 'b1'}, 'children', {_key: 'n3'}],
@@ -449,6 +463,49 @@ describe(mapPointThroughStep.name, () => {
           {_type: 'span', _key: 'n1', text: 'bar', marks: []},
           {_type: 'span', _key: 's1', text: 'foo', marks: []},
         ],
+        newSpanTexts: new Map([
+          ['n1', 'bar'],
+          ['s1', 'foo'],
+        ]),
+      }
+      expect(mapPointThroughStep(step, point)).toBe(point)
+    })
+
+    test('a surviving span that shrinks clamps the offset to its new length', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const point = {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 6,
+      }
+      const step: Step = {
+        type: 'replace.children',
+        path: [{_key: blockKey}, 'children'],
+        oldChildren: [],
+        newChildren: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        newSpanTexts: new Map([[spanKey, 'foo']]),
+      }
+      expect(mapPointThroughStep(step, point)).toEqual({
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+      })
+    })
+
+    test('a surviving child that is not a span is left untouched', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const containerKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const point = {
+        path: [{_key: containerKey}, 'children', {_key: blockKey}],
+        offset: 3,
+      }
+      const step: Step = {
+        type: 'replace.children',
+        path: [{_key: containerKey}, 'children'],
+        oldChildren: [],
+        newChildren: [{_type: 'block', _key: blockKey, text: '', children: []}],
+        newSpanTexts: new Map(),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })
@@ -465,6 +522,7 @@ describe(mapPointThroughStep.name, () => {
           {_type: 'span', _key: 's1', text: 'foobarbaz', marks: []},
         ],
         newChildren: [{_type: 'span', _key: 'n1', text: 'hello', marks: []}],
+        newSpanTexts: new Map([['n1', 'hello']]),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })
@@ -483,6 +541,7 @@ describe(mapPointThroughStep.name, () => {
         newChildren: [
           {_type: 'span', _key: 'n1', text: 'foobarbaz', marks: []},
         ],
+        newSpanTexts: new Map([['n1', 'foobarbaz']]),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })
@@ -509,6 +568,7 @@ describe(mapPointThroughStep.name, () => {
             children: [{_type: 'span', _key: 'n1', text: 'foo', marks: []}],
           },
         ],
+        newSpanTexts: new Map(),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })
@@ -541,6 +601,7 @@ describe(mapPointThroughStep.name, () => {
             children: [{_type: 'span', _key: 'n1', text: 'foo', marks: []}],
           },
         ],
+        newSpanTexts: new Map(),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })
@@ -581,6 +642,11 @@ describe(mapPointThroughStep.name, () => {
           {_type: 'span', _key: 'n2', text: 'bar', marks: ['strong']},
           {_type: 'span', _key: 'n3', text: 'baz', marks: []},
         ],
+        newSpanTexts: new Map([
+          ['n1', 'foo'],
+          ['n2', 'bar'],
+          ['n3', 'baz'],
+        ]),
       }
       expect(mapPointThroughStep(step, point)).toEqual({
         path: [...childrenPath, {_key: 'n2'}],
@@ -602,6 +668,7 @@ describe(mapPointThroughStep.name, () => {
         newChildren: [
           {_type: 'span', _key: 'n1', text: 'foobarbaz', marks: []},
         ],
+        newSpanTexts: new Map([['n1', 'foobarbaz']]),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })
@@ -834,6 +901,7 @@ describe(mapPointThroughStep.name, () => {
             children: [{_type: 'span', _key: 'n1', text: 'foo', marks: []}],
           },
         ],
+        newSpanTexts: new Map(),
       }
       expect(mapPointThroughStep(step, point)).toBe(point)
     })

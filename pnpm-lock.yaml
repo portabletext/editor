@@ -1702,9 +1702,6 @@ importers:
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
-      '@sanity/schema':
-        specifier: 'catalog:'
-        version: 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
       '@sanity/types':
         specifier: 'catalog:'
         version: 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
@@ -1712,6 +1709,9 @@ importers:
       '@sanity/pkg-utils':
         specifier: catalog:tooling
         version: 12.3.0(@babel/runtime@7.29.7)(@tsdown/css@0.22.14)(@types/node@24.12.2)(@volar/typescript@2.4.28)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(oxc-transform-react@0.145.0)(typescript@7.0.2)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+      '@sanity/schema':
+        specifier: 'catalog:'
+        version: 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
       '@sanity/tsconfig':
         specifier: catalog:tooling
         version: 2.2.1

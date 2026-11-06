@@ -44,7 +44,9 @@ export function applyPatchToObject(
   const [head, ...tail] = patch.path
 
   if (typeof head !== 'string') {
-    throw new Error(`Expected field name to be a string, instead got: ${head}`)
+    // Sanity leaves the document unchanged when a path names an array item
+    // where an object field name belongs, as in `[0, 0]`.
+    return nextValue
   }
 
   if (tail.length === 0 && patch.type === 'unset') {

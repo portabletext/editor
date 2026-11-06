@@ -55,11 +55,18 @@ export type RekeyStep = {
   newKey: string
 }
 
+/**
+ * `oldChildren` is empty when the producer cannot see the replaced array
+ * (a remote `set` carries no inverse). `newSpanTexts` maps the key of
+ * each new child the schema calls a span to its text: the mapper is
+ * schema-free, so the producer decides which children are spans.
+ */
 export type ReplaceChildrenStep = {
   type: 'replace.children'
   path: Path
   oldChildren: Array<unknown>
   newChildren: Array<unknown>
+  newSpanTexts: ReadonlyMap<string, string>
 }
 
 export type Step =
@@ -157,6 +164,7 @@ export function mapPointThroughStep(
         step.path,
         step.newChildren,
         step.oldChildren,
+        step.newSpanTexts,
       )
 
       return remapped ?? point
@@ -202,35 +210,29 @@ export function mapPointThroughSteps(
 }
 
 /**
- * Map a point through a wholesale children replacement via its text
- * offset within the node. Returns `undefined` (leave the point
- * untransformed) unless every precondition holds: the point addresses
- * a direct child of the node whose children were replaced, that
- * child's key is gone from the new children (identity did not
- * survive), and the old and new children carry identical concatenated
- * span text, the condition that makes offset mapping lossless.
+ * Map a point through a wholesale children replacement. A point on a
+ * surviving span (its key is still among the new children) keeps its
+ * identity and only has its offset clamped to the span's new text
+ * length. Beyond that, returns `undefined` (leave the point
+ * untransformed) unless every precondition for the vanished-key remap
+ * holds: the point addresses a direct child of the node whose children
+ * were replaced, that child's key is gone from the new children, and the
+ * old and new children carry identical concatenated text, the condition
+ * that makes offset mapping lossless.
  *
- * Spans are detected structurally (`text` being a string) rather than
- * through the schema: this mapper is deliberately schema-free, and
- * text-carrying children are the only ones that occupy offsets.
- *
- * The offset arithmetic is shared with the snapshot-aware block-offset
- * utils through `utils/util.child-text-offset.ts`, so the boundary
- * convention (an offset landing exactly on a span boundary stays at
- * the end of the earlier span) is the same by construction. Only the
- * span detection differs: structural here, schema-based there.
- *
- * A container's array field may also be named `children` and hold
- * blocks rather than spans. The text requirement makes that a no-op by
- * construction: blocks carry no `text` of their own, so a point
- * addressing a replaced block bails at the offset walk, and points
- * deeper inside such blocks fail the direct-child path guard.
+ * The vanished-key remap counts any child with a string `text` as
+ * occupying offsets. The offset arithmetic is shared with the
+ * snapshot-aware block-offset utils through
+ * `utils/util.child-text-offset.ts`, so the boundary convention (an
+ * offset landing exactly on a span boundary stays at the end of the
+ * earlier span) is the same by construction.
  */
 function remapPointThroughChildrenReplacement(
   point: Point,
   childrenPath: Path,
   newChildren: Array<unknown>,
   oldChildren: Array<unknown>,
+  newSpanTexts: ReadonlyMap<string, string>,
 ): Point | undefined {
   if (
     point.path.length !== childrenPath.length + 1 ||
@@ -245,8 +247,12 @@ function remapPointThroughChildrenReplacement(
   }
 
   if (newChildren.some((child) => childKey(child) === pointSegment._key)) {
-    // The point's span survived the replacement; identity wins over
-    // offset mapping.
+    const spanText = newSpanTexts.get(pointSegment._key)
+
+    if (spanText !== undefined && point.offset > spanText.length) {
+      return {path: point.path, offset: spanText.length}
+    }
+
     return undefined
   }
 

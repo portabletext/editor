@@ -1,5 +1,12 @@
 # @portabletext/plugin-typeahead-picker
 
+## 7.0.26
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.26
+
 ## 7.0.25
 
 ### Patch Changes

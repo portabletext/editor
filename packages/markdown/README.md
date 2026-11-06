@@ -224,9 +224,11 @@ To use a Sanity schema, use `@portabletext/sanity-bridge` to convert it to a Por
 ```ts nocheck
 import {markdownToPortableText} from '@portabletext/markdown'
 import {sanitySchemaToPortableTextSchema} from '@portabletext/sanity-bridge'
+import {Schema as SanitySchema} from '@sanity/schema'
 
-// Convert a Sanity block array schema to a Portable Text schema
-const schema = sanitySchemaToPortableTextSchema(sanityBlockArraySchema)
+// Compile the Sanity types, then convert the block array type
+const sanitySchema = SanitySchema.compile({name: 'default', types: [richText]})
+const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('richText'))
 
 markdownToPortableText(markdown, {schema})
 ```

@@ -337,7 +337,10 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           )
 
           for (const [point, key] of rangePoints(selection)) {
-            const result = transformPoint(point, {...op, path: removedPath})
+            const result = transformPoint(editor.snapshot.context, point, {
+              ...op,
+              path: removedPath,
+            })
 
             if (result != null) {
               selection[key] = result
@@ -542,8 +545,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
   }
 
   if (transformSelection && editor.snapshot.context.selection) {
-    const anchor = transformPoint(editor.snapshot.context.selection.anchor, op)
-    const focus = transformPoint(editor.snapshot.context.selection.focus, op)
+    const anchor = transformPoint(
+      editor.snapshot.context,
+      editor.snapshot.context.selection.anchor,
+      op,
+    )
+    const focus = transformPoint(
+      editor.snapshot.context,
+      editor.snapshot.context.selection.focus,
+      op,
+    )
 
     if (!anchor || !focus) {
       // The operation removed the host node of one of the selection's

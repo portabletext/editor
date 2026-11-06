@@ -1,3 +1,4 @@
+import {isSpan, type Schema} from '@portabletext/schema'
 import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Point, PointTransformOptions} from '../interfaces/point'
@@ -18,14 +19,18 @@ import {mapPointThroughSteps, type Step} from './step-mapper'
  * - set.selection: no-op
  */
 export function transformPoint(
+  context: {schema: Schema},
   point: Point | null,
   op: EngineOperation,
   options: PointTransformOptions = {},
 ): Point | null {
-  return mapPointThroughSteps(operationToSteps(op), point, options)
+  return mapPointThroughSteps(operationToSteps(context, op), point, options)
 }
 
-function operationToSteps(op: EngineOperation): Step[] {
+function operationToSteps(
+  context: {schema: Schema},
+  op: EngineOperation,
+): Step[] {
   switch (op.type) {
     case 'insert.text':
       return [
@@ -70,21 +75,22 @@ function operationToSteps(op: EngineOperation): Step[] {
       }
 
       if (propertyName === 'children' && Array.isArray(op.value)) {
+        // Before `apply` (refs) or for a remote `set`, the operation carries
+        // no inverse; a surviving span still clamps from the new children.
         const oldChildren =
           op.inverse?.type === 'set' && Array.isArray(op.inverse.value)
             ? (op.inverse.value as Array<unknown>)
-            : undefined
+            : []
 
-        return oldChildren === undefined
-          ? []
-          : [
-              {
-                type: 'replace.children',
-                path: op.path,
-                oldChildren,
-                newChildren: op.value as Array<unknown>,
-              },
-            ]
+        return [
+          {
+            type: 'replace.children',
+            path: op.path,
+            oldChildren,
+            newChildren: op.value as Array<unknown>,
+            newSpanTexts: spanTexts(context, op.value),
+          },
+        ]
       }
 
       return []
@@ -108,4 +114,19 @@ function operationToSteps(op: EngineOperation): Step[] {
     default:
       return []
   }
+}
+
+function spanTexts(
+  context: {schema: Schema},
+  children: Array<unknown>,
+): Map<string, string> {
+  const texts = new Map<string, string>()
+
+  for (const child of children) {
+    if (isSpan(context, child) && typeof child._key === 'string') {
+      texts.set(child._key, child.text)
+    }
+  }
+
+  return texts
 }
