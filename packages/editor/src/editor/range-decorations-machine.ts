@@ -144,11 +144,6 @@ function buildPropDecoratedRangesFromScratch(
 
   for (const rangeDecoration of rangeDecorations) {
     if (!rangeDecoration.selection) {
-      rangeDecoration.onMoved?.({
-        newSelection: null,
-        rangeDecoration,
-        origin: 'local',
-      })
       continue
     }
 
