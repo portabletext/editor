@@ -1,7 +1,21 @@
-import {EditorProvider, PortableTextEditable} from '@portabletext/editor'
+import {
+  EditorProvider,
+  PortableTextEditable,
+  type Editor,
+  type RangeDecoration,
+} from '@portabletext/editor'
+import {EditorRefPlugin} from '@portabletext/editor/plugins'
+import {diffMatchPatch} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
-import {useMemo, type PropsWithChildren, type ReactElement} from 'react'
-import {describe, expect, test} from 'vitest'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {
+  createRef,
+  useEffect,
+  useMemo,
+  type PropsWithChildren,
+  type ReactElement,
+} from 'react'
+import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page} from 'vitest/browser'
 import {useRemoteCursors} from './plugin.presence-sync'
@@ -30,6 +44,7 @@ function caretAt(offset: number): RemoteCursor['selection'] {
 function Harness(props: {
   cursors: readonly RemoteCursor[]
   useDefaultCaret?: boolean
+  onDecorations?: (decorations: RangeDecoration[]) => void
 }) {
   const cursors = useMemo(() => props.cursors, [props.cursors])
   const rangeDecorations = useRemoteCursors({
@@ -45,6 +60,10 @@ function Harness(props: {
         ),
   })
 
+  useEffect(() => {
+    props.onDecorations?.(rangeDecorations)
+  }, [props, rangeDecorations])
+
   return (
     <PortableTextEditable
       data-testid="editable"
@@ -55,17 +74,43 @@ function Harness(props: {
 
 async function renderEditor(
   cursors: readonly RemoteCursor[],
-  options: {useDefaultCaret?: boolean} = {},
+  options: {
+    initialValue?: PortableTextBlock[]
+    useDefaultCaret?: boolean
+  } = {},
 ) {
+  const editorRef = createRef<Editor>()
+  let decorations: RangeDecoration[] = []
   const result = await render(
-    <EditorProvider initialConfig={{schemaDefinition, initialValue}}>
-      <Harness cursors={cursors} useDefaultCaret={options.useDefaultCaret} />
+    <EditorProvider
+      initialConfig={{
+        schemaDefinition,
+        initialValue: options.initialValue ?? initialValue,
+        keyGenerator: createTestKeyGenerator(),
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <Harness
+        cursors={cursors}
+        useDefaultCaret={options.useDefaultCaret}
+        onDecorations={(nextDecorations) => {
+          decorations = nextDecorations
+        }}
+      />
     </EditorProvider>,
   )
 
   await expect.element(page.getByTestId('editable')).toBeInTheDocument()
 
-  return result
+  await vi.waitFor(() => {
+    expect(editorRef.current).not.toBeNull()
+  })
+
+  return {
+    ...result,
+    editor: editorRef.current!,
+    getSelection: () => decorations[0]?.selection,
+  }
 }
 
 describe('useRemoteCursors in a real editor', () => {
@@ -98,6 +143,229 @@ describe('useRemoteCursors in a real editor', () => {
       .element(page.getByTestId('caret-session-b'))
       .toBeInTheDocument()
   })
+
+  test.each([{origin: 'local' as const}, {origin: 'remote' as const}])(
+    'Scenario: a remote caret inside a split tail follows it for a $origin split',
+    async ({origin}) => {
+      const harness = await renderEditor([
+        {sessionId: 'session-a', selection: caretAt(8)},
+      ])
+      await expect
+        .element(page.getByTestId('caret-session-a'))
+        .toBeInTheDocument()
+
+      if (origin === 'local') {
+        harness.editor.send({type: 'select', at: caretAt(5)})
+        harness.editor.send({type: 'insert.break'})
+      } else {
+        harness.editor.send({
+          type: 'patches',
+          patches: [
+            diffMatchPatch('Hello world', 'Hello', [
+              {_key: 'block-1'},
+              'children',
+              {_key: 'span-1'},
+              'text',
+            ]),
+            {
+              type: 'insert',
+              path: [{_key: 'block-1'}],
+              position: 'after',
+              items: [block('block-2', 'span-2', ' world')],
+              origin: 'remote',
+            },
+          ],
+          snapshot: undefined,
+        })
+      }
+
+      await vi.waitFor(() => {
+        expect(harness.getSelection()).toEqual(
+          caret(
+            origin === 'local' ? 'k2' : 'block-2',
+            origin === 'local' ? 'span-1' : 'span-2',
+            3,
+          ),
+        )
+      })
+    },
+  )
+
+  test('Scenario: a remote caret exactly at a split follows the local caret to the new block start', async () => {
+    const harness = await renderEditor([
+      {sessionId: 'session-a', selection: caretAt(5)},
+    ])
+    await expect
+      .element(page.getByTestId('caret-session-a'))
+      .toBeInTheDocument()
+
+    harness.editor.send({type: 'select', at: caretAt(5)})
+    harness.editor.send({type: 'insert.break'})
+
+    await vi.waitFor(() => {
+      expect(harness.getSelection()).toEqual(caret('k2', 'span-1', 0))
+    })
+  })
+
+  test.each([
+    {
+      name: 'one-character',
+      text: 'Hello x',
+      offset: 7,
+      splitOffset: 6,
+      expected: caret('block-1', 'span-1', 6),
+    },
+    {
+      name: 'ambiguous repeated-text',
+      text: 'foo foo foo',
+      offset: 9,
+      splitOffset: 8,
+      expected: caret('k2', 'span-1', 1),
+    },
+  ])(
+    'Scenario: a remote caret in a $name split tail maps through final-value pairing',
+    async ({text, offset, splitOffset, expected}) => {
+      const value = [block('block-1', 'span-1', text)]
+      const harness = await renderEditor(
+        [
+          {
+            sessionId: 'session-a',
+            selection: caret('block-1', 'span-1', offset),
+          },
+        ],
+        {initialValue: value},
+      )
+      await expect
+        .element(page.getByTestId('caret-session-a'))
+        .toBeInTheDocument()
+
+      harness.editor.send({
+        type: 'select',
+        at: caret('block-1', 'span-1', splitOffset),
+      })
+      harness.editor.send({type: 'insert.break'})
+
+      await vi.waitFor(() => {
+        expect(harness.getSelection()).toEqual(expected)
+      })
+    },
+  )
+
+  test('Scenario: a remote caret in a merge donor lands at the merged offset', async () => {
+    const value = [
+      block('block-1', 'span-1', 'foo'),
+      block('block-2', 'span-2', 'bar'),
+    ]
+    const harness = await renderEditor(
+      [{sessionId: 'session-a', selection: caret('block-2', 'span-2', 2)}],
+      {initialValue: value},
+    )
+    await expect
+      .element(page.getByTestId('caret-session-a'))
+      .toBeInTheDocument()
+
+    harness.editor.send({
+      type: 'select',
+      at: caret('block-2', 'span-2', 0),
+    })
+    harness.editor.send({type: 'delete', direction: 'backward'})
+
+    await vi.waitFor(() => {
+      expect(harness.getSelection()).toEqual(caret('block-1', 'span-1', 5))
+    })
+  })
+
+  test('Scenario: a remote caret at a mark boundary uses the preceding span end', async () => {
+    const value: PortableTextBlock[] = [
+      block('block-1', 'span-1', 'foo'),
+      {
+        ...block('block-2', 'span-2', 'bar'),
+        children: [
+          {
+            _type: 'span',
+            _key: 'span-2',
+            text: 'bar',
+            marks: ['strong'],
+          },
+        ],
+      },
+    ]
+    const harness = await renderEditor(
+      [{sessionId: 'session-a', selection: caret('block-2', 'span-2', 0)}],
+      {initialValue: value},
+    )
+    await expect
+      .element(page.getByTestId('caret-session-a'))
+      .toBeInTheDocument()
+
+    harness.editor.send({
+      type: 'select',
+      at: caret('block-2', 'span-2', 0),
+    })
+    harness.editor.send({type: 'delete', direction: 'backward'})
+
+    await vi.waitFor(() => {
+      expect(harness.getSelection()).toEqual(caret('block-1', 'span-1', 3))
+    })
+  })
+
+  test('Scenario: undoing a split returns a remote caret to its original point', async () => {
+    const harness = await renderEditor([
+      {sessionId: 'session-a', selection: caretAt(8)},
+    ])
+    await expect
+      .element(page.getByTestId('caret-session-a'))
+      .toBeInTheDocument()
+
+    harness.editor.send({type: 'select', at: caretAt(5)})
+    harness.editor.send({type: 'insert.break'})
+    await vi.waitFor(() => {
+      expect(harness.getSelection()).toEqual(caret('k2', 'span-1', 3))
+    })
+
+    harness.editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(harness.getSelection()).toEqual(caretAt(8))
+    })
+  })
+
+  test('Scenario: a remote batch moving the caret block keeps its keyed address', async () => {
+    const value = [
+      block('block-1', 'span-1', 'foo'),
+      block('block-2', 'span-2', 'bar'),
+    ]
+    const harness = await renderEditor(
+      [{sessionId: 'session-a', selection: caret('block-2', 'span-2', 2)}],
+      {initialValue: value},
+    )
+    await expect
+      .element(page.getByTestId('caret-session-a'))
+      .toBeInTheDocument()
+
+    harness.editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', path: [{_key: 'block-2'}], origin: 'remote'},
+        {
+          type: 'insert',
+          path: [{_key: 'block-1'}],
+          position: 'before',
+          items: [block('block-2', 'span-2', 'bar')],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() => {
+      expect(harness.editor.getSnapshot().context.value).toEqual([
+        block('block-2', 'span-2', 'bar'),
+        block('block-1', 'span-1', 'foo'),
+      ])
+      expect(harness.getSelection()).toEqual(caret('block-2', 'span-2', 2))
+    })
+  })
 })
 
 function participant(
@@ -116,6 +384,21 @@ function participant(
 function caretColorOf(sessionId: string): string {
   const element = page.getByTestId(`presence-caret-${sessionId}`).element()
   return getComputedStyle(element).borderLeftColor
+}
+
+function caret(blockKey: string, spanKey: string, offset: number) {
+  const path = [{_key: blockKey}, 'children' as const, {_key: spanKey}]
+  return {anchor: {path, offset}, focus: {path, offset}}
+}
+
+function block(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block' as const,
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span' as const, _key: spanKey, text, marks: []}],
+  }
 }
 
 describe('the default caret', () => {
