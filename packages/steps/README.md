@@ -24,8 +24,25 @@ npm install @portabletext/steps
 `interpretTransaction(base, patches)` derives the steps for a transaction's patches, read against the document value they applied to. `mapPoint(steps, point, options?)` and `mapRange(steps, range)` map a `Point` (`{path, offset}`) or a `Range` (`{anchor, focus}`) through them:
 
 ```ts
+import type {Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {interpretTransaction, mapPoint} from '@portabletext/steps'
 
+const value: Array<PortableTextBlock> = [
+  {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', marks: [], text: 'foo'}],
+    markDefs: [],
+  },
+]
+const patches: Array<Patch> = [
+  {
+    type: 'set',
+    path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+    value: 'foobar',
+  },
+]
 const steps = interpretTransaction(value, patches)
 
 const newPoint = mapPoint(steps, {
