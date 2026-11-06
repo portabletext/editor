@@ -78,3 +78,18 @@ but represents the start at `s3@0` rather than the equivalent preceding span
 boundary `s1@7`. Steps pass 114/114, Argus 4/4, registration 33/33, the
 range-decoration machine 27/27, and the affected change-event suites 113/113.
 See `/workspace/proposals/stage1-report.md` for the rule-by-rule results.
+
+## Stage 2 update
+
+Stage 2 adds decoration death policy at the committed-change seam. An expanded
+decoration dies when its mapped range is lost, collapses, reverses direction,
+or its complete single-span interval was explicitly removed without a step
+that moves original text. Inserted replacement text therefore cannot revive
+it. Partial removals and structural moves keep the surviving original text.
+
+`@portabletext/steps` now exports `normalizeRangeBoundary`: mapped expanded
+range starts at a next-span offset zero are represented at the preceding span
+end, and the equivalent next-span form is recovered before a later change is
+mapped. The range suite passes 56/56 and the structural suite 23/23. Steps pass
+120/120, including the final-state ambiguity pin and boundary-helper tests.
+See `/workspace/proposals/stage2-report.md` for the full compatibility matrix.
