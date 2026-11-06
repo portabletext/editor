@@ -12,12 +12,10 @@ import {
   defineField,
   defineType,
   type ArrayDefinition,
+  type SchemaTypeDefinition,
 } from '@sanity/types'
 import {describe, expect, test} from 'vitest'
-import {
-  sanitySchemaDefinitionToPortableTextSchema,
-  sanitySchemaToPortableTextSchema,
-} from './sanity-schema-to-portable-text-schema'
+import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
 
 // The resolved sub-schema for an unmodified nested block member: the bridge
 // emits each block member's own resolved lists, and an unmodified block
@@ -237,7 +235,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       of: [defineField({type: 'block', name: 'block'})],
     }
 
-    expect(sanitySchemaToPortableTextSchema(sanitySchema)).toEqual(
+    expect(sanitySchemaToPortableTextSchema(compile(sanitySchema))).toEqual(
       defaultSchema,
     )
   })
@@ -252,7 +250,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       ],
     }
 
-    expect(sanitySchemaToPortableTextSchema(sanitySchema)).toEqual({
+    expect(sanitySchemaToPortableTextSchema(compile(sanitySchema))).toEqual({
       ...defaultSchema,
       blockObjects: [
         ...defaultSchema.blockObjects,
@@ -1624,42 +1622,6 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     ).toThrow(new Error('Unknown type: customUrl'))
   })
 
-  test('a raw array definition whose annotation field references an undefined named type throws the raw Sanity error with no hint', () => {
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({
-          type: 'block',
-          name: 'block',
-          marks: {
-            annotations: [
-              {
-                name: 'customLink',
-                type: 'object',
-                fields: [{name: 'customLink', type: 'customUrl'}],
-              },
-            ],
-          },
-        }),
-      ],
-    }
-
-    expect(() => sanitySchemaToPortableTextSchema(richText)).toThrow(
-      new Error('Unknown type: customUrl'),
-    )
-  })
-
-  test('a root array definition named like a Sanity built-in type still resolves its own block member', () => {
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'text',
-      of: [defineField({type: 'block', name: 'block'})],
-    }
-
-    expect(sanitySchemaToPortableTextSchema(richText)).toEqual(defaultSchema)
-  })
-
   test('a raw array definition whose block object has a field typed like the root type resolves the field to itself', () => {
     const richText: ArrayDefinition = {
       type: 'array',
@@ -1674,7 +1636,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       ],
     }
 
-    const schema = sanitySchemaToPortableTextSchema(richText)
+    const schema = sanitySchemaToPortableTextSchema(compile(richText))
 
     expect(schema).toEqual({
       ...defaultSchema,
@@ -1695,14 +1657,74 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     })
   })
 
-  test('a root array definition named like a `builtinTypes` extra compiles', () => {
+  test('a compiled schema whose annotation and block object fields reference a named sibling type resolves them', () => {
+    const customUrl = defineType({
+      name: 'customUrl',
+      type: 'object',
+      fields: [
+        defineField({name: 'href', type: 'url'}),
+        defineField({name: 'blank', type: 'boolean'}),
+      ],
+    })
+
     const richText: ArrayDefinition = {
       type: 'array',
-      name: 'slug',
-      of: [defineField({type: 'block', name: 'block'})],
+      name: 'richText',
+      of: [
+        defineArrayMember({
+          type: 'block',
+          name: 'block',
+          marks: {
+            annotations: [
+              {
+                name: 'customLink',
+                type: 'object',
+                fields: [{name: 'customLink', type: 'customUrl'}],
+              },
+            ],
+          },
+        }),
+        defineArrayMember({
+          type: 'object',
+          name: 'customCallout',
+          fields: [{name: 'link', type: 'customUrl'}],
+        }),
+      ],
     }
 
-    expect(sanitySchemaToPortableTextSchema(richText)).toEqual(defaultSchema)
+    const schema = sanitySchemaToPortableTextSchema(
+      compile(richText, [customUrl]),
+    )
+
+    expect(schema).toEqual({
+      ...defaultSchema,
+      annotations: [
+        {
+          name: 'customLink',
+          title: 'Custom Link',
+          fields: [
+            {
+              name: 'customLink',
+              type: 'object',
+              title: 'Custom Link',
+            },
+          ],
+        },
+      ],
+      blockObjects: [
+        {
+          name: 'customCallout',
+          title: 'Custom Callout',
+          fields: [
+            {
+              name: 'link',
+              type: 'object',
+              title: 'Link',
+            },
+          ],
+        },
+      ],
+    })
   })
 
   test('a block object reached through a same-named root reference stays a bare reference', () => {
@@ -1724,7 +1746,7 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
       ],
     }
 
-    const schema = sanitySchemaToPortableTextSchema(richText)
+    const schema = sanitySchemaToPortableTextSchema(compile(richText))
 
     expect(schema).toEqual({
       ...defaultSchema,
@@ -1754,30 +1776,18 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     })
   })
 
-  test('a member field named like a Sanity built-in type resolves to the built-in type instead of the same-named root definition', () => {
+  test('an uncompiled array definition throws an error asking to compile it first', () => {
     const richText: ArrayDefinition = {
       type: 'array',
-      name: 'text',
-      of: [
-        defineArrayMember({type: 'block', name: 'block'}),
-        defineArrayMember({
-          type: 'object',
-          name: 'callout',
-          fields: [defineField({name: 'label', type: 'text'})],
-        }),
-      ],
+      name: 'richText',
+      of: [defineArrayMember({type: 'block', name: 'block'})],
     }
 
-    expect(sanitySchemaToPortableTextSchema(richText)).toEqual({
-      ...defaultSchema,
-      blockObjects: [
-        {
-          name: 'callout',
-          title: 'Callout',
-          fields: [{name: 'label', type: 'string', title: 'Label'}],
-        },
-      ],
-    })
+    expect(() => sanitySchemaToPortableTextSchema(richText as never)).toThrow(
+      new Error(
+        "Expected a compiled Sanity schema type but received an uncompiled definition ('richText'). Compile it first with `Schema.compile({name: 'default', types: [definition]}).get('richText')` from `@sanity/schema`.",
+      ),
+    )
   })
 
   test('a compiled non-array type whose name collides with a Sanity built-in type throws a diagnostic naming the collision', () => {
@@ -1822,6 +1832,21 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     )
   })
 
+  test('a compiled non-array type from `builtinTypes` throws a diagnostic without the collision sentence', () => {
+    const compiled = SanitySchema.compile({
+      name: 'test',
+      types: builtinTypes,
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(compiled.get('slug') as any),
+    ).toThrow(
+      new Error(
+        "Expected an array schema type but received 'slug' (jsonType: 'object').",
+      ),
+    )
+  })
+
   test('a compiled non-array type whose name does not collide with a Sanity built-in type throws a diagnostic without the collision sentence', () => {
     const compiled = SanitySchema.compile({
       name: 'test',
@@ -1839,6 +1864,58 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
     ).toThrow(
       new Error(
         "Expected an array schema type but received 'foo' (jsonType: 'object').",
+      ),
+    )
+  })
+
+  test('a compiled non-array field type named like a Sanity built-in type throws a diagnostic without the collision sentence', () => {
+    const compiled = SanitySchema.compile({
+      name: 'test',
+      types: [
+        defineType({
+          type: 'object',
+          name: 'foo',
+          fields: [defineField({name: 'label', type: 'string'})],
+        }),
+      ],
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(
+        compiled.get('foo').fields[0].type as any,
+      ),
+    ).toThrow(
+      new Error(
+        "Expected an array schema type but received 'string' (jsonType: 'string').",
+      ),
+    )
+  })
+
+  test('a compiled non-array array member named like a Sanity built-in type throws a diagnostic without the collision sentence', () => {
+    const compiled = SanitySchema.compile({
+      name: 'test',
+      types: [
+        defineType({
+          type: 'object',
+          name: 'foo',
+          fields: [
+            defineField({
+              name: 'gallery',
+              type: 'array',
+              of: [{type: 'image'}],
+            }),
+          ],
+        }),
+      ],
+    })
+
+    expect(() =>
+      sanitySchemaToPortableTextSchema(
+        compiled.get('foo').fields[0].type.of[0] as any,
+      ),
+    ).toThrow(
+      new Error(
+        "Expected an array schema type but received 'image' (jsonType: 'object').",
       ),
     )
   })
@@ -1979,492 +2056,12 @@ describe(sanitySchemaToPortableTextSchema.name, () => {
   })
 })
 
-describe(sanitySchemaDefinitionToPortableTextSchema.name, () => {
-  test('a raw array definition whose annotation field references a named sibling type resolves it via options.types', () => {
-    const customUrl = defineType({
-      name: 'customUrl',
-      type: 'object',
-      fields: [
-        defineField({name: 'href', type: 'url'}),
-        defineField({name: 'blank', type: 'boolean'}),
-      ],
-    })
-
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({
-          type: 'block',
-          name: 'block',
-          marks: {
-            annotations: [
-              {
-                name: 'customLink',
-                type: 'object',
-                fields: [{name: 'customLink', type: 'customUrl'}],
-              },
-            ],
-          },
-        }),
-        defineArrayMember({
-          type: 'object',
-          name: 'customCallout',
-          fields: [{name: 'link', type: 'customUrl'}],
-        }),
-      ],
-    }
-
-    const schema = sanitySchemaDefinitionToPortableTextSchema(richText, {
-      types: [customUrl],
-    })
-
-    expect(schema).toEqual({
-      block: {
-        name: 'block',
-      },
-      span: {
-        name: 'span',
-      },
-      styles: [
-        {name: 'normal', title: 'Normal', value: 'normal'},
-        {name: 'h1', title: 'Heading 1', value: 'h1'},
-        {name: 'h2', title: 'Heading 2', value: 'h2'},
-        {name: 'h3', title: 'Heading 3', value: 'h3'},
-        {name: 'h4', title: 'Heading 4', value: 'h4'},
-        {name: 'h5', title: 'Heading 5', value: 'h5'},
-        {name: 'h6', title: 'Heading 6', value: 'h6'},
-        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
-      ],
-      lists: [
-        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
-        {name: 'number', title: 'Numbered list', value: 'number'},
-      ],
-      decorators: [
-        {name: 'strong', title: 'Strong', value: 'strong'},
-        {name: 'em', title: 'Italic', value: 'em'},
-        {name: 'code', title: 'Code', value: 'code'},
-        {name: 'underline', title: 'Underline', value: 'underline'},
-        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
-      ],
-      annotations: [
-        {
-          name: 'customLink',
-          title: 'Custom Link',
-          fields: [
-            {
-              name: 'customLink',
-              type: 'object',
-              title: 'Custom Link',
-            },
-          ],
-        },
-      ],
-      blockObjects: [
-        {
-          name: 'customCallout',
-          title: 'Custom Callout',
-          fields: [
-            {
-              name: 'link',
-              type: 'object',
-              title: 'Link',
-            },
-          ],
-        },
-      ],
-      inlineObjects: [],
-    })
-  })
-
-  test('a raw array definition whose annotation field references an undefined named type throws with a hint to pass options.types', () => {
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({
-          type: 'block',
-          name: 'block',
-          marks: {
-            annotations: [
-              {
-                name: 'customLink',
-                type: 'object',
-                fields: [{name: 'customLink', type: 'customUrl'}],
-              },
-            ],
-          },
-        }),
-      ],
-    }
-
-    expect(() => sanitySchemaDefinitionToPortableTextSchema(richText)).toThrow(
-      new Error(
-        "Unknown type: customUrl. Define 'customUrl' in the schema or pass it via `options.types`.",
-      ),
-    )
-  })
-
-  test('a raw array definition whose annotation field references a named type not covered by options.types throws with a hint to pass options.types', () => {
-    const someOtherType = defineType({
-      name: 'someOtherType',
-      type: 'object',
-      fields: [defineField({name: 'label', type: 'string'})],
-    })
-
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({
-          type: 'block',
-          name: 'block',
-          marks: {
-            annotations: [
-              {
-                name: 'customLink',
-                type: 'object',
-                fields: [{name: 'customLink', type: 'customUrl'}],
-              },
-            ],
-          },
-        }),
-      ],
-    }
-
-    expect(() =>
-      sanitySchemaDefinitionToPortableTextSchema(richText, {
-        types: [someOtherType],
-      }),
-    ).toThrow(
-      new Error(
-        "Unknown type: customUrl. Define 'customUrl' in the schema or pass it via `options.types`.",
-      ),
-    )
-  })
-
-  test('options.types entries named like the root definition are dropped, the passed definition wins', () => {
-    const customUrl = defineType({
-      name: 'customUrl',
-      type: 'object',
-      fields: [
-        defineField({name: 'href', type: 'url'}),
-        defineField({name: 'blank', type: 'boolean'}),
-      ],
-    })
-
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({
-          type: 'block',
-          name: 'block',
-          marks: {
-            annotations: [
-              {
-                name: 'customLink',
-                type: 'object',
-                fields: [{name: 'customLink', type: 'customUrl'}],
-              },
-            ],
-          },
-        }),
-      ],
-    }
-
-    const expected: Schema = {
-      block: {
-        name: 'block',
-      },
-      span: {
-        name: 'span',
-      },
-      styles: [
-        {name: 'normal', title: 'Normal', value: 'normal'},
-        {name: 'h1', title: 'Heading 1', value: 'h1'},
-        {name: 'h2', title: 'Heading 2', value: 'h2'},
-        {name: 'h3', title: 'Heading 3', value: 'h3'},
-        {name: 'h4', title: 'Heading 4', value: 'h4'},
-        {name: 'h5', title: 'Heading 5', value: 'h5'},
-        {name: 'h6', title: 'Heading 6', value: 'h6'},
-        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
-      ],
-      lists: [
-        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
-        {name: 'number', title: 'Numbered list', value: 'number'},
-      ],
-      decorators: [
-        {name: 'strong', title: 'Strong', value: 'strong'},
-        {name: 'em', title: 'Italic', value: 'em'},
-        {name: 'code', title: 'Code', value: 'code'},
-        {name: 'underline', title: 'Underline', value: 'underline'},
-        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
-      ],
-      annotations: [
-        {
-          name: 'customLink',
-          title: 'Custom Link',
-          fields: [
-            {
-              name: 'customLink',
-              type: 'object',
-              title: 'Custom Link',
-            },
-          ],
-        },
-      ],
-      blockObjects: [],
-      inlineObjects: [],
-    }
-
-    expect(
-      sanitySchemaDefinitionToPortableTextSchema(richText, {
-        types: [customUrl],
-      }),
-    ).toEqual(expected)
-
-    expect(
-      sanitySchemaDefinitionToPortableTextSchema(richText, {
-        types: [richText, customUrl],
-      }),
-    ).toEqual(expected)
-
-    const divergentRichText = defineType({
-      name: 'richText',
-      type: 'array',
-      of: [{type: 'string'}],
-    })
-
-    expect(
-      sanitySchemaDefinitionToPortableTextSchema(richText, {
-        types: [divergentRichText, customUrl],
-      }),
-    ).toEqual(expected)
-  })
-
-  test('an options.types entry named like a Sanity built-in type is ignored, the built-in wins', () => {
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({type: 'block', name: 'block'}),
-        defineArrayMember({type: 'image', name: 'image'}),
-      ],
-    }
-
-    const customImage = defineType({
-      name: 'image',
-      type: 'object',
-      fields: [defineField({name: 'caption', type: 'string'})],
-    })
-
-    const schema = sanitySchemaDefinitionToPortableTextSchema(richText, {
-      types: [customImage],
-    })
-
-    expect(schema.blockObjects).toEqual([
-      {
-        name: 'image',
-        title: 'Image',
-        fields: [
-          {name: 'asset', title: 'Asset', type: 'object'},
-          {name: 'media', title: 'Media', type: 'object'},
-          {name: 'hotspot', title: 'Hotspot', type: 'object'},
-          {name: 'crop', title: 'Crop', type: 'object'},
-        ],
-      },
-    ])
-  })
-
-  test("two options.types entries sharing a name throw Sanity's raw duplicate-type-name error untouched", () => {
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [defineArrayMember({type: 'block', name: 'block'})],
-    }
-
-    const dupA = defineType({
-      name: 'dup',
-      type: 'object',
-      fields: [defineField({name: 'a', type: 'string'})],
-    })
-    const dupB = defineType({
-      name: 'dup',
-      type: 'object',
-      fields: [defineField({name: 'b', type: 'string'})],
-    })
-
-    expect(() =>
-      sanitySchemaDefinitionToPortableTextSchema(richText, {
-        types: [dupA, dupB],
-      }),
-    ).toThrow(new Error('Duplicate type name added to schema: dup'))
-  })
-
-  test('a raw array definition named like a Sanity built-in type resolves a customUrl sibling via options.types', () => {
-    const customUrl = defineType({
-      name: 'customUrl',
-      type: 'object',
-      fields: [
-        defineField({name: 'href', type: 'url'}),
-        defineField({name: 'blank', type: 'boolean'}),
-      ],
-    })
-
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'text',
-      of: [
-        defineArrayMember({
-          type: 'block',
-          name: 'block',
-          marks: {
-            annotations: [
-              {
-                name: 'customLink',
-                type: 'object',
-                fields: [{name: 'customLink', type: 'customUrl'}],
-              },
-            ],
-          },
-        }),
-        defineArrayMember({
-          type: 'object',
-          name: 'customCallout',
-          fields: [{name: 'link', type: 'customUrl'}],
-        }),
-      ],
-    }
-
-    const schema = sanitySchemaDefinitionToPortableTextSchema(richText, {
-      types: [customUrl],
-    })
-
-    expect(schema).toEqual({
-      block: {
-        name: 'block',
-      },
-      span: {
-        name: 'span',
-      },
-      styles: [
-        {name: 'normal', title: 'Normal', value: 'normal'},
-        {name: 'h1', title: 'Heading 1', value: 'h1'},
-        {name: 'h2', title: 'Heading 2', value: 'h2'},
-        {name: 'h3', title: 'Heading 3', value: 'h3'},
-        {name: 'h4', title: 'Heading 4', value: 'h4'},
-        {name: 'h5', title: 'Heading 5', value: 'h5'},
-        {name: 'h6', title: 'Heading 6', value: 'h6'},
-        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
-      ],
-      lists: [
-        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
-        {name: 'number', title: 'Numbered list', value: 'number'},
-      ],
-      decorators: [
-        {name: 'strong', title: 'Strong', value: 'strong'},
-        {name: 'em', title: 'Italic', value: 'em'},
-        {name: 'code', title: 'Code', value: 'code'},
-        {name: 'underline', title: 'Underline', value: 'underline'},
-        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
-      ],
-      annotations: [
-        {
-          name: 'customLink',
-          title: 'Custom Link',
-          fields: [
-            {
-              name: 'customLink',
-              type: 'object',
-              title: 'Custom Link',
-            },
-          ],
-        },
-      ],
-      blockObjects: [
-        {
-          name: 'customCallout',
-          title: 'Custom Callout',
-          fields: [
-            {
-              name: 'link',
-              type: 'object',
-              title: 'Link',
-            },
-          ],
-        },
-      ],
-      inlineObjects: [],
-    })
-  })
-
-  test("a raw array definition whose block object references the root type by name resolves the field as the root's array shape", () => {
-    const richText: ArrayDefinition = {
-      type: 'array',
-      name: 'richText',
-      of: [
-        defineArrayMember({type: 'block', name: 'block'}),
-        defineArrayMember({
-          type: 'object',
-          name: 'callout',
-          fields: [defineField({name: 'nested', type: 'richText'})],
-        }),
-      ],
-    }
-
-    const schema = sanitySchemaDefinitionToPortableTextSchema(richText)
-
-    expect(schema).toEqual({
-      block: {
-        name: 'block',
-      },
-      span: {
-        name: 'span',
-      },
-      styles: [
-        {name: 'normal', title: 'Normal', value: 'normal'},
-        {name: 'h1', title: 'Heading 1', value: 'h1'},
-        {name: 'h2', title: 'Heading 2', value: 'h2'},
-        {name: 'h3', title: 'Heading 3', value: 'h3'},
-        {name: 'h4', title: 'Heading 4', value: 'h4'},
-        {name: 'h5', title: 'Heading 5', value: 'h5'},
-        {name: 'h6', title: 'Heading 6', value: 'h6'},
-        {name: 'blockquote', title: 'Quote', value: 'blockquote'},
-      ],
-      lists: [
-        {name: 'bullet', title: 'Bulleted list', value: 'bullet'},
-        {name: 'number', title: 'Numbered list', value: 'number'},
-      ],
-      decorators: [
-        {name: 'strong', title: 'Strong', value: 'strong'},
-        {name: 'em', title: 'Italic', value: 'em'},
-        {name: 'code', title: 'Code', value: 'code'},
-        {name: 'underline', title: 'Underline', value: 'underline'},
-        {name: 'strike-through', title: 'Strike', value: 'strike-through'},
-      ],
-      annotations: [
-        {
-          name: 'link',
-          title: 'Link',
-          fields: [{name: 'href', type: 'string', title: 'Link'}],
-        },
-      ],
-      blockObjects: [
-        {
-          name: 'callout',
-          title: 'Callout',
-          fields: [
-            {
-              name: 'nested',
-              type: 'array',
-              title: 'Nested',
-              of: [defaultBlockOfMember, {type: 'callout', title: 'Callout'}],
-            },
-          ],
-        },
-      ],
-      inlineObjects: [],
-    })
-  })
-})
+function compile(
+  definition: ArrayDefinition,
+  types: ReadonlyArray<SchemaTypeDefinition> = [],
+) {
+  return SanitySchema.compile({
+    name: 'test',
+    types: [definition, ...types, ...builtinTypes],
+  }).get(definition.name)
+}

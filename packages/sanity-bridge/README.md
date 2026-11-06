@@ -110,6 +110,10 @@ const sanitySchema = Schema.compile({
 const portableTextSchema = sanitySchemaToPortableTextSchema(sanitySchema)
 ```
 
+`sanitySchemaToPortableTextSchema` takes compiled types only. Compile raw
+definitions with `Schema.compile` first, together with every type they
+reference by name, and pass the array type you get from `.get(name)`.
+
 #### Container sub-schemas
 
 When a block object holds an array field with a nested `{type: 'block'}`
@@ -191,53 +195,6 @@ The compact form differs from the full conversion in two ways:
   positions that list it. Some positions deep inside recursive
   structures resolve an object type with no fields, so content inserted
   there loses those fields.
-
-### Convert an uncompiled definition
-
-An uncompiled array definition only carries the types nested inside it.
-When one of its fields references a sibling type by name, convert it with
-`sanitySchemaDefinitionToPortableTextSchema` and pass the siblings through
-`options.types`:
-
-```ts
-import {sanitySchemaDefinitionToPortableTextSchema} from '@portabletext/sanity-bridge'
-import {defineField, defineType} from '@sanity/types'
-
-const customUrl = defineType({
-  name: 'customUrl',
-  type: 'object',
-  fields: [defineField({name: 'href', type: 'url'})],
-})
-
-const richText = defineType({
-  name: 'richText',
-  type: 'array',
-  of: [
-    {
-      type: 'block',
-      name: 'block',
-      marks: {
-        annotations: [
-          {
-            name: 'customLink',
-            type: 'object',
-            fields: [{name: 'link', type: 'customUrl'}],
-          },
-        ],
-      },
-    },
-  ],
-})
-
-const portableTextSchema = sanitySchemaDefinitionToPortableTextSchema(
-  richText,
-  {types: [customUrl]},
-)
-```
-
-`options.types` can be the complete schema type list, including the
-portable text field itself. When a reference cannot be resolved, the
-thrown error names the missing type.
 
 ### Keep hold of the original Sanity types
 

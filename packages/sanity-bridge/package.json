@@ -48,11 +48,11 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@sanity/schema": "catalog:",
     "@sanity/types": "catalog:"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "catalog:tooling",
+    "@sanity/schema": "catalog:",
     "@sanity/tsconfig": "catalog:tooling",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",
