@@ -419,6 +419,9 @@ export function interpretTransaction(
     }
   }
 
+  const contentRemovalSteps = slots.flatMap((step) =>
+    step?.type === 'remove.text' || step?.type === 'set.text' ? [step] : [],
+  )
   const steps = applyNetRekeys(
     base,
     workingCopy,
@@ -430,6 +433,7 @@ export function interpretTransaction(
       nodeInsertions,
       workingCopy,
     ),
+    contentRemovalSteps,
   )
 
   // @ts-expect-error - dot notation trips `noPropertyAccessFromIndexSignature`
@@ -1110,6 +1114,7 @@ function applyNetRekeys(
   base: ReadonlyArray<PortableTextBlock>,
   finalValue: ReadonlyArray<PortableTextBlock>,
   steps: ReadonlyArray<Step>,
+  contentRemovalSteps: ReadonlyArray<Step>,
 ): Array<Step> {
   const baseKeys = new Set(
     base.flatMap((block) =>
@@ -1164,6 +1169,13 @@ function applyNetRekeys(
   }
 
   return [
+    ...replacements.flatMap((replacement) =>
+      contentRemovalSteps.filter((step) =>
+        nodeAnchoredPaths(step).some((path) =>
+          pathContains(replacement.oldRoot, path),
+        ),
+      ),
+    ),
     ...replacements.flatMap((replacement) => replacement.steps),
     ...steps.filter((step) =>
       replacements.every((replacement) =>
