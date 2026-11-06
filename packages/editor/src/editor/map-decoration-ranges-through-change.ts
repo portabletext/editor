@@ -21,21 +21,80 @@ export function mapDecorationRangesThroughChange(
   const base = change.entries[0]?.event.beforeValue ?? []
   const patches = changeToPatches(editorEngine, change)
   const steps = interpretTransaction(base, patches)
+  const touchedBlockKeys = getTouchedBlockKeys(steps)
 
   return (range) => {
-    const mappingRange = normalizeRangeBoundary(base, range, {
-      representation: 'next',
-      normalizeCollapsed: true,
-    })
-    const mappedRange = applyDecorationPolicy(
-      range,
-      mapRange(steps, mappingRange, {collapsedAffinity: 'both'}),
-      steps,
-      base,
-      editorEngine.snapshot.context.value,
-    )
+    const mappedRange = rangeTouchesBlocks(range, touchedBlockKeys)
+      ? applyDecorationPolicy(
+          range,
+          mapRange(
+            steps,
+            normalizeRangeBoundary(base, range, {
+              representation: 'next',
+              normalizeCollapsed: true,
+            }),
+            {collapsedAffinity: 'both'},
+          ),
+          steps,
+          base,
+          editorEngine.snapshot.context.value,
+        )
+      : range
 
     return mappedRange
+  }
+}
+
+function getTouchedBlockKeys(steps: ReadonlyArray<Step>): Set<string> {
+  const blockKeys = new Set<string>()
+
+  for (const step of steps) {
+    if (step.type === 'move.text') {
+      addBlockKey(blockKeys, step.from.path)
+      addBlockKey(blockKeys, step.to.path)
+    } else if (step.type === 'move.node') {
+      addBlockKey(blockKeys, step.from)
+      addBlockKey(blockKeys, step.to)
+    } else {
+      addBlockKey(blockKeys, step.path)
+      if (step.type === 'set.key' && step.path.length === 1) {
+        blockKeys.add(step.newKey)
+      }
+    }
+  }
+
+  return blockKeys
+}
+
+function rangeTouchesBlocks(
+  range: Range,
+  touchedBlockKeys: ReadonlySet<string>,
+): boolean {
+  return (
+    pointTouchesBlock(range.anchor, touchedBlockKeys) ||
+    pointTouchesBlock(range.focus, touchedBlockKeys)
+  )
+}
+
+function pointTouchesBlock(
+  point: Range['anchor'],
+  touchedBlockKeys: ReadonlySet<string>,
+): boolean {
+  const blockSegment = point.path[0]
+  return (
+    typeof blockSegment !== 'object' ||
+    !('_key' in blockSegment) ||
+    touchedBlockKeys.has(blockSegment._key)
+  )
+}
+
+function addBlockKey(
+  blockKeys: Set<string>,
+  path: ReadonlyArray<string | {_key: string}>,
+): void {
+  const blockSegment = path[0]
+  if (typeof blockSegment === 'object' && '_key' in blockSegment) {
+    blockKeys.add(blockSegment._key)
   }
 }
 
