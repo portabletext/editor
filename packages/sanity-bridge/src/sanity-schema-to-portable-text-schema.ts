@@ -4,10 +4,7 @@ import type {
   OfDefinition,
   Schema,
 } from '@portabletext/schema'
-import {Schema as SanitySchema} from '@sanity/schema'
-import {builtinTypes} from '@sanity/schema/_internal'
 import type {
-  ArrayDefinition,
   ArraySchemaType,
   BlockDecoratorDefinition,
   BlockListDefinition,
@@ -16,24 +13,29 @@ import type {
   ObjectSchemaType,
   PortableTextBlock,
   SchemaType,
-  SchemaTypeDefinition,
   SpanSchemaType,
 } from '@sanity/types'
 
 /**
  * @public
- * Compile a Sanity schema to a Portable Text `Schema`.
+ * Convert a compiled Sanity array schema type to a Portable Text `Schema`.
  *
  * A Portable Text `Schema` is compatible with a Portable Text
  * `SchemaDefinition` and can be used as configuration for the Portable Text
  * Editor.
  *
- * For a raw (uncompiled) array definition whose fields reference a sibling
- * type by name, use `sanitySchemaDefinitionToPortableTextSchema` instead.
+ * Raw (uncompiled) definitions are not accepted. Compile them first with
+ * `Schema.compile` from `@sanity/schema` and pass the compiled array type.
  *
  * @example
  * ```tsx nocheck
- * const schema = sanitySchemaToPortableTextSchema(sanitySchema)
+ * import {Schema as SanitySchema} from '@sanity/schema'
+ *
+ * const sanitySchema = SanitySchema.compile({
+ *   name: 'default',
+ *   types: [richText],
+ * })
+ * const schema = sanitySchemaToPortableTextSchema(sanitySchema.get('richText'))
  *
  * return (
  *   <EditorProvider
@@ -47,76 +49,21 @@ import type {
  * ```
  */
 export function sanitySchemaToPortableTextSchema(
-  sanitySchema: ArraySchemaType<unknown> | ArrayDefinition,
+  sanitySchema: ArraySchemaType<unknown>,
 ): Schema {
-  const isCompiled = sanitySchema.hasOwnProperty('jsonType')
-  const compiled = isCompiled
-    ? (sanitySchema as ArraySchemaType<PortableTextBlock>)
-    : compileType(sanitySchema)
-
-  if (isCompiled && compiled.jsonType !== 'array') {
-    throwNonArrayDiagnostic(compiled)
-  }
-
-  return sanitySchemaTypeToSchema(compiled)
-}
-
-/**
- * @public
- * Compile a raw (uncompiled) Sanity array definition to a Portable Text
- * `Schema`, resolving named references to sibling types via
- * `options.types`.
- *
- * A raw definition whose fields reference another type by name (for
- * example a `customLink` annotation field typed `customUrl`) fails to
- * compile on its own: `definition` only carries the types nested inside
- * it, not its siblings elsewhere in the schema. Pass those siblings
- * through `options.types`.
- *
- * `options.types` entries named the same as `definition` itself are
- * ignored, `definition` wins, so a complete schema type list that
- * includes the portable text field can be passed as-is. Entries named
- * like one of Sanity's built-in types (`image`, `block`, `span`, ...) are
- * also ignored: Sanity's compiler gives built-ins precedence over
- * same-named custom types.
- *
- * When a reference still cannot be resolved, the thrown error names the
- * fix: ``Unknown type: customUrl. Define 'customUrl' in the schema or
- * pass it via `options.types`.``
- *
- * @example
- * ```tsx nocheck
- * import {sanitySchemaDefinitionToPortableTextSchema} from '@portabletext/sanity-bridge'
- *
- * const schema = sanitySchemaDefinitionToPortableTextSchema(richTextDefinition, {
- *   types: [customUrl],
- * })
- * ```
- */
-export function sanitySchemaDefinitionToPortableTextSchema(
-  definition: ArrayDefinition,
-  options?: {types?: ReadonlyArray<SchemaTypeDefinition>},
-): Schema {
-  const types = (options?.types ?? []).filter(
-    (type) => type.name !== definition.name,
-  )
-
-  try {
-    return sanitySchemaTypeToSchema(compileType(definition, types))
-  } catch (error) {
-    // The matched text is Sanity's own error message for an unresolved
-    // named reference, not a string this package controls.
-    const unknownType =
-      error instanceof Error && /^Unknown type: (.+)$/.exec(error.message)
-    if (!unknownType) {
-      throw error
-    }
-    const typeName = unknownType[1]
+  if (!sanitySchema.hasOwnProperty('jsonType')) {
     throw new Error(
-      `Unknown type: ${typeName}. Define '${typeName}' in the schema or pass it via \`options.types\`.`,
-      {cause: error},
+      `Expected a compiled Sanity schema type but received an uncompiled definition ('${sanitySchema.name}'). Compile it first with \`Schema.compile({name: 'default', types: [definition]}).get('${sanitySchema.name}')\` from \`@sanity/schema\`.`,
     )
   }
+
+  if (sanitySchema.jsonType !== 'array') {
+    throwNonArrayDiagnostic(sanitySchema)
+  }
+
+  return sanitySchemaTypeToSchema(
+    sanitySchema as ArraySchemaType<PortableTextBlock>,
+  )
 }
 
 function sanitySchemaTypeToSchema(
@@ -1069,65 +1016,16 @@ function findBlockType(type: SchemaType): BlockSchemaType | null {
   return null
 }
 
-/**
- * Sanity's core built-in type names (`text`, `image`, `url`, `block`, `span`,
- * ...) are baked into the compiler itself and always win a name collision,
- * unlike `builtinTypes` from `@sanity/schema/_internal`, which only carries
- * Studio's extra types (`slug`, `geopoint`, ...) and loses a collision with
- * an explicit `Duplicate type name` error instead. Compiling an empty
- * schema and looking the name up asks Sanity directly which core built-ins
- * exist, rather than hardcoding that list here.
- */
-function isBuiltinTypeName(name: string): boolean {
-  return Boolean(
-    SanitySchema.compile({name: 'builtinProbe', types: []}).get(name),
-  )
-}
-
 function throwNonArrayDiagnostic(schemaType: SchemaType): never {
   const name = schemaType.name
   const base = `Expected an array schema type but received '${name}' (jsonType: '${schemaType.jsonType}').`
-  if (isBuiltinTypeName(name)) {
+  // Sanity's core built-ins (`text`, `image`, `url`, ...) are the roots of
+  // the compiled type chain, the only compiled types whose `type` is `null`,
+  // and they always win a name collision with a custom type.
+  if (!schemaType.type) {
     throw new Error(
       `${base} '${name}' collides with a Sanity built-in type, so \`.get('${name}')\` returned the built-in type instead of your custom type.`,
     )
   }
   throw new Error(base)
-}
-
-const ROOT_PLACEHOLDER_NAME = '__portableTextBridgeRoot'
-
-/**
- * The root compiles under a reserved placeholder name: `.get(rawType.name)`
- * on a root named like a core built-in (`text`, `image`, ...) would return
- * the built-in, since core built-ins always win a name collision. The
- * definition is also registered under its own name so a field elsewhere in
- * the schema typed like the root keeps resolving to it, except when a
- * built-in holds that name: core built-ins silently win the collision and
- * the `builtinTypes` extras (`slug`, `geopoint`, ...) throw a
- * duplicate-name error, so the extras are skipped up front and a
- * same-named field reference resolves to the built-in, as it would in a
- * Studio schema.
- */
-function compileType(
-  rawType: any,
-  types: ReadonlyArray<SchemaTypeDefinition> = [],
-) {
-  const siblingTypes = types.filter(
-    (type) => type.name !== ROOT_PLACEHOLDER_NAME,
-  )
-  const ownNameRegistration = builtinTypes.some(
-    (type: {name?: string}) => type.name === rawType.name,
-  )
-    ? []
-    : [rawType]
-  return SanitySchema.compile({
-    name: 'blockTypeSchema',
-    types: [
-      {...rawType, name: ROOT_PLACEHOLDER_NAME},
-      ...ownNameRegistration,
-      ...siblingTypes,
-      ...builtinTypes,
-    ],
-  }).get(ROOT_PLACEHOLDER_NAME)
 }
