@@ -23,8 +23,8 @@ export function mapDecorationRangesThroughChange(
   const steps = interpretTransaction(base, patches)
   const touchedBlocks = getTouchedBlocks(base, steps)
 
-  return (range) => {
-    const mappedRange = rangeTouchesBlocks(range, touchedBlocks)
+  return (range) =>
+    rangeTouchesBlocks(range, touchedBlocks)
       ? applyDecorationPolicy(
           range,
           mapDecorationRange(base, steps, range),
@@ -33,9 +33,6 @@ export function mapDecorationRangesThroughChange(
           editorEngine.snapshot.context.value,
         )
       : range
-
-    return mappedRange
-  }
 }
 
 type TouchedBlocks =
@@ -115,9 +112,13 @@ function rangeTouchesBlocks(
 
   const startIndex = Math.min(anchorIndex, focusIndex)
   const endIndex = Math.max(anchorIndex, focusIndex)
-  return [...touchedBlocks.baseIndexes].some(
-    (index) => index >= startIndex && index <= endIndex,
-  )
+  for (const index of touchedBlocks.baseIndexes) {
+    if (index >= startIndex && index <= endIndex) {
+      return true
+    }
+  }
+
+  return false
 }
 
 function pointBlockIndex(
@@ -224,7 +225,7 @@ function rangeDirectionChanged(
   )
 }
 
-export function changeToPatches(
+function changeToPatches(
   editorEngine: PortableTextEditorEngine,
   change: Change,
 ): Array<Patch> {
