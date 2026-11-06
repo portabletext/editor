@@ -1214,7 +1214,7 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
     expect(mapped).toBeNull()
   })
 
-  test('Probe partial-collision merge: a container remove.node survives descendant moves and still invalidates the sibling it does not cover', () => {
+  test('Probe partial-collision merge: every uniquely keyed surviving descendant moves before its container removal', () => {
     const kA = 'kA'
     const kB = 'kB'
     const collidingKey = 's1'
@@ -1264,6 +1264,7 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
 
     const steps = interpretTransaction(seed, patches)
 
+    // overrides #3208: same-key final-state evidence preserves ordinary descendants
     expect(steps).toEqual([
       {
         type: 'set.key',
@@ -1275,6 +1276,11 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
         from: spanPath(kB, renamedKey),
         to: spanPath(kA, renamedKey),
       },
+      {
+        type: 'move.node',
+        from: spanPath(kB, untouchedSibling),
+        to: spanPath(kA, untouchedSibling),
+      },
       {type: 'remove.node', path: [{_key: kB}]},
     ] satisfies Array<Step>)
 
@@ -1283,7 +1289,10 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
       offset: 2,
     })
 
-    expect(mapped).toBeNull()
+    expect(mapped).toEqual({
+      path: spanPath(kA, untouchedSibling),
+      offset: 2,
+    })
   })
 
   test('Probe A: an unrelated identical delete and insert in different blocks never pairs', () => {
@@ -1377,6 +1386,210 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
 
     expect(steps).toEqual([
       {type: 'remove.text', path: spanPath(b0, s0), offset: 0, length: 3},
+    ] satisfies Array<Step>)
+  })
+
+  test('a surviving descendant with the same key moves before its removed container', () => {
+    const seed = [
+      makeBlock('b1', 's1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'bar ', marks: []},
+          {_type: 'span', _key: 's3', text: 'baz', marks: []},
+        ],
+      } satisfies PortableTextBlock,
+    ]
+    const patches: Array<Patch> = [
+      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        position: 'after',
+        items: [
+          {_type: 'span', _key: 's2', text: 'bar ', marks: []},
+          {_type: 'span', _key: 's3', text: 'baz', marks: []},
+        ],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {
+        type: 'move.node',
+        from: spanPath('b2', 's2'),
+        to: spanPath('b1', 's2'),
+      },
+      {
+        type: 'move.node',
+        from: spanPath('b2', 's3'),
+        to: spanPath('b1', 's3'),
+      },
+      {type: 'remove.node', path: [{_key: 'b2'}]},
+    ] satisfies Array<Step>)
+  })
+
+  test('an intermediate matching node removed before the final value is not a destination', () => {
+    const seed = [makeBlock('b0', 's0', 'foo tail')]
+    const patches: Array<Patch> = [
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 'scratch', text: 'tail', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b0'}, 'children', {_key: 'scratch'}],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b0', 's0'), 'text'],
+        value: dmpPatch('foo tail', 'foo '),
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {type: 'remove.node', path: spanPath('b0', 'scratch')},
+      {
+        type: 'remove.text',
+        path: spanPath('b0', 's0'),
+        offset: 4,
+        length: 4,
+      },
+    ] satisfies Array<Step>)
+  })
+
+  test('a structurally identical block replacement at the same index emits key changes', () => {
+    const seed = [makeBlock('b1', 's1', 'foo')]
+    const patches: Array<Patch> = [
+      {type: 'unset', path: [{_key: 'b1'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        items: [makeBlock('b2', 's2', 'foo')],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {type: 'set.key', path: [{_key: 'b1'}], newKey: 'b2'},
+      {
+        type: 'set.key',
+        path: spanPath('b2', 's1'),
+        newKey: 's2',
+      },
+    ] satisfies Array<Step>)
+  })
+
+  test('a fresh-key copy away from a removed block stays an insertion and removal', () => {
+    const seed = [
+      makeBlock('b0', 's0', 'hello'),
+      makeBlock('b1', 's1', 'foo'),
+      makeBlock('b2', 's2', 'bye'),
+    ]
+    const patches: Array<Patch> = [
+      {type: 'unset', path: [{_key: 'b1'}], origin: 'remote'},
+      {
+        type: 'insert',
+        path: [{_key: 'b2'}],
+        position: 'after',
+        items: [makeBlock('n2', 'm2', 'foo')],
+        origin: 'remote',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {type: 'remove.node', path: [{_key: 'b1'}]},
+    ] satisfies Array<Step>)
+  })
+
+  test('more than one structurally identical replacement prevents rekey inference', () => {
+    const seed = [
+      makeBlock('b0', 's0', 'hello'),
+      makeBlock('b1', 's1', 'foo'),
+      makeBlock('b2', 's2', 'bye'),
+    ]
+    const patches: Array<Patch> = [
+      {type: 'unset', path: [{_key: 'b1'}], origin: 'remote'},
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}],
+        position: 'after',
+        items: [makeBlock('n1', 'm1', 'foo')],
+        origin: 'remote',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'b2'}],
+        position: 'after',
+        items: [makeBlock('n2', 'm2', 'foo')],
+        origin: 'remote',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {type: 'remove.node', path: [{_key: 'b1'}]},
+    ] satisfies Array<Step>)
+  })
+
+  test('a same-key move subsumes text that reconstructs the destination node', () => {
+    const seed = [
+      makeBlock('b1', 's1', 'foo'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'bar', marks: []},
+          {_type: 'span', _key: 's3', text: 'baz', marks: []},
+        ],
+      } satisfies PortableTextBlock,
+    ]
+    const patches: Array<Patch> = [
+      {
+        type: 'insert',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 's3', text: '', marks: []}],
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b1', 's3'), 'text'],
+        value: dmpPatch('', 'baz'),
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {
+        type: 'move.node',
+        from: spanPath('b2', 's3'),
+        to: spanPath('b1', 's3'),
+      },
+      {type: 'remove.node', path: [{_key: 'b2'}]},
     ] satisfies Array<Step>)
   })
 
