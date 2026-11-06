@@ -293,7 +293,7 @@ describe(mapPointThroughStep.name, () => {
       })
     })
 
-    test('maps a point at the end of the moved range to the destination end with the default (forward) affinity', () => {
+    test('leaves a point at the end of the moved range behind with forward affinity', () => {
       const point = {
         path: [{_key: 'b1'}, 'children', {_key: 's1'}],
         offset: 11,
@@ -307,10 +307,8 @@ describe(mapPointThroughStep.name, () => {
         },
         to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
       }
-      expect(mapPointThroughStep(step, point)).toEqual({
-        path: [{_key: 'b2'}, 'children', {_key: 's2'}],
-        offset: 7,
-      })
+      // overrides #3208: forward affinity attaches the end boundary after the moved text
+      expect(mapPointThroughStep(step, point)).toBe(point)
     })
 
     test('leaves a point at the start of the moved range behind with backward affinity', () => {
@@ -332,7 +330,7 @@ describe(mapPointThroughStep.name, () => {
       )
     })
 
-    test('leaves a point at the end of the moved range behind with backward affinity', () => {
+    test('maps a point at the end of the moved range with backward affinity', () => {
       const point = {
         path: [{_key: 'b1'}, 'children', {_key: 's1'}],
         offset: 11,
@@ -346,9 +344,11 @@ describe(mapPointThroughStep.name, () => {
         },
         to: {path: [{_key: 'b2'}, 'children', {_key: 's2'}], offset: 0},
       }
-      expect(mapPointThroughStep(step, point, {affinity: 'backward'})).toBe(
-        point,
-      )
+      // overrides #3208: structural move boundaries remain attached to the moved text
+      expect(mapPointThroughStep(step, point, {affinity: 'backward'})).toEqual({
+        path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+        offset: 7,
+      })
     })
 
     test('a point strictly inside the moved range rides regardless of affinity', () => {

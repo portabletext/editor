@@ -149,7 +149,7 @@ describe(mapRange.name, () => {
     })
   })
 
-  test('a move.text at the range boundaries carries the anchor along (forward) but leaves the focus behind (backward)', () => {
+  test('a move.text at the range boundaries carries both edges with the moved text', () => {
     const range = {
       anchor: {path: spanA, offset: 4},
       focus: {path: spanA, offset: 8},
@@ -162,10 +162,80 @@ describe(mapRange.name, () => {
       },
     ]
 
+    // overrides #3208: structural move boundaries remain attached to the moved text
     expect(mapRange(steps, range)).toEqual({
       anchor: {path: spanB, offset: 0},
-      focus: {path: spanA, offset: 8},
+      focus: {path: spanB, offset: 4},
     })
+  })
+
+  test('a move.text carries both edges of a backward range with the moved text', () => {
+    const range = {
+      anchor: {path: spanA, offset: 8},
+      focus: {path: spanA, offset: 4},
+    }
+    const steps: Array<Step> = [
+      {
+        type: 'move.text',
+        from: {path: spanA, offset: 4, length: 4},
+        to: {path: spanB, offset: 0},
+      },
+    ]
+
+    expect(mapRange(steps, range)).toEqual({
+      anchor: {path: spanB, offset: 4},
+      focus: {path: spanB, offset: 0},
+    })
+  })
+
+  test('an insertion at the end of a backward range stays outside the range', () => {
+    const range = {
+      anchor: {path: spanA, offset: 8},
+      focus: {path: spanA, offset: 4},
+    }
+    const steps: Array<Step> = [
+      {type: 'insert.text', path: spanA, offset: 8, length: 3},
+    ]
+
+    expect(mapRange(steps, range)).toEqual({
+      anchor: {path: spanA, offset: 8},
+      focus: {path: spanA, offset: 4},
+    })
+  })
+
+  test('a collapsed range at a move boundary stays collapsed at the destination', () => {
+    const range = {
+      anchor: {path: spanA, offset: 8},
+      focus: {path: spanA, offset: 8},
+    }
+    const steps: Array<Step> = [
+      {
+        type: 'move.text',
+        from: {path: spanA, offset: 4, length: 4},
+        to: {path: spanB, offset: 0},
+      },
+    ]
+
+    expect(mapRange(steps, range)).toEqual({
+      anchor: {path: spanB, offset: 4},
+      focus: {path: spanB, offset: 4},
+    })
+  })
+
+  test('a collapsed range at the start of moved text stays behind', () => {
+    const range = {
+      anchor: {path: spanA, offset: 4},
+      focus: {path: spanA, offset: 4},
+    }
+    const steps: Array<Step> = [
+      {
+        type: 'move.text',
+        from: {path: spanA, offset: 4, length: 4},
+        to: {path: spanB, offset: 0},
+      },
+    ]
+
+    expect(mapRange(steps, range)).toEqual(range)
   })
 
   test('an unrelated step on a different path leaves the range untransformed', () => {

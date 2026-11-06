@@ -34,7 +34,7 @@ const newPoint = mapPoint(steps, {
 })
 ```
 
-`mapPoint`'s `affinity` option (default `'forward'`) decides which side of an edit a point sitting exactly on the boundary lands on: forward moves it with an insertion made at that offset, backward leaves it behind. `mapRange` maps both ends with inward affinity, so text inserted exactly at a range's edge never gets swallowed into the range.
+`mapPoint`'s `affinity` option (default `'forward'`) decides which side of an insertion a point sitting exactly on the boundary lands on: forward moves it with text inserted at that offset, backward leaves it behind. At a `move.text` boundary, the start follows with forward affinity and the end follows with backward affinity, attaching the point to the moved character on its side. `mapRange` maps the document-order start forward and end backward when both are on the same path, so text inserted exactly at a range's edge never gets swallowed into the range. Following the end of moved text with backward affinity differs from #3208's original design.
 
 ## Step kinds
 

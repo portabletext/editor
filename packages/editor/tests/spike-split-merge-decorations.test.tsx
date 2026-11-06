@@ -480,7 +480,7 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       selection: selection('b1', 's1', 0, 'b1', 's1', 5),
       edit: (editor: Editor) => splitBlock(editor, 'b1', 's1', 5),
       editedValue: ['Hello', ' there world'],
-      editedSelection: selection('b1', 's1', 0, 'k2', 's1', 0),
+      editedSelection: selection('b1', 's1', 0, 'b1', 's1', 5),
       undoneSelection: selection('b1', 's1', 0, 'b1', 's1', 5),
     },
     {
