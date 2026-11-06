@@ -11,15 +11,15 @@ import {
 import {buildListIndexMap, serializePath} from './build-list-index-map'
 
 /**
- * One store per editor: a single `operation` subscription maintains the
- * list index map, and per-path subscriber buckets make notification
- * O(changed paths) rather than O(subscribers).
+ * One store per editor: `change` events maintain the list index map, `ready`
+ * seeds it after initial value sync, and per-path subscriber buckets make
+ * notification O(changed paths) rather than O(subscribers).
  */
 type ListIndexStore = {
   get: (serializedPath: string) => number | undefined
   subscribeKey: (serializedPath: string, callback: () => void) => () => void
   /**
-   * Starts the `operation` subscription. Returns the unsubscribe.
+   * Starts the event subscriptions. Returns the unsubscribe.
    */
   subscribe: () => () => void
 }
@@ -82,14 +82,16 @@ function createListIndexStore(editor: Editor): ListIndexStore {
       // the whole burst is why this needs `batch` rather than a last-event
       // delivery, which would drop a structural op whenever a text op
       // happened to be last in the burst.
-      const subscription = editor.on(
-        'operation',
+      const changeSubscription = editor.on(
+        'change',
         (events) => {
           if (
-            events.some(
-              (event) =>
-                event.operation.type !== 'insert.text' &&
-                event.operation.type !== 'remove.text',
+            events.some((event) =>
+              event.operations.some(
+                (operation) =>
+                  operation.type !== 'insert.text' &&
+                  operation.type !== 'remove.text',
+              ),
             )
           ) {
             rebuild()
@@ -97,9 +99,11 @@ function createListIndexStore(editor: Editor): ListIndexStore {
         },
         {batch: true},
       )
+      const readySubscription = editor.on('ready', rebuild)
 
       return () => {
-        subscription.unsubscribe()
+        changeSubscription.unsubscribe()
+        readySubscription.unsubscribe()
       }
     },
   }
@@ -119,7 +123,7 @@ const ListIndexContext = createContext<ListIndexStore | undefined>(undefined)
  * </EditorProvider>
  * ```
  *
- * The map is rebuilt at most once per microtask burst of operations,
+ * The map is rebuilt at most once per microtask burst of changes,
  * regardless of how many operations the burst contains or how many
  * components read it, and only when the burst contains an operation that can
  * affect list indices. Reads via {@link useListIndex} only re-render when the
