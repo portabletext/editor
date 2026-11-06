@@ -51,9 +51,10 @@ export type RemoveTextStep = {
 }
 
 /**
- * A point strictly inside `from` always rides to `to` with its relative
- * offset. A point exactly at either edge of `from` rides under
- * `'forward'` affinity (the default) and stays under `'backward'`.
+ * A point strictly inside `from` always follows the moved text. At the
+ * boundaries, the start follows with forward affinity and the end follows
+ * with backward affinity: each affinity attaches the point to the moved
+ * character on its side.
  * @public
  */
 export type MoveTextStep = {
@@ -245,7 +246,9 @@ export function mapPointThroughStep(
         step.from.offset < point.offset &&
         point.offset < step.from.offset + step.from.length
       const rides =
-        insideRange || ((atStart || atEnd) && affinity === 'forward')
+        insideRange ||
+        (atStart && affinity === 'forward') ||
+        (atEnd && affinity === 'backward')
 
       if (!rides) {
         return point
@@ -297,18 +300,21 @@ export function mapPoint(
 }
 
 /**
- * Map a range through a batch of steps with inward affinity: the anchor
- * rides forward, the focus rides backward, so text inserted exactly at a
- * range edge lands outside the range rather than being swallowed into it.
- * This assumes a normalized forward range (anchor before focus);
- * consumers normalize a backward range before calling.
+ * Map a range through a batch of steps with inward affinity: the
+ * document-order start rides forward and the end rides backward, so text
+ * inserted exactly at a range edge lands outside the range. At a moved-text
+ * boundary, the start follows with forward affinity and the end follows with
+ * backward affinity, attaching each edge to the moved character on its
+ * inward side.
+ * For points on different keyed paths, their document order is unavailable
+ * without the document, so anchor and focus retain their conventional
+ * forward/backward affinities.
  *
  * A collapsed range (anchor and focus at the same address) maps both ends
  * with backward affinity instead, so it can never inflate into an
  * inverted range at an insertion point.
  *
- * Returns `null` when either end is lost. Output for a backward range
- * (anchor after focus) is unspecified.
+ * Returns `null` when either end is lost.
  * @public
  */
 export function mapRange(
@@ -326,11 +332,14 @@ export function mapRange(
     return point === null ? null : {anchor: point, focus: point}
   }
 
+  const isBackwardOnSamePath =
+    pathEquals(range.anchor.path, range.focus.path) &&
+    range.anchor.offset > range.focus.offset
   const anchor = mapPoint(steps, range.anchor, {
-    affinity: 'forward',
+    affinity: isBackwardOnSamePath ? 'backward' : 'forward',
   })
   const focus = mapPoint(steps, range.focus, {
-    affinity: 'backward',
+    affinity: isBackwardOnSamePath ? 'forward' : 'backward',
   })
 
   if (anchor === null || focus === null) {
