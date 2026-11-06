@@ -108,15 +108,15 @@ blocks and 1,000 prop decorations rendered:
 
 | Workload                   |   Branch |       Base | Ratio |
 | -------------------------- | -------: | ---------: | ----: |
-| 50 text insertions         | 209.1 ms |   296.5 ms | 0.71x |
-| 20 Enters                  | 225.5 ms |   406.5 ms | 0.55x |
-| 10 full-range deletes      |  50.8 ms |    78.8 ms | 0.64x |
-| 10 three-block pastes      | 333.2 ms | 1,342.4 ms | 0.25x |
-| One 216-patch remote batch | 176.6 ms |   188.8 ms | 0.94x |
+| 50 text insertions         | 234.1 ms |   300.6 ms | 0.78x |
+| 20 Enters                  | 243.1 ms |   361.0 ms | 0.67x |
+| 10 full-range deletes      |  52.8 ms |    93.2 ms | 0.57x |
+| 10 three-block pastes      | 381.2 ms | 1,451.4 ms | 0.26x |
+| One 216-patch remote batch | 178.6 ms |   234.2 ms | 0.76x |
 
 The remote batch contains 210 text insertions across distinct blocks plus a
 split, merge, block insertion, and block removal in one change. Its 0.94x
-ratio is below the 1.5x investigation threshold. Full run values and harness
+0.76x ratio is below the 1.5x investigation threshold. Full run values and harness
 details are in `/workspace/proposals/perf-report.md`.
 
 ## Known limits and follow-ups
