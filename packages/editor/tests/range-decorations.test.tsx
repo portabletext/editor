@@ -778,6 +778,156 @@ describe('RangeDecorations', () => {
     },
   )
 
+  test.each([
+    {
+      name: 'two sequential removals at the same offset',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'fooSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('fooSbaz', 'foobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+      ],
+      survives: false,
+    },
+    {
+      name: 'an insertion before the range and removal at its shifted offset',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'xxfooQRSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('xxfooQRSbaz', 'xxfoobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+      ],
+      survives: false,
+    },
+    {
+      name: 'removing all but one original character',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'fooSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+      ],
+      survives: true,
+    },
+  ])(
+    'Scenario: remote $name applies decoration survival from steps',
+    async ({patches, survives}) => {
+      const onMoved = vi.fn()
+      const rangeDecoration: RangeDecoration = {
+        component: ({children}) => <span>{children}</span>,
+        onMoved,
+        selection: acceptanceSelection('b0', 's0', 3, 'b0', 's0', 6),
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        initialValue: [acceptanceBlock('b0', 's0', 'fooQRSbaz')],
+        editableProps: {rangeDecorations: [rangeDecoration]},
+      })
+
+      editor.send({type: 'apply', patches})
+
+      await vi.waitFor(() => {
+        expect(onMoved.mock.calls).toEqual([
+          [
+            {
+              newSelection: survives
+                ? acceptanceSelection('b0', 's0', 3, 'b0', 's0', 4)
+                : null,
+              rangeDecoration,
+              origin: 'remote',
+            },
+          ],
+        ])
+      })
+    },
+  )
+
+  test('Scenario: one remote batch applies both offset-shifting removal patterns', async () => {
+    const firstOnMoved = vi.fn()
+    const secondOnMoved = vi.fn()
+    const firstSelection = acceptanceSelection('b0', 's0', 3, 'b0', 's0', 6)
+    const secondSelection = acceptanceSelection('b0', 's1', 3, 'b0', 's1', 6)
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      initialValue: [
+        {
+          ...acceptanceBlock('b0', 's0', 'foobarbaz'),
+          children: [
+            {_key: 's0', _type: 'span', marks: [], text: 'fooQRSbaz'},
+            {_key: 's1', _type: 'span', marks: [], text: 'fooQRSbaz'},
+          ],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: [
+          {
+            component: ({children}) => <span>{children}</span>,
+            onMoved: firstOnMoved,
+            selection: firstSelection,
+          },
+          {
+            component: ({children}) => <span>{children}</span>,
+            onMoved: secondOnMoved,
+            selection: secondSelection,
+          },
+        ],
+      },
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'fooSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('fooSbaz', 'foobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('fooQRSbaz', 'xxfooQRSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's1'},
+          'text',
+        ]),
+        diffMatchPatch('xxfooQRSbaz', 'xxfoobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's1'},
+          'text',
+        ]),
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(firstOnMoved.mock.calls[0]?.[0].newSelection).toEqual(null)
+      expect(secondOnMoved.mock.calls[0]?.[0].newSelection).toEqual(null)
+    })
+  })
+
   test('Scenario: A repair triggered by a remote patch reports a remote origin', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
