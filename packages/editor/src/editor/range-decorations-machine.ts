@@ -756,7 +756,7 @@ export const rangeDecorationsMachine = setup({
               mappings: result.mappings,
             })
           }
-        } else if (!context.readOnly) {
+        } else {
           source.decoratedRanges = movePropDecoratedRanges(
             source.decoratedRanges,
             mapRange,
