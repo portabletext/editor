@@ -306,7 +306,7 @@ export const abstractInsertBehaviors = [
               type: 'insert.block',
               block: focusTextBlockAfter,
               placement: 'auto',
-              select: event.select === 'end' ? 'none' : 'end',
+              select: (event.select ?? 'end') === 'end' ? 'none' : 'end',
             }),
           )
         }
