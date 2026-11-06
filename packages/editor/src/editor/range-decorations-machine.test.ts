@@ -11,9 +11,8 @@ import {rangeDecorationsMachine} from './range-decorations-machine'
 
 /**
  * A minimal stand-in for `PortableTextEditorEngine`: only the fields the
- * machine's actions and `transformRange` (for `engine operation` events)
- * actually touch. `decorate.fn` itself is never invoked, so `schema`/`value`
- * only need to satisfy path/range comparisons, not real decoration.
+ * machine's actions touch. `decorate.fn` itself is never invoked, so
+ * `schema`/`value` only need to satisfy path/range comparisons.
  */
 function createEditorEngineStub(
   blockKey: string,
