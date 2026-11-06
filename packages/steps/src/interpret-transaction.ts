@@ -23,7 +23,10 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  * `diffMatchPatch`'s offsets only mean anything against the span text they
  * were computed from, which shifts patch by patch within the same
  * transaction (a decorator applied mid-span, say, whose second
- * `diffMatchPatch` targets the span text left behind by the first).
+ * `diffMatchPatch` targets the span text left behind by the first). After
+ * that replay, unresolved removals are compared with destinations that
+ * survive in the final working copy, so intermediate patch order cannot
+ * hide a structural move or turn a discarded scratch node into one.
  *
  * Pairing a removal with an insertion is a claim that one node moved (a
  * block split's tail, a decorator carving a span in three, a merge folding
@@ -38,10 +41,11 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  *   text matches it exactly and is at least 2 characters (a single
  *   character is too common to trust). A whole-node removal (`unset` of
  *   a keyed segment) can land in either patch order (a block merge's
- *   `insert` can arrive before or after the `unset` it pairs with); a
- *   removal that only carved text out of a still-living span must
- *   precede the insertion, the shape a block split or a decorator carve
- *   produces. A removal and insertion that land on the same path pair
+ *   `insert` can arrive before or after the `unset` it pairs with). The
+ *   same is true for a text carve when the inserted node survives in the
+ *   final value, which covers insert-first remote splits without admitting
+ *   transaction-local scratch nodes. A removal and insertion that land on
+ *   the same path pair
  *   with nothing: that's the same node reappearing at a new position in
  *   its array (a block reorder), not content moving between nodes, and
  *   `move.text` has nothing to add.
@@ -132,6 +136,22 @@ export function interpretTransaction(
       collectKeyedNodes(block, []).map((keyedNode) => keyedNode.key),
     ),
   )
+  const preExistingNodePaths = new Set(
+    base.flatMap((block) =>
+      collectKeyedNodes(block, [{_key: block._key}]).map((keyedNode) =>
+        JSON.stringify(keyedNode.path),
+      ),
+    ),
+  )
+  const preExistingKeyCounts = new Map<string, number>()
+  for (const block of base) {
+    for (const keyedNode of collectKeyedNodes(block, [{_key: block._key}])) {
+      preExistingKeyCounts.set(
+        keyedNode.key,
+        (preExistingKeyCounts.get(keyedNode.key) ?? 0) + 1,
+      )
+    }
+  }
 
   // A `set` on `_key` (a rename raised ahead of a merge to dodge a
   // collision, say) gives a transaction-local key the same lineage back to
@@ -199,6 +219,7 @@ export function interpretTransaction(
                 path: spanPath,
                 offset,
                 slotIndex,
+                isBlockInsertion: false,
                 consumed: false,
               })
             }
@@ -216,6 +237,8 @@ export function interpretTransaction(
                 from: {path: spanPath, offset, length: text.length},
                 slotIndex,
                 isNodeRemoval: false,
+                isBlockRemoval: false,
+                netEligible: preExistingNodePaths.has(JSON.stringify(spanPath)),
                 consumed: false,
               })
             }
@@ -306,6 +329,10 @@ export function interpretTransaction(
               },
               slotIndex,
               isNodeRemoval: true,
+              isBlockRemoval: patch.path.length === 1,
+              netEligible: preExistingNodePaths.has(
+                JSON.stringify(representative.path),
+              ),
               consumed: false,
             })
           }
@@ -315,17 +342,13 @@ export function interpretTransaction(
               key: lastSegment._key,
               path: patch.path as StepPath,
               slotIndex,
+              sourceNode,
             })
           }
 
-          // A renamed descendant is independently trackable even though
-          // the removal here targets its container, not the descendant
-          // itself (a block merge unsets the whole donor block after
-          // renaming every colliding child ahead of it, say): each one
-          // reappearing elsewhere is its own move, worth recognizing on
-          // top of whatever the container's own key does. An ordinary
-          // (never-renamed) descendant stays untracked here: nothing
-          // resolves its own move.
+          // A pre-existing descendant is independently trackable even though
+          // the removal targets its container. Final-state filtering below
+          // ensures only a unique surviving reappearance becomes a move.
           for (const keyedNode of collectKeyedNodes(
             sourceNode,
             patch.path as StepPath,
@@ -334,11 +357,16 @@ export function interpretTransaction(
               continue
             }
             const renamedPath = renamedKeyPaths.get(keyedNode.key)
-            if (renamedPath && pathEquals(renamedPath, keyedNode.path)) {
+            if (
+              (preExistingKeyCounts.get(keyedNode.key) === 1 &&
+                preExistingNodePaths.has(JSON.stringify(keyedNode.path))) ||
+              (renamedPath && pathEquals(renamedPath, keyedNode.path))
+            ) {
               nodeRemovals.push({
                 key: keyedNode.key,
                 path: keyedNode.path,
                 slotIndex,
+                sourceNode: keyedNode.node,
               })
             }
           }
@@ -373,6 +401,7 @@ export function interpretTransaction(
               path: representative.path,
               offset: 0,
               slotIndex: pushSlot(),
+              isBlockInsertion: itemPath.length === 1,
               consumed: false,
             })
           }
@@ -393,12 +422,17 @@ export function interpretTransaction(
     }
   }
 
-  const steps = assembleSteps(
-    slots,
-    removalCandidates,
-    insertionCandidates,
-    nodeRemovals,
-    nodeInsertions,
+  const steps = applyNetRekeys(
+    base,
+    workingCopy,
+    assembleSteps(
+      slots,
+      removalCandidates,
+      insertionCandidates,
+      nodeRemovals,
+      nodeInsertions,
+      workingCopy,
+    ),
   )
 
   // @ts-expect-error - dot notation trips `noPropertyAccessFromIndexSignature`
@@ -416,6 +450,8 @@ type RemovalCandidate = {
   from: {path: StepPath; offset: number; length: number}
   slotIndex: number
   isNodeRemoval: boolean
+  isBlockRemoval: boolean
+  netEligible: boolean
   consumed: boolean
 }
 
@@ -425,18 +461,25 @@ type InsertionCandidate = {
   path: StepPath
   offset: number
   slotIndex: number
+  isBlockInsertion: boolean
   consumed: boolean
 }
 
 type Pairing = {removal: RemovalCandidate; insertion: InsertionCandidate}
 
-type NodeRemoval = {key: string; path: StepPath; slotIndex: number}
+type NodeRemoval = {
+  key: string
+  path: StepPath
+  slotIndex: number
+  sourceNode: unknown
+}
 type NodeInsertion = {key: string; path: StepPath; slotIndex: number}
 type NodeMove = {
   from: StepPath
   to: StepPath
   removalSlotIndex: number
   insertionSlotIndex: number
+  sourceNode: unknown
 }
 
 /**
@@ -484,6 +527,7 @@ function resolveNodeMoves(
       to: insertion.path,
       removalSlotIndex: removal.slotIndex,
       insertionSlotIndex: insertion.slotIndex,
+      sourceNode: removal.sourceNode,
     })
   }
   return moves
@@ -517,8 +561,30 @@ function assembleSteps(
   insertionCandidates: ReadonlyArray<InsertionCandidate>,
   nodeRemovals: ReadonlyArray<NodeRemoval>,
   nodeInsertions: ReadonlyArray<NodeInsertion>,
+  finalValue: ReadonlyArray<PortableTextBlock>,
 ): Array<Step> {
-  const pairings = pairMoves(removalCandidates, insertionCandidates)
+  const finalKeyCounts = new Map<string, number>()
+  for (const block of finalValue) {
+    for (const keyedNode of collectKeyedNodes(block, [{_key: block._key}])) {
+      finalKeyCounts.set(
+        keyedNode.key,
+        (finalKeyCounts.get(keyedNode.key) ?? 0) + 1,
+      )
+    }
+  }
+  const pairings = pairMoves(removalCandidates, insertionCandidates, false)
+  const survivingInsertionCandidates = insertionCandidates.filter(
+    (candidate) =>
+      candidate.kind === 'fold' ||
+      getValue(finalValue, candidate.path) !== undefined,
+  )
+  pairings.push(
+    ...pairMoves(
+      removalCandidates.filter((candidate) => candidate.netEligible),
+      survivingInsertionCandidates,
+      true,
+    ),
+  )
 
   const pairingsByInsertionSlot = new Map<number, Pairing>()
   const nulledRemovalSlots = new Set<number>()
@@ -529,7 +595,9 @@ function assembleSteps(
 
   const nodeMoves = resolveNodeMoves(
     nodeRemovals.filter(
-      (removal) => !nulledRemovalSlots.has(removal.slotIndex),
+      (removal) =>
+        !nulledRemovalSlots.has(removal.slotIndex) &&
+        (finalKeyCounts.get(removal.key) ?? 0) <= 1,
     ),
     nodeInsertions.filter(
       (insertion) =>
@@ -538,6 +606,18 @@ function assembleSteps(
             candidate.consumed && pathEquals(candidate.path, insertion.path),
         ),
     ),
+  )
+
+  const nonNestedNodeMoves = nodeMoves.filter(
+    (move) =>
+      !nodeMoves.some(
+        (containerMove) =>
+          containerMove !== move &&
+          containerMove.from.length < move.from.length &&
+          pathContains(containerMove.from, move.from) &&
+          containerMove.to.length < move.to.length &&
+          pathContains(containerMove.to, move.to),
+      ),
   )
 
   const supersededSlots = new Set<number>()
@@ -559,13 +639,21 @@ function assembleSteps(
     {step: Step; afterInsertionSlot: number}
   >()
 
-  for (const move of nodeMoves) {
+  for (const move of nonNestedNodeMoves) {
     supersededSlots.add(move.removalSlotIndex)
     nodeMoveByInsertionSlot.set(move.insertionSlotIndex, move)
     for (let i = 0; i < slots.length; i++) {
       const step = slots[i]
       const path = step ? stepPath(step) : undefined
       if (path && pathContains(move.from, path)) {
+        supersededSlots.add(i)
+      }
+      if (
+        i > move.insertionSlotIndex &&
+        path &&
+        pathContains(move.to, path) &&
+        structurallyEqual(move.sourceNode, getValue(finalValue, move.to))
+      ) {
         supersededSlots.add(i)
       }
     }
@@ -655,6 +743,7 @@ function assembleSteps(
 function pairMoves(
   removalCandidates: ReadonlyArray<RemovalCandidate>,
   insertionCandidates: ReadonlyArray<InsertionCandidate>,
+  allowReorderedTextCarve: boolean,
 ): Array<Pairing> {
   const pairings: Array<Pairing> = []
 
@@ -663,7 +752,11 @@ function pairMoves(
       return
     }
 
-    const eligibleRemovals = eligibleRemovalsFor(insertion, removalCandidates)
+    const eligibleRemovals = eligibleRemovalsFor(
+      insertion,
+      removalCandidates,
+      allowReorderedTextCarve,
+    )
     if (eligibleRemovals.length !== 1) {
       return
     }
@@ -685,6 +778,7 @@ function pairMoves(
       const othersEligibleRemovals = eligibleRemovalsFor(
         other,
         removalCandidates,
+        allowReorderedTextCarve,
       )
       return (
         othersEligibleRemovals.length === 1 &&
@@ -722,6 +816,7 @@ function pairMoves(
 function eligibleRemovalsFor(
   insertion: InsertionCandidate,
   removalCandidates: ReadonlyArray<RemovalCandidate>,
+  allowReorderedTextCarve: boolean,
 ): Array<RemovalCandidate> {
   return removalCandidates.filter(
     (removal) =>
@@ -729,8 +824,11 @@ function eligibleRemovalsFor(
       removal.text === insertion.text &&
       removal.text.length >= 2 &&
       !pathEquals(removal.from.path, insertion.path) &&
+      !(removal.isBlockRemoval && insertion.isBlockInsertion) &&
       (insertion.kind === 'node'
-        ? removal.isNodeRemoval || removal.slotIndex < insertion.slotIndex
+        ? removal.isNodeRemoval ||
+          removal.slotIndex < insertion.slotIndex ||
+          allowReorderedTextCarve
         : removal.isNodeRemoval),
   )
 }
@@ -796,6 +894,10 @@ function nodeChildren(node: unknown): Array<unknown> | undefined {
   }
   const children = node['children']
   return Array.isArray(children) ? children : undefined
+}
+
+function structurallyEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right)
 }
 
 function asKeyedChildren(
@@ -885,15 +987,15 @@ function stepPath(step: Step): StepPath | undefined {
 function collectKeyedNodes(
   node: unknown,
   path: StepPath,
-): Array<{key: string; path: StepPath}> {
+): Array<{key: string; path: StepPath; node: unknown}> {
   if (!isPlainObject(node)) {
     return []
   }
 
-  const results: Array<{key: string; path: StepPath}> = []
+  const results: Array<{key: string; path: StepPath; node: unknown}> = []
   const key = nodeKey(node)
   if (key !== undefined) {
-    results.push({key, path})
+    results.push({key, path, node})
   }
 
   for (const [propertyName, value] of Object.entries(node)) {
@@ -1004,7 +1106,7 @@ function removeAt(root: unknown, path: Path): void {
 
 function applyInsert(root: unknown, patch: InsertPatch): void {
   const anchorKey = patch.path[patch.path.length - 1]
-  if (!isKeyedSegment(anchorKey)) {
+  if (!isKeyedSegment(anchorKey) && typeof anchorKey !== 'number') {
     return
   }
 
@@ -1013,14 +1115,148 @@ function applyInsert(root: unknown, patch: InsertPatch): void {
     return
   }
 
-  const index = parentArray.findIndex(
-    (item) => nodeKey(item) === anchorKey._key,
-  )
-  if (index === -1) {
+  const index =
+    typeof anchorKey === 'number'
+      ? anchorKey
+      : parentArray.findIndex((item) => nodeKey(item) === anchorKey._key)
+  if (index < 0 || index > parentArray.length) {
     return
   }
 
   const insertIndex = patch.position === 'after' ? index + 1 : index
   const clonedItems = patch.items.map((item) => structuredClone(item))
   parentArray.splice(insertIndex, 0, ...clonedItems)
+}
+
+function applyNetRekeys(
+  base: ReadonlyArray<PortableTextBlock>,
+  finalValue: ReadonlyArray<PortableTextBlock>,
+  steps: ReadonlyArray<Step>,
+): Array<Step> {
+  const baseKeys = new Set(
+    base.flatMap((block) =>
+      collectKeyedNodes(block, [{_key: block._key}]).map(
+        (keyedNode) => keyedNode.key,
+      ),
+    ),
+  )
+  const finalKeys = new Set(
+    finalValue.flatMap((block) =>
+      collectKeyedNodes(block, [{_key: block._key}]).map(
+        (keyedNode) => keyedNode.key,
+      ),
+    ),
+  )
+  const replacements: Array<{
+    oldRoot: StepPath
+    newRoot: StepPath
+    steps: Array<Step>
+  }> = []
+
+  for (
+    let index = 0;
+    index < Math.min(base.length, finalValue.length);
+    index++
+  ) {
+    const oldBlock = base[index]!
+    const newBlock = finalValue[index]!
+    if (
+      oldBlock._key === newBlock._key ||
+      finalKeys.has(oldBlock._key) ||
+      baseKeys.has(newBlock._key) ||
+      !structurallyEqualWithoutKeys(oldBlock, newBlock) ||
+      finalValue.filter((block) =>
+        structurallyEqualWithoutKeys(oldBlock, block),
+      ).length !== 1
+    ) {
+      continue
+    }
+
+    const oldRoot: StepPath = [{_key: oldBlock._key}]
+    const newRoot: StepPath = [{_key: newBlock._key}]
+    const keySteps: Array<Step> = [
+      {type: 'set.key', path: oldRoot, newKey: newBlock._key},
+    ]
+    collectDescendantKeyChanges(oldBlock, newBlock, newRoot, keySteps)
+    replacements.push({oldRoot, newRoot, steps: keySteps})
+  }
+
+  if (replacements.length === 0) {
+    return [...steps]
+  }
+
+  return [
+    ...replacements.flatMap((replacement) => replacement.steps),
+    ...steps.filter((step) =>
+      replacements.every((replacement) =>
+        nodeAnchoredPaths(step).every(
+          (path) =>
+            !pathContains(replacement.oldRoot, path) &&
+            !pathContains(replacement.newRoot, path),
+        ),
+      ),
+    ),
+  ]
+}
+
+function collectDescendantKeyChanges(
+  oldNode: unknown,
+  newNode: unknown,
+  parentPath: StepPath,
+  steps: Array<Step>,
+): void {
+  if (!isPlainObject(oldNode) || !isPlainObject(newNode)) {
+    return
+  }
+  for (const [propertyName, oldValue] of Object.entries(oldNode)) {
+    const newValue = newNode[propertyName]
+    if (!Array.isArray(oldValue) || !Array.isArray(newValue)) {
+      continue
+    }
+    for (
+      let index = 0;
+      index < Math.min(oldValue.length, newValue.length);
+      index++
+    ) {
+      const oldChild = oldValue[index]
+      const newChild = newValue[index]
+      const oldKey = nodeKey(oldChild)
+      const newKey = nodeKey(newChild)
+      if (oldKey === undefined || newKey === undefined) {
+        continue
+      }
+      const oldPath: StepPath = [...parentPath, propertyName, {_key: oldKey}]
+      if (oldKey !== newKey) {
+        steps.push({type: 'set.key', path: oldPath, newKey})
+      }
+      collectDescendantKeyChanges(
+        oldChild,
+        newChild,
+        [...parentPath, propertyName, {_key: newKey}],
+        steps,
+      )
+    }
+  }
+}
+
+function structurallyEqualWithoutKeys(left: unknown, right: unknown): boolean {
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return (
+      left.length === right.length &&
+      left.every((value, index) =>
+        structurallyEqualWithoutKeys(value, right[index]),
+      )
+    )
+  }
+  if (isPlainObject(left) && isPlainObject(right)) {
+    const leftEntries = Object.entries(left).filter(([key]) => key !== '_key')
+    const rightEntries = Object.entries(right).filter(([key]) => key !== '_key')
+    return (
+      leftEntries.length === rightEntries.length &&
+      leftEntries.every(([key, value]) =>
+        structurallyEqualWithoutKeys(value, right[key]),
+      )
+    )
+  }
+  return left === right
 }
