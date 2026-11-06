@@ -324,12 +324,9 @@ function reconcileRegisteredSource(
 }
 
 /**
- * A range can carry extra own keys (`backward`, from a captured editor
- * selection) that a live, edit-adjusted range never does: `transformRange`
- * always returns a plain `{anchor, focus}`. Comparing whole objects would
- * treat that extra key as a deliberate re-anchor, snapping a moved
- * decoration back to its config position or reviving a tombstoned one onto
- * destroyed content.
+ * A captured editor selection can carry a `backward` key that is not part of
+ * a decoration's live position. Comparing whole objects would treat it as a
+ * deliberate re-anchor and could revive a tombstoned decoration.
  */
 function hasSameAnchorAndFocus(
   a: NonNullable<EditorSelection>,
@@ -387,10 +384,9 @@ function movePropDecoratedRanges(
 /**
  * A `set`/`unset`/`insert` touches `range` when it targets a node inside
  * it. `insert.text`/`remove.text` touch when the affected span overlaps
- * `range`'s content: an insertion exactly at `range`'s own start/end
- * offset doesn't touch it (matching `transformRange`'s affinity), but a
- * removal reaching into `range` from either side does. A collapsed
- * `range` never touches, regardless of operation type.
+ * `range`'s content: an insertion exactly at `range`'s own start/end offset
+ * doesn't touch it, but a removal reaching into `range` from either side
+ * does. A collapsed `range` never touches, regardless of operation type.
  */
 function operationTouchesRange(
   operation: EngineOperation,
@@ -448,17 +444,12 @@ function moveRegisteredDecoratedRanges(
 
     const newRange = mapRange(currentRange)
 
-    const killedByCollapse =
-      newRange !== null &&
-      isCollapsedRange(newRange) &&
-      !isCollapsedRange(currentRange)
-
     const contentTouched = change.entries.some((entry) =>
       operationTouchesRange(entry.event.operation, currentRange, editorEngine),
     )
     const clonedCurrentRange = cloneRange(currentRange)
 
-    if (newRange === null || killedByCollapse) {
+    if (newRange === null) {
       mappings.push({
         id: liveRangeDecoration.id,
         previousRange: clonedCurrentRange,
