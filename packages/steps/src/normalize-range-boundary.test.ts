@@ -55,6 +55,38 @@ describe(normalizeRangeBoundary.name, () => {
     })
   })
 
+  test('represents a collapsed range at the preceding sibling end when requested', () => {
+    expect(
+      normalizeRangeBoundary(
+        value,
+        {
+          anchor: {path: span2, offset: 0},
+          focus: {path: span2, offset: 0},
+        },
+        {normalizeCollapsed: true},
+      ),
+    ).toEqual({
+      anchor: {path: span1, offset: 7},
+      focus: {path: span1, offset: 7},
+    })
+  })
+
+  test('recovers the next-sibling representation of a collapsed range when requested', () => {
+    expect(
+      normalizeRangeBoundary(
+        value,
+        {
+          anchor: {path: span1, offset: 7},
+          focus: {path: span1, offset: 7},
+        },
+        {representation: 'next', normalizeCollapsed: true},
+      ),
+    ).toEqual({
+      anchor: {path: span2, offset: 0},
+      focus: {path: span2, offset: 0},
+    })
+  })
+
   test('leaves an expanded range end at the next sibling start', () => {
     expect(
       normalizeRangeBoundary(value, {

@@ -46,10 +46,11 @@ export function mapDecorationRangesThroughChange(
   return (range) => {
     const mappingRange = normalizeRangeBoundary(base, range, {
       representation: 'next',
+      normalizeCollapsed: true,
     })
     const mappedRange = applyDecorationPolicy(
       range,
-      mapRange(steps, mappingRange),
+      mapRange(steps, mappingRange, {collapsedAffinity: 'both'}),
       steps,
       base,
       editorEngine.snapshot.context.value,
@@ -84,7 +85,9 @@ function applyDecorationPolicy(
   if (mappedRange === null || isCollapsedRange(range)) {
     return mappedRange === null
       ? null
-      : normalizeRangeBoundary(afterValue, mappedRange)
+      : normalizeRangeBoundary(afterValue, mappedRange, {
+          normalizeCollapsed: true,
+        })
   }
 
   if (
@@ -95,7 +98,9 @@ function applyDecorationPolicy(
     return null
   }
 
-  return normalizeRangeBoundary(afterValue, mappedRange)
+  return normalizeRangeBoundary(afterValue, mappedRange, {
+    normalizeCollapsed: true,
+  })
 }
 
 function rangeDirectionChanged(
