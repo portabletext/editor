@@ -1,9 +1,13 @@
 /**
  * The classification of a lossy conversion encountered while converting
  * Portable Text to Markdown: an annotation or decorator with no mark
- * renderer, a block style or list-item kind with no renderer, always
- * because a consumer's `renderers` option doesn't cover it (the built-in
- * renderers cover every Portable Text construct they define).
+ * renderer, a block style or list-item kind with no renderer, because a
+ * consumer's `renderers` option doesn't cover it (the built-in renderers
+ * cover every Portable Text construct they define), or a heading whose
+ * rendered text holds a line break, which the default heading renderers
+ * cannot express. That heading is written as a paragraph and reported as
+ * a `style-fallback`, unless a top-level `h1` or `h2` reads back intact
+ * as a setext heading.
  * `list-item-fallback` never fires under the default configuration: the
  * default `listItem` renderer is a single function covering every kind,
  * so the event only fires behind a consumer-supplied partial `listItem`

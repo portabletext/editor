@@ -25,7 +25,10 @@ import {
   defaultTableObjectDefinition,
 } from './default-schema'
 import type {SerializeDegradation} from './from-portable-text/degradation-report'
-import {portableTextToMarkdown} from './from-portable-text/portable-text-to-markdown'
+import {
+  portableTextToMarkdown,
+  portableTextToMarkdownWithLostContent,
+} from './from-portable-text/portable-text-to-markdown'
 import {DefaultListItemRenderer} from './from-portable-text/renderers/list-item'
 import {
   DefaultBlockquoteObjectRenderer,
@@ -33,6 +36,10 @@ import {
   DefaultListRenderer,
   DefaultTableRenderer,
 } from './from-portable-text/renderers/type'
+import type {
+  PortableTextListItemRenderer,
+  PortableTextMarkRenderer,
+} from './from-portable-text/types'
 import {markdownToPortableText} from './to-portable-text/markdown-to-portable-text'
 import {buildObjectMatcher} from './to-portable-text/matchers'
 
@@ -1754,8 +1761,9 @@ describe(portableTextToMarkdown.name, () => {
       expect(portableTextToMarkdown(portableText)).toBe('- foo  \n  \nbar')
     })
 
-    test('an empty line between hard breaks in a heading keeps the default break', () => {
+    test('an empty line between hard breaks in an h3 written as a paragraph uses a backslash break', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -1772,7 +1780,212 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe('### foo  \n  \nbar')
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('foo  \n\\\nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo\n\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\n\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\n\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an empty line between hard breaks reports the degradations of content only the backslash break rendering reaches', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const syntheticBlockKey = keyGenerator()
+      const syntheticSpanKey = keyGenerator()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo\n\nbar',
+                marks: [linkKey],
+              },
+            ],
+            markDefs: [
+              {_type: 'link', _key: linkKey, href: 'https://example.com'},
+            ],
+          },
+        ],
+        {
+          marks: {
+            link: ({children, value, renderNode}) => {
+              if (children.includes('\\\n')) {
+                renderNode({
+                  node: {
+                    _type: 'block',
+                    _key: syntheticBlockKey,
+                    style: 'normal',
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: syntheticSpanKey,
+                        text: 'baz',
+                        marks: ['missing'],
+                      },
+                    ],
+                    markDefs: [],
+                  },
+                  index: 0,
+                  isInline: false,
+                  renderNode,
+                })
+              }
+              return `[${children}](${value?.href})`
+            },
+          },
+          onDegradation,
+        },
+      )
+      expect(markdown).toBe('[foo  \n\\\nbar](https://example.com)')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k2', text: 'foo\n\nbar', marks: ['k1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [{_key: 'k1'}],
+                snippet: 'baz',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an empty line between hard breaks reports nothing from content only the rendering it replaced reaches', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const syntheticBlockKey = keyGenerator()
+      const syntheticSpanKey = keyGenerator()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo\n\nbar',
+                marks: [linkKey],
+              },
+            ],
+            markDefs: [
+              {_type: 'link', _key: linkKey, href: 'https://example.com'},
+            ],
+          },
+        ],
+        {
+          marks: {
+            link: ({children, value, renderNode}) => {
+              if (!children.includes('\\\n')) {
+                renderNode({
+                  node: {
+                    _type: 'block',
+                    _key: syntheticBlockKey,
+                    style: 'normal',
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: syntheticSpanKey,
+                        text: 'baz',
+                        marks: ['missing'],
+                      },
+                    ],
+                    markDefs: [],
+                  },
+                  index: 0,
+                  isInline: false,
+                  renderNode,
+                })
+              }
+              return `[${children}](${value?.href})`
+            },
+          },
+          onDegradation,
+        },
+      )
+      expect(markdown).toBe('[foo  \n\\\nbar](https://example.com)')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k2', text: 'foo\n\nbar', marks: ['k1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([])
     })
 
     test('an empty line between hard breaks keeps a custom hard break', () => {
@@ -2459,6 +2672,7 @@ describe(portableTextToMarkdown.name, () => {
   describe('setext headings', () => {
     test('an h1 with a hard break is written as a setext heading', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -2470,7 +2684,7 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      const markdown = portableTextToMarkdown(portableText)
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
       expect(markdown).toBe('foo  \nbar\n===')
       expect(
         markdownToPortableText(markdown, {
@@ -2485,10 +2699,12 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ])
+      expect(onDegradation.mock.calls).toEqual([])
     })
 
     test('an h2 with a hard break is written as a setext heading', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -2500,7 +2716,7 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      const markdown = portableTextToMarkdown(portableText)
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
       expect(markdown).toBe('foo  \nbar\n---')
       expect(
         markdownToPortableText(markdown, {
@@ -2515,6 +2731,7 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ])
+      expect(onDegradation.mock.calls).toEqual([])
     })
 
     test('an h1 with an empty line between hard breaks is written as a setext heading with a backslash break', () => {
@@ -3018,8 +3235,9 @@ describe(portableTextToMarkdown.name, () => {
       expect(portableTextToMarkdown(portableText)).toBe('## foo')
     })
 
-    test('an h3 with a hard break keeps the ATX heading', () => {
+    test('an h3 with a hard break is written as a paragraph and reported', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -3031,8 +3249,100 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe('### foo  \nbar')
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
+
+    test.each(['h4', 'h5', 'h6'])(
+      'an %s with a hard break is written as a paragraph and reported',
+      (style) => {
+        const keyGenerator = createTestKeyGenerator()
+        const onDegradation = vi.fn()
+        const portableText = [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style,
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'foo\nbar',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+          },
+        ]
+        const markdown = portableTextToMarkdown(portableText, {onDegradation})
+        expect(markdown).toBe('foo  \nbar')
+        expect(
+          markdownToPortableText(markdown, {
+            keyGenerator: createTestKeyGenerator(),
+          }),
+        ).toEqual([
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []},
+            ],
+            markDefs: [],
+          },
+        ])
+        expect(onDegradation.mock.calls).toEqual([
+          [
+            {
+              degradations: [
+                {
+                  type: 'style-fallback',
+                  message: `Dropped the \`${style}\` style, kept the text: a Markdown heading cannot hold a line break`,
+                  path: [{_key: 'k0'}],
+                  snippet: 'foo\\nbar',
+                },
+              ],
+              message: [
+                'Portable Text could not be serialized to Markdown without loss:',
+                `- block 0: Dropped the \`${style}\` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")`,
+              ].join('\n'),
+            },
+          ],
+        ])
+      },
+    )
 
     test('an h2 with a hard break keeps a custom h2 renderer', () => {
       const keyGenerator = createTestKeyGenerator()
@@ -3074,8 +3384,9 @@ describe(portableTextToMarkdown.name, () => {
       ).toBe('# foo  \nbar')
     })
 
-    test('an h2 with a hard break keeps the ATX heading with a custom hard break', () => {
+    test('an h2 with a hard break is written as a paragraph with a custom hard break', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -3087,13 +3398,48 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
+      const markdown = portableTextToMarkdown(portableText, {
+        hardBreak: () => '  \n',
+        onDegradation,
+      })
+      expect(markdown).toBe('foo  \nbar')
       expect(
-        portableTextToMarkdown(portableText, {hardBreak: () => '  \n'}),
-      ).toBe('## foo  \nbar')
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
 
-    test('an h2 with a hard break keeps the ATX heading with a custom block spacing', () => {
+    test('an h2 with a hard break is written as a paragraph with a custom block spacing', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -3105,13 +3451,259 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
+      const markdown = portableTextToMarkdown(portableText, {
+        blockSpacing: () => '\n\n',
+        onDegradation,
+      })
+      expect(markdown).toBe('foo  \nbar')
       expect(
-        portableTextToMarkdown(portableText, {blockSpacing: () => '\n\n'}),
-      ).toBe('## foo  \nbar')
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
 
-    test('an h2 list item with a hard break keeps the ATX heading', () => {
+    test('an h1 with a hard break is written as a paragraph with a custom block spacing', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {
+        blockSpacing: () => '\n\n',
+        onDegradation,
+      })
+      expect(markdown).toBe('foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a hard break is spaced from the next block as a paragraph', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const blockSpacing = ({current}: {current: TypedObject}) =>
+        isPortableTextBlock(current) && current.style === 'normal'
+          ? '\n\n'
+          : '\n---\n'
+      const markdown = portableTextToMarkdown(portableText, {
+        blockSpacing,
+        onDegradation,
+      })
+      expect(markdown).toBe('foo  \nbar\n\nbaz')
+      expect(
+        portableTextToMarkdown(
+          portableText.map((block) => ({...block, style: 'normal'})),
+          {blockSpacing},
+        ),
+      ).toBe('foo  \nbar\n\nbaz')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a hard break is spaced from the previous block as a paragraph', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const blockSpacing = ({next}: {next: TypedObject}) =>
+        isPortableTextBlock(next) && next.style === 'normal'
+          ? '\n\n'
+          : '\n---\n'
+      const markdown = portableTextToMarkdown(portableText, {
+        blockSpacing,
+        onDegradation,
+      })
+      expect(markdown).toBe('baz\n\nfoo  \nbar')
+      expect(
+        portableTextToMarkdown(
+          portableText.map((block) => ({...block, style: 'normal'})),
+          {blockSpacing},
+        ),
+      ).toBe('baz\n\nfoo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'baz', marks: []}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k3', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k2'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 1: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h2 list item with a hard break is written as a plain list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -3125,11 +3717,231 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe('- ## foo  \nbar')
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('- foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          listItem: 'bullet',
+          level: 1,
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
 
-    test('an h2 with a hard break keeps the ATX heading when its first line is empty', () => {
+    test('an h3 list item with a hard break reaches a custom list item renderer in the normal style', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const listItem = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        listItem: 'number',
+        level: 1,
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+        ],
+        markDefs: [],
+      }
+      const renderListItem: PortableTextListItemRenderer = ({
+        children,
+        value,
+        listIndex,
+      }) => `${listIndex}. ${value.style}: ${children}`
+      const markdown = portableTextToMarkdown([listItem], {
+        listItem: renderListItem,
+        onDegradation,
+      })
+      expect(markdown).toBe('1. normal: foo  \nbar')
+      expect(
+        portableTextToMarkdown([{...listItem, style: 'normal'}], {
+          listItem: renderListItem,
+        }),
+      ).toBe('1. normal: foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          children: [
+            {_type: 'span', _key: 'k1', text: 'normal: foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 list item ending in a hard break keeps it, as a normal list item does', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const listItem = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        listItem: 'number',
+        level: 1,
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\n', marks: []},
+        ],
+        markDefs: [],
+      }
+      const markdown = portableTextToMarkdown([listItem], {onDegradation})
+      expect(markdown).toBe('1. foo  \n')
+      expect(portableTextToMarkdown([{...listItem, style: 'normal'}])).toBe(
+        '1. foo  \n',
+      )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\n',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\n")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 list item ending in a hard break keeps it for a custom list item renderer writing after it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const listItem = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        listItem: 'number',
+        level: 1,
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\n', marks: []},
+        ],
+        markDefs: [],
+      }
+      const renderListItem: PortableTextListItemRenderer = ({children}) =>
+        `1. ${children}bar`
+      const markdown = portableTextToMarkdown([listItem], {
+        listItem: renderListItem,
+        onDegradation,
+      })
+      expect(markdown).toBe('1. foo  \nbar')
+      expect(
+        portableTextToMarkdown([{...listItem, style: 'normal'}], {
+          listItem: renderListItem,
+        }),
+      ).toBe('1. foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          listItem: 'number',
+          level: 1,
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\n',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\n")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h2 with a hard break whose first line is empty is written as a paragraph when the setext heading would not read back', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -3141,11 +3953,45 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe('##   \nfoo')
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('  \nfoo')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: '\\nfoo',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("\\nfoo")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
 
-    test('an h2 with a hard break keeps the ATX heading when its last line is empty', () => {
+    test('an h2 with a hard break whose last line is empty is written as a paragraph when the setext heading would not read back', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {
           _type: 'block',
@@ -3157,11 +4003,45 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe('## foo  \n')
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('foo  \n')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\n',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\n")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
 
-    test('an h2 with a hard break keeps the ATX heading inside an HTML block the previous block leaves open', () => {
+    test('an h2 with a hard break is written as a paragraph inside an HTML block the previous block leaves open', () => {
       const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
       const portableText = [
         {_type: 'html', _key: keyGenerator(), html: '<pre>'},
         {
@@ -3174,9 +4054,1330 @@ describe(portableTextToMarkdown.name, () => {
           markDefs: [],
         },
       ]
-      expect(portableTextToMarkdown(portableText)).toBe(
-        '<pre>\n\n## foo  \nbar',
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('<pre>\n\nfoo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([{_type: 'html', _key: 'k0', html: '<pre>\n\nfoo  \nbar'}])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k1'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 1: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h1 whose link renderer writes a line break is written as a setext heading', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo',
+              marks: [linkKey],
+            },
+          ],
+          markDefs: [
+            {
+              _type: 'link',
+              _key: linkKey,
+              href: 'https://example.com',
+              title: 'bar\nbaz',
+            },
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {
+        marks: {
+          link: ({children, value}) =>
+            `[${children}](${value.href} "${value.title}")`,
+        },
+        onDegradation,
+      })
+      expect(markdown).toBe('[foo](https://example.com "bar\nbaz")\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: ['k1']}],
+          markDefs: [
+            {
+              _type: 'link',
+              _key: 'k1',
+              href: 'https://example.com',
+              title: 'bar\nbaz',
+            },
+          ],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([])
+    })
+
+    test('an h1 whose link renderer adds text across a line break is written as a paragraph when the setext heading would not read back', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h1',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo',
+              marks: [linkKey],
+            },
+          ],
+          markDefs: [
+            {_type: 'link', _key: linkKey, href: 'https://example.com'},
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {
+        marks: {link: ({children}) => `${children}\nbar`},
+        onDegradation,
+      })
+      expect(markdown).toBe('foo\nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo bar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k1'}],
+                snippet: 'foo',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break ("foo")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 whose link renderer writes a line break is written as a paragraph and reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo',
+              marks: [linkKey],
+            },
+          ],
+          markDefs: [
+            {
+              _type: 'link',
+              _key: linkKey,
+              href: 'https://example.com',
+              title: 'bar\nbaz',
+            },
+          ],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {
+        marks: {
+          link: ({children, value}) =>
+            `[${children}](${value.href} "${value.title}")`,
+        },
+        onDegradation,
+      })
+      expect(markdown).toBe('[foo](https://example.com "bar\nbaz")')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: ['k1']}],
+          markDefs: [
+            {
+              _type: 'link',
+              _key: 'k1',
+              href: 'https://example.com',
+              title: 'bar\nbaz',
+            },
+          ],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k1'}],
+                snippet: 'foo',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a line break in a link title or image text is written as a paragraph and reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'foo',
+              marks: [linkKey],
+            },
+          ],
+          markDefs: [
+            {
+              _type: 'link',
+              _key: linkKey,
+              href: 'https://example.com',
+              title: 'bar\nbaz',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'qux ', marks: []},
+            {
+              _type: 'image',
+              _key: keyGenerator(),
+              src: 'https://example.com/foo.png',
+              alt: 'bar\nbaz',
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe(
+        [
+          '[foo](https://example.com "bar',
+          'baz")',
+          '',
+          'qux ![bar',
+          'baz](https://example.com/foo.png)',
+        ].join('\n'),
       )
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k2', text: 'foo', marks: ['k1']}],
+          markDefs: [
+            {
+              _type: 'link',
+              _key: 'k1',
+              href: 'https://example.com',
+              title: 'bar\nbaz',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k4', text: 'qux ', marks: []},
+            {
+              _type: 'image',
+              _key: 'k5',
+              src: 'https://example.com/foo.png',
+              alt: 'bar\nbaz',
+            },
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k1'}],
+                snippet: 'foo',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k3'}],
+                snippet: 'qux ',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break (2×: "foo", "qux ")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a hard break keeps the ATX heading with a custom hard break that holds no line break', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {
+        hardBreak: () => '<br>',
+        onDegradation,
+      })
+      expect(markdown).toBe('### foo<br>bar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h3',
+          children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([])
+    })
+
+    test('an h3 with a hard break and an unknown decorator reports each degradation once', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const portableText = [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'h3',
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: '# foo\nbar',
+              marks: ['fancy'],
+            },
+          ],
+          markDefs: [],
+        },
+      ]
+      const markdown = portableTextToMarkdown(portableText, {onDegradation})
+      expect(markdown).toBe('\\# foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k1', text: '# foo\nbar', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `fancy` decorator, kept the text: no `fancy` mark renderer',
+                path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+                snippet: '# foo\\nbar',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: '# foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `fancy` decorator, kept the text: no `fancy` mark renderer ("# foo\\nbar")',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("# foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+    test('an h3 with a hard break reports the degradations of content only its paragraph rendering reaches', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const nested = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'baz',
+            marks: ['missing'],
+          },
+        ],
+        markDefs: [],
+      }
+      const aside = {_type: 'aside', _key: keyGenerator(), body: [nested]}
+      const heading = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '# foo\nbar',
+            marks: [aside._key],
+          },
+        ],
+        markDefs: [aside],
+      }
+      const renderAside: PortableTextMarkRenderer<typeof aside> = ({
+        children,
+        value,
+        renderNode,
+      }) =>
+        value && children.startsWith('\\')
+          ? `${children}${renderNode({node: value.body[0]!, index: 0, isInline: false, renderNode})}`
+          : children
+      const markdown = portableTextToMarkdown([heading], {
+        marks: {aside: renderAside},
+        onDegradation,
+      })
+      expect(markdown).toBe('\\# foo  \nbarbaz')
+      const onNormalDegradation = vi.fn()
+      expect(
+        portableTextToMarkdown([{...heading, style: 'normal'}], {
+          marks: {aside: renderAside},
+          onDegradation: onNormalDegradation,
+        }),
+      ).toBe('\\# foo  \nbarbaz')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k1', text: '# foo\nbarbaz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onNormalDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [
+                  {_key: 'k3'},
+                  'markDefs',
+                  {_key: 'k2'},
+                  'body',
+                  {_key: 'k0'},
+                  'children',
+                  {_key: 'k1'},
+                ],
+                snippet: 'baz',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+            ].join('\n'),
+          },
+        ],
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [
+                  {_key: 'k3'},
+                  'markDefs',
+                  {_key: 'k2'},
+                  'body',
+                  {_key: 'k0'},
+                  'children',
+                  {_key: 'k1'},
+                ],
+                snippet: 'baz',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k3'}],
+                snippet: '# foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("# foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a hard break reports the degradations of content both its renderings reach once', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const nested = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'normal',
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: 'baz',
+            marks: ['missing'],
+          },
+        ],
+        markDefs: [],
+      }
+      const aside = {_type: 'aside', _key: keyGenerator(), body: [nested]}
+      const heading = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '# foo\nbar',
+            marks: [aside._key],
+          },
+        ],
+        markDefs: [aside],
+      }
+      const renderAside: PortableTextMarkRenderer<typeof aside> = ({
+        children,
+        value,
+        renderNode,
+      }) =>
+        value && children !== ''
+          ? `${children}${renderNode({node: value.body[0]!, index: 0, isInline: false, renderNode})}`
+          : children
+      const markdown = portableTextToMarkdown([heading], {
+        marks: {aside: renderAside},
+        onDegradation,
+      })
+      expect(markdown).toBe('\\# foo  \nbarbaz')
+      const onNormalDegradation = vi.fn()
+      expect(
+        portableTextToMarkdown([{...heading, style: 'normal'}], {
+          marks: {aside: renderAside},
+          onDegradation: onNormalDegradation,
+        }),
+      ).toBe('\\# foo  \nbarbaz')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k1', text: '# foo\nbarbaz', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onNormalDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [
+                  {_key: 'k3'},
+                  'markDefs',
+                  {_key: 'k2'},
+                  'body',
+                  {_key: 'k0'},
+                  'children',
+                  {_key: 'k1'},
+                ],
+                snippet: 'baz',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+            ].join('\n'),
+          },
+        ],
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [
+                  {_key: 'k3'},
+                  'markDefs',
+                  {_key: 'k2'},
+                  'body',
+                  {_key: 'k0'},
+                  'children',
+                  {_key: 'k1'},
+                ],
+                snippet: 'baz',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k3'}],
+                snippet: '# foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("# foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a hard break reports a heading written as a paragraph in content only its paragraph rendering reaches', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const nested = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'baz\nqux', marks: []},
+        ],
+        markDefs: [],
+      }
+      const aside = {_type: 'aside', _key: keyGenerator(), body: [nested]}
+      const heading = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        children: [
+          {
+            _type: 'span',
+            _key: keyGenerator(),
+            text: '# foo\nbar',
+            marks: [aside._key],
+          },
+        ],
+        markDefs: [aside],
+      }
+      const renderAside: PortableTextMarkRenderer<typeof aside> = ({
+        children,
+        value,
+        renderNode,
+      }) =>
+        value && children.startsWith('\\')
+          ? `${children}${renderNode({node: value.body[0]!, index: 0, isInline: false, renderNode})}`
+          : children
+      const markdown = portableTextToMarkdown([heading], {
+        marks: {aside: renderAside},
+        onDegradation,
+      })
+      expect(markdown).toBe('\\# foo  \nbarbaz  \nqux')
+      const onNormalDegradation = vi.fn()
+      expect(
+        portableTextToMarkdown([{...heading, style: 'normal'}], {
+          marks: {aside: renderAside},
+          onDegradation: onNormalDegradation,
+        }),
+      ).toBe('\\# foo  \nbarbaz  \nqux')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [
+            {_type: 'span', _key: 'k1', text: '# foo\nbarbaz\nqux', marks: []},
+          ],
+          markDefs: [],
+        },
+      ])
+      expect(onNormalDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [
+                  {_key: 'k3'},
+                  'markDefs',
+                  {_key: 'k2'},
+                  'body',
+                  {_key: 'k0'},
+                ],
+                snippet: 'baz\\nqux',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("baz\\nqux")',
+            ].join('\n'),
+          },
+        ],
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [
+                  {_key: 'k3'},
+                  'markDefs',
+                  {_key: 'k2'},
+                  'body',
+                  {_key: 'k0'},
+                ],
+                snippet: 'baz\\nqux',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k3'}],
+                snippet: '# foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break (2×: "baz\\nqux", "# foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h3 with a hard break reports a missing normal renderer, as a normal block does', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const heading = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h3',
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+        ],
+        markDefs: [],
+      }
+      const markdown = portableTextToMarkdown([heading], {
+        block: {normal: undefined},
+        onDegradation,
+      })
+      expect(markdown).toBe('foo  \nbar')
+      const onNormalDegradation = vi.fn()
+      expect(
+        portableTextToMarkdown([{...heading, style: 'normal'}], {
+          block: {normal: undefined},
+          onDegradation: onNormalDegradation,
+        }),
+      ).toBe('foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onNormalDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `normal` style, kept the text: no `normal` block renderer',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `normal` style, kept the text: no `normal` block renderer ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `normal` style, kept the text: no `normal` block renderer',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `normal` style, kept the text: no `normal` block renderer ("foo\\nbar")',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h1 written as a setext heading reports nothing from the normal renderer it replaced', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const heading = {
+        _type: 'block',
+        _key: keyGenerator(),
+        style: 'h1',
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo\nbar', marks: []},
+        ],
+        markDefs: [],
+      }
+      const options = {
+        block: {
+          normal: ({value, renderNode}) =>
+            renderNode({
+              node: {
+                ...value,
+                style: 'paragraph',
+                children: value.children.map((span) => ({
+                  ...span,
+                  marks: ['missing'],
+                })),
+              },
+              index: 0,
+              isInline: false,
+              renderNode,
+            }),
+          paragraph: ({children}) => children ?? '',
+        },
+      } satisfies Parameters<typeof portableTextToMarkdown>[1]
+      const markdown = portableTextToMarkdown([heading], {
+        ...options,
+        onDegradation,
+      })
+      expect(markdown).toBe('foo  \nbar\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([])
+      expect(portableTextToMarkdownWithLostContent([heading], options)).toEqual(
+        {markdown: 'foo  \nbar\n===', degradations: []},
+      )
+    })
+
+    test('an h1 is written as a setext heading when the normal renderer writes nothing', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'h1',
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'foo\nbar',
+                marks: [],
+              },
+            ],
+            markDefs: [],
+          },
+        ],
+        {block: {normal: () => ''}, onDegradation},
+      )
+      expect(markdown).toBe('foo  \nbar\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([])
+    })
+
+    test('an h1 written as a setext heading reports the degradations of content only the setext rendering reaches', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const syntheticBlockKey = keyGenerator()
+      const syntheticSpanKey = keyGenerator()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'h1',
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo\n\nbar',
+                marks: [linkKey],
+              },
+            ],
+            markDefs: [
+              {_type: 'link', _key: linkKey, href: 'https://example.com'},
+            ],
+          },
+        ],
+        {
+          marks: {
+            link: ({children, value, renderNode}) => {
+              if (children.includes('\\\n')) {
+                renderNode({
+                  node: {
+                    _type: 'block',
+                    _key: syntheticBlockKey,
+                    style: 'normal',
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: syntheticSpanKey,
+                        text: 'baz',
+                        marks: ['missing'],
+                      },
+                    ],
+                    markDefs: [],
+                  },
+                  index: 0,
+                  isInline: false,
+                  renderNode,
+                })
+              }
+              return `[${children}](${value?.href})`
+            },
+          },
+          onDegradation,
+        },
+      )
+      expect(markdown).toBe('[foo  \n\\\nbar](https://example.com)\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k2', text: 'foo\n\nbar', marks: ['k1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [{_key: 'k1'}],
+                snippet: 'baz',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h1 written as a setext heading reports nothing from content only the rendering it replaced reaches', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const syntheticBlockKey = keyGenerator()
+      const syntheticSpanKey = keyGenerator()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'h1',
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo\n\nbar',
+                marks: [linkKey],
+              },
+            ],
+            markDefs: [
+              {_type: 'link', _key: linkKey, href: 'https://example.com'},
+            ],
+          },
+        ],
+        {
+          marks: {
+            link: ({children, value, renderNode}) => {
+              if (!children.includes('\\\n')) {
+                renderNode({
+                  node: {
+                    _type: 'block',
+                    _key: syntheticBlockKey,
+                    style: 'normal',
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: syntheticSpanKey,
+                        text: 'baz',
+                        marks: ['missing'],
+                      },
+                    ],
+                    markDefs: [],
+                  },
+                  index: 0,
+                  isInline: false,
+                  renderNode,
+                })
+              }
+              return `[${children}](${value?.href})`
+            },
+          },
+          onDegradation,
+        },
+      )
+      expect(markdown).toBe('[foo  \n\\\nbar](https://example.com)\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k2', text: 'foo\n\nbar', marks: ['k1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([])
+    })
+
+    test('an h1 written as a setext heading reports the degradations of content both its renderings reach once', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const syntheticBlockKey = keyGenerator()
+      const syntheticSpanKey = keyGenerator()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'h1',
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'foo\nbar',
+                marks: [linkKey],
+              },
+            ],
+            markDefs: [
+              {_type: 'link', _key: linkKey, href: 'https://example.com'},
+            ],
+          },
+        ],
+        {
+          marks: {
+            link: ({children, value, renderNode}) => {
+              renderNode({
+                node: {
+                  _type: 'block',
+                  _key: syntheticBlockKey,
+                  style: 'normal',
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: syntheticSpanKey,
+                      text: 'baz',
+                      marks: ['missing'],
+                    },
+                  ],
+                  markDefs: [],
+                },
+                index: 0,
+                isInline: false,
+                renderNode,
+              })
+              return `[${children}](${value?.href})`
+            },
+          },
+          onDegradation,
+        },
+      )
+      expect(markdown).toBe('[foo  \nbar](https://example.com)\n===')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'h1',
+          children: [
+            {_type: 'span', _key: 'k2', text: 'foo\nbar', marks: ['k1']},
+          ],
+          markDefs: [{_type: 'link', _key: 'k1', href: 'https://example.com'}],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [{_key: 'k1'}],
+                snippet: 'baz',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("baz")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('an h1 whose setext heading would not read back reports the degradations of its paragraph rendering', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            style: 'h1',
+            children: [
+              {
+                _type: 'span',
+                _key: keyGenerator(),
+                text: 'foo\nbar',
+                marks: ['missing'],
+              },
+            ],
+            markDefs: [],
+          },
+        ],
+        {onDegradation},
+      )
+      expect(markdown).toBe('foo  \nbar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          children: [{_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []}],
+          markDefs: [],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'decorator-dropped',
+                message:
+                  'Removed the `missing` decorator, kept the text: no `missing` mark renderer',
+                path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+                snippet: 'foo\\nbar',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Removed the `missing` decorator, kept the text: no `missing` mark renderer ("foo\\nbar")',
+              '- block 0: Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
     })
   })
 
@@ -5924,6 +8125,1221 @@ describe(portableTextToMarkdown.name, () => {
     })
   })
 
+  describe('styles inside containers', () => {
+    const blockquoteObjectDefinition = {
+      name: 'blockquote',
+      fields: [{name: 'content', type: 'array'}],
+    } as const satisfies BlockObjectDefinition
+
+    const schemaDefinition = {
+      ...defaultSchema,
+      blockObjects: [...defaultSchema.blockObjects, blockquoteObjectDefinition],
+    }
+
+    const schemas = [
+      ['block', compileSchema(defineSchema(schemaDefinition))],
+      [
+        'myBlock',
+        compileSchema(
+          defineSchema({
+            ...schemaDefinition,
+            block: {...defaultSchema.block, name: 'myBlock'},
+          }),
+        ),
+      ],
+    ] as const
+
+    const types = {blockquote: buildObjectMatcher(blockquoteObjectDefinition)}
+    const renderers = {blockquote: DefaultBlockquoteObjectRenderer}
+    const lineBreakMarks = {
+      link: ({
+        children,
+        value,
+      }: {
+        children: string
+        value?: {href: string; title: string}
+      }) => `[${children}](${value?.href} "${value?.title}")`,
+    }
+
+    for (const [blockName, schema] of schemas) {
+      describe(`text block named \`${blockName}\``, () => {
+        test('a heading in a callout round-trips', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'callout',
+                _key: keyGenerator(),
+                tone: 'note',
+                content: [
+                  textBlock(keyGenerator, blockName, 'h1', 'foo'),
+                  textBlock(keyGenerator, blockName, 'blockquote', 'bar'),
+                ],
+              },
+            ],
+            {schema},
+          )
+
+          expect(markdown).toBe('> [!NOTE]\n> # foo\n>\n> bar')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+            }),
+          ).toEqual([
+            {
+              _type: 'callout',
+              _key: 'k4',
+              tone: 'note',
+              content: [
+                {
+                  _type: blockName,
+                  _key: 'k0',
+                  style: 'h1',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: blockName,
+                  _key: 'k2',
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+
+        test('a heading in a blockquote round-trips', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'blockquote',
+                _key: keyGenerator(),
+                content: [
+                  textBlock(keyGenerator, blockName, 'h2', 'foo'),
+                  textBlock(keyGenerator, blockName, 'normal', 'bar'),
+                ],
+              },
+            ],
+            {schema, types: renderers},
+          )
+
+          expect(markdown).toBe('> ## foo\n>\n> bar')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+              types,
+            }),
+          ).toEqual([
+            {
+              _type: 'blockquote',
+              _key: 'k4',
+              content: [
+                {
+                  _type: blockName,
+                  _key: 'k0',
+                  style: 'h2',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: blockName,
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+
+        test('a heading in a blockquote in a blockquote in a blockquote round-trips', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'blockquote',
+                _key: keyGenerator(),
+                content: [
+                  {
+                    _type: 'blockquote',
+                    _key: keyGenerator(),
+                    content: [
+                      {
+                        _type: 'blockquote',
+                        _key: keyGenerator(),
+                        content: [
+                          textBlock(keyGenerator, blockName, 'h6', 'foo'),
+                          textBlock(keyGenerator, blockName, 'normal', 'bar'),
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            {schema, types: renderers},
+          )
+
+          expect(markdown).toBe('> > > ###### foo\n> > >\n> > > bar')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+              types,
+            }),
+          ).toEqual([
+            {
+              _type: 'blockquote',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'blockquote',
+                  _key: 'k5',
+                  content: [
+                    {
+                      _type: 'blockquote',
+                      _key: 'k4',
+                      content: [
+                        {
+                          _type: blockName,
+                          _key: 'k0',
+                          style: 'h6',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                          ],
+                        },
+                        {
+                          _type: blockName,
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ])
+        })
+
+        test('a heading in a callout in a blockquote in a blockquote keeps its style', () => {
+          const keyGenerator = createTestKeyGenerator()
+
+          expect(
+            portableTextToMarkdown(
+              [
+                {
+                  _type: 'blockquote',
+                  _key: keyGenerator(),
+                  content: [
+                    {
+                      _type: 'blockquote',
+                      _key: keyGenerator(),
+                      content: [
+                        {
+                          _type: 'callout',
+                          _key: keyGenerator(),
+                          tone: 'tip',
+                          content: [
+                            textBlock(keyGenerator, blockName, 'h3', 'foo'),
+                            textBlock(
+                              keyGenerator,
+                              blockName,
+                              'blockquote',
+                              'bar',
+                            ),
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+              {schema, types: renderers},
+            ),
+          ).toBe('> > > [!TIP]\n> > > ### foo\n> > >\n> > > bar')
+        })
+
+        test('a heading with a line break in a callout is written as a paragraph and reported', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const onDegradation = vi.fn()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'callout',
+                _key: keyGenerator(),
+                tone: 'note',
+                content: lineBreakHeadings(keyGenerator, blockName),
+              },
+            ],
+            {schema, marks: lineBreakMarks, onDegradation},
+          )
+
+          expect(markdown).toBe(
+            [
+              '> [!NOTE]',
+              '> foo  ',
+              '> bar',
+              '>',
+              '> [quux](https://example.com "baz',
+              '> qux")',
+            ].join('\n'),
+          )
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+            }),
+          ).toEqual([
+            {
+              _type: 'callout',
+              _key: 'k5',
+              tone: 'note',
+              content: [
+                {
+                  _type: blockName,
+                  _key: 'k0',
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []},
+                  ],
+                },
+                {
+                  _type: blockName,
+                  _key: 'k2',
+                  style: 'blockquote',
+                  markDefs: [
+                    {
+                      _type: 'link',
+                      _key: 'k3',
+                      href: 'https://example.com',
+                      title: 'baz\nqux',
+                    },
+                  ],
+                  children: [
+                    {_type: 'span', _key: 'k4', text: 'quux', marks: ['k3']},
+                  ],
+                },
+              ],
+            },
+          ])
+          expect(onDegradation.mock.calls).toEqual([
+            [
+              {
+                degradations: [
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [{_key: 'k0'}, 'content', {_key: 'k1'}],
+                    snippet: 'foo\\nbar',
+                  },
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [{_key: 'k0'}, 'content', {_key: 'k4'}],
+                    snippet: 'quux',
+                  },
+                ],
+                message: [
+                  'Portable Text could not be serialized to Markdown without loss:',
+                  '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+                  '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("quux")',
+                ].join('\n'),
+              },
+            ],
+          ])
+        })
+
+        test('a heading with a line break in a blockquote is written as a paragraph and reported', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const onDegradation = vi.fn()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'blockquote',
+                _key: keyGenerator(),
+                content: lineBreakHeadings(keyGenerator, blockName),
+              },
+            ],
+            {schema, types: renderers, marks: lineBreakMarks, onDegradation},
+          )
+
+          expect(markdown).toBe(
+            [
+              '> foo  ',
+              '> bar',
+              '>',
+              '> [quux](https://example.com "baz',
+              '> qux")',
+            ].join('\n'),
+          )
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+              types,
+            }),
+          ).toEqual([
+            {
+              _type: 'blockquote',
+              _key: 'k5',
+              content: [
+                {
+                  _type: blockName,
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []},
+                  ],
+                },
+                {
+                  _type: blockName,
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [
+                    {
+                      _type: 'link',
+                      _key: 'k3',
+                      href: 'https://example.com',
+                      title: 'baz\nqux',
+                    },
+                  ],
+                  children: [
+                    {_type: 'span', _key: 'k4', text: 'quux', marks: ['k3']},
+                  ],
+                },
+              ],
+            },
+          ])
+          expect(onDegradation.mock.calls).toEqual([
+            [
+              {
+                degradations: [
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [{_key: 'k0'}, 'content', {_key: 'k1'}],
+                    snippet: 'foo\\nbar',
+                  },
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [{_key: 'k0'}, 'content', {_key: 'k4'}],
+                    snippet: 'quux',
+                  },
+                ],
+                message: [
+                  'Portable Text could not be serialized to Markdown without loss:',
+                  '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+                  '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("quux")',
+                ].join('\n'),
+              },
+            ],
+          ])
+        })
+
+        test('a heading with a line break in a blockquote in a blockquote in a blockquote is written as a paragraph and reported', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const onDegradation = vi.fn()
+          const markdown = portableTextToMarkdown(
+            [
+              {
+                _type: 'blockquote',
+                _key: keyGenerator(),
+                content: [
+                  {
+                    _type: 'blockquote',
+                    _key: keyGenerator(),
+                    content: [
+                      {
+                        _type: 'blockquote',
+                        _key: keyGenerator(),
+                        content: lineBreakHeadings(keyGenerator, blockName),
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            {schema, types: renderers, marks: lineBreakMarks, onDegradation},
+          )
+
+          expect(markdown).toBe(
+            [
+              '> > > foo  ',
+              '> > > bar',
+              '> > >',
+              '> > > [quux](https://example.com "baz',
+              '> > > qux")',
+            ].join('\n'),
+          )
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+              schema,
+              types,
+            }),
+          ).toEqual([
+            {
+              _type: 'blockquote',
+              _key: 'k7',
+              content: [
+                {
+                  _type: 'blockquote',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'blockquote',
+                      _key: 'k5',
+                      content: [
+                        {
+                          _type: blockName,
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo\nbar',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {
+                          _type: blockName,
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [
+                            {
+                              _type: 'link',
+                              _key: 'k3',
+                              href: 'https://example.com',
+                              title: 'baz\nqux',
+                            },
+                          ],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k4',
+                              text: 'quux',
+                              marks: ['k3'],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ])
+          expect(onDegradation.mock.calls).toEqual([
+            [
+              {
+                degradations: [
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [
+                      {_key: 'k0'},
+                      'content',
+                      {_key: 'k1'},
+                      'content',
+                      {_key: 'k2'},
+                      'content',
+                      {_key: 'k3'},
+                    ],
+                    snippet: 'foo\\nbar',
+                  },
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [
+                      {_key: 'k0'},
+                      'content',
+                      {_key: 'k1'},
+                      'content',
+                      {_key: 'k2'},
+                      'content',
+                      {_key: 'k6'},
+                    ],
+                    snippet: 'quux',
+                  },
+                ],
+                message: [
+                  'Portable Text could not be serialized to Markdown without loss:',
+                  '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+                  '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("quux")',
+                ].join('\n'),
+              },
+            ],
+          ])
+        })
+
+        test('a heading with a line break in a callout in a blockquote in a blockquote is written as a paragraph and reported', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const onDegradation = vi.fn()
+
+          expect(
+            portableTextToMarkdown(
+              [
+                {
+                  _type: 'blockquote',
+                  _key: keyGenerator(),
+                  content: [
+                    {
+                      _type: 'blockquote',
+                      _key: keyGenerator(),
+                      content: [
+                        {
+                          _type: 'callout',
+                          _key: keyGenerator(),
+                          tone: 'tip',
+                          content: lineBreakHeadings(keyGenerator, blockName),
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+              {schema, types: renderers, marks: lineBreakMarks, onDegradation},
+            ),
+          ).toBe(
+            [
+              '> > > [!TIP]',
+              '> > > foo  ',
+              '> > > bar',
+              '> > >',
+              '> > > [quux](https://example.com "baz',
+              '> > > qux")',
+            ].join('\n'),
+          )
+          expect(onDegradation.mock.calls).toEqual([
+            [
+              {
+                degradations: [
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [
+                      {_key: 'k0'},
+                      'content',
+                      {_key: 'k1'},
+                      'content',
+                      {_key: 'k2'},
+                      'content',
+                      {_key: 'k3'},
+                    ],
+                    snippet: 'foo\\nbar',
+                  },
+                  {
+                    type: 'style-fallback',
+                    message:
+                      'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                    path: [
+                      {_key: 'k0'},
+                      'content',
+                      {_key: 'k1'},
+                      'content',
+                      {_key: 'k2'},
+                      'content',
+                      {_key: 'k6'},
+                    ],
+                    snippet: 'quux',
+                  },
+                ],
+                message: [
+                  'Portable Text could not be serialized to Markdown without loss:',
+                  '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+                  '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("quux")',
+                ].join('\n'),
+              },
+            ],
+          ])
+        })
+      })
+    }
+
+    test('a heading in a callout inside an object field keeps its style', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'aside',
+              _key: keyGenerator(),
+              body: [
+                {
+                  _type: 'callout',
+                  _key: keyGenerator(),
+                  tone: 'note',
+                  content: [
+                    textBlock(keyGenerator, 'block', 'h1', 'foo'),
+                    textBlock(keyGenerator, 'block', 'blockquote', 'bar'),
+                  ],
+                },
+              ],
+            },
+          ],
+          {
+            types: {
+              aside: ({value, renderNode}) =>
+                (value as {body: Array<TypedObject>}).body
+                  .map((node, index) =>
+                    renderNode({node, index, isInline: false, renderNode}),
+                  )
+                  .join('\n\n'),
+            },
+          },
+        ),
+      ).toBe('> [!NOTE]\n> # foo\n>\n> bar')
+    })
+
+    test('a heading with a line break in a callout inside an object field is written as a paragraph and reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'aside',
+              _key: keyGenerator(),
+              body: [
+                {
+                  _type: 'callout',
+                  _key: keyGenerator(),
+                  tone: 'note',
+                  content: lineBreakHeadings(keyGenerator, 'block'),
+                },
+              ],
+            },
+          ],
+          {
+            types: {
+              aside: ({value, renderNode}) =>
+                (value as {body: Array<TypedObject>}).body
+                  .map((node, index) =>
+                    renderNode({node, index, isInline: false, renderNode}),
+                  )
+                  .join('\n\n'),
+            },
+            marks: lineBreakMarks,
+            onDegradation,
+          },
+        ),
+      ).toBe(
+        [
+          '> [!NOTE]',
+          '> foo  ',
+          '> bar',
+          '>',
+          '> [quux](https://example.com "baz',
+          '> qux")',
+        ].join('\n'),
+      )
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [
+                  {_key: 'k0'},
+                  'body',
+                  {_key: 'k1'},
+                  'content',
+                  {_key: 'k2'},
+                ],
+                snippet: 'foo\\nbar',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [
+                  {_key: 'k0'},
+                  'body',
+                  {_key: 'k1'},
+                  'content',
+                  {_key: 'k5'},
+                ],
+                snippet: 'quux',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h2` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+              '- block 0: Dropped the `h3` style, kept the text: a Markdown heading cannot hold a line break ("quux")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('a custom style renderer runs inside a callout and a blockquote', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [textBlock(keyGenerator, 'block', 'fancy', 'foo')],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [textBlock(keyGenerator, 'block', 'fancy', 'bar')],
+            },
+          ],
+          {
+            block: {fancy: ({children}) => `~${children}~`},
+            types: renderers,
+          },
+        ),
+      ).toBe('> [!NOTE]\n> ~foo~\n\n> ~bar~')
+    })
+
+    test('a block renderer function gets the style of callout content', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const styles: Array<string | undefined> = []
+
+      portableTextToMarkdown(
+        [
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              textBlock(keyGenerator, 'block', 'fancy', 'foo'),
+              textBlock(keyGenerator, 'block', 'h2', 'bar'),
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+        {
+          block: ({value, children}) => {
+            styles.push(value.style)
+            return children ?? ''
+          },
+        },
+      )
+
+      expect(styles).toEqual(['fancy', 'h2', 'normal'])
+    })
+
+    test('a heading list item in a callout keeps the plain list item', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              {
+                ...textBlock(keyGenerator, 'block', 'h1', 'foo'),
+                listItem: 'task',
+                level: 1,
+                checked: true,
+              },
+            ],
+          },
+        ]),
+      ).toBe('> [!NOTE]\n> - [x] foo')
+    })
+
+    test('a multi-line heading in a callout is written as a paragraph and reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const markdown = portableTextToMarkdown(
+        [
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [textBlock(keyGenerator, 'block', 'h1', 'foo\nbar')],
+          },
+        ],
+        {onDegradation},
+      )
+
+      expect(markdown).toBe('> [!NOTE]\n> foo  \n> bar')
+      expect(
+        markdownToPortableText(markdown, {
+          keyGenerator: createTestKeyGenerator(),
+        }),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k2',
+          tone: 'note',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k1', text: 'foo\nbar', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}, 'content', {_key: 'k1'}],
+                snippet: 'foo\\nbar',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break ("foo\\nbar")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('a heading with a carriage return in a blockquote is written as a paragraph and reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [textBlock(keyGenerator, 'block', 'h1', 'foo\rbar')],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [textBlock(keyGenerator, 'block', 'h1', 'baz\rqux')],
+            },
+          ],
+          {types: renderers, onDegradation},
+        ),
+      ).toBe('> [!NOTE]\n> foo\rbar\n\n> baz\rqux')
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k0'}, 'content', {_key: 'k1'}],
+                snippet: 'foo\rbar',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k3'}, 'content', {_key: 'k4'}],
+                snippet: 'baz\rqux',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break (2×: "foo\rbar", "baz\rqux")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('a heading with a line break in a link title or image text in a blockquote is written as a paragraph and reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+      const linkKey = keyGenerator()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'h1',
+                  markDefs: [
+                    {
+                      _type: 'link',
+                      _key: linkKey,
+                      href: 'https://example.com',
+                      title: 'foo\nbar',
+                    },
+                  ],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'baz',
+                      marks: [linkKey],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'h1',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'qux ',
+                      marks: [],
+                    },
+                    {
+                      _type: 'image',
+                      _key: keyGenerator(),
+                      src: 'https://example.com/foo.png',
+                      alt: 'foo\nbar',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          {types: renderers, onDegradation},
+        ),
+      ).toBe(
+        [
+          '> [!NOTE]',
+          '> [baz](https://example.com "foo',
+          '> bar")',
+          '',
+          '> qux ![foo',
+          '> bar](https://example.com/foo.png)',
+        ].join('\n'),
+      )
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k1'}, 'content', {_key: 'k2'}],
+                snippet: 'baz',
+              },
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break',
+                path: [{_key: 'k4'}, 'content', {_key: 'k5'}],
+                snippet: 'qux ',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- Dropped the `h1` style, kept the text: a Markdown heading cannot hold a line break (2×: "baz", "qux ")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    test('a whitespace-only heading in a callout leaves the callout intact', () => {
+      const keyGenerator = createTestKeyGenerator()
+
+      expect(
+        portableTextToMarkdown([
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              textBlock(keyGenerator, 'block', 'h1', ' '),
+              textBlock(keyGenerator, 'block', 'blockquote', 'foo'),
+            ],
+          },
+        ]),
+      ).toBe('> [!NOTE]\n> foo')
+    })
+
+    test('a block style renderer gets the `normal` style for content without a style', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const styles: Array<string | undefined> = []
+
+      portableTextToMarkdown(
+        [
+          {
+            _type: 'callout',
+            _key: keyGenerator(),
+            tone: 'note',
+            content: [
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+        {
+          block: {
+            normal: ({value, children}) => {
+              styles.push(value.style)
+              return children ?? ''
+            },
+          },
+        },
+      )
+
+      expect(styles).toEqual(['normal'])
+    })
+
+    test('a style with no renderer in a callout is reported', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const onDegradation = vi.fn()
+
+      expect(
+        portableTextToMarkdown(
+          [
+            {
+              _type: 'callout',
+              _key: keyGenerator(),
+              tone: 'note',
+              content: [textBlock(keyGenerator, 'block', 'fancy', 'foo')],
+            },
+          ],
+          {onDegradation},
+        ),
+      ).toBe('> [!NOTE]\n> foo')
+      expect(onDegradation.mock.calls).toEqual([
+        [
+          {
+            degradations: [
+              {
+                type: 'style-fallback',
+                message:
+                  'Dropped the `fancy` style, kept the text: no `fancy` block renderer',
+                path: [{_key: 'k0'}, 'content', {_key: 'k1'}],
+                snippet: 'foo',
+              },
+            ],
+            message: [
+              'Portable Text could not be serialized to Markdown without loss:',
+              '- block 0: Dropped the `fancy` style, kept the text: no `fancy` block renderer ("foo")',
+            ].join('\n'),
+          },
+        ],
+      ])
+    })
+
+    function lineBreakHeadings(keyGenerator: () => string, _type: string) {
+      const heading = textBlock(keyGenerator, _type, 'h2', 'foo\nbar')
+      const linkKey = keyGenerator()
+      return [
+        heading,
+        {
+          _type,
+          _key: keyGenerator(),
+          style: 'h3',
+          markDefs: [
+            {
+              _type: 'link',
+              _key: linkKey,
+              href: 'https://example.com',
+              title: 'baz\nqux',
+            },
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'quux',
+              marks: [linkKey],
+            },
+          ],
+        },
+      ]
+    }
+
+    function textBlock(
+      keyGenerator: () => string,
+      _type: string,
+      style: string,
+      text: string,
+    ) {
+      return {
+        _type,
+        _key: keyGenerator(),
+        style,
+        markDefs: [],
+        children: [{_type: 'span', _key: keyGenerator(), text, marks: []}],
+      }
+    }
+  })
+
   describe('plain text escaping', () => {
     // Each string round-trips as the sole text of a single span in a
     // `normal` block: PT -> MD -> PT should reproduce the same block, with
@@ -6724,31 +10140,27 @@ describe(portableTextToMarkdown.name, () => {
       })
 
       describe('a heading with a hard break in its text', () => {
-        test("only the first line is inside the heading's `# ` prefix", () => {
-          const portableText = [leavesBlock(['a\n- b'], {style: 'h3'})]
+        test('every line of the paragraph it is written as gets line-start escaping', () => {
+          const portableText = [leavesBlock(['# a\n- b'], {style: 'h3'})]
 
           const markdown = portableTextToMarkdown(portableText)
-          expect(markdown).toBe('### a  \n\\- b')
+          expect(markdown).toBe('\\# a  \n\\- b')
 
-          const reparsed = markdownToPortableText(markdown)
-          expect(reparsed).toHaveLength(2)
-          const [heading, continuation] = reparsed
-          if (
-            heading === undefined ||
-            continuation === undefined ||
-            !isPortableTextBlock(heading) ||
-            !isPortableTextBlock(continuation)
-          ) {
-            throw new Error('Expected two portable text blocks')
-          }
-          expect(heading.style).toBe('h3')
-          expect(blockText(heading)).toBe('a')
-          // The second raw line is no longer inside the heading's `# `
-          // prefix, so it's an ordinary line: it must not misparse as a
-          // bullet list item, and its text (the hard break's continuation)
-          // must survive.
-          expect(isPortableTextListItemBlock(continuation)).toBe(false)
-          expect(blockText(continuation)).toBe('- b')
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+            }),
+          ).toEqual([
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              children: [
+                {_type: 'span', _key: 'k1', text: '# a\n- b', marks: []},
+              ],
+              markDefs: [],
+            },
+          ])
         })
       })
 

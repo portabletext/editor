@@ -17,8 +17,13 @@ export const serializeDegradationMessage = {
   'decorator-dropped': (markType: string): string =>
     `Removed the \`${markType}\` decorator, kept the text: no \`${markType}\` mark renderer`,
 
-  'style-fallback': (style: string): string =>
-    `Dropped the \`${style}\` style, kept the text: no \`${style}\` block renderer`,
+  'style-fallback': (
+    style: string,
+    cause: 'no-renderer' | 'line-break',
+  ): string =>
+    cause === 'line-break'
+      ? `Dropped the \`${style}\` style, kept the text: a Markdown heading cannot hold a line break`
+      : `Dropped the \`${style}\` style, kept the text: no \`${style}\` block renderer`,
 
   'list-item-fallback': (listItem: string): string =>
     `Rendered the \`${listItem}\` list item as a plain bullet, kept the text: no \`${listItem}\` list-item renderer`,

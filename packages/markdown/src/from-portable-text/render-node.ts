@@ -32,9 +32,18 @@ import {DefaultUnknownMarkRenderer} from './renderers/marks'
 import {
   DefaultH1Renderer,
   DefaultH2Renderer,
+  DefaultH3Renderer,
+  DefaultH4Renderer,
+  DefaultH5Renderer,
+  DefaultH6Renderer,
   DefaultUnknownStyleRenderer,
 } from './renderers/style'
-import type {PortableTextRenderers, RenderNode, Serializable} from './types'
+import type {
+  PortableTextBlockRenderer,
+  PortableTextRenderers,
+  RenderNode,
+  Serializable,
+} from './types'
 
 type ReportDegradation = (
   entry: SerializeDegradationLoss & {
@@ -54,6 +63,15 @@ type ReportDegradation = (
  */
 const HEADING_STYLES = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
 
+const DEFAULT_HEADING_RENDERERS = new Set([
+  DefaultH1Renderer,
+  DefaultH2Renderer,
+  DefaultH3Renderer,
+  DefaultH4Renderer,
+  DefaultH5Renderer,
+  DefaultH6Renderer,
+])
+
 const SETEXT_UNDERLINES = new Map([
   [DefaultH1Renderer, '==='],
   [DefaultH2Renderer, '---'],
@@ -63,9 +81,55 @@ export const createRenderNode = (
   renderers: PortableTextRenderers,
   listIndexMap: Map<string, number>,
   listDepthMap: Map<string, number>,
-  reportDegradation: ReportDegradation | undefined,
-  candidateForms = false,
+  options: {
+    reportDegradation?: ReportDegradation
+    /**
+     * Renders an `h1` or `h2` whose rendered text holds a line break as a
+     * setext heading instead of a paragraph.
+     */
+    candidateForms?: boolean
+    /**
+     * Called with each block written as a paragraph because its rendered
+     * text holds a line break, and whether a setext heading could express
+     * it instead.
+     */
+    onLineBreakFallback?: (node: TypedObject, setextCandidate: boolean) => void
+  },
 ): RenderNode => {
+  const {candidateForms = false} = options
+
+  // A heading that falls back to a paragraph may render its children twice,
+  // and a pure renderer can visit different content in each render, since
+  // its `children` differ. While a render is being collected, its reports
+  // and fallbacks are buffered here, so only those of the render that is
+  // written out take effect.
+  let collectedEffects: Array<() => void> | undefined
+  const emit = (effect: () => void) => {
+    if (collectedEffects) {
+      collectedEffects.push(effect)
+    } else {
+      effect()
+    }
+  }
+  const collectEffects = <T>(render: () => T) => {
+    const enclosingEffects = collectedEffects
+    const effects: Array<() => void> = []
+    collectedEffects = effects
+    try {
+      return {result: render(), effects}
+    } finally {
+      collectedEffects = enclosingEffects
+    }
+  }
+  const report = options.reportDegradation
+  const reportDegradation: ReportDegradation | undefined = report
+    ? (entry) => emit(() => report(entry))
+    : undefined
+  const fallback = options.onLineBreakFallback
+  const onLineBreakFallback = fallback
+    ? (node: TypedObject, setextCandidate: boolean) =>
+        emit(() => fallback(node, setextCandidate))
+    : undefined
   // Keyed by the actual `@text` node objects `buildMarksTree` produces, not
   // by render order: a custom type/mark renderer can call `renderNode` with
   // a synthetic node of its own mid-block (eg to render a placeholder), and
@@ -84,6 +148,10 @@ export const createRenderNode = (
   // degradation reported on that copy could not be re-found in the input
   // tree by reference. The alias maps the copy back to the input node.
   const reportedNodeAliases = new WeakMap<TypedObject, TypedObject>()
+
+  // List items whose heading style fell back to `normal`, so the list-item
+  // renderer gets the item as it would if stored with that style.
+  const normalStyleListItems = new WeakSet<TypedObject>()
 
   // Computed once per document render: a custom `hardBreak` can render to
   // something with no newline of its own (eg `() => '<br />'`), in which
@@ -105,11 +173,28 @@ export const createRenderNode = (
     isHeading: boolean,
     isListItem = false,
   ): string {
-    const chunks = planLeafEscaping(node.children ?? [], node.markDefs ?? [], {
+    return renderPlannedChildren(
+      node,
+      planChildren(node, isHeading, isListItem),
+    )
+  }
+
+  function planChildren(
+    node: PortableTextBlock | PortableTextListItemBlock,
+    isHeading: boolean,
+    isListItem: boolean,
+  ): Array<string> {
+    return planLeafEscaping(node.children ?? [], node.markDefs ?? [], {
       isHeading,
       isListItem,
       hardBreakOutputHasNewline,
     })
+  }
+
+  function renderPlannedChildren(
+    node: PortableTextBlock | PortableTextListItemBlock,
+    chunks: ReadonlyArray<string>,
+  ): string {
     const tree = buildMarksTree(node)
     assignEscapedText(tree, chunks)
 
@@ -239,14 +324,16 @@ export const createRenderNode = (
         isInline: false,
         renderNode,
       })
-      // Strip trailing newlines from block styles - list item component handles spacing
-      children = children.replace(/\n+$/, '')
+      if (!normalStyleListItems.has(node)) {
+        // Strip trailing newlines from block styles - list item component handles spacing
+        children = children.replace(/\n+$/, '')
+      }
     } else {
       children = renderBlockChildren(node, false, true)
     }
 
     return itemHandler({
-      value: node,
+      value: normalStyleListItems.has(node) ? {...node, style: 'normal'} : node,
       index,
       listIndex: node._key ? listIndexMap.get(node._key) : undefined,
       listDepth: node._key ? listDepthMap.get(node._key) : undefined,
@@ -301,23 +388,38 @@ export const createRenderNode = (
       typeof renderers.block === 'function'
         ? renderers.block
         : renderers.block[style]
-    // A setext heading's lines are ordinary paragraph lines, so every line,
-    // the first included, gets the full line-start escaping.
-    const setextUnderline =
-      candidateForms &&
-      !isInline &&
-      !isListItem &&
+
+    if (
+      typeof renderers.block !== 'function' &&
       handler !== undefined &&
-      toPlainText(node).includes('\n')
-        ? SETEXT_UNDERLINES.get(handler)
-        : undefined
+      DEFAULT_HEADING_RENDERERS.has(handler)
+    ) {
+      return renderDefaultHeading(node, index, isInline, isListItem, {
+        heading: handler,
+        normal: renderers.block['normal'],
+      })
+    }
+
     const children = renderBlockChildren(
       node,
-      HEADING_STYLES.has(style) && setextUnderline === undefined,
+      HEADING_STYLES.has(style),
       isListItem,
     )
-    const block = handler || renderers.unknownBlockStyle
+    return renderStyledBlock(node, style, handler, {
+      index,
+      isInline,
+      children,
+      value: node,
+      renderNode,
+    })
+  }
 
+  function renderStyledBlock(
+    node: PortableTextBlock,
+    style: string,
+    handler: PortableTextBlockRenderer | undefined,
+    props: Parameters<PortableTextBlockRenderer>[0],
+  ): string {
     if (
       !handler &&
       renderers.unknownBlockStyle === DefaultUnknownStyleRenderer
@@ -325,18 +427,105 @@ export const createRenderNode = (
       reportDegradation?.({
         type: 'style-fallback',
         style,
-        message: serializeDegradationMessage['style-fallback'](style),
+        message: serializeDegradationMessage['style-fallback'](
+          style,
+          'no-renderer',
+        ),
         snippet: truncateSnippet(toPlainText(node)),
         node: reportedNodeAliases.get(node) ?? node,
         owner: reportedNodeAliases.get(node) ?? node,
       })
     }
 
-    if (setextUnderline !== undefined) {
+    return (handler || renderers.unknownBlockStyle)(props)
+  }
+
+  // Markdown has no multi-line ATX heading: the line after a break reads
+  // back as a paragraph of its own. Only the rendered children tell
+  // whether there is one, since a mark renderer, a link title or image
+  // text can add a line break and a custom `hardBreak` can render without
+  // one.
+  //
+  // A heading that falls back must write exactly the output and the
+  // reports the same block stored with style `normal` would, followed by
+  // its own `style-fallback`.
+  function renderDefaultHeading(
+    node: PortableTextBlock,
+    index: number,
+    isInline: boolean,
+    isListItem: boolean,
+    handlers: {
+      heading: PortableTextBlockRenderer
+      normal: PortableTextBlockRenderer | undefined
+    },
+  ): string {
+    const headingChunks = planChildren(node, true, isListItem)
+    const heading = collectEffects(() =>
+      renderPlannedChildren(node, headingChunks),
+    )
+    if (!/[\r\n]/.test(heading.result)) {
+      heading.effects.forEach(emit)
+      return handlers.heading({
+        index,
+        isInline,
+        children: heading.result,
+        value: node,
+        renderNode,
+      })
+    }
+
+    // A paragraph's or setext heading's lines are ordinary paragraph lines,
+    // so every line, the first included, gets the full line-start
+    // escaping. Most text escapes the same either way, and then the
+    // heading rendering is reused instead of running the mark renderers
+    // again.
+    const paragraphChunks = planChildren(node, false, isListItem)
+    const paragraph = paragraphChunks.some(
+      (chunk, index) => chunk !== headingChunks[index],
+    )
+      ? collectEffects(() => renderPlannedChildren(node, paragraphChunks))
+      : heading
+    paragraph.effects.forEach(emit)
+    const children = paragraph.result
+
+    const setextUnderline =
+      !isInline && !isListItem
+        ? SETEXT_UNDERLINES.get(handlers.heading)
+        : undefined
+    if (candidateForms && setextUnderline !== undefined) {
       return `${children}\n${setextUnderline}`
     }
 
-    return block({index, isInline, children, value: node, renderNode})
+    const reportedNode = reportedNodeAliases.get(node)
+    let rendered = children
+    if (reportedNode !== undefined) {
+      // `node` is `renderListItem`'s copy of a list item, and a `normal`
+      // list item's children go to the list-item renderer as they are.
+      normalStyleListItems.add(reportedNode)
+    } else {
+      rendered = renderStyledBlock(node, 'normal', handlers.normal, {
+        index,
+        isInline,
+        children,
+        value: {...node, style: 'normal'},
+        renderNode,
+      })
+    }
+
+    const style = node.style || 'normal'
+    onLineBreakFallback?.(reportedNode ?? node, setextUnderline !== undefined)
+    reportDegradation?.({
+      type: 'style-fallback',
+      style,
+      message: serializeDegradationMessage['style-fallback'](
+        style,
+        'line-break',
+      ),
+      snippet: truncateSnippet(toPlainText(node)),
+      node: reportedNode ?? node,
+      owner: reportedNode ?? node,
+    })
+    return rendered
   }
 
   function renderText(node: ToolkitTextNode): string {

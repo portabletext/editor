@@ -1,5 +1,5 @@
 import {isTypedObject} from '@portabletext/schema'
-import {isPortableTextBlock} from '@portabletext/toolkit'
+import {isPortableTextBlock, toPlainText} from '@portabletext/toolkit'
 import type {PortableTextBlock, TypedObject} from '@portabletext/types'
 import {
   escapeImageAndLinkText,
@@ -335,7 +335,7 @@ export const DefaultCalloutRenderer: PortableTextTypeRenderer<{
   const renderedContent = options.value.content
     .map((block, index) =>
       renderNode({
-        node: isPortableTextBlock(block) ? {...block, style: 'normal'} : block,
+        node: toContainerContent(block),
         index,
         isInline: false,
         renderNode,
@@ -363,6 +363,20 @@ function isCalloutShaped(
   )
 }
 
+// `blockquote` would quote the text twice. A heading marker after a list
+// marker reads back as different content.
+function toContainerContent<T extends TypedObject>(block: T): T {
+  if (!isPortableTextBlock(block)) {
+    return block
+  }
+  return !block.style ||
+    block.style === 'blockquote' ||
+    block.listItem !== undefined ||
+    toPlainText(block).trim() === ''
+    ? {...block, style: 'normal'}
+    : block
+}
+
 /**
  * Renders a structural blockquote block-object (the `types.blockquote` shape
  * produced by `markdownToPortableText` when a `types.blockquote` matcher is
@@ -382,7 +396,7 @@ export const DefaultBlockquoteObjectRenderer: PortableTextTypeRenderer<{
   const renderedContent = value.content
     .map((block, index) =>
       renderNode({
-        node: isPortableTextBlock(block) ? {...block, style: 'normal'} : block,
+        node: toContainerContent(block),
         index,
         isInline: false,
         renderNode,

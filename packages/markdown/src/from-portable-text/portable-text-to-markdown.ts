@@ -59,7 +59,7 @@ import {
   DefaultTableRenderer,
   DefaultUnknownTypeRenderer,
 } from './renderers/type'
-import type {PortableTextRenderers} from './types'
+import type {PortableTextRenderers, RenderNode} from './types'
 
 const defaultRenderers: PortableTextRenderers = {
   types: {
@@ -98,8 +98,6 @@ const defaultRenderers: PortableTextRenderers = {
   unknownBlockStyle: DefaultUnknownStyleRenderer,
 }
 
-const SETEXT_STYLES = new Set(['h1', 'h2'])
-
 type Options = Partial<PortableTextRenderers> & {
   blockSpacing?: BlockSpacingRenderer
 
@@ -121,8 +119,10 @@ type Options = Partial<PortableTextRenderers> & {
    * Called at most once, after the conversion has walked every block,
    * only when at least one construct degraded to a lossier rendering (an
    * annotation or decorator with no mark renderer, a block style or
-   * list-item kind with no renderer). Left unset, the conversion stays
-   * silent and returns the lossiest representation it can build. Passed
+   * list-item kind with no renderer, a heading written as a paragraph
+   * because its rendered text holds a line break). Left unset, the
+   * conversion stays silent and returns the lossiest representation it
+   * can build. Passed
    * a function, observe every degradation via `report.degradations`, in
    * encounter order, and the same degradations grouped and sorted by
    * block via `report.message`. Enforce against lossy output by throwing
@@ -227,9 +227,22 @@ function renderMarkdown(
 
   type PathSegment = SerializeDegradation['path'][number]
 
-  const internalDegradations: Array<SerializeDegradation & {topIndex: number}> =
-    []
+  type InternalDegradation = SerializeDegradation & {
+    topIndex: number
+    lostContent: SerializeDegradationContent
+  }
+  // What one render of a root block wrote, with the effects it had, so
+  // that only those of the render written out take effect.
+  type RootRendering = {
+    rendered: string
+    degradations: Array<InternalDegradation>
+    // Set when the block itself was written as a paragraph because its
+    // rendered text holds a line break.
+    lineBreakFallback: {setextCandidate: boolean} | undefined
+  }
+
   let currentBlock: {block: TypedObject; index: number; topSegment: PathSegment}
+  let currentRendering: {node: TypedObject; rendering: RootRendering}
   let nodePathIndex:
     | {block: TypedObject; paths: Map<object, Array<PathSegment>>}
     | undefined
@@ -263,90 +276,157 @@ function renderMarkdown(
         if (entry.snippet !== undefined) {
           degradation.snippet = entry.snippet
         }
-        internalDegradations.push({
+        currentRendering.rendering.degradations.push({
           ...degradation,
           topIndex: currentBlock.index,
-        })
-        if (onLostContent) {
-          onLostContent({
-            ...degradation,
+          lostContent: {
             ...lostContent(entry),
-            ownerPath: findOwnerPath(entry.owner),
-          })
-        }
+            ownerPath: onLostContent ? findOwnerPath(entry.owner) : undefined,
+          },
+        })
       }
     : undefined
+  const onLineBreakFallback = (node: TypedObject, setextCandidate: boolean) => {
+    if (node === currentRendering.node) {
+      currentRendering.rendering.lineBreakFallback = {setextCandidate}
+    }
+  }
 
-  const renderNode = createRenderNode(
-    renderers,
-    listIndexMap,
-    listDepthMap,
-    reportDegradation,
-  )
-
-  // Blocks rendering to '' are dropped before spacing is computed, so
-  // `blockSpacing` only ever sees blocks that survive into the output.
-  const renderedBlocks = blocks
-    .map((node, index) => {
-      if (originalBlockKeys !== undefined) {
-        const key = originalBlockKeys[index]
-        currentBlock = {
-          block: node,
-          index,
-          topSegment: key !== undefined ? {_key: key} : index,
-        }
-      }
-      return {
-        node,
-        rendered: renderNode({node, index, isInline: false, renderNode}),
+  const renderRootBlock = (
+    render: RenderNode,
+    node: TypedObject,
+    index: number,
+  ): RootRendering => {
+    if (originalBlockKeys !== undefined) {
+      const key = originalBlockKeys[index]
+      currentBlock = {
+        block: node,
         index,
+        topSegment: key !== undefined ? {_key: key} : index,
       }
+    }
+    const rendering: RootRendering = {
+      rendered: '',
+      degradations: [],
+      lineBreakFallback: undefined,
+    }
+    currentRendering = {node, rendering}
+    rendering.rendered = render({
+      node,
+      index,
+      isInline: false,
+      renderNode: render,
     })
-    .filter(({rendered}) => rendered !== '')
+    return rendering
+  }
 
-  const renderedOutputs = renderedBlocks.map(({rendered}) => rendered)
-  const spacings = renderedBlocks.slice(1).map(
-    (nextBlock, position) =>
-      renderBlockSpacing({
-        current: renderedBlocks[position]!.node,
-        next: nextBlock.node,
-      }) ?? '\n\n',
+  const renderNode = createRenderNode(renderers, listIndexMap, listDepthMap, {
+    reportDegradation,
+    onLineBreakFallback,
+  })
+  const mainRenderings = blocks.map((node, index) =>
+    renderRootBlock(renderNode, node, index),
   )
+  const selectedRenderings = [...mainRenderings]
+
+  // `blockSpacing` sees each block as the style it was written with.
+  const spacingsFor = (
+    indexes: ReadonlyArray<number>,
+    renderings: ReadonlyArray<RootRendering>,
+  ) => {
+    const nodes = indexes.map((index) =>
+      renderings[index]!.lineBreakFallback
+        ? {...blocks[index]!, style: 'normal'}
+        : blocks[index]!,
+    )
+    return nodes
+      .slice(1)
+      .map(
+        (next, position) =>
+          renderBlockSpacing({current: nodes[position]!, next}) ?? '\n\n',
+      )
+  }
 
   if (options.hardBreak === undefined && options.blockSpacing === undefined) {
-    const candidates = new Map<number, string>()
-    renderedBlocks.forEach(({node, rendered, index}, position) => {
-      const candidate = renderCandidate(node, index)
-      if (candidate !== undefined && candidate !== rendered) {
-        candidates.set(position, candidate)
+    // A block rendering to '' is dropped, unless its setext candidate is
+    // still to be tried: a `normal` renderer that writes nothing does not
+    // override the default heading renderer.
+    let candidateIndexes = blocks.flatMap((_node, index) =>
+      mainRenderings[index]!.rendered !== '' ||
+      mainRenderings[index]!.lineBreakFallback?.setextCandidate
+        ? [index]
+        : [],
+    )
+    const candidates = new Map<number, RootRendering>()
+    for (const index of candidateIndexes) {
+      const candidate = renderCandidate(blocks[index]!, index)
+      if (
+        candidate !== undefined &&
+        candidate.rendered !== mainRenderings[index]!.rendered
+      ) {
+        candidates.set(index, candidate)
       }
-    })
-    if (candidates.size > 0) {
-      for (const [position, candidate] of verifyCandidates(
-        renderedBlocks.map(({node}) => node),
-        renderedOutputs,
-        spacings,
-        candidates,
-        options.schema,
-      )) {
-        renderedOutputs[position] = candidate
+    }
+    // A block whose candidate fails is dropped after all, which changes
+    // its neighbours' spacing, so verification runs again without it.
+    while (candidates.size > 0) {
+      const included = candidateIndexes
+      const positionCandidates = new Map<number, string>()
+      included.forEach((index, position) => {
+        const candidate = candidates.get(index)
+        if (candidate !== undefined) {
+          positionCandidates.set(position, candidate.rendered)
+        }
+      })
+      const accepted = new Set(
+        [
+          ...verifyCandidates(
+            included.map((index) => {
+              const {lineBreakFallback} = mainRenderings[index]!
+              return lineBreakFallback && !lineBreakFallback.setextCandidate
+                ? {...blocks[index]!, style: 'normal'}
+                : blocks[index]!
+            }),
+            included.map((index) => mainRenderings[index]!.rendered),
+            spacingsFor(included, mainRenderings),
+            positionCandidates,
+            options.schema,
+          ).keys(),
+        ].map((position) => included[position]!),
+      )
+      candidateIndexes = included.filter(
+        (index) =>
+          mainRenderings[index]!.rendered !== '' || accepted.has(index),
+      )
+      if (candidateIndexes.length === included.length) {
+        for (const index of accepted) {
+          selectedRenderings[index] = candidates.get(index)!
+        }
+        break
       }
     }
   }
 
-  const markdown = joinRenderedBlocks(renderedOutputs, spacings)
+  // Blocks rendering to '' are dropped before spacing is computed, so
+  // `blockSpacing` only ever sees blocks that survive into the output.
+  const writtenIndexes = blocks.flatMap((_node, index) =>
+    selectedRenderings[index]!.rendered !== '' ? [index] : [],
+  )
+  const markdown = joinRenderedBlocks(
+    writtenIndexes.map((index) => selectedRenderings[index]!.rendered),
+    spacingsFor(writtenIndexes, selectedRenderings),
+  )
 
   function renderCandidate(
     node: TypedObject,
     index: number,
-  ): string | undefined {
+  ): RootRendering | undefined {
     if (!isPortableTextBlock(node)) {
       return undefined
     }
-    const text = toPlainText(node)
     if (
-      !text.includes('\n\n') &&
-      !(SETEXT_STYLES.has(node.style ?? 'normal') && text.includes('\n'))
+      !mainRenderings[index]!.lineBreakFallback?.setextCandidate &&
+      !toPlainText(node).includes('\n\n')
     ) {
       return undefined
     }
@@ -354,23 +434,28 @@ function renderMarkdown(
       renderers,
       listIndexMap,
       listDepthMap,
-      undefined,
-      true,
+      {candidateForms: true, reportDegradation, onLineBreakFallback},
     )
-    return renderCandidateNode({
-      node,
-      index,
-      isInline: false,
-      renderNode: renderCandidateNode,
-    })
+    return renderRootBlock(renderCandidateNode, node, index)
   }
 
-  if (options.onDegradation && internalDegradations.length > 0) {
+  // Reported only once verification has decided each candidate, since a
+  // block's degradations are those of the render written out.
+  const degradations = selectedRenderings.flatMap(
+    ({degradations}) => degradations,
+  )
+  if (onLostContent) {
+    for (const degradation of degradations) {
+      onLostContent({
+        ...toSerializeDegradation(degradation),
+        ...degradation.lostContent,
+      })
+    }
+  }
+  if (options.onDegradation && degradations.length > 0) {
     options.onDegradation({
-      degradations: internalDegradations.map(
-        ({topIndex, ...degradation}) => degradation,
-      ),
-      message: buildSerializeDegradationMessage(internalDegradations),
+      degradations: degradations.map(toSerializeDegradation),
+      message: buildSerializeDegradationMessage(degradations),
     })
   }
 
@@ -531,6 +616,17 @@ function gateDefaultTypeRenderers(
       },
     ]),
   )
+}
+
+function toSerializeDegradation({
+  type,
+  message,
+  path,
+  snippet,
+}: SerializeDegradation): SerializeDegradation {
+  return snippet === undefined
+    ? {type, message, path}
+    : {type, message, path, snippet}
 }
 
 function lostContent(
