@@ -80,6 +80,46 @@ describe(mapRange.name, () => {
     })
   })
 
+  test.each([
+    {name: 'start', offset: 4, expectedOffset: 0},
+    {name: 'end', offset: 8, expectedOffset: 4},
+  ])(
+    'a caret at the $name of moved text follows it with both-boundary affinity',
+    ({offset, expectedOffset}) => {
+      const range = {
+        anchor: {path: spanA, offset},
+        focus: {path: spanA, offset},
+      }
+      const steps: Array<Step> = [
+        {
+          type: 'move.text',
+          from: {path: spanA, offset: 4, length: 4},
+          to: {path: spanB, offset: 0},
+        },
+      ]
+
+      expect(mapRange(steps, range, {collapsedAffinity: 'both'})).toEqual({
+        anchor: {path: spanB, offset: expectedOffset},
+        focus: {path: spanB, offset: expectedOffset},
+      })
+    },
+  )
+
+  test('a caret at an insertion follows it with both-boundary affinity', () => {
+    const range = {
+      anchor: {path: spanA, offset: 4},
+      focus: {path: spanA, offset: 4},
+    }
+    const steps: Array<Step> = [
+      {type: 'insert.text', path: spanA, offset: 4, length: 3},
+    ]
+
+    expect(mapRange(steps, range, {collapsedAffinity: 'both'})).toEqual({
+      anchor: {path: spanA, offset: 7},
+      focus: {path: spanA, offset: 7},
+    })
+  })
+
   test('a removal spanning the range end clamps the end to the removal start', () => {
     const range = {
       anchor: {path: spanA, offset: 2},

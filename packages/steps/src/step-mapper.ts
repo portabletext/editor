@@ -150,7 +150,7 @@ export type Step =
 export function mapPointThroughStep(
   step: Step,
   point: Point | null,
-  options?: {affinity?: 'forward' | 'backward'},
+  options?: {affinity?: 'forward' | 'backward' | 'both'},
 ): Point | null {
   if (point === null) {
     return null
@@ -163,7 +163,7 @@ export function mapPointThroughStep(
       if (
         pathEquals(step.path, point.path) &&
         (step.offset < point.offset ||
-          (step.offset === point.offset && affinity === 'forward'))
+          (step.offset === point.offset && affinity !== 'backward'))
       ) {
         return {path: point.path, offset: point.offset + step.length}
       }
@@ -247,8 +247,8 @@ export function mapPointThroughStep(
         point.offset < step.from.offset + step.from.length
       const rides =
         insideRange ||
-        (atStart && affinity === 'forward') ||
-        (atEnd && affinity === 'backward')
+        (atStart && affinity !== 'backward') ||
+        (atEnd && affinity !== 'forward')
 
       if (!rides) {
         return point
@@ -279,13 +279,14 @@ export function mapPointThroughStep(
  *
  * `options.affinity` defaults to `'forward'`: say it loudly, a point
  * exactly at an insertion offset moves with the insertion by default.
- * Pass `'backward'` to have it stay instead.
+ * Pass `'backward'` to have it stay instead. `'both'` uses forward insertion
+ * affinity and follows either boundary of moved text, matching caret mapping.
  * @public
  */
 export function mapPoint(
   steps: ReadonlyArray<Step>,
   point: Point | null,
-  options?: {affinity?: 'forward' | 'backward'},
+  options?: {affinity?: 'forward' | 'backward' | 'both'},
 ): Point | null {
   let current = point
 
@@ -311,8 +312,9 @@ export function mapPoint(
  * forward/backward affinities.
  *
  * A collapsed range (anchor and focus at the same address) maps both ends
- * with backward affinity instead, so it can never inflate into an
- * inverted range at an insertion point.
+ * with backward affinity by default, so it can never inflate into an
+ * inverted range at an insertion point. `collapsedAffinity: 'both'` follows
+ * insertions and either boundary of moved text, matching a local caret.
  *
  * Returns `null` when either end is lost.
  * @public
@@ -320,6 +322,7 @@ export function mapPoint(
 export function mapRange(
   steps: ReadonlyArray<Step>,
   range: Range,
+  options?: {collapsedAffinity?: 'forward' | 'backward' | 'both'},
 ): Range | null {
   const isCollapsed =
     pathEquals(range.anchor.path, range.focus.path) &&
@@ -327,7 +330,7 @@ export function mapRange(
 
   if (isCollapsed) {
     const point = mapPoint(steps, range.anchor, {
-      affinity: 'backward',
+      affinity: options?.collapsedAffinity ?? 'backward',
     })
     return point === null ? null : {anchor: point, focus: point}
   }
