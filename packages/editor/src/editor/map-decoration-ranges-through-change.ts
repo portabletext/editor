@@ -3,6 +3,7 @@ import {
   interpretTransaction,
   mapRange,
   normalizeRangeBoundary,
+  rangeSurvives,
   type Step,
 } from '@portabletext/steps'
 import type {Change} from '../engine/core/change'
@@ -10,7 +11,6 @@ import type {Range} from '../engine/interfaces/range'
 import {isAfterPoint} from '../engine/point/is-after-point'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
-import {isDeepEqual} from '../internal-utils/equality'
 import {operationToPatches} from '../internal-utils/operation-to-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
@@ -29,7 +29,6 @@ export function mapDecorationRangesThroughChange(
     const mappedRange = applyDecorationPolicy(
       range,
       mapRange(steps, mappingRange),
-      change,
       steps,
       base,
       editorEngine.snapshot.context.value,
@@ -42,7 +41,6 @@ export function mapDecorationRangesThroughChange(
 function applyDecorationPolicy(
   range: Range,
   mappedRange: Range | null,
-  change: Change,
   steps: ReadonlyArray<Step>,
   beforeValue: Change['entries'][number]['event']['beforeValue'],
   afterValue: PortableTextEditorEngine['snapshot']['context']['value'],
@@ -60,37 +58,12 @@ function applyDecorationPolicy(
   if (
     isCollapsedRange(mappedRange) ||
     rangeDirectionChanged(range, mappedRange, beforeValue, afterValue) ||
-    (originalSingleSpanTextWasFullyRemoved(range, change) &&
-      !stepsMoveOriginalText(range, steps))
+    !rangeSurvives(beforeValue, steps, range)
   ) {
     return null
   }
 
   return normalizeRangeBoundary(afterValue, mappedRange)
-}
-
-function stepsMoveOriginalText(
-  range: Range,
-  steps: ReadonlyArray<Step>,
-): boolean {
-  const start = Math.min(range.anchor.offset, range.focus.offset)
-  const end = Math.max(range.anchor.offset, range.focus.offset)
-
-  return steps.some((step) => {
-    if (step.type === 'move.node') {
-      return isDeepEqual(
-        range.anchor.path.slice(0, step.from.length),
-        step.from,
-      )
-    }
-
-    return (
-      step.type === 'move.text' &&
-      isDeepEqual(step.from.path, range.anchor.path) &&
-      step.from.offset < end &&
-      step.from.offset + step.from.length > start
-    )
-  })
 }
 
 function rangeDirectionChanged(
@@ -103,50 +76,6 @@ function rangeDirectionChanged(
     isAfterPoint(range.anchor, range.focus, {value: beforeValue}) !==
     isAfterPoint(mappedRange.anchor, mappedRange.focus, {value: afterValue})
   )
-}
-
-function originalSingleSpanTextWasFullyRemoved(
-  range: Range,
-  change: Change,
-): boolean {
-  if (!isDeepEqual(range.anchor.path, range.focus.path)) {
-    return false
-  }
-
-  const start = Math.min(range.anchor.offset, range.focus.offset)
-  const end = Math.max(range.anchor.offset, range.focus.offset)
-  const removedIntervals = change.entries.flatMap((entry) => {
-    const operation = entry.event.operation
-    if (
-      operation.type !== 'remove.text' ||
-      !isDeepEqual(operation.path, range.anchor.path)
-    ) {
-      return []
-    }
-
-    return [
-      {
-        start: operation.offset,
-        end: operation.offset + operation.text.length,
-      },
-    ]
-  })
-
-  let coveredUntil = start
-  for (const interval of removedIntervals.sort((a, b) => a.start - b.start)) {
-    if (interval.end <= coveredUntil) {
-      continue
-    }
-    if (interval.start > coveredUntil) {
-      return false
-    }
-    coveredUntil = interval.end
-    if (coveredUntil >= end) {
-      return true
-    }
-  }
-
-  return false
 }
 
 export function changeToPatches(
