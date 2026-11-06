@@ -263,6 +263,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:*
         version: link:../../packages/schema
+      '@portabletext/steps':
+        specifier: workspace:*
+        version: link:../../packages/steps
       '@portabletext/test':
         specifier: workspace:*
         version: link:../../packages/test
