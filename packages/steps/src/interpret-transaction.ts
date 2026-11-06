@@ -122,7 +122,12 @@ export function interpretTransaction(
 ): Step[] {
   const workingCopy = createWorkingCopy(base, patches)
   const isSingleTextPatch =
-    patches.length === 1 && patches[0]?.path.at(-1) === 'text'
+    patches.length === 1 &&
+    patches[0]?.path.at(-1) === 'text' &&
+    (patches[0].type === 'diffMatchPatch' ||
+      patches[0].type === 'set' ||
+      patches[0].type === 'unset' ||
+      patches[0].type === 'setIfMissing')
   const slots: Array<Step | null> = []
   const removalCandidates: Array<RemovalCandidate> = []
   const insertionCandidates: Array<InsertionCandidate> = []
@@ -415,6 +420,7 @@ export function interpretTransaction(
     }
   }
 
+  // One text patch cannot pair a move or change a key.
   const steps = isSingleTextPatch
     ? slots.flatMap((step) => (step === null ? [] : [step]))
     : applyNetRekeys(
@@ -454,16 +460,17 @@ function createWorkingCopy(
 
   for (const patch of patches) {
     const blockSegment = patch.path[0]
-    if (blockSegment === undefined) {
+    if (!isKeyedSegment(blockSegment)) {
       return structuredClone(base) as Array<PortableTextBlock>
     }
 
-    const blockIndex =
-      typeof blockSegment === 'number'
-        ? blockSegment
-        : isKeyedSegment(blockSegment)
-          ? base.findIndex((block) => block._key === blockSegment._key)
-          : -1
+    const blockIndex = base.findIndex(
+      (block) => block._key === blockSegment._key,
+    )
+
+    if (blockIndex < 0) {
+      return structuredClone(base) as Array<PortableTextBlock>
+    }
 
     if (blockIndex >= 0 && !clonedBlockIndexes.has(blockIndex)) {
       workingCopy[blockIndex] = structuredClone(base[blockIndex]!)
