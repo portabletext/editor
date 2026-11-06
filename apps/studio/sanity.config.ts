@@ -2,7 +2,7 @@ import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {schemaTypes} from './schemaTypes'
-import {TestEditorHandlePlugins} from './schemaTypes/test-editor-handle'
+import {TestPortableTextPlugins} from './schemaTypes/test-plugins'
 
 export default defineConfig({
   name: 'default',
@@ -20,7 +20,7 @@ export default defineConfig({
   form: {
     components: {
       portableText: {
-        plugins: TestEditorHandlePlugins,
+        plugins: TestPortableTextPlugins,
       },
     },
   },
