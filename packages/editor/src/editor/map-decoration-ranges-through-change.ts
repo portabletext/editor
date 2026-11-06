@@ -6,6 +6,27 @@ import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {operationToPatches} from '../internal-utils/operation-to-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
+export type DecorationMappingDebugCapture = {
+  cause: Change['cause']['type']
+  entryOrigins: Array<Change['entries'][number]['event']['origin']>
+  beforeValue: Change['entries'][number]['event']['beforeValue']
+  entryPatches: Array<Array<Patch>>
+  derivedPatches: Array<Patch>
+  steps: ReturnType<typeof interpretTransaction>
+  range: Range
+  mappedRange: Range | null
+}
+
+let decorationMappingDebugHook:
+  | ((capture: DecorationMappingDebugCapture) => void)
+  | undefined
+
+export function setDecorationMappingDebugHook(
+  hook: ((capture: DecorationMappingDebugCapture) => void) | undefined,
+): void {
+  decorationMappingDebugHook = hook
+}
+
 export function mapDecorationRangesThroughChange(
   editorEngine: PortableTextEditorEngine,
   change: Change,
@@ -14,7 +35,22 @@ export function mapDecorationRangesThroughChange(
   const patches = changeToPatches(editorEngine, change)
   const steps = interpretTransaction(base, patches)
 
-  return (range) => mapRange(steps, range)
+  return (range) => {
+    const mappedRange = mapRange(steps, range)
+
+    decorationMappingDebugHook?.({
+      cause: change.cause.type,
+      entryOrigins: change.entries.map((entry) => entry.event.origin),
+      beforeValue: base,
+      entryPatches: change.entries.map((entry) => entry.patches),
+      derivedPatches: patches,
+      steps,
+      range,
+      mappedRange,
+    })
+
+    return mappedRange
+  }
 }
 
 export function changeToPatches(

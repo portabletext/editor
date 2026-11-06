@@ -23,6 +23,7 @@ import {
   type RangeDecorationOnMovedDetails,
   type Decoration,
 } from '../src'
+import {setDecorationMappingDebugHook} from '../src/editor/map-decoration-ranges-through-change'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {EventListenerPlugin, NodePlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
@@ -36,6 +37,16 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
+
+if (
+  (import.meta as {env?: Record<string, string>}).env?.[
+    'VITE_DECORATION_DIAGNOSTICS'
+  ] === '1'
+) {
+  setDecorationMappingDebugHook((capture) => {
+    console.log(`DECORATION_DIAGNOSTIC ${JSON.stringify(capture)}`)
+  })
+}
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
