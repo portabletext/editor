@@ -62,3 +62,19 @@ The remaining failures are inputs to the next step: structural patch pairing,
 range death/revival semantics, and one imported controlled-null harness
 incompatibility. No typing fast path was added. No prerequisite change-event
 or steps implementation was modified.
+
+## Stage 1 update
+
+Stage 1 adds side-aware `move.text` boundary mapping and a final-value pass in
+`interpretTransaction`. The final pass recovers insert-first text moves,
+same-key descendants removed with their container, reconstruction-style undo
+moves, and unambiguous same-index rekeys without changing the change-event
+boundary.
+
+The broad range suite now passes 52/56; its four remaining failures are the
+deferred whole-range death/revival policy cases. The structural suite passes
+22/23. Its remaining marked-span merge case preserves the same visible text
+but represents the start at `s3@0` rather than the equivalent preceding span
+boundary `s1@7`. Steps pass 114/114, Argus 4/4, registration 33/33, the
+range-decoration machine 27/27, and the affected change-event suites 113/113.
+See `/workspace/proposals/stage1-report.md` for the rule-by-rule results.
