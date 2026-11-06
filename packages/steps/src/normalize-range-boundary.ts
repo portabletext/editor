@@ -14,7 +14,10 @@ import type {Point, Range} from './step-mapper'
 export function normalizeRangeBoundary(
   value: ReadonlyArray<PortableTextBlock>,
   range: Range,
-  options?: {representation?: 'previous' | 'next'},
+  options?: {
+    representation?: 'previous' | 'next'
+    normalizeCollapsed?: boolean
+  },
 ): Range {
   const orderedSpanPaths = getOrderedSpanPaths(value)
   const anchorIndex = orderedSpanPaths.findIndex((path) =>
@@ -30,8 +33,17 @@ export function normalizeRangeBoundary(
 
   const isCollapsed =
     anchorIndex === focusIndex && range.anchor.offset === range.focus.offset
-  if (isCollapsed) {
+  if (isCollapsed && !options?.normalizeCollapsed) {
     return range
+  }
+
+  if (isCollapsed) {
+    const point = normalizeStartPoint(
+      value,
+      range.anchor,
+      options?.representation ?? 'previous',
+    )
+    return point === range.anchor ? range : {anchor: point, focus: point}
   }
 
   const anchorIsStart =
