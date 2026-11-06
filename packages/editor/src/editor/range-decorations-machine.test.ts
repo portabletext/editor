@@ -135,6 +135,26 @@ function decoratedRangeIds(actor: ReturnType<typeof startReadyActor>) {
 }
 
 describe(rangeDecorationsMachine.id, () => {
+  test('Scenario: a null prop decoration does not report that it moved', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const actor = startReadyActor(blockKey, spanKey)
+    const onMoved = vi.fn()
+
+    send(actor, {
+      type: 'source updated',
+      sourceKey: 'prop',
+      kind: 'prop',
+      rangeDecorations: [
+        {component: () => null as never, selection: null, onMoved},
+      ],
+    })
+
+    expect(onMoved).not.toHaveBeenCalled()
+    expect(actor.getSnapshot().context.editorEngine.decoratedRanges).toEqual([])
+  })
+
   test('Scenario: an equal prop resupply skips reassigning `decorate.fn`', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
