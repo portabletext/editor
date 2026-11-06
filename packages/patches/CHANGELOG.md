@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.0.4
+
+### Patch Changes
+
+- [#3595](https://github.com/portabletext/editor/pull/3595) [`3729248`](https://github.com/portabletext/editor/commit/3729248acac220c3a5327ad9b85b6faf69aeda4d) Thanks [@christianhg](https://github.com/christianhg)! - fix: change nothing for a path without a field name between two array items
+
 ## 3.0.3
 
 ### Patch Changes

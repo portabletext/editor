@@ -1,5 +1,12 @@
 # @portabletext/repair
 
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [[`3729248`](https://github.com/portabletext/editor/commit/3729248acac220c3a5327ad9b85b6faf69aeda4d)]:
+  - @portabletext/patches@3.0.4
+
 ## 1.0.1
 
 ### Patch Changes
