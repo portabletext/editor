@@ -54,6 +54,71 @@ function seedFromTextspec(
 }
 
 describe(interpretTransaction.name, () => {
+  test('a numeric block path after a root insertion does not mutate the base value', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const secondBlockKey = keyGenerator()
+    const secondSpanKey = keyGenerator()
+    const thirdBlockKey = keyGenerator()
+    const thirdSpanKey = keyGenerator()
+    const insertedBlockKey = keyGenerator()
+    const insertedSpanKey = keyGenerator()
+    const base = [
+      makeBlock(firstBlockKey, firstSpanKey, 'foo'),
+      makeBlock(secondBlockKey, secondSpanKey, 'bar'),
+      makeBlock(thirdBlockKey, thirdSpanKey, 'baz'),
+    ]
+    const originalBase = structuredClone(base)
+
+    interpretTransaction(base, [
+      {
+        type: 'insert',
+        path: [{_key: firstBlockKey}],
+        position: 'before',
+        items: [makeBlock(insertedBlockKey, insertedSpanKey, 'foo')],
+      },
+      {
+        type: 'set',
+        path: [2, 'children', {_key: secondSpanKey}, 'text'],
+        value: 'changed',
+      },
+    ])
+
+    expect(base).toEqual(originalBase)
+  })
+
+  test('a numeric block path created by an earlier insertion resolves against the working value', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const insertedBlockKey = keyGenerator()
+    const insertedSpanKey = keyGenerator()
+    const base = [makeBlock(blockKey, spanKey, 'foo')]
+
+    const steps = interpretTransaction(base, [
+      {
+        type: 'insert',
+        path: [0],
+        position: 'after',
+        items: [makeBlock(insertedBlockKey, insertedSpanKey, 'bar')],
+      },
+      {
+        type: 'set',
+        path: [1, 'children', {_key: insertedSpanKey}, 'text'],
+        value: 'baz',
+      },
+    ])
+
+    expect(steps).toEqual([
+      {
+        type: 'set.text',
+        path: [1, 'children', {_key: insertedSpanKey}],
+        length: 3,
+      },
+    ])
+  })
+
   test('Scenario: block-split moves the tail into the new block', () => {
     const fixture = readFixture('block-split')
     const seed = seedFromTextspec(fixture.seed as string)
