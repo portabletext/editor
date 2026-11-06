@@ -123,7 +123,7 @@ export function interpretTransaction(
   base: ReadonlyArray<PortableTextBlock>,
   patches: ReadonlyArray<Patch>,
 ): Step[] {
-  const workingCopy = structuredClone(base) as Array<PortableTextBlock>
+  const workingCopy = createWorkingCopy(base, patches)
   const slots: Array<Step | null> = []
   const removalCandidates: Array<RemovalCandidate> = []
   const insertionCandidates: Array<InsertionCandidate> = []
@@ -135,21 +135,13 @@ export function interpretTransaction(
   // addresses, so its key reappearing elsewhere is never a move worth
   // recognizing: only a removal of a key that predates the transaction
   // qualifies.
-  const preExistingKeys = new Set(
-    base.flatMap((block) =>
-      collectKeyedNodes(block, []).map((keyedNode) => keyedNode.key),
-    ),
-  )
-  const preExistingNodePaths = new Set(
-    base.flatMap((block) =>
-      collectKeyedNodes(block, [{_key: block._key}]).map((keyedNode) =>
-        JSON.stringify(keyedNode.path),
-      ),
-    ),
-  )
+  const preExistingKeys = new Set<string>()
+  const preExistingNodePaths = new Set<string>()
   const preExistingKeyCounts = new Map<string, number>()
   for (const block of base) {
     for (const keyedNode of collectKeyedNodes(block, [{_key: block._key}])) {
+      preExistingKeys.add(keyedNode.key)
+      preExistingNodePaths.add(JSON.stringify(keyedNode.path))
       preExistingKeyCounts.set(
         keyedNode.key,
         (preExistingKeyCounts.get(keyedNode.key) ?? 0) + 1,
@@ -451,6 +443,35 @@ export function interpretTransaction(
   }
 
   return steps
+}
+
+function createWorkingCopy(
+  base: ReadonlyArray<PortableTextBlock>,
+  patches: ReadonlyArray<Patch>,
+): Array<PortableTextBlock> {
+  const workingCopy = [...base]
+  const clonedBlockIndexes = new Set<number>()
+
+  for (const patch of patches) {
+    const blockSegment = patch.path[0]
+    if (blockSegment === undefined) {
+      return structuredClone(base) as Array<PortableTextBlock>
+    }
+
+    const blockIndex =
+      typeof blockSegment === 'number'
+        ? blockSegment
+        : isKeyedSegment(blockSegment)
+          ? base.findIndex((block) => block._key === blockSegment._key)
+          : -1
+
+    if (blockIndex >= 0 && !clonedBlockIndexes.has(blockIndex)) {
+      workingCopy[blockIndex] = structuredClone(base[blockIndex]!)
+      clonedBlockIndexes.add(blockIndex)
+    }
+  }
+
+  return workingCopy
 }
 
 type RemovalCandidate = {
