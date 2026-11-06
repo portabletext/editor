@@ -447,7 +447,10 @@ function moveRegisteredDecoratedRanges(
     const contentTouched = change.entries.some((entry) =>
       operationTouchesRange(entry.event.operation, currentRange, editorEngine),
     )
-    const clonedCurrentRange = cloneRange(currentRange)
+    const clonedCurrentRange = cloneRange({
+      anchor: currentRange.anchor,
+      focus: currentRange.focus,
+    })
 
     if (newRange === null) {
       mappings.push({
