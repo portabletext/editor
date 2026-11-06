@@ -31,6 +31,7 @@
     "@portabletext/repair": "workspace:*",
     "@portabletext/sanity-bridge": "workspace:*",
     "@portabletext/schema": "workspace:*",
+    "@portabletext/steps": "workspace:*",
     "@portabletext/test": "workspace:*",
     "@portabletext/to-html": "^6.0.0",
     "@portabletext/toolbar": "workspace:*",
