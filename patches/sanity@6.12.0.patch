@@ -1,0 +1,83 @@
+diff --git a/lib/CommentsInput-BwVg7yVG.js b/lib/CommentsInput-BwVg7yVG.js
+index 80f2834f19e7f67149adeed2b0c91ef140373b32..114c4be0d48777cec11ffcccbf84584290d58ef4 100644
+--- a/lib/CommentsInput-BwVg7yVG.js
++++ b/lib/CommentsInput-BwVg7yVG.js
+@@ -23,6 +23,52 @@ import { AnimatePresence, motion } from "motion/react";
+ import { uuid } from "@sanity/uuid";
+ import { PortableTextEditor } from "@portabletext/editor";
+ import { AddCommentIcon } from "@sanity/icons/AddComment";
++
++// --- PTE spike patch (spike/decorations-multiplayer-studio) ---
++// Persist the range the editor reported through onMoved instead of
++// re-deriving it from the stored text with diff-match-patch, which cannot
++// follow a split/merge/paste across blocks. Falls back to the original
++// re-derivation when the moved range cannot be resolved (nested blocks,
++// destroyed ranges).
++const __PTE_START = "\uF000", __PTE_END = "\uF001";
++function __ptePos(value, point) {
++	const path = point?.path || [], ci = path.indexOf("children");
++	if (ci < 1) return void 0;
++	const blockKey = path[ci - 1]?._key, spanKey = path[ci + 1]?._key, block = value.findIndex((b) => b._key === blockKey);
++	if (block === -1 || !isPortableTextTextBlock(value[block])) return void 0;
++	let offset = 0;
++	for (const child of value[block].children) {
++		if (child._key === spanKey) return { block, offset: offset + point.offset };
++		offset += typeof child.text === "string" ? child.text.length : 0;
++	}
++	return void 0;
++}
++function __pteMovedSelectionValue(value, selections) {
++	const points = [];
++	for (const sel of selections) {
++		if (!sel) continue;
++		for (const pt of [sel.anchor, sel.focus]) {
++			const p = __ptePos(value, pt);
++			if (!p) return void 0;
++			points.push(p);
++		}
++	}
++	if (points.length === 0) return void 0;
++	points.sort((a, b) => a.block - b.block || a.offset - b.offset);
++	const start = points[0], end = points[points.length - 1];
++	if (start.block === end.block && start.offset === end.offset) return void 0;
++	const out = [];
++	for (let i = start.block; i <= end.block; i++) {
++		const block = value[i];
++		if (!isPortableTextTextBlock(block)) continue;
++		const text = block.children.map((c) => typeof c.text === "string" ? c.text : "").join("");
++		const s = i === start.block ? start.offset : 0, e = i === end.block ? end.offset : text.length;
++		if (s === e && start.block !== end.block) continue;
++		out.push({ _key: block._key, text: text.slice(0, s) + __PTE_START + text.slice(s, e) + __PTE_END + text.slice(e) });
++	}
++	return out.length > 0 ? out.sort((a, b) => a._key.localeCompare(b._key)) : void 0;
++}
++// --- end PTE spike patch ---
+ /**
+ * A function that creates a DOMRect from an array of elements.
+ */
+@@ -329,9 +375,25 @@ const CommentsPortableTextInputInner = memo(function CommentsPortableTextInputIn
+ 	let handleRangeDecorationMoved = t16, t17;
+ 	$[41] !== addedCommentsDecorations || $[42] !== getComment || $[43] !== operation || $[44] !== props.path ? (t17 = () => {
+ 		let decoratorsToUpdate = addedCommentsDecorations.filter(_temp3);
++		let __pteHandled = new Set();
+ 		decoratorsToUpdate.length !== 0 && (decoratorsToUpdate.forEach((decorator_0) => {
+ 			let commentId_1 = decorator_0.payload?.commentId, comment_0 = getComment(commentId_1 || "");
+ 			if (!comment_0 || !editorRef.current) return;
++			if (__pteHandled.has(commentId_1)) return;
++			__pteHandled.add(commentId_1);
++			let __pteValue = __pteMovedSelectionValue(PortableTextEditor.getValue(editorRef.current) || EMPTY_ARRAY, addedCommentsDecorations.filter((d) => d.payload?.commentId === commentId_1).map((d) => d.selection));
++			if (__pteValue) {
++				let __pteNext = { target: {
++					...comment_0.target,
++					path: {
++						...comment_0.target?.path,
++						field: comment_0.target.path?.field || "",
++						selection: { type: "text", value: __pteValue }
++					}
++				} };
++				isEqual$1(comment_0.target, __pteNext.target) || operation.update(comment_0._id, __pteNext);
++				return;
++			}
+ 			let editorValue = PortableTextEditor.getValue(editorRef.current) || EMPTY_ARRAY, [updatedDecoration] = buildRangeDecorationSelectionsFromComments({
+ 				comments: [comment_0],
+ 				value: editorValue,

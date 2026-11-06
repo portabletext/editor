@@ -95,7 +95,8 @@
     },
     "patchedDependencies": {
       "@microsoft/api-extractor": "patches/@microsoft__api-extractor.patch",
-      "@vitest/browser-playwright": "patches/@vitest__browser-playwright.patch"
+      "@vitest/browser-playwright": "patches/@vitest__browser-playwright.patch",
+      "sanity@6.12.0": "patches/sanity@6.12.0.patch"
     }
   }
 }
