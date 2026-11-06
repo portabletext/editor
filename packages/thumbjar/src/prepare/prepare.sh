@@ -3,7 +3,9 @@
 # THUMBJAR_OUT_DIR, THUMBJAR_PAGE_URL, THUMBJAR_PAGE_PORT and THUMBJAR_BOOTED set, the port from the
 # driver's `localhostPort` and empty when the page is not on localhost, and THUMBJAR_BOOTED the host's epoch
 # seconds when the emulator came online. A prep step that breaks exits with a PREP FAILED line naming the
-# step.
+# step, and status 1, apart from a Japanese dictionary that never loaded on this boot, which exits
+# DICTIONARY_NOT_LOADED_STATUS, 3, so the caller can tell it from every other failure without reading the
+# reason.
 # The prep runs under one deadline, `timeout -k 10 "$deadline"`, so it ends within `prepWorstSeconds` of
 # its keyboard in `src/device/budget.ts`, 632 seconds for English and 889 for Japanese, its boot capture
 # included, however the device hangs.
@@ -17,16 +19,25 @@ here=$(cd "$(dirname "$0")" && pwd)
 # How long after the emulator came online Gboard gets to load its Japanese dictionary, `DICTIONARY_LOAD_SECONDS`
 # in `src/device/budget.ts`.
 DICTIONARY_LOAD_SECONDS=360
+# The status `dictionary.js wait` exits with when no load line came by its deadline, `NOT_LOADED_STATUS` in
+# `dictionary.ts`.
+DICTIONARY_NOT_LOADED_STATUS=3
 mkdir -p "$out"
 log() { echo "PHASE $(date +%H:%M:%S) $*" | tee -a "$out/phases.log"; }
 a() { timeout -k 5 60 adb "$@"; local rc=$?; [ $rc -eq 124 ] && log "TIMEOUT adb $*"; return $rc; }
 fail() { log "PREP FAILED: $*"; exit 1; }
-# Fails the prep with the reason the dictionary wait printed, so the caller's summary can quote it.
+# Fails the prep with the reason the dictionary wait printed, so the caller's summary can quote it, and with
+# the wait's own status when the dictionary never loaded. A retry in the same out dir appends to
+# `ja-dictionary.log`, whose last line an earlier `tee` may have left without its newline, so only the bytes
+# after `earlier`, the log's size before this wait, count, and each of their lines starts where this wait's
+# output did.
 dictionary_failure() {
-  local reason
-  reason=$(grep -m 1 '^DICTIONARY FAILED: ' "$out/ja-dictionary.log" 2>/dev/null)
+  local rc=$1 earlier=$2 reason
+  reason=$(tail -c +$((earlier + 1)) "$out/ja-dictionary.log" 2>/dev/null | grep -m 1 '^DICTIONARY FAILED: ')
   [ -n "$reason" ] || fail "japanese dictionary wait gave no reason, see ja-dictionary.log"
-  fail "${reason#DICTIONARY FAILED: } See ja-dictionary.log for the dictionary lines it saw."
+  log "PREP FAILED: ${reason#DICTIONARY FAILED: } See ja-dictionary.log for the dictionary lines it saw."
+  [ "$rc" -eq "$DICTIONARY_NOT_LOADED_STATUS" ] && exit "$DICTIONARY_NOT_LOADED_STATUS"
+  exit 1
 }
 
 # Gboard's `main` log from this boot, where it logs its dictionary load and session rebuilds, for the Japanese
@@ -146,10 +157,11 @@ prep() {
     wait_seconds=$((booted + DICTIONARY_LOAD_SECONDS - $(date +%s)))
     [ $wait_seconds -gt 0 ] || wait_seconds=0
     log "japanese dictionary wait"
+    earlier_dictionary=$(cat "$out/ja-dictionary.log" 2>/dev/null | wc -c)
     timeout -k 5 $((wait_seconds + 45)) node "$here/dictionary.js" wait "$out" "$booted" 2>&1 | tee -a "$out/ja-dictionary.log"
     rc=${PIPESTATUS[0]}
     log "japanese dictionary wait rc=$rc"
-    [ "$rc" -eq 0 ] || dictionary_failure
+    [ "$rc" -eq 0 ] || dictionary_failure "$rc" "$earlier_dictionary"
     log "japanese dictionary check"
     timeout -k 10 180 node "$here/dictionary.js" check "$out" "$page_url" 2>&1 | tee -a "$out/ja-dictionary.log"
     rc=${PIPESTATUS[0]}
@@ -164,8 +176,10 @@ prep() {
   log "http ok"
   if [ -n "$port" ]; then
     a reverse "tcp:$port" "tcp:$port" || fail "adb reverse"
-    a reverse --list
+    a reverse --list || log "adb reverse --list rc=$?"
   fi
+  # Only `fail` and `dictionary_failure` decide a failed prep's status, never the last command's.
+  return 0
 }
 
 # The prep's deadline, `prepWorstSeconds` less its kill-after, and for Japanese less its boot capture, which
@@ -176,7 +190,7 @@ case "$lang" in
 esac
 
 export -f prep log a fail dictionary_failure capture_seed capture_loop stop_capture capture_alive block_self_update
-export lang out page_url port here booted DICTIONARY_LOAD_SECONDS
+export lang out page_url port here booted DICTIONARY_LOAD_SECONDS DICTIONARY_NOT_LOADED_STATUS
 
 if [ "$lang" = ja ]; then
   log "boot capture"
@@ -193,10 +207,12 @@ trap '[ -n "${prep_pid:-}" ] && kill -TERM "$prep_pid" 2>/dev/null; exit 143' TE
 trap '[ -n "${prep_pid:-}" ] && kill -TERM "$prep_pid" 2>/dev/null; exit 130' INT
 
 # One deadline for the whole prep. `prep` runs in a subshell, so its `fail` exits only the subshell. It
-# runs in the background so a signal to this script interrupts the `wait`.
+# runs in the background so a signal to this script interrupts the `wait`. `timeout` exits with the
+# subshell's status, and its own are 124 and up, so only a dictionary that never loaded exits 3.
 timeout -k 10 "$deadline" bash -c prep &
 prep_pid=$!
 wait "$prep_pid"
 rc=$?
 [ $rc -eq 124 ] && log "PREP FAILED: prep ran past ${deadline}s"
+[ $rc -eq "$DICTIONARY_NOT_LOADED_STATUS" ] && exit "$DICTIONARY_NOT_LOADED_STATUS"
 [ $rc -eq 0 ] || exit 1

@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.0.26
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.26
+
 ## 9.0.25
 
 ### Patch Changes

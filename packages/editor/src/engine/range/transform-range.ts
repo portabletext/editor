@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import type {Node} from '../interfaces/node'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Range, RangeTransformOptions} from '../interfaces/range'
@@ -12,7 +13,7 @@ import {resolveRangeAffinities} from './resolve-range-affinities'
 export function transformRange(
   range: Range | null,
   op: EngineOperation,
-  root: {value: Array<Node>},
+  root: {schema: Schema; value: Array<Node>},
   options: RangeTransformOptions = {},
 ): Range | null {
   if (range === null) {
@@ -26,10 +27,12 @@ export function transformRange(
     affinity,
   )
 
-  const anchor = transformPoint(range.anchor, op, {
+  const anchor = transformPoint(root, range.anchor, op, {
     affinity: affinityAnchor,
   })
-  const focus = transformPoint(range.focus, op, {affinity: affinityFocus})
+  const focus = transformPoint(root, range.focus, op, {
+    affinity: affinityFocus,
+  })
 
   if (!anchor || !focus) {
     return null

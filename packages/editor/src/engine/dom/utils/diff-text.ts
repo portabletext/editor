@@ -245,7 +245,9 @@ export function transformPendingPoint(
   const textDiff = pendingDiffs?.find(({path}) => pathEquals(path, point.path))
 
   if (!textDiff || point.offset <= textDiff.diff.start) {
-    return transformPoint(point, op, {affinity: 'backward'})
+    return transformPoint(editor.snapshot.context, point, op, {
+      affinity: 'backward',
+    })
   }
 
   const {diff} = textDiff
@@ -253,7 +255,7 @@ export function transformPendingPoint(
   // the diff will be applied to and add the offset inside the diff.
   if (point.offset <= diff.start + diff.text.length) {
     const anchor = {path: point.path, offset: diff.start}
-    const transformed = transformPoint(anchor, op, {
+    const transformed = transformPoint(editor.snapshot.context, anchor, op, {
       affinity: 'backward',
     })
 
@@ -272,16 +274,31 @@ export function transformPendingPoint(
     path: point.path,
     offset: point.offset - diff.text.length + diff.end - diff.start,
   }
-  const transformed = transformPoint(anchor, op, {
+  const transformed = transformPoint(editor.snapshot.context, anchor, op, {
     affinity: 'backward',
   })
   if (!transformed) {
     return null
   }
 
+  // A change that shrinks the span can clamp `anchor` inside the span the
+  // pending edit still has to replay over, so the subtraction below would
+  // otherwise put the caret before that edit's end, or below zero.
+  const diffStart = transformPoint(
+    editor.snapshot.context,
+    {path: point.path, offset: diff.start},
+    op,
+    {affinity: 'backward'},
+  )
+
   return {
     path: transformed.path,
-    offset: transformed.offset + diff.text.length - diff.end + diff.start,
+    offset: Math.max(
+      transformed.offset + diff.text.length - diff.end + diff.start,
+      diffStart && pathEquals(diffStart.path, transformed.path)
+        ? diffStart.offset + diff.text.length
+        : 0,
+    ),
   }
 }
 

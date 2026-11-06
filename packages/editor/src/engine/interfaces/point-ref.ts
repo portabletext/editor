@@ -1,3 +1,4 @@
+import type {Schema} from '@portabletext/schema'
 import {transformPoint} from '../point/transform-point'
 import type {TextDirection} from '../types/types'
 import type {EngineOperation} from './operation'
@@ -17,19 +18,27 @@ export interface PointRef {
 }
 
 interface PointRefInterface {
-  transform: (ref: PointRef, op: EngineOperation) => void
+  transform: (
+    context: {schema: Schema},
+    ref: PointRef,
+    op: EngineOperation,
+  ) => void
 }
 
 // eslint-disable-next-line no-redeclare
 export const PointRef: PointRefInterface = {
-  transform(ref: PointRef, op: EngineOperation): void {
+  transform(
+    context: {schema: Schema},
+    ref: PointRef,
+    op: EngineOperation,
+  ): void {
     const {current, affinity} = ref
 
     if (current == null) {
       return
     }
 
-    const point = transformPoint(current, op, {affinity})
+    const point = transformPoint(context, current, op, {affinity})
     ref.current = point
 
     if (point == null) {

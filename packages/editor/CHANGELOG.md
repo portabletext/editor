@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.2.12
+
+### Patch Changes
+
+- [#3589](https://github.com/portabletext/editor/pull/3589) [`4b5d159`](https://github.com/portabletext/editor/commit/4b5d159b58fdd6172aeb3efc7c3c7eb6e3e364dc) Thanks [@christianhg](https://github.com/christianhg)! - fix: clamp the caret to a span's new length when a children replacement shrinks it
+
+- [#3589](https://github.com/portabletext/editor/pull/3589) [`694a6c8`](https://github.com/portabletext/editor/commit/694a6c813a26446fe67f382a4ccea767ecd5867e) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep a pending caret after its pending edit when the span shrinks
+- Updated dependencies [[`3729248`](https://github.com/portabletext/editor/commit/3729248acac220c3a5327ad9b85b6faf69aeda4d)]:
+  - @portabletext/patches@3.0.4
+  - @portabletext/repair@1.0.2
+
 ## 8.2.11
 
 ### Patch Changes

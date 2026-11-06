@@ -10,8 +10,12 @@
       "@portabletext/editor/test": ["./src/test/_exports/index.ts"],
       "@portabletext/editor/test/vitest": [
         "./src/test/vitest/_exports/index.ts"
+      ],
+      "@portabletext/patches/test-utils/patch-path-rules": [
+        "../patches/test-utils/patch-path-rules.ts"
       ]
-    }
+    },
+    "rootDir": ".."
   },
   "include": ["./src", "./gherkin-tests", "./tests"],
   "exclude": ["dist", "node_modules"]

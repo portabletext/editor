@@ -585,6 +585,131 @@ describe(applyPatch.name, () => {
   })
 })
 
+describe('paths without a field name between two array items', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const spanKey = keyGenerator()
+  const blockKey = keyGenerator()
+  const calloutKey = keyGenerator()
+  const innerCalloutKey = keyGenerator()
+  const noteKey = keyGenerator()
+  const insertedSpanKey = keyGenerator()
+  const tableKey = keyGenerator()
+  const span = {_type: 'span', _key: spanKey, text: 'foo', marks: []}
+  const block = {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    markDefs: [],
+    children: [span],
+  }
+  const depths = [
+    {name: 'at the root', value: [block], prefix: []},
+    {
+      name: 'inside a container',
+      value: [{_type: 'callout', _key: calloutKey, content: [block]}],
+      prefix: [{_key: calloutKey}, 'content'],
+    },
+    {
+      name: 'inside a container inside a container',
+      value: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {_type: 'callout', _key: innerCalloutKey, content: [block]},
+          ],
+        },
+      ],
+      prefix: [
+        {_key: calloutKey},
+        'content',
+        {_key: innerCalloutKey},
+        'content',
+      ],
+    },
+    {
+      name: 'inside a rich text field of a block object',
+      value: [{_type: 'note', _key: noteKey, body: [block]}],
+      prefix: [{_key: noteKey}, 'body'],
+    },
+  ] as const
+
+  describe.each(depths)('$name', ({value, prefix}) => {
+    test('Scenario: set with indexed segments changes nothing', () => {
+      expect(applyPatch(value, set('bar', [...prefix, 0, 0, 'text']))).toEqual(
+        value,
+      )
+    })
+
+    test('Scenario: set with keyed segments changes nothing', () => {
+      expect(
+        applyPatch(
+          value,
+          set('bar', [...prefix, {_key: blockKey}, {_key: spanKey}, 'text']),
+        ),
+      ).toEqual(value)
+    })
+
+    test('Scenario: unset changes nothing', () => {
+      expect(
+        applyPatch(
+          value,
+          unset([...prefix, {_key: blockKey}, {_key: spanKey}]),
+        ),
+      ).toEqual(value)
+    })
+
+    test('Scenario: insert changes nothing', () => {
+      expect(
+        applyPatch(
+          value,
+          insert(
+            [{_type: 'span', _key: insertedSpanKey, text: 'baz', marks: []}],
+            'after',
+            [...prefix, 0, 0],
+          ),
+        ),
+      ).toEqual(value)
+    })
+
+    test('Scenario: diffMatchPatch changes nothing', () => {
+      expect(
+        applyPatch(
+          value,
+          diffMatchPatch('foo', 'foobar', [...prefix, 0, 0, 'text']),
+        ),
+      ).toEqual(value)
+    })
+  })
+
+  test('Scenario: an array directly inside an array is still patched', () => {
+    expect(
+      applyPatch(
+        [
+          {
+            _type: 'table',
+            _key: tableKey,
+            matrix: [
+              [1, 2],
+              [3, 4],
+            ],
+          },
+        ],
+        set(9, [{_key: tableKey}, 'matrix', 0, 1]),
+      ),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: tableKey,
+        matrix: [
+          [1, 9],
+          [3, 4],
+        ],
+      },
+    ])
+  })
+})
+
 describe(applyAll.name, () => {
   describe('applying patches to undefined', () => {
     test('setIfMissing on undefined returns the value', () => {
