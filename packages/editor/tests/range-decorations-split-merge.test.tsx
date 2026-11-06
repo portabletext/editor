@@ -7,18 +7,7 @@ import {
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
 } from '../src'
-import {setDecorationMappingDebugHook} from '../src/editor/map-decoration-ranges-through-change'
 import {createTestEditor} from '../src/test/vitest'
-
-if (
-  (import.meta as {env?: Record<string, string>}).env?.[
-    'VITE_DECORATION_DIAGNOSTICS'
-  ] === '1'
-) {
-  setDecorationMappingDebugHook((capture) => {
-    console.log(`DECORATION_DIAGNOSTIC ${JSON.stringify(capture)}`)
-  })
-}
 
 function updateRangeDecorations({
   rangeDecorations,

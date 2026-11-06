@@ -5,7 +5,6 @@ import {
   isTextBlock,
   type PortableTextBlock,
 } from '@portabletext/schema'
-import {mapPoint, type Step} from '@portabletext/steps'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {createRef, useState, type ReactNode, type RefObject} from 'react'
 import {describe, expect, it, test, vi} from 'vitest'
@@ -24,7 +23,6 @@ import {
   type RangeDecorationOnMovedDetails,
   type Decoration,
 } from '../src'
-import {setDecorationMappingDebugHook} from '../src/editor/map-decoration-ranges-through-change'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {EventListenerPlugin, NodePlugin} from '../src/plugins'
 import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
@@ -38,16 +36,6 @@ import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
-
-if (
-  (import.meta as {env?: Record<string, string>}).env?.[
-    'VITE_DECORATION_DIAGNOSTICS'
-  ] === '1'
-) {
-  setDecorationMappingDebugHook((capture) => {
-    console.log(`DECORATION_DIAGNOSTIC ${JSON.stringify(capture)}`)
-  })
-}
 
 const helloBlock: PortableTextBlock = {
   _key: '123',
@@ -1453,29 +1441,47 @@ describe('RangeDecorations: transaction re-anchoring acceptance', () => {
     })
   })
 
-  test('Scenario: mapping a split caret through steps matches the editor selection', async () => {
-    let capturedSteps: Array<Step> = []
-    setDecorationMappingDebugHook((capture) => {
-      capturedSteps = capture.steps
-    })
+  test('Scenario: mapping a registered split caret matches the editor selection', async () => {
     const caret = acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6)
     const harness = await createAcceptanceDecorationHarness({
       initialValue: [acceptanceBlock('b0', 's0', 'Hello world')],
       decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
     })
     await expect.element(harness.locator).toBeVisible()
+    const registration = harness.editor.registerDecorations({
+      decorations: [
+        {
+          id: 'caret',
+          type: 'range',
+          render: ({children}) => <span>{children}</span>,
+          range: caret,
+        },
+      ],
+    })
     await userEvent.click(harness.locator)
     harness.editor.send({type: 'select', at: caret})
 
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
-      expect(capturedSteps.length > 0).toEqual(true)
-      expect(mapPoint(capturedSteps, caret.anchor)).toEqual(
-        harness.editor.getSnapshot().context.selection?.anchor,
-      )
+      expect(registration.getDecorations()).toEqual([
+        {
+          id: 'caret',
+          range: acceptanceSelection('k2', 's0', 0, 'k2', 's0', 0),
+        },
+      ])
+      expect(harness.editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'k2'}, 'children', {_key: 's0'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k2'}, 'children', {_key: 's0'}],
+          offset: 0,
+        },
+        backward: false,
+      })
     })
-    setDecorationMappingDebugHook(undefined)
   })
 
   test('Scenario: a controlled prop decoration keeps its anchor through repeated keyboard splits', async () => {

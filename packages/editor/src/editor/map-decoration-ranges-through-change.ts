@@ -14,27 +14,6 @@ import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {operationToPatches} from '../internal-utils/operation-to-patches'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
-export type DecorationMappingDebugCapture = {
-  cause: Change['cause']['type']
-  entryOrigins: Array<Change['entries'][number]['event']['origin']>
-  beforeValue: Change['entries'][number]['event']['beforeValue']
-  entryPatches: Array<Array<Patch>>
-  derivedPatches: Array<Patch>
-  steps: ReturnType<typeof interpretTransaction>
-  range: Range
-  mappedRange: Range | null
-}
-
-let decorationMappingDebugHook:
-  | ((capture: DecorationMappingDebugCapture) => void)
-  | undefined
-
-export function setDecorationMappingDebugHook(
-  hook: ((capture: DecorationMappingDebugCapture) => void) | undefined,
-): void {
-  decorationMappingDebugHook = hook
-}
-
 export function mapDecorationRangesThroughChange(
   editorEngine: PortableTextEditorEngine,
   change: Change,
@@ -44,8 +23,8 @@ export function mapDecorationRangesThroughChange(
   const steps = interpretTransaction(base, patches)
   const touchedBlocks = getTouchedBlocks(base, steps)
 
-  return (range) => {
-    const mappedRange = rangeTouchesBlocks(range, touchedBlocks)
+  return (range) =>
+    rangeTouchesBlocks(range, touchedBlocks)
       ? applyDecorationPolicy(
           range,
           mapDecorationRange(base, steps, range),
@@ -54,20 +33,6 @@ export function mapDecorationRangesThroughChange(
           editorEngine.snapshot.context.value,
         )
       : range
-
-    decorationMappingDebugHook?.({
-      cause: change.cause.type,
-      entryOrigins: change.entries.map((entry) => entry.event.origin),
-      beforeValue: base,
-      entryPatches: change.entries.map((entry) => entry.patches),
-      derivedPatches: patches,
-      steps,
-      range,
-      mappedRange,
-    })
-
-    return mappedRange
-  }
 }
 
 type TouchedBlocks =
@@ -256,7 +221,7 @@ function rangeDirectionChanged(
   )
 }
 
-export function changeToPatches(
+function changeToPatches(
   editorEngine: PortableTextEditorEngine,
   change: Change,
 ): Array<Patch> {
