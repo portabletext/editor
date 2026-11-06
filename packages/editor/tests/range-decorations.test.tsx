@@ -928,6 +928,134 @@ describe('RangeDecorations', () => {
     })
   })
 
+  test('Scenario: removing the only decorated middle block retires a cross-block decoration', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const middleBlockKey = keyGenerator()
+    const middleSpanKey = keyGenerator()
+    const lastBlockKey = keyGenerator()
+    const lastSpanKey = keyGenerator()
+    const onMoved = vi.fn()
+    const rangeDecoration: RangeDecoration = {
+      component: ({children}) => (
+        <span data-testid="middle-block-decoration">{children}</span>
+      ),
+      onMoved,
+      selection: acceptanceSelection(
+        firstBlockKey,
+        firstSpanKey,
+        3,
+        lastBlockKey,
+        lastSpanKey,
+        0,
+      ),
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        acceptanceBlock(firstBlockKey, firstSpanKey, 'foo'),
+        acceptanceBlock(middleBlockKey, middleSpanKey, 'bar'),
+        acceptanceBlock(lastBlockKey, lastSpanKey, 'baz'),
+      ],
+      editableProps: {rangeDecorations: [rangeDecoration]},
+    })
+    await expect
+      .element(
+        page.getByTestId('middle-block-decoration').filter({hasText: 'bar'}),
+      )
+      .toBeVisible()
+
+    editor.send({
+      type: 'apply',
+      patches: [{type: 'unset', path: [{_key: middleBlockKey}]}],
+    })
+
+    await vi.waitFor(() => {
+      expect(onMoved.mock.calls).toEqual([
+        [
+          {
+            newSelection: null,
+            rangeDecoration,
+            origin: 'remote',
+          },
+        ],
+      ])
+    })
+  })
+
+  test('Scenario: remote typing at both ends of a backward cross-block decoration only moves its document-order start', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const lastBlockKey = keyGenerator()
+    const lastSpanKey = keyGenerator()
+    const onMoved = vi.fn()
+    const selection = acceptanceSelection(
+      lastBlockKey,
+      lastSpanKey,
+      3,
+      firstBlockKey,
+      firstSpanKey,
+      1,
+    )
+    const rangeDecoration: RangeDecoration = {
+      component: ({children}) => (
+        <span data-testid="backward-decoration">{children}</span>
+      ),
+      onMoved,
+      selection,
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        acceptanceBlock(firstBlockKey, firstSpanKey, 'foo'),
+        acceptanceBlock(lastBlockKey, lastSpanKey, 'bar'),
+      ],
+      editableProps: {rangeDecorations: [rangeDecoration]},
+    })
+    await expect
+      .element(page.getByTestId('backward-decoration').first())
+      .toBeVisible()
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        diffMatchPatch('bar', 'barbaz', [
+          {_key: lastBlockKey},
+          'children',
+          {_key: lastSpanKey},
+          'text',
+        ]),
+        diffMatchPatch('foo', 'xfoo', [
+          {_key: firstBlockKey},
+          'children',
+          {_key: firstSpanKey},
+          'text',
+        ]),
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(onMoved.mock.calls).toEqual([
+        [
+          {
+            newSelection: acceptanceSelection(
+              lastBlockKey,
+              lastSpanKey,
+              3,
+              firstBlockKey,
+              firstSpanKey,
+              2,
+            ),
+            rangeDecoration,
+            origin: 'remote',
+          },
+        ],
+      ])
+    })
+  })
+
   test('Scenario: A repair triggered by a remote patch reports a remote origin', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
