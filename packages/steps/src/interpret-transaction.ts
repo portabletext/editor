@@ -121,6 +121,8 @@ export function interpretTransaction(
   patches: ReadonlyArray<Patch>,
 ): Step[] {
   const workingCopy = createWorkingCopy(base, patches)
+  const isSingleTextPatch =
+    patches.length === 1 && patches[0]?.path.at(-1) === 'text'
   const slots: Array<Step | null> = []
   const removalCandidates: Array<RemovalCandidate> = []
   const insertionCandidates: Array<InsertionCandidate> = []
@@ -135,14 +137,16 @@ export function interpretTransaction(
   const preExistingKeys = new Set<string>()
   const preExistingNodePaths = new Set<string>()
   const preExistingKeyCounts = new Map<string, number>()
-  for (const block of base) {
-    for (const keyedNode of collectKeyedNodes(block, [{_key: block._key}])) {
-      preExistingKeys.add(keyedNode.key)
-      preExistingNodePaths.add(JSON.stringify(keyedNode.path))
-      preExistingKeyCounts.set(
-        keyedNode.key,
-        (preExistingKeyCounts.get(keyedNode.key) ?? 0) + 1,
-      )
+  if (!isSingleTextPatch) {
+    for (const block of base) {
+      for (const keyedNode of collectKeyedNodes(block, [{_key: block._key}])) {
+        preExistingKeys.add(keyedNode.key)
+        preExistingNodePaths.add(JSON.stringify(keyedNode.path))
+        preExistingKeyCounts.set(
+          keyedNode.key,
+          (preExistingKeyCounts.get(keyedNode.key) ?? 0) + 1,
+        )
+      }
     }
   }
 
@@ -411,22 +415,25 @@ export function interpretTransaction(
     }
   }
 
-  const contentRemovalSteps = slots.flatMap((step) =>
-    step?.type === 'remove.text' || step?.type === 'set.text' ? [step] : [],
-  )
-  const steps = applyNetRekeys(
-    base,
-    workingCopy,
-    assembleSteps(
-      slots,
-      removalCandidates,
-      insertionCandidates,
-      nodeRemovals,
-      nodeInsertions,
-      workingCopy,
-    ),
-    contentRemovalSteps,
-  )
+  const steps = isSingleTextPatch
+    ? slots.flatMap((step) => (step === null ? [] : [step]))
+    : applyNetRekeys(
+        base,
+        workingCopy,
+        assembleSteps(
+          slots,
+          removalCandidates,
+          insertionCandidates,
+          nodeRemovals,
+          nodeInsertions,
+          workingCopy,
+        ),
+        slots.flatMap((step) =>
+          step?.type === 'remove.text' || step?.type === 'set.text'
+            ? [step]
+            : [],
+        ),
+      )
 
   // @ts-expect-error - dot notation trips `noPropertyAccessFromIndexSignature`
   // (`ProcessEnv` is index-signature-only), but bracket notation would break
