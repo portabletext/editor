@@ -67,14 +67,18 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  * ambiguity resolves to leaving all sides as plain removal/insertion
  * steps.
  *
+ * Final-state pairing deliberately departs from #3208's rule that constraints
+ * can only remove candidates. It admits an insert-first candidate once replay
+ * proves that candidate survives in the final value, but only when exactly one
+ * surviving candidate fits the removal. This makes structural recognition
+ * independent of patch order without letting a discarded scratch node or an
+ * ambiguous copy claim the removed text (Josef's override).
+ *
  * These rules don't rule coincidence out entirely: two whole-node edits
  * in the same batch that happen to carry identical text 2 characters or
  * longer (an unrelated block deleted here, a different block bearing the
  * same words inserted there) still read as one move. The design accepts
- * that residual on purpose: every constraint these rules add only removes
- * candidates, it never adds one, so tightening a rule can only turn a
- * wrong pairing into a missed one (a caret degrading to a boundary),
- * never the other way around.
+ * that residual on purpose.
  *
  * A known gap in the removal side: a whole-node removal's text is read
  * from the working copy at the moment its `unset` patch is processed, so

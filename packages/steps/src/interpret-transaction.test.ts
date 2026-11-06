@@ -1389,6 +1389,41 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
     ] satisfies Array<Step>)
   })
 
+  test('two identical surviving insert-first candidates do not pair with one removal', () => {
+    const seed = [makeBlock('b0', 's0', 'wxyz')]
+    const patches: Array<Patch> = [
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}],
+        position: 'before',
+        items: [makeBlock('b1', 's1', 'wxy')],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}],
+        position: 'after',
+        items: [makeBlock('b2', 's2', 'wxy')],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b0', 's0'), 'text'],
+        value: dmpPatch('wxyz', 'z'),
+        origin: 'local',
+      },
+    ]
+
+    expect(interpretTransaction(seed, patches)).toEqual([
+      {
+        type: 'remove.text',
+        path: spanPath('b0', 's0'),
+        offset: 0,
+        length: 3,
+      },
+    ] satisfies Array<Step>)
+  })
+
   test('a surviving descendant with the same key moves before its removed container', () => {
     const seed = [
       makeBlock('b1', 's1', 'foo'),
