@@ -141,7 +141,7 @@ describe(interpretTransaction.name, () => {
     ] satisfies Array<Step>)
   })
 
-  test('Scenario: block-split-multi-span moves the two flanking spans by key, leaving the split span unpaired', () => {
+  test('Scenario: block-split-multi-span moves the split span tail and both flanking spans by key', () => {
     const fixture = readFixture('block-split-multi-span')
     const seed = seedFromTextspec(
       fixture.seed as string,
@@ -150,12 +150,18 @@ describe(interpretTransaction.name, () => {
 
     const steps = interpretTransaction(seed, fixture.patches)
 
+    // The split span's tail reappears under its own key in the new block
+    // while the head keeps that key, trimmed in place: it pairs as a text
+    // move, like the single-span split.
     expect(steps).toEqual([
       {
-        type: 'remove.text',
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
-        offset: 2,
-        length: 2,
+        type: 'move.text',
+        from: {
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+          offset: 2,
+          length: 2,
+        },
+        to: {path: [{_key: 'k6'}, 'children', {_key: 'k1'}], offset: 0},
       },
       {
         type: 'move.node',
@@ -179,7 +185,7 @@ describe(interpretTransaction.name, () => {
 
     const steps = interpretTransaction(seed, fixture.patches)
 
-    for (let offset = 0; offset <= 2; offset++) {
+    for (let offset = 0; offset < 2; offset++) {
       expect(
         mapPoint(steps, {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
@@ -187,6 +193,22 @@ describe(interpretTransaction.name, () => {
         }),
       ).toEqual({path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset})
     }
+    // At the split offset the caret sits on the boundary of the moved
+    // tail, as in the single-span split: backward affinity keeps it on the
+    // head, forward affinity follows the tail.
+    expect(
+      mapPoint(
+        steps,
+        {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 2},
+        {affinity: 'backward'},
+      ),
+    ).toEqual({path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 2})
+    expect(
+      mapPoint(steps, {
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        offset: 2,
+      }),
+    ).toEqual({path: [{_key: 'k6'}, 'children', {_key: 'k1'}], offset: 0})
   })
 
   test('Scenario: decorator-add-mid-span carves the span in three by moving both flanks', () => {
@@ -1168,7 +1190,7 @@ describe('interpretTransaction oracle: multi-span block splits (key-reappearance
           // so it's converted to its global position in `seedText` before
           // comparing: only the first span in a layout has local and
           // global offsets coincide.
-          for (const [spanIndex, span] of spans.entries()) {
+          for (const span of spans) {
             for (
               let caretOffset = 0;
               caretOffset <= span.text.length;
@@ -1180,27 +1202,11 @@ describe('interpretTransaction oracle: multi-span block splits (key-reappearance
                 caretOffset,
               )!
 
-              if (spanIndex === splitSpanIndex && caretOffset > localOffset) {
-                // The split span's key reappears in the tail (the new
-                // node holds its sliced-off remainder there), but it's
-                // never removed: the head keeps the same key, trimmed in
-                // place rather than unset. Identity-pairing only
-                // resolves removed keys, so this reappearance is never
-                // looked up, and the point degrades to the split
-                // boundary, the same accepted limit the single-span
-                // oracle documents for a short tail.
-                const mapped = mapPoint(steps, {
-                  path: spanPath(blockKey, span.key),
-                  offset: caretOffset,
-                })
-                expect(mapped).toEqual({
-                  path: spanPath(blockKey, span.key),
-                  offset: localOffset,
-                })
-                cases++
-                continue
-              }
-
+              // The split span's key reappears in the tail while the head
+              // keeps it, trimmed in place. The tail is offered as its own
+              // move candidate, so carets in it keep character identity
+              // like every other span (they used to degrade to the split
+              // boundary).
               assertCharacterIdentityPreserved(
                 seedText,
                 resultBlocks,

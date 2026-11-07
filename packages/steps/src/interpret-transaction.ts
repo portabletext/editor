@@ -136,6 +136,11 @@ export function interpretTransaction(
   const insertionCandidates: Array<InsertionCandidate> = []
   const nodeRemovals: Array<NodeRemoval> = []
   const nodeInsertions: Array<NodeInsertion> = []
+  const splitTailCandidates: Array<{
+    key: string
+    blockPath: StepPath
+    candidate: InsertionCandidate
+  }> = []
 
   // A scratch node born and discarded within the same transaction (typing
   // composition's throwaway spans, say) can't be what a pre-existing point
@@ -407,6 +412,48 @@ export function interpretTransaction(
             })
           }
 
+          // A block split inside a span with siblings re-inserts the split
+          // span's tail under its own key next to the moved siblings. The
+          // block's representative text is all of its children together,
+          // which never equals the tail trimmed from the original span, so
+          // the reused-key span is offered on its own. A single-child block
+          // needs no extra candidate: its representative is that span.
+          const blockChildren =
+            itemPath.length === 1 ? nodeChildren(item) : undefined
+          const textChildren =
+            blockChildren?.filter((child) => nodeText(child) !== undefined) ??
+            []
+          if (textChildren.length > 1) {
+            for (const child of textChildren) {
+              const childKey = nodeKey(child)
+              const childText = nodeText(child)!
+              if (
+                childKey === undefined ||
+                childText.length === 0 ||
+                !preExistingKeys.has(childKey)
+              ) {
+                continue
+              }
+              // Whether the key still lives outside the new block is only
+              // known once every patch has applied (a trailing sibling is
+              // trimmed and unset after the insert), so the slot is
+              // reserved here and the candidate admitted after the loop.
+              splitTailCandidates.push({
+                key: childKey,
+                blockPath: itemPath,
+                candidate: {
+                  kind: 'node',
+                  text: childText,
+                  path: [...itemPath, 'children', {_key: childKey}],
+                  offset: 0,
+                  slotIndex: pushSlot(),
+                  isBlockInsertion: false,
+                  consumed: false,
+                },
+              })
+            }
+          }
+
           for (const keyedNode of collectKeyedNodes(item, itemPath)) {
             nodeInsertions.push({
               key: keyedNode.key,
@@ -420,6 +467,12 @@ export function interpretTransaction(
 
       default:
         break
+    }
+  }
+
+  for (const {key, blockPath, candidate} of splitTailCandidates) {
+    if (keyLivesOutside(workingCopy, key, blockPath)) {
+      insertionCandidates.push(candidate)
     }
   }
 
@@ -1005,6 +1058,38 @@ function concatenatedSpanText(children: Array<unknown>): string {
  * concatenated span text if it's a text-bearing block. A block with no
  * span children (an inline/void child only) has nothing to represent.
  */
+/**
+ * Whether a node keyed `key` still exists somewhere other than under
+ * `excludedPath`: the split span was truncated in place, so its key
+ * lives on in the original block while the tail is re-inserted under it.
+ * A sibling that was unset first doesn't, and keeps pairing as a node move.
+ */
+function keyLivesOutside(
+  workingCopy: unknown,
+  key: string,
+  excludedPath: StepPath,
+): boolean {
+  if (!Array.isArray(workingCopy)) {
+    return false
+  }
+  const excluded = JSON.stringify(excludedPath)
+  for (const block of workingCopy) {
+    const blockKey = nodeKey(block)
+    if (blockKey === undefined) {
+      continue
+    }
+    for (const keyedNode of collectKeyedNodes(block, [{_key: blockKey}])) {
+      if (
+        keyedNode.key === key &&
+        !JSON.stringify(keyedNode.path).startsWith(excluded.slice(0, -1))
+      ) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 function representativeSpan(
   node: unknown,
   path: StepPath,
