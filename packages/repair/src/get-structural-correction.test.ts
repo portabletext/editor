@@ -5,6 +5,67 @@ import {getStructuralCorrection} from './get-structural-correction'
 const schema = compileSchema(defineSchema({}))
 
 describe(getStructuralCorrection.name, () => {
+  test.each([
+    {node: undefined, name: 'undefined'},
+    {node: null, name: 'null'},
+    {node: 'string', name: 'a string'},
+    {node: 42, name: 'a number'},
+    {node: false, name: 'a boolean'},
+  ])('removes $name at every array depth', ({node}) => {
+    const context = {schema, keyGenerator: () => 'generated'}
+
+    expect([
+      getStructuralCorrection(context, {
+        node,
+        path: [0],
+        parent: undefined,
+        siblings: () => [],
+      }),
+      getStructuralCorrection(context, {
+        node,
+        path: [{_key: 'c0'}, 'content', 0],
+        parent: {
+          node: {_type: 'container', _key: 'c0'},
+          path: [{_key: 'c0'}],
+        },
+        siblings: () => [],
+      }),
+      getStructuralCorrection(context, {
+        node,
+        path: [{_key: 'b0'}, 'children', 1],
+        parent: {
+          node: {_type: schema.block.name, _key: 'b0', children: []},
+          path: [{_key: 'b0'}],
+        },
+        siblings: () => [],
+      }),
+    ]).toEqual([
+      {type: 'non-object', patches: [{type: 'unset', path: [0]}]},
+      {
+        type: 'non-object',
+        patches: [{type: 'unset', path: [{_key: 'c0'}, 'content', 0]}],
+      },
+      {
+        type: 'non-object',
+        patches: [{type: 'unset', path: [{_key: 'b0'}, 'children', 1]}],
+      },
+    ])
+  })
+
+  test.each([null, 'string'])('does not repair a non-object root', (node) => {
+    expect(
+      getStructuralCorrection(
+        {schema, keyGenerator: () => 'generated'},
+        {
+          node,
+          path: [],
+          parent: undefined,
+          siblings: () => [],
+        },
+      ),
+    ).toEqual(undefined)
+  })
+
   test('adds a missing type before applying later rules', () => {
     expect(
       getStructuralCorrection(
