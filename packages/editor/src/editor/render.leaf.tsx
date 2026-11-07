@@ -52,15 +52,11 @@ export function RenderLeaf(
 
   if (rangeDecorations) {
     for (const entry of [...rangeDecorations].reverse()) {
-      if (entry.kind === 'registered') {
-        renderedSpan = entry.rangeDecoration.render({
-          children: renderedSpan,
-          isFirst: entry.isFirst,
-          isLast: entry.isLast,
-        })
-      } else {
-        renderedSpan = entry.rangeDecoration.component({children: renderedSpan})
-      }
+      renderedSpan = entry.rangeDecoration.render({
+        children: renderedSpan,
+        isFirst: entry.isFirst,
+        isLast: entry.isLast,
+      })
     }
   }
 

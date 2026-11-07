@@ -80,15 +80,9 @@ export type Editor = {
   /**
    * @beta
    *
-   * Register decorations, independent of any `PortableTextEditable`'s
-   * `rangeDecorations` prop. Multiple sources (the prop and any number
-   * of registrations) compose: their decorations flatten with every
-   * `PortableTextEditable`'s prop decorations first (in mount order when
-   * there's more than one editable), then each registration in the order
-   * it was made. The prop always renders outermost, even when a
-   * registration's decoration mounts before the `PortableTextEditable`
-   * carrying the prop. Nesting is outer-to-inner across sources the same
-   * way array order nests within one registration.
+   * Register decorations. Multiple registrations compose in registration
+   * order. Nesting is outer-to-inner across sources the same way array order
+   * nests within one registration.
    *
    * Each decoration needs a stable, unique `id` so `update` can
    * reconcile by identity: a decoration whose `id` carries over keeps its
@@ -98,10 +92,6 @@ export type Editor = {
    * updating with) more than one decoration sharing an `id` throws
    * synchronously, before any state change. `update` and `unregister`
    * after `unregister` are no-ops.
-   *
-   * Registered decorations keep transforming and delivering `onMapped`
-   * while the editor is read-only; the `rangeDecorations` prop freezes
-   * when read-only.
    *
    * This is the low-level primitive higher-level decoration tooling
    * builds on.

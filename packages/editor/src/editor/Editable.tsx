@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useId,
   useMemo,
   type ClipboardEvent,
   type FocusEventHandler,
@@ -30,7 +29,6 @@ import type {
   EditorSelection,
   OnCopyFn,
   OnPasteFn,
-  RangeDecoration,
   RenderPlaceholderFunction,
   ScrollSelectionIntoViewFunction,
 } from '../types/editor'
@@ -60,7 +58,6 @@ export type PortableTextEditableProps = Omit<
   onBeforeInput?: (event: InputEvent) => void
   onPaste?: OnPasteFn
   onCopy?: OnCopyFn
-  rangeDecorations?: RangeDecoration[]
   renderPlaceholder?: RenderPlaceholderFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
   selection?: EditorSelection
@@ -109,7 +106,6 @@ export const PortableTextEditable = forwardRef<
     onDragOver,
     onDrop,
     onDragLeave,
-    rangeDecorations,
     renderPlaceholder,
     selection: propsSelection,
     scrollSelectionIntoView,
@@ -132,31 +128,10 @@ export const PortableTextEditable = forwardRef<
   })
 
   const rangeDecorationsActor = useContext(RangeDecorationsActorContext)
-  // The machine reconciles sources by `sourceKey`; a per-render value
-  // would remove and re-add the source on every render.
-  const rangeDecorationsSourceKey = useId()
   const decorate = useSelector(
     rangeDecorationsActor,
     (s) => s.context.decorate?.fn,
   )
-
-  useEffect(() => {
-    rangeDecorationsActor.send({
-      type: 'source updated',
-      sourceKey: rangeDecorationsSourceKey,
-      kind: 'prop',
-      rangeDecorations: rangeDecorations ?? [],
-    })
-  }, [rangeDecorationsActor, rangeDecorationsSourceKey, rangeDecorations])
-
-  useEffect(() => {
-    return () => {
-      rangeDecorationsActor.send({
-        type: 'source removed',
-        sourceKey: rangeDecorationsSourceKey,
-      })
-    }
-  }, [rangeDecorationsActor, rangeDecorationsSourceKey])
 
   const renderElement = useCallback(
     (eProps: RenderElementProps) => (

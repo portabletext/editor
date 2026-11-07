@@ -187,10 +187,7 @@ export const splitDecorationsByChild = (
     const startIndex = resolveChildIndex(startPoint) ?? 0
     const endIndex = resolveChildIndex(endPoint) ?? children.length - 1
 
-    const trueEdges =
-      decoration.kind === 'registered'
-        ? rangeEdges(decoration, editor.snapshot.context)
-        : undefined
+    const trueEdges = rangeEdges(decoration, editor.snapshot.context)
 
     for (let i = startIndex; i <= endIndex; i++) {
       const ds = decorationsByChild[i]
@@ -214,12 +211,8 @@ export const splitDecorationsByChild = (
       ds.push({
         ...decoration,
         ...childDecorationRange,
-        isRangeStart: trueEdges
-          ? pointEquals(childDecorationRange.anchor, trueEdges[0])
-          : false,
-        isRangeEnd: trueEdges
-          ? pointEquals(childDecorationRange.focus, trueEdges[1])
-          : false,
+        isRangeStart: pointEquals(childDecorationRange.anchor, trueEdges[0]),
+        isRangeEnd: pointEquals(childDecorationRange.focus, trueEdges[1]),
       })
     }
   }

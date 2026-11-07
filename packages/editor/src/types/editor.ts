@@ -5,13 +5,7 @@ import type {
   PortableTextObject,
   TypedObject,
 } from '@portabletext/schema'
-import type {
-  ClipboardEvent,
-  JSX,
-  PropsWithChildren,
-  ReactElement,
-  ReactNode,
-} from 'react'
+import type {ClipboardEvent, JSX, ReactElement, ReactNode} from 'react'
 import type {PortableTextEditableProps} from '../editor/Editable'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {PortableTextEditor} from '../editor/PortableTextEditor'
@@ -187,15 +181,6 @@ export type ScrollSelectionIntoViewFunction = (
 ) => void
 
 /**
- * Details passed to a `RangeDecoration`'s `onMoved` callback.
- * @public */
-export interface RangeDecorationOnMovedDetails {
-  rangeDecoration: RangeDecoration
-  newSelection: EditorSelection
-  origin: 'remote' | 'local'
-}
-
-/**
  * Props passed to a `Decoration`'s `render`.
  * @beta
  */
@@ -216,53 +201,8 @@ export interface DecorationRenderProps {
 }
 
 /**
- * A UI affordance that wraps a selection range in the editor with a custom
- * component, for example to highlight search results, mark validation
- * errors on specific words, or draw user presence.
- * @public */
-export interface RangeDecoration {
-  /**
-   * The component that renders the range decoration. It receives the
-   * decorated text as its children.
-   *
-   * The component can render more than once for one decoration: the range
-   * is split into segments at formatting boundaries and where it overlaps
-   * other decorations, and each segment gets its own wrapper. Where
-   * decorations overlap, their components nest, first in array order
-   * outermost.
-   *
-   * @example
-   * ```tsx nocheck
-   * (rangeComponentProps: PropsWithChildren) => (
-   *    <SearchResultHighlight>
-   *      {rangeComponentProps.children}
-   *    </SearchResultHighlight>
-   *  )
-   * ```
-   */
-  component: (props: PropsWithChildren) => ReactElement<any>
-  /**
-   * The editor content selection range to decorate.
-   */
-  selection: EditorSelection
-  /**
-   * Called when edits move the decorated range. The details carry the new
-   * selection (`null` when the range is lost) and whether the edit was
-   * `local` or `remote`.
-   */
-  onMoved?: (details: RangeDecorationOnMovedDetails) => void
-  /**
-   * A custom payload that can be set on the range decoration.
-   */
-  payload?: Record<string, unknown>
-}
-
-/**
- * A decoration registered through `editor.registerDecorations`,
- * independent of any `PortableTextEditable`'s `rangeDecorations` prop.
- * Unrelated to schema decorators (marks like `strong`): this `Decoration`
- * is the registered counterpart of the `rangeDecorations` prop's
- * `RangeDecoration`.
+ * A decoration registered through `editor.registerDecorations`.
+ * Unrelated to schema decorators (marks like `strong`).
  * @beta
  */
 export interface Decoration {

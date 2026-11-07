@@ -9,7 +9,6 @@ import type {DecoratedRange, LeafPosition} from '../interfaces/text'
  */
 type PendingLeafRangeDecoration = {
   rangeDecoration: unknown
-  kind: 'prop' | 'registered'
   isRangeStart: boolean
   isRangeEnd: boolean
   decorationStart: number
@@ -162,7 +161,6 @@ export function getTextDecorations(
         item.leaf as PortableTextSpan & {rangeDecorations?: unknown}
       ).rangeDecorations = pending.map((entry) => ({
         rangeDecoration: entry.rangeDecoration,
-        kind: entry.kind,
         isFirst: firstStartIndex.get(entry.rangeDecoration) === index,
         isLast: lastEndIndex.get(entry.rangeDecoration) === index,
       }))

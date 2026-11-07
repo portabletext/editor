@@ -62,7 +62,6 @@ export function createInternalEditor(config: EditorConfig): {
   const editable = createEditableAPI(editorEngine, editorActor)
   const rangeDecorationsActor = createActor(rangeDecorationsMachine, {
     input: {
-      readOnly: Boolean(config.readOnly),
       schema: editorActor.getSnapshot().context.schema,
       editorEngine,
     },
@@ -292,19 +291,9 @@ function createActors(config: {
   })
 
   config.subscriptions.push(() => {
-    let previousReadOnly: boolean | undefined
-
     const subscription = config.editorActor.subscribe((snapshot) => {
       const readOnly = snapshot.matches({'edit mode': 'read only'})
       syncActor.send({type: 'update readOnly', readOnly})
-
-      if (readOnly !== previousReadOnly) {
-        previousReadOnly = readOnly
-        config.rangeDecorationsActor.send({
-          type: 'update read only',
-          readOnly,
-        })
-      }
     })
 
     return () => {

@@ -29,7 +29,6 @@ import type {
   Decoration,
   DecorationMapping,
   EditorSelection,
-  RangeDecoration,
 } from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils'
@@ -65,48 +64,34 @@ const engineOperationCallback: CallbackLogicFunction<
 }
 
 export type DecoratedRange = Range & {
-  rangeDecoration: RangeDecoration | Decoration
-  kind: RangeDecorationSourceKind
+  rangeDecoration: Decoration
   merge: (leaf: PortableTextSpan, decoration: object) => void
 }
 
-export type LeafRangeDecoration =
-  | {
-      kind: 'prop'
-      rangeDecoration: RangeDecoration
-      isFirst: boolean
-      isLast: boolean
-    }
-  | {
-      kind: 'registered'
-      rangeDecoration: Decoration
-      isFirst: boolean
-      isLast: boolean
-    }
-
-type RangeDecorationSourceKind = 'prop' | 'registered'
+export type LeafRangeDecoration = {
+  rangeDecoration: Decoration
+  isFirst: boolean
+  isLast: boolean
+}
 
 /**
  * One source's decorations. `rangeDecorations` is the raw config last
- * supplied by the source (the `PortableTextEditable` prop, or a
- * `registerDecorations` call). `decoratedRanges` is the live,
+ * supplied by a `registerDecorations` call. `decoratedRanges` is the live,
  * positionally up-to-date state, moved by local/remote edits and
- * reconciled by `id` for registered sources. `deadSelections` tombstones
- * a registered id whose decoration died, keyed to the range it died
+ * reconciled by `id`. `deadSelections` tombstones an id whose decoration
+ * died, keyed to the range it died
  * under. `initialized` marks whether `decoratedRanges` has been built
  * from `rangeDecorations` yet.
  */
 type RangeDecorationSource = {
   sourceKey: string
-  kind: RangeDecorationSourceKind
-  rangeDecorations: Array<RangeDecoration | Decoration>
+  rangeDecorations: Array<Decoration>
   decoratedRanges: Array<DecoratedRange>
   deadSelections: Map<string, EditorSelection>
   initialized: boolean
   /**
-   * Only meaningful for a `registered` source; fixed at registration.
-   * Receives this source's mappings for one engine operation, one entry
-   * per affected decoration, in this source's array order.
+   * Fixed at registration. Receives this source's mappings for one operation,
+   * one entry per affected decoration, in this source's array order.
    */
   on?: (mappings: Array<DecorationMapping>) => void
 }
@@ -121,8 +106,7 @@ type RangeDecorationSource = {
  * span-level and the offset-level condition hold.
  */
 type PendingLeafRangeDecoration = {
-  rangeDecoration: RangeDecoration | Decoration
-  kind: RangeDecorationSourceKind
+  rangeDecoration: Decoration
   isRangeStart: boolean
   isRangeEnd: boolean
   decorationStart: number
@@ -137,7 +121,6 @@ function mergeRangeDecoration(
 ) {
   const {
     rangeDecoration,
-    kind,
     isRangeStart,
     isRangeEnd,
     decorationStart,
@@ -147,7 +130,6 @@ function mergeRangeDecoration(
     ...(leaf.rangeDecorations ?? []),
     {
       rangeDecoration,
-      kind,
       isRangeStart,
       isRangeEnd,
       decorationStart,
@@ -173,38 +155,7 @@ function canAddress(
   )
 }
 
-function buildPropDecoratedRangesFromScratch(
-  snapshot: TraversalSnapshot,
-  rangeDecorations: Array<RangeDecoration>,
-): Array<DecoratedRange> {
-  const decoratedRanges: Array<DecoratedRange> = []
-
-  for (const rangeDecoration of rangeDecorations) {
-    if (!rangeDecoration.selection) {
-      rangeDecoration.onMoved?.({
-        newSelection: null,
-        rangeDecoration,
-        origin: 'local',
-      })
-      continue
-    }
-
-    if (!canAddress(snapshot, rangeDecoration.selection)) {
-      continue
-    }
-
-    decoratedRanges.push({
-      rangeDecoration,
-      kind: 'prop',
-      merge: mergeRangeDecoration,
-      ...rangeDecoration.selection,
-    })
-  }
-
-  return decoratedRanges
-}
-
-function buildRegisteredDecoratedRangesFromScratch(
+function buildDecoratedRangesFromScratch(
   snapshot: TraversalSnapshot,
   rangeDecorations: Array<Decoration>,
 ): Array<DecoratedRange> {
@@ -217,34 +168,11 @@ function buildRegisteredDecoratedRangesFromScratch(
     return [
       {
         rangeDecoration: {...rangeDecoration, range},
-        kind: 'registered' as const,
         merge: mergeRangeDecoration,
         ...range,
       },
     ]
   })
-}
-
-/**
- * The two configuration shapes (`selection` vs. `range`, and only the
- * registered one tombstones by `id`) aren't interchangeable.
- */
-function buildDecoratedRangesFromScratch(
-  snapshot: TraversalSnapshot,
-  kind: RangeDecorationSourceKind,
-  rangeDecorations: Array<RangeDecoration | Decoration>,
-): Array<DecoratedRange> {
-  if (kind === 'registered') {
-    return buildRegisteredDecoratedRangesFromScratch(
-      snapshot,
-      rangeDecorations as Array<Decoration>,
-    )
-  }
-
-  return buildPropDecoratedRangesFromScratch(
-    snapshot,
-    rangeDecorations as Array<RangeDecoration>,
-  )
 }
 
 /**
@@ -261,35 +189,6 @@ function cloneRegisteredConfig(
     ...rangeDecoration,
     range: cloneRange(rangeDecoration.range),
   }))
-}
-
-/**
- * The `PortableTextEditable` prop's equality guard: a decoration is
- * only rebuilt when its anchor, focus, or payload actually changed. This
- * keeps the `rangeDecoration` object (and its `component`/`onMoved`
- * references) stable across renders that resupply the same configuration,
- * which downstream leaf memoization relies on to skip re-rendering.
- */
-function hasDifferentDecorations(
-  previous: Array<DecoratedRange>,
-  next: Array<RangeDecoration>,
-): boolean {
-  const existingRangeDecorations = previous.map((decoratedRange) => {
-    const rangeDecoration = decoratedRange.rangeDecoration as RangeDecoration
-    return {
-      anchor: rangeDecoration.selection?.anchor,
-      focus: rangeDecoration.selection?.focus,
-      payload: rangeDecoration.payload,
-    }
-  })
-
-  const newRangeDecorations = next.map((rangeDecoration) => ({
-    anchor: rangeDecoration.selection?.anchor,
-    focus: rangeDecoration.selection?.focus,
-    payload: rangeDecoration.payload,
-  }))
-
-  return !isDeepEqual(existingRangeDecorations, newRangeDecorations)
 }
 
 function reconcileRegisteredSource(
@@ -316,7 +215,7 @@ function reconcileRegisteredSource(
   )
   const previousLiveById = new Map(
     previousDecoratedRanges.map((decoratedRange) => [
-      (decoratedRange.rangeDecoration as Decoration).id,
+      decoratedRange.rangeDecoration.id,
       decoratedRange,
     ]),
   )
@@ -348,9 +247,8 @@ function reconcileRegisteredSource(
         focus: previousLive.focus,
         rangeDecoration: {
           ...rangeDecoration,
-          range: (previousLive.rangeDecoration as Decoration).range,
+          range: previousLive.rangeDecoration.range,
         },
-        kind: 'registered',
         merge: mergeRangeDecoration,
       })
       continue
@@ -375,7 +273,6 @@ function reconcileRegisteredSource(
 
     next.push({
       rangeDecoration: {...rangeDecoration, range},
-      kind: 'registered',
       merge: mergeRangeDecoration,
       ...range,
     })
@@ -397,57 +294,6 @@ function hasSameAnchorAndFocus(
   b: NonNullable<EditorSelection>,
 ): boolean {
   return isDeepEqual(a.anchor, b.anchor) && isDeepEqual(a.focus, b.focus)
-}
-
-function movePropDecoratedRanges(
-  decoratedRanges: Array<DecoratedRange>,
-  operation: EngineOperation,
-  origin: 'local' | 'remote',
-  snapshotContext: PortableTextEditorEngine['snapshot']['context'],
-): Array<DecoratedRange> {
-  const next: Array<DecoratedRange> = []
-
-  for (const decoratedRange of decoratedRanges) {
-    const rangeDecoration = decoratedRange.rangeDecoration as RangeDecoration
-    const currentSelection = rangeDecoration.selection
-
-    if (!currentSelection) {
-      rangeDecoration.onMoved?.({
-        newSelection: null,
-        rangeDecoration,
-        origin,
-      })
-      continue
-    }
-
-    const newRange = transformRange(
-      currentSelection,
-      operation,
-      snapshotContext,
-    )
-
-    if (
-      (newRange && newRange !== currentSelection) ||
-      (newRange === null && currentSelection)
-    ) {
-      rangeDecoration.onMoved?.({
-        newSelection: newRange,
-        rangeDecoration,
-        origin,
-      })
-    }
-
-    if (newRange !== null) {
-      next.push({
-        ...newRange,
-        rangeDecoration: {...rangeDecoration, selection: newRange},
-        kind: 'prop',
-        merge: mergeRangeDecoration,
-      })
-    }
-  }
-
-  return next
 }
 
 /**
@@ -508,7 +354,7 @@ function moveRegisteredDecoratedRanges(
   const mappings: Array<DecorationMapping> = []
 
   for (const decoratedRange of decoratedRanges) {
-    const liveRangeDecoration = decoratedRange.rangeDecoration as Decoration
+    const liveRangeDecoration = decoratedRange.rangeDecoration
     const currentRange = liveRangeDecoration.range
 
     const newRange = transformRange(
@@ -556,7 +402,6 @@ function moveRegisteredDecoratedRanges(
     next.push({
       ...newRange,
       rangeDecoration: {...liveRangeDecoration, range: newRange},
-      kind: 'registered',
       merge: mergeRangeDecoration,
     })
   }
@@ -567,21 +412,13 @@ function moveRegisteredDecoratedRanges(
 function flattenSources(
   sources: Array<RangeDecorationSource>,
 ): Array<DecoratedRange> {
-  const kindOrder: Record<RangeDecorationSourceKind, number> = {
-    prop: 0,
-    registered: 1,
-  }
-
-  return [...sources]
-    .sort((a, b) => kindOrder[a.kind] - kindOrder[b.kind])
-    .flatMap((source) => source.decoratedRanges)
+  return sources.flatMap((source) => source.decoratedRanges)
 }
 
 export const rangeDecorationsMachine = setup({
   types: {
     context: {} as {
       sources: Array<RangeDecorationSource>
-      readOnly: boolean
       schema: EditorSchema
       editorEngine: PortableTextEditorEngine
       decorate: {fn: (nodeEntry: NodeEntry) => Array<Range>}
@@ -598,7 +435,6 @@ export const rangeDecorationsMachine = setup({
       sourceUpdateChanged: boolean
     },
     input: {} as {
-      readOnly: boolean
       schema: EditorSchema
       editorEngine: PortableTextEditorEngine
     },
@@ -609,8 +445,7 @@ export const rangeDecorationsMachine = setup({
       | {
           type: 'source updated'
           sourceKey: string
-          kind: RangeDecorationSourceKind
-          rangeDecorations: Array<RangeDecoration | Decoration>
+          rangeDecorations: Array<Decoration>
           /**
            * Only read when this `sourceKey` is seen for the first time:
            * fixed at registration, an `update()` call never carries one.
@@ -625,22 +460,9 @@ export const rangeDecorationsMachine = setup({
           type: 'engine operation'
           operation: EngineOperation
           origin: 'local' | 'remote'
-        }
-      | {
-          type: 'update read only'
-          readOnly: boolean
         },
   },
   actions: {
-    'assign readOnly': assign({
-      readOnly: ({context, event}) => {
-        if (event.type !== 'update read only') {
-          return context.readOnly
-        }
-
-        return event.readOnly
-      },
-    }),
     'update decorate': assign({
       decorate: ({context}) => {
         return {
@@ -666,10 +488,7 @@ export const rangeDecorationsMachine = setup({
         (source) => source.sourceKey === event.sourceKey,
       )
 
-      const rangeDecorations =
-        event.kind === 'registered'
-          ? cloneRegisteredConfig(event.rangeDecorations as Array<Decoration>)
-          : event.rangeDecorations
+      const rangeDecorations = cloneRegisteredConfig(event.rangeDecorations)
 
       if (existing) {
         existing.rangeDecorations = rangeDecorations
@@ -678,7 +497,6 @@ export const rangeDecorationsMachine = setup({
 
       context.sources.push({
         sourceKey: event.sourceKey,
-        kind: event.kind,
         rangeDecorations,
         decoratedRanges: [],
         deadSelections: new Map(),
@@ -703,7 +521,6 @@ export const rangeDecorationsMachine = setup({
 
         source.decoratedRanges = buildDecoratedRangesFromScratch(
           context.editorEngine.snapshot,
-          source.kind,
           source.rangeDecorations,
         )
         source.initialized = true
@@ -725,16 +542,9 @@ export const rangeDecorationsMachine = setup({
       if (!source) {
         source = {
           sourceKey: event.sourceKey,
-          kind: event.kind,
-          rangeDecorations:
-            event.kind === 'registered'
-              ? cloneRegisteredConfig(
-                  event.rangeDecorations as Array<Decoration>,
-                )
-              : event.rangeDecorations,
+          rangeDecorations: cloneRegisteredConfig(event.rangeDecorations),
           decoratedRanges: buildDecoratedRangesFromScratch(
             context.editorEngine.snapshot,
-            event.kind,
             event.rangeDecorations,
           ),
           deadSelections: new Map(),
@@ -742,30 +552,15 @@ export const rangeDecorationsMachine = setup({
           on: event.on,
         }
         context.sources.push(source)
-      } else if (source.kind === 'prop') {
-        changed = hasDifferentDecorations(
-          source.decoratedRanges,
-          event.rangeDecorations as Array<RangeDecoration>,
-        )
-
-        if (changed) {
-          source.rangeDecorations = event.rangeDecorations
-          source.decoratedRanges = buildDecoratedRangesFromScratch(
-            context.editorEngine.snapshot,
-            source.kind,
-            event.rangeDecorations,
-          )
-        }
       } else {
-        const previousRangeDecorations =
-          source.rangeDecorations as Array<Decoration>
+        const previousRangeDecorations = source.rangeDecorations
         const previousDecoratedRanges = source.decoratedRanges
 
         const nextDecoratedRanges = reconcileRegisteredSource(
           context.editorEngine.snapshot,
           previousRangeDecorations,
           previousDecoratedRanges,
-          event.rangeDecorations as Array<Decoration>,
+          event.rangeDecorations,
           source.deadSelections,
         )
 
@@ -776,9 +571,7 @@ export const rangeDecorationsMachine = setup({
               decoratedRange !== previousDecoratedRanges[index],
           )
 
-        source.rangeDecorations = cloneRegisteredConfig(
-          event.rangeDecorations as Array<Decoration>,
-        )
+        source.rangeDecorations = cloneRegisteredConfig(event.rangeDecorations)
         source.decoratedRanges = nextDecoratedRanges
       }
 
@@ -818,28 +611,19 @@ export const rangeDecorationsMachine = setup({
       }> = []
 
       for (const source of context.sources) {
-        if (source.kind === 'registered') {
-          const result = moveRegisteredDecoratedRanges(
-            source.decoratedRanges,
-            event.operation,
-            event.origin,
-            context.editorEngine,
-            source.deadSelections,
-          )
-          source.decoratedRanges = result.decoratedRanges
-          if (source.on && result.mappings.length > 0) {
-            pendingNotifications.push({
-              on: source.on,
-              mappings: result.mappings,
-            })
-          }
-        } else if (!context.readOnly) {
-          source.decoratedRanges = movePropDecoratedRanges(
-            source.decoratedRanges,
-            event.operation,
-            event.origin,
-            context.editorEngine.snapshot.context,
-          )
+        const result = moveRegisteredDecoratedRanges(
+          source.decoratedRanges,
+          event.operation,
+          event.origin,
+          context.editorEngine,
+          source.deadSelections,
+        )
+        source.decoratedRanges = result.decoratedRanges
+        if (source.on && result.mappings.length > 0) {
+          pendingNotifications.push({
+            on: source.on,
+            mappings: result.mappings,
+          })
         }
       }
 
@@ -864,7 +648,6 @@ export const rangeDecorationsMachine = setup({
 }).createMachine({
   id: 'range decorations',
   context: ({input}) => ({
-    readOnly: input.readOnly,
     sources: [],
     schema: input.schema,
     editorEngine: input.editorEngine,
@@ -876,11 +659,6 @@ export const rangeDecorationsMachine = setup({
   invoke: {
     src: 'engine operation listener',
     input: ({context}) => ({editorEngine: context.editorEngine}),
-  },
-  on: {
-    'update read only': {
-      actions: ['assign readOnly'],
-    },
   },
   initial: 'setting up',
   states: {

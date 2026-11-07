@@ -105,8 +105,6 @@ export type {
   OnPasteResult,
   OnPasteResultOrPromise,
   PasteData,
-  RangeDecoration,
-  RangeDecorationOnMovedDetails,
   RenderEditableFunction,
   RenderPlaceholderFunction,
   ScrollSelectionIntoViewFunction,

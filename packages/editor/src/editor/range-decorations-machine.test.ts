@@ -38,7 +38,7 @@ function createEditorEngineStub(
 function startReadyActor(blockKey: string, spanKey: string) {
   const editorEngine = createEditorEngineStub(blockKey, spanKey)
   const actor = createActor(rangeDecorationsMachine, {
-    input: {readOnly: false, schema: {} as EditorSchema, editorEngine},
+    input: {schema: {} as EditorSchema, editorEngine},
   })
   actor.start()
   actor.send({type: 'ready'})
@@ -54,59 +54,6 @@ function decoratedRangeIds(actor: ReturnType<typeof startReadyActor>) {
 }
 
 describe(rangeDecorationsMachine.id, () => {
-  test('Scenario: an equal prop resupply skips reassigning `decorate.fn`', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const selectionA = {
-      anchor: {path: spanPath, offset: 0},
-      focus: {path: spanPath, offset: 3},
-    }
-    const selectionB = {
-      anchor: {path: spanPath, offset: 1},
-      focus: {path: spanPath, offset: 4},
-    }
-    const actor = startReadyActor(blockKey, spanKey)
-
-    const decorateAtReady = actor.getSnapshot().context.decorate.fn
-
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'prop',
-      kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionA},
-      ],
-    })
-    const decorateAfterFirstSupply = actor.getSnapshot().context.decorate.fn
-    expect(decorateAfterFirstSupply).not.toBe(decorateAtReady)
-
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'prop',
-      kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionA},
-      ],
-    })
-    expect(actor.getSnapshot().context.decorate.fn).toBe(
-      decorateAfterFirstSupply,
-    )
-
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'prop',
-      kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionB},
-      ],
-    })
-    expect(actor.getSnapshot().context.decorate.fn).not.toBe(
-      decorateAfterFirstSupply,
-    )
-  })
-
   test('Scenario: a fully unchanged registered resupply skips reassigning `decorate.fn`', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -127,7 +74,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{id: 'a', type: 'range', render, range: selectionA}],
     })
     const decorateAfterFirstSupply = actor.getSnapshot().context.decorate.fn
@@ -135,7 +81,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{id: 'a', type: 'range', render, range: selectionA}],
     })
     expect(actor.getSnapshot().context.decorate.fn).toBe(
@@ -145,7 +90,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{id: 'a', type: 'range', render, range: selectionB}],
     })
     expect(actor.getSnapshot().context.decorate.fn).not.toBe(
@@ -162,7 +106,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'empty',
-      kind: 'registered',
       rangeDecorations: [],
     })
     const decorateAfterEmptySupply = actor.getSnapshot().context.decorate.fn
@@ -190,7 +133,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'live',
-      kind: 'registered',
       rangeDecorations: [{id: 'a', type: 'range', render, range: selectionA}],
     })
     const decorateAfterLiveSupply = actor.getSnapshot().context.decorate.fn
@@ -229,7 +171,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -260,7 +201,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -271,7 +211,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{...registration, range: selectionB}],
     })
 
@@ -301,7 +240,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -362,7 +300,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -396,7 +333,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -433,7 +369,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{...registration, range: movedSelectionA}],
     })
 
@@ -444,7 +379,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{...registration, range: selectionB}],
     })
 
@@ -474,7 +408,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -511,7 +444,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [
         {...registration, range: {...movedSelectionA, backward: true}},
       ],
@@ -543,7 +475,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -561,7 +492,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [],
     })
 
@@ -571,7 +501,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -595,7 +524,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [
         {id: 'a', type: 'range', render: renderOne, range: selectionA},
       ],
@@ -625,7 +553,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [
         {id: 'a', type: 'range', render: renderTwo, range: selectionA},
       ],
@@ -659,7 +586,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [{id: 'a', type: 'range', render, range: selectionA}],
     })
 
@@ -686,7 +612,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [
         {
           id: 'a',
@@ -738,14 +663,12 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'first',
-      kind: 'registered',
       rangeDecorations: [firstRegistration],
       on: onFirst,
     })
     actor.send({
       type: 'source updated',
       sourceKey: 'second',
-      kind: 'registered',
       rangeDecorations: [secondRegistration],
       on: onSecond,
     })
@@ -806,7 +729,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -857,7 +779,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -908,7 +829,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -959,7 +879,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -1010,7 +929,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -1047,7 +965,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -1080,74 +997,6 @@ describe(rangeDecorationsMachine.id, () => {
     ])
   })
 
-  test('Scenario: a prop source registered after `ready` (mounted after another source) still initializes', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const selectionA = {
-      anchor: {path: spanPath, offset: 0},
-      focus: {path: spanPath, offset: 3},
-    }
-    const actor = startReadyActor(blockKey, spanKey)
-
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'late-prop',
-      kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionA},
-      ],
-    })
-
-    expect(
-      actor
-        .getSnapshot()
-        .context.editorEngine.decoratedRanges.map((decoratedRange) => ({
-          anchor: decoratedRange.anchor,
-          focus: decoratedRange.focus,
-        })),
-    ).toEqual([selectionA])
-  })
-
-  test('Scenario: prop sources flatten before registered sources regardless of arrival order', () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const selectionA = {
-      anchor: {path: spanPath, offset: 0},
-      focus: {path: spanPath, offset: 3},
-    }
-    const actor = startReadyActor(blockKey, spanKey)
-
-    // Arrival order: registration first, prop second - the opposite of the
-    // promised render order.
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'registered',
-      kind: 'registered',
-      rangeDecorations: [
-        {
-          id: 'a',
-          type: 'range',
-          render: () => null as never,
-          range: selectionA,
-        },
-      ],
-    })
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'prop',
-      kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionA},
-      ],
-    })
-
-    expect(decoratedRangeIds(actor)).toEqual([undefined, 'a'])
-  })
-
   test('Scenario: mutating a range object after registering it does not corrupt tracking', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -1166,7 +1015,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -1218,7 +1066,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -1232,7 +1079,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
     })
 
@@ -1273,7 +1119,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -1330,7 +1175,7 @@ describe(rangeDecorationsMachine.id, () => {
     ])
   })
 
-  test('Scenario: a read-only editor still transforms and delivers mappings for a registered decoration', () => {
+  test('Scenario: a registered decoration transforms and delivers a mapping on a remote insert', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1341,7 +1186,7 @@ describe(rangeDecorationsMachine.id, () => {
     }
     const editorEngine = createEditorEngineStub(blockKey, spanKey)
     const actor = createActor(rangeDecorationsMachine, {
-      input: {readOnly: true, schema: {} as EditorSchema, editorEngine},
+      input: {schema: {} as EditorSchema, editorEngine},
     })
     actor.start()
     actor.send({type: 'ready'})
@@ -1353,7 +1198,6 @@ describe(rangeDecorationsMachine.id, () => {
     actor.send({
       type: 'source updated',
       sourceKey: 'registered',
-      kind: 'registered',
       rangeDecorations: [registration],
       on,
     })
@@ -1385,53 +1229,5 @@ describe(rangeDecorationsMachine.id, () => {
       },
     ])
     expect(decoratedRangeIds(actor)).toEqual(['a'])
-  })
-
-  test("Scenario: a read-only editor keeps not moving the legacy prop's decoration", () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const selectionA = {
-      anchor: {path: spanPath, offset: 0},
-      focus: {path: spanPath, offset: 3},
-    }
-    const editorEngine = createEditorEngineStub(blockKey, spanKey)
-    const actor = createActor(rangeDecorationsMachine, {
-      input: {readOnly: true, schema: {} as EditorSchema, editorEngine},
-    })
-    actor.start()
-    actor.send({type: 'ready'})
-
-    const onMoved = vi.fn()
-    actor.send({
-      type: 'source updated',
-      sourceKey: 'prop',
-      kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionA, onMoved},
-      ],
-    })
-
-    actor.send({
-      type: 'engine operation',
-      operation: {
-        type: 'insert.text',
-        path: spanPath,
-        offset: 0,
-        text: 'XY',
-      },
-      origin: 'local',
-    })
-
-    expect(onMoved).not.toHaveBeenCalled()
-    expect(
-      actor
-        .getSnapshot()
-        .context.editorEngine.decoratedRanges.map((decoratedRange) => ({
-          anchor: decoratedRange.anchor,
-          focus: decoratedRange.focus,
-        })),
-    ).toEqual([selectionA])
   })
 })

@@ -19,11 +19,4 @@ export type DecoratedRange = Range & {
    */
   isRangeStart?: boolean
   isRangeEnd?: boolean
-  /**
-   * Which kind of range-decoration source produced this decoration.
-   * Only a `'registered'` decoration's `render` ever reads `isFirst`/
-   * `isLast`, so `splitDecorationsByChild` gates the `isRangeStart`/
-   * `isRangeEnd` bookkeeping on it.
-   */
-  kind?: 'prop' | 'registered'
 }

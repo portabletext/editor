@@ -1,4 +1,4 @@
-import type {PropsWithChildren, ReactElement} from 'react'
+import type {ReactElement} from 'react'
 import {describe, expectTypeOf, test} from 'vitest'
 import {defineDecoration} from '../define-decoration'
 import type {Editor} from '../editor'
@@ -8,32 +8,10 @@ import type {
   DecorationMapping,
   DecorationRegistration,
   DecorationRenderProps,
-  RangeDecoration,
 } from './editor'
 
 declare const editor: Editor
 declare const range: NonNullable<EditorSelection>
-
-describe('RangeDecoration.component', () => {
-  test('stays `(props: PropsWithChildren) => ReactElement`, untouched by the registered surface', () => {
-    expectTypeOf<RangeDecoration['component']>().parameters.toEqualTypeOf<
-      [PropsWithChildren]
-    >()
-  })
-
-  test('a component typed to take just PropsWithChildren is still assignable', () => {
-    const component: (props: PropsWithChildren) => ReactElement<any> = (
-      props,
-    ) => props.children as ReactElement<any>
-
-    const rangeDecoration: RangeDecoration = {
-      component,
-      selection: null,
-    }
-
-    void rangeDecoration
-  })
-})
 
 describe('Decoration', () => {
   test("`type` rejects anything other than `'range'`", () => {

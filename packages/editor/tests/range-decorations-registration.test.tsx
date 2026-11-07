@@ -1,18 +1,13 @@
-import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
 import {userEvent} from 'vitest/browser'
 import {
-  EditorProvider,
-  PortableTextEditable,
   useEditor,
   type Decoration,
   type DecorationRegistration,
   type DecorationRenderProps,
   type EditorSelection,
-  type RangeDecoration,
 } from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
@@ -877,6 +872,94 @@ describe('registerDecorations: reconciliation by id', () => {
     )
     expect(registrationOne.getDecorations()).toEqual([])
     expect(registrationTwo.getDecorations()).toEqual([{id: 'shared', range}])
+  })
+
+  test('Scenario: a registered decoration only renders as necessary', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const lastBlockKey = keyGenerator()
+    const lastSpanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+    let renderCount = 0
+    const render = (props: DecorationRenderProps) => {
+      renderCount++
+      return <span data-testid="counted-decoration">{props.children}</span>
+    }
+    const rangeAt = (anchorOffset: number, focusOffset: number) => ({
+      anchor: {path: spanPath, offset: anchorOffset},
+      focus: {path: spanPath, offset: focusOffset},
+    })
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: firstBlockKey,
+          children: [
+            {_type: 'span', _key: firstSpanKey, text: 'first', marks: []},
+          ],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          markDefs: [],
+        },
+        {
+          _type: 'block',
+          _key: lastBlockKey,
+          children: [
+            {_type: 'span', _key: lastSpanKey, text: 'last', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+
+    const decorations: Array<Decoration> = [
+      {id: 'counted', type: 'range', render, range: rangeAt(0, 2)},
+    ]
+    const registration = editor.registerDecorations({decorations})
+
+    await vi.waitFor(() => {
+      expect([renderCount, 'registered']).toEqual([1, 'registered'])
+    })
+
+    // The same array
+    registration.update(decorations)
+    await vi.waitFor(() => {
+      expect([renderCount, 'same-array']).toEqual([1, 'same-array'])
+    })
+
+    // A new object with equal values and the same render function
+    registration.update([
+      {id: 'counted', type: 'range', render, range: rangeAt(0, 2)},
+    ])
+    await vi.waitFor(() => {
+      expect([renderCount, 'equal-values']).toEqual([1, 'equal-values'])
+    })
+
+    // A new offset
+    registration.update([
+      {id: 'counted', type: 'range', render, range: rangeAt(2, 4)},
+    ])
+    await vi.waitFor(() => {
+      expect([renderCount, 'new-offset']).toEqual([2, 'new-offset'])
+    })
+
+    // Back to the first offset
+    registration.update([
+      {id: 'counted', type: 'range', render, range: rangeAt(0, 2)},
+    ])
+    await vi.waitFor(() => {
+      expect([renderCount, 'back']).toEqual([3, 'back'])
+    })
   })
 })
 
@@ -1835,169 +1918,7 @@ describe('registerDecorations: onMapped and getDecorations', () => {
   })
 })
 
-describe('Ordering and composition', () => {
-  test('Scenario: the legacy prop and registered sources nest prop-first, then registration order', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-
-    const propDecoration: RangeDecoration = {
-      component: (props) => (
-        <span data-testid="decoration-prop">{props.children}</span>
-      ),
-      selection: {
-        anchor: {path: spanPath, offset: 0},
-        focus: {path: spanPath, offset: 3},
-      },
-    }
-
-    const registeredA: Array<Decoration> = [
-      {
-        id: 'a',
-        type: 'range',
-        render: (props) => (
-          <span data-testid="decoration-a">{props.children}</span>
-        ),
-        range: {
-          anchor: {path: spanPath, offset: 0},
-          focus: {path: spanPath, offset: 3},
-        },
-      },
-    ]
-
-    const registeredB: Array<Decoration> = [
-      {
-        id: 'b',
-        type: 'range',
-        render: (props) => (
-          <span data-testid="decoration-b">{props.children}</span>
-        ),
-        range: {
-          anchor: {path: spanPath, offset: 0},
-          focus: {path: spanPath, offset: 3},
-        },
-      },
-    ]
-
-    await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ],
-      editableProps: {rangeDecorations: [propDecoration]},
-      children: (
-        <>
-          <RegisteredDecorationsProbe decorations={registeredA} />
-          <RegisteredDecorationsProbe decorations={registeredB} />
-        </>
-      ),
-    })
-
-    await vi.waitFor(() => {
-      expect(getEditorHtml()).toEqual(
-        [
-          `<div data-pt-path="[_key==&quot;${blockKey}&quot;]" data-pt-block="text">`,
-          '<div>',
-          `<span data-pt-path="[_key==&quot;${blockKey}&quot;].children[_key==&quot;${spanKey}&quot;]" data-pt-inline="span">`,
-          '<span data-testid="decoration-prop">',
-          '<span data-testid="decoration-a">',
-          '<span data-testid="decoration-b">',
-          '<span data-pt-marks="true"><span data-pt-text="true">foo</span></span>',
-          '</span>',
-          '</span>',
-          '</span>',
-          '</span>',
-          '</div>',
-          '</div>',
-        ].join(''),
-      )
-    })
-  })
-
-  test('Scenario: the prop renders outermost even when its `PortableTextEditable` mounts after the registration', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-
-    const propDecoration: RangeDecoration = {
-      component: (props) => (
-        <span data-testid="decoration-prop">{props.children}</span>
-      ),
-      selection: {
-        anchor: {path: spanPath, offset: 0},
-        focus: {path: spanPath, offset: 3},
-      },
-    }
-
-    const registered: Array<Decoration> = [
-      {
-        id: 'a',
-        type: 'range',
-        render: (props) => (
-          <span data-testid="decoration-a">{props.children}</span>
-        ),
-        range: {
-          anchor: {path: spanPath, offset: 0},
-          focus: {path: spanPath, offset: 3},
-        },
-      },
-    ]
-
-    // The registration probe mounts (and registers, during its own first
-    // render) before `PortableTextEditable` here - the opposite of
-    // `createTestEditor`'s fixed JSX order, and the opposite of arrival
-    // order the machine would flatten by if it didn't enforce prop-first
-    // ordering.
-    await render(
-      <EditorProvider
-        initialConfig={{
-          keyGenerator,
-          schemaDefinition: defineSchema({}),
-          initialValue: [
-            {
-              _type: 'block',
-              _key: blockKey,
-              children: [
-                {_type: 'span', _key: spanKey, text: 'foo', marks: []},
-              ],
-              markDefs: [],
-            },
-          ],
-        }}
-      >
-        <RegisteredDecorationsProbe decorations={registered} />
-        <PortableTextEditable rangeDecorations={[propDecoration]} />
-      </EditorProvider>,
-    )
-
-    await vi.waitFor(() => {
-      expect(getEditorHtml()).toEqual(
-        [
-          `<div data-pt-path="[_key==&quot;${blockKey}&quot;]" data-pt-block="text">`,
-          '<div>',
-          `<span data-pt-path="[_key==&quot;${blockKey}&quot;].children[_key==&quot;${spanKey}&quot;]" data-pt-inline="span">`,
-          '<span data-testid="decoration-prop">',
-          '<span data-testid="decoration-a">',
-          '<span data-pt-marks="true"><span data-pt-text="true">foo</span></span>',
-          '</span>',
-          '</span>',
-          '</span>',
-          '</div>',
-          '</div>',
-        ].join(''),
-      )
-    })
-  })
-})
-
-describe('RangeDecoration fragment props', () => {
+describe('Decoration fragment props', () => {
   test('Scenario: a decoration spanning a mark boundary reports isFirst/isLast per fragment', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()

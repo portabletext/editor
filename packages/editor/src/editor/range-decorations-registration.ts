@@ -33,7 +33,6 @@ export function createDecorationsRegistration(options: {
   options.rangeDecorationsActor.send({
     type: 'source updated',
     sourceKey: options.sourceKey,
-    kind: 'registered',
     rangeDecorations: options.decorations,
     on: options.onMapped,
   })
@@ -49,7 +48,6 @@ export function createDecorationsRegistration(options: {
       options.rangeDecorationsActor.send({
         type: 'source updated',
         sourceKey: options.sourceKey,
-        kind: 'registered',
         rangeDecorations: decorations,
       })
     },
