@@ -13,7 +13,7 @@ import {describe, expect, test} from 'vitest'
 import {interpretTransaction} from './interpret-transaction'
 import {getValue} from './lib/get-value'
 import {isKeyedSegment} from './lib/is-keyed-segment'
-import {mapPoint, type Step, type StepPath} from './step-mapper'
+import {mapPoint, mapRange, type Step, type StepPath} from './step-mapper'
 
 const wireCatalogueDir = join(
   __dirname,
@@ -702,13 +702,12 @@ describe('interpretTransaction oracle: character-identity across synthetic trans
   test('every split offset preserves character identity for every caret position', () => {
     let cases = 0
 
-    // A tail shorter than two characters never pairs into a move (rule (a)
-    // distrusts single-character text), so it's excluded from this sweep:
-    // the point degrades to the split boundary instead, pinned separately
-    // by the interpreter's own negative tests.
+    // A 1-character tail pairs too: the new block reuses the span key, so
+    // the sweep runs up to the last character. An empty tail has nothing to
+    // move and is left out.
     for (
       let splitOffset = 0;
-      splitOffset <= seedText.length - 2;
+      splitOffset <= seedText.length - 1;
       splitOffset++
     ) {
       const keyGenerator = createTestKeyGenerator()
@@ -756,7 +755,7 @@ describe('interpretTransaction oracle: character-identity across synthetic trans
 
     // Exhaustive over the small space, so the run is deterministic
     // without a seeded RNG.
-    expect(cases).toBe(143)
+    expect(cases).toBe(156)
   })
 
   test('every decorator-add range preserves character identity for every caret position', () => {
@@ -1392,6 +1391,47 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
       {type: 'remove.text', path: spanPath(b1, s1), offset: 6, length: 3},
       {type: 'insert.text', path: spanPath(b2, s2), offset: 8, length: 3},
     ] satisfies Array<Step>)
+  })
+
+  test('a block split with a 1-character tail moves the tail into the new block', () => {
+    const seed = [makeBlock('b1', 's1', 'foo charlie')]
+
+    const patches: Array<Patch> = [
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b1', 's1'), 'text'],
+        value: dmpPatch('foo charlie', 'foo charli'),
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [{_key: 'b1'}],
+        position: 'after',
+        items: [makeBlock('b2', 's1', 'e')],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(steps).toEqual([
+      {
+        type: 'move.text',
+        from: {path: spanPath('b1', 's1'), offset: 10, length: 1},
+        to: {path: spanPath('b2', 's1'), offset: 0},
+      },
+    ] satisfies Array<Step>)
+    // A range over "charlie" ending at the block end follows its last
+    // character into the new block instead of losing it.
+    expect(
+      mapRange(steps, {
+        anchor: {path: spanPath('b1', 's1'), offset: 4},
+        focus: {path: spanPath('b1', 's1'), offset: 11},
+      }),
+    ).toEqual({
+      anchor: {path: spanPath('b1', 's1'), offset: 4},
+      focus: {path: spanPath('b2', 's1'), offset: 1},
+    })
   })
 
   test('Probe B: a one-character delete never pairs, even with matching typing elsewhere', () => {

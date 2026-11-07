@@ -38,7 +38,9 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  *
  * - A brand-new node from an `insert` patch pairs with a removal whose
  *   text matches it exactly and is at least 2 characters (a single
- *   character is too common to trust). A whole-node removal (`unset` of
+ *   character is too common to trust), unless the inserted node reuses
+ *   the removed text's span key: a block split re-inserts its tail under
+ *   the same key, so a 1-character tail pairs too. A whole-node removal (`unset` of
  *   a keyed segment) can land in either patch order (a block merge's
  *   `insert` can arrive before or after the `unset` it pairs with). A text
  *   carve only pairs with an insertion observed after it. A removal
@@ -841,12 +843,36 @@ function eligibleRemovalsFor(
     (removal) =>
       !removal.consumed &&
       removal.text === insertion.text &&
-      removal.text.length >= 2 &&
+      (removal.text.length >= 2 || isSameSpanSplit(removal, insertion)) &&
       !pathEquals(removal.from.path, insertion.path) &&
       !(removal.isBlockRemoval && insertion.isBlockInsertion) &&
       (insertion.kind === 'node'
         ? removal.isNodeRemoval || removal.slotIndex < insertion.slotIndex
         : removal.isNodeRemoval),
+  )
+}
+
+/**
+ * A block split trims the tail off a span and re-inserts it in the new
+ * block under the same span key. That key identity is the evidence the
+ * two-character minimum otherwise stands in for, so a split whose tail is
+ * a single character still pairs. A text removal paired with a node
+ * insertion whose span reuses an unrelated key (Probe B) still needs two
+ * characters.
+ */
+function isSameSpanSplit(
+  removal: RemovalCandidate,
+  insertion: InsertionCandidate,
+): boolean {
+  if (removal.isNodeRemoval || insertion.kind !== 'node') {
+    return false
+  }
+  const removalKey = removal.from.path[removal.from.path.length - 1]
+  const insertionKey = insertion.path[insertion.path.length - 1]
+  return (
+    isKeyedSegment(removalKey) &&
+    isKeyedSegment(insertionKey) &&
+    removalKey._key === insertionKey._key
   )
 }
 
