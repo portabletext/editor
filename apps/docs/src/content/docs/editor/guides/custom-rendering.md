@@ -7,7 +7,7 @@ sidebar:
 
 Marks (decorators and annotations) render through node registrations: `defineDecorator` and `defineAnnotation`, mounted with `NodePlugin` alongside the editor's other registrations. [Rendering](/editor/concepts/rendering/) covers the model every registration shares: markup ownership, dispatch precedence, and `renderDefault`. [Containers](/editor/concepts/containers/) covers positional overrides, rendering a mark differently only inside one part of the document.
 
-`renderPlaceholder` and `rangeDecorations` stay on `<PortableTextEditable>`, and this guide documents them below. `renderPlaceholder` has no registration equivalent. The registered counterpart of `rangeDecorations` is `editor.registerDecorations`, which `@portabletext/plugin-decorations` builds on.
+`renderPlaceholder` stays on `<PortableTextEditable>` because it has no registration equivalent. Range highlights use `editor.registerDecorations`, which `@portabletext/plugin-decorations` builds on.
 
 The `renderDecorator`, `renderAnnotation`, `renderBlock`, `renderChild`, `renderStyle`, and `renderListItem` props are removed in this major; the [migration guide](/editor/guides/migrate-render-props/) walks through moving to registrations. None of these choices affect the Portable Text output: they only change how the editor itself renders content.
 
@@ -123,77 +123,4 @@ Use `renderPlaceholder` to display custom placeholder text when the editor is em
 
 ## Range decorations
 
-Use `rangeDecorations` to highlight specific ranges of text. This is useful for features like search highlighting, comments, or collaborative cursors:
-
-```tsx nocheck
-import type {RangeDecoration} from '@portabletext/editor'
-
-const decorations: RangeDecoration[] = [
-  {
-    selection: {
-      anchor: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 0},
-      focus: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 5},
-    },
-    component: ({children}) => (
-      <span style={{backgroundColor: 'yellow'}}>{children}</span>
-    ),
-  },
-]
-
-<PortableTextEditable
-  rangeDecorations={decorations}
-  // ... other props
-/>
-```
-
-You can apply styles, libraries like Tailwind, or use custom react components within the rendering functions.
-
-To decorate from several independent parts of your app, track decorations by `id`, or read their live positions, use decoration layers instead: see [Decorate content](/editor/guides/decorate-content/).
-
-### Following a range across edits
-
-Edits can move, shrink, or invalidate a decorated range: typing before it shifts its offsets, and deleting it removes it entirely. Pass `onMoved` on a `RangeDecoration` to keep your own state in sync instead of recomputing the selection from scratch:
-
-```tsx
-import {
-  PortableTextEditable,
-  type EditorSelection,
-  type RangeDecoration,
-  type RangeDecorationOnMovedDetails,
-} from '@portabletext/editor'
-import {useState} from 'react'
-
-function Highlight() {
-  const [highlightSelection, setHighlightSelection] = useState<EditorSelection>(
-    {
-      anchor: {
-        path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
-        offset: 0,
-      },
-      focus: {path: [{_key: 'block1'}, 'children', {_key: 'span1'}], offset: 5},
-    },
-  )
-
-  const onMoved = (details: RangeDecorationOnMovedDetails) => {
-    // `newSelection` is `null` when the edit removed the decorated range.
-    setHighlightSelection(details.newSelection)
-  }
-
-  const decorations: RangeDecoration[] = [
-    {
-      selection: highlightSelection,
-      component: ({children}) => (
-        <span style={{backgroundColor: 'yellow'}}>{children}</span>
-      ),
-      onMoved,
-    },
-  ]
-
-  return (
-    <PortableTextEditable
-      rangeDecorations={decorations}
-      // ... other props
-    />
-  )
-}
-```
+Use `editor.registerDecorations` or `useDecorationLayer` from `@portabletext/plugin-decorations` to highlight ranges for search results, comments, or collaborative cursors. [Decorate content](/editor/guides/decorate-content/) covers rendering, edit tracking, and lost ranges.

@@ -67,7 +67,7 @@ If your editor mounts any of these six props on `<PortableTextEditable>`, each h
 
 Registrations mount through `NodePlugin` and the engine dispatches per type (decorator name, annotation `_type`, block or object `_type`), so you can migrate one prop at a time on the latest v7 release, where both paths still work, and bump to v8 when the props are gone from your code. The [render props migration guide](/editor/guides/migrate-render-props/) has a worked example for each, and [Rendering](/editor/concepts/rendering/) covers the model they all share.
 
-Two props you might expect on the list are not on it. `renderPlaceholder` stays, the placeholder is empty-editor chrome with no type to register under, and `rangeDecorations` stays, it wraps a span's output from the outside.
+`renderPlaceholder` stays because the placeholder is empty-editor chrome with no type to register under. The `rangeDecorations` prop stays available in v8. v9 removes it in favor of `editor.registerDecorations` or `@portabletext/plugin-decorations`.
 
 If your render callbacks read `schemaType` or `block` from their payload, both are derivable inside a registered render: `getPathSubSchema` and `getEnclosingBlock` from [`@portabletext/editor/traversal`](/editor/concepts/traversal/), called in a selector. The one field with no equivalent is `editorElementRef`, the engine's own DOM node; put a ref on your own rendered element instead, it reaches the same position in the DOM.
 

@@ -10,22 +10,12 @@ A decoration changes how a range of text looks without changing the document. It
 Typical uses are search highlights, comments anchored to a passage, and the carets of other people editing the same document.
 
 :::caution[Beta]
-The decoration layer API is in beta and can still change. That covers `editor.registerDecorations`, `defineDecoration`, and everything in `@portabletext/plugin-decorations`. The `rangeDecorations` prop on `PortableTextEditable` is stable.
+The decoration layer API is in beta and can still change. That covers `editor.registerDecorations`, `defineDecoration`, and everything in `@portabletext/plugin-decorations`.
 :::
 
 ## Choose an approach
 
-The editor gives you two ways to decorate content:
-
-|                | `rangeDecorations` prop              | Decoration layers                                                 |
-| -------------- | ------------------------------------ | ----------------------------------------------------------------- |
-| Who owns it    | One `PortableTextEditable`           | Any number of components inside `EditorProvider`, each on its own |
-| Identity       | None                                 | A stable `id` per decoration, matched across updates              |
-| Edits          | An `onMoved` callback per decoration | `moved`, `content-changed`, and `lost` events, batched per change |
-| Live positions | Not available                        | Read with `useDecorations`                                        |
-| Read-only mode | Freezes                              | Keeps following remote edits                                      |
-
-Use the `rangeDecorations` prop for simple highlights that one editable owns. [Customize editor rendering](/editor/guides/custom-rendering/#range-decorations) documents it. Use decoration layers when several features decorate the same editor, or when you need to track decorations through edits. The rest of this guide covers decoration layers.
+Use `editor.registerDecorations` directly for low-level integrations, or decoration layers when a React component owns the decorations and needs live positions or edit events. The rest of this guide covers decoration layers.
 
 ## Render a highlight
 
@@ -323,7 +313,7 @@ const renderComment = (props: DecorationRenderProps) => (
 
 A collapsed range has one segment, which is both `isFirst` and `isLast`.
 
-Where decorations overlap, their wrappers nest. A layer registered earlier wraps a layer registered later. For sibling plugins, that is the one that comes first. Within one layer, earlier entries in the array wrap later ones. The `rangeDecorations` prop always renders outermost.
+Where decorations overlap, their wrappers nest. A layer registered earlier wraps a layer registered later. For sibling plugins, that is the one that comes first. Within one layer, earlier entries in the array wrap later ones.
 
 Keep `render` references stable when you can. A new `render` function counts as a change and re-renders the decorated text. Define `render` at module level, like `renderCommentHighlight`, or build decorations inside `useMemo` so they only change when your data does.
 

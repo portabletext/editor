@@ -113,10 +113,8 @@ Studio's own inline-comment UI (the floating "Add comment" button, the
 popover's comment composer, and the range-decoration span it renders around
 commented text).
 
-This family proves Studio's inline comments still work end to end against
-this branch's `rangeDecorations` consumer: creating a comment decorates the
-selected text, and editing text next to a decorated range leaves the
-decoration wrapping exactly the original commented word.
+Studio's inline-comments e2e fails until `sanity` renders inline comments
+through decoration layers.
 
 - **`inline-comments.spec.ts`**:
   - **creating an inline comment decorates the selected text**: resets the
