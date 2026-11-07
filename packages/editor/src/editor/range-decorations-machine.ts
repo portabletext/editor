@@ -519,6 +519,7 @@ export const rangeDecorationsMachine = setup({
        * `decorate.fn` reassignment go through a conditional `assign()`.
        */
       sourceUpdateChanged: boolean
+      engineChangeMovedNode: boolean
     },
     input: {} as {
       readOnly: boolean
@@ -732,10 +733,11 @@ export const rangeDecorationsMachine = setup({
         event.change.cause.type === 'value sync'
           ? 'remote'
           : 'local'
-      const mapRange = mapDecorationRangesThroughChange(
+      const {mapRange, movesNode} = mapDecorationRangesThroughChange(
         context.editorEngine,
         event.change,
       )
+      context.engineChangeMovedNode = movesNode
 
       const pendingNotifications: Array<{
         on: (mappings: Array<DecorationMapping>) => void
@@ -785,6 +787,7 @@ export const rangeDecorationsMachine = setup({
   guards: {
     'has range decorations': ({context}) =>
       context.editorEngine.decoratedRanges.length > 0,
+    'engine change moved node': ({context}) => context.engineChangeMovedNode,
   },
 }).createMachine({
   id: 'range decorations',
@@ -797,6 +800,7 @@ export const rangeDecorationsMachine = setup({
       fn: createDecorate(input.schema, input.editorEngine),
     },
     sourceUpdateChanged: false,
+    engineChangeMovedNode: false,
   }),
   invoke: {
     src: 'engine change listener',
@@ -852,9 +856,17 @@ export const rangeDecorationsMachine = setup({
         },
         'moving range decorations': {
           entry: ['move range decorations'],
-          always: {
-            target: 'idle',
-          },
+          always: [
+            {
+              guard: 'engine change moved node',
+              target: 'refreshing decorate',
+            },
+            {target: 'idle'},
+          ],
+        },
+        'refreshing decorate': {
+          entry: ['update decorate'],
+          always: {target: 'idle'},
         },
       },
     },

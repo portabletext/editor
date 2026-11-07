@@ -122,7 +122,7 @@ describe('Range Decorations spanning block objects', () => {
     await harness.expectDecoratedText('brave worlda new')
   })
 
-  test.fails("Scenario: a highlight from 'brave' in block 1 to 'new' in block 3 gains a text block moved between its edges", async () => {
+  test("Scenario: a highlight from 'brave' in block 1 to 'new' in block 3 gains a text block moved between its edges", async () => {
     // DECISION: A moved block landing between the surviving edges is inside the
     // highlight, consistent with preserving all text between those edges.
     const harness = await createHarness({
