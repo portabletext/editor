@@ -58,7 +58,8 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  *   length at fold time): appending is the only shape a real span merge
  *   produces, so an insert landing mid-span or at the start is local
  *   typing that happens to read the same as some unrelated removal, never
- *   a merge.
+ *   a merge. A 1-character fold pairs only with a span removed from the
+ *   destination's own block (a merge of a 1-character block).
  *
  * A removal whose text matches more than one still-available candidate,
  * or an insertion matched by more than one still-available removal, pairs
@@ -843,7 +844,9 @@ function eligibleRemovalsFor(
     (removal) =>
       !removal.consumed &&
       removal.text === insertion.text &&
-      (removal.text.length >= 2 || isSameSpanSplit(removal, insertion)) &&
+      (removal.text.length >= 2 ||
+        isSameSpanSplit(removal, insertion) ||
+        isSameBlockSpanFold(removal, insertion)) &&
       !pathEquals(removal.from.path, insertion.path) &&
       !(removal.isBlockRemoval && insertion.isBlockInsertion) &&
       (insertion.kind === 'node'
@@ -873,6 +876,35 @@ function isSameSpanSplit(
     isKeyedSegment(removalKey) &&
     isKeyedSegment(insertionKey) &&
     removalKey._key === insertionKey._key
+  )
+}
+
+/**
+ * A block merge moves the absorbed block's span into the surviving block,
+ * folds its text onto the end of the span before it and then unsets the
+ * moved span. Folding a span into its sibling in the same block is what a
+ * merge is, so a single character pairs there too. A removal from another
+ * block (Probe R2) still needs two characters.
+ */
+function isSameBlockSpanFold(
+  removal: RemovalCandidate,
+  insertion: InsertionCandidate,
+): boolean {
+  if (
+    !removal.isNodeRemoval ||
+    removal.isBlockRemoval ||
+    insertion.kind !== 'fold' ||
+    removal.from.path.length !== 3 ||
+    insertion.path.length !== 3
+  ) {
+    return false
+  }
+  const removalBlock = removal.from.path[0]
+  const insertionBlock = insertion.path[0]
+  return (
+    isKeyedSegment(removalBlock) &&
+    isKeyedSegment(insertionBlock) &&
+    removalBlock._key === insertionBlock._key
   )
 }
 

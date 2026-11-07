@@ -1434,6 +1434,43 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
     })
   })
 
+  test('a block merge of a 1-character block folds it into the previous span', () => {
+    const seed = [makeBlock('b1', 's1', 'foo'), makeBlock('b2', 's2', 'x')]
+    const children = [{_key: 'b1'}, 'children'] as Path
+
+    const patches: Array<Patch> = [
+      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+      {type: 'setIfMissing', path: children, value: [], origin: 'local'},
+      {
+        type: 'insert',
+        path: [...children, {_key: 's1'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 's2', text: 'x', marks: []}],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b1', 's1'), 'text'],
+        value: dmpPatch('foo', 'foox'),
+        origin: 'local',
+      },
+      {type: 'unset', path: [...children, {_key: 's2'}], origin: 'local'},
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    // A range over "x" follows it into the merged block.
+    expect(
+      mapRange(steps, {
+        anchor: {path: spanPath('b2', 's2'), offset: 0},
+        focus: {path: spanPath('b2', 's2'), offset: 1},
+      }),
+    ).toEqual({
+      anchor: {path: spanPath('b1', 's1'), offset: 3},
+      focus: {path: spanPath('b1', 's1'), offset: 4},
+    })
+  })
+
   test('Probe B: a one-character delete never pairs, even with matching typing elsewhere', () => {
     const b1 = 'b1'
     const s1 = 's1'
