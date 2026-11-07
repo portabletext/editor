@@ -364,7 +364,7 @@ describe('Range Decorations inside tables', () => {
     await harness.expectDecoratedText(null)
   })
 
-  test.fails("Scenario: a highlight from 'before' before the table to 'two' in a cell shrinks when the whole table is deleted", async () => {
+  test("Scenario: a highlight from 'before' before the table to 'two' in a cell shrinks when the whole table is deleted", async () => {
     const harness = await createHarness({
       value: tableValue(),
       range: range(
@@ -469,7 +469,7 @@ describe('Range Decorations inside tables', () => {
     await harness.expectDecoratedText('onXetwo')
   })
 
-  test.fails("Scenario: a remote table deletion shrinks a highlight from 'before' to 'two' to its surviving text", async () => {
+  test("Scenario: a remote table deletion shrinks a highlight from 'before' to 'two' to its surviving text", async () => {
     const harness = await createHarness({
       value: tableValue(),
       range: range(
