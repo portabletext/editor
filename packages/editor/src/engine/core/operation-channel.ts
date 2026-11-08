@@ -18,6 +18,12 @@ import {getOrigin, type ApplyContextFrame} from './apply-context'
  *   fire nested between the triggering operation's `before` and `after`
  *   events — a fix's `after` listeners run before the triggering
  *   operation's.
+ * - `complete` listeners run from the apply call's `finally` block, including
+ *   when a `before` listener, application, normalization, or an `after`
+ *   listener throws. They observe the apply depth captured at entry. Every
+ *   `complete` listener runs even if one throws. Without an error already in
+ *   flight, the first listener error propagates afterwards; otherwise listener
+ *   errors are reported and the original error keeps its identity.
  */
 export type OperationOrigin =
   | 'local'
@@ -27,6 +33,8 @@ export type OperationOrigin =
   | 'normalization'
 
 export type OperationEvent = {
+  /** The engine-owned apply nesting depth, where the outermost apply is 1. */
+  applyDepth: number
   /**
    * The operation object is enriched in place during apply — `inverse` gets
    * populated and inserted nodes may be re-keyed — so `after` listeners
@@ -65,7 +73,7 @@ export type OperationEvent = {
 
 export type OperationListener = (event: OperationEvent) => void
 
-export type OperationPhase = 'before' | 'after'
+export type OperationPhase = 'before' | 'after' | 'complete'
 
 export function subscribeToOperations(
   editor: Editor,
@@ -108,6 +116,7 @@ export function createOperationEvent(
   operation: EngineOperation,
 ): OperationEvent {
   return {
+    applyDepth: editor.applyDepth,
     operation,
     beforeValue: editor.snapshot.context.value,
     beforeSelection: editor.snapshot.context.selection,
