@@ -20,6 +20,7 @@ import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {Path} from '../types/paths'
 import {applyDeselect} from './apply-selection'
 import {isEqualValues} from './equality'
 import {getValue} from './get-value'
@@ -33,13 +34,27 @@ export function createApplyPatch(
     initialValue: Array<PortableTextBlock> | undefined
   },
 ): (editor: PortableTextEditorEngine, patch: Patch) => boolean {
-  return (editor: PortableTextEditorEngine, patch: Patch): boolean => {
+  return (editor: PortableTextEditorEngine, incomingPatch: Patch): boolean => {
+    const patch = resolveNegativeIndexes(
+      editor.snapshot.context.value,
+      incomingPatch,
+    )
+
+    if (!patch) {
+      return false
+    }
+
     let changed = false
 
     try {
       switch (patch.type) {
         case 'insert':
-          changed = insertPatch(context, editor, patch)
+          changed = insertPatch(
+            context,
+            editor,
+            patch,
+            typeof incomingPatch.path[0] === 'number',
+          )
           break
         case 'unset':
           changed = unsetPatch(editor, patch)
@@ -60,6 +75,77 @@ export function createApplyPatch(
 
     return changed
   }
+}
+
+/**
+ * Like Sanity, a negative index counts from the end of the array its
+ * segment selects in, against the value just before the patch. Returns
+ * `undefined` when a negative index falls before the start of its array,
+ * since the patch then addresses nothing.
+ */
+function resolveNegativeIndexes(
+  value: Array<PortableTextBlock>,
+  patch: Patch,
+): Patch | undefined {
+  if (
+    patch.type !== 'set' &&
+    patch.type !== 'unset' &&
+    !(patch.type === 'insert' && patch.items.length === 1)
+  ) {
+    return patch
+  }
+
+  if (!patch.path.some((segment) => isNegativeIndex(segment))) {
+    return patch
+  }
+
+  const path: Path = []
+  let current: unknown = value
+
+  for (const [segmentIndex, segment] of patch.path.entries()) {
+    if (
+      patch.type === 'insert' &&
+      segment === -1 &&
+      segmentIndex === patch.path.length - 1 &&
+      Array.isArray(current) &&
+      current.length === 0
+    ) {
+      // Like Sanity, an insert at -1 into an empty array inserts its items,
+      // whatever the position.
+      return {...patch, path: [...path, 0], position: 'before'}
+    }
+
+    if (isNegativeIndex(segment)) {
+      if (!Array.isArray(current) || current.length + segment < 0) {
+        return undefined
+      }
+
+      const index = current.length + segment
+      const element: unknown = current[index]
+      const key =
+        typeof element === 'object' && element !== null && '_key' in element
+          ? element['_key']
+          : undefined
+
+      // The rest of the editor resolves keyed segments at any depth, while a
+      // numeric segment below the root is not always found.
+      path.push(typeof key === 'string' ? {_key: key} : index)
+      current = element
+    } else {
+      path.push(segment)
+      current = getValue(current, [segment])
+    }
+  }
+
+  if (patch.type === 'insert' && patch.position === 'replace') {
+    return patch
+  }
+
+  return {...patch, path}
+}
+
+function isNegativeIndex(segment: Path[number]): segment is number {
+  return typeof segment === 'number' && segment < 0
 }
 
 function diffMatchPatch(
@@ -141,6 +227,7 @@ function insertPatch(
   },
   editor: PortableTextEditorEngine,
   patch: InsertPatch,
+  addressedByRootIndex: boolean,
 ) {
   const {items, position} = patch
 
@@ -200,7 +287,7 @@ function insertPatch(
     }
   }
 
-  if (editorWasEmptyBefore && typeof patch.path[0] === 'number') {
+  if (editorWasEmptyBefore && addressedByRootIndex) {
     const removeIdx = position === 'before' ? items.length : 0
     const removeNode = editor.snapshot.context.value[removeIdx]
     if (removeNode) {
