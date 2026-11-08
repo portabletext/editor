@@ -920,6 +920,11 @@ describe('root chunks against real engine editing', () => {
         ) as PortableTextTextBlock
       ).children.length,
     ).toEqual(1)
+    expect(
+      value.map((child) =>
+        engine.blockIndexMap.get(serializePath([{_key: child._key}])),
+      ),
+    ).toEqual(value.map((_, index) => index))
   })
 
   test.each(depths.slice(1))(
