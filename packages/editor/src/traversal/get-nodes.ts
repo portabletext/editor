@@ -11,6 +11,7 @@ import type {
 import {getChildren, getNodeChildren} from './get-children'
 import {resolveChildEntryIndex} from './resolve-child-entry-index'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {walkPath} from './walk-path'
 
 /**
  * Get the descendant nodes of the node at a given path.
@@ -38,6 +39,15 @@ export function* getNodes(
   } = {},
 ): Generator<{node: Node; path: Path}, void, undefined> {
   const {at = [], from, to, match, reverse = false} = options
+
+  if (
+    [from, to].some(
+      (bound) =>
+        bound !== undefined && walkPath(snapshot, bound).status === 'invalid',
+    )
+  ) {
+    return
+  }
 
   if (from === undefined && to === undefined) {
     yield* getNodesSimple(snapshot, at, {match, reverse})

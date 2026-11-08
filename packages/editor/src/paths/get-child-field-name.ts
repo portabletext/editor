@@ -1,12 +1,8 @@
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import type {
-  Containers,
-  RegisteredContainer,
-} from '../schema/resolve-containers'
-import {getNodeChildren} from '../traversal/get-children'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import type {Containers} from '../schema/resolve-containers'
+import {walkedNode, walkPath} from '../traversal/walk-path'
 
 /**
  * Walk the tree to the node at the given path and return the field
@@ -23,40 +19,6 @@ export function getChildFieldName(
   },
   path: Path,
 ): string | undefined {
-  let nodeChildren = getNodeChildren(context, {value: context.value})
-  let currentParent: RegisteredContainer | undefined = nodeChildren?.parent
-
-  for (let i = 0; i < path.length; i++) {
-    if (!nodeChildren) {
-      return undefined
-    }
-
-    const segment = path[i]
-
-    if (typeof segment === 'string') {
-      continue
-    }
-
-    let node: Node | undefined
-
-    if (isKeyedSegment(segment)) {
-      node = nodeChildren.children.find((child) => child._key === segment._key)
-    } else if (typeof segment === 'number') {
-      node = nodeChildren.children.at(segment)
-    }
-
-    if (!node) {
-      return undefined
-    }
-
-    if (i === path.length - 1) {
-      const targetInfo = getNodeChildren(context, node, currentParent)
-      return targetInfo?.fieldName
-    }
-
-    nodeChildren = getNodeChildren(context, node, currentParent)
-    currentParent = nodeChildren?.parent
-  }
-
-  return undefined
+  return walkedNode(walkPath({context, blockIndexMap: new Map()}, path))
+    ?.children?.fieldName
 }

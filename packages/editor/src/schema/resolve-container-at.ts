@@ -1,5 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {walkNodes} from '../traversal/walk-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {
   Containers,
@@ -39,63 +40,47 @@ export function resolveContainerAt(
   value: ReadonlyArray<Node>,
   path: Path,
 ): RegisteredContainer | RegisteredPositional | undefined {
-  const keyedIndices: Array<number> = []
-  for (let index = 0; index < path.length; index++) {
-    if (isKeyedSegment(path[index])) {
-      keyedIndices.push(index)
-    }
-  }
-  if (keyedIndices.length === 0) {
-    return undefined
-  }
-
-  let currentChildren: ReadonlyArray<Node> = value
-  let parent: RegisteredContainer | undefined
-  let resolved: RegisteredContainer | RegisteredPositional | undefined
-  const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
-
-  let segmentIndex = 0
-  while (segmentIndex <= targetKeyedIndex) {
-    const segment = path[segmentIndex]!
-    if (typeof segment === 'string') {
-      segmentIndex++
-      continue
-    }
-
-    let node: Node | undefined
-    if (isKeyedSegment(segment)) {
-      node = currentChildren.find((child) => child._key === segment._key)
-    } else if (typeof segment === 'number') {
-      node = currentChildren.at(segment)
-    } else {
-      return undefined
-    }
-    if (!node) {
-      return undefined
-    }
-
-    resolved = resolveNodeEntry(containers, parent, node)
-    if (!resolved) {
-      return undefined
-    }
-
-    if (segmentIndex < targetKeyedIndex) {
-      // Walk one more level. The resolved entry must be a container
-      // (have children) for descent to continue.
-      if (!('field' in resolved)) {
+  const walk = walkNodes<RegisteredContainer>(
+    value as Array<Node>,
+    path,
+    (node, parent) => {
+      const resolved = resolveNodeEntry(containers, parent, node)
+      if (!resolved || !('field' in resolved)) {
         return undefined
       }
       const fieldValue = (node as Record<string, unknown>)[resolved.field.name]
-      if (!Array.isArray(fieldValue)) {
-        return undefined
-      }
-      parent = resolved
-      currentChildren = fieldValue as Array<Node>
-    }
-    segmentIndex++
+      return Array.isArray(fieldValue)
+        ? {
+            children: fieldValue as Array<Node>,
+            fieldName: resolved.field.name,
+            parent: resolved,
+          }
+        : undefined
+    },
+  )
+
+  if (walk.status === 'invalid') {
+    return undefined
   }
 
-  return resolved
+  // The target is the node at the last keyed segment, and every node above
+  // it must resolve as a registered container at its position.
+  const targetSegmentIndex = path.findLastIndex(isKeyedSegment)
+  const targetNodeIndex = walk.nodes.findIndex(
+    (node) => node.segmentIndex === targetSegmentIndex,
+  )
+  const target = walk.nodes[targetNodeIndex]
+
+  if (
+    !target ||
+    walk.nodes
+      .slice(0, targetNodeIndex)
+      .some((node) => node.children === undefined)
+  ) {
+    return undefined
+  }
+
+  return resolveNodeEntry(containers, target.container, target.node)
 }
 
 function resolveNodeEntry(

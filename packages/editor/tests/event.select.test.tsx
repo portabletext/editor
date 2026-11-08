@@ -1,6 +1,6 @@
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import React from 'react'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
   defineBehavior,
@@ -10,13 +10,20 @@ import {
   type BehaviorEvent,
 } from '../src/behaviors'
 import type {EditorEmittedEvent} from '../src/editor/relay'
+import {inTestChange} from '../src/engine/core/change.test-utils'
 import {move} from '../src/engine/core/move'
+import {selectOperationImplementation} from '../src/operations/operation.select'
 import {BehaviorPlugin, EventListenerPlugin} from '../src/plugins'
 import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {getFocusTextBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 import {getBlockStartPoint} from '../src/utils'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 import {
   getSelectionAfterText,
   getSelectionBeforeText,
@@ -1551,5 +1558,2516 @@ describe('event.select', () => {
       {type: 'select', at: endSelection},
       {type: 'select', at: startSelection},
     ])
+  })
+})
+
+describe('event.select with a compact path at the root', () => {
+  test('Scenario: `select` at a compact span path (indexed) keeps the existing selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {anchor: {path: [0, 0], offset: 1}, focus: {path: [0, 0], offset: 1}},
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its anchor at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 0], offset: 1},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 2},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its focus at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+        focus: {path: [0, 0], offset: 2},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: the `select` operation at a compact span path (indexed) keeps the existing selection', async () => {
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+        backward: false,
+      })
+    })
+
+    const editorEngine = editorEngineRef.current!
+    inTestChange(editorEngine, () =>
+      selectOperationImplementation({
+        snapshot: editor.getSnapshot(),
+        operation: {
+          type: 'select',
+          editor: editorEngine,
+          at: {
+            anchor: {path: [0, 0], offset: 0},
+            focus: {path: [0, 0], offset: 0},
+          },
+        },
+      }),
+    )
+
+    expect(editorEngine.snapshot.context.selection).toEqual({
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+      backward: false,
+    })
+  })
+})
+
+describe('event.select with a compact path inside a callout', () => {
+  test('Scenario: `select` at a compact span path (indexed) keeps the existing selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 'content', 0, 0], offset: 1},
+        focus: {path: [0, 'content', 0, 0], offset: 1},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 2,
+      },
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its anchor at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 'content', 0, 0], offset: 1},
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its focus at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        focus: {path: [0, 'content', 0, 0], offset: 2},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: the `select` operation at a compact span path (indexed) keeps the existing selection', async () => {
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    const editorEngine = editorEngineRef.current!
+    inTestChange(editorEngine, () =>
+      selectOperationImplementation({
+        snapshot: editor.getSnapshot(),
+        operation: {
+          type: 'select',
+          editor: editorEngine,
+          at: {
+            anchor: {path: [0, 'content', 0, 0], offset: 0},
+            focus: {path: [0, 'content', 0, 0], offset: 0},
+          },
+        },
+      }),
+    )
+
+    expect(editorEngine.snapshot.context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      backward: false,
+    })
+  })
+})
+
+describe('event.select with a compact path inside a callout inside a callout', () => {
+  test('Scenario: `select` at a compact span path (indexed) keeps the existing selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 1},
+        focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 1},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 2,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 2,
+      },
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its anchor at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 1},
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its focus at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 2},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: the `select` operation at a compact span path (indexed) keeps the existing selection', async () => {
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    const editorEngine = editorEngineRef.current!
+    inTestChange(editorEngine, () =>
+      selectOperationImplementation({
+        snapshot: editor.getSnapshot(),
+        operation: {
+          type: 'select',
+          editor: editorEngine,
+          at: {
+            anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+            focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+          },
+        },
+      }),
+    )
+
+    expect(editorEngine.snapshot.context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 1,
+      },
+      backward: false,
+    })
+  })
+})
+
+describe('event.select with a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: `select` at a compact span path (indexed) keeps the existing selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 'body', 0, 0], offset: 1},
+        focus: {path: [0, 'body', 0, 0], offset: 1},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 2,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 2,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 2,
+      },
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its anchor at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [0, 'body', 0, 0], offset: 1},
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 2,
+        },
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: `select` with only its focus at a compact span path (indexed) keeps the existing expanded selection', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'selection') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 3,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 1,
+        },
+        focus: {path: [0, 'body', 0, 0], offset: 2},
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 2,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+            },
+            backward: false,
+          },
+        },
+        {
+          type: 'selection',
+          selection: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 1,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 2,
+            },
+            backward: false,
+          },
+        },
+      ])
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: the `select` operation at a compact span path (indexed) keeps the existing selection', async () => {
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 1,
+        },
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+
+    const editorEngine = editorEngineRef.current!
+    inTestChange(editorEngine, () =>
+      selectOperationImplementation({
+        snapshot: editor.getSnapshot(),
+        operation: {
+          type: 'select',
+          editor: editorEngine,
+          at: {
+            anchor: {path: [0, 'body', 0, 0], offset: 0},
+            focus: {path: [0, 'body', 0, 0], offset: 0},
+          },
+        },
+      }),
+    )
+
+    expect(editorEngine.snapshot.context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      backward: false,
+    })
   })
 })

@@ -13,12 +13,8 @@ import {
 import {getValue} from '../../internal-utils/get-value'
 import {toKeyedPatchPath} from '../../internal-utils/operation-to-patches'
 import {safeStringify} from '../../internal-utils/safe-json'
-import {getChildFieldName} from '../../paths/get-child-field-name'
 import {serializePath} from '../../paths/serialize-path'
-import {getNode} from '../../traversal/get-node'
 import type {EditorSelection} from '../../types/editor'
-import type {KeyedSegment} from '../../types/paths'
-import {isKeyedSegment} from '../../utils/util.is-keyed-segment'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {EngineOperation} from '../interfaces/operation'
@@ -26,8 +22,6 @@ import type {Path} from '../interfaces/path'
 import type {Range} from '../interfaces/range'
 import {commonPath} from '../path/common-path'
 import {isSiblingPath} from '../path/is-sibling-path'
-import {parentPath} from '../path/parent-path'
-import {splitNodePath} from '../path/split-node-path'
 import {transformPoint} from '../point/transform-point'
 import {isBackwardRange} from '../range/is-backward-range'
 import {isRange} from '../range/is-range'
@@ -41,8 +35,13 @@ import {
 } from '../utils/modify'
 import {hasRemoteFrame} from './apply-context'
 import {getSetInverse} from './get-set-inverse'
+import type {OperationTarget} from './operation-target'
 
-export function applyOperation(editor: Editor, op: EngineOperation): void {
+export function applyOperation(
+  editor: Editor,
+  op: EngineOperation,
+  target: OperationTarget,
+): void {
   let transformSelection = false
 
   switch (op.type) {
@@ -50,16 +49,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       const {path} = op
       let {node} = op
 
-      if (!targetsStructuralChildren(editor, path)) {
+      if (target.kind === 'data') {
         // The path addresses an element of a sidecar array (e.g.
         // `span.marks` or `block.markDefs`) rather than a structural
-        // child. Apply the insert as a plain data patch on the root
-        // block so the result matches what the datastore computed.
-        // These operations only arrive from remote patches, so no
-        // inverse is needed.
-        applyOnRootBlock(editor, path, {
+        // child. Apply the insert as a plain data patch on the owning
+        // node so the result matches what the datastore computed. These
+        // operations only arrive from remote patches, so no inverse is
+        // needed.
+        applyOnNode(editor, target, {
           type: 'insert',
-          path: path.slice(1),
+          path: target.dataPath,
           position: op.position,
           // Sidecar array members aren't necessarily objects (e.g. `marks`
           // holds strings), so the node is plain JSON data here.
@@ -70,7 +69,30 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      modifyChildren(editor, parentPath(path), (children) => {
+      if (target.kind === 'node' && target.propertyPath.length > 0) {
+        throw new Error(
+          `Cannot apply an "insert" operation at path ${serializePath(path)} because the last segment is a field name.`,
+        )
+      }
+
+      const ownerNodes =
+        target.kind === 'position'
+          ? target.ownerNodes
+          : target.kind === 'node'
+            ? target.nodes.slice(0, -1)
+            : undefined
+      const siblingIndex =
+        target.kind === 'position'
+          ? target.index
+          : target.kind === 'node'
+            ? target.nodes.at(-1)!.index
+            : undefined
+
+      if (ownerNodes === undefined || siblingIndex === undefined) {
+        break
+      }
+
+      modifyChildren(editor, ownerNodes, (children) => {
         // Ensure unique keys on inserted nodes (skip during remote/undo/redo)
         if (
           !editor.applyContext.some(
@@ -86,29 +108,12 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           op.node = node
         }
 
-        const lastSegment = path[path.length - 1]!
-        let index: number
-
-        if (isKeyedSegment(lastSegment)) {
-          const siblingIndex = resolveChildIndex(
-            editor.blockIndexMap,
-            path.slice(0, -1),
-            lastSegment,
-            children,
-          )
-          if (siblingIndex === -1) {
-            throw new Error(
-              `Cannot apply an "insert" operation at path ${serializePath(path)} because the sibling was not found.`,
-            )
-          }
-          index = op.position === 'after' ? siblingIndex + 1 : siblingIndex
-        } else if (typeof lastSegment === 'number') {
-          index = op.position === 'after' ? lastSegment + 1 : lastSegment
-        } else {
-          throw new Error(
-            `Cannot apply an "insert" operation at path ${serializePath(path)} because the last segment is a field name.`,
-          )
-        }
+        const index =
+          target.kind === 'node' && op.position === 'after'
+            ? siblingIndex + 1
+            : target.kind === 'position' && op.position === 'after'
+              ? siblingIndex + 1
+              : siblingIndex
 
         if (index > children.length) {
           throw new Error(
@@ -134,12 +139,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
     }
 
     case 'insert.text': {
-      const {path, offset, text} = op
+      const {offset, text} = op
       if (text.length === 0) {
         break
       }
 
-      modifyLeaf(editor, path, (node) => {
+      if (target.kind !== 'node') {
+        break
+      }
+
+      modifyLeaf(editor, target.nodes, (node) => {
         const before = node.text.slice(0, offset)
         const after = node.text.slice(offset)
 
@@ -154,12 +163,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
     }
 
     case 'remove.text': {
-      const {path, offset, text} = op
+      const {offset, text} = op
       if (text.length === 0) {
         break
       }
 
-      modifyLeaf(editor, path, (node) => {
+      if (target.kind !== 'node') {
+        break
+      }
+
+      modifyLeaf(editor, target.nodes, (node) => {
         const before = node.text.slice(0, offset)
         const after = node.text.slice(offset + text.length)
 
@@ -180,8 +193,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         op.inverse = getSetInverse(editor, path, value)
       }
 
-      // Root-level value replacement: set editor.snapshot.context.value directly
-      if (path.length === 0) {
+      if (target.kind === 'root') {
         if (Array.isArray(value)) {
           editor.snapshot.context.value =
             value as unknown as PortableTextBlock[]
@@ -190,33 +202,30 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      // Split path into node path (up to last keyed/numeric segment)
-      // and property path (trailing string segments)
-      const {nodePath: setNodePath, propertyPath: setPropertyPath} =
-        splitNodePath(path)
+      if (target.kind === 'data') {
+        // The path addresses data inside a sidecar array (e.g.
+        // `span.marks[0]` or a `markDefs` entry). Apply the set as a plain
+        // data patch on the owning node.
+        applyOnNode(editor, target, setPatchHelper(value, target.dataPath))
 
-      if (setNodePath.length === 0) {
+        transformSelection = true
         break
       }
 
-      if (setPropertyPath.length === 0) {
-        if (!targetsStructuralChildren(editor, setNodePath)) {
-          // The path addresses an element of a sidecar array (e.g.
-          // `span.marks[0]`). Apply the set as a plain data patch on the
-          // root block; `modifyDescendant` can't reach these elements.
-          applyOnRootBlock(editor, path, setPatchHelper(value, path.slice(1)))
+      if (target.kind !== 'node') {
+        break
+      }
 
-          transformSelection = true
-          break
-        }
+      const {nodes, propertyPath} = target
 
-        // Full node replacement: replace the node at setNodePath with value
+      if (propertyPath.length === 0) {
+        // Full node replacement: replace the node at the path with value
         if (
           value !== null &&
           typeof value === 'object' &&
           !Array.isArray(value)
         ) {
-          modifyDescendant(editor, setNodePath, () => {
+          modifyDescendant(editor, nodes, () => {
             return value as Node
           })
         }
@@ -224,46 +233,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      // Check if the node path resolves to a known node
-      const setNodeEntry = getNode(editor.snapshot, setNodePath)
-
-      if (setNodeEntry) {
-        // Node found: use modifyDescendant
-        if (setPropertyPath.length === 1) {
-          const propertyName = setPropertyPath[0]!
-          modifyDescendant(editor, setNodePath, (node) => {
-            return {...node, [propertyName]: value} as typeof node
-          })
-        } else {
-          // Multiple property segments: deep set on the resolved node
-          modifyDescendant(editor, setNodePath, (node) => {
-            return deepSet(node, setPropertyPath, value)
-          })
-        }
+      if (propertyPath.length === 1) {
+        const propertyName = propertyPath[0]!
+        modifyDescendant(editor, nodes, (node) => {
+          return {...node, [propertyName]: value} as typeof node
+        })
       } else {
-        // Node not found (e.g., markDefs path): apply on the root block
-        const blockSegment = findBlockSegment(path)
-        if (!blockSegment) {
-          break
-        }
-
-        const blockIndex = resolveBlockIndex(editor, blockSegment)
-        if (blockIndex === -1) {
-          break
-        }
-
-        const block = editor.snapshot.context.value[blockIndex]
-        if (!block) {
-          break
-        }
-
-        const updatedBlock = applyAll(block, [
-          setPatchHelper(value, path.slice(1)),
-        ])
-
-        const newChildren = editor.snapshot.context.value.slice()
-        newChildren[blockIndex] = updatedBlock
-        editor.snapshot.context.value = newChildren
+        // Multiple property segments: deep set on the resolved node
+        modifyDescendant(editor, nodes, (node) => {
+          return deepSet(node, propertyPath, value)
+        })
       }
 
       transformSelection = true
@@ -274,7 +253,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       const {path} = op
 
       // Root-level unset: remove all children
-      if (path.length === 0) {
+      if (target.kind === 'root') {
         if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
           op.inverse = {
             type: 'set',
@@ -287,38 +266,45 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      // Node removal: last segment is a keyed or numeric reference to an
-      // array member. Check this BEFORE splitting into node/property paths
-      // since node removal doesn't need that split.
-      const lastSegment = path[path.length - 1]
-      if (
-        (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') &&
-        !targetsStructuralChildren(editor, path)
-      ) {
+      if (target.kind === 'data') {
         // The path addresses an element of a sidecar array (e.g.
         // `span.marks[0]` or `block.markDefs[_key==...]`) rather than a
         // structural child. Removing it never affects the selection, so
         // apply it as a plain data patch on the root block.
         if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
-          const arrayValue = getValue(
-            editor.snapshot.context.value,
-            path.slice(0, -1),
-          )
-          if (Array.isArray(arrayValue)) {
-            op.inverse = {
-              type: 'set',
-              path: path.slice(0, -1),
-              value: arrayValue,
+          if (typeof path[path.length - 1] === 'string') {
+            const previousValue = getValue(editor.snapshot.context.value, path)
+            if (previousValue === undefined) {
+              break
+            }
+            op.inverse = {type: 'set', path, value: previousValue}
+          } else {
+            const arrayValue = getValue(
+              editor.snapshot.context.value,
+              path.slice(0, -1),
+            )
+            if (Array.isArray(arrayValue)) {
+              op.inverse = {
+                type: 'set',
+                path: path.slice(0, -1),
+                value: arrayValue,
+              }
             }
           }
         }
 
-        applyOnRootBlock(editor, path, unsetPatchHelper(path.slice(1)))
+        applyOnNode(editor, target, unsetPatchHelper(target.dataPath))
 
         transformSelection = true
         break
       }
-      if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
+
+      if (target.kind !== 'node') {
+        break
+      }
+
+      if (target.propertyPath.length === 0) {
+        const removedNode = target.nodes.at(-1)!
         // Transform the selection BEFORE removing the node from the tree.
         // `findNearestSpans` anchors on the removed node's position, so the
         // node must still be in the tree (and in `blockIndexMap`) to resolve
@@ -388,21 +374,10 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
             : null
         }
 
-        modifyChildren(editor, parentPath(path), (children) => {
-          let index: number
+        modifyChildren(editor, target.nodes.slice(0, -1), (children) => {
+          const index = removedNode.index
 
-          if (isKeyedSegment(lastSegment)) {
-            index = resolveChildIndex(
-              editor.blockIndexMap,
-              path.slice(0, -1),
-              lastSegment,
-              children,
-            )
-          } else {
-            index = lastSegment
-          }
-
-          if (index === -1 || index >= children.length) {
+          if (index >= children.length) {
             throw new Error(
               `Cannot apply an "unset" (node removal) operation at path ${serializePath(path)} because the node was not found.`,
             )
@@ -433,13 +408,8 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         break
       }
 
-      // Property removal: split path into node path and property path
-      const {nodePath: unsetNodePath, propertyPath: unsetPropertyPath} =
-        splitNodePath(path)
-
-      if (unsetPropertyPath.length === 0 || unsetNodePath.length === 0) {
-        break
-      }
+      // Property removal
+      const {nodes, propertyPath: unsetPropertyPath} = target
 
       if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
         const previousValue = getValue(editor.snapshot.context.value, path)
@@ -449,46 +419,18 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
         op.inverse = {type: 'set', path, value: previousValue}
       }
 
-      // Check if the node path resolves to a known node
-      const unsetNodeEntry = getNode(editor.snapshot, unsetNodePath)
-
-      if (unsetNodeEntry) {
-        // Node found: use modifyDescendant
-        if (unsetPropertyPath.length === 1) {
-          const propertyName = unsetPropertyPath[0]!
-          modifyDescendant(editor, unsetNodePath, (node) => {
-            const newNode = {...node}
-            delete (newNode as Record<string, unknown>)[propertyName]
-            return newNode
-          })
-        } else {
-          // Multiple property segments: deep unset on the resolved node
-          modifyDescendant(editor, unsetNodePath, (node) => {
-            return deepUnset(node, unsetPropertyPath)
-          })
-        }
+      if (unsetPropertyPath.length === 1) {
+        const propertyName = unsetPropertyPath[0]!
+        modifyDescendant(editor, nodes, (node) => {
+          const newNode = {...node}
+          delete (newNode as Record<string, unknown>)[propertyName]
+          return newNode
+        })
       } else {
-        // Node not found (e.g., markDefs path): apply on the root block
-        const blockSegment = findBlockSegment(path)
-        if (!blockSegment) {
-          break
-        }
-
-        const blockIndex = resolveBlockIndex(editor, blockSegment)
-        if (blockIndex === -1) {
-          break
-        }
-
-        const block = editor.snapshot.context.value[blockIndex]
-        if (!block) {
-          break
-        }
-
-        const updatedBlock = applyAll(block, [unsetPatchHelper(path.slice(1))])
-
-        const newChildren = editor.snapshot.context.value.slice()
-        newChildren[blockIndex] = updatedBlock
-        editor.snapshot.context.value = newChildren
+        // Multiple property segments: deep unset on the resolved node
+        modifyDescendant(editor, nodes, (node) => {
+          return deepUnset(node, unsetPropertyPath)
+        })
       }
 
       transformSelection = true
@@ -580,67 +522,16 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
 }
 
 /**
- * Whether the last (keyed or numeric) segment of `path` addresses a member
- * of its owning node's structural child array.
- *
- * Remote patches can address elements of sidecar arrays — `span.marks`
- * (array of strings) and `block.markDefs` — whose paths also end in a keyed
- * or numeric segment. Those must not be routed through structural child
- * insertion/removal: the owning node's child field is a different array (or
- * doesn't exist at all), so the operation would corrupt the tree or throw.
+ * Apply a patch as plain data on the node a `data` target ends at, the way
+ * the datastore applies it. Used for operations addressing sidecar arrays,
+ * which have no structural children to insert into or remove from.
  */
-function targetsStructuralChildren(editor: Editor, path: Path): boolean {
-  if (path.length < 2) {
-    return true
-  }
-
-  const fieldSegment = path[path.length - 2]
-  if (typeof fieldSegment !== 'string') {
-    // Compact paths ([{_key}, {_key}] or numeric) always descend
-    // structurally.
-    return true
-  }
-
-  const structuralFieldName = getChildFieldName(
-    {
-      schema: editor.snapshot.context.schema,
-      containers: editor.snapshot.context.containers,
-      value: editor.snapshot.context.value,
-    },
-    path.slice(0, -2),
-  )
-
-  return structuralFieldName === fieldSegment
-}
-
-/**
- * Apply a patch on the root block of `path` as plain data (no structural
- * traversal), mirroring how the datastore applies it. Used for operations
- * addressing sidecar arrays that `modifyChildren`/`modifyDescendant` can't
- * reach. The patch's own `path` must be relative to the block (the leading
- * block segment stripped).
- */
-function applyOnRootBlock(editor: Editor, path: Path, patch: Patch): void {
-  const blockSegment = findBlockSegment(path)
-  if (!blockSegment) {
-    return
-  }
-
-  const blockIndex = resolveBlockIndex(editor, blockSegment)
-  if (blockIndex === -1) {
-    return
-  }
-
-  const block = editor.snapshot.context.value[blockIndex]
-  if (!block) {
-    return
-  }
-
-  const updatedBlock = applyAll(block, [patch])
-
-  const newValue = editor.snapshot.context.value.slice()
-  newValue[blockIndex] = updatedBlock
-  editor.snapshot.context.value = newValue
+function applyOnNode(
+  editor: Editor,
+  target: Extract<OperationTarget, {kind: 'data'}>,
+  patch: Patch,
+): void {
+  modifyDescendant(editor, target.nodes, (node) => applyAll(node, [patch]))
 }
 
 /**
@@ -653,61 +544,6 @@ function replaceLastSegment(path: Path, segment: Path[number]): Path {
   const result = [...path]
   result[result.length - 1] = segment
   return result
-}
-
-/**
- * Resolve a child index by keyed segment via `blockIndexMap`, falling
- * back to a linear scan when the map misses or disagrees with the tree
- * (e.g. unkeyed transient nodes, or paths outside registered container
- * fields such as `markDefs`).
- */
-/**
- * Raw-array sibling of `resolveChildEntryIndex` (`traversal/`): this
- * and `resolveBlockIndex` run mid-`modifyChildren` against plain node
- * arrays, where no `{node, path}` entries exist to share the helper.
- */
-function resolveChildIndex(
-  blockIndexMap: ReadonlyMap<string, number>,
-  parentSegments: Path,
-  segment: KeyedSegment,
-  children: Array<Node>,
-): number {
-  const index = blockIndexMap.get(serializePath([...parentSegments, segment]))
-  if (index !== undefined && children[index]?._key === segment._key) {
-    return index
-  }
-  return children.findIndex((child) => child._key === segment._key)
-}
-
-/**
- * Extract the root block reference from the first segment of a path:
- * keyed, or a numeric index for a node normalization has not keyed yet.
- */
-function findBlockSegment(path: Path): KeyedSegment | number | undefined {
-  const firstSegment = path[0]
-  if (isKeyedSegment(firstSegment) || typeof firstSegment === 'number') {
-    return firstSegment
-  }
-  return undefined
-}
-
-/**
- * Resolve a root block's index via `blockIndexMap`, falling back to a
- * linear scan when the map misses or disagrees with the tree.
- */
-function resolveBlockIndex(
-  editor: Editor,
-  segment: KeyedSegment | number,
-): number {
-  const value = editor.snapshot.context.value
-  if (typeof segment === 'number') {
-    return segment < value.length ? segment : -1
-  }
-  const index = editor.blockIndexMap.get(serializePath([segment]))
-  if (index !== undefined && value[index]?._key === segment._key) {
-    return index
-  }
-  return value.findIndex((block) => block._key === segment._key)
 }
 
 /**

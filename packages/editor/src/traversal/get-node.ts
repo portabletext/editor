@@ -1,19 +1,17 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {nodeSegment} from '../paths/node-segment'
-import {serializePath} from '../paths/serialize-path'
-import type {RegisteredContainer} from '../schema/resolve-containers'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {hasNodeSegmentFrom, walkPath} from './walk-path'
 
 /**
  * Get the node at a given path.
  *
- * The path can be either keyed (KeyedSegment + field name strings) or
- * indexed (numbers). Keyed segments are resolved by matching `_key`,
- * field name strings name a structural descent into the previous
- * node's children, and numbers are resolved by index.
+ * Node segments can be keyed (`{_key}`, resolved by matching `_key`) or
+ * indexed (numbers, resolved by index). Either way, a field name string
+ * names the structural descent between every two node segments:
+ * `[{_key:'b1'}, 'children', {_key:'s1'}]` and `[0, 'children', 0]`
+ * both address the first block's span. A compact path that leaves the
+ * field out, such as `[0, 0]`, addresses nothing and returns `undefined`.
  *
  * The returned `path` always identifies the returned node: segments
  * are keyed wherever the node has a usable `_key` (numeric indices are
@@ -61,118 +59,21 @@ export function resolveNode(
   snapshot: TraversalSnapshot,
   path: Path,
 ): ResolveNodeResult {
-  if (path.length === 0) {
+  const walk = walkPath(snapshot, path)
+
+  if (walk.status !== 'found') {
     return {status: 'missing'}
   }
 
-  const {context, blockIndexMap} = snapshot
-  let currentChildren: Array<Node> = context.value
-  let currentFieldName: string | undefined
-  let node: Node | undefined
-  let currentParent: RegisteredContainer | undefined
-  const resolvedPath: Path = []
-
-  for (let i = 0; i < path.length; i++) {
-    const segment = path[i]
-
-    if (typeof segment === 'string') {
-      // A string segment names a structural descent. If it matches the
-      // field name produced by the previous node's `getNodeChildren`,
-      // it's part of the value-tree descent — push it and continue.
-      // Otherwise the string names a sidecar field (markDefs on a text
-      // block, a primitive field on an object). If the input keeps
-      // digging past it with more keyed/numeric segments, the caller
-      // wanted a node inside the sidecar and `getNode` can't reach it
-      // (use `getAnnotation` for annotations); report unreachable.
-      // Otherwise the rest is just trailing field names — let the loop
-      // exit and the post-loop strip remove them.
-      if (currentFieldName !== undefined && segment === currentFieldName) {
-        resolvedPath.push(segment)
-        continue
-      }
-      for (let j = i + 1; j < path.length; j++) {
-        const s = path[j]
-        if (isKeyedSegment(s) || typeof s === 'number') {
-          return {status: 'unreachable'}
-        }
-      }
-      break
-    }
-
-    if (isKeyedSegment(segment)) {
-      resolvedPath.push(segment)
-      const index = blockIndexMap.get(serializePath(resolvedPath))
-      if (
-        index !== undefined &&
-        currentChildren[index]?._key === segment._key
-      ) {
-        node = currentChildren[index]
-      } else {
-        // The map can miss (unkeyed transient nodes, e.g. `{_type:'table'}`
-        // inserted by a remote patch before normalize mints a key) or
-        // disagree with the traversed value (snapshots that pair the live
-        // map with a pre-apply value, e.g. `textPatch`). Fall back to a
-        // linear scan in both cases.
-        const scanIndex = currentChildren.findIndex(
-          (child) => child._key === segment._key,
-        )
-        node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
-        if (node) {
-          resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
-        }
-      }
-    } else if (typeof segment === 'number') {
-      node = currentChildren.at(segment)
-      if (node) {
-        resolvedPath.push(nodeSegment(node, segment))
-      }
-    } else {
-      return {status: 'missing'}
-    }
-
-    if (!node) {
-      return {status: 'missing'}
-    }
-
-    let hasMoreSegments = false
-    for (let j = i + 1; j < path.length; j++) {
-      const s = path[j]
-      if (isKeyedSegment(s) || typeof s === 'number') {
-        hasMoreSegments = true
-        break
-      }
-    }
-
-    if (hasMoreSegments) {
-      const next = getNodeChildren(context, node, currentParent)
-
-      if (!next) {
-        return {status: 'missing'}
-      }
-
-      currentChildren = next.children
-      currentFieldName = next.fieldName
-      currentParent = next.parent
-    } else {
-      currentFieldName = undefined
-    }
-  }
+  const node = walk.nodes.at(-1)
 
   if (!node) {
     return {status: 'missing'}
   }
 
-  // Strip trailing field-name segments. The walker may have pushed
-  // matching field names during structural descent; if the deepest
-  // reached keyed segment was the last keyed segment in the input,
-  // any further field names that followed are part of the input but
-  // don't identify the returned node.
-  while (
-    resolvedPath.length > 0 &&
-    typeof resolvedPath[resolvedPath.length - 1] === 'string'
-  ) {
-    resolvedPath.pop()
+  if (hasNodeSegmentFrom(walk.rest, 0)) {
+    return node.children ? {status: 'unreachable'} : {status: 'missing'}
   }
 
-  return {status: 'found', entry: {node, path: resolvedPath}}
+  return {status: 'found', entry: {node: node.node, path: node.path}}
 }

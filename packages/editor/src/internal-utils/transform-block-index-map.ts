@@ -8,6 +8,7 @@ import {splitNodePath} from '../engine/path/split-node-path'
 import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/container-types'
 import {getNodeChildren} from '../traversal/get-children'
+import {namedArrayField, walkedNode, walkNodes} from '../traversal/walk-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {BlockIndexMap} from './block-index-map'
 import {buildIndexMaps, collectDescendantIndexes} from './build-index-maps'
@@ -206,40 +207,9 @@ function resolveChildIndexInValue(
   value: ReadonlyArray<Node>,
   path: Path,
 ): number {
-  let currentChildren: ReadonlyArray<Node> = value
-  for (let i = 0; i < path.length - 1; i++) {
-    const segment = path[i]!
-    if (typeof segment === 'string') {
-      continue
-    }
-    let node: Node | undefined
-    if (isKeyedSegment(segment)) {
-      node = currentChildren.find((c) => c._key === segment._key)
-    } else if (typeof segment === 'number') {
-      node = currentChildren.at(segment)
-    }
-    if (!node) {
-      return -1
-    }
-    // Descend into the next named field (the following path segment is a string)
-    const next = path[i + 1]
-    if (typeof next === 'string') {
-      const field = (node as Record<string, unknown>)[next]
-      if (!Array.isArray(field)) {
-        return -1
-      }
-      currentChildren = field as ReadonlyArray<Node>
-      i++
-    }
-  }
-  const last = path[path.length - 1]!
-  if (typeof last === 'number') {
-    return last
-  }
-  if (isKeyedSegment(last)) {
-    return currentChildren.findIndex((c) => c._key === last._key)
-  }
-  return -1
+  const walk = walkNodes(value as Array<Node>, path, namedArrayField)
+  const node = walk.status === 'found' ? walkedNode(walk) : undefined
+  return node?.index ?? -1
 }
 
 /**
@@ -509,42 +479,19 @@ function hasKeyedEntries(value: unknown): boolean {
  * doesn't resolve, or if a keyed node has no `_key`.
  */
 function toKeyedPath(value: ReadonlyArray<Node>, path: Path): Path | undefined {
-  const result: Array<Path[number]> = []
-  let currentChildren: ReadonlyArray<Node> = value
-  let currentNode: Node | undefined
-  for (let i = 0; i < path.length; i++) {
-    const segment = path[i]!
-    if (typeof segment === 'string') {
-      result.push(segment)
-      if (!currentNode) {
-        return undefined
-      }
-      const field = (currentNode as Record<string, unknown>)[segment]
-      if (!Array.isArray(field)) {
-        return undefined
-      }
-      currentChildren = field as ReadonlyArray<Node>
-      continue
-    }
-    if (typeof segment === 'number') {
-      currentNode = currentChildren.at(segment)
-      if (!currentNode || currentNode._key === undefined) {
-        return undefined
-      }
-      result.push({_key: currentNode._key})
-      continue
-    }
-    if (isKeyedSegment(segment)) {
-      currentNode = currentChildren.find((c) => c._key === segment._key)
-      if (!currentNode) {
-        return undefined
-      }
-      result.push(segment)
-      continue
-    }
+  const walk = walkNodes(value as Array<Node>, path, namedArrayField)
+  if (walk.status !== 'found' || !walkedNode(walk)) {
     return undefined
   }
-  return result
+  const {nodes} = walk
+  if (nodes.some((node) => node.node._key === undefined)) {
+    return undefined
+  }
+  return nodes.flatMap((node, index) =>
+    index === 0
+      ? [{_key: node.node._key}]
+      : [nodes[index - 1]!.children!.fieldName, {_key: node.node._key}],
+  )
 }
 
 function handleKeyChange(
@@ -575,31 +522,6 @@ function resolveNodeAtPath(
   value: ReadonlyArray<Node>,
   path: Path,
 ): Node | undefined {
-  let currentChildren: ReadonlyArray<Node> = value
-  let currentNode: Node | undefined
-  for (let i = 0; i < path.length; i++) {
-    const segment = path[i]!
-    if (typeof segment === 'string') {
-      if (!currentNode) {
-        return undefined
-      }
-      const field = (currentNode as Record<string, unknown>)[segment]
-      if (!Array.isArray(field)) {
-        return undefined
-      }
-      currentChildren = field as ReadonlyArray<Node>
-      continue
-    }
-    if (isKeyedSegment(segment)) {
-      currentNode = currentChildren.find((c) => c._key === segment._key)
-    } else if (typeof segment === 'number') {
-      currentNode = currentChildren.at(segment)
-    } else {
-      return undefined
-    }
-    if (!currentNode) {
-      return undefined
-    }
-  }
-  return currentNode
+  const walk = walkNodes(value as Array<Node>, path, namedArrayField)
+  return walk.status === 'found' ? walkedNode(walk)?.node : undefined
 }

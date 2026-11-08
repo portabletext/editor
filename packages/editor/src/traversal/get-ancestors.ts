@@ -1,12 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
-import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {nodeSegment} from '../paths/node-segment'
-import {serializePath} from '../paths/serialize-path'
-import type {RegisteredContainer} from '../schema/resolve-containers'
-import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {ancestorNodes, walkPath} from './walk-path'
 
 /**
  * Get all ancestors of the node at a given path, from nearest to furthest.
@@ -19,8 +14,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * [{_key:'t1'}]
  * ```
  *
- * Walks from root to the target in a single pass collecting each ancestor
- * as it goes.
+ * The ancestors of a missing target are the nodes walked before it.
  *
  * Every ancestor is a `PortableTextBlock`: only text blocks and object
  * nodes can contain children.
@@ -31,99 +25,15 @@ export function getAncestors(
   snapshot: TraversalSnapshot,
   path: Path,
 ): Array<{node: PortableTextBlock; path: Path}> {
-  // Collect node-segment indices (keyed or numeric) to know where each
-  // ancestor's path ends.
-  const keyedIndices: Array<number> = []
-  for (let i = 0; i < path.length; i++) {
-    if (isKeyedSegment(path[i]) || typeof path[i] === 'number') {
-      keyedIndices.push(i)
-    }
-  }
+  const ancestors = ancestorNodes(walkPath(snapshot, path), path)
 
-  // Need at least 2 node segments to have an ancestor (the last is self).
-  if (keyedIndices.length <= 1) {
+  if (!ancestors || ancestors.some((node) => node.children === undefined)) {
     return []
   }
 
-  const {context, blockIndexMap} = snapshot
-  let currentChildren: Array<Node> = context.value
-  let currentParent: RegisteredContainer | undefined
-
-  const ancestorsByDepth: Array<{node: PortableTextBlock; path: Path}> = []
-  const resolvedPath: Path = []
-
-  // Descend once. We walk only as far as the second-to-last keyed segment;
-  // the last keyed segment is the target itself, which is not an ancestor.
-  const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
-
-  let segmentIndex = 0
-  while (segmentIndex < targetKeyedIndex) {
-    const segment = path[segmentIndex]!
-
-    if (typeof segment === 'string') {
-      resolvedPath.push(segment)
-      segmentIndex++
-      continue
-    }
-
-    let node: Node | undefined
-    if (isKeyedSegment(segment)) {
-      resolvedPath.push(segment)
-      const index = blockIndexMap.get(serializePath(resolvedPath))
-      if (
-        index !== undefined &&
-        currentChildren[index]?._key === segment._key
-      ) {
-        node = currentChildren[index]
-      } else {
-        // The map can miss (unkeyed transient nodes, e.g. `{_type:'table'}`
-        // inserted by a remote patch before normalize mints a key) or
-        // disagree with the traversed value (snapshots that pair the live
-        // map with a pre-apply value, e.g. `textPatch`). Fall back to a
-        // linear scan in both cases.
-        const scanIndex = currentChildren.findIndex(
-          (child) => child._key === segment._key,
-        )
-        node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
-        if (node) {
-          resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
-        }
-      }
-    } else if (typeof segment === 'number') {
-      node = currentChildren.at(segment)
-      if (node) {
-        resolvedPath.push(nodeSegment(node, segment))
-      }
-    } else {
-      return []
-    }
-
-    if (!node) {
-      return []
-    }
-
-    // Descend with positional awareness. `getNodeChildren` checks the
-    // current parent's `of` for a positional override before falling
-    // back to the top-level `containers` map - so same-`_type`
-    // registered under different parents with different `field`
-    // resolves to the right entry at this position.
-    const next = getNodeChildren(context, node, currentParent)
-    if (!next) {
-      return []
-    }
-
-    // An ancestor has children, so it is never a span. The narrowing
-    // from `Node` to `PortableTextBlock` (text block | object) is safe.
-    ancestorsByDepth.push({
-      node: node as PortableTextBlock,
-      path: resolvedPath.slice(),
-    })
-
-    currentChildren = next.children
-    currentParent = next.parent
-    segmentIndex++
-  }
-
-  // Return nearest-first (reverse of document order at the call site).
-  return ancestorsByDepth.reverse()
+  // An ancestor has children, so it is never a span. The narrowing from
+  // `Node` to `PortableTextBlock` (text block | object) is safe.
+  return ancestors
+    .map((node) => ({node: node.node as PortableTextBlock, path: node.path}))
+    .reverse()
 }

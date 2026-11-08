@@ -171,13 +171,11 @@ function diffMatchPatch(
       {allowExceedingIndices: true},
     )
 
-    editor.apply({
+    return editor.apply({
       type: 'set',
       path: patch.path,
       value: newValue,
     })
-
-    return true
   }
 
   const spanPath = patch.path.slice(0, -1)
@@ -196,29 +194,32 @@ function diffMatchPatch(
   })
   const diff = cleanupEfficiency(makeDiff(spanEntry.node.text, newValue), 5)
 
+  let changed = false
   let offset = 0
   for (const [op, text] of diff) {
     if (op === DIFF_INSERT) {
-      editor.apply({
-        type: 'insert.text',
-        path: spanEntry.path,
-        offset,
-        text,
-      })
+      changed =
+        editor.apply({
+          type: 'insert.text',
+          path: spanEntry.path,
+          offset,
+          text,
+        }) || changed
       offset += text.length
     } else if (op === DIFF_DELETE) {
-      editor.apply({
-        type: 'remove.text',
-        path: spanEntry.path,
-        offset,
-        text,
-      })
+      changed =
+        editor.apply({
+          type: 'remove.text',
+          path: spanEntry.path,
+          offset,
+          text,
+        }) || changed
     } else if (op === DIFF_EQUAL) {
       offset += text.length
     }
   }
 
-  return true
+  return changed
 }
 
 function insertPatch(
@@ -249,15 +250,17 @@ function insertPatch(
       ))
 
   const arrayFieldPath = patch.path.slice(0, -1)
+  let changed = false
 
   for (let index = 0; index < items.length; index++) {
     if (index === 0) {
-      editor.apply({
-        type: 'insert',
-        path: patch.path,
-        node: items[index] as Node,
-        position: position === 'after' ? 'after' : 'before',
-      })
+      changed =
+        editor.apply({
+          type: 'insert',
+          path: patch.path,
+          node: items[index] as Node,
+          position: position === 'after' ? 'after' : 'before',
+        }) || changed
     } else {
       const previousItem = items[index - 1]! as Record<string, unknown>
       const previousKey =
@@ -266,28 +269,30 @@ function insertPatch(
           : undefined
 
       if (previousKey !== undefined) {
-        editor.apply({
-          type: 'insert',
-          path: [...arrayFieldPath, {_key: previousKey}],
-          node: items[index] as Node,
-          position: 'after',
-        })
+        changed =
+          editor.apply({
+            type: 'insert',
+            path: [...arrayFieldPath, {_key: previousKey}],
+            node: items[index] as Node,
+            position: 'after',
+          }) || changed
       } else {
         const lastSegment = patch.path.at(-1)!
         const baseIndex = typeof lastSegment === 'number' ? lastSegment : 0
         const offset = position === 'after' ? 1 : 0
         const numericIndex = baseIndex + offset + index
-        editor.apply({
-          type: 'insert',
-          path: [...arrayFieldPath, numericIndex],
-          node: items[index] as Node,
-          position: 'before',
-        })
+        changed =
+          editor.apply({
+            type: 'insert',
+            path: [...arrayFieldPath, numericIndex],
+            node: items[index] as Node,
+            position: 'before',
+          }) || changed
       }
     }
   }
 
-  if (editorWasEmptyBefore && addressedByRootIndex) {
+  if (changed && editorWasEmptyBefore && addressedByRootIndex) {
     const removeIdx = position === 'before' ? items.length : 0
     const removeNode = editor.snapshot.context.value[removeIdx]
     if (removeNode) {
@@ -298,7 +303,7 @@ function insertPatch(
     }
   }
 
-  return true
+  return changed
 }
 
 function setPatch(
@@ -316,13 +321,11 @@ function setPatch(
     }
   }
 
-  editor.apply({
+  return editor.apply({
     type: 'set',
     path: patch.path,
     value: patch.value,
   })
-
-  return true
 }
 
 function unsetPatch(editor: PortableTextEditorEngine, patch: UnsetPatch) {
@@ -330,7 +333,5 @@ function unsetPatch(editor: PortableTextEditorEngine, patch: UnsetPatch) {
     applyDeselect(editor)
   }
 
-  editor.apply({type: 'unset', path: patch.path})
-
-  return true
+  return editor.apply({type: 'unset', path: patch.path})
 }

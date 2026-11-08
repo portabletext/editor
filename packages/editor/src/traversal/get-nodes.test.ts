@@ -5,6 +5,11 @@ import {
   isTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../../test-utils/text-block-depths'
 import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getNodeDescendants, getNodes} from './get-nodes'
@@ -820,5 +825,422 @@ describe(getNodes.name, () => {
         },
       ])
     })
+  })
+})
+
+const depthsSchema = compileSchema(textBlockDepthsSchemaDefinition)
+const depthsContainers = resolveTestbedContainers(
+  depthsSchema,
+  textBlockDepthsContainers,
+)
+
+describe(`${getNodes.name} with a compact path to a text block at the root`, () => {
+  test('a compact span path (indexed) as `from` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [0, 0],
+          to: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact span path (indexed) as `to` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [{_key: 'b0'}, 'children', {_key: 's0'}],
+          to: [0, 0],
+        }),
+      ),
+    ).toEqual([])
+  })
+})
+
+describe(`${getNodes.name} with a compact path to a text block inside a callout`, () => {
+  test('a compact span path (indexed) as `from` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [0, 'content', 0, 0],
+          to: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact span path (indexed) as `to` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          to: [0, 'content', 0, 0],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact block path (indexed) as `at` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(Array.from(getNodes(snapshot, {at: [0, 0]}))).toEqual([])
+  })
+})
+
+describe(`${getNodes.name} with a compact path to a text block inside a callout inside a callout`, () => {
+  test('a compact span path (indexed) as `from` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                      {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [0, 'content', 0, 'content', 0, 0],
+          to: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact span path (indexed) as `to` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                      {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          to: [0, 'content', 0, 'content', 0, 0],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact block path (indexed) as `at` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                      {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(Array.from(getNodes(snapshot, {at: [0, 0, 0]}))).toEqual([])
+  })
+})
+
+describe(`${getNodes.name} with a compact path to a text block inside a field with its own sub-schema`, () => {
+  test('a compact span path (indexed) as `from` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [0, 'body', 0, 0],
+          to: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact span path (indexed) as `to` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(
+      Array.from(
+        getNodes(snapshot, {
+          from: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          to: [0, 'body', 0, 0],
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  test('a compact block path (indexed) as `at` yields nothing', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+
+    expect(Array.from(getNodes(snapshot, {at: [0, 0]}))).toEqual([])
   })
 })

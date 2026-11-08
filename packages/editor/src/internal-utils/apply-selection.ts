@@ -11,6 +11,7 @@ import {getChildren} from '../traversal/get-children'
 import {getLeaf} from '../traversal/get-leaf'
 import {getNode} from '../traversal/get-node'
 import {isBlock} from '../traversal/is-block'
+import {walkedNode, walkPath} from '../traversal/walk-path'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
@@ -74,6 +75,28 @@ export function resolveSelection(
   }
 }
 
+export function selectionHasInvalidPath(
+  editor: ResolveSelectionEditor,
+  selection: EditorSelection,
+): boolean {
+  if (!selection) {
+    return false
+  }
+
+  const snapshot = {
+    context: {
+      schema: editor.snapshot.context.schema,
+      containers: editor.snapshot.context.containers,
+      value: editor.snapshot.context.value,
+    },
+    blockIndexMap: editor.snapshot.blockIndexMap,
+  }
+
+  return [selection.anchor, selection.focus].some(
+    (point) => walkPath(snapshot, point.path).status === 'invalid',
+  )
+}
+
 function resolveSelectionPoint(
   editor: ResolveSelectionEditor,
   selectionPoint: {path: Path; offset: number},
@@ -93,7 +116,13 @@ function resolveSelectionPoint(
     blockIndexMap: editor.snapshot.blockIndexMap,
   }
 
-  const entry = getNode(snapshot, selectionPoint.path)
+  const walk = walkPath(snapshot, selectionPoint.path)
+
+  if (walk.status === 'invalid') {
+    return undefined
+  }
+
+  const entry = walkedNode(walk)
 
   if (entry) {
     const children = getChildren(snapshot, entry.path)

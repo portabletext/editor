@@ -1,9 +1,14 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
+import {defineSchema, type EditorEmittedEvent} from '../src'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 
 describe('event.unset', () => {
   test('Scenario: unset a property on a block', async () => {
@@ -517,5 +522,486 @@ describe('event.unset', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(initialValue)
     })
+  })
+})
+
+describe('event.unset with a compact path at the root', () => {
+  test('Scenario: `unset` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'unset', at: [0, 0]})
+    editor.send({type: 'unset', at: [{_key: 'b1'}]})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'unset',
+              path: [{_key: 'b1'}],
+              inverse: {
+                type: 'insert',
+                path: [{_key: 'b0'}],
+                node: {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                position: 'after',
+              },
+            },
+          ],
+          patches: [{origin: 'local', type: 'unset', path: [{_key: 'b1'}]}],
+        },
+        {
+          type: 'patch',
+          patch: {origin: 'local', type: 'unset', path: [{_key: 'b1'}]},
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.unset with a compact path inside a callout', () => {
+  test('Scenario: `unset` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'unset', at: [0, 'content', 0, 0]})
+    editor.send({type: 'unset', at: [{_key: 'c0'}, 'content', {_key: 'b1'}]})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'unset',
+              path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+              inverse: {
+                type: 'insert',
+                path: [{_key: 'c0'}, 'content', {_key: 'b0'}],
+                node: {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                position: 'after',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'unset',
+              path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'unset',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.unset with a compact path inside a callout inside a callout', () => {
+  test('Scenario: `unset` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'unset', at: [0, 'content', 0, 'content', 0, 0]})
+    editor.send({
+      type: 'unset',
+      at: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content', {_key: 'b1'}],
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'unset',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+              ],
+              inverse: {
+                type: 'insert',
+                path: [
+                  {_key: 'c0'},
+                  'content',
+                  {_key: 'c1'},
+                  'content',
+                  {_key: 'b0'},
+                ],
+                node: {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                position: 'after',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'unset',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+              ],
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'unset',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.unset with a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: `unset` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'unset', at: [0, 'body', 0, 0]})
+    editor.send({type: 'unset', at: [{_key: 'n0'}, 'body', {_key: 'b1'}]})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'unset',
+              path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+              inverse: {
+                type: 'insert',
+                path: [{_key: 'n0'}, 'body', {_key: 'b0'}],
+                node: {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                position: 'after',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'unset',
+              path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'unset',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
   })
 })

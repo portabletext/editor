@@ -9,6 +9,7 @@ import type {
   SpanConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
+import {walkNodes} from '../traversal/walk-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {ChildArrayField, ResolvedContainers} from './container-types'
 import {
@@ -53,9 +54,10 @@ function schemaDeclarationFieldsAt(
  * the resolved rich {@link ContainerConfig} at each step so positional
  * registrations (nested only in a parent's `of`) are recognized.
  *
- * Returns the immediate parent's rich config and its path, or
+ * Returns the immediate parent's rich config and its path,
  * `undefined` when the chain is broken (an ancestor is unregistered
- * or the parent is the editor root).
+ * or the parent is the editor root), or `'invalid'` when the path
+ * cannot address anything.
  */
 function richDescentToParent(
   input: RichResolutionInput,
@@ -66,87 +68,81 @@ function richDescentToParent(
       parentPath: Path
       ancestors: Array<{type: string; field: string}>
     }
+  | 'invalid'
   | undefined {
-  // Collect keyed-segment indices.
-  const keyedIndices: Array<number> = []
-  for (let index = 0; index < path.length; index++) {
-    if (isKeyedSegment(path[index])) {
-      keyedIndices.push(index)
-    }
+  const walk = walkNodes<ContainerConfig>(
+    input.value as Array<Node>,
+    path,
+    (node, parent) => {
+      const resolved = resolveRichEntry(input.containers, parent, node)
+      if (!resolved || !('container' in resolved)) {
+        return undefined
+      }
+      const fieldValue = (node as Record<string, unknown>)[resolved.field.name]
+      return Array.isArray(fieldValue)
+        ? {
+            children: fieldValue as Array<Node>,
+            fieldName: resolved.field.name,
+            parent: resolved,
+          }
+        : undefined
+    },
+  )
+
+  if (walk.status === 'invalid') {
+    return 'invalid'
   }
-  if (keyedIndices.length <= 1) {
+
+  // The target is the node at the last keyed segment; its ancestors are the
+  // walked nodes above it, each of which must be a registered container.
+  const targetSegmentIndex = path.findLastIndex(isKeyedSegment)
+  const targetNodeIndex = walk.nodes.findIndex(
+    (node) => node.segmentIndex === targetSegmentIndex,
+  )
+  const ancestorNodes =
+    targetNodeIndex === -1 ? [] : walk.nodes.slice(0, targetNodeIndex)
+  const parentNode = ancestorNodes.at(-1)
+
+  if (
+    !parentNode ||
+    ancestorNodes.some((node) => node.children === undefined)
+  ) {
     return undefined
   }
 
-  const richContainers = input.containers
-  let currentChildren: ReadonlyArray<Node> = input.value
-  let parent: ContainerConfig | undefined
-  let parentPath: Path = []
-  const resolvedPath: Path = []
-  const ancestors: Array<{type: string; field: string}> = []
-  const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
-
-  let segmentIndex = 0
-  while (segmentIndex < targetKeyedIndex) {
-    const segment = path[segmentIndex]!
-    if (typeof segment === 'string') {
-      resolvedPath.push(segment)
-      segmentIndex++
-      continue
-    }
-
-    let node: Node | undefined
-    if (isKeyedSegment(segment)) {
-      node = currentChildren.find((child) => child._key === segment._key)
-      resolvedPath.push(segment)
-    } else if (typeof segment === 'number') {
-      node = currentChildren.at(segment)
-      if (node) {
-        resolvedPath.push({_key: node._key})
-      }
-    } else {
-      return undefined
-    }
-    if (!node) {
-      return undefined
-    }
-
-    // Resolve this node's rich config using parent's positional `of`
-    // first, then the global rich map.
-    let resolved:
-      | ContainerConfig
-      | SpanConfig
-      | BlockObjectConfig
-      | InlineObjectConfig
-      | TextBlockConfig
-      | undefined
-    if (parent?.of) {
-      for (const entry of parent.of) {
-        if (entryType(entry) === node._type) {
-          resolved = entry
-          break
-        }
-      }
-    }
-    if (!resolved) {
-      resolved = richContainers.get(node._type)
-    }
-
-    if (!resolved || !('container' in resolved)) {
-      return undefined
-    }
-    const fieldValue = (node as Record<string, unknown>)[resolved.field.name]
-    if (!Array.isArray(fieldValue)) {
-      return undefined
-    }
-    parent = resolved
-    parentPath = resolvedPath.slice()
-    ancestors.push({type: node._type, field: resolved.field.name})
-    currentChildren = fieldValue as Array<Node>
-    segmentIndex++
+  return {
+    parent: parentNode.children!.parent!,
+    parentPath: parentNode.path,
+    ancestors: ancestorNodes.map((node) => ({
+      type: node.node._type,
+      field: node.children!.fieldName,
+    })),
   }
+}
 
-  return parent ? {parent, parentPath, ancestors} : undefined
+/**
+ * Resolve a node's rich config using its parent's positional `of` first,
+ * then the global rich map.
+ */
+function resolveRichEntry(
+  containers: ResolvedContainers,
+  parent: ContainerConfig | undefined,
+  node: Node,
+):
+  | ContainerConfig
+  | SpanConfig
+  | BlockObjectConfig
+  | InlineObjectConfig
+  | TextBlockConfig
+  | undefined {
+  if (parent?.of) {
+    for (const entry of parent.of) {
+      if (entryType(entry) === node._type) {
+        return entry
+      }
+    }
+  }
+  return containers.get(node._type)
 }
 
 /**
@@ -188,6 +184,11 @@ export function resolveContainerByPath(
   | TextBlockConfig
   | undefined {
   const descent = richDescentToParent(input, path)
+
+  if (descent === 'invalid') {
+    return undefined
+  }
+
   const parent = descent?.parent
 
   if (parent?.of) {

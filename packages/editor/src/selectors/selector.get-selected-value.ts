@@ -83,8 +83,13 @@ function sliceArray({
     return []
   }
 
-  const startIdx = resolveIndex(blocks, pathPrefix, startEdge)
-  const endIdx = resolveIndex(blocks, pathPrefix, endEdge)
+  const startIdx = resolveIndex(
+    blocks,
+    pathPrefix,
+    fieldNameInPrefix,
+    startEdge,
+  )
+  const endIdx = resolveIndex(blocks, pathPrefix, fieldNameInPrefix, endEdge)
 
   if (startIdx === -1 || endIdx === -1) {
     return []
@@ -160,6 +165,7 @@ function sliceArray({
 function resolveIndex(
   blocks: ReadonlyArray<PortableTextBlock>,
   pathPrefix: Path,
+  fieldNameInPrefix: string | undefined,
   edge: Edge,
 ): number {
   if (edge === 'array-start') {
@@ -168,20 +174,23 @@ function resolveIndex(
   if (edge === 'array-end') {
     return blocks.length - 1
   }
-  return findBlockIndexForPoint(blocks, pathPrefix, edge)
+  return findBlockIndexForPoint(blocks, pathPrefix, fieldNameInPrefix, edge)
 }
 
 function findBlockIndexForPoint(
   blocks: ReadonlyArray<PortableTextBlock>,
   pathPrefix: Path,
+  fieldNameInPrefix: string | undefined,
   point: EditorSelectionPoint,
 ): number {
+  // Below the root, the point's path must name this level's child field
+  // between the parent's segment and the block's.
   let nodeSegmentIndex = pathPrefix.length
 
-  if (
-    nodeSegmentIndex < point.path.length &&
-    typeof point.path[nodeSegmentIndex] === 'string'
-  ) {
+  if (fieldNameInPrefix !== undefined) {
+    if (point.path[nodeSegmentIndex] !== fieldNameInPrefix) {
+      return -1
+    }
     nodeSegmentIndex++
   }
 
