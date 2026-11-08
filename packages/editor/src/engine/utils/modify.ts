@@ -101,14 +101,17 @@ export const modifyDescendant = <N extends Node>(
       index = resolvedSegment
     } else if (isKeyedSegment(resolvedSegment)) {
       index = result.children.findIndex(
-        (child) => child._key === resolvedSegment._key,
+        (child) =>
+          typeof child === 'object' &&
+          child !== null &&
+          child._key === resolvedSegment._key,
       )
     } else {
       return
     }
 
     const child = result.children[index]
-    if (!child) {
+    if (typeof child !== 'object' || child === null) {
       return
     }
 

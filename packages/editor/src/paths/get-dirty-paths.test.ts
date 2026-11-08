@@ -215,7 +215,7 @@ describe(getDirtyPaths.name, () => {
       ])
     })
 
-    test('root-level value replacement with keyless children dirties them by numeric index', () => {
+    test('root-level value replacement leaves keyless children to their marked parent', () => {
       const newValue: Array<Node> = [
         {
           _type: 'block',
@@ -246,7 +246,7 @@ describe(getDirtyPaths.name, () => {
             value: newValue,
           },
         ),
-      ).toEqual([[], [0], [0, 'children', 0], [1], [1, 'children', 0]])
+      ).toEqual([[]])
     })
 
     test('single property set dirties node path levels', () => {
@@ -352,7 +352,7 @@ describe(getDirtyPaths.name, () => {
       ])
     })
 
-    test('child array field replacement with keyless children dirties them by numeric index', () => {
+    test('child array field replacement leaves keyless children to their marked parent', () => {
       const blockNode: Node = {
         _type: 'block',
         _key: 'b1',
@@ -384,12 +384,7 @@ describe(getDirtyPaths.name, () => {
             ],
           },
         ),
-      ).toEqual([
-        [],
-        [{_key: 'b1'}],
-        [{_key: 'b1'}, 'children', 0],
-        [{_key: 'b1'}, 'children', 1],
-      ])
+      ).toEqual([[], [{_key: 'b1'}]])
     })
 
     test('root-level value replacement with container children dirties descendants', () => {
@@ -620,7 +615,7 @@ describe(getDirtyPaths.name, () => {
       ).toEqual([[], [{_key: 'b1'}]])
     })
 
-    test('_key unset uses numeric index for keyless node', () => {
+    test('_key unset leaves the keyless node to its marked parent', () => {
       const value: Array<Node> = [
         {
           _type: 'block',
@@ -650,7 +645,7 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'old-key'}, '_key'],
           },
         ),
-      ).toEqual([[], [1]])
+      ).toEqual([[]])
     })
 
     test('numeric last segment returns ancestor paths', () => {
@@ -701,7 +696,7 @@ describe(getDirtyPaths.name, () => {
       ).toEqual([[], [{_key: 'c1'}], [{_key: 'c1'}, 'content', {_key: 'b1'}]])
     })
 
-    test('_key unset inside callout uses numeric index for keyless node', () => {
+    test('_key unset inside callout leaves the keyless node to its marked parent', () => {
       const calloutValue: Array<Node> = [
         {
           _type: 'callout',
@@ -737,11 +732,49 @@ describe(getDirtyPaths.name, () => {
             path: [{_key: 'c1'}, 'content', {_key: 'old-key'}, '_key'],
           },
         ),
-      ).toEqual([[], [{_key: 'c1'}], [{_key: 'c1'}, 'content', 1]])
+      ).toEqual([[], [{_key: 'c1'}]])
     })
   })
 
   describe('insert', () => {
+    test('non-object inserts leave the inserted value to its marked parent', () => {
+      const value = Array.from({length: 1_000}, (_, index) => ({
+        _type: 'block',
+        _key: `block-${index}`,
+        children: [],
+      }))
+      value.push('oops' as never)
+
+      expect(
+        getDirtyPaths(
+          {schema, containers: emptyContainers, value},
+          {
+            type: 'insert',
+            path: [{_key: 'block-999'}],
+            node: 'oops' as never,
+            position: 'after',
+          },
+        ),
+      ).toEqual([[], [{_key: 'block-999'}]])
+    })
+
+    test('insert before a keyless reference does not add another positional path', () => {
+      expect(
+        getDirtyPaths(
+          {
+            schema,
+            containers: emptyContainers,
+            value: ['inserted' as never, 'reference' as never],
+          },
+          {
+            type: 'insert',
+            path: [0],
+            node: 'inserted' as never,
+            position: 'before',
+          },
+        ),
+      ).toEqual([[], [0]])
+    })
     test('insert span dirties ancestors and inserted node path', () => {
       expect(
         getDirtyPaths(

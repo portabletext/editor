@@ -40,12 +40,17 @@ export function getChildFieldName(
     let node: Node | undefined
 
     if (isKeyedSegment(segment)) {
-      node = nodeChildren.children.find((child) => child._key === segment._key)
+      node = nodeChildren.children.find(
+        (child) =>
+          typeof child === 'object' &&
+          child !== null &&
+          child._key === segment._key,
+      )
     } else if (typeof segment === 'number') {
       node = nodeChildren.children.at(segment)
     }
 
-    if (!node) {
+    if (typeof node !== 'object' || node === null) {
       return undefined
     }
 

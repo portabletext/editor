@@ -1,5 +1,8 @@
 import {describe, expect, test} from 'vitest'
+import {getAncestors} from './get-ancestors'
+import {getChildren} from './get-children'
 import {getNode} from './get-node'
+import {hasNode} from './has-node'
 import {
   createNodeTraversalTestbed,
   resolveTestbedContainers,
@@ -266,6 +269,75 @@ describe(getNode.name, () => {
       ),
     ).toBeUndefined()
   })
+})
+
+describe('public traversal through non-object entries', () => {
+  test('falsy root and nested entries are missing', () => {
+    const testbed = createNodeTraversalTestbed()
+    const falsyValues = [null, false, 0, '']
+    const nestedBlock = {
+      ...testbed.textBlock1,
+      children: [...testbed.textBlock1.children, ...falsyValues],
+    }
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [nestedBlock, ...falsyValues] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(
+      falsyValues.map((_, index) => ({
+        root: {
+          node: getNode(snapshot, [index + 1]),
+          children: getChildren(snapshot, [index + 1]),
+          ancestors: getAncestors(snapshot, [index + 1, 'children', 0]),
+        },
+        nested: {
+          node: getNode(snapshot, [0, 'children', index + 3]),
+          children: getChildren(snapshot, [0, 'children', index + 3]),
+          ancestors: getAncestors(snapshot, [0, 'children', index + 3, 0]),
+        },
+      })),
+    ).toEqual([
+      {
+        root: {node: undefined, children: [], ancestors: []},
+        nested: {node: undefined, children: [], ancestors: []},
+      },
+      {
+        root: {node: undefined, children: [], ancestors: []},
+        nested: {node: undefined, children: [], ancestors: []},
+      },
+      {
+        root: {node: undefined, children: [], ancestors: []},
+        nested: {node: undefined, children: [], ancestors: []},
+      },
+      {
+        root: {node: undefined, children: [], ancestors: []},
+        nested: {node: undefined, children: [], ancestors: []},
+      },
+    ])
+  })
+
+  test.each([null, false, 0, '', 'oops', 5, true])(
+    '%j is missing when path segments follow',
+    (value) => {
+      const testbed = createNodeTraversalTestbed()
+      const snapshot = {
+        context: {
+          ...testbed.snapshot.context,
+          value: [testbed.textBlock1, value] as never,
+        },
+        blockIndexMap: new Map<string, number>(),
+      }
+
+      expect(getNode(snapshot, [1])).toBeUndefined()
+      expect(hasNode(snapshot, [1])).toBe(false)
+      expect(getNode(snapshot, [1, 'children', 0])).toBeUndefined()
+      expect(hasNode(snapshot, [1, 'children', 0])).toBe(false)
+    },
+  )
 })
 
 describe(`${getNode.name} strips trailing field-name segments`, () => {

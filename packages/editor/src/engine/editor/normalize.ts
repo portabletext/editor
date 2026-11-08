@@ -1,8 +1,7 @@
 import {isTextBlock} from '@portabletext/schema'
 import {serializePath} from '../../paths/serialize-path'
-import {getNode} from '../../traversal/get-node'
-import {getNodes} from '../../traversal/get-nodes'
-import {hasNode} from '../../traversal/has-node'
+import {resolveNode} from '../../traversal/get-node'
+import {getNodesIncludingNonObjects} from '../../traversal/get-nodes'
 import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
@@ -35,7 +34,9 @@ export function normalize(
 
   if (force) {
     const allPaths = Array.from(
-      getNodes(editor.snapshot),
+      getNodesIncludingNonObjects(editor.snapshot.context, {
+        value: editor.snapshot.context.value,
+      }),
       (entry) => entry.path,
     )
     const allPathKeys = new Set(allPaths.map((p) => serializePath(p)))
@@ -58,11 +59,9 @@ export function normalize(
         continue
       }
 
-      if (hasNode(editor.snapshot, dirtyPath)) {
-        const entry = getNode(editor.snapshot, dirtyPath)
-        if (!entry) {
-          continue
-        }
+      const result = resolveNode(editor.snapshot, dirtyPath)
+      if (result.status === 'found') {
+        const entry = result.entry
         const entryNode = entry.node
 
         /*
@@ -87,10 +86,14 @@ export function normalize(
     }
 
     let dirtyPaths = getDirtyPaths(editor)
-    const initialDirtyPathsLength = dirtyPaths.length
+    let initialDirtyPathsLength = dirtyPaths.length
     let iteration = 0
 
     while (dirtyPaths.length !== 0) {
+      initialDirtyPathsLength = Math.max(
+        initialDirtyPathsLength,
+        dirtyPaths.length,
+      )
       if (
         !editor.shouldNormalize({
           dirtyPaths,
@@ -112,9 +115,10 @@ export function normalize(
         } finally {
           editor.applyContext.pop()
         }
-      } else if (hasNode(editor.snapshot, dirtyPath)) {
-        const entry = getNode(editor.snapshot, dirtyPath)
-        if (entry) {
+      } else {
+        const result = resolveNode(editor.snapshot, dirtyPath)
+        if (result.status === 'found') {
+          const entry = result.entry
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
             editor.normalizeNode([entry.node, entry.path], {operation})

@@ -64,6 +64,30 @@ describe(findNearestSpans.name, () => {
     })
   })
 
+  test('Scenario: Numeric paths use raw positions after a non-object', () => {
+    const first = {...testbed.textBlock1, _key: undefined}
+    const second = {...testbed.textBlock2, _key: undefined}
+    const third = {...testbed.cellBlock1, _key: undefined}
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [first, 'oops', second, third] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(findNearestSpans(snapshot, [2])).toEqual({
+      previousSpan: {
+        node: testbed.span2,
+        path: [0, 'children', {_key: 'k2'}],
+      },
+      nextSpan: {
+        node: testbed.cellSpan1,
+        path: [3, 'children', {_key: 'k12'}],
+      },
+    })
+  })
+
   test('Scenario: Removing a nested cell block reaches across container boundaries', () => {
     expect(
       findNearestSpans(testbed.snapshot, [

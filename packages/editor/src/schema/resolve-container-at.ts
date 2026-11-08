@@ -39,23 +39,16 @@ export function resolveContainerAt(
   value: ReadonlyArray<Node>,
   path: Path,
 ): RegisteredContainer | RegisteredPositional | undefined {
-  const keyedIndices: Array<number> = []
-  for (let index = 0; index < path.length; index++) {
-    if (isKeyedSegment(path[index])) {
-      keyedIndices.push(index)
-    }
-  }
-  if (keyedIndices.length === 0) {
-    return undefined
-  }
-
   let currentChildren: ReadonlyArray<Node> = value
   let parent: RegisteredContainer | undefined
   let resolved: RegisteredContainer | RegisteredPositional | undefined
-  const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
+  let targetNodeIndex = path.length - 1
+  while (targetNodeIndex >= 0 && typeof path[targetNodeIndex] === 'string') {
+    targetNodeIndex--
+  }
 
   let segmentIndex = 0
-  while (segmentIndex <= targetKeyedIndex) {
+  while (segmentIndex <= targetNodeIndex) {
     const segment = path[segmentIndex]!
     if (typeof segment === 'string') {
       segmentIndex++
@@ -64,13 +57,18 @@ export function resolveContainerAt(
 
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      node = currentChildren.find((child) => child._key === segment._key)
+      node = currentChildren.find(
+        (child) =>
+          typeof child === 'object' &&
+          child !== null &&
+          child._key === segment._key,
+      )
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
     } else {
       return undefined
     }
-    if (!node) {
+    if (typeof node !== 'object' || node === null) {
       return undefined
     }
 
@@ -79,7 +77,7 @@ export function resolveContainerAt(
       return undefined
     }
 
-    if (segmentIndex < targetKeyedIndex) {
+    if (segmentIndex < targetNodeIndex) {
       // Walk one more level. The resolved entry must be a container
       // (have children) for descent to continue.
       if (!('field' in resolved)) {

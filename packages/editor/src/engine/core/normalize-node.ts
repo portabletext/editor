@@ -3,6 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
+import {isSpan, isTextBlock} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -20,6 +21,7 @@ import {debug} from '../../internal-utils/debug'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
+import {getNodeChildren} from '../../traversal/get-children'
 import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
@@ -31,13 +33,23 @@ import {isAncestorPath} from '../path/is-ancestor-path'
 import type {WithEditorFirstArg} from '../utils/types'
 import {hasRemoteFrame} from './apply-context'
 import {getSetInverse} from './get-set-inverse'
-import {updateDirtyPaths} from './update-dirty-paths'
+import {
+  __dirtyPathRepairStats,
+  takeChildArrayRepairMark,
+  updateDirtyPaths,
+} from './update-dirty-paths'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
   entry,
 ) => {
   const [node, path] = entry
+
+  if (takeChildArrayRepairMark(editor, path)) {
+    repairChildArray(editor, node, path)
+    updateDirtyPaths(editor, [path])
+    return
+  }
 
   /**
    * Add a placeholder block when the editor is empty
@@ -155,6 +167,113 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 }
 
+function repairChildArray(editor: Editor, node: unknown, path: Path) {
+  repairChildArrays(editor, node, path)
+}
+
+function repairChildArrays(
+  editor: Editor,
+  node: unknown,
+  path: Path,
+  parent?: Parameters<typeof getNodeChildren>[2],
+  mintNodeKey = false,
+  hasLaterSibling = false,
+) {
+  const result = isEditor(node)
+    ? getNodeChildren(editor.snapshot.context, {
+        value: editor.snapshot.context.value,
+      })
+    : isTextBlock(editor.snapshot.context, node) ||
+        isSpan(editor.snapshot.context, node) ||
+        isObject(editor.snapshot, node)
+      ? getNodeChildren(editor.snapshot.context, node, parent)
+      : undefined
+  if (!result) {
+    if (mintNodeKey && needsKey(node)) {
+      mintKey(editor, path)
+    }
+    return
+  }
+
+  const objectChildren: Array<{child: object; index: number}> = []
+  const nonObjectIndices: number[] = []
+  let removedBefore = 0
+  for (let index = 0; index < result.children.length; index++) {
+    const child = result.children[index]
+    __dirtyPathRepairStats.scans++
+    if (typeof child !== 'object' || child === null) {
+      nonObjectIndices.push(index)
+      removedBefore++
+      continue
+    }
+    objectChildren.push({
+      child,
+      index: index - removedBefore,
+    })
+  }
+
+  for (let index = 0; index < nonObjectIndices.length; index++) {
+    const childPath =
+      path.length === 0
+        ? [...path, nonObjectIndices[index]! - index]
+        : [...path, result.fieldName, nonObjectIndices[index]! - index]
+    editor.apply({type: 'unset', path: childPath})
+  }
+
+  let currentPath = path
+  if (
+    mintNodeKey &&
+    hasLaterSibling &&
+    nonObjectIndices.length > 0 &&
+    needsKey(node)
+  ) {
+    currentPath = mintKey(editor, path)
+  }
+
+  const reversedObjectChildren = [...objectChildren].reverse()
+  for (let index = 0; index < reversedObjectChildren.length; index++) {
+    const record = reversedObjectChildren[index]!
+    const childPath =
+      currentPath.length === 0
+        ? [...currentPath, record.index]
+        : [...currentPath, result.fieldName, record.index]
+    repairChildArrays(
+      editor,
+      record.child,
+      childPath,
+      result.parent,
+      true,
+      index > 0,
+    )
+  }
+
+  if (mintNodeKey && currentPath === path && needsKey(node)) {
+    mintKey(editor, path)
+  }
+}
+
+function needsKey(node: unknown): node is object {
+  return (
+    typeof node === 'object' &&
+    node !== null &&
+    (!('_key' in node) ||
+      typeof node._key !== 'string' ||
+      node._key.length === 0)
+  )
+}
+
+function mintKey(editor: Editor, path: Path): Path {
+  const key = editor.snapshot.context.keyGenerator()
+  const keyPath = [...path, '_key']
+  editor.apply({
+    type: 'set',
+    path: keyPath,
+    value: key,
+    inverse: getSetInverse(editor, keyPath, key),
+  })
+  return [...path.slice(0, -1), {_key: key}]
+}
+
 function applyStructuralCorrection(
   editor: Editor,
   correction: StructuralCorrection,
@@ -242,6 +361,9 @@ function getSiblings(
 
   const seenKeys = new Set<string>()
   for (const sibling of siblings) {
+    if (typeof sibling !== 'object' || sibling === null) {
+      continue
+    }
     if (sibling._key === undefined) {
       continue
     }

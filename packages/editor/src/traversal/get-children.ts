@@ -44,7 +44,7 @@ export function getChildren(
       node =
         index !== undefined && currentChildren[index]?._key === segment._key
           ? currentChildren[index]
-          : currentChildren.find((child) => child._key === segment._key)
+          : currentChildren.find((child) => child?._key === segment._key)
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
     }
@@ -70,12 +70,19 @@ export function getChildren(
     currentParent = next.parent
   }
 
-  return currentChildren.map((child, childIndex) => ({
-    node: child,
-    path: isRoot
-      ? [nodeSegment(child, childIndex)]
-      : [...currentPath, currentFieldName, nodeSegment(child, childIndex)],
-  }))
+  const children: Array<{node: Node; path: Path}> = []
+  for (let childIndex = 0; childIndex < currentChildren.length; childIndex++) {
+    const child = currentChildren[childIndex]
+    if (typeof child === 'object' && child !== null) {
+      children.push({
+        node: child,
+        path: isRoot
+          ? [nodeSegment(child, childIndex)]
+          : [...currentPath, currentFieldName, nodeSegment(child, childIndex)],
+      })
+    }
+  }
+  return children
 }
 
 /**
@@ -108,6 +115,10 @@ export function getNodeChildren(
       parent: RegisteredContainer | undefined
     }
   | undefined {
+  if (typeof node !== 'object' || node === null) {
+    return undefined
+  }
+
   // Text blocks store children in .children
   if (isTextBlock(context, node)) {
     return {

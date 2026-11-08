@@ -13,7 +13,11 @@ import {isCollapsedRange} from '../range/is-collapsed-range'
 import type {WithEditorFirstArg} from '../utils/types'
 import {applyOperation} from './apply-operation'
 import {createOperationEvent, emitOperationEvent} from './operation-channel'
-import {updateDirtyPaths} from './update-dirty-paths'
+import {
+  markChildArraysForRepair,
+  transformChildArrayRepairMarks,
+  updateDirtyPaths,
+} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   const beforeListeners = editor.operationListeners.before
@@ -38,12 +42,24 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     transformRangeRef(ref, op, editor.snapshot.context)
   }
 
+  transformChildArrayRepairMarks(editor, op)
+
   // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op)
 
-  updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
+  updateDirtyPaths(
+    editor,
+    getDirtyPaths(
+      {
+        ...editor.snapshot.context,
+        markChildArraysForRepair: (path) =>
+          markChildArraysForRepair(editor, path),
+      },
+      op,
+    ),
+  )
 
   editor.operations.push(op)
   normalize(editor, {

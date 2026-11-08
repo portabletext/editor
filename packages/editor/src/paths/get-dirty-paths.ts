@@ -10,14 +10,13 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {getNodeChildren} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
-import {nodeSegment} from './node-segment'
+import {hasUsableKey, nodeSegment} from './node-segment'
 
 /**
- * Recursively collect descendant paths using numeric indices.
- * Numeric indices avoid dedup collisions when siblings have duplicate
- * keys (pre-normalization).
+ * Recursively collect descendant paths.
  *
  * Threads the resolved {@link RegisteredContainer} for the current
  * node through recursion so positional `of` overrides apply when
@@ -28,18 +27,40 @@ function collectDescendantPaths(
   context: {
     schema: EditorSchema
     containers: Containers
+    value: Array<Node>
+    markChildArraysForRepair?: (path: Path) => void
   },
   node: Node,
   parentPath: Path,
   paths: Array<Path>,
   parent?: RegisteredContainer,
 ): void {
+  if (typeof node !== 'object' || node === null) {
+    return
+  }
+
   // Text blocks always use 'children'
   if (isTextBlock(context, node)) {
     const children = node.children
     if (Array.isArray(children)) {
       for (let i = 0; i < children.length; i++) {
-        paths.push([...parentPath, 'children', i])
+        const child = children[i]
+        if (
+          typeof child === 'object' &&
+          child !== null &&
+          hasUsableKey(child._key)
+        ) {
+          paths.push([...parentPath, 'children', i])
+        } else {
+          context.markChildArraysForRepair?.(
+            nearestStableNodePath(context, parentPath),
+          )
+        }
+      }
+      for (let i = children.length - 1; i >= 0; i--) {
+        if (typeof children[i] !== 'object' || children[i] === null) {
+          paths.push([...parentPath, 'children', i])
+        }
       }
     }
     return
@@ -71,9 +92,24 @@ function collectDescendantPaths(
   if (Array.isArray(fieldValue)) {
     for (let i = 0; i < fieldValue.length; i++) {
       const child = fieldValue[i] as Node
+      if (
+        typeof child !== 'object' ||
+        child === null ||
+        !hasUsableKey(child._key)
+      ) {
+        context.markChildArraysForRepair?.(
+          nearestStableNodePath(context, parentPath),
+        )
+        continue
+      }
       const childPath: Path = [...parentPath, arrayField.name, i]
       paths.push(childPath)
       collectDescendantPaths(context, child, childPath, paths, resolved)
+    }
+    for (let i = fieldValue.length - 1; i >= 0; i--) {
+      if (typeof fieldValue[i] !== 'object' || fieldValue[i] === null) {
+        paths.push([...parentPath, arrayField.name, i])
+      }
     }
   }
 }
@@ -86,6 +122,7 @@ export function getDirtyPaths(
     schema: EditorSchema
     containers: Containers
     value: Array<Node>
+    markChildArraysForRepair?: (path: Path) => void
   },
   op: EngineOperation,
 ): Array<Path> {
@@ -102,11 +139,16 @@ export function getDirtyPaths(
         if (Array.isArray(op.value)) {
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
-            if (typeof child !== 'object' || child === null) {
+            if (
+              typeof child !== 'object' ||
+              child === null ||
+              !hasUsableKey((child as {_key?: unknown})._key)
+            ) {
+              context.markChildArraysForRepair?.([])
               continue
             }
             const childNode = child as Node
-            const childPath: Path = [nodeSegment(childNode, i)]
+            const childPath: Path = [childLookupSegment(childNode, i)]
             levels.push(childPath)
             // Seed the walker with the child's own registration so it
             // can recurse into the child's container fields. At root,
@@ -119,6 +161,11 @@ export function getDirtyPaths(
               levels,
               childRegistration,
             )
+          }
+          for (let i = op.value.length - 1; i >= 0; i--) {
+            if (typeof op.value[i] !== 'object' || op.value[i] === null) {
+              levels.push([i])
+            }
           }
         }
         return levels
@@ -164,7 +211,7 @@ export function getDirtyPaths(
       // When _key changes, use the new key in the dirty path
       if (propertyName === '_key' && typeof op.value === 'string') {
         const lastSegment = dirtyPath[dirtyPath.length - 1]
-        if (isKeyedSegment(lastSegment)) {
+        if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
           dirtyPath = [...dirtyPath.slice(0, -1), {_key: op.value}]
         }
       }
@@ -189,19 +236,30 @@ export function getDirtyPaths(
               : undefined
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
-
-            if (typeof child !== 'object' || child === null) {
+            if (
+              typeof child !== 'object' ||
+              child === null ||
+              !hasUsableKey((child as {_key?: unknown})._key)
+            ) {
+              context.markChildArraysForRepair?.(
+                nearestStableNodePath(context, nodePath),
+              )
               continue
             }
-
-            const childNode = child as Node
             const childPath: Path = [
               ...nodePath,
               propertyName,
-              nodeSegment(childNode, i),
+              childLookupSegment(child, i),
             ]
             levels.push(childPath)
+
+            const childNode = child as Node
             collectDescendantPaths(context, childNode, childPath, levels, seed)
+          }
+          for (let i = op.value.length - 1; i >= 0; i--) {
+            if (typeof op.value[i] !== 'object' || op.value[i] === null) {
+              levels.push([...nodePath, propertyName, i])
+            }
           }
         }
       }
@@ -239,7 +297,12 @@ export function getDirtyPaths(
             }
 
             const node = isKeyedSegment(segment)
-              ? currentChildren.find((child) => child._key === segment._key)
+              ? currentChildren.find(
+                  (child) =>
+                    typeof child === 'object' &&
+                    child !== null &&
+                    child._key === segment._key,
+                )
               : undefined
 
             if (!node) {
@@ -260,11 +323,16 @@ export function getDirtyPaths(
 
           // Find the keyless node among siblings
           const index = currentChildren.findIndex(
-            (child) => child._key === undefined,
+            (child) =>
+              typeof child === 'object' &&
+              child !== null &&
+              child._key === undefined,
           )
 
           if (index !== -1) {
-            return pathLevels([...nodePath.slice(0, -1), index])
+            const parent = nearestStableNodePath(context, nodePath.slice(0, -1))
+            context.markChildArraysForRepair?.(parent)
+            return pathLevels(parent)
           }
         }
       }
@@ -275,19 +343,35 @@ export function getDirtyPaths(
     case 'insert': {
       const {node, path} = op
 
+      if (
+        typeof node !== 'object' ||
+        node === null ||
+        !hasUsableKey(node._key)
+      ) {
+        context.markChildArraysForRepair?.(
+          nearestStableNodePath(context, path.slice(0, -1)),
+        )
+      }
+
       // The operation path is the reference sibling (for position-based
       // inserts), not the inserted node's final location. Dirty the
       // ancestors of the reference path AND the inserted node's own path.
       const levels = pathLevels(path)
 
-      const nodePath = [...path]
-      for (let i = nodePath.length - 1; i >= 0; i--) {
-        if (isKeyedSegment(nodePath[i]) || typeof nodePath[i] === 'number') {
-          nodePath[i] = {_key: node._key}
-          break
-        }
+      if (
+        typeof node !== 'object' ||
+        node === null ||
+        !hasUsableKey(node._key)
+      ) {
+        return levels
       }
-      levels.push(nodePath)
+
+      const nodePath = hasUsableKey(node?._key)
+        ? [...path.slice(0, -1), {_key: node._key}]
+        : nearestStableNodePath(context, path.slice(0, -1))
+      if (hasUsableKey(node?._key)) {
+        levels.push(nodePath)
+      }
 
       if (isSpan(context, node)) {
         return levels
@@ -321,4 +405,49 @@ export function getDirtyPaths(
       return []
     }
   }
+}
+
+function childLookupSegment(child: unknown, index: number): Path[number] {
+  return typeof child === 'object' &&
+    child !== null &&
+    hasUsableKey((child as {_key?: unknown})._key)
+    ? nodeSegment(child, 0)
+    : index
+}
+
+function nearestStableNodePath(
+  context: Parameters<typeof getDirtyPaths>[0],
+  path: Path,
+): Path {
+  const stablePath: Path = []
+  let stableLength = 0
+  let children = context.value
+  let parent: RegisteredContainer | undefined
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      stablePath.push(segment)
+      continue
+    }
+    const node = isKeyedSegment(segment)
+      ? children.find(
+          (child) =>
+            typeof child === 'object' &&
+            child !== null &&
+            child._key === segment._key,
+        )
+      : typeof segment === 'number'
+        ? children[segment]
+        : undefined
+    if (typeof node !== 'object' || node === null || !hasUsableKey(node._key)) {
+      break
+    }
+    stablePath.push({_key: node._key})
+    stableLength = stablePath.length
+    const next = getNodeChildren(context, node, parent)
+    if (next) {
+      children = next.children
+      parent = next.parent
+    }
+  }
+  return stablePath.slice(0, stableLength)
 }

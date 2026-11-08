@@ -21,7 +21,10 @@ export function getValue(
         return undefined
       }
       current = current.find(
-        (item: Record<string, unknown>) => item['_key'] === segment._key,
+        (item) =>
+          typeof item === 'object' &&
+          item !== null &&
+          (item as Record<string, unknown>)['_key'] === segment._key,
       )
     } else if (typeof segment === 'number') {
       if (!Array.isArray(current)) {

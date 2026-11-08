@@ -28,7 +28,15 @@ export function resolveChildEntryIndex(
   const lastSegment = childPath[childPath.length - 1]
 
   if (typeof lastSegment === 'number') {
-    return lastSegment >= 0 && lastSegment < children.length ? lastSegment : -1
+    const fastPathSegment = children[lastSegment]?.path.at(-1)
+    if (
+      fastPathSegment !== undefined &&
+      (typeof fastPathSegment !== 'number' || fastPathSegment === lastSegment)
+    ) {
+      return lastSegment
+    }
+
+    return children.findIndex((child) => child.path.at(-1) === lastSegment)
   }
 
   if (!isKeyedSegment(lastSegment)) {

@@ -2,9 +2,61 @@ import {type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {expect, test} from 'vitest'
 import {createBareEditor} from '../../../test-utils/create-bare-editor.test-util'
+import {invalidateVerifiedGroups} from '../../editor/subscriber.update-value'
+import {withRemoteChanges} from '../../engine-plugins/engine-plugin.remote-changes'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {EngineOperation} from '../interfaces/operation'
 import {normalizeNode} from './normalize-node'
+
+test('an inserted null invalidates a verified sibling group', () => {
+  const groups = new Set([''])
+  invalidateVerifiedGroups(groups, {
+    type: 'insert',
+    path: [0],
+    node: null as never,
+    position: 'before',
+  })
+  expect(groups.size).toBe(0)
+})
+
+test('one primitive insert into 1,000 blocks has constant normalization cost', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const value = Array.from({length: 1_000}, (_, index) => ({
+    _type: 'block' as const,
+    _key: `block-${index}`,
+    children: [
+      {
+        _type: 'span' as const,
+        _key: `span-${index}`,
+        text: 'foo',
+        marks: [],
+      },
+    ],
+    markDefs: [],
+    style: 'normal',
+  }))
+  const editor = createBareEditor(value, keyGenerator)
+  let normalizeNodeVisits = 0
+  const originalNormalizeNode = editor.normalizeNode
+  editor.normalizeNode = (...args) => {
+    normalizeNodeVisits++
+    return originalNormalizeNode(...args)
+  }
+
+  withRemoteChanges(editor, 'patches', () => {
+    withoutNormalizing(editor, () => {
+      editor.apply({
+        type: 'insert',
+        path: [{_key: 'block-999'}],
+        node: 'oops' as never,
+        position: 'after',
+      })
+    })
+  })
+
+  expect(normalizeNodeVisits).toBe(3)
+  expect(editor.snapshot.context.value).toEqual(value)
+})
 
 test('a non-object root entry emits only an unset', () => {
   const keyGenerator = createTestKeyGenerator()

@@ -38,7 +38,11 @@ export function getNode(
   path: Path,
 ): {node: Node; path: Path} | undefined {
   const result = resolveNode(snapshot, path)
-  return result.status === 'found' ? result.entry : undefined
+  return result.status === 'found' &&
+    typeof result.entry.node === 'object' &&
+    result.entry.node !== null
+    ? result.entry
+    : undefined
 }
 
 /**
@@ -114,23 +118,23 @@ export function resolveNode(
         // map with a pre-apply value, e.g. `textPatch`). Fall back to a
         // linear scan in both cases.
         const scanIndex = currentChildren.findIndex(
-          (child) => child._key === segment._key,
+          (child) => child?._key === segment._key,
         )
         node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
-        if (node) {
+        if (node !== undefined) {
           resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
         }
       }
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
-      if (node) {
+      if (node !== undefined) {
         resolvedPath.push(nodeSegment(node, segment))
       }
     } else {
       return {status: 'missing'}
     }
 
-    if (!node) {
+    if (node === undefined) {
       return {status: 'missing'}
     }
 
@@ -144,6 +148,9 @@ export function resolveNode(
     }
 
     if (hasMoreSegments) {
+      if (typeof node !== 'object' || node === null) {
+        return {status: 'missing'}
+      }
       const next = getNodeChildren(context, node, currentParent)
 
       if (!next) {
@@ -158,7 +165,7 @@ export function resolveNode(
     }
   }
 
-  if (!node) {
+  if (node === undefined) {
     return {status: 'missing'}
   }
 

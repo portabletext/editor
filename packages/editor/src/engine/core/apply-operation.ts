@@ -80,7 +80,12 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
               frame.kind === 'redo',
           ) &&
           node._key !== undefined &&
-          children.some((sibling) => sibling._key === node._key)
+          children.some(
+            (sibling) =>
+              typeof sibling === 'object' &&
+              sibling !== null &&
+              sibling._key === node._key,
+          )
         ) {
           node = {...node, _key: editor.snapshot.context.keyGenerator()}
           op.node = node
@@ -120,6 +125,8 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
           op.inverse = {
             type: 'unset',
             path:
+              typeof node === 'object' &&
+              node !== null &&
               node._key !== undefined
                 ? replaceLastSegment(path, {_key: node._key})
                 : path,
@@ -676,7 +683,12 @@ function resolveChildIndex(
   if (index !== undefined && children[index]?._key === segment._key) {
     return index
   }
-  return children.findIndex((child) => child._key === segment._key)
+  return children.findIndex(
+    (child) =>
+      typeof child === 'object' &&
+      child !== null &&
+      child._key === segment._key,
+  )
 }
 
 /**
@@ -707,7 +719,12 @@ function resolveBlockIndex(
   if (index !== undefined && value[index]?._key === segment._key) {
     return index
   }
-  return value.findIndex((block) => block._key === segment._key)
+  return value.findIndex(
+    (block) =>
+      typeof block === 'object' &&
+      block !== null &&
+      block._key === segment._key,
+  )
 }
 
 /**

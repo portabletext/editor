@@ -22,7 +22,11 @@ export function buildIndexMaps(
   blockIndexMap.clear()
   for (let blockIndex = 0; blockIndex < context.value.length; blockIndex++) {
     const block = context.value.at(blockIndex)
-    if (block === undefined || block._key === undefined) {
+    if (
+      typeof block !== 'object' ||
+      block === null ||
+      block._key === undefined
+    ) {
       // Unkeyed transient blocks (e.g. inserted by a remote patch before
       // normalization assigns a `_key`) cannot be addressed by keyed path,
       // so they are not indexed, mirroring `collectDescendantIndexes`.
@@ -58,7 +62,7 @@ export function collectDescendantIndexes(
 
   for (let i = 0; i < result.children.length; i++) {
     const child = result.children[i]!
-    if (!child._key) {
+    if (typeof child !== 'object' || child === null || !child._key) {
       continue
     }
 

@@ -89,7 +89,12 @@ export function invalidateVerifiedGroups(
   if (operation.type === 'insert') {
     // The node joins the group containing the reference sibling.
     const groupPath = path.slice(0, -1)
-    if (drop(groupPath) && operation.node._key !== undefined) {
+    if (
+      drop(groupPath) &&
+      typeof operation.node === 'object' &&
+      operation.node !== null &&
+      operation.node._key !== undefined
+    ) {
       dropSubtreeGroups(operation.node, [
         ...groupPath,
         {_key: operation.node._key},

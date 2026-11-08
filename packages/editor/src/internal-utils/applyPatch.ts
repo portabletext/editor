@@ -172,8 +172,11 @@ function insertPatch(
         position: position === 'after' ? 'after' : 'before',
       })
     } else {
-      const previousItem = items[index - 1]! as Record<string, unknown>
+      const previousItem = items[index - 1]
       const previousKey =
+        typeof previousItem === 'object' &&
+        previousItem !== null &&
+        !Array.isArray(previousItem) &&
         typeof previousItem['_key'] === 'string'
           ? previousItem['_key']
           : undefined

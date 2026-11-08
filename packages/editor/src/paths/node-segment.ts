@@ -16,8 +16,12 @@ export function hasUsableKey(key: unknown): key is string {
  * paths must fall back to the index until normalization mints a key.
  */
 export function nodeSegment(
-  node: {_key?: unknown},
+  node: unknown,
   index: number,
 ): KeyedSegment | number {
-  return hasUsableKey(node._key) ? {_key: node._key} : index
+  return typeof node === 'object' &&
+    node !== null &&
+    hasUsableKey((node as {_key?: unknown})._key)
+    ? {_key: (node as {_key: string})._key}
+    : index
 }

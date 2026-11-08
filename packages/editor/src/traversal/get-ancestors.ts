@@ -82,16 +82,16 @@ export function getAncestors(
         // map with a pre-apply value, e.g. `textPatch`). Fall back to a
         // linear scan in both cases.
         const scanIndex = currentChildren.findIndex(
-          (child) => child._key === segment._key,
+          (child) => child?._key === segment._key,
         )
         node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
-        if (node) {
+        if (node !== undefined) {
           resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
         }
       }
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
-      if (node) {
+      if (node !== undefined) {
         resolvedPath.push(nodeSegment(node, segment))
       }
     } else {

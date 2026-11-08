@@ -83,11 +83,57 @@ function* walkStandalone(
 
   for (let childIndex = 0; childIndex < next.children.length; childIndex++) {
     const child = next.children[childIndex]!
+    if (typeof child !== 'object' || child === null) {
+      continue
+    }
     const childPath: Path = isRoot
       ? [nodeSegment(child, childIndex)]
       : [...path, next.fieldName, nodeSegment(child, childIndex)]
     yield {node: child, path: childPath}
     yield* walkStandalone(context, child, childPath, false, next.parent)
+  }
+}
+
+export function* getNodesIncludingNonObjects(
+  context: {schema: EditorSchema; containers: Containers},
+  node: Node | {value: Array<Node>},
+): Generator<{node: Node; path: Path}, void, undefined> {
+  yield* walkIncludingNonObjects(
+    context,
+    node,
+    [],
+    !('_key' in node),
+    undefined,
+  )
+}
+
+function* walkIncludingNonObjects(
+  context: {schema: EditorSchema; containers: Containers},
+  node: Node | {value: Array<Node>},
+  path: Path,
+  isRoot: boolean,
+  parent: RegisteredContainer | undefined,
+): Generator<{node: Node; path: Path}, void, undefined> {
+  const next = getNodeChildren(context, node, parent)
+  if (!next) {
+    return
+  }
+
+  for (let childIndex = 0; childIndex < next.children.length; childIndex++) {
+    const child = next.children[childIndex]!
+    const childPath: Path = isRoot
+      ? [nodeSegment(child, childIndex)]
+      : [...path, next.fieldName, nodeSegment(child, childIndex)]
+    yield {node: child, path: childPath}
+    if (typeof child === 'object' && child !== null) {
+      yield* walkIncludingNonObjects(
+        context,
+        child,
+        childPath,
+        false,
+        next.parent,
+      )
+    }
   }
 }
 

@@ -36,6 +36,20 @@ describe(getValue.name, () => {
     ).toEqual({_key: 's0', text: 'hello'})
   })
 
+  test('resolves a keyed child after non-object entries', () => {
+    expect(
+      getValue(
+        [
+          {
+            _key: 'b0',
+            children: [null, false, 0, '', 'oops', {_key: 's0', text: 'foo'}],
+          },
+        ],
+        [{_key: 'b0'}, 'children', {_key: 's0'}],
+      ),
+    ).toEqual({_key: 's0', text: 'foo'})
+  })
+
   test('resolves property on nested child', () => {
     expect(
       getValue(

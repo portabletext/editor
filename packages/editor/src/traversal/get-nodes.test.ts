@@ -8,6 +8,7 @@ import {describe, expect, test} from 'vitest'
 import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getNodeDescendants, getNodes} from './get-nodes'
+import {getSibling} from './get-sibling'
 import {
   createNodeTraversalTestbed,
   resolveTestbedContainers,
@@ -49,6 +50,80 @@ describe(getNodes.name, () => {
       testbed.cell3,
       testbed.emptyBlock,
       testbed.emptySpan,
+    ])
+  })
+
+  test('non-object entries are skipped at every depth', () => {
+    const nonObjectValues = [null, false, 0, '', 'oops', 5, true]
+    const nestedBlock = {
+      ...testbed.textBlock1,
+      children: [...testbed.textBlock1.children, ...nonObjectValues],
+    }
+    const rootSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: nonObjectValues as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect([...getNodes(rootSnapshot)]).toEqual([])
+    expect([
+      ...getNodes({
+        context: {...testbed.snapshot.context, value: [nestedBlock]},
+        blockIndexMap: new Map<string, number>(),
+      }),
+    ]).toEqual([
+      {node: nestedBlock, path: [{_key: 'k3'}]},
+      {
+        node: testbed.span1,
+        path: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+      },
+      {
+        node: testbed.stockTicker1,
+        path: [{_key: 'k3'}, 'children', {_key: 'k1'}],
+      },
+      {
+        node: testbed.span2,
+        path: [{_key: 'k3'}, 'children', {_key: 'k2'}],
+      },
+    ])
+  })
+
+  test('numeric boundaries use raw positions around non-objects and keyless nodes', () => {
+    const first = {...testbed.textBlock1, _key: undefined}
+    const second = {...testbed.textBlock2, _key: undefined}
+    const third = {...testbed.cellBlock1, _key: undefined}
+    const siblingSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [first, null, second] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [first, 'oops', second, third] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(getSibling(siblingSnapshot, [0], {direction: 'next'})).toEqual({
+      node: second,
+      path: [2],
+    })
+    expect(getSibling(siblingSnapshot, [2], {direction: 'previous'})).toEqual({
+      node: first,
+      path: [0],
+    })
+
+    expect([...getNodes(snapshot, {from: [2], to: [2]})]).toEqual([
+      {node: second, path: [2]},
+    ])
+    expect([...getNodes(snapshot, {from: [0], to: [2]})]).toEqual([
+      {node: first, path: [0]},
+      {node: second, path: [2]},
     ])
   })
 

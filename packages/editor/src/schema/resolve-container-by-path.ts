@@ -97,17 +97,22 @@ function richDescentToParent(
 
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      node = currentChildren.find((child) => child._key === segment._key)
+      node = currentChildren.find(
+        (child) =>
+          typeof child === 'object' &&
+          child !== null &&
+          child._key === segment._key,
+      )
       resolvedPath.push(segment)
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
-      if (node) {
+      if (typeof node === 'object' && node !== null) {
         resolvedPath.push({_key: node._key})
       }
     } else {
       return undefined
     }
-    if (!node) {
+    if (typeof node !== 'object' || node === null) {
       return undefined
     }
 

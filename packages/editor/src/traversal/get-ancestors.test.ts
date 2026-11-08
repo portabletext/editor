@@ -5,6 +5,26 @@ import {createNodeTraversalTestbed} from './node-traversal-testbed'
 describe(getAncestors.name, () => {
   const testbed = createNodeTraversalTestbed()
 
+  test('keyed paths skip a non-object while scanning siblings', () => {
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [null, testbed.textBlock1] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(
+      getAncestors(snapshot, [
+        {_key: testbed.textBlock1._key},
+        'children',
+        {_key: testbed.span1._key},
+      ]),
+    ).toEqual([
+      {node: testbed.textBlock1, path: [{_key: testbed.textBlock1._key}]},
+    ])
+  })
+
   test('empty path returns empty array', () => {
     expect(getAncestors(testbed.snapshot, [])).toEqual([])
   })

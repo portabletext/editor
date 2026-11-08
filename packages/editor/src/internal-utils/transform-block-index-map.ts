@@ -214,7 +214,9 @@ function resolveChildIndexInValue(
     }
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      node = currentChildren.find((c) => c._key === segment._key)
+      node = currentChildren.find(
+        (candidate) => candidate?._key === segment._key,
+      )
     } else if (typeof segment === 'number') {
       node = currentChildren.at(segment)
     }
@@ -237,7 +239,9 @@ function resolveChildIndexInValue(
     return last
   }
   if (isKeyedSegment(last)) {
-    return currentChildren.findIndex((c) => c._key === last._key)
+    return currentChildren.findIndex(
+      (candidate) => candidate?._key === last._key,
+    )
   }
   return -1
 }
@@ -454,7 +458,7 @@ function resolveIndexableNode(
     let child: Node | undefined
     if (isKeyedSegment(childSegment)) {
       child = childrenResult.children.find(
-        (candidate) => candidate._key === childSegment._key,
+        (candidate) => candidate?._key === childSegment._key,
       )
     } else if (typeof childSegment === 'number') {
       child = childrenResult.children.at(childSegment)
@@ -535,7 +539,9 @@ function toKeyedPath(value: ReadonlyArray<Node>, path: Path): Path | undefined {
       continue
     }
     if (isKeyedSegment(segment)) {
-      currentNode = currentChildren.find((c) => c._key === segment._key)
+      currentNode = currentChildren.find(
+        (candidate) => candidate?._key === segment._key,
+      )
       if (!currentNode) {
         return undefined
       }
@@ -591,7 +597,9 @@ function resolveNodeAtPath(
       continue
     }
     if (isKeyedSegment(segment)) {
-      currentNode = currentChildren.find((c) => c._key === segment._key)
+      currentNode = currentChildren.find(
+        (candidate) => candidate?._key === segment._key,
+      )
     } else if (typeof segment === 'number') {
       currentNode = currentChildren.at(segment)
     } else {
