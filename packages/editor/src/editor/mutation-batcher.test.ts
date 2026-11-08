@@ -98,6 +98,7 @@ function createPatch(path: string): Patch {
 
 function createOperationEvent(operation: EngineOperation): OperationEvent {
   return {
+    applyDepth: 1,
     operation,
     beforeValue: [],
     beforeSelection: null,

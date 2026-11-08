@@ -1,3 +1,4 @@
+import {insert, unset} from '@portabletext/patches'
 import {
   compileSchema,
   defineSchema,
@@ -6,9 +7,16 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {cdp, server, userEvent} from 'vitest/browser'
+import type {Path} from '../src/engine/interfaces/path'
+import {serializePath} from '../src/paths/serialize-path'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 
 const isChromium = server.browser === 'chromium'
 
@@ -50,6 +58,42 @@ function delay(ms = 50): Promise<void> {
  * Compiled default schema used for type guards like `isTextBlock`.
  */
 const defaultSchema = compileSchema(defineSchema({}))
+
+const compositionSchema = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+    },
+  ],
+})
+
+const compositionContainers = [
+  defineContainer({type: 'callout', arrayField: 'content'}),
+]
+
+const compositionDepths = [
+  {
+    name: 'the root',
+    wrap: (blocks: Array<PortableTextTextBlock>) => ({
+      value: blocks,
+      prefix: [] as Path,
+    }),
+  },
+  {
+    name: 'a callout',
+    wrap: (
+      blocks: Array<PortableTextTextBlock>,
+      keyGenerator: () => string,
+    ) => {
+      const calloutKey = keyGenerator()
+      return {
+        value: [{_type: 'callout', _key: calloutKey, content: blocks}],
+        prefix: [{_key: calloutKey}, 'content'] as Path,
+      }
+    },
+  },
+]
 
 /**
  * Get the first block from the editor value, asserting it's a text block.
@@ -1881,6 +1925,134 @@ describe.skipIf(!isChromium)('Composition (IME)', () => {
   })
 })
 
+describe.skipIf(!isChromium)('Composition across chunk boundaries', () => {
+  test.each(compositionDepths)(
+    'Scenario: Japanese composition survives a split and merge at $name',
+    async ({wrap}) => {
+      const keyGenerator = createTestKeyGenerator()
+      const engineRef = React.createRef<PortableTextEditorEngine>()
+      const blocks = Array.from({length: 100}, () =>
+        compositionBlock(keyGenerator),
+      )
+      const target = blocks[50]!
+      const wrapped = wrap(blocks, keyGenerator)
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        initialValue: wrapped.value as never,
+        schemaDefinition: compositionSchema,
+        children: React.createElement(
+          React.Fragment,
+          undefined,
+          React.createElement(NodePlugin, {nodes: compositionContainers}),
+          React.createElement(InternalEditorEngineRefPlugin, {ref: engineRef}),
+        ),
+      })
+      const spanPath = [
+        ...wrapped.prefix,
+        {_key: target._key},
+        'children',
+        {_key: target.children[0]!._key},
+      ] as Path
+      await userEvent.click(locator.getByText(target._key))
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: spanPath, offset: target._key.length},
+          focus: {path: spanPath, offset: target._key.length},
+        },
+      })
+      await vi.waitFor(() =>
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: {path: spanPath, offset: target._key.length},
+          focus: {path: spanPath, offset: target._key.length},
+          backward: false,
+        }),
+      )
+      await vi.waitFor(() =>
+        expect({
+          anchorOffset: window.getSelection()?.anchorOffset,
+          anchorText: window.getSelection()?.anchorNode?.textContent,
+        }).toEqual({
+          anchorOffset: target._key.length,
+          anchorText: target._key,
+        }),
+      )
+      enableCompositionKeyEvents()
+      const session = cdp()
+      await session.send('Input.imeSetComposition', {
+        text: 'す',
+        selectionStart: 1,
+        selectionEnd: 1,
+      })
+      await vi.waitFor(() =>
+        expect(window.getSelection()?.anchorNode?.textContent).toBe(
+          `${target._key}す`,
+        ),
+      )
+
+      const insertedBlocks = Array.from({length: 101}, () =>
+        compositionBlock(keyGenerator),
+      )
+      editor.send({
+        type: 'patches',
+        patches: [
+          insert(insertedBlocks, 'before', [
+            ...wrapped.prefix,
+            {_key: target._key},
+          ]),
+        ],
+        snapshot: undefined,
+      })
+      await vi.waitFor(() =>
+        expect(
+          compositionChunkLengths(engineRef.current!, wrapped.prefix),
+        ).toEqual([101, 100]),
+      )
+
+      await session.send('Input.imeSetComposition', {
+        text: 'すし',
+        selectionStart: 2,
+        selectionEnd: 2,
+      })
+      await vi.waitFor(() =>
+        expect(window.getSelection()?.anchorNode?.textContent).toBe(
+          `${target._key}すし`,
+        ),
+      )
+      editor.send({
+        type: 'patches',
+        patches: insertedBlocks.map((insertedBlock) =>
+          unset([...wrapped.prefix, {_key: insertedBlock._key}]),
+        ),
+        snapshot: undefined,
+      })
+      await session.send('Input.insertText', {text: 'すし'})
+
+      await vi.waitFor(() => {
+        const selection = editor.getSnapshot().context.selection
+        expect({
+          text: targetText(
+            editor.getSnapshot().context.value,
+            wrapped.prefix,
+            target._key,
+          ),
+          selection,
+        }).toEqual({
+          text: `${target._key}すし`,
+          selection: {
+            anchor: {path: spanPath, offset: target._key.length + 2},
+            focus: {path: spanPath, offset: target._key.length + 2},
+            backward: false,
+          },
+        })
+      })
+      expect(
+        compositionChunkLengths(engineRef.current!, wrapped.prefix),
+      ).toEqual([100])
+    },
+  )
+})
+
 describe('Selection sync during composition', () => {
   test('Scenario: Rendering while composing with an empty DOM selection', async () => {
     const keyGenerator = createTestKeyGenerator()
@@ -1965,3 +2137,59 @@ describe('Selection sync during composition', () => {
     })
   })
 })
+
+function compositionBlock(keyGenerator: () => string): PortableTextTextBlock {
+  const blockKey = keyGenerator()
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [
+      {_type: 'span', _key: keyGenerator(), text: blockKey, marks: []},
+    ],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function compositionChunkLengths(
+  editor: PortableTextEditorEngine,
+  prefix: Path,
+): Array<number> | undefined {
+  const engine = editor as PortableTextEditorEngine & {
+    childChunks?: Map<string, Array<{blocks: Array<unknown>}>>
+  }
+  const chunks =
+    engine.childChunks?.get(serializePath(prefix)) ??
+    (prefix.length === 0 ? editor.rootChunks : undefined)
+  return chunks?.map((chunk) => chunk.blocks.length)
+}
+
+function targetText(
+  value: Array<PortableTextBlock>,
+  prefix: Path,
+  targetKey: string,
+): string | undefined {
+  let blocks = value
+  if (prefix.length > 0) {
+    const container = value[0]
+    if (
+      !container ||
+      !('content' in container) ||
+      !Array.isArray(container['content'])
+    ) {
+      return undefined
+    }
+    blocks = container['content'] as Array<PortableTextBlock>
+  }
+  const target = blocks.find((block) => block._key === targetKey)
+  if (
+    !target ||
+    !isTextBlock({schema: compileSchema(compositionSchema)}, target)
+  ) {
+    return undefined
+  }
+  const child = target.children[0]
+  return child && 'text' in child && typeof child.text === 'string'
+    ? child.text
+    : undefined
+}

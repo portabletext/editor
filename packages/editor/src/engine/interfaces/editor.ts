@@ -19,9 +19,11 @@ export interface BaseEditor {
   // Core state.
 
   operations: EngineOperation[]
+  applyDepth: number
   operationListeners: {
     before: Array<OperationListener>
     after: Array<OperationListener>
+    complete: Array<OperationListener>
   }
   /**
    * The change recording the current unit of work, `undefined` between

@@ -20,8 +20,9 @@ export const createEditor = (): Editor => {
   const e: any = {
     [EDITOR_BRAND]: true,
     applyContext: [],
+    applyDepth: 0,
     operations: [],
-    operationListeners: {before: [], after: []},
+    operationListeners: {before: [], after: [], complete: []},
     change: undefined,
     changeListeners: [],
     marks: null,

@@ -1,5 +1,7 @@
+import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
@@ -42,6 +44,59 @@ describe('Performance', () => {
 
       console.warn(`Inserted 1000 blocks in ${duration.toFixed(2)}ms`)
     }, 30_000)
+
+    test('Typing 20 characters in a 1000-block document', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const {editor, locator} = await createTestEditor({keyGenerator})
+
+      editor.send({
+        type: 'insert.blocks',
+        blocks: Array.from({length: 1000}, (_, i) => ({
+          _type: 'block',
+          _key: keyGenerator(),
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: `block ${i}`,
+              marks: [],
+            },
+          ],
+          markDefs: [],
+          style: 'normal',
+        })),
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBe(1000)
+
+        expect(locator.getByText('block 999')).toBeInTheDocument()
+      }, RENDER_TIMEOUT)
+
+      await userEvent.click(locator.getByText('block 500'))
+
+      const start = performance.now()
+
+      await userEvent.keyboard('performance!!!!!!!!!')
+
+      await vi.waitFor(() => {
+        const children = (
+          editor.getSnapshot().context.value[500] as {
+            children?: Array<{text?: string}>
+          }
+        ).children
+        expect(
+          children?.some((child) => child.text?.includes('performance')),
+        ).toBe(true)
+      })
+
+      const duration = performance.now() - start
+
+      console.warn(
+        `Typed 20 characters in a 1000-block document in ${duration.toFixed(2)}ms`,
+      )
+    })
 
     test('Toggling a decorator at the end of a 1000-block document', async () => {
       const {editor, locator} = await createTestEditor({

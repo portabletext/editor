@@ -375,6 +375,104 @@ describe('operation channel', () => {
     ])
   })
 
+  test('`complete` listeners run at the captured depth when apply throws', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const completedDepths: Array<number> = []
+
+    subscribeToOperations(
+      editor,
+      (event) => {
+        completedDepths.push(event.applyDepth)
+      },
+      {phase: 'complete'},
+    )
+    subscribeToOperations(
+      editor,
+      () => {
+        throw new Error('before failed')
+      },
+      {phase: 'before'},
+    )
+
+    expect(() =>
+      inTestChange(editor, () => editor.apply(insertTextOperation)),
+    ).toThrow('before failed')
+    expect(completedDepths).toEqual([1])
+    expect(editor.applyDepth).toEqual(0)
+  })
+
+  test('the original apply error wins when a `complete` listener throws', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const originalError = new Error('before failed')
+    const calls: Array<string> = []
+
+    subscribeToOperations(
+      editor,
+      () => {
+        calls.push('first')
+        throw new Error('complete failed')
+      },
+      {phase: 'complete'},
+    )
+    subscribeToOperations(
+      editor,
+      () => {
+        calls.push('second')
+      },
+      {phase: 'complete'},
+    )
+    subscribeToOperations(
+      editor,
+      () => {
+        throw originalError
+      },
+      {phase: 'before'},
+    )
+
+    let thrownError: unknown
+    try {
+      inTestChange(editor, () => editor.apply(insertTextOperation))
+    } catch (error) {
+      thrownError = error
+    }
+
+    expect(thrownError).toBe(originalError)
+    expect(calls).toEqual(['first', 'second'])
+  })
+
+  test('the first `complete` listener error propagates after every listener runs', () => {
+    const editor = createBareEditor(createDefaultValue())
+    const firstError = new Error('first complete failed')
+    const calls: Array<string> = []
+
+    subscribeToOperations(
+      editor,
+      () => {
+        calls.push('first')
+        throw firstError
+      },
+      {phase: 'complete'},
+    )
+    subscribeToOperations(
+      editor,
+      () => {
+        calls.push('second')
+        throw new Error('second complete failed')
+      },
+      {phase: 'complete'},
+    )
+
+    let thrownError: unknown
+    try {
+      inTestChange(editor, () => editor.apply(insertTextOperation))
+    } catch (error) {
+      thrownError = error
+    }
+
+    expect(thrownError).toBe(firstError)
+    expect(calls).toEqual(['first', 'second'])
+  })
+
   test('a normalization bracket nested inside a consumer `normalizeNode` override does not clobber the outer bracket', () => {
     const editor = createBareEditor(createDefaultValue())
     const events: Array<{

@@ -5,6 +5,7 @@ import type {DecoratedRange} from '../editor/range-decorations-machine'
 import type {ApplyContextFrame} from '../engine/core/apply-context'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import type {EngineOperation} from '../engine/interfaces/operation'
+import type {RootChunk} from '../internal-utils/root-chunks'
 import type {
   AnnotationConfig,
   BlockObjectConfig,
@@ -55,6 +56,21 @@ export interface PortableTextEditorEngine extends DOMEditor {
   decoratedRanges: Array<DecoratedRange>
   blockIndexMap: Map<string, number>
   history: History
+  /**
+   * The root value array split into contiguous chunks for rendering.
+   * Maintained per operation by `transformRootChunks` in the
+   * update-value subscriber; chunk object identity changes only when a
+   * chunk's own blocks changed so the React render cache can reuse
+   * elements for untouched chunks.
+   */
+  rootChunks: Array<RootChunk>
+  /**
+   * Child arrays split into render chunks, keyed by serialized array path.
+   * A container render owns its entry until its effect cleanup, and cleanup
+   * may only remove an entry carrying that render instance's owner token.
+   */
+  childChunks: Map<string, Array<RootChunk>>
+  childChunksOwners: Map<string, symbol>
   /**
    * Per-notify pending flags for the segmented selector channels
    * (`EngineSelectorChannel`). Set where the corresponding state mutates
