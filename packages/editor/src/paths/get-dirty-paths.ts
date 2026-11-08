@@ -10,6 +10,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {namedArrayField, walkNodes} from '../traversal/walk-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
 import {nodeSegment} from './node-segment'
@@ -227,36 +228,14 @@ export function getDirtyPaths(
         const lastNodeSegment = nodePath[nodePath.length - 1]
 
         if (isKeyedSegment(lastNodeSegment)) {
-          // Walk the tree to find the siblings array containing the node
-          let currentChildren: Array<Node> = context.value
-
-          for (let i = 0; i < nodePath.length - 1; i++) {
-            const segment = nodePath[i]
-
-            if (typeof segment === 'string') {
-              // Field name segment: descend into the field of the last found node
-              continue
-            }
-
-            const node = isKeyedSegment(segment)
-              ? currentChildren.find((child) => child._key === segment._key)
-              : undefined
-
-            if (!node) {
-              break
-            }
-
-            // Look ahead for a field name to descend into
-            const nextSegment = nodePath[i + 1]
-
-            if (typeof nextSegment === 'string') {
-              const fieldValue = (node as Record<string, unknown>)[nextSegment]
-
-              if (Array.isArray(fieldValue)) {
-                currentChildren = fieldValue as Array<Node>
-              }
-            }
-          }
+          // The node lost its key, so the walk stops at the array that
+          // held it.
+          const walk = walkNodes(context.value, nodePath, namedArrayField)
+          const currentChildren =
+            walk.status === 'missing' &&
+            walk.segmentIndex === nodePath.length - 1
+              ? walk.siblings
+              : []
 
           // Find the keyless node among siblings
           const index = currentChildren.findIndex(

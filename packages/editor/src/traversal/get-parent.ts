@@ -1,8 +1,7 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
-import {parentPath} from '../engine/path/parent-path'
-import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {walkParent} from './walk-path'
 
 /**
  * Get the parent of a node at a given path.
@@ -39,17 +38,7 @@ export function getParent(
     match?: (node: PortableTextBlock, path: Path) => boolean
   },
 ): {node: PortableTextBlock; path: Path} | undefined {
-  if (path.length === 0) {
-    return undefined
-  }
-
-  const parent = parentPath(path)
-
-  if (parent.length === 0) {
-    return undefined
-  }
-
-  const entry = getNode(snapshot, parent)
+  const entry = walkParent(snapshot, path)
 
   if (!entry) {
     return undefined

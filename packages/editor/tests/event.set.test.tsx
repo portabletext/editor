@@ -1,11 +1,16 @@
 import {compileSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
+import {defineSchema, type EditorEmittedEvent} from '../src'
 import type {Path} from '../src/engine/interfaces/path'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 
 describe('event.set', () => {
   test('Scenario: set on a block property', async () => {
@@ -496,3 +501,828 @@ function block(
     style: 'normal',
   }
 }
+
+describe('event.set with a compact path at the root', () => {
+  test('Scenario: `set` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'set', at: [0, 0, 'text'], value: 'baz'})
+    editor.send({
+      type: 'set',
+      at: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+      value: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: 'baz',
+              inverse: {
+                type: 'set',
+                path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+                value: 'bar',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'set',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: 'baz',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'baz',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.set with a compact path inside a callout', () => {
+  test('Scenario: `set` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'set', at: [0, 'content', 0, 0, 'text'], value: 'baz'})
+    editor.send({
+      type: 'set',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+        'text',
+      ],
+      value: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: 'baz',
+              inverse: {
+                type: 'set',
+                path: [
+                  {_key: 'c0'},
+                  'content',
+                  {_key: 'b1'},
+                  'children',
+                  {_key: 's1'},
+                  'text',
+                ],
+                value: 'bar',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'set',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: 'baz',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'baz',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.set with a compact path inside a callout inside a callout', () => {
+  test('Scenario: `set` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [0, 'content', 0, 'content', 0, 0, 'text'],
+      value: 'baz',
+    })
+    editor.send({
+      type: 'set',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+        'text',
+      ],
+      value: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: 'baz',
+              inverse: {
+                type: 'set',
+                path: [
+                  {_key: 'c0'},
+                  'content',
+                  {_key: 'c1'},
+                  'content',
+                  {_key: 'b1'},
+                  'children',
+                  {_key: 's1'},
+                  'text',
+                ],
+                value: 'bar',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'set',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: 'baz',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'baz',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.set with a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: `set` at a compact span path (indexed) changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'set', at: [0, 'body', 0, 0, 'text'], value: 'baz'})
+    editor.send({
+      type: 'set',
+      at: [
+        {_key: 'n0'},
+        'body',
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+        'text',
+      ],
+      value: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: 'baz',
+              inverse: {
+                type: 'set',
+                path: [
+                  {_key: 'n0'},
+                  'body',
+                  {_key: 'b1'},
+                  'children',
+                  {_key: 's1'},
+                  'text',
+                ],
+                value: 'bar',
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'set',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: 'baz',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'baz',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+const propertyDataSchemaDefinition = defineSchema({
+  blockObjects: [
+    {name: 'image', fields: [{name: 'data', type: 'object'}]},
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'image'}],
+        },
+      ],
+    },
+  ],
+})
+
+describe('event.set with a path into an array inside an array at the root', () => {
+  test('Scenario: `set` at a path into an array inside an array changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: propertyDataSchemaDefinition,
+      initialValue: [
+        {_type: 'image', _key: 'i0', data: {matrix: [[{text: 'foo'}]]}},
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [{_key: 'i0'}, 'data', 'matrix', 0, 0, 'text'],
+      value: 'bar',
+    })
+    editor.send({
+      type: 'set',
+      at: [{_key: 'i0'}, 'data', 'caption'],
+      value: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'i0'}, 'data', 'caption'],
+              value: 'baz',
+              inverse: {type: 'unset', path: [{_key: 'i0'}, 'data', 'caption']},
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'set',
+              path: [{_key: 'i0'}, 'data', 'caption'],
+              value: 'baz',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'set',
+            path: [{_key: 'i0'}, 'data', 'caption'],
+            value: 'baz',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'image',
+        _key: 'i0',
+        data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.set with a path into an array inside an array inside a callout', () => {
+  test('Scenario: `set` at a path into an array inside an array changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: propertyDataSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {_type: 'image', _key: 'i0', data: {matrix: [[{text: 'foo'}]]}},
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'set',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'i0'},
+        'data',
+        'matrix',
+        0,
+        0,
+        'text',
+      ],
+      value: 'bar',
+    })
+    editor.send({
+      type: 'set',
+      at: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+      value: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+              value: 'baz',
+              inverse: {
+                type: 'unset',
+                path: [
+                  {_key: 'c0'},
+                  'content',
+                  {_key: 'i0'},
+                  'data',
+                  'caption',
+                ],
+              },
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'set',
+              path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+              value: 'baz',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'set',
+            path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+            value: 'baz',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'image',
+            _key: 'i0',
+            data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})

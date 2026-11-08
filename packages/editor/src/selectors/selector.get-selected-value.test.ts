@@ -7,6 +7,10 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../../test-utils/text-block-depths'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getSelectedValue} from './selector.get-selected-value'
@@ -1346,5 +1350,59 @@ describe(`${getSelectedValue.name} with containers`, () => {
         ],
       },
     ])
+  })
+})
+
+describe(`${getSelectedValue.name} with a compact selection`, () => {
+  test('inside a callout inside a callout, a selection at a compact span path (keyed, missing only the outer container field) slices nothing out of the container', () => {
+    const schema = compileSchema(textBlockDepthsSchemaDefinition)
+    const containers = resolveContainers(schema, textBlockDepthsContainers)
+    const path = [
+      {_key: 'c0'},
+      {_key: 'c1'},
+      'content',
+      {_key: 'b0'},
+      'children',
+      {_key: 's0'},
+    ]
+
+    expect(
+      getSelectedValue(
+        createTestSnapshot({
+          context: {
+            schema,
+            containers,
+            value: [
+              {
+                _type: 'callout',
+                _key: 'c0',
+                content: [
+                  {
+                    _type: 'callout',
+                    _key: 'c1',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'b0',
+                        children: [
+                          {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                          {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                        ],
+                        markDefs: [],
+                        style: 'normal',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+            selection: {
+              anchor: {path, offset: 0},
+              focus: {path, offset: 3},
+            },
+          },
+        }),
+      ),
+    ).toEqual([{_type: 'callout', _key: 'c0', content: []}])
   })
 })

@@ -1,9 +1,7 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
-import {parentPath} from '../engine/path/parent-path'
-import {getChildren} from './get-children'
-import {resolveChildEntryIndex} from './resolve-child-entry-index'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {childEntries, walkedNode, walkPath} from './walk-path'
 
 /**
  * Get a sibling of the node at a given path.
@@ -45,22 +43,15 @@ export function getSibling(
 ): {node: Node; path: Path} | undefined {
   const {direction, match} = options
 
-  if (path.length === 0) {
+  const walk = walkPath(snapshot, path)
+  const node = walkedNode(walk)
+
+  if (walk.status !== 'found' || !node) {
     return undefined
   }
 
-  const parent = parentPath(path)
-  const children = getChildren(snapshot, parent)
-
-  const currentIndex = resolveChildEntryIndex(
-    snapshot.blockIndexMap,
-    children,
-    path,
-  )
-
-  if (currentIndex === -1) {
-    return undefined
-  }
+  const children = childEntries(snapshot.context.value, walk.nodes.at(-2))
+  const currentIndex = node.index
 
   if (!match) {
     const siblingIndex =

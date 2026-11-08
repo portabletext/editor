@@ -9,7 +9,7 @@ import {
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {raise} from '../src/behaviors/behavior.types.action'
@@ -19,6 +19,10 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 
 // `createTestEditors` forwards A's `mutation` events to B, and the batcher
 // flushes those on a 500ms interval, which leaves little of `vi.waitFor`'s
@@ -7482,4 +7486,3362 @@ describe('event.patches', () => {
       ])
     })
   })
+})
+
+describe('event.patches with a compact path at the root', () => {
+  test('Scenario: an incoming `set` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {type: 'set', path: [0, 0, 'text'], value: 'baz', origin: 'remote'},
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `unset` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {type: 'unset', path: [0, 0], origin: 'remote'},
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `insert` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [0, 0],
+          position: 'after',
+          items: [{_type: 'span', _key: 's3', text: 'baz', marks: []}],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `diffMatchPatch` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [0, 0, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobaz'))),
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `setIfMissing` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'setIfMissing',
+          path: [0, 0, 'marks'],
+          value: ['strong'],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `set` patch at a path into an array inside an array changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: propertyDataSchemaDefinition,
+      initialValue: [
+        {_type: 'image', _key: 'i0', data: {matrix: [[{text: 'foo'}]]}},
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'i0'}, 'data', 'matrix', 0, 0, 'text'],
+          value: 'bar',
+          origin: 'remote',
+        },
+        {
+          type: 'set',
+          path: [{_key: 'i0'}, 'data', 'caption'],
+          value: 'baz',
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'remote',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'i0'}, 'data', 'caption'],
+              value: 'baz',
+            },
+          ],
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'image',
+        _key: 'i0',
+        data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.patches with a compact path inside a callout', () => {
+  test('Scenario: an incoming `set` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'set',
+          path: [0, 'content', 0, 0, 'text'],
+          value: 'baz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `unset` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {type: 'unset', path: [0, 'content', 0, 0], origin: 'remote'},
+        {
+          type: 'insert',
+          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `insert` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [0, 'content', 0, 0],
+          position: 'after',
+          items: [{_type: 'span', _key: 's3', text: 'baz', marks: []}],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `diffMatchPatch` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [0, 'content', 0, 0, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobaz'))),
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `setIfMissing` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'setIfMissing',
+          path: [0, 'content', 0, 0, 'marks'],
+          value: ['strong'],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `set` patch at a path into an array inside an array changes nothing', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: propertyDataSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {_type: 'image', _key: 'i0', data: {matrix: [[{text: 'foo'}]]}},
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'i0'},
+            'data',
+            'matrix',
+            0,
+            0,
+            'text',
+          ],
+          value: 'bar',
+          origin: 'remote',
+        },
+        {
+          type: 'set',
+          path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+          value: 'baz',
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'remote',
+          operations: [
+            {
+              type: 'set',
+              path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+              value: 'baz',
+            },
+          ],
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'image',
+            _key: 'i0',
+            data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.patches with a compact path inside a callout inside a callout', () => {
+  test('Scenario: an incoming `set` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'set',
+          path: [0, 'content', 0, 'content', 0, 0, 'text'],
+          value: 'baz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  children: [
+                    {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `unset` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'unset',
+          path: [0, 'content', 0, 'content', 0, 0],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  children: [
+                    {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `insert` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [0, 'content', 0, 'content', 0, 0],
+          position: 'after',
+          items: [{_type: 'span', _key: 's3', text: 'baz', marks: []}],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  children: [
+                    {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `diffMatchPatch` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [0, 'content', 0, 'content', 0, 0, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobaz'))),
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  children: [
+                    {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `setIfMissing` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'setIfMissing',
+          path: [0, 'content', 0, 'content', 0, 0, 'marks'],
+          value: ['strong'],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b2',
+                  children: [
+                    {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('event.patches with a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: an incoming `set` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'set',
+          path: [0, 'body', 0, 0, 'text'],
+          value: 'baz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `unset` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {type: 'unset', path: [0, 'body', 0, 0], origin: 'remote'},
+        {
+          type: 'insert',
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `insert` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [0, 'body', 0, 0],
+          position: 'after',
+          items: [{_type: 'span', _key: 's3', text: 'baz', marks: []}],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `diffMatchPatch` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [0, 'body', 0, 0, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('foo', 'foobaz'))),
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+
+  test('Scenario: an incoming `setIfMissing` patch at a compact span path (indexed) leaves the valid patches around it applied', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'barbaz',
+          origin: 'remote',
+        },
+        {
+          type: 'setIfMissing',
+          path: [0, 'body', 0, 0, 'marks'],
+          value: ['strong'],
+          origin: 'remote',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [
+                {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'barbaz',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            position: 'after',
+            node: {
+              _type: 'block',
+              _key: 'b2',
+              children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+const propertyDataSchemaDefinition = defineSchema({
+  blockObjects: [
+    {name: 'image', fields: [{name: 'data', type: 'object'}]},
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'image'}],
+        },
+      ],
+    },
+  ],
 })

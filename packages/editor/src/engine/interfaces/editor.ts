@@ -39,7 +39,11 @@ export interface BaseEditor {
 
   // Overrideable core methods.
 
-  apply: (operation: EngineOperation) => void
+  /**
+   * Returns whether the operation was applied. An operation whose path
+   * resolves to nothing changes nothing and returns `false`.
+   */
+  apply: (operation: EngineOperation) => boolean
   normalizeNode: (
     entry: [Editor | Node, Path],
     options?: {

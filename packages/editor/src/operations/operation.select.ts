@@ -3,6 +3,7 @@ import {
   applyDeselect,
   applySelect,
   resolveSelection,
+  selectionHasInvalidPath,
 } from '../internal-utils/apply-selection'
 import {getContainer} from '../traversal/get-container'
 import type {OperationImplementation} from './operation.types'
@@ -53,7 +54,10 @@ export const selectOperationImplementation: OperationImplementation<
 
   if (newSelection) {
     applySelect(operation.editor, newSelection)
-  } else {
+  } else if (
+    operation.at === null ||
+    !selectionHasInvalidPath(operation.editor, operation.at)
+  ) {
     applyDeselect(operation.editor)
   }
 

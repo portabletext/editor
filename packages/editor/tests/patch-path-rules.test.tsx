@@ -29,30 +29,15 @@ const knownDifferences = new Set<PatchPathRule['id']>([
   'index-2-insert-replace',
   'index-2-inc',
   'index-2-dec',
-  'index-3-unset',
   'index-3-insert-before',
   'index-3-insert-after',
   'index-3-insert-replace',
-  'index-8-unset',
-  'index-8-insert-before',
-  'index-8-insert-after',
-  'index-8-insert-replace',
-  'absent-unset',
-  'absent-insert-before',
-  'absent-insert-after',
-  'absent-insert-replace',
   'insert-replace-1',
   'insert-replace-3',
   'present-null-setIfMissing',
   'primitive-null-deep-setIfMissing',
   'primitive-[]-deep-unset',
-  'path-number-compact-set',
-  'path-number-compact-unset',
-  'path-number-compact-diffMatchPatch',
   'path-number-explicit-unset',
-  'path-object-compact-set',
-  'path-object-compact-unset',
-  'path-object-compact-diffMatchPatch',
   'path-object-explicit-unset',
   'nested-array-set',
   'nested-array-unset',
@@ -66,16 +51,7 @@ const knownDifferences = new Set<PatchPathRule['id']>([
 const knownConsoleErrors: Partial<
   Record<PatchPathRule['id'], (path: string) => string>
 > = {
-  'index-3-unset': nodeNotFound,
   'index-3-insert-after': pastTheEnd,
-  'index-8-unset': nodeNotFound,
-  'index-8-insert-before': pastTheEnd,
-  'index-8-insert-after': pastTheEnd,
-  'index-8-insert-replace': pastTheEnd,
-  'absent-unset': nodeNotFound,
-  'absent-insert-before': siblingNotFound,
-  'absent-insert-after': siblingNotFound,
-  'absent-insert-replace': siblingNotFound,
 }
 
 const editorRows = patchPathRules
@@ -1465,14 +1441,6 @@ function span(key: string, text: string, marks: Array<string> = []) {
   return {_type: 'span', _key: key, text, marks}
 }
 
-function nodeNotFound(path: string) {
-  return `Cannot apply an "unset" (node removal) operation at path ${path} because the node was not found.`
-}
-
 function pastTheEnd(path: string) {
   return `Cannot apply an "insert" operation at path ${path} because the destination is past the end of the node.`
-}
-
-function siblingNotFound(path: string) {
-  return `Cannot apply an "insert" operation at path ${path} because the sibling was not found.`
 }

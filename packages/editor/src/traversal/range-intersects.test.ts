@@ -1,5 +1,14 @@
+import {compileSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../../test-utils/text-block-depths'
+import {
+  createNodeTraversalTestbed,
+  resolveTestbedContainers,
+} from './node-traversal-testbed'
 import {rangeIntersects} from './range-intersects'
 
 describe(rangeIntersects.name, () => {
@@ -203,5 +212,566 @@ describe(rangeIntersects.name, () => {
       const target = {anchor: inBlock2, focus: inBlock2}
       expect(rangeIntersects(snapshot, range, target)).toBe(false)
     })
+  })
+})
+
+const depthsSchema = compileSchema(textBlockDepthsSchemaDefinition)
+const depthsContainers = resolveTestbedContainers(
+  depthsSchema,
+  textBlockDepthsContainers,
+)
+
+describe(`${rangeIntersects.name} with a compact path to a text block at the root`, () => {
+  test('a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+    }
+    const compactRange = {
+      anchor: {path: [0, 0], offset: 0},
+      focus: {path: [0, 0], offset: 3},
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, [0, 0]),
+      rangeIntersects(snapshot, fullRange, {path: [0, 0], offset: 1}),
+      rangeIntersects(snapshot, fullRange, compactRange),
+      rangeIntersects(snapshot, compactRange, [
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactRange, fullRange),
+    ]).toEqual([false, false, false, false, false])
+  })
+
+  test('a range with one endpoint at a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+    }
+    const compactFocusRange = {
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+      focus: {path: [0, 0], offset: 3},
+    }
+    const compactAnchorRange = {
+      anchor: {path: [0, 0], offset: 0},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, compactFocusRange),
+      rangeIntersects(snapshot, compactFocusRange, [
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactFocusRange, fullRange),
+      rangeIntersects(snapshot, fullRange, compactAnchorRange),
+      rangeIntersects(snapshot, compactAnchorRange, [
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactAnchorRange, fullRange),
+    ]).toEqual([false, false, false, false, false, false])
+  })
+})
+
+describe(`${rangeIntersects.name} with a compact path to a text block inside a callout`, () => {
+  test('a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+    }
+    const compactRange = {
+      anchor: {path: [0, 'content', 0, 0], offset: 0},
+      focus: {path: [0, 'content', 0, 0], offset: 3},
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, [0, 'content', 0, 0]),
+      rangeIntersects(snapshot, fullRange, {
+        path: [0, 'content', 0, 0],
+        offset: 1,
+      }),
+      rangeIntersects(snapshot, fullRange, compactRange),
+      rangeIntersects(snapshot, compactRange, [
+        {_key: 'c0'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactRange, fullRange),
+    ]).toEqual([false, false, false, false, false])
+  })
+
+  test('a range with one endpoint at a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+    }
+    const compactFocusRange = {
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {path: [0, 'content', 0, 0], offset: 3},
+    }
+    const compactAnchorRange = {
+      anchor: {path: [0, 'content', 0, 0], offset: 0},
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, compactFocusRange),
+      rangeIntersects(snapshot, compactFocusRange, [
+        {_key: 'c0'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactFocusRange, fullRange),
+      rangeIntersects(snapshot, fullRange, compactAnchorRange),
+      rangeIntersects(snapshot, compactAnchorRange, [
+        {_key: 'c0'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactAnchorRange, fullRange),
+    ]).toEqual([false, false, false, false, false, false])
+  })
+})
+
+describe(`${rangeIntersects.name} with a compact path to a text block inside a callout inside a callout`, () => {
+  test('a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                      {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+      },
+    }
+    const compactRange = {
+      anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+      focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, [0, 'content', 0, 'content', 0, 0]),
+      rangeIntersects(snapshot, fullRange, {
+        path: [0, 'content', 0, 'content', 0, 0],
+        offset: 1,
+      }),
+      rangeIntersects(snapshot, fullRange, compactRange),
+      rangeIntersects(snapshot, compactRange, [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactRange, fullRange),
+    ]).toEqual([false, false, false, false, false])
+  })
+
+  test('a range with one endpoint at a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                      {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+      },
+    }
+    const compactFocusRange = {
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 0,
+      },
+      focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+    }
+    const compactAnchorRange = {
+      anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+      },
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, compactFocusRange),
+      rangeIntersects(snapshot, compactFocusRange, [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactFocusRange, fullRange),
+      rangeIntersects(snapshot, fullRange, compactAnchorRange),
+      rangeIntersects(snapshot, compactAnchorRange, [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactAnchorRange, fullRange),
+    ]).toEqual([false, false, false, false, false, false])
+  })
+})
+
+describe(`${rangeIntersects.name} with a compact path to a text block inside a field with its own sub-schema`, () => {
+  test('a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+    }
+    const compactRange = {
+      anchor: {path: [0, 'body', 0, 0], offset: 0},
+      focus: {path: [0, 'body', 0, 0], offset: 3},
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, [0, 'body', 0, 0]),
+      rangeIntersects(snapshot, fullRange, {
+        path: [0, 'body', 0, 0],
+        offset: 1,
+      }),
+      rangeIntersects(snapshot, fullRange, compactRange),
+      rangeIntersects(snapshot, compactRange, [
+        {_key: 'n0'},
+        'body',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactRange, fullRange),
+    ]).toEqual([false, false, false, false, false])
+  })
+
+  test('a range with one endpoint at a compact span path (indexed) intersects nothing as a target or as a range', () => {
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    })
+    const fullRange = {
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+    }
+    const compactFocusRange = {
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {path: [0, 'body', 0, 0], offset: 3},
+    }
+    const compactAnchorRange = {
+      anchor: {path: [0, 'body', 0, 0], offset: 0},
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+    }
+
+    expect([
+      rangeIntersects(snapshot, fullRange, compactFocusRange),
+      rangeIntersects(snapshot, compactFocusRange, [
+        {_key: 'n0'},
+        'body',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactFocusRange, fullRange),
+      rangeIntersects(snapshot, fullRange, compactAnchorRange),
+      rangeIntersects(snapshot, compactAnchorRange, [
+        {_key: 'n0'},
+        'body',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ]),
+      rangeIntersects(snapshot, compactAnchorRange, fullRange),
+    ]).toEqual([false, false, false, false, false, false])
   })
 })

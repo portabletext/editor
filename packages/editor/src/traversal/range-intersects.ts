@@ -8,6 +8,7 @@ import type {EditorSelection, EditorSelectionPoint} from '../types/editor'
 import type {Path} from '../types/paths'
 import {comparePoints} from './compare-points'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {walkPath} from './walk-path'
 
 /**
  * Returns true if `range` and the supplied `target` intersect. The target
@@ -23,7 +24,8 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * Pass `snapshot.context.selection` as `range` to ask the question against
  * the editor's current selection.
  *
- * Returns `false` when either `range` or `target` is `null`.
+ * Returns `false` when either `range` or `target` is `null`, or carries a
+ * path that cannot address anything (two node segments side by side).
  *
  * @public
  */
@@ -33,6 +35,20 @@ export function rangeIntersects(
   target: Path | EditorSelectionPoint | EditorSelection,
 ): boolean {
   if (!range || target === null) {
+    return false
+  }
+
+  const paths = [
+    range.anchor.path,
+    range.focus.path,
+    ...(Array.isArray(target)
+      ? [target]
+      : isPoint(target)
+        ? [target.path]
+        : [target.anchor.path, target.focus.path]),
+  ]
+
+  if (paths.some((path) => walkPath(snapshot, path).status === 'invalid')) {
     return false
   }
 

@@ -14,10 +14,19 @@ import type {WithEditorFirstArg} from '../utils/types'
 import {applyOperation} from './apply-operation'
 import {assertChangeOpen, getChangePosition, recordApply} from './change'
 import {createOperationEvent, emitOperationEvent} from './operation-channel'
+import {resolveOperationTarget} from './operation-target'
 import {updateDirtyPaths} from './update-dirty-paths'
 
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   assertChangeOpen(editor, op)
+
+  const target = resolveOperationTarget(editor, op)
+
+  if (!target) {
+    // The operation addresses nothing, so it changes nothing: no listener,
+    // ref, patch or change entry sees it.
+    return false
+  }
 
   const operationEvent = createOperationEvent(editor, op)
   const changePosition = getChangePosition(editor)
@@ -39,7 +48,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
-  applyOperation(editor, op)
+  applyOperation(editor, op, target)
 
   updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
 
@@ -144,4 +153,6 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   // Emitted last so that, when normalization fixes re-enter `apply`, a fix
   // operation's `after` listeners run before the triggering operation's.
   emitOperationEvent(editor.operationListeners.after, operationEvent)
+
+  return true
 }

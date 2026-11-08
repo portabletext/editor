@@ -25,6 +25,7 @@ import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {RegistrableNode} from '../renderers/renderer.types'
 import {pathContains} from '../traversal/path-contains'
+import {walkPath} from '../traversal/walk-path'
 import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -343,7 +344,17 @@ export const editorMachine = setup({
           return context.pendingEvents
         }
 
-        const incomingPaths = event.patches.map((patch) => patch.path)
+        // A path that cannot address anything changes nothing, whatever
+        // the value. A path to a missing node is still compared: an earlier
+        // patch in the same batch can insert the node it names.
+        const editorEngine = context.editorEngine
+        const incomingPaths = event.patches
+          .map((patch) => patch.path)
+          .filter(
+            (path) =>
+              !editorEngine ||
+              walkPath(editorEngine.snapshot, path).status !== 'invalid',
+          )
 
         return context.pendingEvents.filter((pendingEvent) => {
           if (pendingEvent.type !== 'internal.patch') {

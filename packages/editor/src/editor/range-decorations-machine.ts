@@ -20,8 +20,11 @@ import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
 import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
+import {getChildren} from '../traversal/get-children'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
+import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
+import {walkPath} from '../traversal/walk-path'
 import type {
   Decoration,
   DecorationMapping,
@@ -153,7 +156,25 @@ function mergeRangeDecoration(
   ]
 }
 
+/**
+ * Whether a configured decoration range can ever become live. A range with
+ * an endpoint that cannot address anything stays in its source's
+ * configuration, so it unregisters with it, but never renders and is never
+ * mapped. An endpoint at a missing node stays live: the node can still
+ * arrive.
+ */
+function canAddress(
+  snapshot: TraversalSnapshot,
+  range: NonNullable<EditorSelection>,
+): boolean {
+  return (
+    walkPath(snapshot, range.anchor.path).status !== 'invalid' &&
+    walkPath(snapshot, range.focus.path).status !== 'invalid'
+  )
+}
+
 function buildPropDecoratedRangesFromScratch(
+  snapshot: TraversalSnapshot,
   rangeDecorations: Array<RangeDecoration>,
 ): Array<DecoratedRange> {
   const decoratedRanges: Array<DecoratedRange> = []
@@ -165,6 +186,10 @@ function buildPropDecoratedRangesFromScratch(
         rangeDecoration,
         origin: 'local',
       })
+      continue
+    }
+
+    if (!canAddress(snapshot, rangeDecoration.selection)) {
       continue
     }
 
@@ -180,16 +205,23 @@ function buildPropDecoratedRangesFromScratch(
 }
 
 function buildRegisteredDecoratedRangesFromScratch(
+  snapshot: TraversalSnapshot,
   rangeDecorations: Array<Decoration>,
 ): Array<DecoratedRange> {
-  return rangeDecorations.map((rangeDecoration) => {
-    const range = cloneRange(rangeDecoration.range)
-    return {
-      rangeDecoration: {...rangeDecoration, range},
-      kind: 'registered',
-      merge: mergeRangeDecoration,
-      ...range,
+  return rangeDecorations.flatMap((rangeDecoration) => {
+    if (!canAddress(snapshot, rangeDecoration.range)) {
+      return []
     }
+
+    const range = cloneRange(rangeDecoration.range)
+    return [
+      {
+        rangeDecoration: {...rangeDecoration, range},
+        kind: 'registered' as const,
+        merge: mergeRangeDecoration,
+        ...range,
+      },
+    ]
   })
 }
 
@@ -198,16 +230,19 @@ function buildRegisteredDecoratedRangesFromScratch(
  * registered one tombstones by `id`) aren't interchangeable.
  */
 function buildDecoratedRangesFromScratch(
+  snapshot: TraversalSnapshot,
   kind: RangeDecorationSourceKind,
   rangeDecorations: Array<RangeDecoration | Decoration>,
 ): Array<DecoratedRange> {
   if (kind === 'registered') {
     return buildRegisteredDecoratedRangesFromScratch(
+      snapshot,
       rangeDecorations as Array<Decoration>,
     )
   }
 
   return buildPropDecoratedRangesFromScratch(
+    snapshot,
     rangeDecorations as Array<RangeDecoration>,
   )
 }
@@ -258,6 +293,7 @@ function hasDifferentDecorations(
 }
 
 function reconcileRegisteredSource(
+  snapshot: TraversalSnapshot,
   previousRangeDecorations: Array<Decoration>,
   previousDecoratedRanges: Array<DecoratedRange>,
   incoming: Array<Decoration>,
@@ -329,6 +365,10 @@ function reconcileRegisteredSource(
         continue
       }
       deadSelections.delete(rangeDecoration.id)
+    }
+
+    if (!canAddress(snapshot, rangeDecoration.range)) {
+      continue
     }
 
     const range = cloneRange(rangeDecoration.range)
@@ -662,6 +702,7 @@ export const rangeDecorationsMachine = setup({
         }
 
         source.decoratedRanges = buildDecoratedRangesFromScratch(
+          context.editorEngine.snapshot,
           source.kind,
           source.rangeDecorations,
         )
@@ -692,6 +733,7 @@ export const rangeDecorationsMachine = setup({
                 )
               : event.rangeDecorations,
           decoratedRanges: buildDecoratedRangesFromScratch(
+            context.editorEngine.snapshot,
             event.kind,
             event.rangeDecorations,
           ),
@@ -709,6 +751,7 @@ export const rangeDecorationsMachine = setup({
         if (changed) {
           source.rangeDecorations = event.rangeDecorations
           source.decoratedRanges = buildDecoratedRangesFromScratch(
+            context.editorEngine.snapshot,
             source.kind,
             event.rangeDecorations,
           )
@@ -719,6 +762,7 @@ export const rangeDecorationsMachine = setup({
         const previousDecoratedRanges = source.decoratedRanges
 
         const nextDecoratedRanges = reconcileRegisteredSource(
+          context.editorEngine.snapshot,
           previousRangeDecorations,
           previousDecoratedRanges,
           event.rangeDecorations as Array<Decoration>,
@@ -908,15 +952,19 @@ function createDecorate(
       (!firstBlock.style || firstBlock.style === defaultStyle) &&
       !firstBlock.listItem
 
-    if (editorOnlyContainsEmptyParagraph) {
+    const placeholderSpan = editorOnlyContainsEmptyParagraph
+      ? getChildren(editorEngine.snapshot, [{_key: firstBlock._key}]).at(0)
+      : undefined
+
+    if (placeholderSpan) {
       return [
         {
           anchor: {
-            path: [0, 0],
+            path: placeholderSpan.path,
             offset: 0,
           },
           focus: {
-            path: [0, 0],
+            path: placeholderSpan.path,
             offset: 0,
           },
           placeholder: true,

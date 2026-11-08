@@ -20,6 +20,7 @@ import {
   type BehaviorEvent,
   type ExternalBehaviorEvent,
 } from './behavior.types.event'
+import {eventHasInvalidAddress} from './event-has-invalid-address'
 
 function eventCategory(event: BehaviorEvent) {
   return isNativeBehaviorEvent(event)
@@ -90,6 +91,10 @@ export function performEvent({
   sendBack,
   depth,
 }: PerformEventArgs) {
+  if (eventHasInvalidAddress(editor.snapshot, event)) {
+    return
+  }
+
   if (depth > maxEventDepth) {
     console.error(
       new Error(

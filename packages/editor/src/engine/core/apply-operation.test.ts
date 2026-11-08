@@ -919,7 +919,7 @@ describe(applyOperation.name, () => {
       ])
     })
 
-    test('a keyed sibling segment that is not there throws', () => {
+    test('a keyed sibling segment that is not there changes nothing', () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -930,24 +930,22 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      expect(() =>
-        inTestChange(editor, () =>
-          editor.apply({
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', {_key: missingKey}],
-            position: 'after',
-            node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
-          }),
-        ),
-      ).toThrow(
-        `Cannot apply an "insert" operation at path [_key=="k0"].children[_key=="k3"] because the sibling was not found.`,
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: missingKey}],
+          position: 'after',
+          node: {_key: newSpanKey, _type: 'span', text: 'bar', marks: []},
+        }),
       )
+
+      expect(editor.operations).toEqual([])
       expect(editor.snapshot.context.value).toEqual([
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
     })
 
-    test('a keyed child segment that is not there throws on removal', () => {
+    test('a keyed child segment that is not there changes nothing on removal', () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -957,16 +955,14 @@ describe(applyOperation.name, () => {
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
 
-      expect(() =>
-        inTestChange(editor, () =>
-          editor.apply({
-            type: 'unset',
-            path: [{_key: blockKey}, 'children', {_key: missingKey}],
-          }),
-        ),
-      ).toThrow(
-        `Cannot apply an "unset" (node removal) operation at path [_key=="k0"].children[_key=="k3"] because the node was not found.`,
+      inTestChange(editor, () =>
+        editor.apply({
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', {_key: missingKey}],
+        }),
       )
+
+      expect(editor.operations).toEqual([])
       expect(editor.snapshot.context.value).toEqual([
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])

@@ -2,8 +2,8 @@ import {isSpanNode, isTextBlockNode} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
-import {getParent} from './get-parent'
 import type {TraversalSnapshot} from './traversal-snapshot'
+import {ancestorNodes, walkPath} from './walk-path'
 
 /**
  * Determine if a node at the given path is a block.
@@ -16,7 +16,13 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  * @public
  */
 export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
-  const parent = getParent(snapshot, path)
+  const walk = walkPath(snapshot, path)
+
+  if (walk.status === 'invalid') {
+    return false
+  }
+
+  const parent = ancestorNodes(walk, path)?.at(-1)
 
   if (!parent) {
     return true

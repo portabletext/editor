@@ -1,5 +1,5 @@
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import type {BehaviorEvent} from '../src/behaviors'
@@ -15,6 +15,10 @@ import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('Behavior API', () => {
@@ -1109,5 +1113,7472 @@ describe('Behavior API', () => {
         )
       })
     })
+  })
+})
+
+describe('Behavior API with a compact path at the root', () => {
+  test('Scenario: Behaviors never see a raised event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    raise({
+                      type: 'insert.text',
+                      at: [0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    raise({type: 'set', at: [0, 0, 'text'], value: 'baz'}),
+                    raise({
+                      type: 'select',
+                      at: {
+                        anchor: {path: [0, 0], offset: 0},
+                        focus: {path: [0, 0], offset: 0},
+                      },
+                    }),
+                    raise({
+                      type: 'insert.text',
+                      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {type: 'custom.edit'},
+      {
+        type: 'insert.text',
+        at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual(null)
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path inside a callout', () => {
+  test('Scenario: Behaviors never see a raised event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    raise({
+                      type: 'insert.text',
+                      at: [0, 'content', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    raise({
+                      type: 'set',
+                      at: [0, 'content', 0, 0, 'text'],
+                      value: 'baz',
+                    }),
+                    raise({
+                      type: 'select',
+                      at: {
+                        anchor: {path: [0, 'content', 0, 0], offset: 0},
+                        focus: {path: [0, 'content', 0, 0], offset: 0},
+                      },
+                    }),
+                    raise({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'b0'},
+                        'children',
+                        {_key: 's0'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [
+                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {type: 'custom.edit'},
+      {
+        type: 'insert.text',
+        at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual(null)
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path inside a callout inside a callout', () => {
+  test('Scenario: Behaviors never see a raised event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    raise({
+                      type: 'insert.text',
+                      at: [0, 'content', 0, 'content', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    raise({
+                      type: 'set',
+                      at: [0, 'content', 0, 'content', 0, 0, 'text'],
+                      value: 'baz',
+                    }),
+                    raise({
+                      type: 'select',
+                      at: {
+                        anchor: {
+                          path: [0, 'content', 0, 'content', 0, 0],
+                          offset: 0,
+                        },
+                        focus: {
+                          path: [0, 'content', 0, 'content', 0, 0],
+                          offset: 0,
+                        },
+                      },
+                    }),
+                    raise({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'c1'},
+                        'content',
+                        {_key: 'b0'},
+                        'children',
+                        {_key: 's0'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {type: 'custom.edit'},
+      {
+        type: 'insert.text',
+        at: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual(null)
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: Behaviors never see a raised event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    raise({
+                      type: 'insert.text',
+                      at: [0, 'body', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    raise({
+                      type: 'set',
+                      at: [0, 'body', 0, 0, 'text'],
+                      value: 'baz',
+                    }),
+                    raise({
+                      type: 'select',
+                      at: {
+                        anchor: {path: [0, 'body', 0, 0], offset: 0},
+                        focus: {path: [0, 'body', 0, 0], offset: 0},
+                      },
+                    }),
+                    raise({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'n0'},
+                        'body',
+                        {_key: 'b0'},
+                        'children',
+                        {_key: 's0'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [
+                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {type: 'custom.edit'},
+      {
+        type: 'insert.text',
+        at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual(null)
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path at the root', () => {
+  test('Scenario: Behaviors after a `forward` never see the forwarded event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    forward({
+                      type: 'insert.text',
+                      at: [0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+        },
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path inside a callout', () => {
+  test('Scenario: Behaviors after a `forward` never see the forwarded event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    forward({
+                      type: 'insert.text',
+                      at: [0, 'content', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [
+                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+        },
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path inside a callout inside a callout', () => {
+  test('Scenario: Behaviors after a `forward` never see the forwarded event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    forward({
+                      type: 'insert.text',
+                      at: [0, 'content', 0, 'content', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+        },
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: Behaviors after a `forward` never see the forwarded event at a compact path (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    forward({
+                      type: 'insert.text',
+                      at: [0, 'body', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [
+                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+        },
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event at the root', () => {
+  test('Scenario: Behaviors never see a `move.block` with a valid `at` and a compact `to` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'move.block', at: [{_key: 'b1'}], to: [0, 0]})
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a callout', () => {
+  test('Scenario: Behaviors never see a `move.block` with a valid `at` and a compact `to` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+      to: [0, 'content', 0, 0],
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a callout inside a callout', () => {
+  test('Scenario: Behaviors never see a `move.block` with a valid `at` and a compact `to` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content', {_key: 'b1'}],
+      to: [0, 'content', 0, 'content', 0, 0],
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+      ],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a field with its own sub-schema', () => {
+  test('Scenario: Behaviors never see a `move.block` with a valid `at` and a compact `to` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'move.block',
+      at: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+      to: [0, 'body', 0, 0],
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event at the root', () => {
+  test('Scenario: Behaviors never see a `clipboard.paste` at a compact `position` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'baz')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {
+          anchor: {path: [0, 0], offset: 3},
+          focus: {path: [0, 0], offset: 3},
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a callout', () => {
+  test('Scenario: Behaviors never see a `clipboard.paste` at a compact `position` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'baz')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {
+          anchor: {path: [0, 'content', 0, 0], offset: 3},
+          focus: {path: [0, 'content', 0, 0], offset: 3},
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a callout inside a callout', () => {
+  test('Scenario: Behaviors never see a `clipboard.paste` at a compact `position` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'baz')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {
+          anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+          focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+      ],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a field with its own sub-schema', () => {
+  test('Scenario: Behaviors never see a `clipboard.paste` at a compact `position` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'baz')
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {
+          anchor: {path: [0, 'body', 0, 0], offset: 3},
+          focus: {path: [0, 'body', 0, 0], offset: 3},
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event at the root', () => {
+  test('Scenario: Behaviors never see a `drag.drop` with a valid destination and a compact `dragOrigin` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'oo')
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {
+        selection: {
+          anchor: {path: [0, 0], offset: 1},
+          focus: {path: [0, 0], offset: 3},
+        },
+      },
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a callout', () => {
+  test('Scenario: Behaviors never see a `drag.drop` with a valid destination and a compact `dragOrigin` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'oo')
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {
+        selection: {
+          anchor: {path: [0, 'content', 0, 0], offset: 1},
+          focus: {path: [0, 'content', 0, 0], offset: 3},
+        },
+      },
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a callout inside a callout', () => {
+  test('Scenario: Behaviors never see a `drag.drop` with a valid destination and a compact `dragOrigin` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'oo')
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {
+        selection: {
+          anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 1},
+          focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+        },
+      },
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b1'},
+        'children',
+        {_key: 's1'},
+      ],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact address on a native or synthetic event inside a field with its own sub-schema', () => {
+  test('Scenario: Behaviors never see a `drag.drop` with a valid destination and a compact `dragOrigin` (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'oo')
+    editor.send({
+      type: 'drag.drop',
+      originEvent: {dataTransfer},
+      dragOrigin: {
+        selection: {
+          anchor: {path: [0, 'body', 0, 0], offset: 1},
+          focus: {path: [0, 'body', 0, 0], offset: 3},
+        },
+      },
+      position: {
+        block: 'end',
+        isEditor: false,
+        isContainer: false,
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'insert.text',
+        at: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact native origin at the root', () => {
+  test('Scenario: `deserialization.success` whose native origin is at a compact path changes nothing (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'deserialization.success',
+      mimeType: 'text/plain',
+      data: [
+        {
+          _type: 'block',
+          _key: 'b9',
+          children: [{_type: 'span', _key: 's9', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      originEvent: {
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer: new DataTransfer()},
+        position: {
+          selection: {
+            anchor: {path: [0, 0], offset: 0},
+            focus: {path: [0, 0], offset: 3},
+            backward: false,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+          focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+        },
+      },
+      {
+        type: 'insert.text',
+        at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 6},
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact native origin inside a callout', () => {
+  test('Scenario: `deserialization.success` whose native origin is at a compact path changes nothing (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'deserialization.success',
+      mimeType: 'text/plain',
+      data: [
+        {
+          _type: 'block',
+          _key: 'b9',
+          children: [{_type: 'span', _key: 's9', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      originEvent: {
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer: new DataTransfer()},
+        position: {
+          selection: {
+            anchor: {path: [0, 'content', 0, 0], offset: 0},
+            focus: {path: [0, 'content', 0, 0], offset: 3},
+            backward: false,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+          },
+        },
+      },
+      {
+        type: 'insert.text',
+        at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 6,
+      },
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact native origin inside a callout inside a callout', () => {
+  test('Scenario: `deserialization.success` whose native origin is at a compact path changes nothing (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'deserialization.success',
+      mimeType: 'text/plain',
+      data: [
+        {
+          _type: 'block',
+          _key: 'b9',
+          children: [{_type: 'span', _key: 's9', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      originEvent: {
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer: new DataTransfer()},
+        position: {
+          selection: {
+            anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+            focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+            backward: false,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+          },
+        },
+      },
+      {
+        type: 'insert.text',
+        at: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 6,
+      },
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API with a compact native origin inside a field with its own sub-schema', () => {
+  test('Scenario: `deserialization.success` whose native origin is at a compact path changes nothing (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const seenEvents: Array<BehaviorEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: '*',
+                actions: [
+                  ({event}) => [
+                    effect(() => {
+                      seenEvents.push(event)
+                    }),
+                    forward(event),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+
+    editor.send({
+      type: 'deserialization.success',
+      mimeType: 'text/plain',
+      data: [
+        {
+          _type: 'block',
+          _key: 'b9',
+          children: [{_type: 'span', _key: 's9', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      originEvent: {
+        type: 'clipboard.paste',
+        originEvent: {dataTransfer: new DataTransfer()},
+        position: {
+          selection: {
+            anchor: {path: [0, 'body', 0, 0], offset: 0},
+            focus: {path: [0, 'body', 0, 0], offset: 3},
+            backward: false,
+          },
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 3,
+      text: 'baz',
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(seenEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 0,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+          },
+        },
+      },
+      {
+        type: 'insert.text',
+        at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+        text: 'baz',
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 6,
+      },
+      backward: false,
+    })
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path at the root', () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({type: 'set', at: [0, 0, 'text'], value: 'baz'}),
+                    execute({
+                      type: 'insert.text',
+                      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout', () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'set',
+                      at: [0, 'content', 0, 0, 'text'],
+                      value: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'set',
+                      at: [0, 'content', 0, 'content', 0, 0, 'text'],
+                      value: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'c1'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'set',
+                      at: [0, 'body', 0, 0, 'text'],
+                      value: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'n0'},
+                        'body',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path at the root', () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({type: 'unset', at: [0, 0]}),
+                    execute({
+                      type: 'insert.text',
+                      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout', () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({type: 'unset', at: [0, 'content', 0, 0]}),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'unset',
+                      at: [0, 'content', 0, 'content', 0, 0],
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'c1'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({type: 'unset', at: [0, 'body', 0, 0]}),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'n0'},
+                        'body',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path at the root', () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert',
+                      at: [0, 0],
+                      value: {
+                        _key: 'i0',
+                        _type: 'span',
+                        text: 'baz',
+                        marks: [],
+                      },
+                      position: 'after',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout', () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert',
+                      at: [0, 'content', 0, 0],
+                      value: {
+                        _key: 'i0',
+                        _type: 'span',
+                        text: 'baz',
+                        marks: [],
+                      },
+                      position: 'after',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert',
+                      at: [0, 'content', 0, 'content', 0, 0],
+                      value: {
+                        _key: 'i0',
+                        _type: 'span',
+                        text: 'baz',
+                        marks: [],
+                      },
+                      position: 'after',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'c1'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert',
+                      at: [0, 'body', 0, 0],
+                      value: {
+                        _key: 'i0',
+                        _type: 'span',
+                        text: 'baz',
+                        marks: [],
+                      },
+                      position: 'after',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'n0'},
+                        'body',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path at the root', () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert.text',
+                      at: [0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout', () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert.text',
+                      at: [0, 'content', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert.text',
+                      at: [0, 'content', 0, 'content', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'c1'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'insert.text',
+                      at: [0, 'body', 0, 0],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'n0'},
+                        'body',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path at the root', () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'remove.text',
+                      at: [0, 0],
+                      offset: 1,
+                      text: 'oo',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [{_key: 'b1'}, 'children', {_key: 's1'}],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout', () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'remove.text',
+                      at: [0, 'content', 0, 0],
+                      offset: 1,
+                      text: 'oo',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+                {
+                  _type: 'block',
+                  _key: 'b1',
+                  children: [
+                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'remove.text',
+                      at: [0, 'content', 0, 'content', 0, 0],
+                      offset: 1,
+                      text: 'oo',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'c0'},
+                        'content',
+                        {_key: 'c1'},
+                        'content',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
+  })
+})
+
+describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+    const consoleError = vi.spyOn(console, 'error')
+    const consoleWarn = vi.spyOn(console, 'warn')
+    onTestFinished(() => {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    })
+    const events: Array<EditorEmittedEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: 'b1',
+              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin nodes={textBlockDepthsContainers} />
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'custom.edit',
+                actions: [
+                  () => [
+                    execute({
+                      type: 'remove.text',
+                      at: [0, 'body', 0, 0],
+                      offset: 1,
+                      text: 'oo',
+                    }),
+                    execute({
+                      type: 'insert.text',
+                      at: [
+                        {_key: 'n0'},
+                        'body',
+                        {_key: 'b1'},
+                        'children',
+                        {_key: 's1'},
+                      ],
+                      offset: 3,
+                      text: 'baz',
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'change') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'custom.edit'})
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          operations: [
+            {
+              type: 'insert.text',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+              ],
+              offset: 3,
+              text: 'baz',
+            },
+          ],
+          patches: [
+            {
+              origin: 'local',
+              type: 'diffMatchPatch',
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b1'},
+                'children',
+                {_key: 's1'},
+                'text',
+              ],
+              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+            },
+          ],
+        },
+        {
+          type: 'patch',
+          patch: {
+            origin: 'local',
+            type: 'diffMatchPatch',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
+          },
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    expect(consoleWarn.mock.calls).toEqual([])
   })
 })

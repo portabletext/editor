@@ -1,3 +1,4 @@
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {createActor} from 'xstate'
@@ -10,7 +11,7 @@ import {rangeDecorationsMachine} from './range-decorations-machine'
  * A minimal stand-in for `PortableTextEditorEngine`: only the fields the
  * machine's actions and `transformRange` (for `engine operation` events)
  * actually touch. `decorate.fn` itself is never invoked, so `schema`/`value`
- * only need to satisfy path/range comparisons, not real decoration.
+ * only need to let decoration ranges be resolved, not real decoration.
  */
 function createEditorEngineStub(
   blockKey: string,
@@ -21,6 +22,7 @@ function createEditorEngineStub(
     decoratedRanges: [],
     snapshot: {
       context: {
+        schema: compileSchema(defineSchema({})),
         value: [
           {
             _type: 'block',

@@ -14,7 +14,12 @@ import {
   type EditorSelection,
   type RangeDecoration,
 } from '../src'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
 import {
   getSelectionBeforeText,
   getTextSelection,
@@ -2457,3 +2462,2749 @@ function RegisteredDecorationsProbe(props: {decorations: Array<Decoration>}) {
   )
   return null
 }
+
+describe('registerDecorations with a compact range at the root', () => {
+  test('Scenario: a collapsed compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 0], offset: 1},
+            focus: {path: [0, 0], offset: 1},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+            focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 0,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 1,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+          focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 4},
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 0], offset: 0},
+            focus: {path: [0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+            focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 0,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 1,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+          focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 4},
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact anchor only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 0], offset: 0},
+            focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+            focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 0,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 1,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+          focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 4},
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact focus only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b0',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+            focus: {path: [0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+            focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 0,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 1,
+                },
+                focus: {
+                  path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+          focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 4},
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+})
+
+describe('registerDecorations with a compact range inside a callout', () => {
+  test('Scenario: a collapsed compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'content', 0, 0], offset: 1},
+            focus: {path: [0, 'content', 0, 0], offset: 1},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'content', 0, 0], offset: 0},
+            focus: {path: [0, 'content', 0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact anchor only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'content', 0, 0], offset: 0},
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact focus only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {path: [0, 'content', 0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+})
+
+describe('registerDecorations with a compact range inside a callout inside a callout', () => {
+  test('Scenario: a collapsed compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 1},
+            focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 1},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+            focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact anchor only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'content', 0, 'content', 0, 0], offset: 0},
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact focus only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'b0',
+                  children: [
+                    {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  ],
+                  markDefs: [],
+                  style: 'normal',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {path: [0, 'content', 0, 'content', 0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'c0'},
+                'content',
+                {_key: 'c1'},
+                'content',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [
+        {_key: 'c0'},
+        'content',
+        {_key: 'c1'},
+        'content',
+        {_key: 'b0'},
+        'children',
+        {_key: 's0'},
+      ],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'c0'},
+                    'content',
+                    {_key: 'c1'},
+                    'content',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+})
+
+describe('registerDecorations with a compact range inside a field with its own sub-schema', () => {
+  test('Scenario: a collapsed compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'body', 0, 0], offset: 1},
+            focus: {path: [0, 'body', 0, 0], offset: 1},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'body', 0, 0], offset: 0},
+            focus: {path: [0, 'body', 0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact anchor only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {path: [0, 'body', 0, 0], offset: 0},
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+
+  test('Scenario: a expanded, compact focus only, compact decoration at a compact span path (indexed) never renders, is never mapped, and unregisters with its registration', async () => {
+    const onMapped = vi.fn()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: textBlockDepthsSchemaDefinition,
+      initialValue: [
+        {
+          _type: 'note',
+          _key: 'n0',
+          body: [
+            {
+              _type: 'block',
+              _key: 'b0',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={textBlockDepthsContainers} />,
+    })
+
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'compact',
+          type: 'range',
+          render: (props) => (
+            <span data-testid="compact">{props.children}</span>
+          ),
+          range: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {path: [0, 'body', 0, 0], offset: 3},
+          },
+        },
+        {
+          id: 'full',
+          type: 'range',
+          render: (props) => <span data-testid="full">{props.children}</span>,
+          range: {
+            anchor: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 0,
+            },
+            focus: {
+              path: [
+                {_key: 'n0'},
+                'body',
+                {_key: 'b0'},
+                'children',
+                {_key: 's0'},
+              ],
+              offset: 3,
+            },
+          },
+        },
+      ],
+      onMapped,
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+      offset: 0,
+      text: 'X',
+    })
+
+    await vi.waitFor(() => {
+      expect(onMapped.mock.calls).toEqual([
+        [
+          [
+            {
+              id: 'full',
+              previousRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 0,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 3,
+                },
+              },
+              newRange: {
+                anchor: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 1,
+                },
+                focus: {
+                  path: [
+                    {_key: 'n0'},
+                    'body',
+                    {_key: 'b0'},
+                    'children',
+                    {_key: 's0'},
+                  ],
+                  offset: 4,
+                },
+              },
+              contentTouched: false,
+              origin: 'local',
+            },
+          ],
+        ],
+      ])
+    })
+    await vi.waitFor(() => {
+      expect([
+        document.querySelectorAll('[data-testid="compact"]').length,
+        document.querySelectorAll('[data-testid="full"]').length,
+      ]).toEqual([0, 1])
+    })
+    expect(registration.getDecorations()).toEqual([
+      {
+        id: 'full',
+        range: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 4,
+          },
+        },
+      },
+    ])
+
+    registration.unregister()
+
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('[data-testid="full"]').length).toEqual(
+        0,
+      )
+    })
+    expect(registration.getDecorations()).toEqual([])
+  })
+})
