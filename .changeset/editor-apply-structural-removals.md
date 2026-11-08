@@ -4,8 +4,10 @@
 
 fix: apply removals from structural corrections
 
-The editor removes array entries that are not objects, including strings, numbers, booleans and `null`, anywhere in the document when they arrive by remote patch. Non-object entries inside container, table and nested container arrays are also removed when they arrive through `initialValue` or `update value`.
+The editor removes string, number, boolean, `null` and `undefined` entries from Portable Text arrays when remote patches introduce them. This includes root blocks and entries nested in container and table-cell arrays. Objects that lack a usable `_key` receive one while keeping their array position.
 
-The traversal functions now treat an array entry that is not an object as if it were not there. `getNode` and `hasNode` return `undefined` and `false` for a path to or through one. `getChildren`, `getNodes` and `getSibling` skip it, and `getAncestors`, `getAncestor` and `getParent` return their missing result through it. None of them throw on such an entry.
+The same nested container and table-cell entries are removed when they arrive through `initialValue` or `update value`. Non-object span entries in a root text block are repaired when introduced by a patch, but are not covered when supplied through `initialValue` or `update value`.
 
-A root `null` supplied through `initialValue` or `update value` is not removed by this fix.
+Public node lookups skip non-object array entries instead of throwing. Numeric paths continue to address raw array positions, while sibling and ranged traversal results omit the non-object entries.
+
+A non-object used as the entire `initialValue` or `update value`, and arrays used as array entries, are not covered by this fix.

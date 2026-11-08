@@ -52,11 +52,7 @@ export function getSibling(
   const parent = parentPath(path)
   const children = getChildren(snapshot, parent)
 
-  const currentIndex = resolveChildEntryIndex(
-    snapshot.blockIndexMap,
-    children,
-    path,
-  )
+  const currentIndex = resolveChildEntryIndex(snapshot, children, path)
 
   if (currentIndex === -1) {
     return undefined

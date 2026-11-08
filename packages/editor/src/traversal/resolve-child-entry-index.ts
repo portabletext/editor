@@ -2,11 +2,14 @@ import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {getNode} from './get-node'
+import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
  * The index of the child addressed by `childPath`'s last segment within
  * `children` (entries as resolved by `getChildren`). Numeric last
- * segments are literal, bounds-checked indices. Keyed segments resolve
+ * segments address raw array positions and are mapped onto the filtered
+ * entries by node identity. Keyed segments resolve
  * through `blockIndexMap` when the path is fully keyed (the map's id
  * space), verified against the entry at the mapped position, with a
  * linear scan fallback for misses, disagreements, and paths the map
@@ -21,22 +24,15 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * arrays mid-mutation, where no entries exist.
  */
 export function resolveChildEntryIndex(
-  blockIndexMap: ReadonlyMap<string, number>,
+  snapshot: TraversalSnapshot,
   children: ReadonlyArray<{node: Node; path: Path}>,
   childPath: Path,
 ): number {
   const lastSegment = childPath[childPath.length - 1]
 
   if (typeof lastSegment === 'number') {
-    const fastPathSegment = children[lastSegment]?.path.at(-1)
-    if (
-      fastPathSegment !== undefined &&
-      (typeof fastPathSegment !== 'number' || fastPathSegment === lastSegment)
-    ) {
-      return lastSegment
-    }
-
-    return children.findIndex((child) => child.path.at(-1) === lastSegment)
+    const node = getNode(snapshot, childPath)?.node
+    return node ? children.findIndex((child) => child.node === node) : -1
   }
 
   if (!isKeyedSegment(lastSegment)) {
@@ -57,7 +53,7 @@ export function resolveChildEntryIndex(
   }
 
   if (fullyKeyed) {
-    const mappedIndex = blockIndexMap.get(serializePath(childPath))
+    const mappedIndex = snapshot.blockIndexMap.get(serializePath(childPath))
     if (
       mappedIndex !== undefined &&
       children[mappedIndex]?.node._key === lastSegment._key

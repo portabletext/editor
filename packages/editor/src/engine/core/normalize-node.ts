@@ -20,8 +20,7 @@ import {
 import {debug} from '../../internal-utils/debug'
 import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
-import {getChildren} from '../../traversal/get-children'
-import {getNodeChildren} from '../../traversal/get-children'
+import {getChildren, getNodeChildren} from '../../traversal/get-children'
 import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
@@ -33,11 +32,7 @@ import {isAncestorPath} from '../path/is-ancestor-path'
 import type {WithEditorFirstArg} from '../utils/types'
 import {hasRemoteFrame} from './apply-context'
 import {getSetInverse} from './get-set-inverse'
-import {
-  __dirtyPathRepairStats,
-  takeChildArrayRepairMark,
-  updateDirtyPaths,
-} from './update-dirty-paths'
+import {takeChildArrayRepairMark, updateDirtyPaths} from './update-dirty-paths'
 
 export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   editor,
@@ -46,7 +41,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   const [node, path] = entry
 
   if (takeChildArrayRepairMark(editor, path)) {
-    repairChildArray(editor, node, path)
+    repairChildArrays(editor, node, path)
     updateDirtyPaths(editor, [path])
     return
   }
@@ -167,10 +162,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 }
 
-function repairChildArray(editor: Editor, node: unknown, path: Path) {
-  repairChildArrays(editor, node, path)
-}
-
 function repairChildArrays(
   editor: Editor,
   node: unknown,
@@ -200,7 +191,6 @@ function repairChildArrays(
   let removedBefore = 0
   for (let index = 0; index < result.children.length; index++) {
     const child = result.children[index]
-    __dirtyPathRepairStats.scans++
     if (typeof child !== 'object' || child === null) {
       nonObjectIndices.push(index)
       removedBefore++

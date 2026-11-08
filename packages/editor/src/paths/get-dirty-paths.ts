@@ -34,6 +34,7 @@ function collectDescendantPaths(
   parentPath: Path,
   paths: Array<Path>,
   parent?: RegisteredContainer,
+  repairPathOverride?: Path,
 ): void {
   if (typeof node !== 'object' || node === null) {
     return
@@ -53,7 +54,7 @@ function collectDescendantPaths(
           paths.push([...parentPath, 'children', i])
         } else {
           context.markChildArraysForRepair?.(
-            nearestStableNodePath(context, parentPath),
+            repairPathOverride ?? stableRepairPath(parentPath),
           )
         }
       }
@@ -98,13 +99,20 @@ function collectDescendantPaths(
         !hasUsableKey(child._key)
       ) {
         context.markChildArraysForRepair?.(
-          nearestStableNodePath(context, parentPath),
+          repairPathOverride ?? stableRepairPath(parentPath),
         )
         continue
       }
       const childPath: Path = [...parentPath, arrayField.name, i]
       paths.push(childPath)
-      collectDescendantPaths(context, child, childPath, paths, resolved)
+      collectDescendantPaths(
+        context,
+        child,
+        childPath,
+        paths,
+        resolved,
+        repairPathOverride,
+      )
     }
     for (let i = fieldValue.length - 1; i >= 0; i--) {
       if (typeof fieldValue[i] !== 'object' || fieldValue[i] === null) {
@@ -234,6 +242,7 @@ export function getDirtyPaths(
             parentRegistration && 'field' in parentRegistration
               ? parentRegistration
               : undefined
+          let needsChildArrayRepair = false
           for (let i = 0; i < op.value.length; i++) {
             const child = op.value[i]
             if (
@@ -241,9 +250,7 @@ export function getDirtyPaths(
               child === null ||
               !hasUsableKey((child as {_key?: unknown})._key)
             ) {
-              context.markChildArraysForRepair?.(
-                nearestStableNodePath(context, nodePath),
-              )
+              needsChildArrayRepair = true
               continue
             }
             const childPath: Path = [
@@ -255,6 +262,11 @@ export function getDirtyPaths(
 
             const childNode = child as Node
             collectDescendantPaths(context, childNode, childPath, levels, seed)
+          }
+          if (needsChildArrayRepair) {
+            context.markChildArraysForRepair?.(
+              nearestStableNodePath(context, nodePath),
+            )
           }
           for (let i = op.value.length - 1; i >= 0; i--) {
             if (typeof op.value[i] !== 'object' || op.value[i] === null) {
@@ -330,9 +342,11 @@ export function getDirtyPaths(
           )
 
           if (index !== -1) {
-            const parent = nearestStableNodePath(context, nodePath.slice(0, -1))
-            context.markChildArraysForRepair?.(parent)
-            return pathLevels(parent)
+            const parentPath = nodePath.slice(0, -1)
+            context.markChildArraysForRepair?.(
+              nearestStableNodePath(context, parentPath),
+            )
+            return pathLevels(parentPath)
           }
         }
       }
@@ -366,12 +380,8 @@ export function getDirtyPaths(
         return levels
       }
 
-      const nodePath = hasUsableKey(node?._key)
-        ? [...path.slice(0, -1), {_key: node._key}]
-        : nearestStableNodePath(context, path.slice(0, -1))
-      if (hasUsableKey(node?._key)) {
-        levels.push(nodePath)
-      }
+      const nodePath = [...path.slice(0, -1), {_key: node._key}]
+      levels.push(nodePath)
 
       if (isSpan(context, node)) {
         return levels
@@ -396,6 +406,7 @@ export function getDirtyPaths(
         parentRegistration && 'field' in parentRegistration
           ? parentRegistration
           : undefined,
+        nearestStableNodePath(context, path.slice(0, -1)),
       )
 
       return levels
@@ -450,4 +461,21 @@ function nearestStableNodePath(
     }
   }
   return stablePath.slice(0, stableLength)
+}
+
+function stableRepairPath(path: Path): Path {
+  const stablePath: Path = []
+  for (const segment of path) {
+    if (
+      typeof segment === 'number' ||
+      (isKeyedSegment(segment) && !hasUsableKey(segment._key))
+    ) {
+      break
+    }
+    stablePath.push(segment)
+  }
+  while (typeof stablePath.at(-1) === 'string') {
+    stablePath.pop()
+  }
+  return stablePath
 }

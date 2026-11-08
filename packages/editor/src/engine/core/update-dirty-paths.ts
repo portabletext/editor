@@ -6,10 +6,6 @@ import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 
-const repairChildArrayPaths = new WeakMap<Editor, Map<string, Path>>()
-
-export const __dirtyPathRepairStats = {scans: 0}
-
 export function transformChildArrayRepairMarks(
   editor: Editor,
   operation: EngineOperation,
@@ -22,43 +18,40 @@ export function transformChildArrayRepairMarks(
   ) {
     return
   }
-  const paths = repairChildArrayPaths.get(editor)
-  if (!paths) {
+  const result = resolveNode(editor.snapshot, operation.path.slice(0, -1))
+  if (result.status !== 'found') {
     return
   }
-  const nodePath = operation.path.slice(0, -1)
-  for (const [key, path] of [...paths]) {
-    __dirtyPathRepairStats.scans++
-    if (
-      path.length < nodePath.length ||
-      serializePath(path.slice(0, nodePath.length)) !== serializePath(nodePath)
-    ) {
+  const oldNodePath = result.entry.path
+  const affected = editor.childArrayRepairPathPrefixes.get(
+    serializePath(oldNodePath),
+  )
+  if (!affected) {
+    return
+  }
+  const newNodePath = [...oldNodePath.slice(0, -1), {_key: operation.value}]
+  for (const markKey of [...affected]) {
+    const path = editor.childArrayRepairPaths.get(markKey)
+    if (!path) {
       continue
     }
-    paths.delete(key)
-    const transformed = [...path]
-    transformed[nodePath.length - 1] = {_key: operation.value}
-    paths.set(serializePath(transformed), transformed)
+    deleteRepairPath(editor, markKey, path)
+    addRepairPath(editor, [...newNodePath, ...path.slice(oldNodePath.length)])
   }
 }
 
 export function markChildArraysForRepair(editor: Editor, path: Path): void {
-  const paths = repairChildArrayPaths.get(editor) ?? new Map<string, Path>()
-  paths.set(serializePath(path), path)
-  repairChildArrayPaths.set(editor, paths)
+  addRepairPath(editor, path)
 }
 
 export function takeChildArrayRepairMark(editor: Editor, path: Path): boolean {
-  const paths = repairChildArrayPaths.get(editor)
-  if (!paths) {
+  const key = serializePath(path)
+  const markedPath = editor.childArrayRepairPaths.get(key)
+  if (!markedPath) {
     return false
   }
-  const key = serializePath(path)
-  const marked = paths.delete(key)
-  if (paths.size === 0) {
-    repairChildArrayPaths.delete(editor)
-  }
-  return marked
+  deleteRepairPath(editor, key, markedPath)
+  return true
 }
 
 export function updateDirtyPaths(editor: Editor, newDirtyPaths: Path[]): void {
@@ -80,6 +73,43 @@ export function updateDirtyPaths(editor: Editor, newDirtyPaths: Path[]): void {
     editor.dirtyPathKeys.add(key)
     editor.dirtyPaths.push(stablePath)
   }
+}
+
+function addRepairPath(editor: Editor, path: Path): void {
+  const key = serializePath(path)
+  if (editor.childArrayRepairPaths.has(key)) {
+    return
+  }
+  editor.childArrayRepairPaths.set(key, path)
+  for (const prefix of nodePathPrefixes(path)) {
+    const prefixKey = serializePath(prefix)
+    const marks =
+      editor.childArrayRepairPathPrefixes.get(prefixKey) ?? new Set()
+    marks.add(key)
+    editor.childArrayRepairPathPrefixes.set(prefixKey, marks)
+  }
+}
+
+function deleteRepairPath(editor: Editor, key: string, path: Path): void {
+  editor.childArrayRepairPaths.delete(key)
+  for (const prefix of nodePathPrefixes(path)) {
+    const prefixKey = serializePath(prefix)
+    const marks = editor.childArrayRepairPathPrefixes.get(prefixKey)
+    marks?.delete(key)
+    if (marks?.size === 0) {
+      editor.childArrayRepairPathPrefixes.delete(prefixKey)
+    }
+  }
+}
+
+function nodePathPrefixes(path: Path): Path[] {
+  const prefixes: Path[] = [[]]
+  for (let index = 0; index < path.length; index++) {
+    if (typeof path[index] !== 'string') {
+      prefixes.push(path.slice(0, index + 1))
+    }
+  }
+  return prefixes
 }
 
 function stableDirtyPath(editor: Editor, path: Path): Path | undefined {

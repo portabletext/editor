@@ -317,7 +317,7 @@ function boundaryChildIndex(
   }
 
   const resolvedIndex = resolveChildEntryIndex(
-    snapshot.blockIndexMap,
+    snapshot,
     children,
     boundary.slice(0, childPathLength),
   )

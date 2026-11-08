@@ -4,6 +4,7 @@ import {expect, test} from 'vitest'
 import {createBareEditor} from '../../../test-utils/create-bare-editor.test-util'
 import {invalidateVerifiedGroups} from '../../editor/subscriber.update-value'
 import {withRemoteChanges} from '../../engine-plugins/engine-plugin.remote-changes'
+import {setNormalizing} from '../editor/set-normalizing'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {EngineOperation} from '../interfaces/operation'
 import {normalizeNode} from './normalize-node'
@@ -74,7 +75,17 @@ test('a non-object root entry emits only an unset', () => {
     ],
     keyGenerator,
   )
-  editor.snapshot.context.value.push('oops' as never)
+  setNormalizing(editor, false)
+  editor.apply({
+    type: 'set',
+    path: [],
+    value: [...editor.snapshot.context.value, 'oops'] as never,
+  })
+  setNormalizing(editor, true)
+  editor.dirtyPaths = []
+  editor.dirtyPathKeys.clear()
+  editor.childArrayRepairPaths.clear()
+  editor.childArrayRepairPathPrefixes.clear()
   const operations: Array<EngineOperation> = []
   const apply = editor.apply
   editor.apply = (operation) => {
@@ -115,8 +126,20 @@ test('a non-object child emits only an unset', () => {
     },
   ] as Array<PortableTextBlock>
   const editor = createBareEditor(value, keyGenerator)
-  const block = value[0] as {children: Array<unknown>}
-  block.children.unshift(42)
+  setNormalizing(editor, false)
+  editor.apply({
+    type: 'set',
+    path: [{_key: blockKey}, 'children'],
+    value: [
+      42,
+      {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+    ] as never,
+  })
+  setNormalizing(editor, true)
+  editor.dirtyPaths = []
+  editor.dirtyPathKeys.clear()
+  editor.childArrayRepairPaths.clear()
+  editor.childArrayRepairPathPrefixes.clear()
   const operations: Array<EngineOperation> = []
   const apply = editor.apply
   editor.apply = (operation) => {

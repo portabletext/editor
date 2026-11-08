@@ -24,6 +24,8 @@ export interface BaseEditor {
   }
   dirtyPaths: Path[]
   dirtyPathKeys: Set<string>
+  childArrayRepairPaths: Map<string, Path>
+  childArrayRepairPathPrefixes: Map<string, Set<string>>
   flushing: boolean
   normalizing: boolean
   pathRefs: Set<PathRef>

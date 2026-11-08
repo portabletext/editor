@@ -88,6 +88,118 @@ describe(findNearestSpans.name, () => {
     })
   })
 
+  test('Scenario: Numeric paths resolve keyed nodes in a container after a non-object', () => {
+    const codeBlock = {
+      ...testbed.codeBlock,
+      code: [testbed.codeLine1, null, testbed.codeLine2],
+    }
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [
+          testbed.textBlock1,
+          testbed.image,
+          testbed.textBlock2,
+          codeBlock,
+          testbed.table,
+        ] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(
+      findNearestSpans(snapshot, [{_key: testbed.codeBlock._key}, 'code', 2]),
+    ).toEqual({
+      previousSpan: {
+        node: testbed.codeSpan1,
+        path: [
+          {_key: testbed.codeBlock._key},
+          'code',
+          {_key: testbed.codeLine1._key},
+          'children',
+          {_key: testbed.codeSpan1._key},
+        ],
+      },
+      nextSpan: {
+        node: testbed.cellSpan1,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell1._key},
+          'content',
+          {_key: testbed.cellBlock1._key},
+          'children',
+          {_key: testbed.cellSpan1._key},
+        ],
+      },
+    })
+  })
+
+  test('Scenario: Numeric paths resolve keyed nodes in a table cell after a non-object', () => {
+    const cell1 = {
+      ...testbed.cell1,
+      content: [testbed.cellBlock1, null, testbed.cellBlock2],
+    }
+    const row1 = {...testbed.row1, cells: [cell1, testbed.cell2]}
+    const table = {...testbed.table, rows: [row1, testbed.row2]}
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [
+          testbed.textBlock1,
+          testbed.image,
+          testbed.textBlock2,
+          testbed.codeBlock,
+          table,
+        ] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(
+      findNearestSpans(snapshot, [
+        {_key: testbed.table._key},
+        'rows',
+        {_key: testbed.row1._key},
+        'cells',
+        {_key: testbed.cell1._key},
+        'content',
+        2,
+      ]),
+    ).toEqual({
+      previousSpan: {
+        node: testbed.cellSpan1,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell1._key},
+          'content',
+          {_key: testbed.cellBlock1._key},
+          'children',
+          {_key: testbed.cellSpan1._key},
+        ],
+      },
+      nextSpan: {
+        node: testbed.cellSpan3,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell2._key},
+          'content',
+          {_key: testbed.cellBlock3._key},
+          'children',
+          {_key: testbed.cellSpan3._key},
+        ],
+      },
+    })
+  })
+
   test('Scenario: Removing a nested cell block reaches across container boundaries', () => {
     expect(
       findNearestSpans(testbed.snapshot, [

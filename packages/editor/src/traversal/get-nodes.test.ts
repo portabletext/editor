@@ -108,6 +108,18 @@ describe(getNodes.name, () => {
       },
       blockIndexMap: new Map<string, number>(),
     }
+    const keyedSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [
+          testbed.textBlock1,
+          null,
+          testbed.image,
+          testbed.textBlock2,
+        ] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
 
     expect(getSibling(siblingSnapshot, [0], {direction: 'next'})).toEqual({
       node: second,
@@ -121,10 +133,165 @@ describe(getNodes.name, () => {
     expect([...getNodes(snapshot, {from: [2], to: [2]})]).toEqual([
       {node: second, path: [2]},
     ])
+    expect(getSibling(keyedSnapshot, [2], {direction: 'previous'})).toEqual({
+      node: testbed.textBlock1,
+      path: [{_key: testbed.textBlock1._key}],
+    })
+    expect(getSibling(keyedSnapshot, [2], {direction: 'next'})).toEqual({
+      node: testbed.textBlock2,
+      path: [{_key: testbed.textBlock2._key}],
+    })
+    expect([...getNodes(keyedSnapshot, {from: [2], to: [2]})]).toEqual([
+      {node: testbed.image, path: [{_key: testbed.image._key}]},
+    ])
     expect([...getNodes(snapshot, {from: [0], to: [2]})]).toEqual([
       {node: first, path: [0]},
       {node: second, path: [2]},
     ])
+  })
+
+  test('numeric boundaries map keyed nodes after non-objects in nested arrays', () => {
+    const codeBlock = {
+      ...testbed.codeBlock,
+      code: [
+        testbed.codeLine1,
+        null,
+        testbed.codeLine2,
+        {...testbed.codeLine1, _key: 'after-code-line'},
+      ],
+    }
+    const cell1 = {
+      ...testbed.cell1,
+      content: [
+        testbed.cellBlock1,
+        null,
+        testbed.cellBlock2,
+        testbed.cellBlock3,
+      ],
+    }
+    const row1 = {...testbed.row1, cells: [cell1, testbed.cell2]}
+    const table = {...testbed.table, rows: [row1, testbed.row2]}
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [
+          testbed.textBlock1,
+          testbed.image,
+          testbed.textBlock2,
+          codeBlock,
+          table,
+        ] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    const containerPath = [{_key: testbed.codeBlock._key}, 'code', 2] as const
+    const cellPath = [
+      {_key: testbed.table._key},
+      'rows',
+      {_key: testbed.row1._key},
+      'cells',
+      {_key: testbed.cell1._key},
+      'content',
+      2,
+    ] as const
+
+    expect({
+      containerPrevious: getSibling(snapshot, [...containerPath], {
+        direction: 'previous',
+      }),
+      containerRange: [
+        ...getNodes(snapshot, {
+          at: [{_key: testbed.codeBlock._key}],
+          from: [...containerPath],
+          to: [...containerPath],
+        }),
+      ],
+      containerNext: getSibling(snapshot, [...containerPath], {
+        direction: 'next',
+      }),
+      cellPrevious: getSibling(snapshot, [...cellPath], {
+        direction: 'previous',
+      }),
+      cellNext: getSibling(snapshot, [...cellPath], {direction: 'next'}),
+      cellRange: [
+        ...getNodes(snapshot, {
+          at: [
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+          ],
+          from: [...cellPath],
+          to: [...cellPath],
+        }),
+      ],
+    }).toEqual({
+      containerPrevious: {
+        node: testbed.codeLine1,
+        path: [
+          {_key: testbed.codeBlock._key},
+          'code',
+          {_key: testbed.codeLine1._key},
+        ],
+      },
+      containerRange: [
+        {
+          node: testbed.codeLine2,
+          path: [
+            {_key: testbed.codeBlock._key},
+            'code',
+            {_key: testbed.codeLine2._key},
+          ],
+        },
+      ],
+      containerNext: {
+        node: {...testbed.codeLine1, _key: 'after-code-line'},
+        path: [
+          {_key: testbed.codeBlock._key},
+          'code',
+          {_key: 'after-code-line'},
+        ],
+      },
+      cellPrevious: {
+        node: testbed.cellBlock1,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell1._key},
+          'content',
+          {_key: testbed.cellBlock1._key},
+        ],
+      },
+      cellNext: {
+        node: testbed.cellBlock3,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell1._key},
+          'content',
+          {_key: testbed.cellBlock3._key},
+        ],
+      },
+      cellRange: [
+        {
+          node: testbed.cellBlock2,
+          path: [
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+            'content',
+            {_key: testbed.cellBlock2._key},
+          ],
+        },
+      ],
+    })
   })
 
   test('paths are correct', () => {

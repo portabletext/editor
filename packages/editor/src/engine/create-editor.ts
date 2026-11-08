@@ -25,6 +25,8 @@ export const createEditor = (): Editor => {
     marks: null,
     dirtyPaths: [],
     dirtyPathKeys: new Set(),
+    childArrayRepairPaths: new Map(),
+    childArrayRepairPathPrefixes: new Map(),
     flushing: false,
     normalizing: true,
     pathRefs: new Set(),

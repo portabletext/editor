@@ -151,6 +151,16 @@ test.each([
       {...nestedBlock, _key: 'generated-k2'},
       {...block, _key: 'last'},
     ],
+    expectedPatches: [
+      {type: 'unset', path: [2, 'children', 1], origin: 'local'},
+      {type: 'unset', path: [2, 'children', 1], origin: 'local'},
+      {
+        type: 'set',
+        path: [2, '_key'],
+        value: 'generated-k2',
+        origin: 'local',
+      },
+    ],
   },
   {
     name: 'a remotely inserted keyless block repairs after a later insert',
@@ -186,6 +196,16 @@ test.each([
       {...block, _key: 'inserted'},
       {...nestedBlock, _key: 'generated-k2'},
       {...block, _key: 'last'},
+    ],
+    expectedPatches: [
+      {type: 'unset', path: [2, 'children', 1], origin: 'local'},
+      {type: 'unset', path: [2, 'children', 1], origin: 'local'},
+      {
+        type: 'set',
+        path: [2, '_key'],
+        value: 'generated-k2',
+        origin: 'local',
+      },
     ],
   },
   {
@@ -234,6 +254,24 @@ test.each([
           {...nestedBlock, _key: 'generated-k2'},
           {...block, _key: 'last'},
         ],
+      },
+    ],
+    expectedPatches: [
+      {
+        type: 'unset',
+        path: [{_key: containerKey}, 'content', 2, 'children', 1],
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: containerKey}, 'content', 2, 'children', 1],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [{_key: containerKey}, 'content', 2, '_key'],
+        value: 'generated-k2',
+        origin: 'local',
       },
     ],
   },
@@ -297,6 +335,53 @@ test.each([
             ],
           },
         ],
+      },
+    ],
+    expectedPatches: [
+      {
+        type: 'unset',
+        path: [
+          {_key: tableKey},
+          'rows',
+          {_key: rowKey},
+          'cells',
+          {_key: cellKey},
+          'content',
+          0,
+          'children',
+          0,
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [
+          {_key: tableKey},
+          'rows',
+          {_key: rowKey},
+          'cells',
+          {_key: cellKey},
+          'content',
+          0,
+          'children',
+          0,
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [
+          {_key: tableKey},
+          'rows',
+          {_key: rowKey},
+          'cells',
+          {_key: cellKey},
+          'content',
+          0,
+          '_key',
+        ],
+        value: 'generated-k2',
+        origin: 'local',
       },
     ],
   },
@@ -845,7 +930,13 @@ test.each([
       {type: 'unset' as const, path: [1], origin: 'local' as const},
     ],
   })),
-])(
+] satisfies Array<{
+  name: string
+  initialValue: unknown
+  event: unknown
+  expectedValue: unknown
+  expectedPatches: Array<Patch>
+}>)(
   'Scenario: $name is removed',
   async ({initialValue, event, expectedValue, expectedPatches}) => {
     const patches: Array<Patch> = []
@@ -873,9 +964,7 @@ test.each([
       expect(editor.getSnapshot().context.value).toEqual(expectedValue),
     )
     await expect.element(locator).toBeVisible()
-    if (expectedPatches) {
-      await vi.waitFor(() => expect(patches).toEqual(expectedPatches))
-    }
+    await vi.waitFor(() => expect(patches).toEqual(expectedPatches))
   },
 )
 
@@ -1075,6 +1164,335 @@ test('Scenario: a keyed container set followed by an insert through a numeric pa
     ]),
   )
 })
+
+test.each([
+  {
+    name: 'root block',
+    initialValue: [{...block, _key: 'b'}],
+    childrenPath: [{_key: 'b'}, 'children'],
+    keyPath: [0, '_key'],
+    expectedValue: [{...block, _key: 'b2'}],
+    expectedPatches: [
+      {
+        type: 'unset',
+        path: [{_key: 'b2'}, 'children', 1],
+        origin: 'local',
+      },
+    ],
+  },
+  {
+    name: 'container block',
+    initialValue: [
+      {_type: 'container', _key: 'c', content: [{...block, _key: 'b'}]},
+    ],
+    childrenPath: [{_key: 'c'}, 'content', {_key: 'b'}, 'children'],
+    keyPath: [0, 'content', 0, '_key'],
+    expectedValue: [
+      {_type: 'container', _key: 'c', content: [{...block, _key: 'b2'}]},
+    ],
+    expectedPatches: [
+      {
+        type: 'unset',
+        path: [{_key: 'c'}, 'content', {_key: 'b2'}, 'children', 1],
+        origin: 'local',
+      },
+    ],
+  },
+  {
+    name: 'table-cell block',
+    initialValue: [
+      {
+        _type: 'table',
+        _key: 't',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r',
+            cells: [
+              {_type: 'cell', _key: 'l', content: [{...block, _key: 'b'}]},
+            ],
+          },
+        ],
+      },
+    ],
+    childrenPath: [
+      {_key: 't'},
+      'rows',
+      {_key: 'r'},
+      'cells',
+      {_key: 'l'},
+      'content',
+      {_key: 'b'},
+      'children',
+    ],
+    keyPath: [
+      {_key: 't'},
+      'rows',
+      0,
+      'cells',
+      {_key: 'l'},
+      'content',
+      0,
+      '_key',
+    ],
+    expectedValue: [
+      {
+        _type: 'table',
+        _key: 't',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r',
+            cells: [
+              {_type: 'cell', _key: 'l', content: [{...block, _key: 'b2'}]},
+            ],
+          },
+        ],
+      },
+    ],
+    expectedPatches: [
+      {
+        type: 'unset',
+        path: [
+          {_key: 't'},
+          'rows',
+          {_key: 'r'},
+          'cells',
+          {_key: 'l'},
+          'content',
+          {_key: 'b2'},
+          'children',
+          1,
+        ],
+        origin: 'local',
+      },
+    ],
+  },
+])(
+  'Scenario: a children set followed by a numeric or mixed re-key repairs a $name',
+  async ({
+    initialValue,
+    childrenPath,
+    keyPath,
+    expectedValue,
+    expectedPatches,
+  }) => {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(editorEvent) => {
+              if (editorEvent.type === 'patch') {
+                patches.push(editorEvent.patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={[container, table, row, cell]} />
+        </>
+      ),
+      initialValue: initialValue as never,
+      keyGenerator: createTestKeyGenerator('generated-'),
+      schemaDefinition,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'set',
+          path: childrenPath,
+          value: [...block.children, null],
+          origin: 'remote',
+        },
+        {type: 'set', path: keyPath, value: 'b2', origin: 'remote'},
+      ],
+      snapshot: undefined,
+    } as never)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(patches).toEqual(expectedPatches)
+    })
+  },
+)
+
+test.each([
+  {
+    name: 'root',
+    initialValue: [{...block, _key: 'b'}],
+    insertPath: [{_key: 'b'}],
+    expectedValue: [
+      {...block, _key: 'b'},
+      {...block, _key: 'generated-k2', children: [{...block.children[0]}]},
+    ],
+    expectedPatches: [
+      {
+        type: 'set',
+        path: [1, '_key'],
+        value: 'generated-k2',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'generated-k2'}, 'children', 1],
+        origin: 'local',
+      },
+    ],
+  },
+  {
+    name: 'container',
+    initialValue: [
+      {_type: 'container', _key: 'c', content: [{...block, _key: 'b'}]},
+    ],
+    insertPath: [{_key: 'c'}, 'content', {_key: 'b'}],
+    expectedValue: [
+      {
+        _type: 'container',
+        _key: 'c',
+        content: [
+          {...block, _key: 'b'},
+          {...block, _key: 'generated-k2', children: [{...block.children[0]}]},
+        ],
+      },
+    ],
+    expectedPatches: [
+      {
+        type: 'set',
+        path: [{_key: 'c'}, 'content', 1, '_key'],
+        value: 'generated-k2',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'c'}, 'content', {_key: 'generated-k2'}, 'children', 1],
+        origin: 'local',
+      },
+    ],
+  },
+  {
+    name: 'table cell',
+    initialValue: [
+      {
+        _type: 'table',
+        _key: 't',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r',
+            cells: [
+              {_type: 'cell', _key: 'l', content: [{...block, _key: 'b'}]},
+            ],
+          },
+        ],
+      },
+    ],
+    insertPath: [
+      {_key: 't'},
+      'rows',
+      {_key: 'r'},
+      'cells',
+      {_key: 'l'},
+      'content',
+      {_key: 'b'},
+    ],
+    expectedValue: [
+      {
+        _type: 'table',
+        _key: 't',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'l',
+                content: [
+                  {...block, _key: 'b'},
+                  {
+                    ...block,
+                    _key: 'generated-k2',
+                    children: [{...block.children[0]}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    expectedPatches: [
+      {
+        type: 'set',
+        path: [
+          {_key: 't'},
+          'rows',
+          {_key: 'r'},
+          'cells',
+          {_key: 'l'},
+          'content',
+          1,
+          '_key',
+        ],
+        value: 'generated-k2',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [
+          {_key: 't'},
+          'rows',
+          {_key: 'r'},
+          'cells',
+          {_key: 'l'},
+          'content',
+          {_key: 'generated-k2'},
+          'children',
+          1,
+        ],
+        origin: 'local',
+      },
+    ],
+  },
+])(
+  'Scenario: a duplicate-keyed $name insert removes its non-object child',
+  async ({initialValue, insertPath, expectedValue, expectedPatches}) => {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      children: (
+        <>
+          <EventListenerPlugin
+            on={(editorEvent) => {
+              if (editorEvent.type === 'patch') {
+                patches.push(editorEvent.patch)
+              }
+            }}
+          />
+          <NodePlugin nodes={[container, table, row, cell]} />
+        </>
+      ),
+      initialValue: initialValue as never,
+      keyGenerator: createTestKeyGenerator('generated-'),
+      schemaDefinition,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: insertPath,
+          position: 'after',
+          items: [{...block, _key: 'b', children: [...block.children, null]}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    } as never)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(patches).toEqual(expectedPatches)
+    })
+  },
+)
 
 test.each([
   {
