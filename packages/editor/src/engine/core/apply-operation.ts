@@ -270,7 +270,7 @@ export function applyOperation(
         // The path addresses an element of a sidecar array (e.g.
         // `span.marks[0]` or `block.markDefs[_key==...]`) rather than a
         // structural child. Removing it never affects the selection, so
-        // apply it as a plain data patch on the root block.
+        // apply it as a plain data patch on the node the walk reached.
         if (!op.inverse && !hasRemoteFrame(editor.applyContext)) {
           if (typeof path[path.length - 1] === 'string') {
             const previousValue = getValue(editor.snapshot.context.value, path)
