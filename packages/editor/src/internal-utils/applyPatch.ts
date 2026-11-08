@@ -254,13 +254,18 @@ function insertPatch(
 
   for (let index = 0; index < items.length; index++) {
     if (index === 0) {
-      changed =
-        editor.apply({
-          type: 'insert',
-          path: patch.path,
-          node: items[index] as Node,
-          position: position === 'after' ? 'after' : 'before',
-        }) || changed
+      changed = editor.apply({
+        type: 'insert',
+        path: patch.path,
+        node: items[index] as Node,
+        position: position === 'after' ? 'after' : 'before',
+      })
+
+      if (!changed) {
+        // The anchor addresses nothing. Later items anchor on the previous
+        // item's key, which could match an unrelated existing sibling.
+        return false
+      }
     } else {
       const previousItem = items[index - 1]! as Record<string, unknown>
       const previousKey =
