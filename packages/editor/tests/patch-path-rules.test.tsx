@@ -138,8 +138,8 @@ describe.each([
           }
         })
 
-        // The marker rides at the end of the same event, so its removal shows
-        // the batch was processed to its end.
+        // A row patch that changes nothing has nothing to wait for, so wait
+        // for the marker removal that follows it in the same batch.
         editor.send({
           type: 'patches',
           patches: [
@@ -1384,8 +1384,8 @@ async function sendRemotePatches(
     }
   })
 
-  // The marker rides at the end of the same event, so its removal shows the
-  // batch was processed to its end.
+  // A patch that changes nothing has nothing to wait for, so wait for the
+  // marker removal that follows it in the same batch.
   editor.send({
     type: 'patches',
     patches: [
