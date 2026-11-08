@@ -8,6 +8,7 @@ import {
   useId,
   useMemo,
   type ClipboardEvent,
+  type ClipboardEventHandler,
   type FocusEventHandler,
   type KeyboardEvent,
   type TextareaHTMLAttributes,
@@ -53,13 +54,124 @@ import {validateSelectionMachine} from './validate-selection-machine'
  */
 export type PortableTextEditableProps = Omit<
   TextareaHTMLAttributes<HTMLDivElement>,
-  'onPaste' | 'onCopy' | 'onBeforeInput'
+  'onPaste' | 'onCopy' | 'onCut' | 'onBeforeInput'
 > & {
   ref?: React.Ref<HTMLDivElement>
+  /**
+   * @deprecated Register a `keyboard.keydown` Behavior instead. Custom hotkeys
+   * can use any Behavior actions.
+   *
+   * @example
+   * ```tsx
+   * import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+   * import {BehaviorPlugin} from '@portabletext/editor/plugins'
+   * import {createKeyboardShortcut} from '@portabletext/keyboard-shortcuts'
+   *
+   * const highlightShortcut = createKeyboardShortcut({
+   *   default: [{key: 'H', ctrl: true, shift: true}],
+   *   apple: [{key: 'H', meta: true, shift: true}],
+   * })
+   *
+   * // Requires a 'highlight' decorator in the schema
+   * const toggleHighlight = defineBehavior({
+   *   on: 'keyboard.keydown',
+   *   guard: ({event}) => highlightShortcut.guard(event.originEvent),
+   *   actions: [() => [raise({type: 'decorator.toggle', decorator: 'highlight'})]],
+   * })
+   *
+   * const plugin = <BehaviorPlugin behaviors={[toggleHighlight]} />
+   * ```
+   */
   hotkeys?: HotkeyOptions
   onBeforeInput?: (event: InputEvent) => void
+  /**
+   * @deprecated Register a `clipboard.paste` Behavior instead. For asynchronous
+   * work, use `effect(async ({send}) => { ...; send({type: 'insert.blocks', ...}) })`.
+   * To observe a paste and let it continue, return both `effect(...)` and
+   * `forward(event)`.
+   *
+   * @example
+   * ```tsx
+   * import {defineBehavior, raise} from '@portabletext/editor/behaviors'
+   * import {BehaviorPlugin} from '@portabletext/editor/plugins'
+   *
+   * const insertPastedBlocks = defineBehavior({
+   *   on: 'clipboard.paste',
+   *   guard: ({event}) => {
+   *     const data = event.originEvent.dataTransfer.getData('application/x-my-app')
+   *     return data ? {blocks: JSON.parse(data)} : false
+   *   },
+   *   actions: [
+   *     (_, {blocks}) => [
+   *       raise({type: 'insert.blocks', blocks, placement: 'auto'}),
+   *     ],
+   *   ],
+   * })
+   *
+   * const plugin = <BehaviorPlugin behaviors={[insertPastedBlocks]} />
+   * ```
+   */
   onPaste?: OnPasteFn
+  /**
+   * @deprecated Register a `clipboard.copy` Behavior instead. Calling
+   * `forward(event)` keeps the editor's own copy, while leaving it out replaces it.
+   *
+   * @example
+   * ```tsx
+   * import {defineBehavior, effect, forward} from '@portabletext/editor/behaviors'
+   * import {BehaviorPlugin} from '@portabletext/editor/plugins'
+   * import {getSelectedValue, isSelectionExpanded} from '@portabletext/editor/selectors'
+   *
+   * const copyWithAppData = defineBehavior({
+   *   on: 'clipboard.copy',
+   *   guard: ({snapshot}) => isSelectionExpanded(snapshot),
+   *   actions: [
+   *     ({event, snapshot}) => [
+   *       effect(() => {
+   *         event.originEvent.dataTransfer.setData(
+   *           'application/x-my-app',
+   *           JSON.stringify(getSelectedValue(snapshot)),
+   *         )
+   *       }),
+   *       forward(event),
+   *     ],
+   *   ],
+   * })
+   *
+   * const plugin = <BehaviorPlugin behaviors={[copyWithAppData]} />
+   * ```
+   */
   onCopy?: OnCopyFn
+  /**
+   * @deprecated Register a `clipboard.cut` Behavior instead. Calling
+   * `forward(event)` keeps the editor's own cut, while leaving it out replaces it.
+   *
+   * @example
+   * ```tsx
+   * import {defineBehavior, effect, forward} from '@portabletext/editor/behaviors'
+   * import {BehaviorPlugin} from '@portabletext/editor/plugins'
+   * import {getSelectedValue, isSelectionExpanded} from '@portabletext/editor/selectors'
+   *
+   * const cutWithAppData = defineBehavior({
+   *   on: 'clipboard.cut',
+   *   guard: ({snapshot}) => isSelectionExpanded(snapshot),
+   *   actions: [
+   *     ({event, snapshot}) => [
+   *       effect(() => {
+   *         event.originEvent.dataTransfer.setData(
+   *           'application/x-my-app',
+   *           JSON.stringify(getSelectedValue(snapshot)),
+   *         )
+   *       }),
+   *       forward(event),
+   *     ],
+   *   ],
+   * })
+   *
+   * const plugin = <BehaviorPlugin behaviors={[cutWithAppData]} />
+   * ```
+   */
+  onCut?: ClipboardEventHandler<HTMLDivElement> | undefined
   rangeDecorations?: RangeDecoration[]
   renderPlaceholder?: RenderPlaceholderFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
