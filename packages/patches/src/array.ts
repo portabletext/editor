@@ -14,7 +14,14 @@ function findTargetIndex(array: any[], pathSegment: PathSegment | undefined) {
     return index >= 0 && index < array.length ? index : false
   }
   if (isKeyedSegment(pathSegment)) {
-    const index = array.findIndex((item) => item._key === pathSegment._key)
+    // Sanity skips items that are not objects, such as `null`, when it looks
+    // an item up by `_key`.
+    const index = array.findIndex(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        item._key === pathSegment._key,
+    )
     return index === -1 ? false : index
   }
   return false
