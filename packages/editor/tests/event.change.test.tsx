@@ -459,6 +459,57 @@ describe('event.change', () => {
         repaired: (blockKey, spanKey) => [textBlock(blockKey, spanKey, 'foo')],
         corrected: true,
       },
+      {
+        name: 'a `null` entry',
+        leaf: (blockKey, spanKey) => [
+          textBlock(blockKey, spanKey, 'foo'),
+          null,
+        ],
+        repaired: (blockKey, spanKey) => [textBlock(blockKey, spanKey, 'foo')],
+        corrected: true,
+      },
+      {
+        name: 'empty children, a missing key, a duplicate key and a non-object entry together',
+        leaf: (blockKey, spanKey) => [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: `${spanKey}-b`, text: 'foo', marks: []},
+            ],
+          },
+          textBlock(blockKey, `${spanKey}-c`, 'bar'),
+          'baz',
+        ],
+        repaired: (blockKey, spanKey) => [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'm-k0', text: '', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'm-k1',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: `${spanKey}-b`, text: 'foo', marks: []},
+            ],
+          },
+          textBlock('m-k2', `${spanKey}-c`, 'bar'),
+        ],
+        corrected: true,
+      },
     ]
 
     test.each(

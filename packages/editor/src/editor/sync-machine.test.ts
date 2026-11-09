@@ -97,6 +97,53 @@ describe('sync machine', () => {
     expect(remoteFrames).toEqual([{kind: 'remote', source: 'update-value'}])
   })
 
+  test('a `load` before the first value sync tags its operations `load`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, schema} = createTestEngine(keyGenerator)
+
+    const remoteFrames: Array<ApplyContextFrame> = []
+    subscribeToOperations(editor, (event) => {
+      for (const frame of event.context) {
+        if (frame.kind === 'remote') {
+          remoteFrames.push(frame)
+        }
+      }
+    })
+
+    const actor = createActor(syncMachine, {
+      input: {
+        initialValue: undefined,
+        keyGenerator,
+        schema,
+        readOnly: false,
+        editorEngine: editor,
+      },
+    })
+    // A plugin's mount effect sends `load` before the provider starts the
+    // actor.
+    actor.send({
+      type: 'load',
+      value: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 's1', text: 'foo', marks: []}],
+        },
+      ],
+    })
+    actor.start()
+
+    await vi.waitFor(() => {
+      expect(remoteFrames.length).toBeGreaterThan(0)
+    })
+
+    expect(new Set(remoteFrames.map((frame) => JSON.stringify(frame)))).toEqual(
+      new Set([JSON.stringify({kind: 'remote', source: 'load'})]),
+    )
+  })
+
   test('`findOldBlock` resolves a moved block without scanning the value', () => {
     const keyGenerator = createTestKeyGenerator()
     const schema = compileSchema(defineSchema({}))
