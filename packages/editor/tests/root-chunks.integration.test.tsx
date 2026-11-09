@@ -20,6 +20,7 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getChildren} from '../src/traversal/get-children'
+import {getNode} from '../src/traversal/get-node'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 
 const schemaDefinition = defineSchema({
@@ -641,9 +642,12 @@ describe('root chunks against real engine editing', () => {
         const flattened = engineRef.current!.rootChunks.flatMap(
           (chunk) => chunk.blocks,
         )
-        // Reference equality per block: the chunks must hold the
-        // value's actual block objects, not stale copies.
+        // The chunks must hold the value's actual block objects, not
+        // stale copies.
         expect(flattened, label).toEqual(value())
+        flattened.forEach((chunkBlock, index) => {
+          expect(chunkBlock, `${label} at ${index}`).toBe(value()[index])
+        })
       })
     }
 
@@ -715,6 +719,263 @@ describe('root chunks against real engine editing', () => {
     await vi.waitFor(() => expect(value().length).toBe(blockCountBeforeDelete))
     await expectChunksMatchValue('after undoing the delete')
   }, 120000)
+
+  test('Scenario: A remote duplicate followed by a keyed edit renders at the root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const engineRef = React.createRef<PortableTextEditorEngine>()
+    const blocks = Array.from({length: 250}, () => fooBlock(keyGenerator))
+    const target = blocks[0]!
+    const spanPath = [
+      {_key: target._key},
+      'children',
+      {_key: target.children[0]!._key},
+    ] as Path
+    const {editor, locator} = await createTestEditor({
+      children: <InternalEditorEngineRefPlugin ref={engineRef} />,
+      initialValue: blocks,
+      keyGenerator,
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert([structuredClone(target)], 'after', [{_key: blocks[149]!._key}]),
+        set('bar', [...spanPath, 'text']),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() =>
+      expect(
+        locator.element().querySelectorAll('[data-pt-block="text"]').length,
+      ).toEqual(251),
+    )
+    expect(
+      getNode(engineRef.current!.snapshot, [{_key: target._key}])?.node,
+    ).toEqual({
+      _type: 'block',
+      _key: target._key,
+      children: [
+        {_type: 'span', _key: target.children[0]!._key, text: 'bar', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    })
+    await vi.waitFor(() =>
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="text"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(
+        Array.from({length: 251}, (_, index) => (index === 0 ? 'bar' : 'foo')),
+      ),
+    )
+  })
+
+  test('Scenario: A duplicate root ancestor followed by a deep keyed edit renders at a callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const engineRef = React.createRef<PortableTextEditorEngine>()
+    const target = fooBlock(keyGenerator)
+    const {wrap} = depths[1]!
+    const first = wrap([target], keyGenerator)
+    const roots = [
+      first.value[0]!,
+      ...Array.from(
+        {length: 249},
+        () => wrap([fooBlock(keyGenerator)], keyGenerator).value[0]!,
+      ),
+    ]
+    const targetPath = [...first.prefix, {_key: target._key}] as Path
+    const spanPath = [
+      ...targetPath,
+      'children',
+      {_key: target.children[0]!._key},
+    ] as Path
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <>
+          <NodePlugin nodes={containers} />
+          <InternalEditorEngineRefPlugin ref={engineRef} />
+        </>
+      ),
+      initialValue: roots,
+      keyGenerator,
+      schemaDefinition,
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert([structuredClone(roots[0]!)], 'after', [
+          {_key: roots[149]!._key},
+        ]),
+        set('bar', [...spanPath, 'text']),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() =>
+      expect(
+        locator.element().querySelectorAll('[data-pt-block="text"]').length,
+      ).toEqual(251),
+    )
+    expect(getNode(engineRef.current!.snapshot, targetPath)?.node).toEqual({
+      _type: 'block',
+      _key: target._key,
+      children: [
+        {_type: 'span', _key: target.children[0]!._key, text: 'bar', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    })
+    await vi.waitFor(() =>
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="text"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(
+        Array.from({length: 251}, (_, index) => (index === 0 ? 'bar' : 'foo')),
+      ),
+    )
+  })
+
+  test('Scenario: A duplicate root ancestor followed by a deep keyed edit renders at a nested callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const engineRef = React.createRef<PortableTextEditorEngine>()
+    const target = fooBlock(keyGenerator)
+    const {wrap} = depths[2]!
+    const first = wrap([target], keyGenerator)
+    const roots = [
+      first.value[0]!,
+      ...Array.from(
+        {length: 249},
+        () => wrap([fooBlock(keyGenerator)], keyGenerator).value[0]!,
+      ),
+    ]
+    const targetPath = [...first.prefix, {_key: target._key}] as Path
+    const spanPath = [
+      ...targetPath,
+      'children',
+      {_key: target.children[0]!._key},
+    ] as Path
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <>
+          <NodePlugin nodes={containers} />
+          <InternalEditorEngineRefPlugin ref={engineRef} />
+        </>
+      ),
+      initialValue: roots,
+      keyGenerator,
+      schemaDefinition,
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert([structuredClone(roots[0]!)], 'after', [
+          {_key: roots[149]!._key},
+        ]),
+        set('bar', [...spanPath, 'text']),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() =>
+      expect(
+        locator.element().querySelectorAll('[data-pt-block="text"]').length,
+      ).toEqual(251),
+    )
+    expect(getNode(engineRef.current!.snapshot, targetPath)?.node).toEqual({
+      _type: 'block',
+      _key: target._key,
+      children: [
+        {_type: 'span', _key: target.children[0]!._key, text: 'bar', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    })
+    await vi.waitFor(() =>
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="text"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(
+        Array.from({length: 251}, (_, index) => (index === 0 ? 'bar' : 'foo')),
+      ),
+    )
+  })
+
+  test('Scenario: A duplicate root ancestor followed by a deep keyed edit renders at a table cell', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const engineRef = React.createRef<PortableTextEditorEngine>()
+    const target = fooBlock(keyGenerator)
+    const {wrap} = depths[3]!
+    const first = wrap([target], keyGenerator)
+    const roots = [
+      first.value[0]!,
+      ...Array.from(
+        {length: 249},
+        () => wrap([fooBlock(keyGenerator)], keyGenerator).value[0]!,
+      ),
+    ]
+    const targetPath = [...first.prefix, {_key: target._key}] as Path
+    const spanPath = [
+      ...targetPath,
+      'children',
+      {_key: target.children[0]!._key},
+    ] as Path
+    const {editor, locator} = await createTestEditor({
+      children: (
+        <>
+          <NodePlugin nodes={containers} />
+          <InternalEditorEngineRefPlugin ref={engineRef} />
+        </>
+      ),
+      initialValue: roots,
+      keyGenerator,
+      schemaDefinition,
+    })
+
+    editor.send({
+      type: 'patches',
+      patches: [
+        insert([structuredClone(roots[0]!)], 'after', [
+          {_key: roots[149]!._key},
+        ]),
+        set('bar', [...spanPath, 'text']),
+      ],
+      snapshot: undefined,
+    })
+
+    await vi.waitFor(() =>
+      expect(
+        locator.element().querySelectorAll('[data-pt-block="text"]').length,
+      ).toEqual(251),
+    )
+    expect(getNode(engineRef.current!.snapshot, targetPath)?.node).toEqual({
+      _type: 'block',
+      _key: target._key,
+      children: [
+        {_type: 'span', _key: target.children[0]!._key, text: 'bar', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    })
+    await vi.waitFor(() =>
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="text"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(
+        Array.from({length: 251}, (_, index) => (index === 0 ? 'bar' : 'foo')),
+      ),
+    )
+  })
 
   test('Scenario: Root chunks match normalized inserts by reference', async () => {
     const keyGenerator = createTestKeyGenerator()
@@ -1065,6 +1326,16 @@ function block(keyGenerator: () => string): PortableTextTextBlock {
     children: [
       {_type: 'span', _key: keyGenerator(), text: blockKey, marks: []},
     ],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function fooBlock(keyGenerator: () => string): PortableTextTextBlock {
+  return {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
     markDefs: [],
     style: 'normal',
   }
