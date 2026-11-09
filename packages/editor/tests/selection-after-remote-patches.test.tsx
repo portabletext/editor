@@ -12,6 +12,13 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+} from '../test-utils/load-depths'
+import {anchorCases} from '../test-utils/resync-anchors'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('Feature: Selection adjustment after remote patches', () => {
@@ -847,3 +854,58 @@ function block(
     style: 'normal',
   }
 }
+
+describe('Feature: Selection after a `resync`', () => {
+  test.each(
+    loadDepths.flatMap((depth) =>
+      anchorCases.map((anchorCase) => ({depth, anchorCase})),
+    ),
+  )(
+    'Scenario: A caret at the $anchorCase.position of the text lands cleanly across a $anchorCase.update at $depth.name',
+    async ({depth, anchorCase}) => {
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w'))
+      const before = depth.wrap(anchorCase.before, wrapperKey)
+      const after = depth.wrap(anchorCase.after, wrapperKey)
+      const owner = (spanKey: string) => (spanKey === 'us' ? 'u' : 'b')
+      const spanPath = (spanKey: string): Path => [
+        ...before.prefix,
+        {_key: owner(spanKey)},
+        'children',
+        {_key: spanKey},
+      ]
+      const {editor} = await createTestEditor({
+        schemaDefinition: loadSchemaDefinition,
+        initialValue: before.value,
+        children: <NodePlugin nodes={loadContainers} />,
+      })
+      const caret = {
+        path: spanPath(anchorCase.range.spanKey),
+        offset: anchorCase.range.from,
+      }
+
+      editor.send({type: 'select', at: {anchor: caret, focus: caret}})
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.selection).toEqual({
+          anchor: caret,
+          focus: caret,
+          backward: false,
+        })
+      })
+
+      editor.send({type: 'resync', value: after.value})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(after.value)
+      })
+      const landed = {
+        path: spanPath(anchorCase.caretAfter.spanKey),
+        offset: anchorCase.caretAfter.offset,
+      }
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: landed,
+        focus: landed,
+        backward: false,
+      })
+    },
+  )
+})

@@ -72,6 +72,14 @@ function setEditorState(context: Context, textspec: string): void {
   })
 }
 
+function resyncEditor(context: Context, textspec: string): void {
+  const {schema, keyGenerator, containers} =
+    context.editor.getSnapshot().context
+  const {blocks} = fromTextspec({schema, keyGenerator, containers}, textspec)
+
+  context.editor.send({type: 'resync', value: blocks})
+}
+
 async function assertEditorState(
   context: Context,
   textspec: string,
@@ -268,6 +276,16 @@ export const stepDefinitions = [
   ),
   Given('the editor state is', (context: Context, textspec: string) => {
     setEditorState(context, textspec)
+  }),
+
+  When(
+    'the editor is resynced to {string}',
+    (context: Context, textspec: string) => {
+      resyncEditor(context, textspec.replace(/;;/g, '\n'))
+    },
+  ),
+  When('the editor is resynced to', (context: Context, textspec: string) => {
+    resyncEditor(context, textspec)
   }),
 
   When('the selection is', selectionFromInput),

@@ -194,4 +194,26 @@ describe('event.ready', () => {
       },
     )
   })
+
+  describe('resync', () => {
+    test('Scenario: `resync` before `ready` throws', async () => {
+      const errors: Array<unknown> = []
+
+      function ResyncOnMount() {
+        const editor = useEditor()
+        useEffect(() => {
+          try {
+            editor.send({type: 'resync', value: []})
+          } catch (error) {
+            errors.push(error)
+          }
+        }, [editor])
+        return null
+      }
+
+      await createTestEditor({children: <ResyncOnMount />})
+
+      expect(errors).toHaveLength(1)
+    })
+  })
 })

@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -11,9 +12,19 @@ import {
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  textBlock,
+} from '../test-utils/load-depths'
 
 describe('event.history.undo', () => {
   test('Scenario: Undoing action sets', async () => {
@@ -1178,5 +1189,114 @@ describe('event.history.undo', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(repairedValue)
     })
+  })
+
+  describe('resync', () => {
+    test.each(loadDepths)(
+      'Scenario: `resync` clears undo history after typing at $name',
+      async (depth) => {
+        const keyGenerator = createTestKeyGenerator()
+        const wrapperKey = createWrapperKeys(keyGenerator)
+        const blockKey = keyGenerator()
+        const spanKey = keyGenerator()
+        const before = depth.wrap(
+          [textBlock(blockKey, spanKey, 'foo')],
+          wrapperKey,
+        )
+        const engineRef = React.createRef<PortableTextEditorEngine>()
+        const {editor, locator} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: loadSchemaDefinition,
+          initialValue: before.value,
+          children: (
+            <>
+              <InternalEditorEngineRefPlugin ref={engineRef} />
+              <NodePlugin nodes={loadContainers} />
+            </>
+          ),
+        })
+        const spanPath = [
+          ...before.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ]
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: spanPath, offset: 3},
+            focus: {path: spanPath, offset: 3},
+          },
+        })
+        await userEvent.type(locator, 'x')
+        await vi.waitFor(() => {
+          expect(engineRef.current?.history.undos.length).toBeGreaterThan(0)
+        })
+
+        editor.send({
+          type: 'resync',
+          value: depth.wrap(
+            [textBlock(blockKey, spanKey, 'foo bar')],
+            wrapperKey,
+          ).value,
+        })
+        editor.send({type: 'history.undo'})
+
+        expect(engineRef.current?.history).toEqual({undos: [], redos: []})
+        expect(editor.getSnapshot().context.value).toEqual(
+          depth.wrap([textBlock(blockKey, spanKey, 'foo bar')], wrapperKey)
+            .value,
+        )
+      },
+    )
+
+    test.each(loadDepths)(
+      'Scenario: `resync` to an identical copy still clears undo history at $name',
+      async (depth) => {
+        const keyGenerator = createTestKeyGenerator()
+        const wrapperKey = createWrapperKeys(keyGenerator)
+        const blockKey = keyGenerator()
+        const spanKey = keyGenerator()
+        const before = depth.wrap(
+          [textBlock(blockKey, spanKey, 'foo')],
+          wrapperKey,
+        )
+        const engineRef = React.createRef<PortableTextEditorEngine>()
+        const {editor, locator} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: loadSchemaDefinition,
+          initialValue: before.value,
+          children: (
+            <>
+              <InternalEditorEngineRefPlugin ref={engineRef} />
+              <NodePlugin nodes={loadContainers} />
+            </>
+          ),
+        })
+        const spanPath = [
+          ...before.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ]
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: spanPath, offset: 3},
+            focus: {path: spanPath, offset: 3},
+          },
+        })
+        await userEvent.type(locator, 'x')
+        await vi.waitFor(() => {
+          expect(engineRef.current?.history.undos.length).toBeGreaterThan(0)
+        })
+        const typed = editor.getSnapshot().context.value
+
+        editor.send({type: 'resync', value: structuredClone(typed)})
+
+        expect(engineRef.current?.history).toEqual({undos: [], redos: []})
+        expect(editor.getSnapshot().context.value).toEqual(typed)
+      },
+    )
   })
 })
