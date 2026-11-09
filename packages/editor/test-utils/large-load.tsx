@@ -113,6 +113,15 @@ export async function renderLargeLoad(options: {
     userChanges,
     unmount: () => screen.unmount(),
     isDrawn,
+    /**
+     * The editor is mid-draw: the last block is not in the DOM yet and the
+     * editable is not editable. Tests that act "during the draw" assert this
+     * first, so they cannot pass on an editor that has no draw.
+     */
+    expectMidDraw() {
+      expect(isDrawn(keys.at(-1)!.blockKey)).toEqual(false)
+      expect(editable()?.getAttribute('contenteditable')).toEqual('false')
+    },
     isEditable: () => editable()?.getAttribute('contenteditable') === 'true',
     spanPath: (index: number): Path => [
       ...loaded.prefix,
