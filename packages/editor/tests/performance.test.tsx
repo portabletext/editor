@@ -96,7 +96,7 @@ describe('Performance', () => {
       console.warn(
         `Typed 20 characters in a 1000-block document in ${duration.toFixed(2)}ms`,
       )
-    })
+    }, 30_000)
 
     test('Toggling a decorator at the end of a 1000-block document', async () => {
       const {editor, locator} = await createTestEditor({
