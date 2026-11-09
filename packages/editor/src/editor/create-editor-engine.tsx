@@ -57,6 +57,7 @@ export function createEditorEngine(
       value: [placeholderBlock],
     },
     decoratorState: {},
+    status: 'loading',
   }
 
   editor.containers = new Map()
