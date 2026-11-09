@@ -380,7 +380,7 @@ describe('event.change', () => {
             _key: blockKey,
             style: 'normal',
             markDefs: [],
-            children: [{_type: 'span', _key: 'm-k0', text: '', marks: []}],
+            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
           },
         ],
         corrected: true,
@@ -420,7 +420,7 @@ describe('event.change', () => {
         repaired: (_blockKey, spanKey) => [
           {
             _type: 'block',
-            _key: 'm-k0',
+            _key: 'm-k2',
             style: 'normal',
             markDefs: [],
             children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
@@ -436,7 +436,7 @@ describe('event.change', () => {
         ],
         repaired: (blockKey, spanKey) => [
           textBlock(blockKey, spanKey, 'foo'),
-          textBlock('m-k0', `${spanKey}-b`, 'bar'),
+          textBlock('m-k2', `${spanKey}-b`, 'bar'),
         ],
         corrected: true,
       },
@@ -495,18 +495,18 @@ describe('event.change', () => {
             _key: blockKey,
             style: 'normal',
             markDefs: [],
-            children: [{_type: 'span', _key: 'm-k0', text: '', marks: []}],
+            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
           },
           {
             _type: 'block',
-            _key: 'm-k1',
+            _key: 'm-k3',
             style: 'normal',
             markDefs: [],
             children: [
               {_type: 'span', _key: `${spanKey}-b`, text: 'foo', marks: []},
             ],
           },
-          textBlock('m-k2', `${spanKey}-c`, 'bar'),
+          textBlock('m-k4', `${spanKey}-c`, 'bar'),
         ],
         corrected: true,
       },
