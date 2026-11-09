@@ -12,8 +12,11 @@ export type AnchorCase = {
   after: Array<PortableTextBlock>
   /** The span a range or caret starts on, and the range's offsets there. */
   range: {spanKey: string; from: number; to: number}
-  /** Where the range ends up, or `null` when it is lost. */
-  rangeAfter: {anchor: Point; focus: Point} | null
+  /**
+   * Where the range ends up, `null` when it is lost, or `'unchanged'` when
+   * it sits in text the change left alone and `onMoved` is not called.
+   */
+  rangeAfter: {anchor: Point; focus: Point} | null | 'unchanged'
   /** Where a caret at the start of the range ends up. */
   caretAfter: Point
 }
@@ -39,13 +42,16 @@ export const anchorCases: Array<AnchorCase> = [
       before: [textBlock('b', 's', 'foobar')],
       after: [textBlock('b', 's', 'fooXYbar')],
       range: {spanKey: 's', from, to},
-      rangeAfter: {
-        anchor: {spanKey: 's', offset: from + shift},
-        focus: {
-          spanKey: 's',
-          offset: to + shift + (position === 'middle' ? 2 : 0),
-        },
-      },
+      rangeAfter:
+        position === 'first'
+          ? ('unchanged' as const)
+          : {
+              anchor: {spanKey: 's', offset: from + shift},
+              focus: {
+                spanKey: 's',
+                offset: to + shift + (position === 'middle' ? 2 : 0),
+              },
+            },
       caretAfter: {spanKey: 's', offset: from + shift},
     }
   }),
@@ -61,10 +67,13 @@ export const anchorCases: Array<AnchorCase> = [
     before: [textBlock('b', 's', 'foobar')],
     after: [textBlock('b', 's', 'foo'), textBlock('u', 'us', 'bar')],
     range: {spanKey: 's', from, to},
-    rangeAfter: {
-      anchor: {spanKey: 's', offset: after.from},
-      focus: {spanKey: 's', offset: after.to},
-    },
+    rangeAfter:
+      position === 'first'
+        ? ('unchanged' as const)
+        : {
+            anchor: {spanKey: 's', offset: after.from},
+            focus: {spanKey: 's', offset: after.to},
+          },
     caretAfter: {spanKey: 's', offset: caretOffset},
   })),
   ...(

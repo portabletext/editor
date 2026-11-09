@@ -205,7 +205,7 @@ describe('event.ready', () => {
           try {
             editor.send({type: 'resync', value: []})
           } catch (error) {
-            errors.push(error)
+            errors.push(error instanceof Error ? error.message : error)
           }
         }, [editor])
         return null
@@ -213,7 +213,9 @@ describe('event.ready', () => {
 
       await createTestEditor({children: <ResyncOnMount />})
 
-      expect(errors).toHaveLength(1)
+      expect(errors).toEqual([
+        '`resync` is only valid once the editor is ready',
+      ])
     })
   })
 })
