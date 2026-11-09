@@ -158,7 +158,7 @@ describe('selection emit stability', () => {
     // A remote patch that writes the same text must not produce a selection
     // emit, since the caret hasn't moved.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -167,7 +167,6 @@ describe('selection emit stability', () => {
           origin: 'remote',
         },
       ],
-      snapshot: [block],
     })
 
     const caretAt5 = {

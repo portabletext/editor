@@ -82,7 +82,7 @@ describe('event.patches', () => {
       ]
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
@@ -91,7 +91,6 @@ describe('event.patches', () => {
             origin: 'remote',
           },
         ],
-        snapshot: newValue,
       })
 
       await vi.waitFor(() => {
@@ -154,7 +153,7 @@ describe('event.patches', () => {
       ]
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
@@ -163,7 +162,6 @@ describe('event.patches', () => {
             origin: 'remote',
           },
         ],
-        snapshot: newValue,
       })
 
       await vi.waitFor(() => {
@@ -470,7 +468,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'setIfMissing',
@@ -490,7 +488,6 @@ describe('event.patches', () => {
           origin: 'remote',
         },
       ],
-      snapshot: [headingBlock, listBlock],
     })
 
     await vi.waitFor(() => {
@@ -554,7 +551,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'setIfMissing',
@@ -574,7 +571,6 @@ describe('event.patches', () => {
           origin: 'remote',
         },
       ],
-      snapshot: [headingBlock, listBlock],
     })
 
     await vi.waitFor(() => {
@@ -611,7 +607,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -642,7 +638,6 @@ describe('event.patches', () => {
           path: [{_key: blockKey}, 'children', {_key: cKey}],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -677,7 +672,7 @@ describe('event.patches', () => {
     const newBlockKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -686,7 +681,6 @@ describe('event.patches', () => {
           value: newBlockKey,
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -720,7 +714,7 @@ describe('event.patches', () => {
     const newImageKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -729,7 +723,6 @@ describe('event.patches', () => {
           value: newImageKey,
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -757,7 +750,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -766,7 +759,6 @@ describe('event.patches', () => {
           value: 'bar',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -780,7 +772,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -795,7 +787,6 @@ describe('event.patches', () => {
           value: 'bar',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -817,7 +808,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -826,7 +817,6 @@ describe('event.patches', () => {
           value: ['strong'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -870,7 +860,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -878,7 +868,6 @@ describe('event.patches', () => {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}, '_map'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -894,7 +883,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -902,7 +891,6 @@ describe('event.patches', () => {
           path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -941,9 +929,8 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{type: 'unset', origin: 'remote', path: [{_key: 'k0'}]}],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1021,7 +1008,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1030,7 +1017,6 @@ describe('event.patches', () => {
           value: 'https://www.sanity.io/logo.png',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1081,21 +1067,13 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
           origin: 'remote',
           path: [{_key: 'k2'}, 'description'],
           value: 'Sanity is a headless CMS',
-        },
-      ],
-      snapshot: [
-        {
-          _key: 'k2',
-          _type: 'url',
-          href: 'https://www.sanity.io',
-          description: 'Sanity is a headless CMS',
         },
       ],
     })
@@ -1149,7 +1127,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1162,16 +1140,6 @@ describe('event.patches', () => {
           origin: 'remote',
           path: [{_key: 'k2'}, 'content', 'description'],
           value: 'Sanity is a headless CMS',
-        },
-      ],
-      snapshot: [
-        {
-          _key: 'k2',
-          _type: 'url',
-          href: 'https://www.sanity.io',
-          content: {
-            description: 'Sanity is a headless CMS',
-          },
         },
       ],
     })
@@ -1211,9 +1179,8 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{type: 'unset', origin: 'remote', path: [{_key: 'k0'}, 'src']}],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1227,7 +1194,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -1235,7 +1202,6 @@ describe('event.patches', () => {
           path: [{_key: imageKey}, '_map', 'foo'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1249,11 +1215,10 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {type: 'unset', origin: 'remote', path: [{_key: imageKey}, '_map']},
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1289,12 +1254,11 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {type: 'unset', origin: 'remote', path: [{_key: blockKey}, 'listItem']},
         {type: 'unset', origin: 'remote', path: [{_key: blockKey}, 'level']},
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1379,7 +1343,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1393,7 +1357,6 @@ describe('event.patches', () => {
           value: 'AAPL',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1417,7 +1380,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1438,7 +1401,6 @@ describe('event.patches', () => {
           value: 'bar',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1491,7 +1453,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1500,7 +1462,6 @@ describe('event.patches', () => {
           value: 'new key',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1546,7 +1507,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1555,7 +1516,6 @@ describe('event.patches', () => {
           value: 'new type',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1613,7 +1573,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1621,7 +1581,6 @@ describe('event.patches', () => {
           value: 'Jane Doe',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1675,7 +1634,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1683,7 +1642,6 @@ describe('event.patches', () => {
           value: 'foo',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1744,7 +1702,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -1757,7 +1715,6 @@ describe('event.patches', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1811,7 +1768,7 @@ describe('event.patches', () => {
 
     // Unset _key: normalization restores it with a new key
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -1819,7 +1776,6 @@ describe('event.patches', () => {
           path: [{_key: blockKey}, 'children', {_key: stockTickerKey}, '_key'],
         },
       ],
-      snapshot: undefined,
     })
 
     const newInlineKey = 'k6'
@@ -1845,7 +1801,7 @@ describe('event.patches', () => {
     // normalization is skipped while applying remote patches; only the
     // repairs run.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -1853,7 +1809,6 @@ describe('event.patches', () => {
           path: [{_key: blockKey}, 'children', {_key: newInlineKey}, '_type'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1891,7 +1846,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1900,7 +1855,6 @@ describe('event.patches', () => {
           value: 'h1',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1959,7 +1913,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1974,7 +1928,6 @@ describe('event.patches', () => {
           value: 'An image',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2024,7 +1977,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {type: 'unset', origin: 'remote', path: [{_key: blockKey}]},
         {
@@ -2043,7 +1996,6 @@ describe('event.patches', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2111,11 +2063,10 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {type: 'unset', origin: 'remote', path: [{_key: barBlockKey}]},
         ],
-        snapshot: [fooBlock, bazBlock],
       })
 
       await vi.waitFor(() => {
@@ -2183,11 +2134,10 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {type: 'unset', origin: 'remote', path: [{_key: fooBlockKey}]},
         ],
-        snapshot: [barBlock],
       })
 
       await vi.waitFor(() => {
@@ -2243,11 +2193,10 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {type: 'unset', origin: 'remote', path: [{_key: fooBlockKey}]},
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -2327,11 +2276,10 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {type: 'unset', origin: 'remote', path: [{_key: barBlockKey}]},
         ],
-        snapshot: [fooBlock, bazBlock],
       })
 
       await vi.waitFor(() => {
@@ -2399,11 +2347,10 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {type: 'unset', origin: 'remote', path: [{_key: barBlockKey}]},
         ],
-        snapshot: [fooBlock],
       })
 
       await vi.waitFor(() => {
@@ -2593,7 +2540,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -2609,7 +2556,6 @@ describe('event.patches', () => {
             ],
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -2682,7 +2628,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -2697,7 +2643,6 @@ describe('event.patches', () => {
             items: [{_key: barSpanKey, _type: 'span', text: 'bar', marks: []}],
           },
         ],
-        snapshot: [barBlock],
       })
 
       await vi.waitFor(() => {
@@ -2735,11 +2680,10 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {type: 'unset', origin: 'remote', path: [{_key: barImageKey}]},
         ],
-        snapshot: [fooImage],
       })
 
       await vi.waitFor(() => {
@@ -2805,7 +2749,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -2813,7 +2757,6 @@ describe('event.patches', () => {
             path: [{_key: blockKey}, 'children', {_key: barSpanKey}],
           },
         ],
-        snapshot: undefined,
       })
       editor.send({type: 'insert.text', text: 'x'})
 
@@ -2895,7 +2838,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -2903,7 +2846,6 @@ describe('event.patches', () => {
             path: [{_key: fooBlockKey}, 'children', 1],
           },
         ],
-        snapshot: undefined,
       })
       editor.send({type: 'insert.text', text: 'x'})
 
@@ -2951,7 +2893,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -2960,7 +2902,6 @@ describe('event.patches', () => {
             value: '@@ -0,0 +1 @@\n+e\n',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -2976,7 +2917,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -2985,7 +2926,6 @@ describe('event.patches', () => {
             value: '@@ -1 +0,0 @@\n-e\n',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3007,7 +2947,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3018,7 +2958,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3047,7 +2986,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3058,7 +2997,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3087,7 +3025,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3098,7 +3036,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3127,7 +3064,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3138,7 +3075,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3168,7 +3104,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3179,7 +3115,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3211,7 +3146,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3222,7 +3157,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3252,7 +3186,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3263,7 +3197,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3293,7 +3226,7 @@ describe('event.patches', () => {
       const {editor, blockKey, spanKey} = await createEditor(editorText)
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3304,7 +3237,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3385,7 +3317,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'diffMatchPatch',
@@ -3403,7 +3335,6 @@ describe('event.patches', () => {
             ),
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -3496,7 +3427,7 @@ describe('event.patches', () => {
       style: 'normal',
     }
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           origin: 'remote',
@@ -3505,7 +3436,6 @@ describe('event.patches', () => {
           value: newBlock,
         },
       ],
-      snapshot: [newBlock],
     })
 
     // Then the block is replaced with the new block
@@ -3531,7 +3461,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             ...unset([]),
@@ -3548,12 +3478,6 @@ describe('event.patches', () => {
                 _type: 'image',
               },
             ],
-          },
-        ],
-        snapshot: [
-          {
-            _key: blockKey,
-            _type: 'image',
           },
         ],
       })
@@ -3595,7 +3519,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             ...unset([]),
@@ -3609,7 +3533,6 @@ describe('event.patches', () => {
             items: [block],
           },
         ],
-        snapshot: [block],
       })
 
       await vi.waitFor(() => {
@@ -3665,7 +3588,7 @@ describe('event.patches', () => {
           style: 'normal',
         }
         editor.send({
-          type: 'patches',
+          type: 'apply',
           patches: [
             {
               origin: 'remote',
@@ -3675,7 +3598,6 @@ describe('event.patches', () => {
               items: [blockA, blockB],
             },
           ],
-          snapshot: [blockA, blockB],
         })
 
         await vi.waitFor(() => {
@@ -3709,7 +3631,7 @@ describe('event.patches', () => {
         }
 
         editor.send({
-          type: 'patches',
+          type: 'apply',
           patches: [
             {
               origin: 'remote',
@@ -3719,7 +3641,6 @@ describe('event.patches', () => {
               items: [blockA, blockB],
             },
           ],
-          snapshot: [blockA, blockB],
         })
 
         await vi.waitFor(() => {
@@ -3753,7 +3674,7 @@ describe('event.patches', () => {
         }
 
         editor.send({
-          type: 'patches',
+          type: 'apply',
           patches: [
             {
               origin: 'remote',
@@ -3763,7 +3684,6 @@ describe('event.patches', () => {
               items: [blockA, blockB],
             },
           ],
-          snapshot: [blockA, blockB],
         })
 
         await vi.waitFor(() => {
@@ -3794,7 +3714,7 @@ describe('event.patches', () => {
         }
 
         editor.send({
-          type: 'patches',
+          type: 'apply',
           patches: [
             {
               origin: 'remote',
@@ -3804,7 +3724,6 @@ describe('event.patches', () => {
               items: [blockA, blockB],
             },
           ],
-          snapshot: [{...blockA, _key: 'generated-a'}, blockB],
         })
 
         await vi.waitFor(() => {
@@ -3863,7 +3782,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             origin: 'remote',
@@ -3873,7 +3792,6 @@ describe('event.patches', () => {
             items: [newBlock],
           },
         ],
-        snapshot: [newBlock, blockA, blockB],
       })
 
       await vi.waitFor(() => {
@@ -3923,7 +3841,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             origin: 'remote',
@@ -3933,7 +3851,6 @@ describe('event.patches', () => {
             items: [newBlock],
           },
         ],
-        snapshot: [blockA, newBlock, blockB],
       })
 
       await vi.waitFor(() => {
@@ -3983,7 +3900,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             origin: 'remote',
@@ -3993,7 +3910,6 @@ describe('event.patches', () => {
             items: [newBlock],
           },
         ],
-        snapshot: [blockA, newBlock, blockB],
       })
 
       await vi.waitFor(() => {
@@ -4026,7 +3942,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4035,7 +3951,6 @@ describe('event.patches', () => {
             value: [],
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4051,7 +3966,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4060,7 +3975,6 @@ describe('event.patches', () => {
             value: [],
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4095,7 +4009,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4104,7 +4018,6 @@ describe('event.patches', () => {
             value: 1,
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4135,7 +4048,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4144,7 +4057,6 @@ describe('event.patches', () => {
             value: 'normal',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4174,7 +4086,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4183,7 +4095,6 @@ describe('event.patches', () => {
             value: 'baz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -4216,7 +4127,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4225,7 +4136,6 @@ describe('event.patches', () => {
             value: 'fizz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([block])
@@ -4262,7 +4172,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4271,7 +4181,6 @@ describe('event.patches', () => {
             value: 'https://example.com',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -4314,7 +4223,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4323,7 +4232,6 @@ describe('event.patches', () => {
             value: 'https://example.net',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -4366,7 +4274,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4375,7 +4283,6 @@ describe('event.patches', () => {
             value: 'baz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -4418,7 +4325,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4427,7 +4334,6 @@ describe('event.patches', () => {
             value: 'fizz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([block])
@@ -4452,7 +4358,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4461,7 +4367,6 @@ describe('event.patches', () => {
             value: 'https://example.com/image-a.png',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4494,7 +4399,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4503,7 +4408,6 @@ describe('event.patches', () => {
             value: 'https://example.com/image-b.png',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4531,7 +4435,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4540,7 +4444,6 @@ describe('event.patches', () => {
             value: 1,
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4568,7 +4471,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4577,7 +4480,6 @@ describe('event.patches', () => {
             value: true,
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4605,7 +4507,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4614,7 +4516,6 @@ describe('event.patches', () => {
             value: 'https://example.com/image-a.png',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4641,7 +4542,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4652,7 +4553,6 @@ describe('event.patches', () => {
             },
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4684,7 +4584,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4693,7 +4593,6 @@ describe('event.patches', () => {
             value: [{src: 'https://example.com/image-a.png'}],
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4725,7 +4624,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4740,7 +4639,6 @@ describe('event.patches', () => {
             value: 'https://example.com/image-b.png',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -4773,7 +4671,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4782,7 +4680,6 @@ describe('event.patches', () => {
             value: 'https://example.com/image-a.png',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -4813,7 +4710,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4822,7 +4719,6 @@ describe('event.patches', () => {
             value: 'https://example.com/image-b.png',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([image])
@@ -4846,7 +4742,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4855,7 +4751,6 @@ describe('event.patches', () => {
             value: 'bar',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -4886,7 +4781,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4895,7 +4790,6 @@ describe('event.patches', () => {
             value: 'baz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([block])
@@ -4919,7 +4813,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4928,7 +4822,6 @@ describe('event.patches', () => {
             value: 'foo',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([block])
@@ -4954,7 +4847,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -4963,7 +4856,6 @@ describe('event.patches', () => {
             value: 'baz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([
@@ -5000,7 +4892,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'setIfMissing',
@@ -5009,7 +4901,6 @@ describe('event.patches', () => {
             value: 'fizz',
           },
         ],
-        snapshot: undefined,
       })
 
       expect(editor.getSnapshot().context.value).toEqual([block])
@@ -5036,7 +4927,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -5044,7 +4935,6 @@ describe('event.patches', () => {
           path: [{_key: 'k0'}, 'metadata', 'title'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5084,7 +4974,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         set(
           {
@@ -5099,7 +4989,6 @@ describe('event.patches', () => {
           [{_key: blockKey}],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5140,14 +5029,13 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         set(
           [{_type: 'span', _key: newSpanKey, text: 'replaced', marks: []}],
           [{_key: blockKey}, 'children'],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5204,14 +5092,13 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         set(
           [{_type: 'stock-ticker', _key: inlineKey, symbol: 'AAPL'}],
           [{_key: blockKey}, 'children'],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5283,14 +5170,13 @@ describe('event.patches', () => {
     // Setting children with a span that has no text property.
     // Normalization adds text: '' to the span.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         set(
           [{_type: 'span', _key: spanKey, marks: []}],
           [{_key: blockKey}, 'children'],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5343,7 +5229,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -5352,7 +5238,6 @@ describe('event.patches', () => {
           value: 'Sanity is a headless CMS',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5405,7 +5290,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -5413,7 +5298,6 @@ describe('event.patches', () => {
           path: [{_key: blockObjectKey}, 'content', 'description'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5471,7 +5355,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -5479,7 +5363,6 @@ describe('event.patches', () => {
           path: [{_key: blockKey}, 'markDefs', {_key: markDefKey}, 'href'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5540,7 +5423,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'setIfMissing',
@@ -5549,7 +5432,6 @@ describe('event.patches', () => {
           value: 'default description',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5566,7 +5448,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'setIfMissing',
@@ -5575,7 +5457,6 @@ describe('event.patches', () => {
           value: 'should not overwrite',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5623,7 +5504,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -5631,7 +5512,6 @@ describe('event.patches', () => {
           path: [],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -5771,7 +5651,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'insert',
@@ -5796,7 +5676,6 @@ describe('event.patches', () => {
             origin: 'remote',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -5894,7 +5773,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'insert',
@@ -5917,7 +5796,6 @@ describe('event.patches', () => {
             origin: 'remote',
           },
         ],
-        snapshot: undefined,
       })
 
       // The adjacent same-mark spans are NOT merged: cosmetic normalization
@@ -6023,7 +5901,7 @@ describe('event.patches', () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'insert',
@@ -6056,7 +5934,6 @@ describe('event.patches', () => {
             origin: 'remote',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -6153,7 +6030,7 @@ describe('event.patches', () => {
       // now-empty array. This exercises the fallback path in insertPatch
       // where getNode fails because there is nothing at index 0.
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -6183,7 +6060,6 @@ describe('event.patches', () => {
             origin: 'remote',
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -6677,7 +6553,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {type: 'setIfMissing', path: [], value: [], origin: 'remote'},
         {
@@ -6688,7 +6564,6 @@ describe('event.patches', () => {
           origin: 'remote',
         },
       ],
-      snapshot: [remoteBazBlock],
     })
 
     await vi.waitFor(() => {
@@ -7204,7 +7079,7 @@ describe('event.patches', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -7222,7 +7097,6 @@ describe('event.patches', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

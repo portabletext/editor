@@ -606,9 +606,8 @@ describe('event.change', () => {
     const textPath = [{_key: blockKey}, 'children', {_key: spanKey}, 'text']
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...set('bar', textPath), origin: 'remote'}],
-      snapshot: [block(blockKey, spanKey, 'bar')],
     })
 
     expect(editor.getSnapshot().context.value).toEqual([
@@ -643,11 +642,10 @@ describe('event.change', () => {
     }
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {...insert([duplicateSpan], 'after', spanPath), origin: 'remote'},
       ],
-      snapshot: undefined,
     })
 
     expect(editor.getSnapshot().context.value).toEqual([
@@ -830,9 +828,8 @@ describe('event.change', () => {
     const markDefsPath = [{_key: blockKey}, 'markDefs']
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...unset(markDefsPath), origin: 'remote'}],
-      snapshot: undefined,
     })
 
     expect(editor.getSnapshot().context.value).toEqual([
@@ -867,14 +864,12 @@ describe('event.change', () => {
     const textPath = [{_key: blockKey}, 'children', {_key: spanKey}, 'text']
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...set('foo', textPath), origin: 'remote'}],
-      snapshot: [block(blockKey, spanKey, 'foo')],
     })
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...set('bar', textPath), origin: 'remote'}],
-      snapshot: [block(blockKey, spanKey, 'bar')],
     })
 
     expect(changes).toEqual([
@@ -1925,9 +1920,8 @@ describe('event.change', () => {
     const changes = collectChanges(editor)
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...unset([]), origin: 'remote'}],
-      snapshot: undefined,
     })
 
     const placeholderBlock = block('k4', 'k5', '')
@@ -2019,19 +2013,17 @@ describe('event.change', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           ...set('bar', [{_key: blockKey}, 'children', 5, 'text']),
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...set('bar', textPath), origin: 'remote'}],
-      snapshot: undefined,
     })
     consoleError.mockRestore()
 
@@ -2351,9 +2343,8 @@ describe('event.change', () => {
       marks: [],
     }
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...insert([secondSpan], 'after', spanPath), origin: 'remote'}],
-      snapshot: undefined,
     })
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -2657,9 +2648,8 @@ describe('event.change', () => {
           />
           <SendOnMount
             event={{
-              type: 'patches',
+              type: 'apply',
               patches: [{...unset(firstSpanPath), origin: 'remote'}],
-              snapshot: undefined,
             }}
           />
         </>
@@ -4112,9 +4102,8 @@ describe('event.change', () => {
     ]
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...unset(markDefsPath), origin: 'remote'}],
-      snapshot: undefined,
     })
 
     expect(editor.getSnapshot().context.value).toEqual([
@@ -4169,9 +4158,8 @@ describe('event.change', () => {
     ]
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...unset(markDefsPath), origin: 'remote'}],
-      snapshot: undefined,
     })
 
     expect(editor.getSnapshot().context.value).toEqual([
@@ -4216,9 +4204,8 @@ describe('event.change', () => {
     const markDefsPath = [{_key: noteKey}, 'body', {_key: blockKey}, 'markDefs']
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{...unset(markDefsPath), origin: 'remote'}],
-      snapshot: undefined,
     })
 
     expect(editor.getSnapshot().context.value).toEqual([

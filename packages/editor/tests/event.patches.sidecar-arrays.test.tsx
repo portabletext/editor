@@ -37,7 +37,7 @@ describe('event.patches sidecar arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -47,7 +47,6 @@ describe('event.patches sidecar arrays', () => {
           items: ['strong'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -82,7 +81,7 @@ describe('event.patches sidecar arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -90,7 +89,6 @@ describe('event.patches sidecar arrays', () => {
           path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'marks', 0],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -121,7 +119,7 @@ describe('event.patches sidecar arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -138,7 +136,6 @@ describe('event.patches sidecar arrays', () => {
           items: [{_key: 'm1', _type: 'link', href: 'https://www.sanity.io'}],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -173,7 +170,7 @@ describe('event.patches sidecar arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -186,7 +183,6 @@ describe('event.patches sidecar arrays', () => {
           path: [{_key: 'b1'}, 'markDefs', {_key: 'm1'}],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -219,7 +215,7 @@ describe('event.patches sidecar arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -228,7 +224,6 @@ describe('event.patches sidecar arrays', () => {
           value: 'em',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -261,7 +256,7 @@ describe('event.patches sidecar arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'diffMatchPatch',
@@ -270,7 +265,6 @@ describe('event.patches sidecar arrays', () => {
           value: '@@ -1,6 +1,2 @@\n-strong\n+em\n',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -378,7 +372,7 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -396,7 +390,6 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
           items: ['strong'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -444,7 +437,7 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -469,7 +462,6 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
           items: ['m1'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -537,7 +529,7 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -557,7 +549,6 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -600,7 +591,7 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -610,7 +601,6 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
           items: ['landscape'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -645,7 +635,7 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
     // `tags` sits beside the container's structural child field (`content`);
     // the element removal must hit `tags`, not the container's children.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -653,7 +643,6 @@ describe('event.patches sidecar arrays in containers and custom arrays', () => {
           path: [{_key: 'c1'}, 'tags', 0],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -722,7 +711,7 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -740,7 +729,6 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
           items: ['underline'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -780,7 +768,7 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -796,7 +784,6 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -829,7 +816,7 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
     // unused-markDefs normalization rule and `validateValue`'s
     // auto-resolution remove it).
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -860,7 +847,6 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
           items: ['m3'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -900,7 +886,7 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -927,7 +913,6 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

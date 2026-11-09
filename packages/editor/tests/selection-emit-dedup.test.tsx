@@ -56,7 +56,7 @@ describe('selection emission dedup', () => {
     // apply-operation selection re-spread, which produces an EditorSelection
     // with a fresh reference but the same semantic value.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -65,7 +65,6 @@ describe('selection emission dedup', () => {
           origin: 'remote',
         },
       ],
-      snapshot: initialValue,
     })
 
     await vi.waitFor(() => {

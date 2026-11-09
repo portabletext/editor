@@ -528,7 +528,7 @@ describe('container normalization', () => {
 
     // Simulate a remote unset of the rows field
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -536,7 +536,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -866,7 +865,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -902,7 +901,6 @@ describe('container normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1007,7 +1005,7 @@ describe('container normalization', () => {
 
     // Simulate a remote patch that removes the content field
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -1015,7 +1013,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1151,7 +1148,7 @@ describe('container normalization', () => {
 
     // Insert a bare callout via incoming patch
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -1166,7 +1163,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1494,7 +1490,7 @@ describe('container normalization', () => {
 
     // Remove the content block via incoming patch, leaving content: []
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -1502,7 +1498,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1646,7 +1641,7 @@ describe('container normalization', () => {
     // Insert a callout whose content block and span both lack _key.
     // Normalization must assign keys using numeric indices at container depth.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -1668,7 +1663,6 @@ describe('container normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2126,7 +2120,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -2136,7 +2130,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2241,7 +2234,7 @@ describe('container normalization', () => {
 
     // Send a new value with a callout with empty content
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -2250,7 +2243,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     // The empty content array should NOT be normalized because the type
@@ -2332,7 +2324,7 @@ describe('container normalization', () => {
     unregister()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -2341,7 +2333,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2423,7 +2414,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -2432,7 +2423,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2477,7 +2467,7 @@ describe('container normalization', () => {
     // descendants of the insertion and fill each cell's content with a
     // placeholder block.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -2502,7 +2492,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2700,7 +2689,7 @@ describe('container normalization', () => {
     // remote patch. The row's only cell has no `content` field at all;
     // normalization should fill it.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -2716,7 +2705,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -3067,7 +3055,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -3075,7 +3063,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -3182,7 +3169,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -3190,7 +3177,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -3291,7 +3277,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -3310,7 +3296,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -3432,7 +3417,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -3442,7 +3427,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -3899,7 +3883,7 @@ describe('container normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -3907,7 +3891,6 @@ describe('container normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

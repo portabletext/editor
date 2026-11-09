@@ -200,23 +200,13 @@ describe('registered render: blocks', () => {
     const initialCount = renderBlockValues.length
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
           origin: 'remote',
           path: [{_key: blockKey}, 'metadata', 'title'],
           value: 'Hello',
-        },
-      ],
-      snapshot: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          metadata: {title: 'Hello'},
         },
       ],
     })
@@ -236,23 +226,13 @@ describe('registered render: blocks', () => {
     const countAfterFirstPatch = renderBlockValues.length
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
           origin: 'remote',
           path: [{_key: blockKey}, 'metadata', 'description'],
           value: 'World',
-        },
-      ],
-      snapshot: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          metadata: {title: 'Hello', description: 'World'},
         },
       ],
     })
@@ -311,22 +291,12 @@ describe('registered render: blocks', () => {
     const initialCount = renderBlockValues.length
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
           origin: 'remote',
           path: [{_key: blockKey}, 'metadata', 'title'],
-        },
-      ],
-      snapshot: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          metadata: {description: 'World'},
         },
       ],
     })
@@ -459,7 +429,7 @@ describe('registered render: blocks', () => {
     const countBefore = renderBlockValues.length
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -475,7 +445,6 @@ describe('registered render: blocks', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     const normalizedBlock = {

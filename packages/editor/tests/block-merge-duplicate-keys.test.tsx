@@ -447,9 +447,8 @@ describe('Feature: block merge renames colliding keys', () => {
     })
 
     editor2.send({
-      type: 'patches',
+      type: 'apply',
       patches: patches.map((patch) => ({...patch, origin: 'remote'})),
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

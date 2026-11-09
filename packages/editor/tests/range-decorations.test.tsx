@@ -683,7 +683,7 @@ describe('RangeDecorations', () => {
     )
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('foo', 'barfoo', [
           {_key: blockKey},
@@ -692,7 +692,6 @@ describe('RangeDecorations', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -768,7 +767,7 @@ describe('RangeDecorations', () => {
     // origin of the change that triggered it: `remote`, not the repair's
     // own executor.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -780,7 +779,6 @@ describe('RangeDecorations', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

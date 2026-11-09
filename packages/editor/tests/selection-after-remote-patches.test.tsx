@@ -51,7 +51,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const insertedSpanKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         insert(
           [
@@ -74,7 +74,6 @@ describe('Feature: Selection adjustment after remote patches', () => {
           [{_key: b1}],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -146,7 +145,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const insertedSpanKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         insert(
           [
@@ -169,7 +168,6 @@ describe('Feature: Selection adjustment after remote patches', () => {
           [{_key: b2}],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -238,7 +236,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const afterFooSelection = await whenTheCaretIsPutAfter(editor, 'foo')
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('bar', 'baz', [
           {_key: b2},
@@ -247,7 +245,6 @@ describe('Feature: Selection adjustment after remote patches', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -297,9 +294,8 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const afterCccSelection = await whenTheCaretIsPutAfter(editor, 'ccc')
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [unset([{_key: b1}])],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -350,7 +346,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     await whenTheCaretIsPutAfter(editor, 'helloworld')
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('helloworld', 'hello world', [
           {_key: b1},
@@ -359,7 +355,6 @@ describe('Feature: Selection adjustment after remote patches', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -406,7 +401,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const newSpanKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         insert(
           [
@@ -421,7 +416,6 @@ describe('Feature: Selection adjustment after remote patches', () => {
           [{_key: b1}, 'children', {_key: s1}],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -464,7 +458,7 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const newSpanKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('foobar', 'foo', [
           {_key: b1},
@@ -493,7 +487,6 @@ describe('Feature: Selection adjustment after remote patches', () => {
           [{_key: b1}],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -542,9 +535,8 @@ describe('Feature: Selection adjustment after remote patches', () => {
     const afterBarSelection = await whenTheCaretIsPutAfter(editor, 'bar')
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [unset([{_key: b1}, 'children', {_key: s1}])],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -729,14 +721,13 @@ describe.each([
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         set(
           [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
           [...blockPath, 'children'],
         ),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

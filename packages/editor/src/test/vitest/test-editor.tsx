@@ -135,12 +135,11 @@ export async function createTestEditors(
     sharedDocument = applyAll(sharedDocument, event.patches)
 
     peer?.send({
-      type: 'patches',
+      type: 'apply',
       patches: event.patches.map((patch) => ({
         ...patch,
         origin: 'remote',
       })),
-      snapshot: sharedDocument,
     })
 
     // A flush emits all its mutations synchronously and the sender is no

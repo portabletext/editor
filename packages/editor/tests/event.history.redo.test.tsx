@@ -28,18 +28,8 @@ describe('event.history.redo', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
     })
 
-    const snapshotAfterRemote = [
-      {
-        _type: 'block',
-        _key: 'k0',
-        children: [{_type: 'span', _key: 'k1', text: 'world', marks: []}],
-        markDefs: [],
-        style: 'normal',
-      },
-    ]
-
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'diffMatchPatch',
@@ -48,7 +38,6 @@ describe('event.history.redo', () => {
           origin: 'remote',
         },
       ],
-      snapshot: snapshotAfterRemote,
     })
 
     await vi.waitFor(() => {

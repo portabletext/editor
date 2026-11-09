@@ -337,7 +337,7 @@ describe.each([
 
     editor.send({type: 'insert.text', text: 'baz'})
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'diffMatchPatch',
@@ -346,7 +346,6 @@ describe.each([
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
