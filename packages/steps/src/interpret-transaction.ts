@@ -24,8 +24,9 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  * were computed from, which shifts patch by patch within the same
  * transaction (a decorator applied mid-span, say, whose second
  * `diffMatchPatch` targets the span text left behind by the first). After
- * that replay, unresolved removals stay as removals: text pairing follows
- * patch order and only considers insertions observed after the removal.
+ * that replay, unresolved removals are compared with destinations that
+ * survive in the final working copy, so intermediate patch order cannot
+ * hide a structural move or turn a discarded scratch node into one.
  *
  * Pairing a removal with an insertion is a claim that one node moved (a
  * block split's tail, a decorator carving a span in three, a merge folding
@@ -42,9 +43,11 @@ import {mapPoint, type Step, type StepPath} from './step-mapper'
  *   the removed text's span key: a block split re-inserts its tail under
  *   the same key, so a 1-character tail pairs too. A whole-node removal (`unset` of
  *   a keyed segment) can land in either patch order (a block merge's
- *   `insert` can arrive before or after the `unset` it pairs with). A text
- *   carve only pairs with an insertion observed after it. A removal
- *   and insertion that land on the same path pair
+ *   `insert` can arrive before or after the `unset` it pairs with). The
+ *   same is true for a text carve when the inserted node survives in the
+ *   final value, which covers insert-first remote splits without admitting
+ *   transaction-local scratch nodes. A removal and insertion that land on
+ *   the same path pair
  *   with nothing: that's the same node reappearing at a new position in
  *   its array (a block reorder), not content moving between nodes, and
  *   `move.text` has nothing to add.
@@ -248,6 +251,7 @@ export function interpretTransaction(
                 slotIndex,
                 isNodeRemoval: false,
                 isBlockRemoval: false,
+                netEligible: preExistingNodePaths.has(JSON.stringify(spanPath)),
                 consumed: false,
               })
             }
@@ -339,6 +343,9 @@ export function interpretTransaction(
               slotIndex,
               isNodeRemoval: true,
               isBlockRemoval: patch.path.length === 1,
+              netEligible: preExistingNodePaths.has(
+                JSON.stringify(representative.path),
+              ),
               consumed: false,
             })
           }
@@ -543,6 +550,7 @@ type RemovalCandidate = {
   slotIndex: number
   isNodeRemoval: boolean
   isBlockRemoval: boolean
+  netEligible: boolean
   consumed: boolean
 }
 
@@ -663,7 +671,19 @@ function assembleSteps(
       )
     }
   }
-  const pairings = pairMoves(removalCandidates, insertionCandidates)
+  const pairings = pairMoves(removalCandidates, insertionCandidates, false)
+  const survivingInsertionCandidates = insertionCandidates.filter(
+    (candidate) =>
+      candidate.kind === 'fold' ||
+      getValue(finalValue, candidate.path) !== undefined,
+  )
+  pairings.push(
+    ...pairMoves(
+      removalCandidates.filter((candidate) => candidate.netEligible),
+      survivingInsertionCandidates,
+      true,
+    ),
+  )
 
   const pairingsByInsertionSlot = new Map<number, Pairing>()
   const nulledRemovalSlots = new Set<number>()
@@ -822,6 +842,7 @@ function assembleSteps(
 function pairMoves(
   removalCandidates: ReadonlyArray<RemovalCandidate>,
   insertionCandidates: ReadonlyArray<InsertionCandidate>,
+  allowReorderedTextCarve: boolean,
 ): Array<Pairing> {
   const pairings: Array<Pairing> = []
 
@@ -833,6 +854,7 @@ function pairMoves(
     const eligibleRemovals = eligibleRemovalsFor(
       insertion,
       removalCandidates,
+      allowReorderedTextCarve,
     )
     if (eligibleRemovals.length !== 1) {
       return
@@ -855,6 +877,7 @@ function pairMoves(
       const othersEligibleRemovals = eligibleRemovalsFor(
         other,
         removalCandidates,
+        allowReorderedTextCarve,
       )
       return (
         othersEligibleRemovals.length === 1 &&
@@ -892,6 +915,7 @@ function pairMoves(
 function eligibleRemovalsFor(
   insertion: InsertionCandidate,
   removalCandidates: ReadonlyArray<RemovalCandidate>,
+  allowReorderedTextCarve: boolean,
 ): Array<RemovalCandidate> {
   return removalCandidates.filter(
     (removal) =>
@@ -903,7 +927,9 @@ function eligibleRemovalsFor(
       !pathEquals(removal.from.path, insertion.path) &&
       !(removal.isBlockRemoval && insertion.isBlockInsertion) &&
       (insertion.kind === 'node'
-        ? removal.isNodeRemoval || removal.slotIndex < insertion.slotIndex
+        ? removal.isNodeRemoval ||
+          removal.slotIndex < insertion.slotIndex ||
+          allowReorderedTextCarve
         : removal.isNodeRemoval),
   )
 }

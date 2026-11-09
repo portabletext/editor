@@ -1507,7 +1507,7 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
     ] satisfies Array<Step>)
   })
 
-  test('Probe C: a node insertion preceding its matching removal never pairs', () => {
+  test('Probe C: a surviving node insertion preceding its matching removal pairs from the net transaction', () => {
     const b0 = 'b0'
     const s0 = 's0'
     const b1 = 'b1'
@@ -1532,8 +1532,13 @@ describe('interpretTransaction: adversarial recognizer misfires', () => {
 
     const steps = interpretTransaction(seed, patches)
 
+    // overrides #3208: final-state structural evidence makes patch order irrelevant
     expect(steps).toEqual([
-      {type: 'remove.text', path: spanPath(b0, s0), offset: 0, length: 3},
+      {
+        type: 'move.text',
+        from: {path: spanPath(b0, s0), offset: 0, length: 3},
+        to: {path: spanPath(b1, s1), offset: 0},
+      },
     ] satisfies Array<Step>)
   })
 

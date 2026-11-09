@@ -500,7 +500,6 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       undoneSelection: selection('b1', 's2', 1, 'b1', 's3', 2),
     },
     {
-      // known gap: insert-first undo after a merge (B5 dropped)
       name: 'backspace merge with decoration in the second block',
       initialValue: [
         textBlock('b1', [['s1', 'Hello']]),
@@ -511,10 +510,8 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       editedValue: ['Helloworld'],
       editedSelection: selection('b1', 's1', 5, 'b1', 's1', 10),
       undoneSelection: selection('b2', 's2', 0, 'b2', 's2', 5),
-      losesSelectionAfterUndo: true,
     },
     {
-      // known gap: insert-first undo after a merge (B5 dropped)
       name: 'forward delete merge with decoration in the second block',
       initialValue: [
         textBlock('b1', [['s1', 'Hello']]),
@@ -525,7 +522,6 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       editedValue: ['Helloworld'],
       editedSelection: selection('b1', 's1', 5, 'b1', 's1', 10),
       undoneSelection: selection('b2', 's2', 0, 'b2', 's2', 5),
-      losesSelectionAfterUndo: true,
     },
     {
       name: 'backspace merge with decoration across the block boundary',
@@ -537,9 +533,7 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       edit: (editor: Editor) => deleteAt(editor, 'b2', 's2', 0, 'backward'),
       editedValue: ['Helloworld'],
       editedSelection: selection('b1', 's1', 2, 'b1', 's1', 8),
-      // known gap: insert-first undo after a merge (B5 dropped)
-      undoneSelection: selection('b1', 's1', 2, 'b1', 's1', 5),
-      redoneSelection: selection('b1', 's1', 2, 'b1', 's1', 5),
+      undoneSelection: selection('b1', 's1', 2, 'b2', 's2', 3),
     },
     {
       name: 'backspace merge with decoration on a marked second child',
@@ -580,11 +574,7 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       expect(getTersePt(harness.editor.getSnapshot().context)).toEqual(
         initialTersePt,
       )
-      expect(harness.getSelection()).toEqual(
-        'losesSelectionAfterUndo' in scenario
-          ? undefined
-          : scenario.undoneSelection,
-      )
+      expect(harness.getSelection()).toEqual(scenario.undoneSelection)
     })
 
     harness.editor.send({type: 'history.redo'})
@@ -593,13 +583,7 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       expect(getTersePt(harness.editor.getSnapshot().context)).toEqual(
         scenario.editedValue,
       )
-      expect(harness.getSelection()).toEqual(
-        'losesSelectionAfterUndo' in scenario
-          ? undefined
-          : 'redoneSelection' in scenario
-            ? scenario.redoneSelection
-            : scenario.editedSelection,
-      )
+      expect(harness.getSelection()).toEqual(scenario.editedSelection)
     })
 
     harness.editor.send({type: 'history.undo'})
@@ -608,11 +592,7 @@ describe('RangeDecorations: Undo and Redo of Split and Merge', () => {
       expect(getTersePt(harness.editor.getSnapshot().context)).toEqual(
         initialTersePt,
       )
-      expect(harness.getSelection()).toEqual(
-        'losesSelectionAfterUndo' in scenario
-          ? undefined
-          : scenario.undoneSelection,
-      )
+      expect(harness.getSelection()).toEqual(scenario.undoneSelection)
     })
   })
 })
