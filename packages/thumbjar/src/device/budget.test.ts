@@ -8,11 +8,15 @@ import {
   DICTIONARY_WAIT_KILL_SECONDS,
   DICTIONARY_WAIT_TAIL_SECONDS,
   deviceTestFileSeconds,
+  FETCH_U2_JAR_WORST_SECONDS,
   KILL_GRACE_SECONDS,
   PREP_KILL_SECONDS,
   PREP_STAGES_SECONDS,
   prepWorstSeconds,
   SELF_UPDATE_BLOCK_SECONDS,
+  U2_JAR_ATTEMPT_SECONDS,
+  U2_JAR_ATTEMPTS,
+  U2_JAR_RETRY_SECONDS,
 } from './budget.ts'
 
 const prepare = readFileSync(
@@ -118,5 +122,16 @@ describe(prepWorstSeconds.name, () => {
         DICTIONARY_CHECK_SECONDS,
       ],
     })
+  })
+})
+
+describe('`thumbjar fetch-u2-jar`', () => {
+  test('is bounded at three downloads of 45 seconds, 15 apart, 165 seconds', () => {
+    expect({
+      attempts: U2_JAR_ATTEMPTS,
+      attempt: U2_JAR_ATTEMPT_SECONDS,
+      retry: U2_JAR_RETRY_SECONDS,
+      worst: FETCH_U2_JAR_WORST_SECONDS,
+    }).toEqual({attempts: 3, attempt: 45, retry: 15, worst: 165})
   })
 })

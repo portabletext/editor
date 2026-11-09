@@ -9,7 +9,8 @@ import {localhostPort} from './device/page-url.ts'
 
 const USAGE = `Usage:
   thumbjar fetch-u2-jar
-      Download the uiautomator2 server jar and check its hash, before the emulator boots.
+      Download the uiautomator2 server jar unless .cache already holds it with its pinned hash, and check its hash,
+      before the emulator boots.
   thumbjar serve <dir> [--port 8765]
       Serve a built page directory over HTTP, one log line per request.
   thumbjar prepare --keyboard ja|en --page-url <url> [--out-dir out] [--booted <epoch seconds>]
