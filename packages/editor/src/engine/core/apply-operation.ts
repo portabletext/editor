@@ -808,6 +808,12 @@ function deepUnsetObject(
     return object
   }
 
+  if (Array.isArray(object)) {
+    // A property name cannot reach inside an array, and spreading one would
+    // turn it into an object.
+    return object
+  }
+
   if (propertyPath.length === 1) {
     const newObject = {...object}
     delete newObject[propertyPath[0]!]
