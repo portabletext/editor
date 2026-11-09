@@ -32,6 +32,10 @@ export function LoadOnMount(props: {
         })
         return
       }
+      // The low-level `operation` event is not part of the load contract.
+      if (event.type === 'operation') {
+        return
+      }
       props.records.push({type: 'event', event})
     })
     for (const value of props.loads) {

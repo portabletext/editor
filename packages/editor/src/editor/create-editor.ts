@@ -132,6 +132,7 @@ export function createInternalEditor(config: EditorConfig): {
     send: (event) => {
       switch (event.type) {
         case 'update value':
+        case 'load':
           syncActor.send(event)
           break
 

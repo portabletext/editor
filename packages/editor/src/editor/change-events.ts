@@ -39,6 +39,18 @@ export function toChangeEvents(
     })
   }
 
+  // Entries the engine never held are removed from the host's value by
+  // patches alone, ahead of every other local change.
+  if (change.removalPatches?.length) {
+    events.push({
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: change.removalPatches,
+      correction: true,
+    })
+  }
+
   for (const run of localRuns(change)) {
     events.push(
       run.kind === 'correction'

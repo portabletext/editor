@@ -6,6 +6,7 @@ import {
   assertEvent,
   assign,
   emit,
+  enqueueActions,
   fromCallback,
   not,
   raise,
@@ -42,6 +43,10 @@ import {
   isEqualChild,
   isEqualValues,
 } from '../internal-utils/equality'
+import {
+  getNonObjectRemovalPatches,
+  removeNonObjects,
+} from '../internal-utils/remove-non-objects'
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toEngineBlock} from '../internal-utils/values'
@@ -87,6 +92,7 @@ const syncValueCallback: CallbackLogicFunction<
     }
     editorEngine: PortableTextEditorEngine
     streamBlocks: boolean
+    wholeValue: boolean
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
@@ -95,7 +101,7 @@ const syncValueCallback: CallbackLogicFunction<
   // commits once the sync is done.
   const change = createChange({
     type: 'value sync',
-    initial: input.streamBlocks,
+    initial: input.streamBlocks || input.wholeValue,
   })
 
   resumeChange(input.editorEngine, change, () =>
@@ -116,6 +122,7 @@ const syncValueCallback: CallbackLogicFunction<
       change,
       value: input.value,
       streamBlocks: input.streamBlocks,
+      wholeValue: input.wholeValue,
     }),
   ).finally(() => {
     commitChange(input.editorEngine, change)
@@ -151,6 +158,7 @@ export const syncMachine = setup({
       editorEngine: PortableTextEditorEngine
       pendingValue: Array<PortableTextBlock> | undefined
       previousValue: Array<PortableTextBlock> | undefined
+      loadedValue: {value: Array<PortableTextBlock> | undefined} | undefined
     },
     input: {} as {
       initialValue: Array<PortableTextBlock> | undefined
@@ -164,6 +172,11 @@ export const syncMachine = setup({
           type: 'update value'
           value: Array<PortableTextBlock> | undefined
         }
+      | {
+          type: 'load'
+          value: Array<PortableTextBlock> | undefined
+        }
+      | {type: 'first value'}
       | {
           type: 'update readOnly'
           readOnly: boolean
@@ -188,11 +201,20 @@ export const syncMachine = setup({
         return event.readOnly
       },
     }),
+    'assign loaded value': assign({
+      loadedValue: ({event}) => {
+        assertEvent(event, 'load')
+        return {value: event.value}
+      },
+    }),
     'assign pending value': assign({
       pendingValue: ({event}) => {
         assertEvent(event, 'update value')
         return event.value
       },
+    }),
+    'assign pending loaded value': assign({
+      pendingValue: ({context}) => context.loadedValue?.value,
     }),
     'clear pending value': assign({
       pendingValue: undefined,
@@ -220,6 +242,8 @@ export const syncMachine = setup({
   },
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
+    'has loaded value': ({context}) => context.loadedValue !== undefined,
+    'has no initial value': ({context}) => context.initialValue === undefined,
     'is busy': ({context}) => {
       const isBusy =
         context.editorEngine.isDeferringMutations ||
@@ -290,15 +314,30 @@ export const syncMachine = setup({
     editorEngine: input.editorEngine,
     pendingValue: undefined,
     previousValue: undefined,
+    loadedValue: undefined,
   }),
   entry: [
-    raise(({context}) => {
-      return {type: 'update value', value: context.initialValue}
+    // An editor without an `initialValue` queues its first sync behind the
+    // events sent before the actor started, so a `load` a plugin's mount
+    // effect sent is handled first, in the same turn. An `initialValue`
+    // keeps syncing at once, as it always has.
+    enqueueActions(({context, enqueue}) => {
+      if (context.initialValue === undefined) {
+        enqueue(({self}) => {
+          self.send({type: 'first value'})
+        })
+      } else {
+        enqueue.raise({type: 'update value', value: context.initialValue})
+      }
     }),
   ],
   on: {
     'update readOnly': {
       actions: ['assign readOnly'],
+    },
+    'load': {
+      guard: not('initial value synced'),
+      actions: ['assign loaded value'],
     },
   },
   initial: 'idle',
@@ -315,7 +354,40 @@ export const syncMachine = setup({
         },
       ],
       on: {
+        'first value': [
+          {
+            guard: 'initial value synced',
+            actions: [],
+          },
+          {
+            guard: 'has loaded value',
+            target: 'syncing',
+            actions: ['assign pending loaded value'],
+          },
+          {
+            actions: raise(({context}) => ({
+              type: 'update value',
+              value: context.initialValue,
+            })),
+          },
+        ],
         'update value': [
+          {
+            // A host value that arrives while an editor without an
+            // `initialValue` still waits for a `load`: nothing is loading,
+            // so the empty start is over, as it was before the wait, and the
+            // value syncs the way it always has.
+            guard: and([
+              not('initial value synced'),
+              not('has loaded value'),
+              'has no initial value',
+            ]),
+            actions: [
+              'assign initial value synced',
+              'emit done syncing value',
+              raise(({event}) => event),
+            ],
+          },
           {
             guard: and(['is empty value', not('initial value synced')]),
             actions: ['assign initial value synced', 'emit done syncing value'],
@@ -422,7 +494,8 @@ export const syncMachine = setup({
               schema: context.schema,
             },
             editorEngine: context.editorEngine,
-            streamBlocks: !context.initialValueSynced,
+            streamBlocks: !context.initialValueSynced && !context.loadedValue,
+            wholeValue: !context.initialValueSynced && !!context.loadedValue,
             value: context.pendingValue,
           }
         },
@@ -473,6 +546,7 @@ async function updateValue({
   editorEngine,
   change,
   streamBlocks,
+  wholeValue,
   value,
 }: {
   context: {
@@ -485,8 +559,14 @@ async function updateValue({
   editorEngine: PortableTextEditorEngine
   change: Change
   streamBlocks: boolean
+  wholeValue: boolean
   value: PortableTextBlock[] | undefined
 }) {
+  if (wholeValue) {
+    loadValue({context, sendBack, editorEngine, value})
+    return
+  }
+
   let isChanged = false
   let isValid = true
 
@@ -638,6 +718,59 @@ async function updateValue({
   }
 
   sendBack({type: 'done syncing', value, changed: isChanged})
+}
+
+/**
+ * Puts the first value into the engine whole, with one root `set`, and
+ * normalizes once at the end. Normalization runs inside the remote-change
+ * frame, with patching on, so a fix it makes is a reported correction.
+ */
+function loadValue({
+  context,
+  sendBack,
+  editorEngine,
+  value,
+}: {
+  context: {schema: EditorSchema}
+  sendBack: (event: SyncValueEvent) => void
+  editorEngine: PortableTextEditorEngine
+  value: Array<PortableTextBlock> | undefined
+}) {
+  const isEmpty = !value || value.length === 0
+
+  if (!isEmpty) {
+    const engineValue = removeNonObjects(
+      {
+        schema: context.schema,
+        containers: editorEngine.snapshot.context.containers,
+      },
+      value,
+    )
+
+    if (editorEngine.change) {
+      editorEngine.change.removalPatches = getNonObjectRemovalPatches(
+        {
+          schema: context.schema,
+          containers: editorEngine.snapshot.context.containers,
+        },
+        value,
+      )
+    }
+
+    withRemoteChanges(editorEngine, 'load', () => {
+      withoutNormalizing(editorEngine, () => {
+        pluginWithoutHistory(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
+            editorEngine.apply({type: 'set', path: [], value: engineValue})
+          })
+        })
+      })
+    })
+
+    editorEngine.onChange()
+  }
+
+  sendBack({type: 'done syncing', value, changed: !isEmpty})
 }
 
 async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
