@@ -78,7 +78,7 @@ test("Scenario: a remote collaborator's edit to another block does not disarm sm
   })
 
   editor.send({
-    type: 'patches',
+    type: 'apply',
     patches: [
       {
         type: 'set',
@@ -87,7 +87,6 @@ test("Scenario: a remote collaborator's edit to another block does not disarm sm
         origin: 'remote',
       },
     ],
-    snapshot: undefined,
   })
 
   await vi.waitFor(() => {
