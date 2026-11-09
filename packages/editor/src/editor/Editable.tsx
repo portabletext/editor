@@ -175,6 +175,34 @@ export type PortableTextEditableProps = Omit<
   rangeDecorations?: RangeDecoration[]
   renderPlaceholder?: RenderPlaceholderFunction
   scrollSelectionIntoView?: ScrollSelectionIntoViewFunction
+  /**
+   * @deprecated Select on `ready` instead: send a `select` event when the
+   * editor emits `ready`. Render the component inside `EditorProvider` together
+   * with the editor, because a listener added after `ready` never runs. To
+   * change the selection later, send `select` directly.
+   *
+   * @example
+   * ```tsx
+   * import {useEditor, type EditorSelection} from '@portabletext/editor'
+   * import {useEffect} from 'react'
+   *
+   * function InitialSelectionPlugin(props: {selection: EditorSelection}) {
+   *   const editor = useEditor()
+   *
+   *   useEffect(() => {
+   *     const subscription = editor.on('ready', () => {
+   *       editor.send({type: 'select', at: props.selection})
+   *     })
+   *
+   *     return () => {
+   *       subscription.unsubscribe()
+   *     }
+   *   }, [editor, props.selection])
+   *
+   *   return null
+   * }
+   * ```
+   */
   selection?: EditorSelection
   spellCheck?: boolean
 }
