@@ -26,10 +26,175 @@ import {useEngineStatic} from '../src/engine/react/hooks/use-engine-static'
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  textBlock,
+} from '../test-utils/load-depths'
+import {LoadOnMount, type LoadRecord} from '../test-utils/load-on-mount'
 
 describe('event.change', () => {
+  describe('load', () => {
+    const loadDefects: Array<{
+      name: string
+      leaf: (blockKey: string, spanKey: string) => Array<unknown>
+      repaired: (blockKey: string, spanKey: string) => Array<unknown>
+      corrected: boolean
+    }> = [
+      {
+        name: 'a text block with empty `children`',
+        leaf: (blockKey) => [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+        ],
+        repaired: (blockKey) => [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'm-k0', text: '', marks: []}],
+          },
+        ],
+        corrected: true,
+      },
+      {
+        name: 'a span missing `marks`',
+        leaf: (blockKey, spanKey) => [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ],
+        repaired: (blockKey, spanKey) => [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ],
+        corrected: false,
+      },
+      {
+        name: 'a block missing `_key`',
+        leaf: (_blockKey, spanKey) => [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ],
+        repaired: (_blockKey, spanKey) => [
+          {
+            _type: 'block',
+            _key: 'm-k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ],
+        corrected: true,
+      },
+      {
+        name: 'duplicate block keys',
+        leaf: (blockKey, spanKey) => [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock(blockKey, `${spanKey}-b`, 'bar'),
+        ],
+        repaired: (blockKey, spanKey) => [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock('m-k0', `${spanKey}-b`, 'bar'),
+        ],
+        corrected: true,
+      },
+      {
+        name: 'an unknown mark',
+        leaf: (blockKey, spanKey) => [
+          textBlock(blockKey, spanKey, 'foo', ['unknown']),
+        ],
+        repaired: (blockKey, spanKey) => [
+          textBlock(blockKey, spanKey, 'foo', ['unknown']),
+        ],
+        corrected: false,
+      },
+      {
+        name: 'a non-object entry',
+        leaf: (blockKey, spanKey) => [
+          textBlock(blockKey, spanKey, 'foo'),
+          'bar',
+        ],
+        repaired: (blockKey, spanKey) => [textBlock(blockKey, spanKey, 'foo')],
+        corrected: true,
+      },
+    ]
+
+    test.each(
+      loadDefects.flatMap((defect) =>
+        loadDepths.map((depth) => ({defect, depth})),
+      ),
+    )(
+      'Scenario: `load` of $defect.name at $depth.name emits only corrections',
+      async ({defect, depth}) => {
+        const keyGenerator = createTestKeyGenerator('m-')
+        let wrapperKeyCount = 0
+        const wrapperKey = createWrapperKeys(() => `w-${wrapperKeyCount++}`)
+        const loaded = depth.wrap(
+          defect.leaf('a', 'a-span') as never,
+          wrapperKey,
+        )
+        const expected = depth.wrap(
+          defect.repaired('a', 'a-span') as never,
+          wrapperKey,
+        )
+        const records: Array<LoadRecord> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: loadSchemaDefinition,
+          children: (
+            <>
+              <NodePlugin nodes={loadContainers} />
+              <LoadOnMount loads={[loaded.value]} records={records} />
+            </>
+          ),
+        })
+
+        expect(editor.getSnapshot().context.value).toEqual(expected.value)
+        expect(
+          records.flatMap((record) =>
+            record.type === 'event' && record.event.type === 'change'
+              ? [
+                  {
+                    origin: record.event.origin,
+                    correction:
+                      'correction' in record.event
+                        ? record.event.correction
+                        : undefined,
+                  },
+                ]
+              : [],
+          ),
+        ).toEqual(defect.corrected ? [{origin: 'local', correction: true}] : [])
+      },
+    )
+  })
+
   test('Scenario: Typing emits one local `change` per keystroke with its operations and patches', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
