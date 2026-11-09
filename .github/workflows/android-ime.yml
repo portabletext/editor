@@ -190,7 +190,7 @@ jobs:
         run: |
           node android/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-1.log 2> >(tee -a android/out/sdk-install-1.log >&2)
 
       - name: Install the emulator and its system image (retry)
         id: install2
@@ -201,7 +201,7 @@ jobs:
         run: |
           node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-2.log 2> >(tee -a android/out/sdk-install-2.log >&2)
 
       # Only runs on main save, the nightly schedule and a manual dispatch on main, so pull requests read
       # its entry and add none.
