@@ -83,6 +83,26 @@ export type PortableTextEditableProps = Omit<
    * ```
    */
   hotkeys?: HotkeyOptions
+  /**
+   * @deprecated Register a Behavior on the event you want to intercept, such as
+   * `insert.text`, `delete.backward` or `clipboard.paste`, or listen for
+   * `beforeinput` on a parent element in the capture phase.
+   *
+   * @example
+   * ```tsx
+   * import {defineBehavior} from '@portabletext/editor/behaviors'
+   * import {BehaviorPlugin} from '@portabletext/editor/plugins'
+   *
+   * // Typing '#' does nothing
+   * const ignoreHash = defineBehavior({
+   *   on: 'insert.text',
+   *   guard: ({event}) => event.text === '#',
+   *   actions: [],
+   * })
+   *
+   * const plugin = <BehaviorPlugin behaviors={[ignoreHash]} />
+   * ```
+   */
   onBeforeInput?: (event: InputEvent) => void
   /**
    * @deprecated Register a `clipboard.paste` Behavior instead. For asynchronous
