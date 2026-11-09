@@ -9,7 +9,7 @@ import {
 } from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {useEffect} from 'react'
+import React, {useEffect} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {
@@ -26,19 +26,336 @@ import {useEngineStatic} from '../src/engine/react/hooks/use-engine-static'
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 import {
   createWrapperKeys,
+  imageBlock,
   loadContainers,
   loadDepths,
+  loadPositions,
   loadSchemaDefinition,
+  positionIndex,
   textBlock,
 } from '../test-utils/load-depths'
 import {LoadOnMount, type LoadRecord} from '../test-utils/load-on-mount'
 
 describe('event.change', () => {
+  describe('resync', () => {
+    const resyncCases = loadDepths.flatMap((depth) =>
+      loadPositions.map((position) => ({depth, position})),
+    )
+
+    async function createResyncEditor(
+      depth: (typeof loadDepths)[number],
+      siblings: Array<PortableTextBlock>,
+      keyGenerator: () => string,
+    ) {
+      const wrapperKey = createWrapperKeys(keyGenerator)
+      const {value, prefix} = depth.wrap(siblings, wrapperKey)
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        initialValue: value,
+        children: <NodePlugin nodes={loadContainers} />,
+      })
+
+      return {
+        editor,
+        prefix,
+        wrap: (blocks: Array<PortableTextBlock>) =>
+          depth.wrap(blocks, wrapperKey).value,
+      }
+    }
+
+    test.each(resyncCases)(
+      'Scenario: `resync` of a changed word in the $position block at $depth.name emits the text edit on that span only',
+      async ({depth, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const keys = Array.from({length: 3}, () => ({
+          blockKey: keyGenerator(),
+          spanKey: keyGenerator(),
+        }))
+        const target = positionIndex(position)
+        const before = keys.map(({blockKey, spanKey}) =>
+          block(blockKey, spanKey, 'foo bar'),
+        )
+        const after = keys.map(({blockKey, spanKey}, index) =>
+          block(blockKey, spanKey, index === target ? 'foo baz' : 'foo bar'),
+        )
+        const {editor, prefix, wrap} = await createResyncEditor(
+          depth,
+          before,
+          keyGenerator,
+        )
+        const changes = collectChanges(editor)
+        const spanPath = [
+          ...prefix,
+          {_key: keys[target]!.blockKey},
+          'children',
+          {_key: keys[target]!.spanKey},
+        ]
+
+        editor.send({type: 'resync', value: wrap(after)})
+
+        expect(editor.getSnapshot().context.value).toEqual(wrap(after))
+        expect(changes).toEqual([
+          {
+            type: 'change',
+            origin: 'remote',
+            operations: [
+              {type: 'remove.text', path: spanPath, offset: 6, text: 'r'},
+              {type: 'insert.text', path: spanPath, offset: 6, text: 'z'},
+            ],
+          },
+        ])
+      },
+    )
+
+    test.each(resyncCases)(
+      'Scenario: `resync` that adds a block at the $position of three siblings at $depth.name emits one keyed insert',
+      async ({depth, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const keys = Array.from({length: 3}, () => ({
+          blockKey: keyGenerator(),
+          spanKey: keyGenerator(),
+        }))
+        const addedBlock = block(keyGenerator(), keyGenerator(), 'qux')
+        const before = keys.map(({blockKey, spanKey}) =>
+          block(blockKey, spanKey, 'foo'),
+        )
+        const after = [...before]
+        after.splice(positionIndex(position), 0, addedBlock)
+        const {editor, wrap} = await createResyncEditor(
+          depth,
+          before,
+          keyGenerator,
+        )
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: wrap(after)})
+
+        expect(editor.getSnapshot().context.value).toEqual(wrap(after))
+        expect(changes).toHaveLength(1)
+        expect(changes[0]?.origin).toEqual('remote')
+        expect(
+          changes[0]?.operations.map((operation) =>
+            operation.type === 'insert'
+              ? {type: operation.type, node: operation.node}
+              : {type: operation.type},
+          ),
+        ).toEqual([{type: 'insert', node: addedBlock}])
+      },
+    )
+
+    test.each(resyncCases)(
+      'Scenario: `resync` that removes the $position block of three siblings at $depth.name emits one keyed unset',
+      async ({depth, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const keys = Array.from({length: 3}, () => ({
+          blockKey: keyGenerator(),
+          spanKey: keyGenerator(),
+        }))
+        const before = keys.map(({blockKey, spanKey}) =>
+          block(blockKey, spanKey, 'foo'),
+        )
+        const after = before.filter(
+          (_, index) => index !== positionIndex(position),
+        )
+        const {editor, prefix, wrap} = await createResyncEditor(
+          depth,
+          before,
+          keyGenerator,
+        )
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: wrap(after)})
+
+        expect(editor.getSnapshot().context.value).toEqual(wrap(after))
+        expect(changes).toHaveLength(1)
+        expect(changes[0]?.origin).toEqual('remote')
+        expect(
+          changes[0]?.operations.map((operation) => ({
+            type: operation.type,
+            path: operation.path,
+          })),
+        ).toEqual([
+          {
+            type: 'unset',
+            path: [...prefix, {_key: keys[positionIndex(position)]!.blockKey}],
+          },
+        ])
+      },
+    )
+
+    test.each(resyncCases)(
+      'Scenario: `resync` that retypes the $position block of three siblings at $depth.name replaces it by key',
+      async ({depth, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const keys = Array.from({length: 3}, () => ({
+          blockKey: keyGenerator(),
+          spanKey: keyGenerator(),
+        }))
+        const target = positionIndex(position)
+        const before = keys.map(({blockKey, spanKey}) =>
+          block(blockKey, spanKey, 'foo'),
+        )
+        const retyped = imageBlock(keys[target]!.blockKey, 'foo.png')
+        const after = before.map((sibling, index) =>
+          index === target ? retyped : sibling,
+        )
+        const {editor, prefix, wrap} = await createResyncEditor(
+          depth,
+          before,
+          keyGenerator,
+        )
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: wrap(after)})
+
+        expect(editor.getSnapshot().context.value).toEqual(wrap(after))
+        expect(changes).toHaveLength(1)
+        expect(changes[0]?.origin).toEqual('remote')
+        expect(
+          changes[0]?.operations.map((operation) =>
+            operation.type === 'insert'
+              ? {type: operation.type, node: operation.node}
+              : {type: operation.type, path: operation.path},
+          ),
+        ).toEqual([
+          {type: 'unset', path: [...prefix, {_key: keys[target]!.blockKey}]},
+          {type: 'insert', node: retyped},
+        ])
+      },
+    )
+
+    test.each(resyncCases)(
+      'Scenario: `resync` that moves the $position block of three siblings to the end at $depth.name keeps the siblings in place',
+      async ({depth, position}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const keys = Array.from({length: 3}, () => ({
+          blockKey: keyGenerator(),
+          spanKey: keyGenerator(),
+        }))
+        const target = positionIndex(position)
+        const before = keys.map(({blockKey, spanKey}) =>
+          block(blockKey, spanKey, 'foo'),
+        )
+        const after = [
+          ...before.filter((_, index) => index !== target),
+          before[target]!,
+        ]
+        const {editor, wrap} = await createResyncEditor(
+          depth,
+          before,
+          keyGenerator,
+        )
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: wrap(after)})
+
+        expect(editor.getSnapshot().context.value).toEqual(wrap(after))
+        const untouchedKeys = keys
+          .filter((_, index) => index !== target)
+          .map(({blockKey}) => blockKey)
+        expect(changes).toHaveLength(1)
+        expect(changes[0]?.origin).toEqual('remote')
+        expect(changes[0]?.operations.length).toBeGreaterThan(0)
+        expect(
+          changes[0]?.operations.filter((operation) =>
+            operation.path.some(
+              (segment) =>
+                typeof segment === 'object' &&
+                '_key' in segment &&
+                untouchedKeys.includes(segment._key),
+            ),
+          ),
+        ).toEqual([])
+      },
+    )
+
+    test.each(loadDepths)(
+      'Scenario: `resync` to an identical copy at $name emits no `change` and clears history',
+      async (depth) => {
+        const keyGenerator = createTestKeyGenerator()
+        const blocks = ['foo', 'bar', 'baz'].map((text) =>
+          block(keyGenerator(), keyGenerator(), text),
+        )
+        const engineRef = React.createRef<PortableTextEditorEngine>()
+        const wrapperKey = createWrapperKeys(keyGenerator)
+        const {value, prefix} = depth.wrap(blocks, wrapperKey)
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: loadSchemaDefinition,
+          initialValue: value,
+          children: (
+            <>
+              <InternalEditorEngineRefPlugin ref={engineRef} />
+              <NodePlugin nodes={loadContainers} />
+            </>
+          ),
+        })
+        const spanPath = [
+          ...prefix,
+          {_key: blocks[0]!._key},
+          'children',
+          {
+            _key: (blocks[0] as {children: Array<{_key: string}>}).children[0]!
+              ._key,
+          },
+        ]
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: spanPath, offset: 3},
+            focus: {path: spanPath, offset: 3},
+          },
+        })
+        editor.send({type: 'insert.text', text: 'x'})
+        const typed = editor.getSnapshot().context.value
+        expect(engineRef.current?.history.undos.length).toBeGreaterThan(0)
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: structuredClone(typed)})
+
+        expect(editor.getSnapshot().context.value).toEqual(typed)
+        expect(changes).toEqual([])
+        expect(engineRef.current?.history).toEqual({undos: [], redos: []})
+      },
+    )
+
+    test('Scenario: A correction after `resync` is emitted as a local `change` with `correction`', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const duplicateKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [block(blockKey, spanKey, 'foo')],
+      })
+      const changes = collectChanges(editor)
+
+      editor.send({
+        type: 'resync',
+        value: [
+          block(blockKey, spanKey, 'foo'),
+          block(duplicateKey, keyGenerator(), 'bar'),
+          block(duplicateKey, keyGenerator(), 'baz'),
+        ],
+      })
+
+      expect(
+        changes.map((change) => [change.origin, 'correction' in change]),
+      ).toEqual([
+        ['remote', false],
+        ['local', true],
+      ])
+    })
+  })
+
   describe('load', () => {
     const loadDefects: Array<{
       name: string

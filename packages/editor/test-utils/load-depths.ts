@@ -5,9 +5,16 @@ import {defineContainer} from '../src/renderers/renderer.types'
 export const loadSchemaDefinition = defineSchema({
   decorators: [{name: 'strong'}],
   blockObjects: [
+    {name: 'image', fields: [{name: 'src', type: 'string'}]},
     {
       name: 'callout',
-      fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'image'}, {type: 'callout'}],
+        },
+      ],
     },
     {
       name: 'table',
@@ -28,7 +35,11 @@ export const loadSchemaDefinition = defineSchema({
                       type: 'object',
                       name: 'cell',
                       fields: [
-                        {name: 'content', type: 'array', of: [{type: 'block'}]},
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [{type: 'block'}, {type: 'image'}],
+                        },
                       ],
                     },
                   ],
@@ -156,5 +167,40 @@ export function createWrapperKeys(keyGenerator: () => string) {
     const key = keyGenerator()
     keys.set(name, key)
     return key
+  }
+}
+
+export function imageBlock(imageKey: string, src: string): PortableTextBlock {
+  return {_type: 'image', _key: imageKey, src}
+}
+
+/**
+ * Textspec for a leaf array at each depth, with fixed container keys, so a
+ * resync and the state it starts from describe the same containers.
+ */
+export function wrapTextspec(
+  depthName: LoadDepth['name'],
+  leafLines: Array<string>,
+): string {
+  const lines = (indent: number) =>
+    leafLines.map((line) => `${' '.repeat(indent)}${line}`)
+  switch (depthName) {
+    case 'root':
+      return lines(0).join(';;')
+    case 'callout':
+      return ['CALLOUT _key="callout":', ...lines(2)].join(';;')
+    case 'nested callout':
+      return [
+        'CALLOUT _key="outer":',
+        '  CALLOUT _key="inner":',
+        ...lines(4),
+      ].join(';;')
+    case 'table cell':
+      return [
+        'TABLE _key="table":',
+        '  ROW _key="row":',
+        '    CELL _key="cell":',
+        ...lines(6),
+      ].join(';;')
   }
 }

@@ -32,6 +32,13 @@ import {
   getChildKeyFromSelectionPoint,
 } from '../src/utils/util.selection-point'
 import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+} from '../test-utils/load-depths'
+import {anchorCases} from '../test-utils/resync-anchors'
+import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
@@ -1403,4 +1410,82 @@ describe('RangeDecorations: multiple PortableTextEditables under one provider', 
       ).length,
     ).toEqual(1)
   })
+})
+
+describe('RangeDecorations across a `resync`', () => {
+  test.each(
+    loadDepths.flatMap((depth) =>
+      anchorCases.map((anchorCase) => ({depth, anchorCase})),
+    ),
+  )(
+    'Scenario: A range at the $anchorCase.position of the text survives or is lost cleanly across a $anchorCase.update at $depth.name',
+    async ({depth, anchorCase}) => {
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w'))
+      const before = depth.wrap(anchorCase.before, wrapperKey)
+      const after = depth.wrap(anchorCase.after, wrapperKey)
+      const owner = (spanKey: string) => (spanKey === 'us' ? 'u' : 'b')
+      const spanPath = (spanKey: string, owner: string) => [
+        ...before.prefix,
+        {_key: owner},
+        'children',
+        {_key: spanKey},
+      ]
+      const onMoved = vi.fn<(details: RangeDecorationOnMovedDetails) => void>()
+      const rangeDecoration: RangeDecoration = {
+        component: ({children}) => (
+          <span data-testid="resync-decoration">{children}</span>
+        ),
+        selection: {
+          anchor: {
+            path: spanPath(
+              anchorCase.range.spanKey,
+              owner(anchorCase.range.spanKey),
+            ),
+            offset: anchorCase.range.from,
+          },
+          focus: {
+            path: spanPath(
+              anchorCase.range.spanKey,
+              owner(anchorCase.range.spanKey),
+            ),
+            offset: anchorCase.range.to,
+          },
+        },
+        onMoved,
+      }
+      const {editor} = await createTestEditor({
+        schemaDefinition: loadSchemaDefinition,
+        initialValue: before.value,
+        children: <NodePlugin nodes={loadContainers} />,
+        editableProps: {rangeDecorations: [rangeDecoration]},
+      })
+
+      editor.send({type: 'resync', value: after.value})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual(after.value)
+      })
+
+      if (anchorCase.rangeAfter === null) {
+        await vi.waitFor(() => {
+          expect(onMoved.mock.calls.at(-1)?.[0].newSelection).toEqual(null)
+        })
+      } else {
+        const {anchor, focus} = anchorCase.rangeAfter
+        await vi.waitFor(() => {
+          const newSelection = onMoved.mock.calls.at(-1)?.[0].newSelection
+          expect(newSelection).toEqual({
+            anchor: {
+              path: spanPath(anchor.spanKey, owner(anchor.spanKey)),
+              offset: anchor.offset,
+            },
+            focus: {
+              path: spanPath(focus.spanKey, owner(focus.spanKey)),
+              offset: focus.offset,
+            },
+          })
+        })
+      }
+    },
+  )
 })
