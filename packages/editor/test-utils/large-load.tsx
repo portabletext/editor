@@ -28,7 +28,7 @@ export const largeBlockCount = 3000
  */
 const blocksPerContainer = 3
 
-export type LargeBlock = {blockKey: string; spanKey: string}
+type LargeBlock = {blockKey: string; spanKey: string}
 
 /**
  * Where a test aims inside a large value: the first chunk, a middle chunk,

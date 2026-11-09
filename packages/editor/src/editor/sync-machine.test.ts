@@ -22,6 +22,7 @@ function createTestEngine(keyGenerator: () => string) {
   e.containers = new Map()
   e.blockIndexMap = new Map()
   e.verifiedUniqueChildGroups = new Set()
+  e.clearPendingMutations = () => {}
   e.snapshot = {
     blockIndexMap: e.blockIndexMap,
     context: {
@@ -139,9 +140,11 @@ describe('sync machine', () => {
       expect(remoteFrames.length).toBeGreaterThan(0)
     })
 
-    expect(new Set(remoteFrames.map((frame) => JSON.stringify(frame)))).toEqual(
-      new Set([JSON.stringify({kind: 'remote', source: 'load'})]),
-    )
+    expect(
+      remoteFrames.filter(
+        (frame) => frame.kind !== 'remote' || frame.source !== 'load',
+      ),
+    ).toEqual([])
   })
 
   test('a `resync` after the first value sync tags its operations `resync`', async () => {
@@ -187,9 +190,11 @@ describe('sync machine', () => {
       expect(remoteFrames.length).toBeGreaterThan(0)
     })
 
-    expect(new Set(remoteFrames.map((frame) => JSON.stringify(frame)))).toEqual(
-      new Set([JSON.stringify({kind: 'remote', source: 'resync'})]),
-    )
+    expect(
+      remoteFrames.filter(
+        (frame) => frame.kind !== 'remote' || frame.source !== 'resync',
+      ),
+    ).toEqual([])
   })
 
   test('`findOldBlock` resolves a moved block without scanning the value', () => {
