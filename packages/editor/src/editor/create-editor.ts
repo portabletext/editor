@@ -140,6 +140,17 @@ export function createInternalEditor(config: EditorConfig): {
           editorActor.send(event)
           break
 
+        case 'apply':
+          editorActor.send({
+            type: 'patches',
+            patches: event.patches.map((patch) => ({
+              ...patch,
+              origin: 'remote',
+            })),
+            snapshot: undefined,
+          })
+          break
+
         default:
           editorActor.send(
             rerouteExternalBehaviorEvent({

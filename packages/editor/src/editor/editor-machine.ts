@@ -47,6 +47,23 @@ export type PatchesEvent = {
 }
 
 /**
+ * Another writer's change to the content, for example a collaborator's
+ * patches arriving from your backend. The patches apply in order as another
+ * writer's change. They don't become steps in your undo history, and the caret
+ * stays put in text they don't touch. If they change the content, the editor
+ * emits one remote `change` event, followed by a `correction: true` change if
+ * it had to fix something. An `unset` of the whole value clears the undo
+ * history. Every patch counts as another writer's, so none needs an `origin`,
+ * and there is no `snapshot` to pass.
+ *
+ * @public
+ */
+export type ApplyEvent = {
+  type: 'apply'
+  patches: Array<Patch>
+}
+
+/**
  * @public
  */
 export type ExternalEditorEvent =
@@ -55,6 +72,7 @@ export type ExternalEditorEvent =
       readOnly: boolean
     }
   | PatchesEvent
+  | ApplyEvent
 
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
   operationId?: string

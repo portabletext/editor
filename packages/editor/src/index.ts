@@ -9,7 +9,7 @@ export type {
 export type {Editor, EditorConfig, EditorEvent} from './editor'
 export {PortableTextEditable} from './editor/Editable'
 export type {PortableTextEditableProps} from './editor/Editable'
-export type {PatchesEvent} from './editor/editor-machine'
+export type {ApplyEvent, PatchesEvent} from './editor/editor-machine'
 export {
   EditorProvider,
   type EditorProviderProps,
