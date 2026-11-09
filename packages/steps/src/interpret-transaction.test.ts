@@ -2590,3 +2590,91 @@ describe('interpretTransaction: a span edited before its block merges', () => {
     })
   })
 })
+
+describe('interpretTransaction: a merged block whose first span was emptied', () => {
+  test('"def", after an emptied "abc", follows its own span into the merged block', () => {
+    const seed: Array<PortableTextBlock> = [
+      makeBlock('b1', 's1', 'xyz'),
+      {
+        _type: 'block',
+        _key: 'b2',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 's2', text: 'abc', marks: ['strong']},
+          {_type: 'span', _key: 's3', text: 'def', marks: []},
+        ],
+      } satisfies PortableTextBlock,
+    ]
+    // Deleting "abc" across the break into "xyz|abcdef": "abc" is emptied in
+    // place, then b2 merges into b1 and the empty span is dropped.
+    const patches: Array<Patch> = [
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b2', 's2'), 'text'],
+        value: dmpPatch('abc', ''),
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        position: 'after',
+        items: [
+          {_type: 'span', _key: 's2', text: '', marks: ['strong']},
+          {_type: 'span', _key: 's3', text: 'def', marks: []},
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(mapPoint(steps, {path: spanPath('b2', 's3'), offset: 1})).toEqual({
+      path: spanPath('b1', 's3'),
+      offset: 1,
+    })
+  })
+})
+
+describe('interpretTransaction: a span key removed from two blocks at once', () => {
+  test('"def" follows the merge when a deleted block also held its key', () => {
+    const seed: Array<PortableTextBlock> = [
+      makeBlock('b1', 's1', 'abc'),
+      makeBlock('b2', 's2', 'gone'),
+      makeBlock('b3', 's2', 'XYdef'),
+    ]
+    // Deleting from the end of "abc" through "XY" in "abc|gone|XYdef": b2 is
+    // deleted outright, b3's span is trimmed, then b3 merges into b1. Both
+    // removed blocks held a span keyed s2; only b3's comes back.
+    const patches: Array<Patch> = [
+      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+      {
+        type: 'diffMatchPatch',
+        path: [...spanPath('b3', 's2'), 'text'],
+        value: dmpPatch('XYdef', 'def'),
+        origin: 'local',
+      },
+      {type: 'unset', path: [{_key: 'b3'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+        position: 'after',
+        items: [{_type: 'span', _key: 's2', text: 'def', marks: ['strong']}],
+        origin: 'local',
+      },
+    ]
+
+    const steps = interpretTransaction(seed, patches)
+
+    expect(mapPoint(steps, {path: spanPath('b3', 's2'), offset: 3})).toEqual({
+      path: spanPath('b1', 's2'),
+      offset: 1,
+    })
+  })
+})

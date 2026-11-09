@@ -313,7 +313,7 @@ export function interpretTransaction(
 
         if (isKeyedSegment(lastSegment)) {
           const sourceNode = getValue(workingCopy, patch.path)
-          const representative = representativeSpan(
+          const representative = removedTextSpan(
             sourceNode,
             patch.path as StepPath,
           )
@@ -1124,6 +1124,30 @@ function keyLivesOutside(
     }
   }
   return false
+}
+
+/**
+ * The span a removed node's text is read from. Like `representativeSpan`,
+ * except that when every character of a block sits in one span after its
+ * other spans were emptied (a delete-across clearing the first span before
+ * the merge), the removal is anchored on that span, where its text lives.
+ */
+function removedTextSpan(
+  node: unknown,
+  path: StepPath,
+): {path: StepPath; text: string} | undefined {
+  const representative = representativeSpan(node, path)
+  const children = nodeChildren(node)
+  if (representative === undefined || children === undefined) {
+    return representative
+  }
+  const withText = children.filter(
+    (child) => (nodeText(child) ?? '').length > 0,
+  )
+  const onlyKey = withText.length === 1 ? nodeKey(withText[0]) : undefined
+  return onlyKey === undefined
+    ? representative
+    : {path: [...path, 'children', {_key: onlyKey}], text: representative.text}
 }
 
 function representativeSpan(
