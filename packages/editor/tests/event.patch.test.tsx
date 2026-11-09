@@ -802,4 +802,64 @@ describe('event.patch', () => {
       },
     )
   })
+
+  describe('the base after a resync', () => {
+    test.each([
+      {name: 'undefined', value: undefined},
+      {name: 'an empty array', value: []},
+    ])(
+      'Scenario: A first character typed after a `resync` to $name emits the patches `update value` gives',
+      async ({value}) => {
+        async function patchesAfter(feed: 'update value' | 'resync') {
+          const keyGenerator = createTestKeyGenerator()
+          const patches: Array<Patch> = []
+          const {editor, locator} = await createTestEditor({
+            keyGenerator,
+            initialValue: [
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+                ],
+              },
+            ],
+            children: (
+              <EventListenerPlugin
+                on={(event) => {
+                  if (event.type === 'patch') {
+                    patches.push(event.patch)
+                  }
+                }}
+              />
+            ),
+          })
+
+          editor.send({type: feed, value})
+          await vi.waitFor(() => {
+            expect(editor.getSnapshot().context.value.length).toEqual(1)
+            expect(
+              toTextspec({...editor.getSnapshot().context, selection: null}),
+            ).toEqual('B: ')
+          })
+          patches.length = 0
+
+          await userEvent.click(locator)
+          await userEvent.type(locator, 'f')
+          await vi.waitFor(() => {
+            expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+          })
+
+          return patches
+        }
+
+        const afterResync = await patchesAfter('resync')
+
+        expect(afterResync).not.toEqual([])
+        expect(afterResync).toEqual(await patchesAfter('update value'))
+      },
+    )
+  })
 })

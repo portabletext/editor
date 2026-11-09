@@ -143,6 +143,52 @@ describe('sync machine', () => {
     )
   })
 
+  test('a `resync` after the first value sync tags its operations `resync`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, schema} = createTestEngine(keyGenerator)
+    const block = (text: string): PortableTextBlock => ({
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 's1', text, marks: []}],
+    })
+
+    const actor = createActor(syncMachine, {
+      input: {
+        initialValue: undefined,
+        keyGenerator,
+        schema,
+        readOnly: false,
+        editorEngine: editor,
+      },
+    })
+    actor.start()
+    actor.send({type: 'load', value: [block('foo')]})
+    await vi.waitFor(() => {
+      expect(editor.snapshot.context.value).toEqual([block('foo')])
+    })
+
+    const remoteFrames: Array<ApplyContextFrame> = []
+    subscribeToOperations(editor, (event) => {
+      for (const frame of event.context) {
+        if (frame.kind === 'remote') {
+          remoteFrames.push(frame)
+        }
+      }
+    })
+
+    actor.send({type: 'resync', value: [block('foobar')]})
+
+    await vi.waitFor(() => {
+      expect(remoteFrames.length).toBeGreaterThan(0)
+    })
+
+    expect(new Set(remoteFrames.map((frame) => JSON.stringify(frame)))).toEqual(
+      new Set([JSON.stringify({kind: 'remote', source: 'resync'})]),
+    )
+  })
+
   test('`findOldBlock` resolves a moved block without scanning the value', () => {
     const keyGenerator = createTestKeyGenerator()
     const schema = compileSchema(defineSchema({}))

@@ -1466,7 +1466,16 @@ describe('RangeDecorations across a `resync`', () => {
         expect(editor.getSnapshot().context.value).toEqual(after.value)
       })
 
-      if (anchorCase.rangeAfter === null) {
+      if (anchorCase.rangeAfter === 'unchanged') {
+        await vi.waitFor(() => {
+          expect(editor.getSnapshot().context.value).toEqual(after.value)
+        })
+        expect(onMoved).not.toHaveBeenCalled()
+        expect(
+          document.querySelector('[data-testid="resync-decoration"]')
+            ?.textContent,
+        ).toEqual('foobar'.slice(anchorCase.range.from, anchorCase.range.to))
+      } else if (anchorCase.rangeAfter === null) {
         await vi.waitFor(() => {
           expect(onMoved.mock.calls.at(-1)?.[0].newSelection).toEqual(null)
         })

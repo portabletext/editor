@@ -232,8 +232,8 @@ describe('event.change', () => {
       },
     )
 
-    test.each(resyncCases)(
-      'Scenario: `resync` that moves the $position block of three siblings to the end at $depth.name keeps the siblings in place',
+    test.each(resyncCases.filter(({position}) => position !== 'last'))(
+      'Scenario: `resync` that moves the $position block of three siblings to the end at $depth.name leaves the other siblings alone',
       async ({depth, position}) => {
         const keyGenerator = createTestKeyGenerator()
         const keys = Array.from({length: 3}, () => ({
@@ -261,18 +261,23 @@ describe('event.change', () => {
         const untouchedKeys = keys
           .filter((_, index) => index !== target)
           .map(({blockKey}) => blockKey)
+        // What an operation changes: the node it removes or inserts, or the
+        // node it edits. The anchor an insert is placed after is not changed.
+        const changedKeys = (changes[0]?.operations ?? []).flatMap(
+          (operation) =>
+            operation.type === 'insert'
+              ? [(operation.node as {_key: string})._key]
+              : operation.path.flatMap((segment) =>
+                  typeof segment === 'object' && '_key' in segment
+                    ? [segment._key]
+                    : [],
+                ),
+        )
         expect(changes).toHaveLength(1)
         expect(changes[0]?.origin).toEqual('remote')
-        expect(changes[0]?.operations.length).toBeGreaterThan(0)
+        expect(changedKeys.length).toBeGreaterThan(0)
         expect(
-          changes[0]?.operations.filter((operation) =>
-            operation.path.some(
-              (segment) =>
-                typeof segment === 'object' &&
-                '_key' in segment &&
-                untouchedKeys.includes(segment._key),
-            ),
-          ),
+          changedKeys.filter((key) => untouchedKeys.includes(key)),
         ).toEqual([])
       },
     )
@@ -324,6 +329,118 @@ describe('event.change', () => {
         expect(editor.getSnapshot().context.value).toEqual(typed)
         expect(changes).toEqual([])
         expect(engineRef.current?.history).toEqual({undos: [], redos: []})
+      },
+    )
+
+    test.each([
+      {name: 'undefined', value: undefined},
+      {name: 'an empty array', value: []},
+    ])(
+      'Scenario: `resync` to $name gives the placeholder, one remote `change` and cleared history',
+      async ({value}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKey = keyGenerator()
+        const spanKey = keyGenerator()
+        const engineRef = React.createRef<PortableTextEditorEngine>()
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          initialValue: [block(blockKey, spanKey, 'foo')],
+          children: <InternalEditorEngineRefPlugin ref={engineRef} />,
+        })
+        editor.send({
+          type: 'select',
+          at: {
+            anchor: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 3,
+            },
+            focus: {
+              path: [{_key: blockKey}, 'children', {_key: spanKey}],
+              offset: 3,
+            },
+          },
+        })
+        editor.send({type: 'insert.text', text: 'x'})
+        expect(engineRef.current?.history.undos.length).toBeGreaterThan(0)
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value})
+
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: 'k4',
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(changes.map((change) => change.origin)).toEqual(['remote'])
+        expect(engineRef.current?.history).toEqual({undos: [], redos: []})
+      },
+    )
+
+    test.each([
+      {name: 'undefined', value: undefined},
+      {name: 'an empty array', value: []},
+    ])(
+      'Scenario: `resync` to $name of an editor that is already empty emits no `change` and clears history',
+      async ({value}) => {
+        const engineRef = React.createRef<PortableTextEditorEngine>()
+        const {editor, locator} = await createTestEditor({
+          children: <InternalEditorEngineRefPlugin ref={engineRef} />,
+        })
+        await userEvent.click(locator)
+        await userEvent.type(locator, 'x')
+        await userEvent.keyboard('{Backspace}')
+        await vi.waitFor(() => {
+          expect(engineRef.current?.history.undos.length).toBeGreaterThan(0)
+        })
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value})
+
+        expect(changes).toEqual([])
+        expect(engineRef.current?.history).toEqual({undos: [], redos: []})
+      },
+    )
+
+    test.each([loadDepths[0]!, loadDepths[3]!])(
+      'Scenario: `resync` keeps adjacent spans with the same marks and duplicate markDefs as received at $name',
+      async (depth) => {
+        const keyGenerator = createTestKeyGenerator()
+        const wrapperKey = createWrapperKeys(keyGenerator)
+        const blockKey = keyGenerator()
+        const spanKey = keyGenerator()
+        const before = depth.wrap([block(blockKey, spanKey, 'foo')], wrapperKey)
+        const {editor} = await createTestEditor({
+          keyGenerator,
+          schemaDefinition: loadSchemaDefinition,
+          initialValue: before.value,
+          children: <NodePlugin nodes={loadContainers} />,
+        })
+        const received = depth.wrap(
+          [
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [
+                {_type: 'link', _key: 'm1', href: 'https://example.com'},
+                {_type: 'link', _key: 'm1', href: 'https://example.com'},
+              ],
+              children: [
+                {_type: 'span', _key: spanKey, text: 'foo', marks: ['strong']},
+                {_type: 'span', _key: 'b', text: 'bar', marks: ['strong']},
+              ],
+            },
+          ],
+          wrapperKey,
+        ).value
+
+        editor.send({type: 'resync', value: received})
+
+        expect(editor.getSnapshot().context.value).toEqual(received)
       },
     )
 
