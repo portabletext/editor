@@ -523,7 +523,7 @@ describe('createDecorationLayer: events', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       // Importing @portabletext/patches's diffMatchPatch here mirrors the
       // legacy suite's origin harness (see `@portabletext/editor`'s
       // `tests/range-decorations.test.tsx`).
@@ -534,7 +534,6 @@ describe('createDecorationLayer: events', () => {
           value: '@@ -1,3 +1,6 @@\n+bar\n foo\n',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -603,7 +602,7 @@ describe('createDecorationLayer: events', () => {
     // Replacing "d" with "X" keeps the text length: same shape as the local
     // same-length-edit scenario, applied as a remote patch instead.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('abcdef', 'abcXef', [
           {_key: blockKey},
@@ -612,7 +611,6 @@ describe('createDecorationLayer: events', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -685,9 +683,8 @@ describe('createDecorationLayer: events', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{type: 'unset', path: [{_key: blockKey}]}],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1222,7 +1219,7 @@ describe('createDecorationLayer: mixed-origin bursts', () => {
       text: 'x',
     })
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('xfoo', 'YZxfoo', [
           {_key: blockKey},
@@ -1231,7 +1228,6 @@ describe('createDecorationLayer: mixed-origin bursts', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1310,7 +1306,7 @@ describe('createDecorationLayer: mixed-origin bursts', () => {
       text: 'x',
     })
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('xfoo', 'YZxfoo', [
           {_key: blockKey},
@@ -1319,10 +1315,9 @@ describe('createDecorationLayer: mixed-origin bursts', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         diffMatchPatch('YZxfoo', 'xfoo', [
           {_key: blockKey},
@@ -1331,7 +1326,6 @@ describe('createDecorationLayer: mixed-origin bursts', () => {
           'text',
         ]),
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
