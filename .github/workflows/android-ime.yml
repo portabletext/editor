@@ -64,13 +64,13 @@ jobs:
               lang: ja,
               file: tests/ja.test.ts,
               run_minutes: 56,
-              job_minutes: 183,
+              job_minutes: 186,
             }
           - {
               lang: en,
               file: tests/en.test.ts,
               run_minutes: 52,
-              job_minutes: 175,
+              job_minutes: 178,
             }
         api: [36]
 
@@ -114,9 +114,33 @@ jobs:
           pnpm --filter @portabletext/editor build:android
           node -e "console.log('EDITOR_VERSION', require('./packages/editor/package.json').version)"
 
+      # The jar comes from the actions cache when an earlier run saved it, under a key that changes with its
+      # URL and hash, see the jar cache in `packages/editor/android/README.md`. A failed restore or save is a
+      # miss, which downloads as before.
+      - name: Restore the uiautomator2 server jar
+        id: u2-jar-restore
+        continue-on-error: true
+        timeout-minutes: 1
+        uses: actions/cache/restore@v6
+        with:
+          key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
+          path: packages/thumbjar/.cache/u2.jar
+
+      # A restored jar whose hash differs is downloaded again.
       - name: Fetch the uiautomator2 server jar
-        timeout-minutes: 2
+        id: u2-jar-fetch
+        timeout-minutes: 3
         run: pnpm --filter @portabletext/editor exec thumbjar fetch-u2-jar
+
+      # Saves from any ref: a pull request's entry is read only by that pull request's runs, and main's by every branch.
+      - name: Save the uiautomator2 server jar
+        if: steps.u2-jar-fetch.outcome == 'success' && steps.u2-jar-restore.outputs.cache-hit != 'true'
+        continue-on-error: true
+        timeout-minutes: 1
+        uses: actions/cache/save@v6
+        with:
+          key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
+          path: packages/thumbjar/.cache/u2.jar
 
       # The emulator and its system image come from the actions cache when it holds the versions a fresh
       # install picks today, see the SDK cache in `packages/editor/android/README.md`. A failed lookup,
