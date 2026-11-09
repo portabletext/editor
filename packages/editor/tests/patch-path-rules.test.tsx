@@ -1202,6 +1202,1051 @@ describe('remote patches resolve a negative index that selects a container, no S
   })
 })
 
+describe('remote patches at the root at a negative index address the item counted from the end even when its key is unusable, like Sanity', () => {
+  test("Scenario: a remote `set` at [-1, 'children', 0, 'text'] after an insert of a block with the key of a sibling edits the inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'block',
+        _key: 'foo',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'bar',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'baz',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'baz'}],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: 'baz',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [-1, 'children', 0, 'text'],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'block',
+          _key: 'foo',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'bar',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'baz',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'qux-s', text: 'X', marks: []}],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+
+  test("Scenario: a remote `set` at [-3, 'children', 0, 'text'] after an insert of a block with the key of a sibling before b edits the inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'block',
+        _key: 'foo',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'bar',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'baz',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'bar'}],
+        position: 'before',
+        items: [
+          {
+            _type: 'block',
+            _key: 'foo',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [-3, 'children', 0, 'text'],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'block',
+          _key: 'foo',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'qux-s', text: 'X', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'bar',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'baz',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+
+  test("Scenario: a remote `set` at [-1, 'children', 0, 'text'] after an insert of two blocks with an empty key edits the second inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'block',
+        _key: 'foo',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'bar',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'baz',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'baz'}],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: '',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: '',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'quux-s', text: 'quux', marks: []},
+            ],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [-1, 'children', 0, 'text'],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'block',
+          _key: 'foo',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'bar',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'baz',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'quux-s', text: 'X', marks: []}],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+})
+
+describe('remote patches inside a callout at a negative index address the item counted from the end even when its key is unusable, like Sanity', () => {
+  test("Scenario: a remote `set` at [-1, 'children', 0, 'text'] after an insert of a block with the key of a sibling edits the inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'foo',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'bar',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'baz',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', {_key: 'baz'}],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: 'baz',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', -1, 'children', 0, 'text'],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'foo',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'bar',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'baz',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'qux-s', text: 'X', marks: []}],
+            },
+          ],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+
+  test("Scenario: a remote `set` at [-3, 'children', 0, 'text'] after an insert of a block with the key of a sibling before b edits the inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'foo',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'bar',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'baz',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', {_key: 'bar'}],
+        position: 'before',
+        items: [
+          {
+            _type: 'block',
+            _key: 'foo',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', -3, 'children', 0, 'text'],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'foo',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'qux-s', text: 'X', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'bar',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'baz',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+
+  test("Scenario: a remote `set` at [-1, 'children', 0, 'text'] after an insert of two blocks with an empty key edits the second inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'foo',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'foo-s', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'bar',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'bar-s', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'baz',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'baz-s', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', {_key: 'baz'}],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: '',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: '',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'quux-s', text: 'quux', marks: []},
+            ],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', -1, 'children', 0, 'text'],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'foo',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'bar',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'baz',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'qux-s', text: 'qux', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'quux-s', text: 'X', marks: []}],
+            },
+          ],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+})
+
+describe('remote patches inside a callout inside a callout at a negative index address the item counted from the end even when its key is unusable, like Sanity', () => {
+  test("Scenario: a remote `set` at [-1, 'children', 0, 'text'] after an insert of a block with the key of a sibling edits the inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'foo',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'bar',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'baz',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content', {_key: 'baz'}],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: 'baz',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          -1,
+          'children',
+          0,
+          'text',
+        ],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'foo',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'bar',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'baz',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k3',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'qux-s', text: 'X', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+
+  test("Scenario: a remote `set` at [-3, 'children', 0, 'text'] after an insert of a block with the key of a sibling before b edits the inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'foo',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'bar',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'baz',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content', {_key: 'bar'}],
+        position: 'before',
+        items: [
+          {
+            _type: 'block',
+            _key: 'foo',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          -3,
+          'children',
+          0,
+          'text',
+        ],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'foo',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k3',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'qux-s', text: 'X', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'bar',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'baz',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+
+  test("Scenario: a remote `set` at [-1, 'children', 0, 'text'] after an insert of two blocks with an empty key edits the second inserted block", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor, consoleErrors} = await createSpanEditor(keyGenerator, [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'foo',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'bar',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'baz',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+
+    await sendRemotePatches(editor, keyGenerator, [
+      {
+        type: 'insert',
+        origin: 'remote',
+        path: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content', {_key: 'baz'}],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: '',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'qux-s', text: 'qux', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: '',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'quux-s', text: 'quux', marks: []},
+            ],
+          },
+        ],
+      },
+      {
+        type: 'set',
+        origin: 'remote',
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          -1,
+          'children',
+          0,
+          'text',
+        ],
+        value: 'X',
+      },
+    ])
+
+    expect({
+      value: editor.getSnapshot().context.value,
+      consoleErrors,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: 'c0',
+          content: [
+            {
+              _type: 'callout',
+              _key: 'c1',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'foo',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'foo-s', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'bar',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'bar-s', text: 'bar', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'baz',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'baz-s', text: 'baz', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k4',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'qux-s', text: 'qux', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k3',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'quux-s', text: 'X', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      consoleErrors: [],
+    })
+  })
+})
+
 const schemaDefinition = defineSchema({
   block: {
     fields: [
