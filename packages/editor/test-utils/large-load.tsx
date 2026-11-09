@@ -1,8 +1,8 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
-import {expect, vi} from 'vitest'
-import {render} from 'vitest-browser-react'
+import {createRoot} from 'react-dom/client'
+import {expect, onTestFinished, vi} from 'vitest'
 import {EditorProvider, PortableTextEditable, type Editor} from '../src'
 import {useEditor} from '../src/editor/use-editor'
 import type {Path} from '../src/engine/interfaces/path'
@@ -19,7 +19,14 @@ import {
 } from './load-depths'
 import {LoadOnMount} from './load-on-mount'
 
-export const largeBlockCount = 450
+export const largeBlockCount = 3000
+
+/**
+ * At a container depth the value is many sibling containers rather than one
+ * container holding every block: a single container with thousands of
+ * children is one root block, so it is drawn in one chunk.
+ */
+const blocksPerContainer = 3
 
 export type LargeBlock = {blockKey: string; spanKey: string}
 
@@ -29,7 +36,7 @@ export type LargeBlock = {blockKey: string; spanKey: string}
  */
 export const drawPositions = [
   {name: 'first chunk', index: 0},
-  {name: 'middle chunk', index: 250},
+  {name: 'middle chunk', index: 1500},
   {name: 'last chunk', index: largeBlockCount - 1},
 ] as const
 
@@ -70,17 +77,58 @@ export async function renderLargeLoad(options: {
         ],
       }
     })
-  const loaded = options.depth.wrap(
-    blocksWith((key) => key.blockKey),
-    wrapperKey,
-  )
+  const groupBlocks = (blocks: Array<PortableTextBlock>) => {
+    if (options.depth.name === 'root') {
+      return [options.depth.wrap(blocks, wrapperKey)]
+    }
+    const groups: Array<ReturnType<typeof options.depth.wrap>> = []
+    for (let start = 0; start < blocks.length; start += blocksPerContainer) {
+      groups.push(
+        options.depth.wrap(
+          blocks.slice(start, start + blocksPerContainer),
+          createWrapperKeys(() => `g${start}-${wrapperKeyCounter++}`),
+        ),
+      )
+    }
+    return groups
+  }
+  let wrapperKeyCounter = 0
+  const buildValue = (blocks: Array<PortableTextBlock>) => {
+    wrapperKeyCounter = 0
+    return groupBlocks(blocks).flatMap((group) => group.value)
+  }
+  const loadedGroups = (() => {
+    wrapperKeyCounter = 0
+    return groupBlocks(blocksWith((key) => key.blockKey))
+  })()
+  const loaded = {
+    value: loadedGroups.flatMap((group) => group.value),
+    prefix: loadedGroups[0]!.prefix,
+  }
+  const prefixFor = (index: number): Path =>
+    options.depth.name === 'root'
+      ? loaded.prefix
+      : loadedGroups[Math.floor(index / blocksPerContainer)]!.prefix
   const editorRef = React.createRef<Editor>()
   const engineRef = React.createRef<PortableTextEditorEngine>()
   const records: Array<never> = []
   const loads = [loaded.value]
   const userChanges: Array<unknown> = []
 
-  const screen = await render(
+  // Mounted without `act`: `act` waits for the scheduled work to settle,
+  // which is the whole draw, and the tests act during it.
+  const container = document.body.appendChild(document.createElement('div'))
+  const root = createRoot(container)
+  let unmounted = false
+  const unmount = () => {
+    if (!unmounted) {
+      unmounted = true
+      root.unmount()
+      container.remove()
+    }
+  }
+  onTestFinished(unmount)
+  root.render(
     <EditorProvider
       initialConfig={{keyGenerator, schemaDefinition: loadSchemaDefinition}}
     >
@@ -94,8 +142,12 @@ export async function renderLargeLoad(options: {
   )
 
   const editable = () => document.querySelector<HTMLElement>('[data-pt-editor]')
+  // A block is drawn when its element is in the DOM; its text may have been
+  // changed by the test, so the key is read from the element's path.
   const isDrawn = (blockKey: string) =>
-    editable()?.textContent?.includes(blockKey) ?? false
+    editable()?.querySelector(
+      `[data-pt-block][data-pt-path$='_key=="${blockKey}"]']`,
+    ) !== null && editable() !== null
 
   await vi.waitFor(() => expect(isDrawn(keys[0]!.blockKey)).toEqual(true), {
     timeout: 10_000,
@@ -107,11 +159,10 @@ export async function renderLargeLoad(options: {
     keys,
     loaded,
     prefix: loaded.prefix as Path,
-    wrap: (blocks: Array<PortableTextBlock>) =>
-      options.depth.wrap(blocks, wrapperKey).value,
+    wrap: (blocks: Array<PortableTextBlock>) => buildValue(blocks),
     blocksWith,
     userChanges,
-    unmount: () => screen.unmount(),
+    unmount,
     isDrawn,
     /**
      * The editor is mid-draw: the last block is not in the DOM yet and the
@@ -124,7 +175,7 @@ export async function renderLargeLoad(options: {
     },
     isEditable: () => editable()?.getAttribute('contenteditable') === 'true',
     spanPath: (index: number): Path => [
-      ...loaded.prefix,
+      ...prefixFor(index),
       ...(options.tableEvery && index % options.tableEvery === 0
         ? [
             {_key: `table-${keys[index]!.blockKey}`},
