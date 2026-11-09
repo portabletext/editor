@@ -15,7 +15,7 @@ import type {
   RemoveTextOperation,
 } from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
-import {hasUsableKey} from '../paths/node-segment'
+import {hasUsableKey, isAddressableByKey} from '../paths/node-segment'
 import {getSpan} from '../traversal/get-span'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {isRecord} from '../utils/asserters'
@@ -132,17 +132,4 @@ export function toKeyedPatchPath(value: unknown, path: Path): Path {
   }
 
   return keyedPath
-}
-
-function isAddressableByKey(elements: Array<unknown>, key: string): boolean {
-  let count = 0
-  for (const element of elements) {
-    if (!isRecord(element)) {
-      return false
-    }
-    if (element['_key'] === key) {
-      count++
-    }
-  }
-  return count === 1
 }
