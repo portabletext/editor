@@ -30,5 +30,6 @@ export function createTestSnapshot(snapshot: {
     blockIndexMap,
     context,
     decoratorState: snapshot?.decoratorState ?? {},
+    status: 'ready',
   }
 }

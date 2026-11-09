@@ -41,6 +41,13 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
+  /**
+   * `'loading'` until the editor's first commit has finished, `'ready'` from
+   * then on. It is `'ready'` before the `ready` event is emitted, so a
+   * `ready` listener already reads it, and it never goes back to `'loading'`.
+   * A consumer that mounts after `ready` reads `'ready'` at once.
+   */
+  status: 'loading' | 'ready'
   blockIndexMap: ReadonlyMap<string, number>
   /**
    * @beta
@@ -78,5 +85,6 @@ export function createEditorSnapshot({
     blockIndexMap: editor.blockIndexMap,
     context,
     decoratorState: editor.snapshot.decoratorState,
+    status: editor.snapshot.status,
   } satisfies EditorSnapshot
 }

@@ -34,6 +34,7 @@ function createTestEngine(keyGenerator: () => string) {
       value: [],
     },
     decoratorState: {},
+    status: 'ready',
   }
 
   // Only wired for the plugin closures `updateSelectionPlugin` and

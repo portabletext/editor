@@ -45,6 +45,7 @@ function createBareEditor(value: Array<PortableTextBlock>): Editor {
       value,
     },
     decoratorState: {},
+    status: 'ready',
     // The bare engine editor lacks the fields that `withDOM` and
     // `createEditorEngine` assign. Only the snapshot fields used by
     // `apply` are needed here.
