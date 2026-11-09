@@ -305,8 +305,14 @@ function EditorEventListener(props: {
 
   useEffect(() => {
     const subscription = props.editorRef.on('patches', (event) => {
-      if (patchSubscriptionActive) {
-        editor.send(event)
+      if (!patchSubscriptionActive) {
+        return
+      }
+
+      const patches = event.patches.filter((patch) => patch.origin !== 'local')
+
+      if (patches.length > 0) {
+        editor.send({type: 'apply', patches})
       }
     })
 

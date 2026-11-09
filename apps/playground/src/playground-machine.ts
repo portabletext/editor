@@ -3,7 +3,6 @@ import {
   type ChangeEvent,
   type EditorSelection,
   type MutationEvent,
-  type PatchesEvent,
   type PortableTextBlock,
 } from '@portabletext/editor'
 import {portableTextToMarkdown} from '@portabletext/markdown'
@@ -250,6 +249,11 @@ const editorMachine = setup({
   },
 })
 
+type PatchesEvent = {
+  type: 'patches'
+  patches: Array<Patch>
+}
+
 export type GlobalPatchEntry = {
   id: string
   editorId: string
@@ -358,7 +362,6 @@ export const playgroundMachine = setup({
             ...patch,
             origin: event.editorId === editor.id ? 'local' : 'remote',
           })),
-          snapshot: event.value,
         })
       })
     },
