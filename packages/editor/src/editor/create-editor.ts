@@ -136,18 +136,16 @@ export function createInternalEditor(config: EditorConfig): {
           break
 
         case 'update readOnly':
-        case 'patches':
           editorActor.send(event)
           break
 
         case 'apply':
           editorActor.send({
-            type: 'patches',
+            type: 'internal.apply',
             patches: event.patches.map((patch) => ({
               ...patch,
               origin: 'remote',
             })),
-            snapshot: undefined,
           })
           break
 

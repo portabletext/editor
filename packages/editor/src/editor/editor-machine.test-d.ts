@@ -23,3 +23,10 @@ describe('editor.send apply', () => {
     editor.send({type: 'apply', patches, snapshot: undefined})
   })
 })
+
+describe('editor.send patches', () => {
+  test('the incoming `patches` event is not an editor event', () => {
+    // @ts-expect-error - `patches` is no longer an event the editor accepts
+    editor.send({type: 'patches', patches: [], snapshot: undefined})
+  })
+})

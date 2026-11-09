@@ -28,8 +28,6 @@ interface History {
 export type RemotePatch = {
   patch: Patch
   time: Date
-  snapshot: PortableTextBlock[] | undefined
-  previousSnapshot: PortableTextBlock[] | undefined
 }
 
 export interface PortableTextEditorEngine extends DOMEditor {

@@ -81,7 +81,7 @@ export function setupRemotePatches({
 
   subscriptions.push(() => {
     debug.syncPatch('subscribing to remote patches')
-    const subscription = editorActor.on('patches', handlePatches)
+    const subscription = editorActor.on('internal.apply', handlePatches)
     return () => {
       debug.syncPatch('unsubscribing to remote patches')
       subscription.unsubscribe()

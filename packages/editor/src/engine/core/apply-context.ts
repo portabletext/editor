@@ -53,7 +53,7 @@ export function getOrigin(
 
 /**
  * True while the frame stack carries a `remote` frame at any depth: the
- * editor is applying content that arrived from outside (remote `patches`
+ * editor is applying content that arrived from outside (`apply`
  * or value sync), possibly nested inside a normalization fix.
  * `normalize-node`'s readers gate optional fix-ups on it to leave adopted
  * content alone; `apply-operation` skips inverse population; the sync

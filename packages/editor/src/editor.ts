@@ -40,7 +40,7 @@ export type EditorEvent =
        * This includes blocks with local edits the snapshot doesn't contain
        * yet, so those edits are lost. Only send snapshots that include
        * everything the editor has emitted. To apply other writers' changes
-       * while the user is editing, send them as `patches` instead.
+       * while the user is editing, send them as `apply` instead.
        *
        * Reconciliation is not an edit: it emits no `patch` or `mutation`
        * events and adds no history step. While local changes are in
