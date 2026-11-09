@@ -14,13 +14,8 @@ import {createCharacterPairRegex} from './regex.character-pair'
 export function createCharacterPairRule(config: {
   decorator: ({
     context,
-    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
-    /**
-     * @deprecated Use `context.schema` instead
-     */
-    schema: EditorContext['schema']
   }) => string | undefined
   pair: {char: string; amount: number}
 }) {
@@ -53,7 +48,6 @@ export function createCharacterPairRule(config: {
       const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
       const decorator = config.decorator({
         context: {schema: subSchema},
-        schema: subSchema,
       })
 
       if (decorator === undefined) {
