@@ -103,6 +103,18 @@ export interface PortableTextEditorEngine extends DOMEditor {
    */
   clearPendingMutations: () => void
   /**
+   * True from the end of the first commit, when a `load` put a value in,
+   * until the last of its blocks is drawn onto the screen. While true the
+   * editor behaves as read-only to the user: editing events do nothing and
+   * the editable is not editable. Remote `patches` and `resync` still apply.
+   * Internal: no `editable` or `read only` event is emitted for it.
+   */
+  isDrawing: boolean
+  /**
+   * How many root chunks the render has drawn so far while `isDrawing`.
+   */
+  drawnRootChunkCount: number
+  /**
    * The last host value recorded by a value sync that changed the engine. A
    * pristine block equal to it is persisted content, not the local
    * placeholder. Syncs that write nothing are not recorded: hosts mirror

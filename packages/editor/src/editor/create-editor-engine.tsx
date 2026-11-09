@@ -79,6 +79,8 @@ export function createEditorEngine(
 
   editor.isDeferringMutations = false
   editor.clearPendingMutations = () => {}
+  editor.isDrawing = false
+  editor.drawnRootChunkCount = 0
   editor.lastSyncedValue = undefined
   editor.valueUnsetEmitted = false
   editor.isPatching = true
