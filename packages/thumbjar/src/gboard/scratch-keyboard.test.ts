@@ -4,12 +4,15 @@ import {join} from 'node:path'
 import {JSDOM} from 'jsdom'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {adb} from '../device/adb.ts'
+import {prefixedPageUrl} from '../device/page-url.ts'
 import {recordInput} from '../page.ts'
 import {openScratchKeyboard, scratchKeyboard} from './scratch-keyboard.ts'
 
 const fake = vi.hoisted(() => ({
   window: undefined as (Window & typeof globalThis) | undefined,
   timeline: [] as string[],
+  intents: [] as string[],
+  currentUrls: [] as string[],
   foreground: '',
   opened: (_opens: number) => {},
   opens: 0,
@@ -21,6 +24,7 @@ vi.mock(import('../device/adb.ts'), async (importOriginal) => ({
   adb: vi.fn((args: string[]) => {
     if (args[1]?.startsWith('am start')) {
       fake.opens += 1
+      fake.intents.push(args[1]!)
       fake.timeline.push('open')
       fake.opened(fake.opens)
     }
@@ -36,6 +40,9 @@ vi.mock(import('../device/adb.ts'), async (importOriginal) => ({
 
 vi.mock(import('../device/cdp.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
+  setCurrentUrl: (url: string) => {
+    fake.currentUrls.push(url)
+  },
   cdpEval: (expression: string) =>
     Promise.resolve(fake.window!.eval(expression)),
 }))
@@ -55,6 +62,8 @@ const GBOARD_KEYS = {
 beforeEach(() => {
   vi.mocked(adb).mockClear()
   fake.timeline = []
+  fake.intents = []
+  fake.currentUrls = []
   fake.opens = 0
   fake.opened = () => {}
   fake.inputShown = true
@@ -106,6 +115,27 @@ describe(openScratchKeyboard.name, () => {
       ),
     ).toEqual(['open', 'open', 'tap 110,60'])
   })
+
+  test.each(['', 'x'])(
+    'opens a URL no device test opens, for a test with prefix %j',
+    async (prefix) => {
+      const pageUrl = 'https://example.test/editor.html'
+      fake.foreground = 'com.android.chrome'
+      fake.opened = () => loadScratchPage()
+      const device = fakeDevice({dumps: [GBOARD_KEYS.english]})
+
+      await openScratchKeyboard(pageUrl, () => Promise.resolve(device.device))
+
+      const openedUrls = fake.intents.map(
+        (intent) => /-d '?(\S+?)'? com\.android\.chrome/.exec(intent)?.[1],
+      )
+      expect(openedUrls).toHaveLength(1)
+      expect(openedUrls[0]).toMatch(/^https:\/\/example\.test\/editor\.html\?/)
+      expect(openedUrls[0]).not.toEqual(prefixedPageUrl(pageUrl, prefix))
+      expect(openedUrls[0]).not.toEqual(pageUrl)
+      expect(fake.currentUrls).toEqual([openedUrls[0]])
+    },
+  )
 
   test('leaves Gboard on the layout it opened on', async () => {
     fake.foreground = 'com.android.chrome'

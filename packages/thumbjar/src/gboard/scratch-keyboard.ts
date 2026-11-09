@@ -32,8 +32,10 @@ const ADB_SECONDS = 10
 const LANGUAGE_KEY = /^(次の言語|next language|switch to|globe)/i
 
 /**
- * Open `pageUrl` in Chrome and raise Gboard on its field, leaving Gboard on the layout it opened on, the way
- * the driver opens a test's page.
+ * Open `pageUrl` in Chrome and raise Gboard on its field, leaving Gboard on the layout it opened on. The URL
+ * carries a `thumbjar` search parameter that no device test opens: the check ends by force-stopping Chrome,
+ * which keeps the tab, and the driver attaches to the first page whose URL equals the one it opened, so a
+ * test that opened the same URL could attach to that stale tab.
  */
 export function openScratchKeyboard(
   pageUrl: string,
@@ -41,7 +43,7 @@ export function openScratchKeyboard(
 ): Promise<Device> {
   return openKeyboard(
     NAME,
-    {url: pageUrl, keyboard: 'en', prefix: ''},
+    {url: dictionaryCheckUrl(pageUrl), keyboard: 'en', prefix: ''},
     connect,
     {},
   )
@@ -129,4 +131,10 @@ async function scratchField(): Promise<{
 
 function readCapture(out: string): Capture {
   return parseCapture(readFileSync(`${out}/boot-logcat.txt`, 'utf8'))
+}
+
+function dictionaryCheckUrl(pageUrl: string): string {
+  const url = new URL(pageUrl)
+  url.searchParams.set('thumbjar', 'dictionary-check')
+  return url.href
 }
