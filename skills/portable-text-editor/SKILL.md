@@ -25,7 +25,7 @@ description: Building or changing a rich text editor with @portabletext/editor (
 | UI inside or outside the editor reads editor state                              | `useEditorSelector(editor, selector)`                                                                                                                                      | `@portabletext/editor`, `/selectors`                       | Mirroring the value into React state from `mutation` events                                       |
 | Move the caret programmatically (jump to a block)                               | `editor.send({type: 'select', at})` then `editor.send({type: 'focus'})`                                                                                                    | `@portabletext/editor`, `/utils`                           | Hand-built span paths, or forgetting `focus`                                                      |
 | Save changes                                                                    | `editor.on('mutation', ...)` or `EventListenerPlugin`                                                                                                                      | `@portabletext/editor`                                     | Treating `initialValue` as controlled                                                             |
-| Apply someone else's changes while the user types                               | `editor.send({type: 'patches', patches, snapshot})` with `origin: 'remote'`                                                                                                | `@portabletext/editor`, `@portabletext/patches`            | `update value` with the server value, which drops in-flight typing. Or declaring it impossible    |
+| Apply someone else's changes while the user types                               | `editor.send({type: 'apply', patches})`                                                                                                                                    | `@portabletext/editor`, `@portabletext/patches`            | `update value` with the server value, which drops in-flight typing. Or declaring it impossible    |
 | Bind the editor to a field in a Sanity document from a Sanity SDK app           | `SDKPortableTextEditable`, or `SDKValuePlugin` next to your own `PortableTextEditable`                                                                                     | `@portabletext/plugin-sdk-value`                           | Hand-wiring `mutation` and `patches` to the SDK document                                          |
 | Open a different document in the same editor                                    | Remount: `<EditorProvider key={documentId}>`                                                                                                                               | `@portabletext/editor`                                     | `update value` with the other document, which keeps the old undo stack                            |
 | Paste: URL on a selection becomes a link                                        | `PasteLinkPlugin`                                                                                                                                                          | `@portabletext/plugin-paste-link`                          | A `paste` DOM listener                                                                            |
@@ -357,17 +357,16 @@ function DecoratorButton(props: {schemaType: ToolbarDecoratorSchemaType}) {
 
 `initialConfig` is read once on mount, and changing it later does nothing. The editor owns the value. You talk to it with events.
 
-| Situation                                                                    | Do this                                                                                                                                                      |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Persist the user's edits                                                     | `editor.on('mutation', (event) => save(event.patches, event.value))`. `mutation` is debounced and batched for persistence                                    |
-| Stream every operation (a socket)                                            | `editor.on('patch', ...)`                                                                                                                                    |
-| Apply another writer's changes while the user may be typing                  | `editor.send({type: 'patches', patches, snapshot})` with other writers' patches marked `origin: 'remote'`, where `snapshot` is the value after those patches |
-| Switch to another document                                                   | Remount: `<EditorProvider key={documentId} initialConfig={{schemaDefinition, initialValue}}>`                                                                |
-| A fresh snapshot of the same document arrives and nothing local is in flight | `editor.send({type: 'update value', value})`                                                                                                                 |
+| Situation                                                                    | Do this                                                                                                                   |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Persist the user's edits                                                     | `editor.on('mutation', (event) => save(event.patches, event.value))`. `mutation` is debounced and batched for persistence |
+| Stream every operation (a socket)                                            | `editor.on('patch', ...)`                                                                                                 |
+| Apply another writer's changes while the user may be typing                  | `editor.send({type: 'apply', patches})` with other writers' patches                                                       |
+| Switch to another document                                                   | Remount: `<EditorProvider key={documentId} initialConfig={{schemaDefinition, initialValue}}>`                             |
+| A fresh snapshot of the same document arrives and nothing local is in flight | `editor.send({type: 'update value', value})`                                                                              |
 
 - `update value` replaces every block that differs from the editor's current content, local edits included. It is not a setter for live sync, and it does not clear undo history.
-- Do not send the editor its own patches back. Every patch that is not `origin: 'local'` is applied, and an echo of an `insert` or `diffMatchPatch` applies twice. Have the channel skip the sender, or drop your own echoes before you mark the rest `'remote'`.
-- Include `snapshot` with incoming patches. History uses it to keep local undo steps valid over remote edits, so undo removes only the user's own changes.
+- Do not send the editor its own patches back. `apply` treats every patch as another writer's, and an echo of an `insert` or `diffMatchPatch` applies twice. Have the channel skip the sender, or drop your own echoes before you send.
 - Do not read live content from `mutation` for UI. It lags by design. Use `useEditorSelector`.
 
 The full sync loop, the `update value` caveats and the document switch are in [references/value-sync.md](references/value-sync.md).
@@ -427,6 +426,6 @@ The editor's own `createTestEditor` lives under `@portabletext/editor/test/vites
 
 ## References
 
-- [references/value-sync.md](references/value-sync.md): saving, remote patches, `update value`, switching documents.
+- [references/value-sync.md](references/value-sync.md): saving, remote patches with `apply`, `update value`, switching documents.
 - [references/inline-objects-and-pickers.md](references/inline-objects-and-pickers.md): inserting inline objects from rules and pickers with the caret after them.
 - [references/testing.md](references/testing.md): the public test harness.

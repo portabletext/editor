@@ -103,4 +103,4 @@ test('Enter on an empty heading turns it into a paragraph', async () => {
 - Assert the full value, not a fragment. Include the selection when the caret position is the point of the feature.
 - Test the fall-through cases too: Enter where your guard should not match must still split, and Tab outside your context must still move focus or indent a list.
 - In `userEvent.keyboard` and `userEvent.type`, a literal `[` or `{` must be doubled (`[[`, `{{`), because single brackets start a key descriptor.
-- To check remote changes, send `{type: 'patches', patches, snapshot}` mid-typing and assert that both the typed text and the remote change survive.
+- To check remote changes, send `{type: 'apply', patches}` mid-typing and assert that both the typed text and the remote change survive.

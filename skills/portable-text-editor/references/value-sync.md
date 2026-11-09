@@ -15,25 +15,16 @@ Do not drive UI from `mutation`. Its debounce makes it lag while the user types.
 
 ## Incoming changes from other writers
 
-Send other writers' changes as patches:
+Send other writers' changes with `apply`:
 
 ```tsx
-import {
-  useEditor,
-  type Patch,
-  type PortableTextBlock,
-} from '@portabletext/editor'
+import {useEditor, type Patch} from '@portabletext/editor'
 import {useEffect} from 'react'
 
 // The channel must not deliver this client's own patches back to it.
 type Channel = {
   publish: (patches: Array<Patch>) => void
-  subscribe: (
-    listener: (
-      patches: Array<Patch>,
-      snapshot: Array<PortableTextBlock>,
-    ) => void,
-  ) => () => void
+  subscribe: (listener: (patches: Array<Patch>) => void) => () => void
 }
 
 export function SyncPlugin(props: {channel: Channel}) {
@@ -45,12 +36,8 @@ export function SyncPlugin(props: {channel: Channel}) {
       channel.publish(event.patches)
     })
 
-    const unsubscribe = channel.subscribe((patches, snapshot) => {
-      editor.send({
-        type: 'patches',
-        patches: patches.map((patch) => ({...patch, origin: 'remote'})),
-        snapshot,
-      })
+    const unsubscribe = channel.subscribe((patches) => {
+      editor.send({type: 'apply', patches})
     })
 
     return () => {
@@ -64,8 +51,8 @@ export function SyncPlugin(props: {channel: Channel}) {
 ```
 
 - Incoming patches are applied as remote. They create no undo step, emit no outgoing patches, and are normalized afterwards.
-- Mark other writers' patches `'remote'`, and never feed the editor its own patches. Only patches with `origin: 'local'` are dropped on the way in, so an echo marked `'remote'` is applied again. Non-idempotent patches (`insert`, `diffMatchPatch`) then apply twice and duplicate text. Have the server skip the sender when it broadcasts, or tag what you publish with a client id and drop your own echoes before you mark the rest `'remote'`.
-- `snapshot` is the full value after the patches, as the server holds it. History stores it to rebase local undo steps over remote edits. One undo then removes the user's last edit and leaves the remote change in place.
+- Never feed the editor its own patches. `apply` treats every patch as another writer's, so an echo is applied again. Non-idempotent patches (`insert`, `diffMatchPatch`) then apply twice and duplicate text. Have the server skip the sender when it broadcasts, or tag what you publish with a client id and drop your own echoes before you send.
+- The patches need no `origin` and there is no `snapshot` to pass. One undo removes the user's last edit and leaves the remote change in place.
 - A remote `unset` at the root path (`[]`) wipes undo history. Do not "sync" by sending a whole-document `unset` followed by a `set`.
 - On the server, `applyAll(value, patches)` from `@portabletext/patches` applies a batch to a stored value.
 
@@ -77,7 +64,7 @@ export function SyncPlugin(props: {channel: Channel}) {
 - Any other snapshot is reconciled block by block against the editor's current content. Every block that differs is replaced by the snapshot's version. That includes blocks with local edits the snapshot does not contain yet, so those edits are lost.
 - It emits no `patch` or `mutation`, adds no undo step, and does not clear undo history.
 
-Use it only for a new snapshot of the same document that already includes everything the editor emitted, for example after a save round trip when nothing local is in flight. To apply other writers' changes while the user edits, send `patches`.
+Use it only for a new snapshot of the same document that already includes everything the editor emitted, for example after a save round trip when nothing local is in flight. To apply other writers' changes while the user edits, send `apply`.
 
 ## Switching documents
 
