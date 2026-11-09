@@ -7,13 +7,8 @@ import {defineInputRule} from '@portabletext/plugin-input-rule'
 export function createOrderedListRule(config: {
   orderedList: ({
     context,
-    schema,
   }: {
     context: Pick<EditorContext, 'schema'>
-    /**
-     * @deprecated Use `context.schema` instead
-     */
-    schema: EditorContext['schema']
   }) => string | undefined
 }) {
   return defineInputRule({
@@ -22,7 +17,6 @@ export function createOrderedListRule(config: {
       const subSchema = getPathSubSchema(snapshot, event.focusBlock.path)
       const orderedList = config.orderedList({
         context: {schema: subSchema},
-        schema: subSchema,
       })
 
       if (!orderedList) {
