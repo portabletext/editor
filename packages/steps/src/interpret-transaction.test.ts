@@ -2448,3 +2448,89 @@ describe('interpretTransaction oracle: repeated text across two blocks', () => {
 function dmpPatch(oldText: string, newText: string): string {
   return stringifyPatches(makePatches(oldText, newText))
 }
+
+describe('interpretTransaction: span keys repeated in other blocks', () => {
+  // Span keys are only unique within a block. A merge that carries spans
+  // into the previous block must still read as moves when another block
+  // happens to hold a span with the same key.
+  const block = (key: string, spans: Array<[string, string]>) =>
+    ({
+      _type: 'block',
+      _key: key,
+      style: 'normal',
+      markDefs: [],
+      children: spans.map(([spanKey, text]) => ({
+        _type: 'span',
+        _key: spanKey,
+        text,
+        marks: [],
+      })),
+    }) satisfies PortableTextBlock
+
+  test('merging "def"+"ghi" into "abc" moves both spans, though "baz" elsewhere shares the key of "def"', () => {
+    const base = [
+      block('b0', [['s0', 'abc']]),
+      block('b1', [
+        ['s1', 'def'],
+        ['s2', 'ghi'],
+      ]),
+      block('b2', [['s1', 'baz']]),
+    ]
+    const steps = interpretTransaction(base, [
+      {type: 'unset', path: [{_key: 'b1'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        position: 'after',
+        items: base[1]!.children,
+        origin: 'local',
+      },
+    ])
+
+    expect(mapPoint(steps, {path: spanPath('b1', 's1'), offset: 1})).toEqual({
+      path: spanPath('b0', 's1'),
+      offset: 1,
+    })
+    expect(mapPoint(steps, {path: spanPath('b1', 's2'), offset: 1})).toEqual({
+      path: spanPath('b0', 's2'),
+      offset: 1,
+    })
+  })
+
+  test('a merge that folds the carried "def" into "abc" after moving it still follows "def", though "baz" elsewhere shares its key', () => {
+    const base = [
+      block('b0', [['s0', 'abc']]),
+      block('b1', [
+        ['s1', 'def'],
+        ['s2', 'ghi'],
+      ]),
+      block('b2', [['s1', 'baz']]),
+    ]
+    const steps = interpretTransaction(base, [
+      {type: 'unset', path: [{_key: 'b1'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+        position: 'after',
+        items: base[1]!.children,
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+        value: '@@ -1,3 +1,6 @@\n abc\n+def\n',
+        origin: 'local',
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'b0'}, 'children', {_key: 's1'}],
+        origin: 'local',
+      },
+    ])
+
+    expect(mapPoint(steps, {path: spanPath('b1', 's1'), offset: 1})).toEqual({
+      path: spanPath('b0', 's0'),
+      offset: 4,
+    })
+  })
+})

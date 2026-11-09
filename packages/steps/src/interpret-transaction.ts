@@ -149,16 +149,11 @@ export function interpretTransaction(
   // qualifies.
   const preExistingKeys = new Set<string>()
   const preExistingNodePaths = new Set<string>()
-  const preExistingKeyCounts = new Map<string, number>()
   if (!isSingleTextPatch) {
     for (const block of base) {
       for (const keyedNode of collectKeyedNodes(block, [{_key: block._key}])) {
         preExistingKeys.add(keyedNode.key)
         preExistingNodePaths.add(JSON.stringify(keyedNode.path))
-        preExistingKeyCounts.set(
-          keyedNode.key,
-          (preExistingKeyCounts.get(keyedNode.key) ?? 0) + 1,
-        )
       }
     }
   }
@@ -364,8 +359,7 @@ export function interpretTransaction(
             }
             const renamedPath = renamedKeyPaths.get(keyedNode.key)
             if (
-              (preExistingKeyCounts.get(keyedNode.key) === 1 &&
-                preExistingNodePaths.has(JSON.stringify(keyedNode.path))) ||
+              preExistingNodePaths.has(JSON.stringify(keyedNode.path)) ||
               (renamedPath && pathEquals(renamedPath, keyedNode.path))
             ) {
               nodeRemovals.push({
@@ -459,6 +453,7 @@ export function interpretTransaction(
               key: keyedNode.key,
               path: keyedNode.path,
               slotIndex: pushSlot(),
+              node: keyedNode.node,
             })
           }
         }
@@ -564,13 +559,38 @@ type NodeRemoval = {
   slotIndex: number
   sourceNode: unknown
 }
-type NodeInsertion = {key: string; path: StepPath; slotIndex: number}
+type NodeInsertion = {
+  key: string
+  path: StepPath
+  slotIndex: number
+  node?: unknown
+}
 type NodeMove = {
   from: StepPath
   to: StepPath
   removalSlotIndex: number
   insertionSlotIndex: number
   sourceNode: unknown
+}
+
+/**
+ * Span keys are only unique within a block, so a removed span's key can
+ * also live, untouched, in another block. Identity alone can't pair it
+ * then: exactly one inserted node may carry the key, and it must be the
+ * removed node unchanged as inserted (a merge carrying a span across, which
+ * may then fold its text into a neighbour and unset it).
+ */
+function isUnchangedReappearance(
+  removal: NodeRemoval,
+  nodeInsertions: ReadonlyArray<NodeInsertion>,
+): boolean {
+  const withKey = nodeInsertions.filter(
+    (insertion) => insertion.key === removal.key,
+  )
+  return (
+    withKey.length === 1 &&
+    structurallyEqual(removal.sourceNode, withKey[0]!.node)
+  )
 }
 
 /**
@@ -676,7 +696,8 @@ function assembleSteps(
     nodeRemovals.filter(
       (removal) =>
         !nulledRemovalSlots.has(removal.slotIndex) &&
-        (finalKeyCounts.get(removal.key) ?? 0) <= 1,
+        ((finalKeyCounts.get(removal.key) ?? 0) <= 1 ||
+          isUnchangedReappearance(removal, nodeInsertions)),
     ),
     nodeInsertions.filter(
       (insertion) =>
