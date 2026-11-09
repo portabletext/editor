@@ -21,6 +21,12 @@ import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getChildren} from '../src/traversal/get-children'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {
+  drawPositions,
+  largeBlockCount,
+  renderLargeLoad,
+} from '../test-utils/large-load'
+import {loadDepths} from '../test-utils/load-depths'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -1078,3 +1084,182 @@ function chunkLengths(
     .get(childArrayPath)
     ?.map((chunk) => chunk.blocks.length)
 }
+
+describe('drawing a large first value after `ready`', () => {
+  test.each(loadDepths)(
+    'Scenario: The editor becomes editable only after the last block is drawn at $name',
+    async (depth) => {
+      const large = await renderLargeLoad({depth})
+
+      expect(large.isEditable()).toEqual(false)
+
+      const polls = await large.drawToTheEnd()
+
+      expect(polls.filter((poll) => poll.editable && !poll.lastDrawn)).toEqual(
+        [],
+      )
+      await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+    },
+  )
+
+  test('Scenario: The gate opens after the last block of a value with 10% tables is drawn, and then typing works', async () => {
+    const large = await renderLargeLoad({depth: loadDepths[0]!, tableEvery: 10})
+
+    await large.drawToTheEnd()
+    await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+    large.editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: large.spanPath(1), offset: 0},
+        focus: {path: large.spanPath(1), offset: 0},
+      },
+    })
+    await userEvent.keyboard('x')
+
+    await vi.waitFor(() => expect(large.userChanges.length).toBeGreaterThan(0))
+  })
+
+  test.each(
+    loadDepths.flatMap((depth) =>
+      drawPositions.map((position) => ({depth, position})),
+    ),
+  )(
+    'Scenario: A `resync` with a changed word in the $position.name at $depth.name during the draw lands in the value and the DOM',
+    async ({depth, position}) => {
+      const large = await renderLargeLoad({depth})
+      const resynced = large.blocksWith((key, index) =>
+        index === position.index ? `${key.blockKey} edited` : key.blockKey,
+      )
+
+      large.editor.send({type: 'resync', value: large.wrap(resynced)})
+
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.wrap(resynced),
+      )
+      await large.drawToTheEnd()
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(
+              `${large.keys[position.index]!.blockKey} edited`,
+            ),
+        ).toEqual(true),
+      )
+      await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+    },
+  )
+
+  test.each(
+    loadDepths.flatMap((depth) =>
+      drawPositions.map((position) => ({depth, position})),
+    ),
+  )(
+    'Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the $position.name at $depth.name',
+    async ({depth, position}) => {
+      const large = await renderLargeLoad({depth})
+      const drawnIndex = 0
+      const patchFor = (index: number, text: string) =>
+        set(text, [...large.spanPath(index), 'text'])
+
+      for (const order of [
+        [drawnIndex, position.index],
+        [position.index, drawnIndex],
+      ]) {
+        large.editor.send({
+          type: 'patches',
+          patches: order.map((index) => ({
+            ...patchFor(index, `patched-${index}`),
+            origin: 'remote' as const,
+          })),
+          snapshot: undefined,
+        })
+      }
+
+      const patchedIndexes = new Set([drawnIndex, position.index])
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.wrap(
+          large.blocksWith((key, index) =>
+            patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+          ),
+        ),
+      )
+      await large.drawToTheEnd()
+      for (const index of patchedIndexes) {
+        await vi.waitFor(() =>
+          expect(
+            document
+              .querySelector('[data-pt-editor]')
+              ?.textContent?.includes(`patched-${index}`),
+          ).toEqual(true),
+        )
+      }
+    },
+  )
+
+  test.each(
+    [
+      {name: 'a transaction, then a resync', order: ['patches', 'resync']},
+      {name: 'a resync, then a transaction', order: ['resync', 'patches']},
+    ].flatMap((interleaving) =>
+      [loadDepths[0]!, loadDepths[3]!].map((depth) => ({interleaving, depth})),
+    ),
+  )(
+    'Scenario: $interleaving.name during the draw at $depth.name leaves the value the resync set',
+    async ({interleaving, depth}) => {
+      const large = await renderLargeLoad({depth})
+      const last = largeBlockCount - 1
+      const resynced = large.blocksWith((key, index) =>
+        index === last ? `${key.blockKey} resynced` : key.blockKey,
+      )
+      const transaction = () =>
+        large.editor.send({
+          type: 'patches',
+          patches: [
+            {
+              ...set('transacted', [...large.spanPath(0), 'text']),
+              origin: 'remote' as const,
+            },
+          ],
+          snapshot: undefined,
+        })
+      const resync = () =>
+        large.editor.send({type: 'resync', value: large.wrap(resynced)})
+
+      for (const step of interleaving.order) {
+        if (step === 'patches') {
+          transaction()
+        } else {
+          resync()
+        }
+      }
+
+      const expected = large.blocksWith((key, index) =>
+        index === 0 && interleaving.order[0] === 'resync'
+          ? 'transacted'
+          : index === last
+            ? `${key.blockKey} resynced`
+            : key.blockKey,
+      )
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.wrap(expected),
+      )
+      await large.drawToTheEnd()
+    },
+  )
+
+  test('Scenario: Unmounting during the draw leaves no errors and no later paint', async () => {
+    const errors: Array<unknown> = []
+    const onError = (event: ErrorEvent) => errors.push(event.error)
+    window.addEventListener('error', onError)
+    const large = await renderLargeLoad({depth: loadDepths[0]!})
+
+    await large.unmount()
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect(errors).toEqual([])
+    expect(document.querySelector('[data-pt-editor]')).toEqual(null)
+    window.removeEventListener('error', onError)
+  })
+})

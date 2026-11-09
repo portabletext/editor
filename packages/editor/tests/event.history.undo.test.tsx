@@ -18,6 +18,7 @@ import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {renderLargeLoad} from '../test-utils/large-load'
 import {
   createWrapperKeys,
   loadContainers,
@@ -1298,5 +1299,15 @@ describe('event.history.undo', () => {
         expect(editor.getSnapshot().context.value).toEqual(typed)
       },
     )
+  })
+
+  test('Scenario: `history.undo` while a large first value is drawn does nothing', async () => {
+    const large = await renderLargeLoad({depth: loadDepths[0]!})
+
+    large.editor.send({type: 'history.undo'})
+
+    expect(large.userChanges).toEqual([])
+    expect(large.engine.history).toEqual({undos: [], redos: []})
+    expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
   })
 })
