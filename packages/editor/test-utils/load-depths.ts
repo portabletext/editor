@@ -173,34 +173,3 @@ export function createWrapperKeys(keyGenerator: () => string) {
 export function imageBlock(imageKey: string, src: string): PortableTextBlock {
   return {_type: 'image', _key: imageKey, src}
 }
-
-/**
- * Textspec for a leaf array at each depth, with fixed container keys, so a
- * resync and the state it starts from describe the same containers.
- */
-export function wrapTextspec(
-  depthName: LoadDepth['name'],
-  leafLines: Array<string>,
-): string {
-  const lines = (indent: number) =>
-    leafLines.map((line) => `${' '.repeat(indent)}${line}`)
-  switch (depthName) {
-    case 'root':
-      return lines(0).join(';;')
-    case 'callout':
-      return ['CALLOUT _key="callout":', ...lines(2)].join(';;')
-    case 'nested callout':
-      return [
-        'CALLOUT _key="outer":',
-        '  CALLOUT _key="inner":',
-        ...lines(4),
-      ].join(';;')
-    case 'table cell':
-      return [
-        'TABLE _key="table":',
-        '  ROW _key="row":',
-        '    CELL _key="cell":',
-        ...lines(6),
-      ].join(';;')
-  }
-}

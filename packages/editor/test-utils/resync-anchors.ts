@@ -1,11 +1,11 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {textBlock} from './load-depths'
 
-export type AnchorUpdate = 'edit' | 'split' | 'merge'
+type AnchorUpdate = 'edit' | 'split' | 'merge'
 
 type Point = {spanKey: string; offset: number}
 
-export type AnchorCase = {
+type AnchorCase = {
   update: AnchorUpdate
   position: 'first' | 'middle' | 'last'
   before: Array<PortableTextBlock>
