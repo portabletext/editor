@@ -385,7 +385,7 @@ describe(ValueSyncPlugin.name, () => {
       const syncWrites: Array<string> = []
       const originalSend = editor.send.bind(editor)
       editor.send = ((event: Parameters<Editor['send']>[0]) => {
-        if (event.type === 'patches' || event.type === 'update value') {
+        if (event.type === 'apply' || event.type === 'update value') {
           syncWrites.push(event.type)
         }
         originalSend(event)

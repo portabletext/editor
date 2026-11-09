@@ -796,9 +796,8 @@ function applySync({
       return
     }
 
-    const snapshot = editor.getSnapshot().context.value
     debug.repair('applying confirmed repair patches %o', second.patches)
-    editor.send({type: 'patches', patches: second.patches, snapshot})
+    editor.send({type: 'apply', patches: second.patches})
 
     // Patch application is best-effort: the editor skips operations it
     // cannot resolve against its current tree, and concurrent edits to the
@@ -949,7 +948,7 @@ const valueSyncMachine = setup({
         if (patches.length === 0) {
           return
         }
-        context.editor.send({type: 'patches', patches, snapshot})
+        context.editor.send({type: 'apply', patches})
       })
     },
   },
