@@ -26,12 +26,20 @@ import {
  *
  * Returns `null` only when no character of the range survives.
  *
+ * Pass `options.after` (the value after `steps`) to apply a third rule: if a
+ * move puts the last surviving character before the first (an edge swap,
+ * for example the range's end block moved above its start block), the range
+ * spans every surviving character instead of the inverted pair. Without the
+ * value the order of points on different blocks isn't known, so the edges
+ * are returned as mapped.
+ *
  * @public
  */
 export function mapRangeInward(
   base: ReadonlyArray<PortableTextBlock>,
   steps: ReadonlyArray<Step>,
   range: Range,
+  options?: {after?: ReadonlyArray<PortableTextBlock>},
 ): Range | null {
   const textPoints = collectTextPoints(base)
   const ordered = orderRange(textPoints, range)
@@ -74,10 +82,24 @@ export function mapRangeInward(
   start = first
   end = {path: last.path, offset: last.offset + 1}
 
-  const mappedStart = mapPoint(steps, start, {affinity: 'forward'})
-  const mappedEnd = mapPoint(steps, end, {affinity: 'backward'})
+  let mappedStart = mapPoint(steps, start, {affinity: 'forward'})
+  let mappedEnd = mapPoint(steps, end, {affinity: 'backward'})
   if (mappedStart === null || mappedEnd === null) {
     return null
+  }
+
+  if (options?.after) {
+    const swapped = spanSurvivorsOnEdgeSwap(
+      options.after,
+      steps,
+      characters,
+      mappedStart,
+      mappedEnd,
+    )
+    if (swapped) {
+      mappedStart = swapped.start
+      mappedEnd = swapped.end
+    }
   }
 
   const isBackward =
@@ -85,6 +107,61 @@ export function mapRangeInward(
   return isBackward
     ? {anchor: mappedEnd, focus: mappedStart}
     : {anchor: mappedStart, focus: mappedEnd}
+}
+
+/**
+ * When the mapped start lands after the mapped end, return the edges of
+ * every surviving character in `after`'s document order.
+ */
+function spanSurvivorsOnEdgeSwap(
+  after: ReadonlyArray<PortableTextBlock>,
+  steps: ReadonlyArray<Step>,
+  characters: ReadonlyArray<Point>,
+  mappedStart: Point,
+  mappedEnd: Point,
+): {start: Point; end: Point} | undefined {
+  const afterPoints = collectTextPoints(after)
+  const position = (point: Point): number | undefined => {
+    const index = afterPoints.findIndex((textPoint) =>
+      pathEquals(textPoint.path, point.path),
+    )
+    return index === -1 ? undefined : index * 1e9 + point.offset
+  }
+  const startPosition = position(mappedStart)
+  const endPosition = position(mappedEnd)
+  if (
+    startPosition === undefined ||
+    endPosition === undefined ||
+    startPosition <= endPosition
+  ) {
+    return undefined
+  }
+
+  let first: {point: Point; position: number} | undefined
+  let last: {point: Point; position: number} | undefined
+  for (const character of characters) {
+    if (!characterSurvives(steps, character)) {
+      continue
+    }
+    const point = mapPoint(steps, character, {affinity: 'forward'})
+    const at = point === null ? undefined : position(point)
+    if (point === null || at === undefined) {
+      continue
+    }
+    if (first === undefined || at < first.position) {
+      first = {point, position: at}
+    }
+    if (last === undefined || at > last.position) {
+      last = {point, position: at}
+    }
+  }
+  if (first === undefined || last === undefined) {
+    return undefined
+  }
+  return {
+    start: first.point,
+    end: {path: last.point.path, offset: last.point.offset + 1},
+  }
 }
 
 type TextPoint = Point & {length: number}

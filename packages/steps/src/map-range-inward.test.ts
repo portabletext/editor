@@ -138,3 +138,57 @@ describe(mapRangeInward.name, () => {
     ).toBeNull()
   })
 })
+
+describe(`${mapRangeInward.name} with the value after the steps`, () => {
+  test('when the block holding the end of "c\\nde" moves above the block holding its start, the range spans "de\\nabc"', () => {
+    const base = [block('b0', [['s0', 'abc']]), block('b1', [['s1', 'def']])]
+    const moved = base[1]!
+    const patches = [
+      {type: 'unset' as const, path: [{_key: 'b1'}], origin: 'local' as const},
+      {
+        type: 'insert' as const,
+        path: [{_key: 'b0'}],
+        position: 'before' as const,
+        items: [moved],
+        origin: 'local' as const,
+      },
+    ]
+    const steps = interpretTransaction(base, patches)
+    const after = [base[1]!, base[0]!]
+    const range = {anchor: at('b0', 's0', 2), focus: at('b1', 's1', 2)}
+
+    expect(mapRangeInward(base, steps, range)).toEqual({
+      anchor: at('b0', 's0', 2),
+      focus: at('b1', 's1', 2),
+    })
+    expect(mapRangeInward(base, steps, range, {after})).toEqual({
+      anchor: at('b1', 's1', 0),
+      focus: at('b0', 's0', 3),
+    })
+  })
+
+  test('a block moved between the edges of "c\\nde" without swapping them leaves the edges alone', () => {
+    const base = [
+      block('b0', [['s0', 'abc']]),
+      block('b1', [['s1', 'def']]),
+      block('b2', [['s2', 'ghi']]),
+    ]
+    const steps = interpretTransaction(base, [
+      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+      {
+        type: 'insert',
+        path: [{_key: 'b0'}],
+        position: 'after',
+        items: [base[2]!],
+        origin: 'local',
+      },
+    ])
+    const after = [base[0]!, base[2]!, base[1]!]
+    const range = {anchor: at('b0', 's0', 2), focus: at('b1', 's1', 2)}
+
+    expect(mapRangeInward(base, steps, range, {after})).toEqual({
+      anchor: at('b0', 's0', 2),
+      focus: at('b1', 's1', 2),
+    })
+  })
+})
