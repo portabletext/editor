@@ -52,7 +52,6 @@ const knownDifferences = new Set<PatchPathRule['id']>([
   'insert-replace-3',
   'present-null-setIfMissing',
   'primitive-null-deep-setIfMissing',
-  'primitive-[]-deep-unset',
   'path-number-compact-set',
   'path-number-compact-unset',
   'path-number-compact-diffMatchPatch',
