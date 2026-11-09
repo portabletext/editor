@@ -122,9 +122,12 @@ export const PortableTextEditable = forwardRef<
   const relay = useContext(RelayContext)
   const editorEngine = useEngine()
   const schema = editorEngine.snapshot.context.schema
-  const readOnly = useSelector(editorActor, (s) =>
+  const isReadOnly = useSelector(editorActor, (s) =>
     s.matches({'edit mode': 'read only'}),
   )
+  // Until the last block of a loaded value is drawn the editor is read-only
+  // to the user, the way the host's read-only is.
+  const readOnly = isReadOnly || editorEngine.isDrawing
   const validateSelectionActor = useActorRef(validateSelectionMachine, {
     input: {
       editorEngine,

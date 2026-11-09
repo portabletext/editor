@@ -812,6 +812,10 @@ function loadValue({
       })
     })
 
+    // The blocks are drawn after `ready`; until the last one is, the user
+    // can't edit.
+    editorEngine.isDrawing = true
+    editorEngine.drawnRootChunkCount = 0
     editorEngine.onChange()
   }
 

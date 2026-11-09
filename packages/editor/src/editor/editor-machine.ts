@@ -468,6 +468,21 @@ export const editorMachine = setup({
 
       return context.editorEngine.operations.length > 0
     },
+    'engine is drawing and event is a user edit': ({context, event}) => {
+      if (!context.editorEngine?.isDrawing || event.type !== 'behavior event') {
+        return false
+      }
+
+      // The events a read-only editor still handles.
+      return !(
+        event.behaviorEvent.type === 'clipboard.copy' ||
+        event.behaviorEvent.type === 'mouse.click' ||
+        event.behaviorEvent.type === 'serialize' ||
+        event.behaviorEvent.type === 'serialization.failure' ||
+        event.behaviorEvent.type === 'serialization.success' ||
+        event.behaviorEvent.type === 'select'
+      )
+    },
     'engine is normalizing node': ({context}) => {
       if (!context.editorEngine) {
         return false
@@ -584,9 +599,15 @@ export const editorMachine = setup({
               target: '#editor.edit mode.read only.read only',
               actions: ['emit read only'],
             },
-            'behavior event': {
-              actions: ['sort behaviors', 'handle behavior event'],
-            },
+            'behavior event': [
+              {
+                guard: 'engine is drawing and event is a user edit',
+                actions: [],
+              },
+              {
+                actions: ['sort behaviors', 'handle behavior event'],
+              },
+            ],
             'blur': {
               actions: 'handle blur',
             },

@@ -374,8 +374,33 @@ const useChildren = (props: {
       }
     }
   }, [childArrayPath, editor, ownedChildChunks])
+  // After a `load`, the root draws a chunk per task until the last one is
+  // drawn. Container children render whole when their root block draws.
+  const isDrawingRoot = renderAsChunks && editor.isDrawing
+  const rootChunkCount = renderAsChunks ? editor.rootChunks.length : 0
+  useEffect(() => {
+    if (!isDrawingRoot) {
+      return
+    }
+
+    if (editor.drawnRootChunkCount >= rootChunkCount) {
+      // The last chunk is in the DOM: the editable opens.
+      editor.isDrawing = false
+      editor.onChange()
+      return
+    }
+
+    const timeout = setTimeout(() => {
+      editor.drawnRootChunkCount++
+      editor.onChange()
+    }, 0)
+
+    return () => clearTimeout(timeout)
+  })
   const renderChunks = renderAsChunks
-    ? editor.rootChunks
+    ? isDrawingRoot
+      ? editor.rootChunks.slice(0, Math.max(editor.drawnRootChunkCount, 1))
+      : editor.rootChunks
     : isContainerNode
       ? editor.childChunks.get(childArrayPath!)
       : undefined

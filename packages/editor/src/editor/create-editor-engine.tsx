@@ -78,6 +78,8 @@ export function createEditorEngine(
   editor.undoStepId = undefined
 
   editor.isDeferringMutations = false
+  editor.isDrawing = false
+  editor.drawnRootChunkCount = 0
   editor.lastSyncedValue = undefined
   editor.valueUnsetEmitted = false
   editor.isPatching = true
