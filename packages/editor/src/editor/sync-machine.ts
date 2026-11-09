@@ -249,6 +249,7 @@ export const syncMachine = setup({
   guards: {
     'initial value synced': ({context}) => context.initialValueSynced,
     'has loaded value': ({context}) => context.loadedValue !== undefined,
+    'has no initial value': ({context}) => context.initialValue === undefined,
     'is busy': ({context}) => {
       const isBusy =
         context.editorEngine.isDeferringMutations ||
@@ -361,6 +362,10 @@ export const syncMachine = setup({
         },
         'first value': [
           {
+            guard: 'initial value synced',
+            actions: [],
+          },
+          {
             guard: 'has loaded value',
             target: 'syncing',
             actions: ['assign pending loaded value'],
@@ -373,6 +378,22 @@ export const syncMachine = setup({
           },
         ],
         'update value': [
+          {
+            // A host value that arrives while an editor without an
+            // `initialValue` still waits for a `load`: nothing is loading,
+            // so the empty start is over, as it was before the wait, and the
+            // value syncs the way it always has.
+            guard: and([
+              not('initial value synced'),
+              not('has loaded value'),
+              'has no initial value',
+            ]),
+            actions: [
+              'assign initial value synced',
+              'emit done syncing value',
+              raise(({event}) => event),
+            ],
+          },
           {
             guard: and(['is empty value', not('initial value synced')]),
             actions: ['assign initial value synced', 'emit done syncing value'],
