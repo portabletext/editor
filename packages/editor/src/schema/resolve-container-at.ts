@@ -39,23 +39,23 @@ export function resolveContainerAt(
   value: ReadonlyArray<Node>,
   path: Path,
 ): RegisteredContainer | RegisteredPositional | undefined {
-  const keyedIndices: Array<number> = []
+  const nodeIndices: Array<number> = []
   for (let index = 0; index < path.length; index++) {
-    if (isKeyedSegment(path[index])) {
-      keyedIndices.push(index)
+    if (isKeyedSegment(path[index]) || typeof path[index] === 'number') {
+      nodeIndices.push(index)
     }
   }
-  if (keyedIndices.length === 0) {
+  if (nodeIndices.length === 0) {
     return undefined
   }
 
   let currentChildren: ReadonlyArray<Node> = value
   let parent: RegisteredContainer | undefined
   let resolved: RegisteredContainer | RegisteredPositional | undefined
-  const targetKeyedIndex = keyedIndices[keyedIndices.length - 1]!
+  const targetNodeIndex = nodeIndices[nodeIndices.length - 1]!
 
   let segmentIndex = 0
-  while (segmentIndex <= targetKeyedIndex) {
+  while (segmentIndex <= targetNodeIndex) {
     const segment = path[segmentIndex]!
     if (typeof segment === 'string') {
       segmentIndex++
@@ -79,7 +79,7 @@ export function resolveContainerAt(
       return undefined
     }
 
-    if (segmentIndex < targetKeyedIndex) {
+    if (segmentIndex < targetNodeIndex) {
       // Walk one more level. The resolved entry must be a container
       // (have children) for descent to continue.
       if (!('field' in resolved)) {
