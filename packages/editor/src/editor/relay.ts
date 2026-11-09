@@ -51,7 +51,7 @@ export type EditorEmittedEvent =
       /**
        * Where the change that produced this operation came from:
        * `'local'` for changes made in this editor (edits, undo/redo),
-       * `'remote'` for changes applied from the outside (`patches`,
+       * `'remote'` for changes applied from the outside (`apply`,
        * `update value`, and the initial value sync). A normalization fix
        * (a repaired key, a merged span) reports the origin of the change
        * that triggered it.
@@ -97,7 +97,7 @@ export type EditorEmittedEvent =
  *   received. Corrections are not held back: one to the initial value,
  *   or to a value received while the editor is read-only, carries
  *   `patches` that no `patch` or `mutation` event emits.
- * - `origin: 'remote'`: one event per applied `patches` message and per
+ * - `origin: 'remote'`: one event per applied `apply` event and per
  *   `update value` that changed the content. When an `operation` listener
  *   sends a Behavior event or registers a node while an `update value` is
  *   applied, that change is emitted in between, so the `update value`

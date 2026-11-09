@@ -3,7 +3,6 @@
  * steps are rebased against incoming patches since the step occurred.
  */
 
-import type {PortableTextBlock} from '@portabletext/schema'
 import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -24,12 +23,10 @@ export function subscribeHistory({
   subscriptions: Array<() => () => void>
   editor: PortableTextEditorEngine
 }): () => void {
-  let previousSnapshot: Array<PortableTextBlock> | undefined =
-    editor.snapshot.context.value
   let previousUndoStepId = editor.undoStepId
 
   subscriptions.push(() => {
-    const subscription = editorActor.on('patches', ({patches, snapshot}) => {
+    const subscription = editorActor.on('internal.apply', ({patches}) => {
       let reset = false
 
       for (const patch of patches) {
@@ -52,12 +49,8 @@ export function subscribeHistory({
         editor.remotePatches.push({
           patch,
           time: new Date(),
-          snapshot,
-          previousSnapshot,
         })
       }
-
-      previousSnapshot = snapshot
     })
 
     return () => {

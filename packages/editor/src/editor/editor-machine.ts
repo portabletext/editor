@@ -38,15 +38,6 @@ import type {EditorEmittedEvent, MutationEvent, PatchEvent} from './relay'
 export * from 'xstate/guards'
 
 /**
- * @public
- */
-export type PatchesEvent = {
-  type: 'patches'
-  patches: Array<Patch>
-  snapshot: Array<PortableTextBlock> | undefined
-}
-
-/**
  * Another writer's change to the content, for example a collaborator's
  * patches arriving from your backend. The patches apply in order as another
  * writer's change. They don't become steps in your undo history, and the caret
@@ -71,11 +62,18 @@ export type ExternalEditorEvent =
       type: 'update readOnly'
       readOnly: boolean
     }
-  | PatchesEvent
   | ApplyEvent
 
 type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
   operationId?: string
+}
+
+/**
+ * @internal
+ */
+type InternalApplyEvent = {
+  type: 'internal.apply'
+  patches: Array<Patch>
 }
 
 /**
@@ -88,6 +86,7 @@ export type EditorActor = ActorRefFrom<typeof editorMachine>
  */
 type InternalEditorEvent =
   | ExternalEditorEvent
+  | InternalApplyEvent
   | {
       type: 'add behavior'
       behaviorConfig: BehaviorConfig
@@ -149,7 +148,7 @@ type InternalEditorEvent =
 type InternalEditorEmittedEvent =
   | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
   | InternalPatchEvent
-  | PatchesEvent
+  | InternalApplyEvent
 
 export function rerouteExternalBehaviorEvent({
   event,
@@ -205,7 +204,7 @@ export const editorMachine = setup({
       initialConverters: Array<Converter>
       keyGenerator: () => string
       pendingEvents: Array<InternalPatchEvent | MutationEvent>
-      pendingIncomingPatchesEvents: Array<PatchesEvent>
+      pendingIncomingPatchesEvents: Array<InternalApplyEvent>
       pendingRegistrations: Array<RegistrableNode>
       schema: EditorSchema
       initialReadOnly: boolean
@@ -340,7 +339,7 @@ export const editorMachine = setup({
     }),
     'discard conflicting pending patches': assign({
       pendingEvents: ({context, event}) => {
-        if (event.type !== 'patches') {
+        if (event.type !== 'internal.apply') {
           return context.pendingEvents
         }
 
@@ -364,7 +363,7 @@ export const editorMachine = setup({
     }),
     'defer incoming patches': assign({
       pendingIncomingPatchesEvents: ({context, event}) => {
-        return event.type === 'patches'
+        return event.type === 'internal.apply'
           ? [...context.pendingIncomingPatchesEvents, event]
           : context.pendingIncomingPatchesEvents
       },
@@ -756,7 +755,7 @@ export const editorMachine = setup({
             'done syncing value': {
               target: 'set up',
             },
-            'patches': {
+            'internal.apply': {
               actions: ['defer incoming patches'],
             },
           },
@@ -779,7 +778,7 @@ export const editorMachine = setup({
                     },
                   ],
                   on: {
-                    'patches': {
+                    'internal.apply': {
                       actions: [emit(({event}) => event)],
                     },
                     'syncing value': {
@@ -805,7 +804,7 @@ export const editorMachine = setup({
                     'clear pending incoming patches',
                   ],
                   on: {
-                    'patches': {
+                    'internal.apply': {
                       actions: ['defer incoming patches'],
                     },
                     'done syncing value': {
@@ -857,7 +856,7 @@ export const editorMachine = setup({
                             target: '#editor.setup.set up.writing.dirty',
                           },
                         ],
-                        'patches': {
+                        'internal.apply': {
                           actions: 'discard conflicting pending patches',
                         },
                         'syncing value': {
