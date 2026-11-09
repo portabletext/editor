@@ -2534,3 +2534,59 @@ describe('interpretTransaction: span keys repeated in other blocks', () => {
     })
   })
 })
+
+describe('interpretTransaction: a span edited before its block merges', () => {
+  const seed = (): Array<PortableTextBlock> => [
+    makeBlock('b1', 's1', 'abc'),
+    {
+      _type: 'block',
+      _key: 'b2',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: 's2', text: 'XYdef', marks: []},
+        {_type: 'span', _key: 's3', text: ' ghi', marks: []},
+      ],
+    } satisfies PortableTextBlock,
+  ]
+  // Deleting "XY" across the break into "abc|XYdef ghi": the merge first
+  // trims "XY" off s2 in place, then unsets b2 and re-inserts s2 and s3,
+  // as they now are, after s1.
+  const patches: Array<Patch> = [
+    {
+      type: 'diffMatchPatch',
+      path: [...spanPath('b2', 's2'), 'text'],
+      value: dmpPatch('XYdef', 'def'),
+      origin: 'local',
+    },
+    {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+    {
+      type: 'insert',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      position: 'after',
+      items: [
+        {_type: 'span', _key: 's2', text: 'def', marks: []},
+        {_type: 'span', _key: 's3', text: ' ghi', marks: []},
+      ],
+      origin: 'local',
+    },
+  ]
+
+  test('"d", after the trimmed "XY", lands at the start of the moved "def"', () => {
+    const steps = interpretTransaction(seed(), patches)
+
+    expect(mapPoint(steps, {path: spanPath('b2', 's2'), offset: 2})).toEqual({
+      path: spanPath('b1', 's2'),
+      offset: 0,
+    })
+  })
+
+  test('the end of "def" lands at the end of the moved "def", not past it', () => {
+    const steps = interpretTransaction(seed(), patches)
+
+    expect(mapPoint(steps, {path: spanPath('b2', 's2'), offset: 5})).toEqual({
+      path: spanPath('b1', 's2'),
+      offset: 3,
+    })
+  })
+})

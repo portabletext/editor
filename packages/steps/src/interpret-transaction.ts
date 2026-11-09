@@ -571,6 +571,7 @@ type NodeMove = {
   removalSlotIndex: number
   insertionSlotIndex: number
   sourceNode: unknown
+  insertedNode: unknown
 }
 
 /**
@@ -639,6 +640,7 @@ function resolveNodeMoves(
       removalSlotIndex: removal.slotIndex,
       insertionSlotIndex: insertion.slotIndex,
       sourceNode: removal.sourceNode,
+      insertedNode: insertion.node,
     })
   }
   return moves
@@ -742,10 +744,18 @@ function assembleSteps(
   for (const move of nonNestedNodeMoves) {
     supersededSlots.add(move.removalSlotIndex)
     nodeMoveByInsertionSlot.set(move.insertionSlotIndex, move)
+    const carriesOldPathEdits = structurallyEqual(
+      move.sourceNode,
+      move.insertedNode,
+    )
     for (let i = 0; i < slots.length; i++) {
       const step = slots[i]
       const path = step ? stepPath(step) : undefined
-      if (path && pathContains(move.from, path)) {
+      if (
+        path &&
+        pathContains(move.from, path) &&
+        !(carriesOldPathEdits && i < move.removalSlotIndex && isTextEdit(step))
+      ) {
         supersededSlots.add(i)
       }
       if (
@@ -838,6 +848,14 @@ function assembleSteps(
   }
 
   return steps
+}
+
+function isTextEdit(step: Step | null | undefined): boolean {
+  return (
+    step?.type === 'remove.text' ||
+    step?.type === 'insert.text' ||
+    step?.type === 'set.text'
+  )
 }
 
 function pairMoves(
