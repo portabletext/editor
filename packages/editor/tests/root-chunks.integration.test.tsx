@@ -1105,8 +1105,14 @@ describe('drawing a large first value after `ready`', () => {
   test('Scenario: The gate opens after the last block of a value with 10% tables is drawn, and then typing works', async () => {
     const large = await renderLargeLoad({depth: loadDepths[0]!, tableEvery: 10})
 
+    large.expectMidDraw()
     await large.drawToTheEnd()
     await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+    await userEvent.click(
+      document.querySelector(
+        `[data-pt-block][data-pt-path$='_key=="${large.keys[1]!.blockKey}"]']`,
+      )!,
+    )
     large.editor.send({
       type: 'select',
       at: {
