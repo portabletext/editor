@@ -1,6 +1,10 @@
 import {readFileSync, realpathSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
-import {deviceTestFileSeconds, prepWorstSeconds} from 'thumbjar/vitest'
+import {
+  deviceTestFileSeconds,
+  FETCH_U2_JAR_WORST_SECONDS,
+  prepWorstSeconds,
+} from 'thumbjar/vitest'
 
 // The caps `run-on-device.sh` runs its stages under, in seconds, each a `timeout -k <kill> <seconds>`.
 // `budget.test.ts` checks the script against them and the workflow's `timeout-minutes` against their sum.
@@ -93,6 +97,16 @@ export function runStepMinutes(keyboard, testCount) {
 
 /** The job's time beyond its steps' caps, for the runner to move between steps, so the Result step runs. */
 export const JOB_HEADROOM_MINUTES = 1
+
+/** `pnpm` and Node starting `thumbjar fetch-u2-jar`, which its own bound does not count. */
+export const FETCH_STEP_HEADROOM_SECONDS = 15
+
+/** The jar fetch step's `timeout-minutes`: thumbjar's three downloads and their waits, and the headroom. */
+export function fetchStepMinutes() {
+  return Math.ceil(
+    (FETCH_U2_JAR_WORST_SECONDS + FETCH_STEP_HEADROOM_SECONDS) / 60,
+  )
+}
 
 /**
  * The number of tests in a device test file: its top-level `test(` and `test.fails(` calls. A unit test

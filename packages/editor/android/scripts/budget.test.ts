@@ -12,7 +12,11 @@ import {
 import {tmpdir} from 'node:os'
 import {basename, join} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {deviceTestFileSeconds, prepWorstSeconds} from 'thumbjar/vitest'
+import {
+  deviceTestFileSeconds,
+  FETCH_U2_JAR_WORST_SECONDS,
+  prepWorstSeconds,
+} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
 import {
@@ -24,6 +28,8 @@ import {
   DEVICE_CHECK_SECONDS,
   DIAGNOSTICS_KILL_SECONDS,
   DIAGNOSTICS_SECONDS,
+  FETCH_STEP_HEADROOM_SECONDS,
+  fetchStepMinutes,
   JOB_HEADROOM_MINUTES,
   prepSeconds,
   RUN_STEP_HEADROOM_SECONDS,
@@ -312,7 +318,20 @@ describe('the workflow', () => {
     )
   })
 
-  test('caps the Japanese run steps at 56 minutes and its job at 183, the English run steps at 52 and its job at 175', () => {
+  test("caps the jar fetch step at thumbjar's three downloads and pnpm's start, 3 minutes", () => {
+    expect({
+      worst: FETCH_U2_JAR_WORST_SECONDS,
+      headroom: FETCH_STEP_HEADROOM_SECONDS,
+      minutes: fetchStepMinutes(),
+      step: Number(
+        /^ {6}- name: Fetch the uiautomator2 server jar\n(?: {8}.*\n)*? {8}timeout-minutes: (\d+)$/m.exec(
+          workflow,
+        )?.[1],
+      ),
+    }).toEqual({worst: 165, headroom: 15, minutes: 3, step: 3})
+  })
+
+  test('caps the Japanese run steps at 56 minutes and its job at 186, the English run steps at 52 and its job at 178', () => {
     expect(
       rows.map(({lang, runMinutes, jobMinutes}) => ({
         lang,
@@ -320,8 +339,8 @@ describe('the workflow', () => {
         jobMinutes,
       })),
     ).toEqual([
-      {lang: 'ja', runMinutes: 56, jobMinutes: 183},
-      {lang: 'en', runMinutes: 52, jobMinutes: 175},
+      {lang: 'ja', runMinutes: 56, jobMinutes: 186},
+      {lang: 'en', runMinutes: 52, jobMinutes: 178},
     ])
   })
 })

@@ -2003,6 +2003,112 @@ describe('the workflow', () => {
     })
   })
 
+  test('restores the uiautomator2 server jar before its fetch and saves it after a fetch on a miss, from any ref, none of which can fail the job', () => {
+    const names = [...workflow.matchAll(/^ {6}- (?:name|uses): (.*)$/gm)].map(
+      (match) => match[1],
+    )
+    const step = (name: string) =>
+      workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0] ?? ''
+    const key =
+      "u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}"
+    const path = 'packages/thumbjar/.cache/u2.jar'
+    expect({
+      order: names.slice(
+        names.indexOf('Restore the uiautomator2 server jar'),
+        names.indexOf('Look up the SDK cache key') + 1,
+      ),
+      restore: {
+        id: /^ {8}id: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        uses: /^ {8}uses: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        key: /^ {10}key: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        path: /^ {10}path: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+      },
+      fetch: {
+        id: /^ {8}id: (.*)$/m.exec(
+          step('Fetch the uiautomator2 server jar'),
+        )?.[1],
+        continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(
+          step('Fetch the uiautomator2 server jar'),
+        )?.[1],
+        command: /^ {8}run: (.*)$/m.exec(
+          step('Fetch the uiautomator2 server jar'),
+        )?.[1],
+      },
+      save: {
+        condition: /^ {8}if: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        uses: /^ {8}uses: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        key: /^ {10}key: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        path: /^ {10}path: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+      },
+      keyedFile: {
+        exists: existsSync(
+          new URL('../../../thumbjar/src/device/u2-jar.json', import.meta.url),
+        ),
+        importedByJarModule:
+          /^import jar from '\.\/u2-jar\.json' with \{type: 'json'\}$/m.test(
+            readFileSync(
+              new URL(
+                '../../../thumbjar/src/device/u2-jar.ts',
+                import.meta.url,
+              ),
+              'utf8',
+            ),
+          ),
+      },
+    }).toEqual({
+      order: [
+        'Restore the uiautomator2 server jar',
+        'Fetch the uiautomator2 server jar',
+        'Save the uiautomator2 server jar',
+        'Look up the SDK cache key',
+      ],
+      restore: {
+        id: 'u2-jar-restore',
+        continueOnError: 'true',
+        uses: 'actions/cache/restore@v6',
+        key,
+        path,
+      },
+      fetch: {
+        id: 'u2-jar-fetch',
+        continueOnError: undefined,
+        command:
+          'pnpm --filter @portabletext/editor exec thumbjar fetch-u2-jar',
+      },
+      save: {
+        condition:
+          "steps.u2-jar-fetch.outcome == 'success' && steps.u2-jar-restore.outputs.cache-hit != 'true'",
+        continueOnError: 'true',
+        uses: 'actions/cache/save@v6',
+        key,
+        path,
+      },
+      keyedFile: {exists: true, importedByJarModule: true},
+    })
+  })
+
   test('saves the SDK cache only from main, after a successful install and a manifest of the installed packages', () => {
     const names = [...workflow.matchAll(/^ {6}- (?:name|uses): (.*)$/gm)].map(
       (match) => match[1],
@@ -2069,7 +2175,12 @@ describe('the workflow', () => {
         key: '${{ steps.sdk-key.outputs.key }}',
         path: '${{ steps.sdk-key.outputs.paths }}',
       },
-      cacheActions: ['actions/cache/restore@v6', 'actions/cache/save@v6'],
+      cacheActions: [
+        'actions/cache/restore@v6',
+        'actions/cache/save@v6',
+        'actions/cache/restore@v6',
+        'actions/cache/save@v6',
+      ],
       avd: false,
     })
   })
