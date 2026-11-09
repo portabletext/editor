@@ -444,6 +444,197 @@ describe('event.change', () => {
       },
     )
 
+    test.each([
+      {
+        depth: loadDepths[0]!,
+        duplicateKey: 'k4',
+        emptySpanKey: 'k5',
+        missingKey: 'k6',
+      },
+      {
+        depth: loadDepths[1]!,
+        duplicateKey: 'k5',
+        emptySpanKey: 'k6',
+        missingKey: 'k7',
+      },
+      {
+        depth: loadDepths[2]!,
+        duplicateKey: 'k6',
+        emptySpanKey: 'k7',
+        missingKey: 'k8',
+      },
+      {
+        depth: loadDepths[3]!,
+        duplicateKey: 'k7',
+        emptySpanKey: 'k8',
+        missingKey: 'k9',
+      },
+    ])(
+      'Scenario: `resync` of empty `children`, a missing key, a duplicate key and a non-object entry together at $depth.name emits the remote operations, then a correction',
+      async ({depth, duplicateKey, emptySpanKey, missingKey}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKey = keyGenerator()
+        const spanKey = keyGenerator()
+        const {editor, prefix, wrap} = await createResyncEditor(
+          depth,
+          [block(blockKey, spanKey, 'foo')],
+          keyGenerator,
+        )
+        const changes = collectChanges(editor)
+
+        editor.send({
+          type: 'resync',
+          value: wrap([
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [],
+              children: [],
+            },
+            {
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: `${spanKey}-b`, text: 'foo', marks: []},
+              ],
+            } as never,
+            textBlock(blockKey, `${spanKey}-c`, 'bar'),
+            'baz' as never,
+          ]),
+        })
+
+        expect(editor.getSnapshot().context.value).toEqual(
+          wrap([
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: emptySpanKey, text: '', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: missingKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: `${spanKey}-b`, text: 'foo', marks: []},
+              ],
+            },
+            textBlock(duplicateKey, `${spanKey}-c`, 'bar'),
+          ]),
+        )
+        expect(changes).toEqual([
+          {
+            type: 'change',
+            origin: 'remote',
+            operations: [
+              {
+                type: 'unset',
+                path: [...prefix, 0, 'children', {_key: spanKey}],
+              },
+              {
+                type: 'insert',
+                path: [...prefix, 0],
+                node: {
+                  _type: 'block',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: `${spanKey}-b`,
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+                position: 'after',
+              },
+              {
+                type: 'insert',
+                path: [...prefix, 1],
+                node: textBlock(blockKey, `${spanKey}-c`, 'bar'),
+                position: 'after',
+              },
+            ],
+          },
+          {
+            type: 'change',
+            origin: 'local',
+            correction: true,
+            operations: [
+              {
+                type: 'set',
+                path: [...prefix, 2, '_key'],
+                value: duplicateKey,
+                inverse: {
+                  type: 'set',
+                  path: [...prefix, 2, '_key'],
+                  value: blockKey,
+                },
+              },
+              {
+                type: 'insert',
+                path: [...prefix, {_key: blockKey}, 'children', 0],
+                node: {
+                  _type: 'span',
+                  _key: emptySpanKey,
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+              {
+                type: 'set',
+                path: [...prefix, 1, '_key'],
+                value: missingKey,
+                inverse: {type: 'unset', path: [...prefix, 1, '_key']},
+              },
+            ],
+            patches: [
+              {
+                origin: 'local',
+                type: 'set',
+                path: [...prefix, 2, '_key'],
+                value: duplicateKey,
+              },
+              {
+                origin: 'local',
+                type: 'setIfMissing',
+                path: [...prefix, {_key: blockKey}, 'children'],
+                value: [],
+              },
+              {
+                origin: 'local',
+                type: 'insert',
+                path: [...prefix, {_key: blockKey}, 'children', 0],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: emptySpanKey,
+                    text: '',
+                    marks: [],
+                  },
+                ],
+              },
+              {
+                origin: 'local',
+                type: 'set',
+                path: [...prefix, 1, '_key'],
+                value: missingKey,
+              },
+            ],
+          },
+        ])
+      },
+    )
+
     test('Scenario: A correction after `resync` is emitted as a local `change` with `correction`', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
