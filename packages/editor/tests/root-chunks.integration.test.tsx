@@ -1402,6 +1402,7 @@ describe('drawing a large first value after `ready`', () => {
         index === position.index ? `${key.blockKey} edited` : key.blockKey,
       )
 
+      large.expectMidDraw()
       large.editor.send({type: 'resync', value: large.wrap(resynced)})
 
       expect(large.editor.getSnapshot().context.value).toEqual(
@@ -1433,6 +1434,7 @@ describe('drawing a large first value after `ready`', () => {
       const patchFor = (index: number, text: string) =>
         set(text, [...large.spanPath(index), 'text'])
 
+      large.expectMidDraw()
       for (const order of [
         [drawnIndex, position.index],
         [position.index, drawnIndex],
@@ -1497,6 +1499,7 @@ describe('drawing a large first value after `ready`', () => {
       const resync = () =>
         large.editor.send({type: 'resync', value: large.wrap(resynced)})
 
+      large.expectMidDraw()
       for (const step of interleaving.order) {
         if (step === 'patches') {
           transaction()
@@ -1525,6 +1528,7 @@ describe('drawing a large first value after `ready`', () => {
     window.addEventListener('error', onError)
     const large = await renderLargeLoad({depth: loadDepths[0]!})
 
+    large.expectMidDraw()
     await large.unmount()
     await new Promise((resolve) => requestAnimationFrame(resolve))
     await new Promise((resolve) => requestAnimationFrame(resolve))
