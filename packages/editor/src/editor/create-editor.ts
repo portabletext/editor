@@ -131,6 +131,13 @@ export function createInternalEditor(config: EditorConfig): {
     },
     send: (event) => {
       switch (event.type) {
+        case 'resync':
+          if (editorEngine.snapshot.status === 'loading') {
+            throw new Error('`resync` is only valid once the editor is ready')
+          }
+          syncActor.send(event)
+          break
+
         case 'update value':
         case 'load':
           syncActor.send(event)

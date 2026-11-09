@@ -28,7 +28,7 @@ export type ChangeEntry = {
 export type ChangeCause =
   | {type: 'behavior event'}
   | {type: 'remote patches'}
-  | {type: 'value sync'; initial: boolean}
+  | {type: 'value sync'; initial: boolean; resync?: true}
   | {type: 'registration'}
 
 /**
