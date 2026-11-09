@@ -18,6 +18,7 @@ import {
 } from '@sanity/diff-match-patch'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
+import {hasUsableKey, isAddressableByKey} from '../paths/node-segment'
 import {getNode} from '../traversal/get-node'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {Path} from '../types/paths'
@@ -128,8 +129,14 @@ function resolveNegativeIndexes(
           : undefined
 
       // The rest of the editor resolves keyed segments at any depth, while a
-      // numeric segment below the root is not always found.
-      path.push(typeof key === 'string' ? {_key: key} : index)
+      // numeric segment below the root is not always found. A key that is
+      // empty or shared with a sibling would resolve to another item, so
+      // the index stays.
+      path.push(
+        hasUsableKey(key) && isAddressableByKey(current, key)
+          ? {_key: key}
+          : index,
+      )
       current = element
     } else {
       path.push(segment)
