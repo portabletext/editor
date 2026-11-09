@@ -9,17 +9,20 @@ import {
   readFileSync,
   rmSync,
   symlinkSync,
+  truncateSync,
   writeFileSync,
 } from 'node:fs'
 import {tmpdir} from 'node:os'
 import {basename, dirname, join} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test} from 'vitest'
 import {
   bootSeconds,
   cacheRevisions,
   deviceVerdict,
   installCleanupPaths,
+  installFailureLines,
+  installLogTail,
   installResult,
   packageMismatch,
   retryAfter,
@@ -1462,6 +1465,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
     ).toEqual({
       status: 1,
       stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
         'install outcome: retried once after a failed install\nrun outcome: cancelled, on the retry after adb lost the device\n',
       output: '',
       summary:
@@ -1539,6 +1543,8 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       }).toEqual({
         status: 1,
         stdout:
+          'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+          'install attempt 2: no install output was recorded in android/out/sdk-install-2.log\n' +
           'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
         stderr: '',
         summary:
@@ -1559,6 +1565,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
     ).toEqual({
       status: 0,
       stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
         'install outcome: retried once after a failed install\nrun outcome: success, on the retry after adb lost the device\n',
       output: '',
       summary:
@@ -1590,7 +1597,9 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       }),
     ).toEqual({
       status: 1,
-      stdout: 'run outcome: cancelled\n',
+      stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+        'run outcome: cancelled\n',
       output: '',
       summary: 'run outcome: cancelled\n',
       timing: '',
@@ -1622,7 +1631,9 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       }),
     ).toEqual({
       status: 1,
-      stdout: 'run outcome: cancelled\n',
+      stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+        'run outcome: cancelled\n',
       output: '',
       summary: 'run outcome: cancelled\n',
       timing: '',
@@ -1643,6 +1654,89 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       summary:
         'run outcome: no emulator run, a step before the emulator install failed\n',
       timing: '',
+    })
+  })
+
+  describe('with an install log', () => {
+    const resultWithLog = (
+      log: string,
+      workflowOutcomes: {INSTALL2_OUTCOME: string},
+    ) => {
+      const directory = mkdtempSync(join(tmpdir(), 'install-result-'))
+      try {
+        mkdirSync(join(directory, 'android/out'), {recursive: true})
+        writeFileSync(join(directory, 'android/out/sdk-install-1.log'), log)
+        const result = spawnSync(
+          'node',
+          [
+            join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+            'result',
+            'missing.txt',
+            'skipped',
+          ],
+          {
+            cwd: directory,
+            encoding: 'utf8',
+            env: {
+              ...process.env,
+              INSTALL1_OUTCOME: 'failure',
+              ...workflowOutcomes,
+              GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+            },
+          },
+        )
+        return {
+          status: result.status,
+          stdout: result.stdout,
+          summary: readFileSync(join(directory, 'summary'), 'utf8'),
+        }
+      } finally {
+        rmSync(directory, {recursive: true, force: true})
+      }
+    }
+
+    test('prints the tail of a ZipFile failure before the run outcome and leaves the summary unchanged', () => {
+      const log =
+        '[=======================================] 100% Unzipping... emulator/emulator\n' +
+        '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+        '[=====================                  ] 54% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+        '[=======================================] 100% Unzipping... system-images/android-36/google_apis_playstore/x86_64/system.img\r\n' +
+        'yes: standard output: Broken pipe\n' +
+        'Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.\n'
+      expect(resultWithLog(log, {INSTALL2_OUTCOME: 'success'})).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: last 4 lines of android/out/sdk-install-1.log\n' +
+          '  [=======================================] 100% Unzipping... emulator/emulator\n' +
+          '  [=======================================] 100% Unzipping... system-images/android-36/google_apis_playstore/x86_64/system.img\n' +
+          '  yes: standard output: Broken pipe\n' +
+          '  Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: the emulator never booted, infrastructure failure, not a test result\n',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: the emulator never booted, infrastructure failure, not a test result\n',
+      })
+    })
+
+    test('prints the package a timed out install was downloading, which has no error line', () => {
+      const log =
+        'yes: standard output: Broken pipe\n' +
+        '[=======================================] 100% Unzipping... emulator/emulator\n' +
+        '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+        '[================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...        \r'
+      expect(resultWithLog(log, {INSTALL2_OUTCOME: 'failure'})).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: last 3 lines of android/out/sdk-install-1.log\n' +
+          '  yes: standard output: Broken pipe\n' +
+          '  [=======================================] 100% Unzipping... emulator/emulator\n' +
+          '  [================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\n' +
+          'install attempt 2: no install output was recorded in android/out/sdk-install-2.log\n' +
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
     })
   })
 })
@@ -2503,3 +2597,289 @@ function restoredCheck(prepare: (sdk: string, manifest: string) => void) {
     rmSync(directory, {recursive: true, force: true})
   }
 }
+
+describe(installLogTail.name, () => {
+  const downloading = [
+    '[=======================================] 100% Unzipping... platform-tools/adb',
+    '[=======================================] 100% Unzipping... emulator/emulator',
+    '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...',
+  ]
+
+  test('names the package an install killed by its timeout was downloading, from the last state of each redraw', () => {
+    const log =
+      `${downloading.slice(0, 2).join('\n')}\n` +
+      '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+      '[==========                             ] 25% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+      '[================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...        \r'
+    expect(installLogTail(log)).toEqual([
+      '[=======================================] 100% Unzipping... platform-tools/adb',
+      '[=======================================] 100% Unzipping... emulator/emulator',
+      '[================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...',
+    ])
+  })
+
+  test('names the package of a ZipFile error', () => {
+    const log =
+      '[=======================================] 100% Unzipping... emulator/emulator\n' +
+      'Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.\n' +
+      'Warning: Failed to download package!\n'
+    expect(installLogTail(log)).toEqual([
+      '[=======================================] 100% Unzipping... emulator/emulator',
+      'Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.',
+      'Warning: Failed to download package!',
+    ])
+  })
+
+  test('keeps the package line within the last 30 lines of a long log', () => {
+    const progress = Array.from(
+      {length: 200},
+      (_, index) =>
+        `[${'='.repeat(index % 40)}] ${index % 100}% Downloading x86_64-36_r07.zip...`,
+    ).join('\r')
+    const tail = installLogTail(
+      `[ ] 0% Downloading x86_64-36_r07.zip...\r${progress}\n`,
+    )
+    expect(tail).toEqual([
+      `[${'='.repeat(39)}] 99% Downloading x86_64-36_r07.zip...`,
+    ])
+  })
+
+  test('returns the last 30 lines of many lines', () => {
+    const lines = Array.from({length: 100}, (_, index) => `line ${index}`)
+    expect(installLogTail(lines.join('\n'))).toEqual(lines.slice(-30))
+  })
+
+  test('returns nothing for an empty, blank or missing log', () => {
+    expect(installLogTail('')).toEqual([])
+    expect(installLogTail('\n\r\n  \r\n')).toEqual([])
+    expect(installLogTail(undefined)).toEqual([])
+  })
+
+  test('bounds a huge log and a huge line', () => {
+    const huge = `first\n${'x'.repeat(10_000_000)}\nlast\n`
+    expect(installLogTail(huge)).toEqual([`${'x'.repeat(300)}...`, 'last'])
+  })
+})
+
+describe(installFailureLines.name, () => {
+  const logs: Record<number, string> = {
+    1: '[===      ] 40% Downloading x86_64-36_r07.zip...\r',
+    2: 'Warning: Failed to download package!\n',
+  }
+  const readLog = (attempt: 1 | 2) => logs[attempt]
+
+  test('prints nothing when both installs succeed or only the first one runs', () => {
+    expect(installFailureLines('success', 'skipped', readLog)).toEqual([])
+    expect(installFailureLines('skipped', 'skipped', readLog)).toEqual([])
+    expect(installFailureLines('cancelled', 'skipped', readLog)).toEqual([])
+  })
+
+  test('prints the first attempt when its retry succeeded', () => {
+    expect(installFailureLines('failure', 'success', readLog)).toEqual([
+      'install attempt 1: last 1 lines of android/out/sdk-install-1.log',
+      '  [===      ] 40% Downloading x86_64-36_r07.zip...',
+    ])
+  })
+
+  test('prints both attempts when both failed', () => {
+    expect(installFailureLines('failure', 'failure', readLog)).toEqual([
+      'install attempt 1: last 1 lines of android/out/sdk-install-1.log',
+      '  [===      ] 40% Downloading x86_64-36_r07.zip...',
+      'install attempt 2: last 1 lines of android/out/sdk-install-2.log',
+      '  Warning: Failed to download package!',
+    ])
+  })
+
+  test('says so when an attempt left no output', () => {
+    expect(installFailureLines('failure', 'failure', () => undefined)).toEqual([
+      'install attempt 1: no install output was recorded in android/out/sdk-install-1.log',
+      'install attempt 2: no install output was recorded in android/out/sdk-install-2.log',
+    ])
+  })
+})
+
+describe('emulator-runs.mjs result with install logs', () => {
+  const runResultCommand = (
+    directory: string,
+    installs: {first: string; second: string},
+  ) => {
+    const result = spawnSync(
+      'node',
+      [
+        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        'result',
+        'android/out/timing.txt',
+        'success',
+      ],
+      {
+        cwd: directory,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          INSTALL1_OUTCOME: installs.first,
+          INSTALL2_OUTCOME: installs.second,
+          JOB_STATUS: 'success',
+          GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+        },
+      },
+    )
+    return {
+      status: result.status,
+      stdout: result.stdout,
+      summary: existsSync(join(directory, 'summary'))
+        ? readFileSync(join(directory, 'summary'), 'utf8')
+        : '',
+    }
+  }
+
+  const setup = () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-result-logs-'))
+    mkdirSync(join(directory, 'android/out'), {recursive: true})
+    writeFileSync(join(directory, 'android/out/timing.txt'), booted)
+    writeFileSync(
+      join(directory, 'android/out/sdk-install-1.log'),
+      '[====      ] 40% Downloading x86_64-36_r07.zip...\r',
+    )
+    return directory
+  }
+
+  test('prints the same lines as before when both installs succeed or the first one does', () => {
+    const directory = setup()
+    try {
+      expect(
+        runResultCommand(directory, {first: 'success', second: 'skipped'}),
+      ).toEqual({
+        status: 0,
+        stdout: 'run outcome: success\n',
+        summary: 'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('prints the first attempt tail before the retry line when the retry succeeded', () => {
+    const directory = setup()
+    try {
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'success'}),
+      ).toEqual({
+        status: 0,
+        stdout:
+          'install attempt 1: last 1 lines of android/out/sdk-install-1.log\n' +
+          '  [====      ] 40% Downloading x86_64-36_r07.zip...\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('keeps the infrastructure failure line last when both installs failed', () => {
+    const directory = setup()
+    try {
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'failure'}),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: last 1 lines of android/out/sdk-install-1.log\n' +
+          '  [====      ] 40% Downloading x86_64-36_r07.zip...\n' +
+          'install attempt 2: no install output was recorded in android/out/sdk-install-2.log\n' +
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('says a log that is a directory could not be read and keeps the success outcome', () => {
+    const directory = setup()
+    try {
+      rmSync(join(directory, 'android/out/sdk-install-1.log'))
+      mkdirSync(join(directory, 'android/out/sdk-install-1.log'))
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'success'}),
+      ).toEqual({
+        status: 0,
+        stdout:
+          'install attempt 1: android/out/sdk-install-1.log could not be read (EISDIR)\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('still prints the second attempt tail when the first attempt log could not be read', () => {
+    const directory = setup()
+    try {
+      rmSync(join(directory, 'android/out/sdk-install-1.log'))
+      mkdirSync(join(directory, 'android/out/sdk-install-1.log'))
+      writeFileSync(
+        join(directory, 'android/out/sdk-install-2.log'),
+        'Warning: Failed to download package!\n',
+      )
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'failure'}),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: android/out/sdk-install-1.log could not be read (EISDIR)\n' +
+          'install attempt 2: last 1 lines of android/out/sdk-install-2.log\n' +
+          '  Warning: Failed to download package!\n' +
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  describe('with a log larger than the longest string Node can hold', () => {
+    let sparseLog: string | undefined
+
+    afterEach(() => {
+      if (sparseLog !== undefined) {
+        rmSync(sparseLog, {force: true})
+        sparseLog = undefined
+      }
+    })
+
+    test('reads only the end of the log', () => {
+      const directory = setup()
+      try {
+        sparseLog = join(directory, 'android/out/sdk-install-1.log')
+        const lastLine = 'Warning: Failed to download package!\n'
+        truncateSync(sparseLog, 0x1fffffe8 + 1)
+        appendFileSync(sparseLog, `${'\n'.repeat(65_536)}${lastLine}`)
+        expect(
+          runResultCommand(directory, {first: 'failure', second: 'success'}),
+        ).toEqual({
+          status: 0,
+          stdout:
+            'install attempt 1: last 1 lines of android/out/sdk-install-1.log\n' +
+            '  Warning: Failed to download package!\n' +
+            'install outcome: retried once after a failed install\n' +
+            'run outcome: success\n',
+          summary:
+            'install outcome: retried once after a failed install\n' +
+            'run outcome: success\n',
+        })
+      } finally {
+        rmSync(directory, {recursive: true, force: true})
+      }
+    })
+  })
+})

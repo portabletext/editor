@@ -1,10 +1,14 @@
 import {spawnSync} from 'node:child_process'
 import {
   appendFileSync,
+  closeSync,
   existsSync,
+  fstatSync,
   lstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
+  readSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -286,6 +290,84 @@ export function installResult(
     : result
 }
 
+/**
+ * The last lines of a `sdkmanager --install` log, for a job log that would otherwise say nothing about the
+ * package a failed or timed-out install was working on. A progress bar redraws its line with carriage
+ * returns, so each line keeps only its last state. Only the last characters of the string are used and a
+ * long line is cut, so the output stays small however much `sdkmanager` printed. The caller reads just the
+ * end of the file.
+ *
+ * @param {string | undefined} log The install attempt's log, `undefined` when no file exists
+ * @param {number} [maxLines]
+ * @returns {string[]}
+ */
+export function installLogTail(log, maxLines = INSTALL_LOG_TAIL_LINES) {
+  const lines = (log ?? '')
+    .slice(-INSTALL_LOG_READ_CHARACTERS)
+    .split('\n')
+    .map((line) => {
+      const redraws = line.split('\r').filter((state) => state.trim() !== '')
+      return (redraws.at(-1) ?? '').trimEnd()
+    })
+    .filter((line) => line !== '')
+    .map((line) =>
+      line.length > INSTALL_LOG_LINE_CHARACTERS
+        ? `${line.slice(0, INSTALL_LOG_LINE_CHARACTERS)}...`
+        : line,
+    )
+  return lines.slice(-maxLines)
+}
+
+/**
+ * The lines the Result step prints for each install attempt that failed, with the tail of its log. A log
+ * that cannot be read gets a line naming the error code, so it never costs the other attempt's lines.
+ *
+ * @param {string | undefined} first The first install step's outcome
+ * @param {string | undefined} second The install retry step's outcome
+ * @param {(attempt: 1 | 2) => string | undefined} readLog The attempt's log, `undefined` when it has none.
+ *   It throws when the log exists but cannot be read
+ * @returns {string[]}
+ */
+export function installFailureLines(first, second, readLog) {
+  /** @type {string[]} */
+  const lines = []
+  for (const [attempt, attemptOutcome] of /** @type {const} */ ([
+    [1, first],
+    [2, second],
+  ])) {
+    if (attemptOutcome !== 'failure') {
+      continue
+    }
+    const logFile = `android/out/sdk-install-${attempt}.log`
+    /** @type {string | undefined} */
+    let log
+    try {
+      log = readLog(attempt)
+    } catch (error) {
+      const code =
+        error instanceof Error && 'code' in error ? String(error.code) : 'error'
+      lines.push(
+        `install attempt ${attempt}: ${logFile} could not be read (${code})`,
+      )
+      continue
+    }
+    const tail = installLogTail(log)
+    lines.push(
+      tail.length === 0
+        ? `install attempt ${attempt}: no install output was recorded in android/out/sdk-install-${attempt}.log`
+        : `install attempt ${attempt}: last ${tail.length} lines of android/out/sdk-install-${attempt}.log`,
+      ...tail.map((line) => `  ${line}`),
+    )
+  }
+  return lines
+}
+
+const INSTALL_LOG_TAIL_LINES = 30
+const INSTALL_LOG_READ_CHARACTERS = 65_536
+// A tail of this many bytes decodes to at most this many characters, so installLogTail never cuts a file's tail further
+const INSTALL_LOG_READ_BYTES = INSTALL_LOG_READ_CHARACTERS
+const INSTALL_LOG_LINE_CHARACTERS = 300
+
 const [command, file, outcome, manifestFile, key] = process.argv.slice(2)
 
 if (!isMain()) {
@@ -305,6 +387,7 @@ if (!isMain()) {
   file !== undefined &&
   outcome !== undefined
 ) {
+  mkdirSync('android/out', {recursive: true})
   if (existsSync('android/out/install-paths.txt')) {
     const before = readFileSync('android/out/install-paths.txt', 'utf8').split(
       '\n',
@@ -491,6 +574,13 @@ if (!isMain()) {
     process.env.INSTALL2_OUTCOME,
     process.env.JOB_STATUS,
   )
+  for (const line of installFailureLines(
+    process.env.INSTALL1_OUTCOME,
+    process.env.INSTALL2_OUTCOME,
+    (attempt) => readTail(`android/out/sdk-install-${attempt}.log`),
+  )) {
+    log(line)
+  }
   if (result.installLine !== undefined) {
     report(result.installLine)
   }
@@ -684,6 +774,42 @@ function infrastructureFailure(last, first) {
  */
 function log(line) {
   process.stdout.write(`${line}\n`)
+}
+
+/**
+ * The last `INSTALL_LOG_READ_BYTES` bytes of a file as UTF-8, without reading the rest. A sequence cut at
+ * the start decodes to a replacement character.
+ *
+ * @param {string} path
+ * @returns {string | undefined} `undefined` when the file does not exist
+ */
+function readTail(path) {
+  if (!existsSync(path)) {
+    return undefined
+  }
+  const descriptor = openSync(path, 'r')
+  try {
+    const size = fstatSync(descriptor).size
+    const buffer = Buffer.alloc(Math.min(size, INSTALL_LOG_READ_BYTES))
+    const start = size - buffer.length
+    let read = 0
+    while (read < buffer.length) {
+      const count = readSync(
+        descriptor,
+        buffer,
+        read,
+        buffer.length - read,
+        start + read,
+      )
+      if (count === 0) {
+        break
+      }
+      read += count
+    }
+    return buffer.toString('utf8', 0, read)
+  } finally {
+    closeSync(descriptor)
+  }
 }
 
 /** @param {string} line */
