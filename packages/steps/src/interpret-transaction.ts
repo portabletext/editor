@@ -595,6 +595,23 @@ function isUnchangedReappearance(
 }
 
 /**
+ * Span keys are only unique within a block, so two removed blocks can both
+ * hold a span with the reappearing key. The reappearance still has one
+ * origin when exactly one of those removed spans is the inserted node,
+ * unchanged.
+ */
+function isOnlyExactOrigin(
+  removal: NodeRemoval,
+  sameKeyRemovals: ReadonlyArray<NodeRemoval>,
+  insertion: NodeInsertion,
+): boolean {
+  const exact = sameKeyRemovals.filter((candidate) =>
+    structurallyEqual(candidate.sourceNode, insertion.node),
+  )
+  return exact.length === 1 && exact[0] === removal
+}
+
+/**
  * Resolve which removed node keys reappear, at any depth, inside a node
  * inserted elsewhere in the same transaction: exact identity carries no
  * coincidence risk the way text matching does, so unlike `pairMoves`,
@@ -631,7 +648,11 @@ function resolveNodeMoves(
     if (insertion === undefined || extraInsertions.length > 0) {
       continue
     }
-    if ((removalsByKey.get(removal.key) ?? []).length !== 1) {
+    const sameKeyRemovals = removalsByKey.get(removal.key) ?? []
+    if (
+      sameKeyRemovals.length !== 1 &&
+      !isOnlyExactOrigin(removal, sameKeyRemovals, insertion)
+    ) {
       continue
     }
     moves.push({

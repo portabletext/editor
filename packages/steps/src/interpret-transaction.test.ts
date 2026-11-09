@@ -2643,38 +2643,74 @@ describe('interpretTransaction: a merged block whose first span was emptied', ()
 })
 
 describe('interpretTransaction: a span key removed from two blocks at once', () => {
-  test('"def" follows the merge when a deleted block also held its key', () => {
-    const seed: Array<PortableTextBlock> = [
-      makeBlock('b1', 's1', 'abc'),
-      makeBlock('b2', 's2', 'gone'),
-      makeBlock('b3', 's2', 'XYdef'),
-    ]
-    // Deleting from the end of "abc" through "XY" in "abc|gone|XYdef": b2 is
-    // deleted outright, b3's span is trimmed, then b3 merges into b1. Both
-    // removed blocks held a span keyed s2; only b3's comes back.
-    const patches: Array<Patch> = [
-      {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
-      {
-        type: 'diffMatchPatch',
-        path: [...spanPath('b3', 's2'), 'text'],
-        value: dmpPatch('XYdef', 'def'),
-        origin: 'local',
-      },
-      {type: 'unset', path: [{_key: 'b3'}], origin: 'local'},
-      {
-        type: 'insert',
-        path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-        position: 'after',
-        items: [{_type: 'span', _key: 's2', text: 'def', marks: ['strong']}],
-        origin: 'local',
-      },
-    ]
+  // Deleting from the end of "abc" through "XY" in "abc|gone|XYdef ghi": b2
+  // is deleted outright, b3's first span is trimmed, then b3 merges into b1
+  // and "def" folds into "abc". Both removed blocks held a span keyed s2;
+  // only b3's comes back.
+  const seed = (): Array<PortableTextBlock> => [
+    makeBlock('b1', 's1', 'abc'),
+    makeBlock('b2', 's2', 'gone'),
+    {
+      _type: 'block',
+      _key: 'b3',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: 's2', text: 'XYdef', marks: []},
+        {_type: 'span', _key: 's4', text: ' ghi', marks: ['strong']},
+      ],
+    } satisfies PortableTextBlock,
+  ]
+  const patches: Array<Patch> = [
+    {type: 'unset', path: [{_key: 'b2'}], origin: 'local'},
+    {
+      type: 'diffMatchPatch',
+      path: [...spanPath('b3', 's2'), 'text'],
+      value: dmpPatch('XYdef', 'def'),
+      origin: 'local',
+    },
+    {type: 'unset', path: [{_key: 'b3'}], origin: 'local'},
+    {
+      type: 'insert',
+      path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+      position: 'after',
+      items: [
+        {_type: 'span', _key: 's2', text: 'def', marks: []},
+        {_type: 'span', _key: 's4', text: ' ghi', marks: ['strong']},
+      ],
+      origin: 'local',
+    },
+    {
+      type: 'diffMatchPatch',
+      path: [...spanPath('b1', 's1'), 'text'],
+      value: dmpPatch('abc', 'abcdef'),
+      origin: 'local',
+    },
+    {
+      type: 'unset',
+      path: [{_key: 'b1'}, 'children', {_key: 's2'}],
+      origin: 'local',
+    },
+  ]
 
-    const steps = interpretTransaction(seed, patches)
+  test('"e" in "XYdef" follows the fold to "abcdef"', () => {
+    const steps = interpretTransaction(seed(), patches)
 
     expect(mapPoint(steps, {path: spanPath('b3', 's2'), offset: 3})).toEqual({
-      path: spanPath('b1', 's2'),
-      offset: 1,
+      path: spanPath('b1', 's1'),
+      offset: 4,
     })
+  })
+
+  test('the end of "XYdef" lands at the end of "abcdef"', () => {
+    const steps = interpretTransaction(seed(), patches)
+
+    expect(
+      mapPoint(
+        steps,
+        {path: spanPath('b3', 's2'), offset: 5},
+        {affinity: 'backward'},
+      ),
+    ).toEqual({path: spanPath('b1', 's1'), offset: 6})
   })
 })
