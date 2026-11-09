@@ -48,7 +48,7 @@ function diffList(
     return [insert(wanted, 'before', [...path, 0])]
   }
 
-  const staying = new Set(longestCommonRun(shownKeys, wantedKeys))
+  const staying = new Set(stayingKeys(shownKeys, wantedKeys))
   const itemPath = (key: string): Path => [...path, {_key: key}]
   const firstStaying = wantedKeys.find((key) => staying.has(key))
 
@@ -75,11 +75,12 @@ function diffList(
       ? [insert([item], 'before', itemPath(firstStaying))]
       : [insert([item], 'after', itemPath(previousKey))]
   })
+  const shownItems = new Map(shownKeys.map((key, index) => [key, shown[index]]))
   const changes = wanted.flatMap((item, index) => {
     const key = wantedKeys[index]!
 
     return staying.has(key)
-      ? diffItem(shown[shownKeys.indexOf(key)], item, itemPath(key))
+      ? diffItem(shownItems.get(key), item, itemPath(key))
       : []
   })
 
@@ -121,7 +122,7 @@ function diffPartlyKeyedList(
   }
 
   const staying = new Set(
-    longestCommonRun(
+    stayingKeys(
       shownKeys.filter(
         (key): key is string => inShown(key) && wantedCounts.has(key),
       ),
@@ -277,41 +278,91 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function longestCommonRun(
-  keysA: Array<string>,
-  keysB: Array<string>,
+/**
+ * The keys that stay put when both lists hold each key at most once: the
+ * common prefix and suffix, plus the longest increasing subsequence of the
+ * wanted positions of the remaining shown keys, taken in shown order.
+ */
+function stayingKeys(
+  shownKeys: Array<string>,
+  wantedKeys: Array<string>,
 ): Array<string> {
-  const lengths = Array.from({length: keysA.length + 1}, () =>
-    Array.from({length: keysB.length + 1}, () => 0),
-  )
+  let start = 0
 
-  for (let indexA = keysA.length - 1; indexA >= 0; indexA--) {
-    for (let indexB = keysB.length - 1; indexB >= 0; indexB--) {
-      lengths[indexA]![indexB] =
-        keysA[indexA] === keysB[indexB]
-          ? lengths[indexA + 1]![indexB + 1]! + 1
-          : Math.max(
-              lengths[indexA + 1]![indexB]!,
-              lengths[indexA]![indexB + 1]!,
-            )
+  while (
+    start < shownKeys.length &&
+    start < wantedKeys.length &&
+    shownKeys[start] === wantedKeys[start]
+  ) {
+    start++
+  }
+
+  let shownEnd = shownKeys.length
+  let wantedEnd = wantedKeys.length
+
+  while (
+    shownEnd > start &&
+    wantedEnd > start &&
+    shownKeys[shownEnd - 1] === wantedKeys[wantedEnd - 1]
+  ) {
+    shownEnd--
+    wantedEnd--
+  }
+
+  const wantedPositions = new Map<string, number>()
+
+  for (let index = start; index < wantedEnd; index++) {
+    wantedPositions.set(wantedKeys[index]!, index)
+  }
+
+  const candidateKeys: Array<string> = []
+  const candidatePositions: Array<number> = []
+
+  for (let index = start; index < shownEnd; index++) {
+    const position = wantedPositions.get(shownKeys[index]!)
+
+    if (position !== undefined) {
+      candidateKeys.push(shownKeys[index]!)
+      candidatePositions.push(position)
     }
   }
 
-  const run: Array<string> = []
-  let indexA = 0
-  let indexB = 0
+  const tails: Array<number> = []
+  const previous: Array<number> = []
 
-  while (indexA < keysA.length && indexB < keysB.length) {
-    if (keysA[indexA] === keysB[indexB]) {
-      run.push(keysA[indexA]!)
-      indexA++
-      indexB++
-    } else if (lengths[indexA + 1]![indexB]! >= lengths[indexA]![indexB + 1]!) {
-      indexA++
-    } else {
-      indexB++
+  for (let index = 0; index < candidatePositions.length; index++) {
+    let low = 0
+    let high = tails.length
+
+    while (low < high) {
+      const middle = (low + high) >> 1
+
+      if (candidatePositions[tails[middle]!]! < candidatePositions[index]!) {
+        low = middle + 1
+      } else {
+        high = middle
+      }
     }
+
+    previous[index] = low > 0 ? tails[low - 1]! : -1
+    tails[low] = index
   }
 
-  return run
+  const middleRun: Array<string> = []
+
+  for (
+    let index = tails.length > 0 ? tails[tails.length - 1]! : -1;
+    index >= 0;
+    index = previous[index]!
+  ) {
+    middleRun.push(candidateKeys[index]!)
+  }
+
+  middleRun.reverse()
+
+  return [
+    ...shownKeys.slice(0, start),
+    ...middleRun,
+    ...shownKeys.slice(shownEnd),
+  ]
 }

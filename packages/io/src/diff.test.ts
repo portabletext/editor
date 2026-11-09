@@ -4,9 +4,12 @@ import {
   insert,
   set,
   unset,
+  type Patch,
+  type Path,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
-import {describe, expect, test} from 'vitest'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {describe, expect, test, vi} from 'vitest'
 import {diffValue} from './diff'
 import {applyOnServer} from './test/fake-server'
 
@@ -671,7 +674,277 @@ describe(diffValue.name, () => {
 
     expect(failures).toEqual([])
   })
+
+  describe('aligning keyed lists', () => {
+    const placements = ['first', 'middle', 'last'] as const
+
+    for (const [name, nested] of [
+      ['at the root', false],
+      ['inside a callout', true],
+    ] as const) {
+      test(`takes the same patches as the quadratic alignment on generated lists ${name}`, () => {
+        const keyGenerator = createTestKeyGenerator()
+        const containerKey = keyGenerator()
+        const path = containerPath(containerKey, nested)
+        const random = seededRandom(7)
+        const mismatches: Array<unknown> = []
+
+        for (let run = 0; run < 600; run++) {
+          const shownList = uniqueKeyList(
+            random,
+            2 + Math.floor(random() * 12),
+            keyGenerator,
+          )
+          const wantedList = editList(
+            shownList,
+            random,
+            placements[run % placements.length]!,
+            run % 4,
+            keyGenerator,
+          )
+          const shown = inContainer(shownList, containerKey, nested)
+          const wanted = inContainer(wantedList, containerKey, nested)
+          const patches = diffValue(shown, wanted)
+
+          if (
+            JSON.stringify(patches) !==
+              JSON.stringify(referencePatches(shownList, wantedList, path)) ||
+            JSON.stringify(applyAll(shown, patches)) !== JSON.stringify(wanted)
+          ) {
+            mismatches.push({shownList, wantedList})
+          }
+        }
+
+        expect(mismatches).toEqual([])
+      })
+
+      test(`aligns keys with indexOf and Array.from counts that do not grow with the list ${name}`, () => {
+        const keyGenerator = createTestKeyGenerator()
+        const containerKey = keyGenerator()
+        const shownList = Array.from({length: 50}, () =>
+          block(keyGenerator(), 'foo'),
+        )
+        const wantedList = [...shownList.slice(1), shownList[0]!]
+        const shown = inContainer(shownList, containerKey, nested)
+        const wanted = inContainer(wantedList, containerKey, nested)
+        const doubledKeyGenerator = createTestKeyGenerator()
+        const doubledContainerKey = doubledKeyGenerator()
+        const doubledShownList = Array.from({length: 100}, () =>
+          block(doubledKeyGenerator(), 'foo'),
+        )
+        const doubledWantedList = [
+          ...doubledShownList.slice(1),
+          doubledShownList[0]!,
+        ]
+        const doubledShown = inContainer(
+          doubledShownList,
+          doubledContainerKey,
+          nested,
+        )
+        const doubledWanted = inContainer(
+          doubledWantedList,
+          doubledContainerKey,
+          nested,
+        )
+        const indexOfSpy = vi.spyOn(Array.prototype, 'indexOf')
+
+        try {
+          const fromSpy = vi.spyOn(Array, 'from')
+
+          try {
+            const patches = diffValue(shown, wanted)
+            const calls = {
+              indexOf: indexOfSpy.mock.calls.length,
+              from: fromSpy.mock.calls.length,
+            }
+            indexOfSpy.mockClear()
+            fromSpy.mockClear()
+
+            diffValue(doubledShown, doubledWanted)
+
+            expect({
+              patches,
+              doubledCalls: {
+                indexOf: indexOfSpy.mock.calls.length,
+                from: fromSpy.mock.calls.length,
+              },
+            }).toEqual({
+              patches: [
+                unset([...containerPath(containerKey, nested), {_key: 'k1'}]),
+                insert([block('k1', 'foo')], 'after', [
+                  ...containerPath(containerKey, nested),
+                  {_key: 'k50'},
+                ]),
+              ],
+              doubledCalls: calls,
+            })
+          } finally {
+            fromSpy.mockRestore()
+          }
+        } finally {
+          indexOfSpy.mockRestore()
+        }
+      })
+
+      test(`times a large keyed list with one block moved first to last ${name}`, () => {
+        const keyGenerator = createTestKeyGenerator()
+        const containerKey = keyGenerator()
+        const shownList = Array.from({length: 6000}, () =>
+          block(keyGenerator(), 'foo'),
+        )
+        const wantedList = [...shownList.slice(1), shownList[0]!]
+        const shown = inContainer(shownList, containerKey, nested)
+        const wanted = inContainer(wantedList, containerKey, nested)
+        const start = performance.now()
+
+        diffValue(shown, wanted)
+
+        console.warn(
+          `diffValue, 6000 keyed blocks, one moved first to last ${name}: ${(performance.now() - start).toFixed(1)}ms`,
+        )
+      })
+    }
+  })
 })
+
+function containerPath(containerKey: string, nested: boolean): Path {
+  return nested ? [{_key: containerKey}, 'content'] : []
+}
+
+function inContainer(
+  list: Array<PortableTextBlock>,
+  containerKey: string,
+  nested: boolean,
+): Array<PortableTextBlock> {
+  return nested ? [callout(containerKey, list)] : list
+}
+
+function uniqueKeyList(
+  random: () => number,
+  length: number,
+  keyGenerator: () => string,
+): Array<PortableTextBlock> {
+  const keys = Array.from({length}, () => keyGenerator())
+
+  for (let index = keys.length - 1; index > 0; index--) {
+    const other = Math.floor(random() * (index + 1))
+    ;[keys[index], keys[other]] = [keys[other]!, keys[index]!]
+  }
+
+  return keys.map((key) => block(key, 'foo'))
+}
+
+function editList(
+  list: Array<PortableTextBlock>,
+  random: () => number,
+  placement: 'first' | 'middle' | 'last',
+  kind: number,
+  keyGenerator: () => string,
+): Array<PortableTextBlock> {
+  const pick = (length: number) =>
+    placement === 'first'
+      ? 0
+      : placement === 'last'
+        ? length - 1
+        : Math.floor(random() * length)
+  const edited = [...list]
+  const fresh = () => block(keyGenerator(), 'bar')
+
+  if (kind === 0) {
+    const [moved] = edited.splice(pick(edited.length), 1)
+    edited.splice(pick(edited.length + 1), 0, moved!)
+  } else if (kind === 1) {
+    const first = pick(edited.length)
+    const second = Math.floor(random() * edited.length)
+    ;[edited[first], edited[second]] = [edited[second]!, edited[first]!]
+  } else if (kind === 2) {
+    edited.splice(pick(edited.length), 1)
+    edited.splice(pick(edited.length + 1), 0, fresh())
+  } else {
+    edited.splice(pick(edited.length), 1)
+    edited.splice(pick(edited.length + 1), 0, fresh())
+    edited.splice(Math.floor(random() * (edited.length + 1)), 0, fresh())
+  }
+
+  return edited
+}
+
+function referencePatches(
+  shown: Array<PortableTextBlock>,
+  wanted: Array<PortableTextBlock>,
+  path: Path,
+): Array<Patch> {
+  const itemPath = (key: string): Path => [...path, {_key: key}]
+  const shownKeys = shown.map((item) => item._key!)
+  const wantedKeys = wanted.map((item) => item._key!)
+  const staying = new Set(longestCommonRun(shownKeys, wantedKeys))
+  const firstStaying = wantedKeys.find((key) => staying.has(key))
+
+  if (firstStaying === undefined) {
+    return [
+      ...(wanted.length > 0
+        ? [insert(wanted, 'before', itemPath(shownKeys[0]!))]
+        : []),
+      ...shownKeys.map((key) => unset(itemPath(key))),
+    ]
+  }
+
+  return [
+    ...shownKeys
+      .filter((key) => !staying.has(key))
+      .map((key) => unset(itemPath(key))),
+    ...wanted.flatMap((item, index) => {
+      if (staying.has(wantedKeys[index]!)) {
+        return []
+      }
+
+      const previousKey = wantedKeys[index - 1]
+
+      return previousKey === undefined
+        ? [insert([item], 'before', itemPath(firstStaying))]
+        : [insert([item], 'after', itemPath(previousKey))]
+    }),
+  ]
+}
+
+function longestCommonRun(
+  keysA: Array<string>,
+  keysB: Array<string>,
+): Array<string> {
+  const lengths = Array.from({length: keysA.length + 1}, () =>
+    Array.from({length: keysB.length + 1}, () => 0),
+  )
+
+  for (let indexA = keysA.length - 1; indexA >= 0; indexA--) {
+    for (let indexB = keysB.length - 1; indexB >= 0; indexB--) {
+      lengths[indexA]![indexB] =
+        keysA[indexA] === keysB[indexB]
+          ? lengths[indexA + 1]![indexB + 1]! + 1
+          : Math.max(
+              lengths[indexA + 1]![indexB]!,
+              lengths[indexA]![indexB + 1]!,
+            )
+    }
+  }
+
+  const run: Array<string> = []
+  let indexA = 0
+  let indexB = 0
+
+  while (indexA < keysA.length && indexB < keysB.length) {
+    if (keysA[indexA] === keysB[indexB]) {
+      run.push(keysA[indexA]!)
+      indexA++
+      indexB++
+    } else if (lengths[indexA + 1]![indexB]! >= lengths[indexA]![indexB + 1]!) {
+      indexA++
+    } else {
+      indexB++
+    }
+  }
+
+  return run
+}
 
 function isUnique(list: Array<PortableTextBlock>, key: string | undefined) {
   return (
