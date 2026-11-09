@@ -73,6 +73,23 @@ export type EditorEvent =
       type: 'load'
       value: Array<PortableTextBlock> | undefined
     }
+  | {
+      /**
+       * A fresh copy of the editor's value, sent once the editor is ready.
+       * The editor works out the final content first, then changes what it
+       * holds to match in one pass: siblings are matched by `_key` and
+       * `_type` at every depth, containers included, so a node that keeps
+       * its key keeps its identity, and a span's `text` changes by text
+       * edits. Anything anchored to a node that survives, in text the
+       * change left alone, keeps its anchor.
+       *
+       * Undo and redo history are cleared. One remote `change` is emitted if
+       * anything moved, and none if nothing did. `undefined` and `[]` both
+       * give the empty editor. Sending `resync` before `ready` throws.
+       */
+      type: 'resync'
+      value: Array<PortableTextBlock> | undefined
+    }
 
 /**
  * @public

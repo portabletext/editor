@@ -97,6 +97,12 @@ export interface PortableTextEditorEngine extends DOMEditor {
 
   isDeferringMutations: boolean
   /**
+   * Drops the edit the editor has not sent as a `mutation` yet: the
+   * pending mutations, the `patch` events held while read-only, and the
+   * timers that would flush them. Internal: `resync` calls it.
+   */
+  clearPendingMutations: () => void
+  /**
    * The last host value recorded by a value sync that changed the engine. A
    * pristine block equal to it is persisted content, not the local
    * placeholder. Syncs that write nothing are not recorded: hosts mirror

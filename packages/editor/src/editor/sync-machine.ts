@@ -43,13 +43,14 @@ import {
   isEqualChild,
   isEqualValues,
 } from '../internal-utils/equality'
+import {reconcileValue} from '../internal-utils/reconcile-value'
 import {
   getNonObjectRemovalPatches,
   removeNonObjects,
 } from '../internal-utils/remove-non-objects'
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
-import {toEngineBlock} from '../internal-utils/values'
+import {isEqualToEmptyEditor, toEngineBlock} from '../internal-utils/values'
 import {getNode} from '../traversal/get-node'
 import {hasNode} from '../traversal/has-node'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
@@ -176,6 +177,10 @@ export const syncMachine = setup({
           type: 'load'
           value: Array<PortableTextBlock> | undefined
         }
+      | {
+          type: 'resync'
+          value: Array<PortableTextBlock> | undefined
+        }
       | {type: 'first value'}
       | {
           type: 'update readOnly'
@@ -213,6 +218,11 @@ export const syncMachine = setup({
         return event.value
       },
     }),
+    'resync': ({context, event}) => {
+      assertEvent(event, 'resync')
+      context.editorEngine.clearPendingMutations()
+      resyncValue({context, value: event.value})
+    },
     'assign pending loaded value': assign({
       pendingValue: ({context}) => context.loadedValue?.value,
     }),
@@ -354,6 +364,9 @@ export const syncMachine = setup({
         },
       ],
       on: {
+        'resync': {
+          actions: ['resync'],
+        },
         'first value': [
           {
             guard: 'initial value synced',
@@ -461,6 +474,9 @@ export const syncMachine = setup({
         ],
       },
       on: {
+        'resync': {
+          actions: ['resync'],
+        },
         'update value': [
           {
             guard: 'is new value',
@@ -718,6 +734,80 @@ async function updateValue({
   }
 
   sendBack({type: 'done syncing', value, changed: isChanged})
+}
+
+/**
+ * Changes the editor to a fresh copy of its value in one pass: the
+ * operations `reconcileValue` works out run in one remote frame, without
+ * history or patching, and normalization follows once at the end. The copy
+ * becomes the base the field lifecycle patches read, and undo and redo
+ * history are cleared even when nothing moved.
+ */
+function resyncValue({
+  context,
+  value,
+}: {
+  context: {
+    schema: EditorSchema
+    editorEngine: PortableTextEditorEngine
+  }
+  value: Array<PortableTextBlock> | undefined
+}) {
+  const editorEngine = context.editorEngine
+  const next = removeNonObjects(
+    {
+      schema: context.schema,
+      containers: editorEngine.snapshot.context.containers,
+    },
+    value ?? [],
+  )
+  const change = createChange({
+    type: 'value sync',
+    initial: false,
+    resync: true,
+  })
+  change.removalPatches = getNonObjectRemovalPatches(
+    {
+      schema: context.schema,
+      containers: editorEngine.snapshot.context.containers,
+    },
+    value ?? [],
+  )
+
+  resumeChange(editorEngine, change, () => {
+    withRemoteChanges(editorEngine, 'resync', () => {
+      withoutNormalizing(editorEngine, () => {
+        pluginWithoutHistory(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
+            const operations: Array<EngineOperation> =
+              next.length === 0
+                ? isEqualToEmptyEditor(
+                    undefined,
+                    editorEngine.snapshot.context.value,
+                    context.schema,
+                  )
+                  ? []
+                  : [{type: 'set', path: [], value: []}]
+                : reconcileValue({
+                    schema: context.schema,
+                    containers: editorEngine.snapshot.context.containers,
+                    current: editorEngine.snapshot.context.value,
+                    next,
+                  })
+
+            for (const operation of operations) {
+              editorEngine.apply(operation)
+            }
+          })
+        })
+      })
+    })
+  })
+
+  commitChange(editorEngine, change)
+  editorEngine.onChange()
+  editorEngine.history = {undos: [], redos: []}
+  editorEngine.lastSyncedValue = value
 }
 
 /**
