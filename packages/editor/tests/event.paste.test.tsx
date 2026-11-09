@@ -10,6 +10,8 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {renderLargeLoad} from '../test-utils/large-load'
+import {loadDepths} from '../test-utils/load-depths'
 
 describe('event.clipboard.paste', () => {
   test('Scenario: Cut/paste block object', async () => {
@@ -872,5 +874,32 @@ describe('event.clipboard.paste', () => {
         },
       ])
     })
+  })
+
+  describe('while a large first value is drawn', () => {
+    test.each(loadDepths)(
+      'Scenario: `clipboard.paste` in the first chunk at $name does nothing',
+      async (depth) => {
+        const large = await renderLargeLoad({depth})
+        const dataTransfer = new DataTransfer()
+        dataTransfer.setData('text/plain', 'pasted')
+
+        large.editor.send({
+          type: 'select',
+          at: {
+            anchor: {path: large.spanPath(0), offset: 0},
+            focus: {path: large.spanPath(0), offset: 0},
+          },
+        })
+        large.editor.send({
+          type: 'clipboard.paste',
+          originEvent: {dataTransfer},
+          position: {selection: large.editor.getSnapshot().context.selection!},
+        })
+
+        expect(large.userChanges).toEqual([])
+        expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
+      },
+    )
   })
 })
