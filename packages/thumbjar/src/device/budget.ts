@@ -142,3 +142,17 @@ export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
     DICTIONARY_CHECK_KILL_SECONDS
   )
 }
+
+/** One download of the uiautomator2 server jar, its body included. The slowest seen on CI took 16. */
+export const U2_JAR_ATTEMPT_SECONDS = 45
+
+/** The downloads `thumbjar fetch-u2-jar` tries. */
+export const U2_JAR_ATTEMPTS = 3
+
+/** The wait before the next download. The host's 504s come several in a row, so a retry waits past them. */
+export const U2_JAR_RETRY_SECONDS = 15
+
+/** The longest `thumbjar fetch-u2-jar` runs: every download times out, with the waits between them. */
+export const FETCH_U2_JAR_WORST_SECONDS =
+  U2_JAR_ATTEMPTS * U2_JAR_ATTEMPT_SECONDS +
+  (U2_JAR_ATTEMPTS - 1) * U2_JAR_RETRY_SECONDS

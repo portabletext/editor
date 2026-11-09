@@ -3,9 +3,7 @@
 // answering.
 
 import {createHash} from 'node:crypto'
-import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
-import {dirname} from 'node:path'
-import {fileURLToPath} from 'node:url'
+import {readFileSync, writeFileSync} from 'node:fs'
 import {
   adb,
   AdbConnection,
@@ -14,6 +12,7 @@ import {
   deviceShell,
   shellQuote,
 } from './adb.ts'
+import {ensureJar} from './u2-jar.ts'
 import {
   currentInspection,
   isInstance,
@@ -22,13 +21,6 @@ import {
   tracked,
 } from './util.ts'
 
-const JAR_URL =
-  'https://github.com/openatx/android-uiautomator-server-jar/releases/download/0.4.1/u2.jar'
-const JAR_SHA256 =
-  '87c8ac9505970d42aa5922baa90114808fda6f47f9e5fbd4caa0f621c2c8d30d'
-const JAR_PATH = fileURLToPath(
-  new URL('.cache/u2.jar', import.meta.resolve('thumbjar/package.json')),
-)
 const DEVICE_JAR = '/data/local/tmp/u2.jar'
 const SERVER_PORT = 9008
 // The uiautomator2 client's default HTTP timeout for a JSON-RPC call.
@@ -55,27 +47,6 @@ export class TapNotInjectedError extends Error {
 }
 export class LaunchUiAutomationError extends Error {
   override name = 'LaunchUiAutomationError'
-}
-
-/** Download u2.jar into .cache unless it is already there, and check its hash. */
-export async function ensureJar(): Promise<string> {
-  if (existsSync(JAR_PATH) && sha256(readFileSync(JAR_PATH)) === JAR_SHA256) {
-    return JAR_PATH
-  }
-  const response = await fetch(JAR_URL, {signal: AbortSignal.timeout(120_000)})
-  if (!response.ok) {
-    throw new Error(
-      `u2.jar download failed: ${response.status} ${response.statusText}`,
-    )
-  }
-  const data = Buffer.from(await response.arrayBuffer())
-  const hash = sha256(data)
-  if (hash !== JAR_SHA256) {
-    throw new Error(`u2.jar sha256 ${hash}, expected ${JAR_SHA256}`)
-  }
-  mkdirSync(dirname(JAR_PATH), {recursive: true})
-  writeFileSync(JAR_PATH, data)
-  return JAR_PATH
 }
 
 export type AppInfo = {package: string; activity: string; pid: number}
@@ -456,10 +427,6 @@ function selector(fields: SelectorFields): Record<string, unknown> {
   return {mask, childOrSibling: [], childOrSiblingSelector: [], ...fields}
 }
 
-function sha256(data: Buffer): string {
-  return createHash('sha256').update(data).digest('hex')
-}
-
 // NanoHTTPD reads a body without a charset as US-ASCII, so every non-ASCII character goes out escaped.
 // Raw UTF-8 would garble patterns like 日本語.
 function asciiJson(value: unknown): string {
@@ -680,7 +647,7 @@ async function checkAlive(): Promise<boolean> {
 }
 
 async function setupJar(): Promise<void> {
-  const local = await ensureJar()
+  const {path: local} = await ensureJar()
   const md5 = createHash('md5').update(readFileSync(local)).digest('hex')
   let output = await deviceShell(shellQuote(['toybox', 'md5sum', DEVICE_JAR]))
   throwIfAborted()
