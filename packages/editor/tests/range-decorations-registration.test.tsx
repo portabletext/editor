@@ -1451,7 +1451,7 @@ describe('registerDecorations: onMapped and getDecorations', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1459,7 +1459,6 @@ describe('registerDecorations: onMapped and getDecorations', () => {
           value: 'ABCDEF',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

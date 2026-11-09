@@ -166,7 +166,7 @@ describe('Feature: Scrolling the Selection Into View', () => {
 
     const insertedKeys = Array.from({length: 60}, () => keyGenerator())
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         insert(
           insertedKeys.map((key) => fillerBlock(key)),
@@ -174,7 +174,6 @@ describe('Feature: Scrolling the Selection Into View', () => {
           [{_key: 'p2'}],
         ),
       ],
-      snapshot: undefined,
     })
 
     const lastInsertedKey = insertedKeys[insertedKeys.length - 1]

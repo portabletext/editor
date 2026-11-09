@@ -2660,9 +2660,8 @@ describe('event.drag.drop', () => {
     dataTransfer.setData(json.mimeType, json.data)
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [{type: 'unset', path: [{_key: imageKey}], origin: 'remote'}],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2780,7 +2779,7 @@ describe('event.drag.drop', () => {
 
     // Mid-drag, a remote peer deletes `bar` and types into `foo`.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {type: 'unset', path: [{_key: barBlockKey}], origin: 'remote'},
         {
@@ -2790,7 +2789,6 @@ describe('event.drag.drop', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

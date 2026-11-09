@@ -141,7 +141,7 @@ describe.each([
         // A row patch that changes nothing has nothing to wait for, so wait
         // for the marker removal that follows it in the same batch.
         editor.send({
-          type: 'patches',
+          type: 'apply',
           patches: [
             {...structuredClone(row.patch), origin: 'remote', path},
             {
@@ -153,7 +153,6 @@ describe.each([
             },
             {type: 'unset', origin: 'remote', path: [{_key: markerKey}]},
           ],
-          snapshot: undefined,
         })
 
         await vi.waitFor(() => {
@@ -1387,7 +1386,7 @@ async function sendRemotePatches(
   // A patch that changes nothing has nothing to wait for, so wait for the
   // marker removal that follows it in the same batch.
   editor.send({
-    type: 'patches',
+    type: 'apply',
     patches: [
       ...patches,
       {
@@ -1399,7 +1398,6 @@ async function sendRemotePatches(
       },
       {type: 'unset', origin: 'remote', path: [{_key: markerKey}]},
     ],
-    snapshot: undefined,
   })
 
   await vi.waitFor(() => {

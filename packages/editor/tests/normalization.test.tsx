@@ -144,7 +144,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -160,7 +160,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -271,7 +270,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -288,7 +287,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -564,7 +562,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -573,7 +571,6 @@ describe('normalization', () => {
           items: [{_type: 'span', text: 'bar', marks: ['strong']}],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -629,7 +626,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -640,7 +637,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -705,7 +701,7 @@ describe('normalization', () => {
     // so resolving it by "first sibling without a key" would send both
     // spans' mints into the first block.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -726,7 +722,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -801,7 +796,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -817,7 +812,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -878,7 +872,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -894,7 +888,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -963,7 +956,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -972,7 +965,6 @@ describe('normalization', () => {
           items: [{_type: 'image', src: '/photo.jpg'}],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1040,7 +1032,7 @@ describe('normalization', () => {
     ]
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1048,7 +1040,6 @@ describe('normalization', () => {
           value: newValue,
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1096,7 +1087,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -1113,7 +1104,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1273,7 +1263,7 @@ describe('normalization', () => {
 
     // Insert a block with the same _key as the existing one
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -1292,7 +1282,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1356,7 +1345,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1392,7 +1381,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1466,7 +1454,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1478,7 +1466,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1542,7 +1529,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1556,7 +1543,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1632,7 +1618,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1644,7 +1630,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1706,7 +1691,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -1734,7 +1719,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1805,14 +1789,13 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
           path: [{_key: blockKey}, '_type'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1865,14 +1848,13 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
           path: [{_key: blockKey}, 'children', {_key: spanKey}, '_type'],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1925,7 +1907,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -1936,7 +1918,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -1996,7 +1977,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -2007,7 +1988,6 @@ describe('normalization', () => {
           ],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -2103,7 +2083,7 @@ describe('normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -2111,7 +2091,6 @@ describe('normalization', () => {
           value: 42,
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

@@ -1147,7 +1147,7 @@ describe('event.history.undo', () => {
       marks: ['strong'],
     }
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -1156,9 +1156,6 @@ describe('event.history.undo', () => {
           items: [duplicateSpan],
           origin: 'remote',
         },
-      ],
-      snapshot: [
-        {...initialBlock, children: [...initialBlock.children, duplicateSpan]},
       ],
     })
 

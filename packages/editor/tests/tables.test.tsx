@@ -155,9 +155,8 @@ describe('tables', () => {
       const {editor, table} = await createTableTestEditor()
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [set(1, [{_key: table._key}, 'headerRows'])],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -198,9 +197,8 @@ describe('tables', () => {
       }
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [set([newRow], [{_key: table._key}, 'rows'])],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -235,14 +233,13 @@ describe('tables', () => {
       }
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           set(
             [newCell],
             [{_key: table._key}, 'rows', {_key: row._key}, 'cells'],
           ),
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -260,7 +257,7 @@ describe('tables', () => {
         await createTableTestEditor()
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           set(
             ['strong'],
@@ -278,7 +275,6 @@ describe('tables', () => {
             ],
           ),
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -315,9 +311,8 @@ describe('tables', () => {
       const {editor, table} = await createTableTestEditor()
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [unset([{_key: table._key}, 'rows'])],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -331,11 +326,10 @@ describe('tables', () => {
       const {editor, table, row} = await createTableTestEditor()
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           unset([{_key: table._key}, 'rows', {_key: row._key}, 'cells']),
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -349,7 +343,7 @@ describe('tables', () => {
       const {editor, table, row, cell} = await createTableTestEditor()
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           unset([
             {_key: table._key},
@@ -360,7 +354,6 @@ describe('tables', () => {
             'content',
           ]),
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -374,7 +367,7 @@ describe('tables', () => {
       const {editor, table, row, cell, block} = await createTableTestEditor()
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           unset([
             {_key: table._key},
@@ -387,7 +380,6 @@ describe('tables', () => {
             'children',
           ]),
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {

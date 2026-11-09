@@ -122,7 +122,7 @@ describe('Collaborative editing', () => {
       // Simulate Editor B: another user opened the document, normalized it,
       // and made "foo" bold. Editor B sends these patches to Editor A.
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           // Editor B's normalization patch
           {
@@ -137,22 +137,6 @@ describe('Collaborative editing', () => {
             path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
             value: ['strong'],
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'foo',
-                marks: ['strong'],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -390,29 +374,13 @@ describe('Collaborative editing', () => {
 
       // Remote patch on unrelated path (text, not marks)
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
             path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
             value: 'hello',
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'hello',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -528,29 +496,13 @@ describe('Collaborative editing', () => {
 
       // Remote patch changes style to h1
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
             path: [{_key: blockKey}, 'style'],
             value: 'h1',
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'foo',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'h1',
           },
         ],
       })
@@ -652,7 +604,7 @@ describe('Collaborative editing', () => {
 
       // Remote patches set markDefs AND update span marks to use the link
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
@@ -667,24 +619,6 @@ describe('Collaborative editing', () => {
             path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
             value: [linkKey],
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'click here',
-                marks: [linkKey],
-              },
-            ],
-            markDefs: [
-              {_key: linkKey, _type: 'link', href: 'https://example.com'},
-            ],
-            style: 'normal',
           },
         ],
       })
@@ -805,7 +739,7 @@ describe('Collaborative editing', () => {
 
       // Remote patch updates the inline object's symbol property
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
@@ -817,19 +751,6 @@ describe('Collaborative editing', () => {
             ],
             value: 'GOOG',
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {_type: 'span', _key: span1Key, text: 'Price: ', marks: []},
-              {_type: 'stock-ticker', _key: stockTickerKey, symbol: 'GOOG'},
-              {_type: 'span', _key: span2Key, text: '', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -954,22 +875,13 @@ describe('Collaborative editing', () => {
 
       // Remote patch replaces the entire span (parent of marks property)
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
             path: [{_key: blockKey}, 'children', {_key: spanKey}],
             value: {_type: 'span', _key: spanKey, text: 'bar', marks: []},
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -1064,29 +976,13 @@ describe('Collaborative editing', () => {
 
       // Remote patch on child path (span text)
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
             path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
             value: 'hello',
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'hello',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -1203,29 +1099,13 @@ describe('Collaborative editing', () => {
 
       // Remote patch changes style to h1
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
             path: [{_key: blockKey}, 'style'],
             value: 'h1',
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'foo',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-            style: 'h1',
           },
         ],
       })
@@ -1347,7 +1227,7 @@ describe('Collaborative editing', () => {
 
       // Remote patch replaces the entire block
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
@@ -1362,17 +1242,6 @@ describe('Collaborative editing', () => {
               style: 'h1',
             },
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {_type: 'span', _key: newSpanKey, text: 'replaced', marks: []},
-            ],
-            markDefs: [],
-            style: 'h1',
           },
         ],
       })
@@ -1487,33 +1356,13 @@ describe('Collaborative editing', () => {
 
       // Remote patch updates text in second block
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
             path: [{_key: block2Key}, 'children', {_key: span2Key}, 'text'],
             value: 'updated',
             origin: 'remote',
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: block1Key,
-            children: [
-              {_type: 'span', _key: span1Key, text: 'first', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-          {
-            _type: 'block',
-            _key: block2Key,
-            children: [
-              {_type: 'span', _key: span2Key, text: 'updated', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -1652,7 +1501,7 @@ describe('Collaborative editing', () => {
       // Simulate a remote set patch that replaces the entire block
       // with one containing an unknown decorator
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'set',
@@ -1672,22 +1521,6 @@ describe('Collaborative editing', () => {
               markDefs: [],
               style: 'normal',
             },
-          },
-        ],
-        snapshot: [
-          {
-            _type: 'block',
-            _key: blockKey,
-            children: [
-              {
-                _type: 'span',
-                _key: spanKey,
-                text: 'foo',
-                marks: ['strong', 'underline'],
-              },
-            ],
-            markDefs: [],
-            style: 'normal',
           },
         ],
       })
@@ -1806,18 +1639,13 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      const valueFromA = editor.getSnapshot().context.value
-      const valueFromB = editorB.getSnapshot().context.value
-
       editorB.send({
-        type: 'patches',
+        type: 'apply',
         patches: localPatchesA.map((patch) => ({...patch, origin: 'remote'})),
-        snapshot: valueFromA,
       })
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: localPatchesB.map((patch) => ({...patch, origin: 'remote'})),
-        snapshot: valueFromB,
       })
 
       await vi.waitFor(() => {
@@ -2038,8 +1866,8 @@ function echoedBlock(text: string): PortableTextBlock {
 }
 
 /**
- * Two editors wired like the playground: every mutation is sent to both
- * editors as patches (`local` for the sender, `remote` for the peer), and
+ * Two editors wired like the playground: every mutation is sent to the peer
+ * editor with `apply`, never back to the sender, which already has it, and
  * the mutation's own `value` becomes the shared document, which reaches
  * both editors as `update value` once React renders it. `delivered` records
  * the shared document each editor was last sent.
@@ -2066,14 +1894,10 @@ async function renderValueEchoingEditors() {
       ['a', editorARef],
       ['b', editorBRef],
     ] as const) {
-      peerRef.current?.send({
-        type: 'patches',
-        patches: event.patches.map((patch) => ({
-          ...patch,
-          origin: peerId === editorId ? 'local' : 'remote',
-        })),
-        snapshot: event.value,
-      })
+      if (peerId === editorId) {
+        continue
+      }
+      peerRef.current?.send({type: 'apply', patches: event.patches})
     }
 
     shared.value = event.value

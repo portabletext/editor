@@ -158,7 +158,7 @@ describe(createPlaceholderBlock.name, () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -166,7 +166,6 @@ describe(createPlaceholderBlock.name, () => {
             path: [{_key: 'k0'}],
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -216,14 +215,13 @@ describe(createPlaceholderBlock.name, () => {
 
       const unsetPatch = unset([{_key: blockKey}])
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             ...unsetPatch,
             origin: 'remote',
           },
         ],
-        snapshot: undefined,
       })
       foreignValue = applyAll(foreignValue, [unsetPatch])
 
@@ -283,7 +281,7 @@ describe(createPlaceholderBlock.name, () => {
       })
 
       editor.send({
-        type: 'patches',
+        type: 'apply',
         patches: [
           {
             type: 'unset',
@@ -291,7 +289,6 @@ describe(createPlaceholderBlock.name, () => {
             path: [{_key: 'k0'}],
           },
         ],
-        snapshot: undefined,
       })
 
       await vi.waitFor(() => {
@@ -359,7 +356,7 @@ describe(createPlaceholderBlock.name, () => {
 
     foreignValue = undefined
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'unset',
@@ -367,7 +364,6 @@ describe(createPlaceholderBlock.name, () => {
           path: [{_key: imageKey}],
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

@@ -52,9 +52,8 @@ describe('diffValue round-trip: engine patches application', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: diffValueToPatches(fromValue, toValue),
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

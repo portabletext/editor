@@ -297,7 +297,7 @@ describe('data-pt-path attribute', () => {
     const newBlockKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -305,7 +305,6 @@ describe('data-pt-path attribute', () => {
           value: newBlockKey,
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -338,7 +337,7 @@ describe('data-pt-path attribute', () => {
     const newImageKey = keyGenerator()
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -346,7 +345,6 @@ describe('data-pt-path attribute', () => {
           value: newImageKey,
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

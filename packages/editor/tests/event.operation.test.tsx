@@ -459,7 +459,7 @@ describe('event.operation', () => {
     const origins = collectOperationOrigins(editor)
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -468,7 +468,6 @@ describe('event.operation', () => {
           origin: 'remote',
         },
       ],
-      snapshot: [block('b1', 'bar')],
     })
 
     await vi.waitFor(() => {
@@ -530,7 +529,7 @@ describe('event.operation', () => {
       marks: ['strong'],
     }
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -539,9 +538,6 @@ describe('event.operation', () => {
           items: [duplicateSpan],
           origin: 'remote',
         },
-      ],
-      snapshot: [
-        {...initialBlock, children: [...initialBlock.children, duplicateSpan]},
       ],
     })
 

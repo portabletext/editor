@@ -63,7 +63,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -72,7 +72,6 @@ describe('remote patches skip cosmetic normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -212,7 +211,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -222,7 +221,6 @@ describe('remote patches skip cosmetic normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -346,7 +344,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -369,7 +367,6 @@ describe('remote patches skip cosmetic normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -485,7 +482,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -495,7 +492,6 @@ describe('remote patches skip cosmetic normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -593,7 +589,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -603,7 +599,6 @@ describe('remote patches skip cosmetic normalization', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
@@ -743,9 +738,8 @@ describe('remote patches skip cosmetic normalization', () => {
 
     // Deliver the marks change in its own event, then the rest.
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [collaboratorPatches[0]!],
-      snapshot: undefined,
     })
 
     // The interleave window: the marks change has landed, the merge
@@ -767,9 +761,8 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: collaboratorPatches.slice(1),
-      snapshot: undefined,
     })
 
     // The receiver converges to the document byte-identically, without
@@ -921,7 +914,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -930,7 +923,6 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {

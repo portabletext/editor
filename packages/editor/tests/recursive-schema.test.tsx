@@ -214,7 +214,7 @@ describe('recursive schemas (lists in list-items in lists)', () => {
     )[0]!
 
     editor.send({
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'set',
@@ -240,7 +240,6 @@ describe('recursive schemas (lists in list-items in lists)', () => {
           origin: 'remote',
         },
       ],
-      snapshot: undefined,
     })
 
     await vi.waitFor(() => {
