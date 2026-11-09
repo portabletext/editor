@@ -1985,6 +1985,24 @@ describe('the workflow', () => {
     })
   })
 
+  test('skips Version Packages pull requests, whose head branch is `changeset-release/`, and nothing else', () => {
+    expect({
+      jobIf: /^ {4}if: (.*)$/m.exec(workflow)?.[1],
+      editorPackageInPaths: /^ {6}- packages\/editor\/package\.json$/m.test(
+        workflow,
+      ),
+      triggers: [
+        ...(workflow.split('\non:\n')[1]?.split('\n\n')[0] ?? '').matchAll(
+          /^ {2}(\w+):/gm,
+        ),
+      ].map((match) => match[1]),
+    }).toEqual({
+      jobIf: "${{ !startsWith(github.head_ref, 'changeset-release/') }}",
+      editorPackageInPaths: true,
+      triggers: ['pull_request', 'schedule', 'workflow_dispatch'],
+    })
+  })
+
   test('saves the SDK cache only from main, after a successful install and a manifest of the installed packages', () => {
     const names = [...workflow.matchAll(/^ {6}- (?:name|uses): (.*)$/gm)].map(
       (match) => match[1],

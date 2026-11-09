@@ -39,6 +39,9 @@ permissions:
 jobs:
   emulator:
     name: Android IME (${{ matrix.suite.file }})
+    # Version Packages pull requests, from `changeset-release/main` and `changeset-release/next`, only bump
+    # versions and changelogs. Other pull requests that touch `packages/editor/package.json` still run.
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
     runs-on: ubuntu-latest
     # The row's job cap: the sum of the step caps below on the retry path and
     # a minute for the runner between steps, see the budget in
