@@ -241,10 +241,12 @@ describe('the workflow', () => {
   ].map((match) => match[1])
   const jobCap = /^ {4}timeout-minutes: (.+)$/m.exec(workflow)?.[1]
 
-  test('runs `ja.test.ts` and `en.test.ts` in a job each, on a device prepared for the language the file is named after', () => {
+  test('runs `ja.test.ts`, `en.test.ts`, `ja.enter.test.ts` and `en.enter.test.ts` in a job each, on a device prepared for the language the file is named after', () => {
     expect(rows.map(({lang, file}) => ({lang, file}))).toEqual([
       {lang: 'ja', file: 'tests/ja.test.ts'},
       {lang: 'en', file: 'tests/en.test.ts'},
+      {lang: 'ja', file: 'tests/ja.enter.test.ts'},
+      {lang: 'en', file: 'tests/en.enter.test.ts'},
     ])
   })
 
@@ -331,7 +333,7 @@ describe('the workflow', () => {
     }).toEqual({worst: 165, headroom: 15, minutes: 3, step: 3})
   })
 
-  test('caps the Japanese run steps at 62 minutes and its job at 198, the English run steps at 57 and its job at 188', () => {
+  test('caps the run steps of the files of three tests at 62 minutes and the job at 198 for Japanese and at 57 and 188 for English, and those of the files of two tests at 51 and 176 and at 46 and 166', () => {
     expect(
       rows.map(({lang, runMinutes, jobMinutes}) => ({
         lang,
@@ -341,6 +343,8 @@ describe('the workflow', () => {
     ).toEqual([
       {lang: 'ja', runMinutes: 62, jobMinutes: 198},
       {lang: 'en', runMinutes: 57, jobMinutes: 188},
+      {lang: 'ja', runMinutes: 51, jobMinutes: 176},
+      {lang: 'en', runMinutes: 46, jobMinutes: 166},
     ])
   })
 })
