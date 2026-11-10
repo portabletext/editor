@@ -3313,6 +3313,53 @@ describe(portableTextToMarkdown.name, () => {
           ).toBe('q:foo\nq:\nq:bar')
         })
       })
+
+      describe('callout marker', () => {
+        test('a marker on a later line is not escaped', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = '> foo  \n> [!NOTE]  \n> bar'
+
+          expect(
+            portableTextToMarkdown([
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                style: 'blockquote',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: keyGenerator(),
+                    text: 'foo\n[!NOTE]\nbar',
+                    marks: [],
+                  },
+                ],
+              },
+            ]),
+          ).toBe(markdown)
+
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+            }),
+          ).toEqual([
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo\n[!NOTE]\nbar',
+                  marks: [],
+                },
+              ],
+            },
+          ])
+        })
+      })
     })
 
     describe('h1', () => {
