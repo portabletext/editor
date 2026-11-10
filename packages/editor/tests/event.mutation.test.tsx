@@ -5,7 +5,7 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
-import {useState} from 'react'
+import {createRef, useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page, userEvent, type Locator} from 'vitest/browser'
@@ -15,11 +15,14 @@ import {
   type MutationEvent,
   type Patch,
 } from '../src'
+import {inTestChange} from '../src/engine/core/change.test-utils'
 import type {Path} from '../src/engine/interfaces/path'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 
 describe('event.mutation', () => {
   test('Scenario: Deferring mutation events when read-only', async () => {
@@ -368,6 +371,109 @@ describe.each([
         },
       ])
     })
+  })
+})
+
+describe.each([
+  {depth: 'at the root', wrap: atRoot},
+  {depth: 'inside a callout', wrap: inCallout},
+])('event.mutation resync $depth', ({wrap}) => {
+  test('Scenario: `resync` clears the edit the editor has not sent as a `mutation`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {wrapValue, prefix} = wrap(keyGenerator)
+    const spanPath = [...prefix, {_key: blockKey}, 'children', {_key: spanKey}]
+    const mutations: Array<MutationEvent> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestingSchemaDefinition,
+      initialValue: wrapValue([block(blockKey, spanKey, 'foo')]),
+      children: (
+        <>
+          <NodePlugin nodes={nestingContainers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'mutation') {
+                mutations.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 3},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'x'})
+    editor.send({
+      type: 'resync',
+      value: wrapValue([block(blockKey, spanKey, 'foo bar')]),
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+
+    expect(mutations).toEqual([])
+    expect(editor.getSnapshot().context.value).toEqual(
+      wrapValue([block(blockKey, spanKey, 'foo bar')]),
+    )
+  })
+
+  test('Scenario: `resync` clears an edit made while read-only, so it is neither a `patch` nor a `mutation` once the editor is editable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {wrapValue, prefix} = wrap(keyGenerator)
+    const spanPath = [...prefix, {_key: blockKey}, 'children', {_key: spanKey}]
+    const engineRef = createRef<PortableTextEditorEngine>()
+    const events: Array<string> = []
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestingSchemaDefinition,
+      initialValue: wrapValue([block(blockKey, spanKey, 'foo')]),
+      children: (
+        <>
+          <NodePlugin nodes={nestingContainers} />
+          <InternalEditorEngineRefPlugin ref={engineRef} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch' || event.type === 'mutation') {
+                events.push(event.type)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({type: 'update readOnly', readOnly: true})
+    inTestChange(engineRef.current!, () => {
+      engineRef.current!.apply({
+        type: 'insert.text',
+        path: spanPath,
+        offset: 3,
+        text: 'x',
+      })
+    })
+    editor.send({
+      type: 'resync',
+      value: wrapValue([block(blockKey, spanKey, 'foo bar')]),
+    })
+    editor.send({type: 'update readOnly', readOnly: false})
+
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+
+    expect(events).toEqual([])
+    expect(editor.getSnapshot().context.value).toEqual(
+      wrapValue([block(blockKey, spanKey, 'foo bar')]),
+    )
   })
 })
 
