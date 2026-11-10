@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {
   interpretTransaction,
   mapRange,
+  mapRangeInward,
   normalizeRangeBoundary,
   rangeSurvives,
   type Step,
@@ -17,22 +18,30 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 export function mapDecorationRangesThroughChange(
   editorEngine: PortableTextEditorEngine,
   change: Change,
-): (range: Range) => Range | null {
+): {mapRange: (range: Range) => Range | null; movesNode: boolean} {
   const base = change.entries[0]?.event.beforeValue ?? []
   const patches = changeToPatches(editorEngine, change)
   const steps = interpretTransaction(base, patches)
   const touchedBlocks = getTouchedBlocks(base, steps)
 
-  return (range) =>
-    rangeTouchesBlocks(range, touchedBlocks)
-      ? applyDecorationPolicy(
-          range,
-          mapDecorationRange(base, steps, range),
-          steps,
-          base,
-          editorEngine.snapshot.context.value,
-        )
-      : range
+  return {
+    mapRange: (range) =>
+      rangeTouchesBlocks(range, touchedBlocks)
+        ? applyDecorationPolicy(
+            range,
+            mapDecorationRange(
+              base,
+              steps,
+              range,
+              editorEngine.snapshot.context.schema.block.name,
+            ),
+            steps,
+            base,
+            editorEngine.snapshot.context.value,
+          )
+        : range,
+    movesNode: steps.some((step) => step.type === 'move.node'),
+  }
 }
 
 type TouchedBlocks =
@@ -162,23 +171,105 @@ function mapDecorationRange(
   base: Change['entries'][number]['event']['beforeValue'],
   steps: ReadonlyArray<Step>,
   range: Range,
+  textBlockType: string,
 ): Range | null {
   const isBackward = isAfterPoint(range.anchor, range.focus, {value: base})
   const rangeInDocumentOrder = isBackward
     ? {anchor: range.focus, focus: range.anchor}
     : range
-  const mappedRange = mapRange(
-    steps,
-    normalizeRangeBoundary(base, rangeInDocumentOrder, {
-      representation: 'next',
-      normalizeCollapsed: true,
-    }),
-    {collapsedAffinity: 'both'},
-  )
+  const normalizedRange = normalizeRangeBoundary(base, rangeInDocumentOrder, {
+    representation: 'next',
+    normalizeCollapsed: true,
+  })
+  const mappedRange = mapRange(steps, normalizedRange, {
+    collapsedAffinity: 'both',
+  })
+  const recoveredRange =
+    mappedRange === null &&
+    !isCollapsedRange(normalizedRange) &&
+    removesTextContainer(base, steps, textBlockType)
+      ? mapRangeInward(base, steps, normalizedRange)
+      : mappedRange
 
-  return mappedRange === null || !isBackward
-    ? mappedRange
-    : {anchor: mappedRange.focus, focus: mappedRange.anchor}
+  return recoveredRange === null || !isBackward
+    ? recoveredRange
+    : {anchor: recoveredRange.focus, focus: recoveredRange.anchor}
+}
+
+function removesTextContainer(
+  base: Change['entries'][number]['event']['beforeValue'],
+  steps: ReadonlyArray<Step>,
+  textBlockType: string,
+): boolean {
+  return steps.some((step) => {
+    if (step.type !== 'remove.node') {
+      return false
+    }
+
+    const node = getNodeAtPath(base, step.path)
+    return (
+      node !== undefined &&
+      node['_type'] !== textBlockType &&
+      containsTextBlock(node, textBlockType)
+    )
+  })
+}
+
+function getNodeAtPath(
+  value: ReadonlyArray<unknown>,
+  path: ReadonlyArray<string | {_key: string}>,
+): Record<string, unknown> | undefined {
+  let children: ReadonlyArray<unknown> = value
+  let node: Record<string, unknown> | undefined
+
+  for (const segment of path) {
+    if (typeof segment === 'string') {
+      const field = node?.[segment]
+      if (!Array.isArray(field)) {
+        return undefined
+      }
+      children = field
+      continue
+    }
+
+    const child = children.find(
+      (candidate) => isRecord(candidate) && candidate['_key'] === segment._key,
+    )
+    if (!isRecord(child)) {
+      return undefined
+    }
+    node = child
+  }
+
+  return node
+}
+
+function containsTextBlock(
+  node: Record<string, unknown>,
+  textBlockType: string,
+): boolean {
+  for (const value of Object.values(node)) {
+    if (!Array.isArray(value)) {
+      continue
+    }
+    for (const child of value) {
+      if (!isRecord(child)) {
+        continue
+      }
+      if (
+        child['_type'] === textBlockType ||
+        containsTextBlock(child, textBlockType)
+      ) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function applyDecorationPolicy(
