@@ -2,10 +2,17 @@ import {appendFileSync} from 'node:fs'
 import {afterAll, type RunnerTask, type RunnerTestCase} from 'vitest'
 import {unstoppedProcesses} from '../device/adb.ts'
 import {driverRuns, lastDriverRun} from '../driver.ts'
-import {summaryLines, testOutcome} from './summary.ts'
+import {summaryLines, tapsBlock, testOutcome} from './summary.ts'
 
 // oxlint-disable-next-line no-empty-pattern -- Vitest reads a hook's first argument as the fixtures it uses and takes only an object pattern, and this hook uses none
 afterAll(({}, file) => {
+  // Once the file's tests ended, so a test's final state is known and an expected failure prints nothing.
+  for (const test of leafTests(file.tasks)) {
+    const taps = lastDriverRun(test)?.taps
+    if (test.result?.state === 'fail' && taps !== undefined) {
+      console.error(tapsBlock(test.name, taps))
+    }
+  }
   const summaryFile = process.env.GITHUB_STEP_SUMMARY
   if (summaryFile) {
     appendFileSync(
@@ -14,6 +21,10 @@ afterAll(({}, file) => {
         file.name,
         leafTests(file.tasks).map((test) => ({
           name: test.name,
+          ...(test.result?.state === 'fail' &&
+          lastDriverRun(test)?.taps !== undefined
+            ? {taps: lastDriverRun(test)?.taps}
+            : {}),
           // A skipped or todo test, or one skipped as it ran, ends neither passed nor failed.
           outcome:
             test.result?.state === 'pass' || test.result?.state === 'fail'

@@ -105,6 +105,9 @@ export type Typed = {
   compositionstartPerWord: number[]
 }
 
+/** The keys the driver tapped in one step and the events the page recorded during it. */
+export type StepTaps = {keys: string[]; events: PageEvent[]}
+
 /**
  * What one `runOnDevice` attempt shares with the call around it. `typeOnDevice` passes none, so its
  * attempts keep their Space fallback and read nothing after a fault.
@@ -130,6 +133,7 @@ export async function typeInChrome(
   name: string,
   {url: pageUrl, keyboard, prefix, words}: TypeOnDeviceOptions,
   connect: () => Promise<Device>,
+  onTaps?: (taps: StepTaps[]) => void,
 ): Promise<Typed> {
   const result: Record<string, unknown> = {url: pageUrl, prefix, words}
   const device = await openKeyboard(
@@ -138,7 +142,7 @@ export async function typeInChrome(
     connect,
     result,
   )
-  const {picked, stepEnds, text, events} = await runSteps(
+  const {picked, stepEnds, text, events, taps} = await runSteps(
     device,
     name,
     result,
@@ -152,6 +156,7 @@ export async function typeInChrome(
           word.candidate === undefined ? 'space' : {candidate: word.candidate},
       }),
       boundaries: false,
+      onTaps,
     },
   )
   const typed: Typed = {
@@ -165,6 +170,7 @@ export async function typeInChrome(
     compositionstartPerWord: compositionstartPerWord(events, stepEnds),
   }
   result.typed = typed
+  result.taps = taps
   writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
   phase(`typed ${pyRepr(text)} picked=${typed.picked.join('/')}`)
   throwOnUnexpectedDigit(
@@ -188,6 +194,7 @@ export async function runInChrome(
   connect: () => Promise<Device>,
   onStepFailure?: (error: unknown, records: StepRecord[]) => void,
   hooks?: AttemptHooks,
+  onTaps?: (taps: StepTaps[]) => void,
 ): Promise<Run> {
   const result: Record<string, unknown> = {url: pageUrl, prefix, steps}
   const records: StepRecord[] = []
@@ -215,7 +222,14 @@ export async function runInChrome(
       name,
       result,
       steps,
-      {toStep: (step) => step, records, boundaries: true, keyboard, hooks},
+      {
+        toStep: (step) => step,
+        records,
+        boundaries: true,
+        keyboard,
+        hooks,
+        onTaps,
+      },
     )
     run = {steps: records, text, selection, events}
   } catch (error) {
@@ -263,7 +277,7 @@ export async function runInChrome(
 export function withStepRecords(error: unknown, records: StepRecord[]): Error {
   const lines = records.map(
     (record, index) =>
-      `  ${index + 1}. ${field(() => String(record.type))}: ${field(() => String(record.status))}${field(() => (record.reason === undefined ? '' : ` (${String(record.reason)})`), ` (${UNPRINTABLE_ERROR})`)}, textAfter ${field(() => pyRepr(record.textAfter))}`,
+      `  ${index + 1}. ${field(() => String(record.type))}: ${field(() => String(record.status))}${field(() => (record.reason === undefined ? '' : ` (${String(record.reason)})`), ` (${UNPRINTABLE_ERROR})`)}, textAfter ${field(() => pyRepr(record.textAfter))}${field(() => (record.keys === undefined ? '' : `, keys ${record.keys.length > 0 ? record.keys.join(' ') : 'none'}`))}`,
   )
   return new Error(
     `${guardedErrorMessage(error)}\nSteps:\n${lines.join('\n')}`,
@@ -457,12 +471,15 @@ async function runSteps<Input>(
     boundaries,
     keyboard,
     hooks,
+    onTaps,
   }: {
     toStep: (input: Input) => Step
     records?: StepRecord[]
     boundaries: boolean
     keyboard?: RunOnDeviceOptions['keyboard']
     hooks?: AttemptHooks | undefined
+    /** Called with the list of steps once the first begins. Each step's keys are added as they are tapped and its events once it is read, so the list holds the steps so far when one throws. */
+    onTaps?: ((taps: StepTaps[]) => void) | undefined
   },
 ): Promise<{
   /** How each `compose` step was committed: its candidate or `space`, `undefined` for any other step. */
@@ -472,19 +489,35 @@ async function runSteps<Input>(
   text: string | null
   selection: GraphemeSelection | null
   events: PageEvent[]
+  taps: StepTaps[]
 }> {
   const picked: Array<string | undefined> = []
   const stepEnds: number[] = []
+  const taps: StepTaps[] = []
   let last = boundaries ? await readBoundary() : undefined
   const firstEnd = last?.state.events.length ?? 0
   let eventsBefore = firstEnd
   for (const [index, input] of inputs.entries()) {
     const step = toStep(input)
     const position = index + 1
+    const entry: StepTaps = {keys: [], events: []}
+    taps.push(entry)
+    if (taps.length === 1) {
+      onTaps?.(taps)
+    }
     let after: PageState
     try {
       picked.push(
-        await runStep(device, name, result, step, position, keyboard, hooks),
+        await runStep(
+          device,
+          name,
+          result,
+          step,
+          position,
+          keyboard,
+          hooks,
+          entry.keys,
+        ),
       )
       if (boundaries) {
         last = await readBoundary()
@@ -509,6 +542,7 @@ async function runSteps<Input>(
                 selectionAfter: null,
                 focusedAfter: null,
                 events: [],
+                keys: [...entry.keys],
               },
               ...Array.from(
                 inputs.slice(index + 1),
@@ -520,6 +554,7 @@ async function runSteps<Input>(
                   selectionAfter: null,
                   focusedAfter: null,
                   events: [],
+                  keys: [],
                 }),
               ),
             ),
@@ -529,13 +564,15 @@ async function runSteps<Input>(
       throw error
     }
     stepEnds.push(after.events.length)
+    entry.events = after.events.slice(eventsBefore)
     records?.push({
       type: step.type,
       status: 'done',
       textAfter: after.text,
       selectionAfter: last?.selection ?? null,
       focusedAfter: last?.focused ?? null,
-      events: after.events.slice(eventsBefore),
+      events: entry.events,
+      keys: [...entry.keys],
     })
     eventsBefore = after.events.length
   }
@@ -547,6 +584,7 @@ async function runSteps<Input>(
       text: last.state.text,
       selection: last.selection,
       events: last.state.events.slice(firstEnd),
+      taps,
     }
   }
   const state = (await cdpEval('window.__state()')) as PageState
@@ -557,6 +595,7 @@ async function runSteps<Input>(
     text: state.text,
     selection: null,
     events: state.events,
+    taps,
   }
 }
 
@@ -593,8 +632,10 @@ async function runStep(
   position: number,
   keyboard: RunOnDeviceOptions['keyboard'] | undefined,
   hooks: AttemptHooks | undefined,
+  sent: string[],
 ): Promise<string | undefined> {
-  const tap = (center: [number, number]) => {
+  const tap = (label: string, center: [number, number]) => {
+    sent.push(label)
     if (hooks !== undefined) {
       hooks.inputSent = true
     }
@@ -1119,14 +1160,16 @@ async function waitForKeyboardState(
 async function tapKey(
   device: Device,
   label: string,
-  tap: (center: [number, number]) => Promise<void> = (center) =>
-    device.click(...center),
+  tap: (label: string, center: [number, number]) => Promise<void> = (
+    _label,
+    center,
+  ) => device.click(...center),
 ): Promise<void> {
   const keys = await gboardKeys(device)
   for (const candidate of [label, label.toUpperCase()]) {
     const center = keys.get(candidate)
     if (center) {
-      await tap(center)
+      await tap(candidate, center)
       // Paces taps at a typist's speed. Gboard gives no signal that it has handled a tap, and the page only
       // sees the taps that produce text.
       await sleep(0.4)
@@ -1221,7 +1264,7 @@ async function compose(
     commit: Commit
     candidateRequired: boolean
     position: number
-    tap: (center: [number, number]) => Promise<void>
+    tap: (label: string, center: [number, number]) => Promise<void>
   },
 ): Promise<string | undefined> {
   // A run of symbols is typed in one trip off the letter layout, so Space between them is the symbol
@@ -1261,7 +1304,7 @@ async function compose(
   let picked: string
   const candidate = wanted === undefined ? undefined : keys.get(wanted)
   if (candidate) {
-    await tap(candidate)
+    await tap(wanted!, candidate)
     picked = wanted!
   } else if (wanted !== undefined && candidateRequired) {
     throw new Error(
@@ -1318,7 +1361,7 @@ export function roleKey(
 async function tapRole(
   device: Device,
   role: KeyRole,
-  tap: (center: [number, number]) => Promise<void>,
+  tap: (label: string, center: [number, number]) => Promise<void>,
 ): Promise<void> {
   // Waits for a whole layout first, so a dump taken mid-redraw does not read as a missing key.
   await gboardKeys(device)
@@ -1331,7 +1374,7 @@ async function tapRole(
       )}`,
     )
   }
-  await tap(key.center)
+  await tap(key.label, key.center)
   // Paces taps at a typist's speed, as `tapKey` does.
   await sleep(0.4)
 }

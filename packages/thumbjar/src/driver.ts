@@ -127,6 +127,11 @@ export type DriverRun = {
    * skipped, so whether adb still reached the device is unknown and it is not counted as device offline.
    */
   deviceUnconfirmed?: true
+  /** The keys the driver tapped in each step of the last attempt and the events the page recorded during it. */
+  taps?: Array<{
+    keys: string[]
+    events: Array<{type: string; inputType?: string; data?: string}>
+  }>
 }
 
 /**
@@ -193,7 +198,17 @@ export async function typeOnDevice(
       signal: context.signal,
       task: context.task,
     },
-    (name, connect) => typeInChrome(name, options, connect),
+    (run) => (name, connect) => {
+      delete run.taps
+      // An attempt the call gave up on may still report once it stops, and must not replace the taps of
+      // the attempt that followed it.
+      const signal = currentSignal()
+      return typeInChrome(name, options, connect, (taps) => {
+        if (!signal?.aborted) {
+          run.taps = taps
+        }
+      })
+    },
   )
 }
 
@@ -284,9 +299,11 @@ export async function runOnDevice(
         signal: context.signal,
         task: context.task,
       },
-      (name, connect, hooks) => {
+      (run) => (name, connect, hooks) => {
         const attempt: (typeof attempts)[number] = {}
         attempts.push(attempt)
+        delete run.taps
+        const signal = currentSignal()
         return runInChrome(
           name,
           options,
@@ -295,6 +312,11 @@ export async function runOnDevice(
             attempt.failure = {error, records}
           },
           hooks,
+          (taps) => {
+            if (!signal?.aborted) {
+              run.taps = taps
+            }
+          },
         ).catch((error: unknown) => {
           attempt.thrown = {error}
           throw error
@@ -325,7 +347,7 @@ async function drive<T>(
   inspection: Inspection,
   keyboard: RunOnDeviceOptions['keyboard'],
   test: {name: string; fails: boolean; signal: AbortSignal; task: object},
-  attempt: Attempt<T>,
+  attempt: (run: DriverRun) => Attempt<T>,
   strict = false,
 ): Promise<T> {
   const run: DriverRun = {
@@ -343,7 +365,14 @@ async function drive<T>(
   const running = previousRun.then(() =>
     runNotStrict(() =>
       runInspecting(inspection, () =>
-        driveAfterPrevious(inspection, run, name, test.signal, attempt, strict),
+        driveAfterPrevious(
+          inspection,
+          run,
+          name,
+          test.signal,
+          attempt(run),
+          strict,
+        ),
       ),
     ),
   )

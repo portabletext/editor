@@ -64,13 +64,47 @@ export function testOutcome({
 }
 
 /**
+ * The keys the driver sent and the events the page recorded, one pair of lines per step, for a failed
+ * test, so a key that never reached the page shows beside the events that did.
+ */
+export function tapsBlock(
+  testName: string,
+  taps: NonNullable<DriverRun['taps']>,
+): string {
+  const steps = taps.flatMap((step, index) => {
+    const label = `step ${index + 1}: `
+    const events = step.events.map((event) =>
+      [
+        event.type,
+        event.inputType,
+        event.data === undefined || event.data === null
+          ? undefined
+          : JSON.stringify(event.data),
+      ]
+        .filter((part) => part !== undefined && part !== null)
+        .join(' '),
+    )
+    return [
+      `  ${label}sent ${step.keys.length > 0 ? step.keys.join(' ') : '(none)'}`,
+      `  ${' '.repeat(label.length)}page ${events.length > 0 ? events.join(', ') : '(none)'}`,
+    ]
+  })
+  return [`Taps sent and page events for "${testName}":`, ...steps].join('\n')
+}
+
+/**
  * How many tests of `file` ended in each outcome, and which, then the tests that did not run, skipped or
  * todo, on a line of their own when there are any, and each note whose condition one of `runs` meets. A
  * test that did not run has no `outcome`.
  */
 export function summaryLines(
   file: string,
-  tests: Array<{name: string; outcome: Outcome | undefined}>,
+  tests: Array<{
+    name: string
+    outcome: Outcome | undefined
+    /** The taps of a failed test, printed under the counts. */
+    taps?: DriverRun['taps']
+  }>,
   runs: DriverRun[],
 ): string {
   const counts = OUTCOMES.map((outcome) => {
@@ -96,6 +130,9 @@ export function summaryLines(
       ? [`${notRun.length} not run, skipped or todo (${notRun.join(', ')})`]
       : []),
     ...notes,
+    ...tests.flatMap((test) =>
+      test.taps === undefined ? [] : [tapsBlock(test.name, test.taps)],
+    ),
   ]
     .map((line) => `${line}\n`)
     .join('\n')

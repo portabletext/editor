@@ -30,6 +30,7 @@ test('Scenario: A page exception in the read of a step that failed before input 
       test: 'Scenario: A page exception in the read of a step that failed before input ends the call on it',
       fails: false,
       state: 'page-exception',
+      taps: [{keys: [], events: []}],
       pageException:
         'Uncaught in `window.__state()`: Error: getSnapshot failed',
     },
@@ -61,6 +62,7 @@ test('Scenario: A page exception in the read of a step that failed on the retry 
       test: 'Scenario: A page exception in the read of a step that failed on the retry ends the call on it',
       fails: false,
       state: 'page-exception',
+      taps: [{keys: [], events: []}],
       pageException:
         'Uncaught in `window.__state()`: Error: getSnapshot failed',
     },
@@ -92,6 +94,7 @@ test('Scenario: A page exception in the read of a step that failed after input e
       test: 'Scenario: A page exception in the read of a step that failed after input ends the call on it, not inconclusive',
       fails: false,
       state: 'page-exception',
+      taps: [{keys: ['Enter'], events: []}],
       pageException:
         'Uncaught in `window.__state()`: Error: getSnapshot failed',
     },
@@ -126,6 +129,7 @@ test('Scenario: Another error in the read of a failed step stays a diagnostic, a
           textAfter: 'foo-',
           selectionAfter: {anchor: 4, focus: 4},
           focusedAfter: true,
+          keys: ['-'],
           events: [],
         },
       ],
@@ -137,6 +141,7 @@ test('Scenario: Another error in the read of a failed step stays a diagnostic, a
       test: 'Scenario: Another error in the read of a failed step stays a diagnostic, and the call still retries',
       fails: false,
       state: 'complete',
+      taps: [{keys: ['-'], events: []}],
     },
     attempts: ['attempt 1', 'attempt 2'],
   })

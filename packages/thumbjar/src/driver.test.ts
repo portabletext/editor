@@ -1,4 +1,4 @@
-import {mkdtempSync, readFileSync} from 'node:fs'
+import {mkdtempSync, readFileSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -1203,6 +1203,12 @@ describe('the job summary', () => {
         '',
         'Could not check whether the device was reachable, so the device offline count can be too low.',
         '',
+        'Taps sent and page events for "Scenario: Failed":\n  step 1: sent Enter\n          page (none)',
+        '',
+        'Taps sent and page events for "Scenario: Inconclusive after input":\n  step 1: sent Enter\n          page (none)',
+        '',
+        'Taps sent and page events for "Scenario: Passed in a group":\n  step 1: sent Enter\n          page (none)',
+        '',
       ].join('\n'),
     })
   }, 60_000)
@@ -1251,6 +1257,49 @@ describe('the job summary', () => {
         '`src/fixtures/suites/nested-outcomes.ts`: 3 passed ("Scenario: Passed", "Scenario: Passed on its retry", "Scenario: Same name"), 0 failed, 1 expected failure ("Scenario: Expected failure"), 1 inconclusive ("Scenario: Same name"), 0 device offline, 0 driver fault',
         '',
         '3 not run, skipped or todo ("Scenario: Skipped", "Scenario: Todo", "Scenario: Skipped as it runs")',
+        '',
+      ].join('\n'),
+    })
+  }, 60_000)
+})
+
+describe('the taps a failed test prints', () => {
+  test('are printed at the end of the file for each test that ends failed, and for no other', async () => {
+    const captured = join(
+      mkdtempSync(join(tmpdir(), 'thumbjar-stderr-')),
+      'stderr.txt',
+    )
+    writeFileSync(captured, '')
+    vi.stubEnv('THUMBJAR_CAPTURED_STDERR', captured)
+    let result: Awaited<ReturnType<typeof runSuite>>
+    try {
+      result = await runSuite({
+        root,
+        file: 'src/fixtures/suites/taps-print-on-final-state.ts',
+        setupFiles: [
+          'src/fixtures/suites/gboard-device.ts',
+          'src/fixtures/suites/capture-stderr.ts',
+          'src/vitest/setup.ts',
+        ],
+        testTimeout: 15_000,
+      })
+    } finally {
+      vi.unstubAllEnvs()
+    }
+
+    expect({result, stderr: readFileSync(captured, 'utf8')}).toEqual({
+      result: {
+        file: 'failed',
+        errors: [],
+        tests: [
+          {name: 'Scenario: Ordinary failure', state: 'failed'},
+          {name: 'Scenario: Expected failure', state: 'passed'},
+          {name: 'Scenario: Unexpected pass', state: 'failed'},
+        ],
+      },
+      stderr: [
+        'Taps sent and page events for "Scenario: Ordinary failure":\n  step 1: sent Enter\n          page (none)',
+        'Taps sent and page events for "Scenario: Unexpected pass":\n  step 1: sent Enter\n          page (none)',
         '',
       ].join('\n'),
     })
