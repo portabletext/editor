@@ -1396,6 +1396,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
+      '@portabletext/plugin-decorations':
+        specifier: workspace:^
+        version: link:../plugin-decorations
       '@sanity/diff-match-patch':
         specifier: 'catalog:'
         version: 3.2.1

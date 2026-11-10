@@ -23,43 +23,68 @@ npm install @portabletext/plugin-sdk-value
 
 ## Usage
 
-Use `SDKPortableTextEditable` in place of `PortableTextEditable`, inside the
-`EditorProvider`. It names the document and field once and wires up value sync,
-presence reporting, and remote carets:
+Render `PortableTextEditable` from `@portabletext/editor` and add the plugins as
+children of `EditorProvider`, the way the other `@portabletext/plugin-*`
+packages are used. `SDKValuePlugin` syncs the field's value,
+`SDKPresencePlugin` reports the local user's caret and draws other people's, and
+`SDKCommentsPlugin` draws comment highlights:
 
 ```tsx
-import {defineSchema, EditorProvider} from '@portabletext/editor'
-import {SDKPortableTextEditable} from '@portabletext/plugin-sdk-value'
+import {
+  defineSchema,
+  EditorProvider,
+  PortableTextEditable,
+} from '@portabletext/editor'
+import {
+  SDKCommentsPlugin,
+  SDKPresencePlugin,
+  SDKValuePlugin,
+} from '@portabletext/plugin-sdk-value'
+import {Suspense} from 'react'
 
 function MyEditor() {
   return (
     <EditorProvider initialConfig={{schemaDefinition: defineSchema({})}}>
-      <SDKPortableTextEditable
+      <SDKValuePlugin
         documentId="my-document-id"
         documentType="myDocumentType"
         path="content"
       />
+      <SDKPresencePlugin
+        documentId="my-document-id"
+        documentType="myDocumentType"
+        path="content"
+      />
+      <Suspense fallback={null}>
+        <SDKCommentsPlugin
+          documentId="my-document-id"
+          documentType="myDocumentType"
+          path="content"
+          renderDecoration={(comment) => (props) => (
+            <mark data-comment-id={comment.id}>{props.children}</mark>
+          )}
+        />
+      </Suspense>
+      <PortableTextEditable />
     </EditorProvider>
   )
 }
 ```
 
 That is all of it. Remote carets are drawn with a built-in caret, so nothing has
-to be styled to get presence working.
-
-Every other prop is forwarded to `PortableTextEditable` untouched. Any
-`rangeDecorations` you pass are kept and merged with the presence carets rather
-than replaced.
+to be styled to get presence working. Drop `SDKCommentsPlugin` if the app has no
+comments. `PortableTextEditable` is yours, so props
+such as `style` and `renderBlock` go straight to it.
 
 ### Styling the caret
 
 The built-in caret is deliberately plain: a coloured line with a dot above it and
 the participant's name on hover. Colours come from a small fixed palette, keyed on
 the user, so one person in two tabs gets one colour. Pass `renderCursor` to
-replace it:
+`SDKPresencePlugin` to replace it:
 
 ```tsx nocheck
-<SDKPortableTextEditable
+<SDKPresencePlugin
   {...documentHandle}
   path="content"
   renderCursor={({user}) =>
@@ -70,9 +95,11 @@ replace it:
 ```
 
 Your component receives the decorated text as `children` and should render it.
+The returned render is called as a plain function, not as a component, so it
+must not call hooks. When you need hooks, return an element of your own
+component.
 Pass `renderCursor={null}` to draw no carets at all while still reporting the
-local user's presence, which is what you want if you only care about keeping the
-document in sync.
+local user's presence.
 
 ### Inline comments
 
@@ -81,55 +108,94 @@ threads can be started on the current selection. The composer UI stays with the
 app, the same split presence uses for carets. Comments are written in the shape
 Sanity Studio stores, so threads round-trip between an SDK app and the Studio.
 
-`useSDKCommentDecorations` returns `RangeDecoration[]` for the open threads on
-the field. Pass it through `rangeDecorations`, which `SDKPortableTextEditable`
-merges with the presence carets:
+`SDKCommentsPlugin` draws the open threads on the field. It draws every
+anchored block and lets each highlight follow edits while its stored text still
+resolves. If the text can no longer be found, the highlight stays hidden until
+any content in the comment list changes, including replies and reactions. A
+content change resolves and places every anchor again from its stored text.
+Place it inside `EditorProvider`, next to `PortableTextEditable`. It suspends
+while the comments load, so wrap it in `Suspense` where you want a fallback:
 
 ```tsx nocheck
-const decorations = useSDKCommentDecorations({
-  ...documentHandle,
-  path: 'content',
-  renderDecoration: (comment) => (props) => (
-    <span data-comment-id={comment.id} style={{background: '#fef3c7'}}>
-      {props.children}
-    </span>
-  ),
-})
-
-return (
-  <SDKPortableTextEditable
-    {...documentHandle}
-    path="content"
-    rangeDecorations={decorations}
-  />
-)
+<EditorProvider initialConfig={{schemaDefinition}}>
+  <Suspense fallback={null}>
+    <SDKCommentsPlugin
+      {...documentHandle}
+      path="content"
+      renderDecoration={(comment) => (props) => (
+        <span data-comment-id={comment.id} style={{background: '#fef3c7'}}>
+          {props.children}
+        </span>
+      )}
+    />
+  </Suspense>
+  <PortableTextEditable />
+</EditorProvider>
 ```
+
+The returned render is called as a plain function, not as a component, so it
+must not call hooks. When you need hooks, return an element of your own
+component.
+
+`renderDecoration` is read when a highlight is drawn, so a highlight already on
+screen keeps its look until it is drawn again. A look that changes with app
+state belongs in your own component, which can use hooks.
+
+Use `useSDKCommentDecorations` instead when a component of your own needs the
+`DecorationLayer`. It takes the same options and must run inside
+`EditorProvider`.
 
 `useSDKCommentAuthoring` is the write side: `commentableSelection` is set when
 the current selection can take a comment, and `createInlineComment` starts a
-thread anchored to it:
+thread anchored to it. It needs the live editor, so it is a hook, and the
+composer UI that uses it is the one component an app writes inside
+`EditorProvider`:
 
 ```tsx nocheck
 import {useSDKCommentAuthoring} from '@portabletext/plugin-sdk-value'
 
-const {commentableSelection, createInlineComment} = useSDKCommentAuthoring({
-  ...documentHandle,
-  path: 'content',
-})
+function CommentComposer(props: DocumentHandle) {
+  const {commentableSelection, createInlineComment} = useSDKCommentAuthoring({
+    ...props,
+    path: 'content',
+  })
 
-// Show the composer while `commentableSelection` is set, then:
-await createInlineComment({message})
+  if (!commentableSelection) {
+    return null
+  }
+
+  return (
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault()
+        const message = new FormData(event.currentTarget).get('message')
+        await createInlineComment({
+          message: [
+            {
+              _type: 'block',
+              _key: 'message',
+              children: [{_type: 'span', _key: 'text', text: String(message)}],
+            },
+          ],
+        })
+      }}
+    >
+      <input name="message" />
+      <button type="submit">Comment</button>
+    </form>
+  )
+}
 ```
 
 Highlights follow the text while the user types, and a highlight whose text is
 deleted or rewritten beyond recognition is dropped rather than drawn on the
 wrong words. Resolved threads draw nothing, matching the Studio.
 
-### Rendering the editable yourself
+### A full example
 
-`SDKValuePlugin` still works as a sibling component if you would rather keep
-control of `PortableTextEditable`. Pair it with `SDKPresencePlugin` to report
-presence, and `useSDKPresenceCursors` for remote carets:
+Value sync, presence, comments and comment authoring together. Everything but
+the composer is a plugin. The composer is your own component, because its UI
+lives inside the provider anyway:
 
 ```tsx nocheck
 import {
@@ -138,51 +204,86 @@ import {
   PortableTextEditable,
 } from '@portabletext/editor'
 import {
+  SDKCommentsPlugin,
   SDKPresencePlugin,
   SDKValuePlugin,
-  useSDKPresenceCursors,
+  useSDKCommentAuthoring,
 } from '@portabletext/plugin-sdk-value'
+import type {DocumentHandle} from '@sanity/sdk-react'
+import {Suspense} from 'react'
 
 function MyEditor(props: DocumentHandle) {
-  const cursors = useSDKPresenceCursors({
+  return (
+    <EditorProvider initialConfig={{schemaDefinition: defineSchema({})}}>
+      <SDKValuePlugin {...props} path="content" />
+      <SDKPresencePlugin {...props} path="content" />
+      <Suspense fallback={null}>
+        <SDKCommentsPlugin
+          {...props}
+          path="content"
+          renderDecoration={(comment) => (decorationProps) => (
+            <mark data-comment-id={comment.id}>{decorationProps.children}</mark>
+          )}
+        />
+        <CommentComposer {...props} />
+      </Suspense>
+      <PortableTextEditable />
+    </EditorProvider>
+  )
+}
+
+function CommentComposer(props: DocumentHandle) {
+  const {commentableSelection, createInlineComment} = useSDKCommentAuthoring({
     ...props,
     path: 'content',
-    renderCursor:
-      ({user}) =>
-      (cursorProps) => <Caret user={user}>{cursorProps.children}</Caret>,
   })
 
   return (
-    <EditorProvider initialConfig={{schemaDefinition: defineSchema({})}}>
-      <PortableTextEditable rangeDecorations={cursors} />
-      <SDKValuePlugin {...props} path="content" />
-      <SDKPresencePlugin {...props} path="content" />
-    </EditorProvider>
+    <button
+      disabled={!commentableSelection}
+      onClick={() =>
+        createInlineComment({
+          message: [
+            {
+              _type: 'block',
+              _key: 'message',
+              children: [{_type: 'span', _key: 'text', text: 'Looks good'}],
+            },
+          ],
+        })
+      }
+    >
+      Comment on selection
+    </button>
   )
 }
 ```
 
+`useSDKPresenceCursors` and `useSDKCommentDecorations` are the hooks behind the
+two plugins. Use them when your own component needs the `DecorationLayer`, for
+example to read it or combine it with other decorations.
+
 ## Props
 
-`SDKPortableTextEditable` accepts a
-[Document Handle](https://www.sanity.io/docs/app-sdk/document-handles), every
-`PortableTextEditable` prop, and:
+`SDKValuePlugin`, `SDKPresencePlugin` and `SDKCommentsPlugin` accept a
+[Document Handle](https://www.sanity.io/docs/app-sdk/document-handles) and:
 
-| Prop           | Type                          | Description                                                                      |
-| -------------- | ----------------------------- | -------------------------------------------------------------------------------- |
-| `documentId`   | `string`                      | The document ID                                                                  |
-| `documentType` | `string`                      | The document type                                                                |
-| `path`         | `string`                      | [JSONMatch][json-match] path expression to the Portable Text field               |
-| `renderCursor` | `function \| null` (optional) | Draws one remote participant's caret. Omit for the built-in one, `null` for none |
-| `dataset`      | `string` (optional)           | Dataset name (if different from configured default)                              |
-| `projectId`    | `string` (optional)           | Project ID (if different from configured default)                                |
-| `perspective`  | `string \| object` (optional) | Which document to sync and report: draft, published, or a release                |
+| Prop               | Type                          | Description                                                                                  |
+| ------------------ | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `documentId`       | `string`                      | The document ID                                                                              |
+| `documentType`     | `string`                      | The document type                                                                            |
+| `path`             | `string`                      | [JSONMatch][json-match] path expression to the Portable Text field                           |
+| `renderDecoration` | `function`                    | `SDKCommentsPlugin` only. Returns the render for one comment's highlight                     |
+| `renderCursor`     | `function \| null` (optional) | `SDKPresencePlugin` only. Draws one remote caret. Omit for the built-in one, `null` for none |
+| `dataset`          | `string` (optional)           | Dataset name (if different from configured default)                                          |
+| `projectId`        | `string` (optional)           | Project ID (if different from configured default)                                            |
+| `perspective`      | `string \| object` (optional) | Which document to sync and report: draft, published, or a release                            |
 
 [json-match]: https://www.sanity.io/docs/content-lake/json-match
 
 ## Notes on presence
 
-Carets are drawn with the built-in component unless you pass `renderCursor`, and
+Carets are drawn with the built-in component unless you pass `renderCursor` to `SDKPresencePlugin`, and
 are collapsed to a single point at the participant's focus. Presence
 answers where someone is, so decorating their whole selection would highlight
 text the local user never selected. The Studio does the same.

@@ -52,6 +52,10 @@ export interface StoredTextSelection {
 export interface AnchoredComment {
   /** The comment's id, echoed back so the caller can correlate. */
   commentId: string
+  /** The key of the block containing this anchor. */
+  blockKey: string
+  /** The stored selection member that produced this anchor. */
+  memberIndex: number
   /** Where the comment's text sits in the current editor value. */
   selection: NonNullable<EditorSelection>
 }
@@ -157,8 +161,9 @@ function diffApply(current: string, patches: Patch[]): string {
  * similarity threshold. An anchor whose text is gone, or changed beyond
  * recognition, is dropped rather than drawn somewhere wrong.
  *
- * Live tracking while the user types is not this function's job: the editor's
- * `RangeDecoration.onMoved` does that. This runs when comments load or change.
+ * Live tracking while the user types is not this function's job: the registered
+ * decoration layer does that. Callers re-run this against the current value to
+ * hide anchors whose stored text can no longer be found.
  */
 export function resolveCommentSelections(
   options: ResolveOptions,
@@ -167,7 +172,7 @@ export function resolveCommentSelections(
   const anchored: AnchoredComment[] = []
 
   for (const {commentId, relativePath, selection} of comments) {
-    for (const selectionMember of selection.value) {
+    for (const [memberIndex, selectionMember] of selection.value.entries()) {
       const container =
         relativePath.length > 0 ? getValueAtPath(value, relativePath) : value
       const matchedBlock = Array.isArray(container)
@@ -251,6 +256,8 @@ export function resolveCommentSelections(
 
       anchored.push({
         commentId,
+        blockKey: matchedBlock._key,
+        memberIndex,
         selection: {
           anchor: {
             path: [
