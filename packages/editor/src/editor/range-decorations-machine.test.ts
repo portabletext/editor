@@ -1554,7 +1554,7 @@ describe(rangeDecorationsMachine.id, () => {
     expect(decoratedRangeIds(actor)).toEqual(['a'])
   })
 
-  test("Scenario: a read-only editor keeps not moving the legacy prop's decoration", () => {
+  test("Scenario: a read-only editor moves the legacy prop's decoration", () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1571,13 +1571,12 @@ describe(rangeDecorationsMachine.id, () => {
     send(actor, {type: 'ready'})
 
     const onMoved = vi.fn()
+    const component = () => null as never
     send(actor, {
       type: 'source updated',
       sourceKey: 'prop',
       kind: 'prop',
-      rangeDecorations: [
-        {component: () => null as never, selection: selectionA, onMoved},
-      ],
+      rangeDecorations: [{component, selection: selectionA, onMoved}],
     })
 
     send(actor, {
@@ -1591,7 +1590,22 @@ describe(rangeDecorationsMachine.id, () => {
       origin: 'local',
     })
 
-    expect(onMoved).not.toHaveBeenCalled()
+    expect(onMoved.mock.calls).toEqual([
+      [
+        {
+          newSelection: {
+            anchor: {path: spanPath, offset: 2},
+            focus: {path: spanPath, offset: 5},
+          },
+          rangeDecoration: {
+            component,
+            selection: selectionA,
+            onMoved,
+          },
+          origin: 'local',
+        },
+      ],
+    ])
     expect(
       actor
         .getSnapshot()
@@ -1599,6 +1613,11 @@ describe(rangeDecorationsMachine.id, () => {
           anchor: decoratedRange.anchor,
           focus: decoratedRange.focus,
         })),
-    ).toEqual([selectionA])
+    ).toEqual([
+      {
+        anchor: {path: spanPath, offset: 2},
+        focus: {path: spanPath, offset: 5},
+      },
+    ])
   })
 })
