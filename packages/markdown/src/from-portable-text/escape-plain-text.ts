@@ -22,6 +22,14 @@ const HTML_LIKE_ANGLE_BRACKET = /<(?=[a-zA-Z/!?])/g
 const BRACKET_BEFORE_LINK_OPEN = /\](?=[([])/g
 
 /**
+ * A GFM alert marker alone on a line (`[!NOTE]`, any case, trailing
+ * whitespace allowed). As the first line of a quote it opens a callout on
+ * import and the marker text is consumed, so it is escaped wherever it
+ * starts a block.
+ */
+const GFM_ALERT_MARKER = /^\[!(?:note|tip|important|warning|caution)\][ \t]*$/i
+
+/**
  * markdown-it's own emphasis-flanking rule classifies a delimiter's
  * neighbor as punctuation using Unicode's `P` (Punctuation) and `S`
  * (Symbol) categories, not just ASCII: an emoji, an em dash, or a CJK
@@ -650,6 +658,11 @@ function collectLineStartEdits(
         insert: '\\',
       })
     }
+    return edits
+  }
+
+  if (isFirstLine && GFM_ALERT_MARKER.test(rest)) {
+    edits.push({at: leadingSpaces, deleteCount: 0, insert: '\\'})
     return edits
   }
 
