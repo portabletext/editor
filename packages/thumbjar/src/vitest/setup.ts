@@ -62,6 +62,14 @@ afterAll(({}, file) => {
         run.fails && (run.state === 'driving' || run.state === 'aborted'),
     )
     .map((run) => `"${run.test}"`)
+  const withoutDriverCall = leafTests(file.tasks)
+    .filter(
+      (test) =>
+        test.fails &&
+        (test.result?.state === 'pass' || test.result?.state === 'fail') &&
+        lastDriverRun(test) === undefined,
+    )
+    .map((test) => `"${test.name}"`)
   const problems = [
     ...unresolved,
     ...(faulted.length > 0
@@ -71,6 +79,9 @@ afterAll(({}, file) => {
       ? [
           `The driver never returned a result and cleaned up in ${incomplete.join(', ')}, the test timed out or its cleanup failed.`,
         ]
+      : []),
+    ...(withoutDriverCall.length > 0
+      ? [`No driver call was recorded for ${withoutDriverCall.join(', ')}.`]
       : []),
   ]
   if (problems.length > 0) {

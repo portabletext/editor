@@ -148,6 +148,26 @@ describe(typeOnDevice.name, () => {
       ],
     })
   }, 30_000)
+
+  test('keeps the no-driver-call guard quiet for `test.fails` tests that overlap, each run owned by its own test', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/sibling-suites-fails.ts',
+        setupFiles: [
+          'src/fixtures/suites/typing-loses-first-character.ts',
+          'src/vitest/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {name: 'Scenario: First type', state: 'passed'},
+        {name: 'Scenario: Second type', state: 'passed'},
+      ],
+    })
+  }, 30_000)
 })
 
 describe('a digit in the typed text', () => {
@@ -435,6 +455,32 @@ describe(runOnDevice.name, () => {
           name: 'Scenario: The device saw only the case Gboard can drive',
           state: 'passed',
         },
+      ],
+    })
+  }, 30_000)
+
+  test('fails the file for a `test.fails` test that ends before any driver call, matching per test and not per name', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/setup-throws-before-driver.ts',
+        setupFiles: [
+          'src/fixtures/suites/run-faults-once.ts',
+          'src/vitest/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [
+        'No driver call was recorded for "Scenario: Typing after a setup that throws", "Scenario: Same name". These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.',
+      ],
+      tests: [
+        {
+          name: 'Scenario: Typing after a setup that throws',
+          state: 'passed',
+        },
+        {name: 'Scenario: Same name', state: 'passed'},
+        {name: 'Scenario: Same name', state: 'passed'},
       ],
     })
   }, 30_000)

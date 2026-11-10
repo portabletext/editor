@@ -7,7 +7,17 @@ describe('outer', () => {
       expect(1).toEqual(1)
     })
 
-    test.fails('Scenario: Expected failure', () => {
+    test.fails('Scenario: Expected failure', async (context) => {
+      globalThis.gboardDevice.reset()
+      vi.useFakeTimers()
+      const running = runOnDevice(context, {
+        keyboard: 'en',
+        url: 'http://localhost:8765/editor.html',
+        prefix: '',
+        steps: [{type: 'enter'}],
+      })
+      await vi.runAllTimersAsync()
+      await running
       expect(1).toEqual(2)
     })
 
