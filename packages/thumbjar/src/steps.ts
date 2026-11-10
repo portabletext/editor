@@ -80,6 +80,8 @@ export type StepRecord = {
   focusedAfter: boolean | null
   /** The events the page recorded between the boundary before the step and the boundary after it. */
   events: PageEvent[]
+  /** The keys the driver tapped in the step, in order, the ones sent before it failed for a `failed` step. */
+  keys: string[]
 }
 
 /** What `runOnDevice` opens and drives. */

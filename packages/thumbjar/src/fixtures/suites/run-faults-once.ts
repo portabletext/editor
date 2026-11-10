@@ -21,6 +21,7 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
             selectionAfter: {anchor: 4, focus: 4},
             focusedAfter: true,
             events: [],
+            keys: [],
           },
         ],
         text: 'foo\n',

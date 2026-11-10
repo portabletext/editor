@@ -31,6 +31,7 @@ test('Scenario: A fault before any input is retried once the old Chrome stopped 
       test: 'Scenario: A fault before any input is retried once the old Chrome stopped and the new one runs in another process',
       fails: false,
       state: 'complete',
+      taps: [{keys: ['Enter'], events: []}],
     },
     calls: [
       'open chrome',
@@ -185,14 +186,18 @@ test('Scenario: A fault after a key tap is inconclusive and never retried, and k
     message: [
       'read 3 of the page failed',
       'Steps:',
-      "  1. backspace: done, textAfter 'fo'",
-      '  2. enter: failed (Error: read 3 of the page failed), textAfter None',
+      "  1. backspace: done, textAfter 'fo', keys Delete",
+      '  2. enter: failed (Error: read 3 of the page failed), textAfter None, keys Enter',
     ].join('\n'),
     cause: 'Error: read 3 of the page failed',
     run: {
       test: 'Scenario: A fault after a key tap is inconclusive and never retried, and keeps its error and records',
       fails: false,
       state: 'inconclusive',
+      taps: [
+        {keys: ['Delete'], events: []},
+        {keys: ['Enter'], events: []},
+      ],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     calls: [
@@ -227,6 +232,7 @@ test('Scenario: A fault right after a Delete tap is inconclusive, since Delete c
       test: 'Scenario: A fault right after a Delete tap is inconclusive, since Delete changes the field',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Delete'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     calls: [
@@ -263,6 +269,7 @@ test('Scenario: A key tap whose reply was rejected counts as sent input, so its 
       test: 'Scenario: A key tap whose reply was rejected counts as sent input, so its fault is never retried',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     attempts: ['attempt 1'],
@@ -293,6 +300,7 @@ test('Scenario: A key tap the device never answers counts as sent input, so the 
       test: 'Scenario: A key tap the device never answers counts as sent input, so the attempt timing out is never retried',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     attempts: ['attempt 1'],
@@ -373,6 +381,7 @@ test("Scenario: A tap the adb server answers with `FAIL device offline` ends the
       test: "Scenario: A tap the adb server answers with `FAIL device offline` ends the call device offline, like the CLI's error",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: the adb server answered FAIL: device offline',
     },
@@ -410,6 +419,7 @@ test('Scenario: A tap whose socket to the adb server closed is no lost device, a
       test: 'Scenario: A tap whose socket to the adb server closed is no lost device, and after input it ends the call inconclusive',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     calls: [
@@ -614,6 +624,7 @@ test('Scenario: An ordinary error while uiautomator2 starts is polled again, and
       test: 'Scenario: An ordinary error while uiautomator2 starts is polled again, and the call completes',
       fails: false,
       state: 'complete',
+      taps: [{keys: ['Enter'], events: []}],
     },
     calls: [
       'uiautomator2 info rejected',
@@ -680,6 +691,7 @@ test('Scenario: An ordinary error while the page loads over CDP is polled again,
       test: 'Scenario: An ordinary error while the page loads over CDP is polled again, and the call completes',
       fails: false,
       state: 'complete',
+      taps: [{keys: ['Enter'], events: []}],
     },
     calls: [
       'open chrome',
@@ -819,7 +831,7 @@ test("Scenario: A step whose adb call adb's CLI lost the device on fails with th
     ).records[0].reason,
   }).toEqual({
     message:
-      "adb shell input tap exited with 1: error: device offline\nSteps:\n  1. enter: failed (CommandError: adb shell input tap exited with 1: error: device offline), textAfter 'foo'",
+      "adb shell input tap exited with 1: error: device offline\nSteps:\n  1. enter: failed (CommandError: adb shell input tap exited with 1: error: device offline), textAfter 'foo', keys Enter",
     causeIdentical: true,
     reason: `adb lost the device, so it was not retried: ${fault.message}`,
     record:
@@ -864,7 +876,7 @@ test("Scenario: A step whose adb call the adb server's `FAIL` lost the device on
     ).records[0].reason,
   }).toEqual({
     message:
-      "Unable to connect to uiautomator2 server: device offline\nSteps:\n  1. enter: failed (HTTPError: Unable to connect to uiautomator2 server: device offline (AdbError: device offline)), textAfter 'foo'",
+      "Unable to connect to uiautomator2 server: device offline\nSteps:\n  1. enter: failed (HTTPError: Unable to connect to uiautomator2 server: device offline (AdbError: device offline)), textAfter 'foo', keys Enter",
     causeIdentical: true,
     reason: `adb lost the device, so it was not retried: ${'the adb server answered FAIL: device offline'}`,
     record:
@@ -1005,6 +1017,7 @@ test("Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own 
         test: "Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes",
         fails: false,
         state: 'complete',
+        taps: [{keys: ['Enter'], events: []}],
       },
       {
         test: "Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes",
@@ -1075,6 +1088,7 @@ test("Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for 
         test: "Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
         fails: false,
         state: 'complete',
+        taps: [{keys: ['A', 'Space'], events: []}],
       },
       {
         test: "Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
@@ -1287,6 +1301,7 @@ test('Scenario: A later failure that throws the same error object as the timeout
       test: 'Scenario: A later failure that throws the same error object as the timeout the state read answered is unconfirmed',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
       deviceUnconfirmed: true,
     },
@@ -1346,6 +1361,10 @@ test('Scenario: A step that throws the same error on both attempts is unconfirme
       test: 'Scenario: A step that throws the same error on both attempts is unconfirmed on the second, whose failure the state read never answered',
       fails: false,
       state: 'inconclusive',
+      taps: [
+        {keys: ['Enter'], events: []},
+        {keys: [], events: []},
+      ],
       reason: 'the driver faulted after it sent input, so it was not retried',
       deviceUnconfirmed: true,
     },
@@ -1403,6 +1422,7 @@ test("Scenario: adb's CLI error for a lost device is read once to classify and q
       test: "Scenario: adb's CLI error for a lost device is read once to classify and quote it, so a message that throws when read again cannot reopen a retry after input",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: adb shell input tap exited with 1: error: device offline',
     },
@@ -1457,6 +1477,7 @@ test("Scenario: The adb server's wrapped `FAIL` for a lost device is read once t
       test: "Scenario: The adb server's wrapped `FAIL` for a lost device is read once to classify and quote it, so a message that throws when read again cannot reopen a retry after input",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: the adb server answered FAIL: device offline',
     },

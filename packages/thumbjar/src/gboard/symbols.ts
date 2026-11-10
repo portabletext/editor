@@ -69,7 +69,7 @@ export async function typeSymbols(
   device: Device,
   keyboard: RunOnDeviceOptions['keyboard'],
   text: string,
-  tap: (center: [number, number]) => Promise<void>,
+  tap: (label: string, center: [number, number]) => Promise<void>,
 ): Promise<void> {
   const layouts = LAYOUTS[keyboard]
   let layout = 'letters'
@@ -85,7 +85,7 @@ export async function typeSymbols(
     await moveTo((name) => layouts[name]!.keys[character] !== undefined)
     const entry = layouts[layout]!.keys[character]!
     const key = await waitForKey(device, layouts, layout, entry.label)
-    await tap(key.center)
+    await tap(character, key.center)
     layout = entry.to ?? layout
     // Paces taps at a typist's speed, as `tapKey` does.
     await sleep(0.4)

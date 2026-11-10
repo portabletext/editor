@@ -31,6 +31,7 @@ test("Scenario: Each step's record holds whether the field has focus, read in th
         textAfter: 'fo',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
+        keys: ['Delete'],
         events: [],
       },
       {
@@ -39,6 +40,7 @@ test("Scenario: Each step's record holds whether the field has focus, read in th
         textAfter: 'fo\n',
         selectionAfter: {anchor: 3, focus: 3},
         focusedAfter: false,
+        keys: ['Enter'],
         events: [],
       },
     ],
@@ -69,9 +71,9 @@ test("Scenario: After a step fails, the page's text, selection and focus are rea
     message: [
       'injected tap 3 was rejected',
       'Steps:',
-      "  1. backspace: done, textAfter 'fo'",
-      "  2. enter: failed (Error: injected tap 3 was rejected), textAfter 'fo\\n'",
-      '  3. backspace: skipped (step 2 failed), textAfter None',
+      "  1. backspace: done, textAfter 'fo', keys Delete",
+      "  2. enter: failed (Error: injected tap 3 was rejected), textAfter 'fo\\n', keys Enter",
+      '  3. backspace: skipped (step 2 failed), textAfter None, keys none',
     ].join('\n'),
     cause: 'Error: injected tap 3 was rejected',
     records: [
@@ -81,6 +83,7 @@ test("Scenario: After a step fails, the page's text, selection and focus are rea
         textAfter: 'fo',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
+        keys: ['Delete'],
         events: [],
       },
       {
@@ -90,6 +93,7 @@ test("Scenario: After a step fails, the page's text, selection and focus are rea
         textAfter: 'fo\n',
         selectionAfter: {anchor: 3, focus: 3},
         focusedAfter: false,
+        keys: ['Enter'],
         events: [],
       },
       {
@@ -99,6 +103,7 @@ test("Scenario: After a step fails, the page's text, selection and focus are rea
         textAfter: null,
         selectionAfter: null,
         focusedAfter: null,
+        keys: [],
         events: [],
       },
     ],
@@ -125,7 +130,7 @@ test("Scenario: The page is read into the failed step's record after the attempt
     message: [
       'attempt en-the-page-is-read-into-the-failed-step-s-record-after-the-attempt-timed-out-on-a-clock-of-its-own timed out after 180s',
       'Steps:',
-      "  1. enter: failed (DeadlineError: attempt en-the-page-is-read-into-the-failed-step-s-record-after-the-attempt-timed-out-on-a-clock-of-its-own timed out after 180s), textAfter 'foo\\n'",
+      "  1. enter: failed (DeadlineError: attempt en-the-page-is-read-into-the-failed-step-s-record-after-the-attempt-timed-out-on-a-clock-of-its-own timed out after 180s), textAfter 'foo\\n', keys Enter",
     ].join('\n'),
     records: [
       {
@@ -136,6 +141,7 @@ test("Scenario: The page is read into the failed step's record after the attempt
         textAfter: 'foo\n',
         selectionAfter: {anchor: 4, focus: 4},
         focusedAfter: true,
+        keys: ['Enter'],
         events: [],
       },
     ],
@@ -165,13 +171,14 @@ test("Scenario: A read after the failed step that does not answer leaves its tex
     message: [
       'injected tap 2 was rejected',
       'Steps:',
-      '  1. enter: failed (Error: injected tap 2 was rejected), textAfter None',
+      '  1. enter: failed (Error: injected tap 2 was rejected), textAfter None, keys Enter',
     ].join('\n'),
     cause: 'Error: injected tap 2 was rejected',
     run: {
       test: "Scenario: A read after the failed step that does not answer leaves its text, selection and focus unread, and the error is the step's",
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     records: [
@@ -182,6 +189,7 @@ test("Scenario: A read after the failed step that does not answer leaves its tex
         textAfter: null,
         selectionAfter: null,
         focusedAfter: null,
+        keys: ['Enter'],
         events: [],
       },
     ],
@@ -216,6 +224,7 @@ test("Scenario: A failed step read back before the test's deadline ends the call
       test: "Scenario: A failed step read back before the test's deadline ends the call inconclusive",
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     records: [
@@ -226,6 +235,7 @@ test("Scenario: A failed step read back before the test's deadline ends the call
         textAfter: 'foo',
         selectionAfter: {anchor: 3, focus: 3},
         focusedAfter: true,
+        keys: ['Enter'],
         events: [],
       },
     ],
@@ -261,6 +271,7 @@ test("Scenario: A failed step whose read back is still running at the test's dea
       test: "Scenario: A failed step whose read back is still running at the test's deadline ends the call inconclusive, and the read is stopped",
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     records: [
@@ -271,6 +282,7 @@ test("Scenario: A failed step whose read back is still running at the test's dea
         textAfter: null,
         selectionAfter: null,
         focusedAfter: null,
+        keys: ['Enter'],
         events: [],
       },
     ],
@@ -300,12 +312,13 @@ test("Scenario: The test's deadline during a step that still runs ends the call 
     error: [
       'Error: test deadline',
       'Steps:',
-      '  1. enter: failed (Error: test deadline), textAfter None',
+      '  1. enter: failed (Error: test deadline), textAfter None, keys Enter',
     ].join('\n'),
     run: {
       test: "Scenario: The test's deadline during a step that still runs ends the call aborted",
       fails: false,
       state: 'aborted',
+      taps: [{keys: ['Enter'], events: []}],
     },
   })
 })
@@ -336,6 +349,7 @@ test("Scenario: A tap that times out after input, with the state read answered b
         test: "Scenario: A tap that times out after input, with the state read answered before the test's deadline, ends the call inconclusive and answered",
         fails: false,
         state: 'inconclusive',
+        taps: [{keys: ['Enter'], events: []}],
         reason: 'the driver faulted after it sent input, so it was not retried',
         deviceAnswered: true,
       },
@@ -370,6 +384,7 @@ test("Scenario: A tap that times out after input, with the state read still runn
         test: "Scenario: A tap that times out after input, with the state read still running at the test's deadline, ends the call inconclusive and unconfirmed",
         fails: false,
         state: 'inconclusive',
+        taps: [{keys: ['Enter'], events: []}],
         reason: 'the driver faulted after it sent input, so it was not retried',
         deviceUnconfirmed: true,
       },
@@ -471,6 +486,7 @@ test("Scenario: A rejected tap after input, with the failure dump done before th
         test: "Scenario: A rejected tap after input, with the failure dump done before the test's deadline, ends the call inconclusive",
         fails: false,
         state: 'inconclusive',
+        taps: [{keys: ['Enter'], events: []}],
         reason: 'the driver faulted after it sent input, so it was not retried',
       },
     },
@@ -501,6 +517,7 @@ test("Scenario: A rejected tap after input, with the failure dump still running 
         test: "Scenario: A rejected tap after input, with the failure dump still running at the test's deadline, ends the call inconclusive",
         fails: false,
         state: 'inconclusive',
+        taps: [{keys: ['Enter'], events: []}],
         reason: 'the driver faulted after it sent input, so it was not retried',
       },
     },
@@ -531,6 +548,7 @@ test("Scenario: An exception in the page, with the read of the page done before 
         test: "Scenario: An exception in the page, with the read of the page done before the test's deadline, ends the call on the page's exception",
         fails: false,
         state: 'page-exception',
+        taps: [{keys: ['Enter'], events: []}],
         pageException:
           'Uncaught in `window.__state()`: Error: getSnapshot failed',
       },
@@ -563,6 +581,7 @@ test("Scenario: An exception in the page, with the read of the page still runnin
         test: "Scenario: An exception in the page, with the read of the page still running at the test's deadline, ends the call on the page's exception",
         fails: false,
         state: 'page-exception',
+        taps: [{keys: ['Enter'], events: []}],
         pageException:
           'Uncaught in `window.__state()`: Error: getSnapshot failed',
       },
@@ -599,6 +618,7 @@ test('Scenario: The outcome of a failed attempt is recorded before any diagnosti
       test: 'Scenario: The outcome of a failed attempt is recorded before any diagnostic, so one that never answers changes nothing',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['Enter'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
       deviceUnconfirmed: true,
     },
@@ -636,6 +656,7 @@ test("Scenario: A tap that fails on adb's error for a lost device, from adb's CL
       test: "Scenario: A tap that fails on adb's error for a lost device, from adb's CLI, ends the call device offline from that error alone, with the state read hanging at the test's deadline",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: adb shell input tap exited with 1: error: device offline',
     },
@@ -681,6 +702,7 @@ test("Scenario: A tap that fails on adb's error for a lost device, from adb's CL
       test: "Scenario: A tap that fails on adb's error for a lost device, from adb's CLI, ends the call device offline from that error alone, with the failure dump hanging at the test's deadline",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: adb shell input tap exited with 1: error: device offline',
     },
@@ -724,6 +746,7 @@ test("Scenario: A tap that fails on adb's error for a lost device, from the adb 
       test: "Scenario: A tap that fails on adb's error for a lost device, from the adb server's `FAIL`, ends the call device offline from that error alone, with the state read hanging at the test's deadline",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: the adb server answered FAIL: device offline',
     },
@@ -768,6 +791,7 @@ test("Scenario: A tap that fails on adb's error for a lost device, from the adb 
       test: "Scenario: A tap that fails on adb's error for a lost device, from the adb server's `FAIL`, ends the call device offline from that error alone, with the failure dump hanging at the test's deadline",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: the adb server answered FAIL: device offline',
     },
@@ -1003,7 +1027,7 @@ test("Scenario: A retry that refuses a Chrome that did not restart still ends th
     message: [
       'injected dump was rejected',
       'Steps:',
-      "  1. enter: failed (Error: injected dump was rejected), textAfter 'foo'",
+      "  1. enter: failed (Error: injected dump was rejected), textAfter 'foo', keys none",
     ].join('\n'),
     run: {
       test: "Scenario: A retry that refuses a Chrome that did not restart still ends the call on the first attempt's step records",
@@ -1038,7 +1062,7 @@ test("Scenario: A retry whose own step fails ends the call on its own step recor
     message: [
       'injected tap 2 was rejected',
       'Steps:',
-      "  1. enter: failed (Error: injected tap 2 was rejected), textAfter 'foo'",
+      "  1. enter: failed (Error: injected tap 2 was rejected), textAfter 'foo', keys Enter",
     ].join('\n'),
     attempts: ['attempt 1', 'attempt 2'],
   })
@@ -1070,6 +1094,7 @@ test("Scenario: A rejected tap before any input, with the failure dump done befo
       test: "Scenario: A rejected tap before any input, with the failure dump done before the test's deadline, is retried and the call completes",
       fails: false,
       state: 'complete',
+      taps: [{keys: ['Enter'], events: []}],
     },
     calls: [
       'open chrome',
@@ -1124,6 +1149,7 @@ test("Scenario: A test deadline that reading adb's lost-device error itself abor
       test: "Scenario: A test deadline that reading adb's lost-device error itself aborts still ends the call device offline, since the failure was already being classified",
       fails: false,
       state: 'device-offline',
+      taps: [{keys: ['Enter'], events: []}],
       reason:
         'adb lost the device, so it was not retried: adb shell input tap exited with 1: error: device offline',
     },
@@ -1274,12 +1300,13 @@ test('Scenario: A candidate Gboard does not offer fails the step instead of comm
     ),
   }).toEqual({
     message: expect.stringMatching(
-      /^Gboard did not offer the candidate '今日' in step 1, candidates \[.*'きょう'.*\]\nSteps:\n {2}1\. compose: failed \(Error: Gboard did not offer the candidate '今日' in step 1, .*\), textAfter 'kyou'\n {2}2\. enter: skipped \(step 1 failed\), textAfter None$/,
+      /^Gboard did not offer the candidate '今日' in step 1, candidates \[.*'きょう'.*\]\nSteps:\n {2}1\. compose: failed \(Error: Gboard did not offer the candidate '今日' in step 1, .*\), textAfter 'kyou', keys k y o u\n {2}2\. enter: skipped \(step 1 failed\), textAfter None, keys none$/,
     ),
     run: {
       test: 'Scenario: A candidate Gboard does not offer fails the step instead of committing with Space',
       fails: false,
       state: 'inconclusive',
+      taps: [{keys: ['k', 'y', 'o', 'u'], events: []}],
       reason: 'the driver faulted after it sent input, so it was not retried',
     },
     taps: ['tap field', 'tap k', 'tap y', 'tap o', 'tap u'],

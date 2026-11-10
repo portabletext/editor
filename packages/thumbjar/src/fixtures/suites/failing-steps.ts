@@ -24,9 +24,9 @@ test('Scenario: Backspace, Enter and Backspace fail before any input, then on En
     message: [
       'injected tap 3 was rejected',
       'Steps:',
-      "  1. backspace: done, textAfter 'fo'",
-      "  2. enter: failed (Error: injected tap 3 was rejected), textAfter 'f'",
-      '  3. backspace: skipped (step 2 failed), textAfter None',
+      "  1. backspace: done, textAfter 'fo', keys Delete",
+      "  2. enter: failed (Error: injected tap 3 was rejected), textAfter 'f', keys Enter",
+      '  3. backspace: skipped (step 2 failed), textAfter None, keys none',
     ].join('\n'),
     cause: 'Error: injected tap 3 was rejected',
     state: 'inconclusive',
@@ -77,13 +77,14 @@ test('Scenario: The page throws after Backspace, ending the call without a retry
     message: [
       'Uncaught in `window.__state()`: Error: getSnapshot failed',
       'Steps:',
-      "  1. backspace: failed (PageExceptionError: Uncaught in `window.__state()`: Error: getSnapshot failed), textAfter 'f'",
-      '  2. enter: skipped (step 1 failed), textAfter None',
+      "  1. backspace: failed (PageExceptionError: Uncaught in `window.__state()`: Error: getSnapshot failed), textAfter 'f', keys Delete",
+      '  2. enter: skipped (step 1 failed), textAfter None, keys none',
     ].join('\n'),
     run: {
       test: 'Scenario: The page throws after Backspace, ending the call without a retry',
       fails: false,
       state: 'page-exception',
+      taps: [{keys: ['Delete'], events: []}],
       pageException:
         'Uncaught in `window.__state()`: Error: getSnapshot failed',
     },
@@ -139,8 +140,8 @@ test('Scenario: An error thrown by a step in two calls carries only the records 
   const message = [
     'tap failed',
     'Steps:',
-    "  1. backspace: done, textAfter 'fo'",
-    "  2. enter: failed (Error: tap failed), textAfter 'f'",
+    "  1. backspace: done, textAfter 'fo', keys Delete",
+    "  2. enter: failed (Error: tap failed), textAfter 'f', keys Enter",
   ].join('\n')
   expect({messages, original: tapFailed.message}).toEqual({
     messages: [message, message],
@@ -173,7 +174,7 @@ test('Scenario: A frozen step error is the cause of the error with the records',
     message: [
       'tap failed',
       'Steps:',
-      "  1. backspace: failed (Error: tap failed), textAfter 'fo'",
+      "  1. backspace: failed (Error: tap failed), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
   })
@@ -203,7 +204,7 @@ test('Scenario: A step that throws a string fails with the string and the record
     message: [
       'tap failed',
       'Steps:',
-      "  1. backspace: failed (tap failed), textAfter 'fo'",
+      "  1. backspace: failed (tap failed), textAfter 'fo', keys Delete",
     ].join('\n'),
     cause: 'tap failed',
   })
@@ -238,7 +239,7 @@ test('Scenario: A step that throws a value whose `toString` throws fails with th
     message: [
       '<thrown value that cannot be converted to text>',
       'Steps:',
-      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo'",
+      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
   })
@@ -277,7 +278,7 @@ test('Scenario: A step error whose `message` getter throws is the cause of the e
     message: [
       '<thrown value that cannot be converted to text>',
       'Steps:',
-      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo'",
+      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
   })
@@ -318,7 +319,7 @@ test('Scenario: A step error whose `message` is an object whose `toString` throw
     message: [
       '<thrown value that cannot be converted to text>',
       'Steps:',
-      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo'",
+      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
   })
@@ -351,7 +352,7 @@ test('Scenario: A step error whose `message` is a Symbol fails with its descript
     message: [
       'Symbol(tap failed)',
       'Steps:',
-      "  1. backspace: failed (Error: Symbol(tap failed)), textAfter 'fo'",
+      "  1. backspace: failed (Error: Symbol(tap failed)), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
   })
@@ -381,7 +382,7 @@ test('Scenario: A step that throws NaN fails with NaN and the records', async (c
     message: [
       'NaN',
       'Steps:',
-      "  1. backspace: failed (NaN), textAfter 'fo'",
+      "  1. backspace: failed (NaN), textAfter 'fo', keys Delete",
     ].join('\n'),
     cause: Number.NaN,
   })
@@ -439,7 +440,7 @@ test('Scenario: A step that throws a revoked Proxy after input fails with the Pr
     message: [
       '<thrown value that cannot be converted to text>',
       'Steps:',
-      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo'",
+      "  1. backspace: failed (<thrown value that cannot be converted to text>), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
     state: 'inconclusive',
@@ -540,7 +541,7 @@ test('Scenario: A step whose `toJSON` throws fails with the step error and the r
     message: [
       'tap failed',
       'Steps:',
-      "  1. backspace: failed (Error: tap failed), textAfter 'fo'",
+      "  1. backspace: failed (Error: tap failed), textAfter 'fo', keys Delete",
     ].join('\n'),
     isCause: true,
     state: 'inconclusive',
@@ -577,7 +578,7 @@ test('Scenario: The page throws after a step whose `toJSON` throws, ending the c
     message: [
       'Uncaught in `window.__state()`: Error: getSnapshot failed',
       'Steps:',
-      "  1. backspace: failed (PageExceptionError: Uncaught in `window.__state()`: Error: getSnapshot failed), textAfter 'f'",
+      "  1. backspace: failed (PageExceptionError: Uncaught in `window.__state()`: Error: getSnapshot failed), textAfter 'f', keys Delete",
     ].join('\n'),
     state: 'page-exception',
   })

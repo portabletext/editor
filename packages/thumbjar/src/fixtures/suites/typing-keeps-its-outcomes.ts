@@ -31,6 +31,7 @@ test('Scenario: A candidate Gboard does not offer is committed with Space', asyn
       test: 'Scenario: A candidate Gboard does not offer is committed with Space',
       fails: false,
       state: 'complete',
+      taps: [{keys: ['k', 'y', 'o', 'u', 'スペース'], events: []}],
     },
     taps: ['tap field', 'tap k', 'tap y', 'tap o', 'tap u', 'tap スペース'],
   })
@@ -57,6 +58,7 @@ test('Scenario: A fault after a key tap is retried in a restarted Chrome without
       test: 'Scenario: A fault after a key tap is retried in a restarted Chrome without a pid check',
       fails: false,
       state: 'complete',
+      taps: [{keys: ['A', 'B', 'Space'], events: []}],
     },
     calls: [
       'open chrome',
