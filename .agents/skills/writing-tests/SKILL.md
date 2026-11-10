@@ -18,6 +18,12 @@ The file extension is the discriminator, never a `.browser` suffix:
 
 When scaffolding a new package, mirror `plugin-sdk-value`'s vitest config: a `browser` project including `src/**/*.test.tsx` and a `unit` project including `src/**/*.test.ts`.
 
+## Choosing the form
+
+- When textspec can state the case (the document and selection before, the action, the document and selection after), write it as a Gherkin scenario using the existing steps. Editor scenarios go in `gherkin-spec/`, plugin scenarios in a `.feature` next to the plugin source.
+- When textspec can't state it (emitted events or patches, paths, or anything else outside the notation), write a plain test with every value written out, even when that makes the file long. Don't bend a scenario to fit by adding steps that take or check JSON.
+- No `.each` whose rows are built by helpers. A table of fixture builders, path builders and wrappers makes the reader assemble each case in their head. Write each case out as its own test.
+
 ## Harnesses
 
 - **Editor integration tests**: `createTestEditor` from `@portabletext/editor/test/vitest` (inside the editor package: `../src/test/vitest`). Returns `{editor, locator}`. Plugins and probes go in as `children`, but note they mount as siblings _after_ `PortableTextEditable`; a provider that must wrap the editable needs a hand-rolled render with a comment explaining why.
