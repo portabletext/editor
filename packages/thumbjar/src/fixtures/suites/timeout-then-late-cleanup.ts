@@ -1,8 +1,8 @@
 import {expect, test, vi} from 'vitest'
 import {driverRuns, typeOnDevice} from '../../driver.ts'
 
-test.fails('Scenario: Typing kyou into an empty block times out while Chrome stops', async () => {
-  const typed = await typeOnDevice({
+test.fails('Scenario: Typing kyou into an empty block times out while Chrome stops', async (context) => {
+  const typed = await typeOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',

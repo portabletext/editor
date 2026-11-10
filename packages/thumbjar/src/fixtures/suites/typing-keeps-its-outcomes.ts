@@ -6,9 +6,9 @@ beforeEach(() => {
   vi.useFakeTimers()
 })
 
-test('Scenario: A candidate Gboard does not offer is committed with Space', async () => {
+test('Scenario: A candidate Gboard does not offer is committed with Space', async (context) => {
   globalThis.gboardDevice.keyboard = 'ja'
-  const running = typeOnDevice({
+  const running = typeOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
@@ -36,9 +36,9 @@ test('Scenario: A candidate Gboard does not offer is committed with Space', asyn
   })
 })
 
-test('Scenario: A fault after a key tap is retried in a restarted Chrome without a pid check', async () => {
+test('Scenario: A fault after a key tap is retried in a restarted Chrome without a pid check', async (context) => {
   globalThis.gboardDevice.rejectedTaps = [3]
-  const running = typeOnDevice({
+  const running = typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
