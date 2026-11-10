@@ -1,8 +1,8 @@
 import {typeOnDevice} from 'thumbjar'
 import {expect, test} from 'vitest'
 
-test('Scenario: Typing kyou twice into a plain contenteditable', async () => {
-  const typed = await typeOnDevice({
+test('Scenario: Typing kyou twice into a plain contenteditable', async (context) => {
+  const typed = await typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/plain.html',
     prefix: '',
@@ -13,8 +13,8 @@ test('Scenario: Typing kyou twice into a plain contenteditable', async () => {
   expect(typed.text).toBeOneOf(['Kyou kyou ', 'Kyou kyou'])
 })
 
-test('Scenario: Typing kyou twice into an empty block', async () => {
-  const typed = await typeOnDevice({
+test('Scenario: Typing kyou twice into an empty block', async (context) => {
+  const typed = await typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
@@ -24,8 +24,8 @@ test('Scenario: Typing kyou twice into an empty block', async () => {
   expect(typed.text).toEqual('Kyou kyou ')
 })
 
-test('Scenario: Typing kyou twice after existing text', async () => {
-  const typed = await typeOnDevice({
+test('Scenario: Typing kyou twice after existing text', async (context) => {
+  const typed = await typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/editor.html',
     prefix: 'x',

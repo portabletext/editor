@@ -85,11 +85,11 @@ Without an emulator, `pnpm test:android:unit` runs `tests/ja.test.ts` against fa
 
 ## Adding a test
 
-Add the test to the file for its language. It calls `typeOnDevice` from `thumbjar` with the page's `url`, the `keyboard`, the `prefix` the block holds and the `words` to type, and asserts on what it returns. thumbjar's README describes each option and result. For example, to check that Japanese composition after a full-width prefix commits without a restarted composition, typing `sakura` and committing 桜:
+Add the test to the file for its language. It calls `typeOnDevice` from `thumbjar` with the test's `context` and the page's `url`, the `keyboard`, the `prefix` the block holds and the `words` to type, and asserts on what it returns. thumbjar's README describes each option and result. For example, to check that Japanese composition after a full-width prefix commits without a restarted composition, typing `sakura` and committing 桜:
 
 ```ts
-test('Scenario: Typing sakura after full-width text', async () => {
-  const typed = await typeOnDevice({
+test('Scenario: Typing sakura after full-width text', async (context) => {
+  const typed = await typeOnDevice(context, {
     url: 'http://localhost:8765/editor.html',
     keyboard: 'ja',
     prefix: 'あ',

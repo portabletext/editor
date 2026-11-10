@@ -1,7 +1,7 @@
 import {vi} from 'vitest'
 
 vi.mock(import('thumbjar'), () => ({
-  typeOnDevice: ({prefix}: {prefix: string}) =>
+  typeOnDevice: (_context: unknown, {prefix}: {prefix: string}) =>
     Promise.resolve({
       text: `${prefix}きょう今日`,
       picked: ['space', '今日'],
