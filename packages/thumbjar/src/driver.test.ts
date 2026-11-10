@@ -109,7 +109,42 @@ describe(typeOnDevice.name, () => {
       file: 'passed',
       errors: [],
       tests: [
+        {
+          name: 'Scenario: A call with its options first throws before the device',
+          state: 'passed',
+        },
         {name: 'Scenario: Typing kyou after a driver fault', state: 'passed'},
+      ],
+    })
+  }, 30_000)
+
+  test('records each call against the test whose context it takes, while another test is current', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'src/fixtures/suites/concurrent-type.ts',
+        setupFiles: [
+          'src/fixtures/suites/typing-loses-first-character.ts',
+          'src/vitest/setup.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: First type resumes while the second test is current',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Second type of the concurrent tests',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: First type resumes while the other suite is current',
+          state: 'passed',
+        },
+        {name: 'Scenario: Second type of the sibling suites', state: 'passed'},
       ],
     })
   }, 30_000)

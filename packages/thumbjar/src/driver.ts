@@ -6,7 +6,7 @@
 // see `throwOnUnexpectedDigit`.
 
 import {mkdirSync} from 'node:fs'
-import {TestRunner, type RunnerTestCase, type TestContext} from 'vitest'
+import type {TestContext} from 'vitest'
 import {
   assertNoUnstoppedProcess,
   DeviceLost,
@@ -152,22 +152,46 @@ let previousRun: Promise<void> = Promise.resolve()
  * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
  * URL. Type `words` on Gboard and read back what the page holds. A driver fault restarts Chrome and types
  * everything again once. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
+ *
+ * `context` is the context Vitest passes to the test that calls it. The timeout, the artifact names and
+ * the `driverRuns` record all belong to that test, also in a test that runs alongside others. Only the
+ * context's shape is checked, so the context of another test makes that test the owner of the call.
+ * `test.each` passes no context, `test.for` does.
+ *
+ * @example
+ * ```ts
+ * import {typeOnDevice} from 'thumbjar'
+ * import {expect, test} from 'vitest'
+ *
+ * test('Scenario: Typing kyou into an empty block', async (context) => {
+ *   const typed = await typeOnDevice(context, {
+ *     url: 'http://localhost:8765/editor.html',
+ *     keyboard: 'en',
+ *     prefix: '',
+ *     words: [{letters: 'kyou'}],
+ *   })
+ *
+ *   expect(typed.text).toEqual('Kyou ')
+ * })
+ * ```
  */
 export async function typeOnDevice(
+  context: TestContext,
   options: TypeOnDeviceOptions,
 ): Promise<Typed> {
-  const currentTest = TestRunner.getCurrentTest<RunnerTestCase | undefined>()
-  if (!currentTest) {
-    throw new Error('`typeOnDevice` runs inside a test')
+  if (!isTestContext(context)) {
+    throw new Error(
+      '`typeOnDevice` takes the context Vitest passes to the test first: `typeOnDevice(context, options)`',
+    )
   }
   return await drive(
     PLAIN_INSPECTION,
     options.keyboard,
     {
-      name: currentTest.name,
-      fails: Boolean(currentTest.fails),
-      signal: currentTest.context.signal,
-      task: currentTest,
+      name: context.task.name,
+      fails: Boolean(context.task.fails),
+      signal: context.signal,
+      task: context.task,
     },
     (name, connect) => typeInChrome(name, options, connect),
   )

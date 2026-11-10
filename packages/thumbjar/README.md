@@ -14,7 +14,7 @@ Chrome is stopped and started again for each test. The test opens its page, whic
 
 ### `thumbjar`
 
-`typeOnDevice(options)` types on the device and returns what the page holds. It runs inside a Vitest test. Its options:
+`typeOnDevice(context, options)` types on the device and returns what the page holds. `context` is the context Vitest passes to the test that calls it, which owns the call: its timeout, its artifact names and its record, also when tests run concurrently. A call without one, for example with its options first, throws before it touches the device. Its options:
 
 1. `url`: the page to type into, served on the host. The driver reverses a `localhost` port to the device with `adb reverse`, 80 or 443 when the URL names none, and sets `prefix` as its `prefix` search parameter, replacing any the URL already has, so the page can seed its field with it.
 2. `keyboard`: `ja` switches Gboard to Japanese QWERTY (romaji) first, `en` leaves it on English.
@@ -33,8 +33,8 @@ It returns a `Typed`:
 import {typeOnDevice} from 'thumbjar'
 import {expect, test} from 'vitest'
 
-test('Scenario: Typing sakura after full-width text', async () => {
-  const typed = await typeOnDevice({
+test('Scenario: Typing sakura after full-width text', async (context) => {
+  const typed = await typeOnDevice(context, {
     url: 'http://localhost:8765/editor.html',
     keyboard: 'ja',
     prefix: 'あ',
@@ -182,7 +182,7 @@ The `PHASE` lines in the test's output time each driver step.
 6. `src/bin.ts` and `src/prepare/`: the `thumbjar` command, the device prep script, the Japanese setup, the page server, the jar download and `diagnose.sh`, which records device facts and never fails.
 7. `src/fixtures/`: accessibility dumps and event logs from CI runs, and fake-device suites, for the unit tests.
 
-Its only runtime dependency is Vitest, which it imports for the current test. adb runs through `child_process`, and CDP goes over the global `WebSocket` and `fetch` through `adb forward`.
+Its only runtime dependency is Vitest, whose `afterAll` the setup file uses. adb runs through `child_process`, and CDP goes over the global `WebSocket` and `fetch` through `adb forward`.
 
 ## Checking it without an emulator
 

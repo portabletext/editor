@@ -1,10 +1,10 @@
 import {expect, test, vi} from 'vitest'
 import {driverRuns, typeOnDevice} from '../../driver.ts'
 
-test.fails('Scenario: Stopping Chrome after typing leaves an adb process that outlives SIGKILL', async () => {
+test.fails('Scenario: Stopping Chrome after typing leaves an adb process that outlives SIGKILL', async (context) => {
   globalThis.firstAttemptFaults = false
   vi.useFakeTimers()
-  const typing = typeOnDevice({
+  const typing = typeOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
@@ -16,9 +16,9 @@ test.fails('Scenario: Stopping Chrome after typing leaves an adb process that ou
   expect(typed.text).toEqual('今日')
 })
 
-test('Scenario: The next test types nothing', async () => {
+test('Scenario: The next test types nothing', async (context) => {
   await expect(
-    typeOnDevice({
+    typeOnDevice(context, {
       keyboard: 'ja',
       url: 'http://localhost:8765/editor.html',
       prefix: 'x',

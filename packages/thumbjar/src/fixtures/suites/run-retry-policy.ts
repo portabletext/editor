@@ -966,7 +966,7 @@ test("Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own 
       if (globalThis.gboardDevice.attempt === 1 && queued === undefined) {
         // Read while the strict attempt runs, so the call is queued from inside its strict scope.
         globalThis.gboardDevice.infoErrors = [fault, fault]
-        queued = typeOnDevice({
+        queued = typeOnDevice(context, {
           keyboard: 'en',
           url: 'http://localhost:8765/editor.html',
           prefix: 'foo',
@@ -1052,7 +1052,7 @@ test("Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for 
       return 'a'
     },
   }
-  const typing = typeOnDevice({
+  const typing = typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/editor.html',
     prefix: 'foo',
