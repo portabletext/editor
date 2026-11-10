@@ -13,6 +13,7 @@ import {page, userEvent} from 'vitest/browser'
 import {
   defineContainer,
   defineSchema,
+  defineTextBlock,
   EditorProvider,
   PortableTextEditable,
   useEditor,
@@ -714,6 +715,347 @@ describe('RangeDecorations', () => {
     })
   })
 
+  test.each([
+    {
+      order: 'text first' as const,
+      expected: acceptanceSelection('b0', 's0', 6, 'b1', 's1', 6),
+    },
+    {
+      // known gap: insert-first remote split (B5 dropped)
+      order: 'insert first' as const,
+      expected: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 11),
+    },
+  ])(
+    'Scenario: A remote split inside a Range Decoration ($order) calls `onMoved` once with the final selection',
+    async ({order, expected}) => {
+      const onMoved = vi.fn()
+      const rangeDecoration: RangeDecoration = {
+        component: ({children}) => <span>{children}</span>,
+        onMoved,
+        selection: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 17),
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        initialValue: [acceptanceBlock('b0', 's0', 'Hello highlighted words')],
+        editableProps: {rangeDecorations: [rangeDecoration]},
+      })
+      const textPatch = diffMatchPatch(
+        'Hello highlighted words',
+        'Hello highl',
+        [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+      )
+      const insertPatch = {
+        type: 'insert' as const,
+        path: [{_key: 'b0'}],
+        position: 'after' as const,
+        items: [acceptanceBlock('b1', 's1', 'ighted words')],
+        origin: 'remote' as const,
+      }
+
+      editor.send({
+        type: 'apply',
+        patches:
+          order === 'text first'
+            ? [textPatch, insertPatch]
+            : [insertPatch, textPatch],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          acceptanceBlock('b0', 's0', 'Hello highl'),
+          acceptanceBlock('b1', 's1', 'ighted words'),
+        ])
+        expect(onMoved.mock.calls).toEqual([
+          [
+            {
+              newSelection: expected,
+              rangeDecoration,
+              origin: 'remote',
+            },
+          ],
+        ])
+      })
+    },
+  )
+
+  test.each([
+    {
+      name: 'two sequential removals at the same offset',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'fooSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('fooSbaz', 'foobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+      ],
+      survives: false,
+    },
+    {
+      name: 'an insertion before the range and removal at its shifted offset',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'xxfooQRSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('xxfooQRSbaz', 'xxfoobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+      ],
+      survives: false,
+    },
+    {
+      name: 'removing all but one original character',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'fooSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+      ],
+      survives: true,
+    },
+  ])(
+    'Scenario: remote $name applies decoration survival from steps',
+    async ({patches, survives}) => {
+      const onMoved = vi.fn()
+      const rangeDecoration: RangeDecoration = {
+        component: ({children}) => <span>{children}</span>,
+        onMoved,
+        selection: acceptanceSelection('b0', 's0', 3, 'b0', 's0', 6),
+      }
+      const {editor} = await createTestEditor({
+        keyGenerator: createTestKeyGenerator(),
+        initialValue: [acceptanceBlock('b0', 's0', 'fooQRSbaz')],
+        editableProps: {rangeDecorations: [rangeDecoration]},
+      })
+
+      editor.send({type: 'apply', patches})
+
+      await vi.waitFor(() => {
+        expect(onMoved.mock.calls).toEqual([
+          [
+            {
+              newSelection: survives
+                ? acceptanceSelection('b0', 's0', 3, 'b0', 's0', 4)
+                : null,
+              rangeDecoration,
+              origin: 'remote',
+            },
+          ],
+        ])
+      })
+    },
+  )
+
+  test('Scenario: one remote batch applies both offset-shifting removal patterns', async () => {
+    const firstOnMoved = vi.fn()
+    const secondOnMoved = vi.fn()
+    const firstSelection = acceptanceSelection('b0', 's0', 3, 'b0', 's0', 6)
+    const secondSelection = acceptanceSelection('b0', 's1', 3, 'b0', 's1', 6)
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      initialValue: [
+        {
+          ...acceptanceBlock('b0', 's0', 'foobarbaz'),
+          children: [
+            {_key: 's0', _type: 'span', marks: [], text: 'fooQRSbaz'},
+            {_key: 's1', _type: 'span', marks: [], text: 'fooQRSbaz'},
+          ],
+        },
+      ],
+      editableProps: {
+        rangeDecorations: [
+          {
+            component: ({children}) => <span>{children}</span>,
+            onMoved: firstOnMoved,
+            selection: firstSelection,
+          },
+          {
+            component: ({children}) => <span>{children}</span>,
+            onMoved: secondOnMoved,
+            selection: secondSelection,
+          },
+        ],
+      },
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        diffMatchPatch('fooQRSbaz', 'fooSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('fooSbaz', 'foobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+          'text',
+        ]),
+        diffMatchPatch('fooQRSbaz', 'xxfooQRSbaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's1'},
+          'text',
+        ]),
+        diffMatchPatch('xxfooQRSbaz', 'xxfoobaz', [
+          {_key: 'b0'},
+          'children',
+          {_key: 's1'},
+          'text',
+        ]),
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(firstOnMoved.mock.calls[0]?.[0].newSelection).toEqual(null)
+      expect(secondOnMoved.mock.calls[0]?.[0].newSelection).toEqual(null)
+    })
+  })
+
+  test('Scenario: removing the only decorated middle block retires a cross-block decoration', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const middleBlockKey = keyGenerator()
+    const middleSpanKey = keyGenerator()
+    const lastBlockKey = keyGenerator()
+    const lastSpanKey = keyGenerator()
+    const onMoved = vi.fn()
+    const rangeDecoration: RangeDecoration = {
+      component: ({children}) => (
+        <span data-testid="middle-block-decoration">{children}</span>
+      ),
+      onMoved,
+      selection: acceptanceSelection(
+        firstBlockKey,
+        firstSpanKey,
+        3,
+        lastBlockKey,
+        lastSpanKey,
+        0,
+      ),
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        acceptanceBlock(firstBlockKey, firstSpanKey, 'foo'),
+        acceptanceBlock(middleBlockKey, middleSpanKey, 'bar'),
+        acceptanceBlock(lastBlockKey, lastSpanKey, 'baz'),
+      ],
+      editableProps: {rangeDecorations: [rangeDecoration]},
+    })
+    await expect
+      .element(
+        page.getByTestId('middle-block-decoration').filter({hasText: 'bar'}),
+      )
+      .toBeVisible()
+
+    editor.send({
+      type: 'apply',
+      patches: [{type: 'unset', path: [{_key: middleBlockKey}]}],
+    })
+
+    await vi.waitFor(() => {
+      expect(onMoved.mock.calls).toEqual([
+        [
+          {
+            newSelection: null,
+            rangeDecoration,
+            origin: 'remote',
+          },
+        ],
+      ])
+    })
+  })
+
+  test('Scenario: remote typing at both ends of a backward cross-block decoration only moves its document-order start', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const firstBlockKey = keyGenerator()
+    const firstSpanKey = keyGenerator()
+    const lastBlockKey = keyGenerator()
+    const lastSpanKey = keyGenerator()
+    const onMoved = vi.fn()
+    const selection = acceptanceSelection(
+      lastBlockKey,
+      lastSpanKey,
+      3,
+      firstBlockKey,
+      firstSpanKey,
+      1,
+    )
+    const rangeDecoration: RangeDecoration = {
+      component: ({children}) => (
+        <span data-testid="backward-decoration">{children}</span>
+      ),
+      onMoved,
+      selection,
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        acceptanceBlock(firstBlockKey, firstSpanKey, 'foo'),
+        acceptanceBlock(lastBlockKey, lastSpanKey, 'bar'),
+      ],
+      editableProps: {rangeDecorations: [rangeDecoration]},
+    })
+    await expect
+      .element(page.getByTestId('backward-decoration').first())
+      .toBeVisible()
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        diffMatchPatch('bar', 'barbaz', [
+          {_key: lastBlockKey},
+          'children',
+          {_key: lastSpanKey},
+          'text',
+        ]),
+        diffMatchPatch('foo', 'xfoo', [
+          {_key: firstBlockKey},
+          'children',
+          {_key: firstSpanKey},
+          'text',
+        ]),
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(onMoved.mock.calls).toEqual([
+        [
+          {
+            newSelection: acceptanceSelection(
+              lastBlockKey,
+              lastSpanKey,
+              3,
+              firstBlockKey,
+              firstSpanKey,
+              2,
+            ),
+            rangeDecoration,
+            origin: 'remote',
+          },
+        ],
+      ])
+    })
+  })
+
   test('Scenario: A repair triggered by a remote patch reports a remote origin', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -1023,6 +1365,1265 @@ describe('RangeDecorations', () => {
     )
   })
 })
+
+describe('RangeDecorations: transaction re-anchoring acceptance', () => {
+  test('Scenario: splitting exactly at a decoration end keeps it in the first block', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'Hello world')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+    })
+    await expect.element(harness.locator).toBeVisible()
+    await userEvent.click(harness.locator)
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 5, 'b0', 's0', 5),
+    })
+
+    await userEvent.keyboard('{Enter}')
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['Hello', ' world'])
+      expect(harness.getSelection()).toEqual(
+        acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+      )
+      expect(page.getByTestId('acceptance-decoration')).toHaveTextContent(
+        'Hello',
+      )
+    })
+  })
+
+  test('Scenario: splitting exactly at a decoration start moves it into the new block', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'Hello world')],
+      decoration: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 11),
+    })
+    await expect.element(harness.locator).toBeVisible()
+    await userEvent.click(harness.locator)
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6),
+    })
+
+    await userEvent.keyboard('{Enter}')
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['Hello ', 'world'])
+      expect(harness.getSelection()).toEqual(
+        acceptanceSelection('k2', 's0', 0, 'k2', 's0', 5),
+      )
+      expect(page.getByTestId('acceptance-decoration')).toHaveTextContent(
+        'world',
+      )
+    })
+  })
+
+  test('Scenario: merging at a decoration start preserves its text without growing backward', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [
+        acceptanceBlock('b0', 's0', 'Hello '),
+        acceptanceBlock('b1', 's1', 'world'),
+      ],
+      decoration: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 5),
+    })
+    await expect.element(harness.locator).toBeVisible()
+    await userEvent.click(harness.locator)
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 0),
+    })
+
+    await userEvent.keyboard('{Backspace}')
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['Hello world'])
+      expect(harness.getSelection()).toEqual(
+        acceptanceSelection('b0', 's0', 6, 'b0', 's0', 11),
+      )
+      expect(page.getByTestId('acceptance-decoration')).toHaveTextContent(
+        'world',
+      )
+    })
+  })
+
+  test('Scenario: mapping a registered split caret matches the editor selection', async () => {
+    const caret = acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6)
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'Hello world')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+    })
+    await expect.element(harness.locator).toBeVisible()
+    const registration = harness.editor.registerDecorations({
+      decorations: [
+        {
+          id: 'caret',
+          type: 'range',
+          render: ({children}) => <span>{children}</span>,
+          range: caret,
+        },
+      ],
+    })
+    await userEvent.click(harness.locator)
+    harness.editor.send({type: 'select', at: caret})
+
+    await userEvent.keyboard('{Enter}')
+
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()).toEqual([
+        {
+          id: 'caret',
+          range: acceptanceSelection('k2', 's0', 0, 'k2', 's0', 0),
+        },
+      ])
+      expect(harness.editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: 'k2'}, 'children', {_key: 's0'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'k2'}, 'children', {_key: 's0'}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: a controlled prop decoration keeps its anchor through repeated keyboard splits', async () => {
+    const editorRef: RefObject<Editor | null> = createRef()
+    const movedSelections: Array<
+      RangeDecorationOnMovedDetails['newSelection']
+    > = []
+
+    function App() {
+      const [, setValue] = useState<Array<PortableTextBlock> | undefined>()
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([
+        {
+          component: ({children}) => (
+            <span data-testid="controlled-decoration">{children}</span>
+          ),
+          payload: {id: 'controlled'},
+          selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+          onMoved: (details) => {
+            movedSelections.push(details.newSelection)
+            setRangeDecorations((decorations) =>
+              decorations.map((decoration) =>
+                decoration.payload?.['id'] === 'controlled'
+                  ? {...decoration, selection: details.newSelection}
+                  : decoration,
+              ),
+            )
+          },
+        },
+        {
+          component: ({children}) => <span>{children}</span>,
+          payload: {id: 'live'},
+          selection: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+        },
+      ])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator: createTestKeyGenerator(),
+            schemaDefinition: defineSchema({}),
+            initialValue: [
+              acceptanceBlock(
+                'b0',
+                's0',
+                'Alpha text then highlighted words move onward.',
+              ),
+            ],
+          }}
+        >
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'mutation') {
+                setValue(event.value)
+              }
+            }}
+          />
+          <NodePlugin
+            nodes={[
+              defineTextBlock({
+                type: 'block',
+                render: (props) => (
+                  <div {...props.attributes}>{props.children}</div>
+                ),
+              }),
+            ]}
+          />
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+          <EditorRefPlugin ref={editorRef} />
+        </EditorProvider>
+      )
+    }
+
+    await render(<App />)
+    const locator = page.getByRole('textbox')
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editorRef.current!.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+    })
+
+    for (const word of ['asd', 'as', 'd', 'asd', 'as']) {
+      await userEvent.keyboard('{Enter}')
+      await userEvent.type(locator, word)
+    }
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+        'B: Alpha text then highli\nB: asd\nB: as\nB: d\nB: asd\nB: as|ghted words move onward.',
+      )
+      expect(movedSelections.at(-1)).toEqual(
+        acceptanceSelection('b0', 's0', 16, 'k6', 's0', 13),
+      )
+    })
+  })
+
+  test.each([
+    {
+      name: 'split across blocks',
+      words: ['asd', 'as', 'd'],
+      highlight: acceptanceSelection('b0', 's0', 16, 'k4', 's0', 12),
+    },
+    {
+      name: 'single block',
+      words: [],
+      highlight: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+    },
+  ])(
+    'Scenario: typing over a whole controlled prop decoration ($name) does not revive it',
+    async ({words, highlight}) => {
+      const editorRef: RefObject<Editor | null> = createRef()
+      const movedSelections: Array<
+        RangeDecorationOnMovedDetails['newSelection']
+      > = []
+
+      function App() {
+        const [rangeDecorations, setRangeDecorations] = useState<
+          Array<RangeDecoration>
+        >([
+          {
+            component: ({children}) => (
+              <span data-testid="controlled-decoration">{children}</span>
+            ),
+            payload: {id: 'controlled'},
+            selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+            onMoved: (details) => {
+              movedSelections.push(details.newSelection)
+              setRangeDecorations((decorations) =>
+                decorations.map((decoration) =>
+                  decoration.payload?.['id'] === 'controlled'
+                    ? {...decoration, selection: details.newSelection}
+                    : decoration,
+                ),
+              )
+            },
+          },
+          {
+            component: ({children}) => <span>{children}</span>,
+            payload: {id: 'live'},
+            selection: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+          },
+        ])
+
+        return (
+          <EditorProvider
+            initialConfig={{
+              keyGenerator: createTestKeyGenerator(),
+              schemaDefinition: defineSchema({}),
+              initialValue: [
+                acceptanceBlock(
+                  'b0',
+                  's0',
+                  'Alpha text then highlighted words move onward.',
+                ),
+              ],
+            }}
+          >
+            <NodePlugin
+              nodes={[
+                defineTextBlock({
+                  type: 'block',
+                  render: (props) => (
+                    <div {...props.attributes}>{props.children}</div>
+                  ),
+                }),
+              ]}
+            />
+            <PortableTextEditable rangeDecorations={rangeDecorations} />
+            <EditorRefPlugin ref={editorRef} />
+          </EditorProvider>
+        )
+      }
+
+      await render(<App />)
+      const locator = page.getByRole('textbox')
+      await expect.element(locator).toBeVisible()
+      await userEvent.click(locator)
+      editorRef.current!.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+      })
+
+      for (const word of words) {
+        await userEvent.keyboard('{Enter}')
+        await userEvent.type(locator, word)
+      }
+
+      await vi.waitFor(() => {
+        expect(movedSelections.at(-1) ?? highlight).toEqual(highlight)
+      })
+
+      editorRef.current!.send({type: 'select', at: highlight})
+      const movedSelectionsBeforeTyping = movedSelections.length
+      await userEvent.keyboard('a')
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+          'B: Alpha text then a| move onward.',
+        )
+        expect(movedSelections.slice(movedSelectionsBeforeTyping)).toEqual([
+          null,
+        ])
+      })
+      expect(page.getByTestId('controlled-decoration').elements()).toEqual([])
+    },
+  )
+
+  test('Scenario: replacing a split controlled prop decoration from one character before it never grows it back', async () => {
+    const editorRef: RefObject<Editor | null> = createRef()
+    const movedSelections: Array<
+      RangeDecorationOnMovedDetails['newSelection']
+    > = []
+
+    function App() {
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([
+        {
+          component: ({children}) => (
+            <span data-testid="controlled-decoration">{children}</span>
+          ),
+          payload: {id: 'controlled'},
+          selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 41),
+          onMoved: (details) => {
+            movedSelections.push(details.newSelection)
+            setRangeDecorations((decorations) =>
+              decorations.map((decoration) =>
+                decoration.payload?.['id'] === 'controlled'
+                  ? {...decoration, selection: details.newSelection}
+                  : decoration,
+              ),
+            )
+          },
+        },
+      ])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator: createTestKeyGenerator(),
+            schemaDefinition: defineSchema({}),
+            initialValue: [
+              acceptanceBlock(
+                'b0',
+                's0',
+                'Paste into this highlighted middle phrase today.',
+              ),
+              acceptanceBlock('b1', 's1', 'Selection begins in this block.'),
+            ],
+          }}
+        >
+          <NodePlugin
+            nodes={[
+              defineTextBlock({
+                type: 'block',
+                render: (props) => (
+                  <div {...props.attributes}>{props.children}</div>
+                ),
+              }),
+            ]}
+          />
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+          <EditorRefPlugin ref={editorRef} />
+        </EditorProvider>
+      )
+    }
+
+    await render(<App />)
+    const locator = page.getByRole('textbox')
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editorRef.current!.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 21, 'b0', 's0', 21),
+    })
+
+    for (const word of ['asd', 'as', 'd']) {
+      await userEvent.keyboard('{Enter}')
+      await userEvent.type(locator, word)
+    }
+
+    await vi.waitFor(() => {
+      expect(movedSelections.at(-1)).toEqual(
+        acceptanceSelection('b0', 's0', 16, 'k4', 's0', 21),
+      )
+    })
+
+    editorRef.current!.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 15, 'k4', 's0', 21),
+    })
+    const movedSelectionsBeforeReplacing = movedSelections.length
+    await userEvent.keyboard('l')
+    editorRef.current!.send({type: 'insert.text', text: 'jlkaj sdck.'})
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData('text/plain', 'jlkaj sdck.')
+    editorRef.current!.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {
+        selection: editorRef.current!.getSnapshot().context.selection!,
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+        'B: Paste into thisljlkaj sdck.jlkaj sdck.| today.\nB: Selection begins in this block.',
+      )
+      expect(movedSelections.slice(movedSelectionsBeforeReplacing)).toEqual([
+        null,
+      ])
+    })
+    expect(page.getByTestId('controlled-decoration').elements()).toEqual([])
+  })
+
+  test.each([
+    {key: '{Backspace}', direction: 'backward' as const},
+    {key: '{Delete}', direction: 'forward' as const},
+  ])(
+    'Scenario: a controlled prop decoration survives keyboard split then $direction merge',
+    async ({key, direction}) => {
+      const editorRef: RefObject<Editor | null> = createRef()
+      const movedSelections: Array<
+        RangeDecorationOnMovedDetails['newSelection']
+      > = []
+
+      function App() {
+        const [, setValue] = useState<Array<PortableTextBlock> | undefined>()
+        const [rangeDecorations, setRangeDecorations] = useState<
+          Array<RangeDecoration>
+        >([
+          {
+            component: ({children}) => (
+              <span data-testid="controlled-decoration">{children}</span>
+            ),
+            payload: {id: 'controlled'},
+            selection: acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+            onMoved: (details) => {
+              movedSelections.push(details.newSelection)
+              setRangeDecorations((decorations) =>
+                decorations.map((decoration) =>
+                  decoration.payload?.['id'] === 'controlled'
+                    ? {...decoration, selection: details.newSelection}
+                    : decoration,
+                ),
+              )
+            },
+          },
+          {
+            component: ({children}) => <span>{children}</span>,
+            payload: {id: 'other'},
+            selection: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 5),
+          },
+        ])
+
+        return (
+          <EditorProvider
+            initialConfig={{
+              keyGenerator: createTestKeyGenerator(),
+              schemaDefinition: defineSchema({}),
+              initialValue: [
+                acceptanceBlock(
+                  'b0',
+                  's0',
+                  'Alpha text then highlighted words move onward.',
+                ),
+              ],
+            }}
+          >
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'mutation') {
+                  setValue(event.value)
+                }
+              }}
+            />
+            <NodePlugin
+              nodes={[
+                defineTextBlock({
+                  type: 'block',
+                  render: (props) => (
+                    <div {...props.attributes}>{props.children}</div>
+                  ),
+                }),
+              ]}
+            />
+            <PortableTextEditable rangeDecorations={rangeDecorations} />
+            <EditorRefPlugin ref={editorRef} />
+          </EditorProvider>
+        )
+      }
+
+      await render(<App />)
+      const locator = page.getByRole('textbox')
+      await expect.element(locator).toBeVisible()
+      await userEvent.click(locator)
+      editorRef.current!.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+      })
+      await userEvent.keyboard('{Enter}')
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editorRef.current!.getSnapshot().context)).toEqual(
+          'B: Alpha text then highli\nB: |ghted words move onward.',
+        )
+        expect(movedSelections.at(-1)).toEqual(
+          acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
+        )
+      })
+
+      editorRef.current!.send({
+        type: 'child.unset',
+        at: [{_key: 'k2'}, 'children', {_key: 's0'}],
+        props: ['_key'],
+      })
+
+      await vi.waitFor(() => {
+        expect(movedSelections.at(-1)).toEqual(
+          acceptanceSelection('b0', 's0', 16, 'k2', 'k3', 11),
+        )
+      })
+
+      if (direction === 'forward') {
+        editorRef.current!.send({
+          type: 'select',
+          at: acceptanceSelection('b0', 's0', 22, 'b0', 's0', 22),
+        })
+      }
+      await userEvent.keyboard(key)
+
+      await vi.waitFor(() => {
+        expect(editorRef.current!.getSnapshot().context.value).toEqual([
+          acceptanceBlock(
+            'b0',
+            's0',
+            'Alpha text then highlighted words move onward.',
+          ),
+        ])
+        expect(movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 16, 'k2', 's0', 11),
+          acceptanceSelection('b0', 's0', 16, 'k2', 'k3', 11),
+          acceptanceSelection('b0', 's0', 16, 'b0', 's0', 33),
+        ])
+        expect(page.getByTestId('controlled-decoration')).toHaveTextContent(
+          'highlighted words',
+        )
+      })
+    },
+  )
+
+  test.each([
+    {kind: 'prop' as const, direction: 'backward' as const},
+    {kind: 'prop' as const, direction: 'forward' as const},
+    {kind: 'registered' as const, direction: 'backward' as const},
+    {kind: 'registered' as const, direction: 'forward' as const},
+  ])(
+    'Scenario: a $kind decoration survives split then $direction merge',
+    async ({kind, direction}) => {
+      const harness = await createSplitMergeDecorationHarness(kind)
+
+      harness.editor.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6),
+      })
+      harness.editor.send({type: 'insert.break'})
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(['highli', 'ghted words'])
+        expect(harness.movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 0, 'k2', 's0', 11),
+        ])
+      })
+
+      const value = harness.editor.getSnapshot().context.value
+      const firstBlock = value[0]!
+      const secondBlock = value[1]!
+      if (
+        !isTextBlock(
+          {schema: harness.editor.getSnapshot().context.schema},
+          firstBlock,
+        ) ||
+        !isTextBlock(
+          {schema: harness.editor.getSnapshot().context.schema},
+          secondBlock,
+        )
+      ) {
+        throw new Error('Expected text blocks')
+      }
+      const firstSpan = firstBlock.children[0]!
+      const secondSpan = secondBlock.children[0]!
+      if (
+        !isSpan(
+          {schema: harness.editor.getSnapshot().context.schema},
+          firstSpan,
+        ) ||
+        !isSpan(
+          {schema: harness.editor.getSnapshot().context.schema},
+          secondSpan,
+        )
+      ) {
+        throw new Error('Expected spans')
+      }
+
+      harness.editor.send({
+        type: 'select',
+        at:
+          direction === 'backward'
+            ? acceptanceSelection(
+                secondBlock._key,
+                secondSpan._key,
+                0,
+                secondBlock._key,
+                secondSpan._key,
+                0,
+              )
+            : acceptanceSelection(
+                firstBlock._key,
+                firstSpan._key,
+                firstSpan.text.length,
+                firstBlock._key,
+                firstSpan._key,
+                firstSpan.text.length,
+              ),
+      })
+      harness.editor.send({type: 'delete', direction})
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(['highlighted words'])
+        expect(harness.getSelection()).toEqual(
+          acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
+        )
+        expect(harness.movedSelections).toEqual([
+          acceptanceSelection('b0', 's0', 0, 'k2', 's0', 11),
+          acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17),
+        ])
+        expect(getDecoratedText()).toEqual(['highlighted words'])
+      })
+    },
+  )
+
+  test.each([
+    {kind: 'prop' as const, key: '{Backspace}'},
+    {kind: 'prop' as const, key: '{Delete}'},
+    {kind: 'registered' as const, key: '{Backspace}'},
+    {kind: 'registered' as const, key: '{Delete}'},
+  ])(
+    'Scenario: a $kind decoration whose text is deleted with $key does not revive on identical text',
+    async ({kind, key}) => {
+      const initialValue = [
+        acceptanceBlock('b0', 's0', 'foo'),
+        acceptanceBlock('b1', 's1', 'foo'),
+      ]
+      const decoration = acceptanceSelection('b1', 's1', 0, 'b1', 's1', 3)
+      const harness =
+        kind === 'prop'
+          ? await createAcceptanceDecorationHarness({initialValue, decoration})
+          : await createRegisteredDecorationHarness({initialValue, decoration})
+
+      await userEvent.click(harness.locator)
+      harness.editor.send({
+        type: 'select',
+        at: acceptanceSelection('b0', 's0', 3, 'b1', 's1', 3),
+      })
+      await userEvent.keyboard(key)
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(['foo'])
+        expect(harness.getSelection()).toEqual(undefined)
+        expect(harness.movedSelections).toEqual([null])
+        expect(getDecoratedText()).toEqual([])
+      })
+    },
+  )
+
+  test('Scenario: typing repeated copies over a decoration does not revive it on the first copy', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'a')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 1),
+    })
+
+    await userEvent.click(harness.locator)
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 1),
+    })
+    await vi.waitFor(() => {
+      expect(harness.editor.getSnapshot().context.selection).toEqual({
+        ...acceptanceSelection('b0', 's0', 0, 'b0', 's0', 1),
+        backward: false,
+      })
+    })
+    harness.locator.element().dispatchEvent(
+      new InputEvent('beforeinput', {
+        inputType: 'insertText',
+        data: 'banana',
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['banana'])
+      expect(harness.getSelection()).toEqual(undefined)
+      expect(harness.movedSelections).toEqual([null])
+      expect(getDecoratedText()).toEqual([])
+    })
+  })
+
+  test.each([
+    {
+      name: 'one block',
+      blocks: [acceptanceBlock('pasted-b0', 'pasted-s0', 'foo')],
+    },
+    {
+      name: 'two blocks',
+      blocks: [
+        acceptanceBlock('pasted-b0', 'pasted-s0', 'foo'),
+        acceptanceBlock('pasted-b1', 'pasted-s1', 'bar'),
+      ],
+    },
+  ])(
+    'Scenario: local paste of $name over decorated text removes the decoration',
+    async ({blocks}) => {
+      const harness = await createAcceptanceDecorationHarness({
+        initialValue: [
+          acceptanceBlock('b0', 's0', 'hello'),
+          acceptanceBlock('b1', 's1', 'foo'),
+          acceptanceBlock('b2', 's2', 'bye'),
+        ],
+        decoration: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 3),
+      })
+      harness.editor.send({
+        type: 'select',
+        at: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 3),
+      })
+      harness.editor.send({
+        type: 'insert.blocks',
+        blocks,
+        placement: 'auto',
+      })
+
+      await vi.waitFor(() => {
+        expect(harness.getSelection()).toEqual(undefined)
+        expect(harness.movedSelections).toEqual([null])
+        expect(getDecoratedText()).toEqual([])
+      })
+    },
+  )
+
+  test('Scenario: pasting two blocks inside a decoration stretches it over the pasted text', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'ab foo')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 6),
+    })
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 1, 'b0', 's0', 2),
+    })
+    harness.editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        acceptanceBlock('p1', 'q1', 'x'),
+        acceptanceBlock('p2', 'q2', 'y'),
+      ],
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['ax', 'y foo'])
+      expect(getDecoratedText()).toEqual(['ax', 'y foo'])
+    })
+  })
+
+  test('Scenario: pasting two blocks over text preserves a decoration on the unselected tail', async () => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'ab foo')],
+      decoration: acceptanceSelection('b0', 's0', 3, 'b0', 's0', 6),
+    })
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 1, 'b0', 's0', 2),
+    })
+    harness.editor.send({
+      type: 'insert.blocks',
+      blocks: [
+        acceptanceBlock('p1', 'q1', 'x'),
+        acceptanceBlock('p2', 'q2', 'y'),
+      ],
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(['ax', 'y foo'])
+      expect(harness.getSelection()).toEqual(
+        acceptanceSelection('p2', 'q2', 2, 'p2', 'q2', 5),
+      )
+      expect(harness.movedSelections).toEqual([
+        acceptanceSelection('p2', 'q2', 2, 'p2', 'q2', 5),
+      ])
+      expect(getDecoratedText()).toEqual(['foo'])
+    })
+  })
+
+  test.each(['one', 'one\ntwo'])(
+    'Scenario: plain-text paste of %s at the start of decorated text preserves the original words',
+    async (text) => {
+      const harness = await createAcceptanceDecorationHarness({
+        initialValue: [acceptanceBlock('b0', 's0', 'hello foo bye')],
+        decoration: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 9),
+      })
+
+      pasteAcceptanceText(harness.editor, 'b0', 's0', 6, text)
+
+      await vi.waitFor(() => {
+        expect(getDecoratedText()).toEqual(['foo'])
+      })
+    },
+  )
+
+  test('Scenario: typing reports one registered decoration mapping per keystroke', async () => {
+    const harness = await createRegisteredDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'foo')],
+      decoration: acceptanceSelection('b0', 's0', 1, 'b0', 's0', 3),
+    })
+
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 0),
+    })
+    harness.editor.send({type: 'insert.text', text: 'x'})
+    harness.editor.send({type: 'insert.text', text: 'y'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 2, 'b0', 's0', 4),
+      acceptanceSelection('b0', 's0', 3, 'b0', 's0', 5),
+    ])
+  })
+
+  test('Scenario: undo and redo of a split each report one registered decoration mapping', async () => {
+    const harness = await createRegisteredDecorationHarness({
+      initialValue: [acceptanceBlock('b0', 's0', 'hello dolly')],
+      decoration: acceptanceSelection('b0', 's0', 0, 'b0', 's0', 11),
+    })
+
+    harness.editor.send({
+      type: 'select',
+      at: acceptanceSelection('b0', 's0', 6, 'b0', 's0', 6),
+    })
+    harness.editor.send({type: 'insert.break'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 0, 'k2', 's0', 5),
+    ])
+    harness.movedSelections.length = 0
+
+    harness.editor.send({type: 'history.undo'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 0, 'b0', 's0', 11),
+    ])
+    harness.movedSelections.length = 0
+
+    harness.editor.send({type: 'history.redo'})
+
+    expect(harness.movedSelections).toEqual([
+      acceptanceSelection('b0', 's0', 0, 'k2', 's0', 5),
+    ])
+  })
+
+  test('Scenario: a controlled null prop decoration does not call `onMoved`', async () => {
+    const onMoved = vi.fn()
+
+    function App() {
+      const [rangeDecorations, setRangeDecorations] = useState<
+        Array<RangeDecoration>
+      >([
+        {
+          component: ({children}) => <span>{children}</span>,
+          selection: null,
+          onMoved: (details) => {
+            onMoved(details)
+            setRangeDecorations((decorations) => [...decorations])
+          },
+        },
+      ])
+
+      return (
+        <EditorProvider
+          initialConfig={{
+            keyGenerator: createTestKeyGenerator(),
+            schemaDefinition: defineSchema({}),
+            initialValue: [acceptanceBlock('b0', 's0', 'highlighted words')],
+          }}
+        >
+          <PortableTextEditable rangeDecorations={rangeDecorations} />
+        </EditorProvider>
+      )
+    }
+
+    await render(<App />)
+    await expect.element(page.getByRole('textbox')).toBeVisible()
+    expect(onMoved).toHaveBeenCalledTimes(0)
+  })
+
+  test.each([
+    {
+      name: 'P1 text/plain single line pasted inside a decoration',
+      text: 'XX',
+      value: ['HeXXllo world'],
+      expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 7),
+      decoratedText: ['HeXXllo'],
+    },
+    {
+      name: 'P2 text/plain single newline pasted inside a decoration',
+      text: 'one\ntwo',
+      value: ['Heone\ntwollo world'],
+      expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 12),
+      decoratedText: ['Heone\ntwollo'],
+    },
+    {
+      // known gap: insert-first remote split (B5 dropped)
+      name: 'P3 text/plain blank line pasted inside a decoration',
+      text: 'a\n\nb',
+      value: ['Hea', 'bllo world'],
+      expected: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 2),
+      decoratedText: ['He'],
+    },
+  ])('Scenario: $name', async ({text, value, expected, decoratedText}) => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: [acceptanceBlock('b1', 's1', 'Hello world')],
+      decoration: acceptanceSelection('b1', 's1', 0, 'b1', 's1', 5),
+    })
+
+    pasteAcceptanceText(harness.editor, 'b1', 's1', 2, text)
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(value)
+      expect(harness.movedSelections).toEqual([expected])
+      expect(getDecoratedText()).toEqual(decoratedText)
+    })
+  })
+
+  test.each([
+    {
+      name: 'X1 typing over only a block break keeps a decoration in the second block',
+      decoration: acceptanceSelection('b2', 's2', 0, 'b2', 's2', 5),
+      editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
+      text: 'Z',
+      value: ['AlphaZBravo charlie'],
+      expected: acceptanceSelection('b1', 's1', 6, 'b1', 's1', 11),
+      decoratedText: ['Bravo'],
+    },
+    {
+      name: 'X2 typing over text across a block break keeps a later decoration',
+      decoration: acceptanceSelection('b2', 's2', 3, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
+      text: 'Y',
+      value: ['AlpYavo charlie'],
+      expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+      decoratedText: ['vo ch'],
+    },
+    {
+      name: 'X3 typing inside a decoration across a block break preserves both tails',
+      decoration: acceptanceSelection('b1', 's1', 6, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 10, 'b2', 's2', 3),
+      text: 'X',
+      value: ['Bravo highXosses the line'],
+      expected: acceptanceSelection('b1', 's1', 6, 'b1', 's1', 16),
+      decoratedText: ['highXosses'],
+      initialValue: [
+        acceptanceBlock('b1', 's1', 'Bravo highlight'),
+        acceptanceBlock('b2', 's2', ' crosses the line'),
+      ],
+    },
+  ])('Scenario: $name', async (scenario) => {
+    const harness = await createAcceptanceDecorationHarness({
+      initialValue: scenario.initialValue ?? [
+        acceptanceBlock('b1', 's1', 'Alpha'),
+        acceptanceBlock('b2', 's2', 'Bravo charlie'),
+      ],
+      decoration: scenario.decoration,
+    })
+
+    harness.editor.send({type: 'select', at: scenario.editSelection})
+    harness.editor.send({type: 'insert.text', text: scenario.text})
+
+    await vi.waitFor(() => {
+      expect(harness.getText()).toEqual(scenario.value)
+      expect(harness.movedSelections).toEqual([scenario.expected])
+      expect(getDecoratedText()).toEqual(scenario.decoratedText)
+    })
+  })
+
+  test.each([
+    {
+      name: 'X4 backspace over only a block break',
+      direction: 'backward' as const,
+      decoration: acceptanceSelection('b2', 's2', 0, 'b2', 's2', 5),
+      editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
+      value: ['AlphaBravo charlie'],
+      expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+      decoratedText: ['Bravo'],
+    },
+    {
+      name: 'X4 delete over only a block break',
+      direction: 'forward' as const,
+      decoration: acceptanceSelection('b2', 's2', 0, 'b2', 's2', 5),
+      editSelection: acceptanceSelection('b1', 's1', 5, 'b2', 's2', 0),
+      value: ['AlphaBravo charlie'],
+      expected: acceptanceSelection('b1', 's1', 5, 'b1', 's1', 10),
+      decoratedText: ['Bravo'],
+    },
+    {
+      name: 'X4 backspace over text across a block break',
+      direction: 'backward' as const,
+      decoration: acceptanceSelection('b2', 's2', 3, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
+      value: ['Alpavo charlie'],
+      expected: acceptanceSelection('b1', 's1', 4, 'b1', 's1', 9),
+      decoratedText: ['vo ch'],
+    },
+    {
+      name: 'X4 delete over text across a block break',
+      direction: 'forward' as const,
+      decoration: acceptanceSelection('b2', 's2', 3, 'b2', 's2', 8),
+      editSelection: acceptanceSelection('b1', 's1', 3, 'b2', 's2', 2),
+      value: ['Alpavo charlie'],
+      expected: acceptanceSelection('b1', 's1', 4, 'b1', 's1', 9),
+      decoratedText: ['vo ch'],
+    },
+  ])(
+    'Scenario: $name keeps a decoration in the second block',
+    async (scenario) => {
+      const harness = await createAcceptanceDecorationHarness({
+        initialValue: [
+          acceptanceBlock('b1', 's1', 'Alpha'),
+          acceptanceBlock('b2', 's2', 'Bravo charlie'),
+        ],
+        decoration: scenario.decoration,
+      })
+
+      harness.editor.send({
+        type: 'select',
+        at: scenario.editSelection,
+      })
+      harness.editor.send({type: 'delete', direction: scenario.direction})
+
+      await vi.waitFor(() => {
+        expect(harness.getText()).toEqual(scenario.value)
+        expect(harness.movedSelections).toEqual([scenario.expected])
+        expect(getDecoratedText()).toEqual(scenario.decoratedText)
+      })
+    },
+  )
+})
+
+function getDecoratedText() {
+  return page
+    .getByTestId('acceptance-decoration')
+    .elements()
+    .map((element) => element.textContent)
+}
+
+function acceptanceBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    style: 'normal',
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+  }
+}
+
+function acceptanceSelection(
+  anchorBlockKey: string,
+  anchorSpanKey: string,
+  anchorOffset: number,
+  focusBlockKey: string,
+  focusSpanKey: string,
+  focusOffset: number,
+) {
+  return {
+    anchor: {
+      path: [
+        {_key: anchorBlockKey},
+        'children' as const,
+        {_key: anchorSpanKey},
+      ],
+      offset: anchorOffset,
+    },
+    focus: {
+      path: [{_key: focusBlockKey}, 'children' as const, {_key: focusSpanKey}],
+      offset: focusOffset,
+    },
+  }
+}
+
+async function createAcceptanceDecorationHarness(args: {
+  initialValue: Array<ReturnType<typeof acceptanceBlock>>
+  decoration: ReturnType<typeof acceptanceSelection>
+}) {
+  const movedSelections: Array<RangeDecorationOnMovedDetails['newSelection']> =
+    []
+  let rangeDecorations: Array<RangeDecoration> = [
+    {
+      component: ({children}) => (
+        <span data-testid="acceptance-decoration">{children}</span>
+      ),
+      payload: {id: 'acceptance'},
+      selection: args.decoration,
+      onMoved: (details) => {
+        movedSelections.push(details.newSelection)
+        rangeDecorations = updateRangeDecorations({rangeDecorations, details})
+      },
+    },
+  ]
+  const result = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: args.initialValue,
+    editableProps: {rangeDecorations},
+  })
+
+  return {
+    ...result,
+    movedSelections,
+    getSelection: () => rangeDecorations[0]?.selection,
+    getText: () =>
+      result.editor
+        .getSnapshot()
+        .context.value.map((block) =>
+          isTextBlock(
+            {schema: result.editor.getSnapshot().context.schema},
+            block,
+          )
+            ? block.children
+                .map((child) =>
+                  isSpan(
+                    {schema: result.editor.getSnapshot().context.schema},
+                    child,
+                  )
+                    ? child.text
+                    : '',
+                )
+                .join('')
+            : '',
+        ),
+  }
+}
+
+function createSplitMergeDecorationHarness(kind: 'prop' | 'registered') {
+  const initialValue = [acceptanceBlock('b0', 's0', 'highlighted words')]
+  const decoration = acceptanceSelection('b0', 's0', 0, 'b0', 's0', 17)
+  return kind === 'registered'
+    ? createRegisteredDecorationHarness({initialValue, decoration})
+    : createAcceptanceDecorationHarness({initialValue, decoration})
+}
+
+async function createRegisteredDecorationHarness(args: {
+  initialValue: Array<ReturnType<typeof acceptanceBlock>>
+  decoration: ReturnType<typeof acceptanceSelection>
+}) {
+  const result = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: args.initialValue,
+  })
+  const movedSelections: Array<RangeDecorationOnMovedDetails['newSelection']> =
+    []
+  const registration = result.editor.registerDecorations({
+    decorations: [
+      {
+        id: 'acceptance',
+        type: 'range',
+        render: ({children}) => (
+          <span data-testid="acceptance-decoration">{children}</span>
+        ),
+        range: args.decoration,
+      },
+    ],
+    onMapped: (mappings) => {
+      for (const mapping of mappings) {
+        movedSelections.push(mapping.newRange)
+      }
+    },
+  })
+  return {
+    ...result,
+    movedSelections,
+    getSelection: () => registration.getDecorations()[0]?.range,
+    getText: () =>
+      result.editor
+        .getSnapshot()
+        .context.value.map((block) =>
+          isTextBlock(
+            {schema: result.editor.getSnapshot().context.schema},
+            block,
+          )
+            ? block.children
+                .map((child) =>
+                  isSpan(
+                    {schema: result.editor.getSnapshot().context.schema},
+                    child,
+                  )
+                    ? child.text
+                    : '',
+                )
+                .join('')
+            : '',
+        ),
+  }
+}
+
+function pasteAcceptanceText(
+  editor: Editor,
+  blockKey: string,
+  spanKey: string,
+  offset: number,
+  text: string,
+) {
+  const at = acceptanceSelection(
+    blockKey,
+    spanKey,
+    offset,
+    blockKey,
+    spanKey,
+    offset,
+  )
+  editor.send({type: 'select', at})
+  const dataTransfer = new DataTransfer()
+  dataTransfer.setData('text/plain', text)
+  editor.send({
+    type: 'clipboard.paste',
+    originEvent: {dataTransfer},
+    position: {selection: at},
+  })
+}
 
 describe('RangeDecorations inside editable containers', () => {
   test('Scenario: Drawing a collapsed Range Decoration inside a callout', async () => {
@@ -1400,5 +3001,204 @@ describe('RangeDecorations: multiple PortableTextEditables under one provider', 
         '[data-testid="registered-decoration"]',
       ).length,
     ).toEqual(1)
+  })
+
+  test('Scenario: registered decorations move synchronously with an edit', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children' as const, {_key: spanKey}]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'Hello world', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+    const renderDecoration = (props: {children: ReactNode}) => (
+      <span>{props.children}</span>
+    )
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'decoration',
+          type: 'range',
+          render: renderDecoration,
+          range: {
+            anchor: {path: spanPath, offset: 6},
+            focus: {path: spanPath, offset: 11},
+          },
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()).toEqual([
+        {
+          id: 'decoration',
+          range: {
+            anchor: {path: spanPath, offset: 6},
+            focus: {path: spanPath, offset: 11},
+          },
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'XX'})
+
+    expect(registration.getDecorations()[0]!.range).toEqual({
+      anchor: {path: spanPath, offset: 8},
+      focus: {path: spanPath, offset: 13},
+    })
+  })
+
+  test('Scenario: updating a registered decoration after an edit does not move it twice', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children' as const, {_key: spanKey}]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [
+            {_type: 'span', _key: spanKey, text: 'Hello world', marks: []},
+          ],
+          markDefs: [],
+        },
+      ],
+    })
+    const renderDecoration = (props: {children: ReactNode}) => (
+      <span>{props.children}</span>
+    )
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'decoration',
+          type: 'range',
+          render: renderDecoration,
+          range: {
+            anchor: {path: spanPath, offset: 6},
+            focus: {path: spanPath, offset: 11},
+          },
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()[0]?.range).toEqual({
+        anchor: {path: spanPath, offset: 6},
+        focus: {path: spanPath, offset: 11},
+      })
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: spanPath, offset: 0},
+        focus: {path: spanPath, offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'XX'})
+    registration.update([
+      {
+        id: 'decoration',
+        type: 'range',
+        render: renderDecoration,
+        range: {
+          anchor: {path: spanPath, offset: 8},
+          focus: {path: spanPath, offset: 13},
+        },
+      },
+    ])
+
+    expect(registration.getDecorations()[0]!.range).toEqual({
+      anchor: {path: spanPath, offset: 8},
+      focus: {path: spanPath, offset: 13},
+    })
+  })
+
+  test('Scenario: operation mapping preserves a registered decoration when its block is rekeyed', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: 'b1',
+          children: [{_type: 'span', _key: 's1', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+    const registration = editor.registerDecorations({
+      decorations: [
+        {
+          id: 'decoration',
+          type: 'range',
+          render: (props) => <span>{props.children}</span>,
+          range: {
+            anchor: {
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 0,
+            },
+            focus: {
+              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+              offset: 3,
+            },
+          },
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()[0]?.range).toEqual({
+        anchor: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+          offset: 3,
+        },
+      })
+    })
+
+    editor.send({
+      type: 'update value',
+      value: [
+        {
+          _type: 'block',
+          _key: 'b2',
+          children: [{_type: 'span', _key: 's2', text: 'foo', marks: []}],
+          markDefs: [],
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(registration.getDecorations()[0]?.range).toEqual({
+        anchor: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: 'b2'}, 'children', {_key: 's2'}],
+          offset: 3,
+        },
+      })
+    })
   })
 })

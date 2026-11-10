@@ -7,8 +7,7 @@ import {
   type AnyEventObject,
   type CallbackLogicFunction,
 } from 'xstate'
-import {hasRemoteFrame} from '../engine/core/apply-context'
-import {subscribeToOperations} from '../engine/core/operation-channel'
+import {subscribeToChanges, type Change} from '../engine/core/change'
 import type {Node, NodeEntry} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {Range} from '../engine/interfaces/range'
@@ -18,7 +17,6 @@ import {cloneRange} from '../engine/range/clone-range'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeIntersection} from '../engine/range/range-intersection'
-import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {rangeIntersects} from '../traversal/range-intersects'
@@ -32,33 +30,19 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isEmptyTextBlock} from '../utils'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
+import {mapDecorationRangesThroughChange} from './map-decoration-ranges-through-change'
 
-const engineOperationCallback: CallbackLogicFunction<
+const engineChangeCallback: CallbackLogicFunction<
   AnyEventObject,
   {
-    type: 'engine operation'
-    operation: EngineOperation
-    origin: 'local' | 'remote'
+    type: 'engine change'
+    change: Change
   },
   {editorEngine: PortableTextEditorEngine}
 > = ({input, sendBack}) => {
-  return subscribeToOperations(
-    input.editorEngine,
-    (event) => {
-      if (event.operation.type !== 'set.selection') {
-        // `transform range decorations` reads the editor snapshot
-        // synchronously and needs the pre-apply tree (removed nodes must
-        // still be present to resolve document order) — hence the
-        // `before` phase.
-        sendBack({
-          type: 'engine operation',
-          operation: event.operation,
-          origin: hasRemoteFrame(event.context) ? 'remote' : 'local',
-        })
-      }
-    },
-    {phase: 'before'},
-  )
+  return subscribeToChanges(input.editorEngine, (change) => {
+    sendBack({type: 'engine change', change})
+  })
 }
 
 export type DecoratedRange = Range & {
@@ -160,11 +144,6 @@ function buildPropDecoratedRangesFromScratch(
 
   for (const rangeDecoration of rangeDecorations) {
     if (!rangeDecoration.selection) {
-      rangeDecoration.onMoved?.({
-        newSelection: null,
-        rangeDecoration,
-        origin: 'local',
-      })
       continue
     }
 
@@ -345,12 +324,9 @@ function reconcileRegisteredSource(
 }
 
 /**
- * A range can carry extra own keys (`backward`, from a captured editor
- * selection) that a live, edit-adjusted range never does: `transformRange`
- * always returns a plain `{anchor, focus}`. Comparing whole objects would
- * treat that extra key as a deliberate re-anchor, snapping a moved
- * decoration back to its config position or reviving a tombstoned one onto
- * destroyed content.
+ * A captured editor selection can carry a `backward` key that is not part of
+ * a decoration's live position. Comparing whole objects would treat it as a
+ * deliberate re-anchor and could revive a tombstoned decoration.
  */
 function hasSameAnchorAndFocus(
   a: NonNullable<EditorSelection>,
@@ -361,9 +337,8 @@ function hasSameAnchorAndFocus(
 
 function movePropDecoratedRanges(
   decoratedRanges: Array<DecoratedRange>,
-  operation: EngineOperation,
+  mapRange: (range: Range) => Range | null,
   origin: 'local' | 'remote',
-  snapshotContext: PortableTextEditorEngine['snapshot']['context'],
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
 
@@ -380,15 +355,11 @@ function movePropDecoratedRanges(
       continue
     }
 
-    const newRange = transformRange(
-      currentSelection,
-      operation,
-      snapshotContext,
-    )
+    const newRange = mapRange(currentSelection)
 
     if (
-      (newRange && newRange !== currentSelection) ||
-      (newRange === null && currentSelection)
+      (newRange && !hasSameAnchorAndFocus(newRange, currentSelection)) ||
+      newRange === null
     ) {
       rangeDecoration.onMoved?.({
         newSelection: newRange,
@@ -413,10 +384,9 @@ function movePropDecoratedRanges(
 /**
  * A `set`/`unset`/`insert` touches `range` when it targets a node inside
  * it. `insert.text`/`remove.text` touch when the affected span overlaps
- * `range`'s content: an insertion exactly at `range`'s own start/end
- * offset doesn't touch it (matching `transformRange`'s affinity), but a
- * removal reaching into `range` from either side does. A collapsed
- * `range` never touches, regardless of operation type.
+ * `range`'s content: an insertion exactly at `range`'s own start/end offset
+ * doesn't touch it, but a removal reaching into `range` from either side
+ * does. A collapsed `range` never touches, regardless of operation type.
  */
 function operationTouchesRange(
   operation: EngineOperation,
@@ -456,7 +426,8 @@ function operationTouchesRange(
 
 function moveRegisteredDecoratedRanges(
   decoratedRanges: Array<DecoratedRange>,
-  operation: EngineOperation,
+  change: Change,
+  mapRange: (range: Range) => Range | null,
   origin: 'local' | 'remote',
   editorEngine: PortableTextEditorEngine,
   deadSelections: Map<string, EditorSelection>,
@@ -471,25 +442,17 @@ function moveRegisteredDecoratedRanges(
     const liveRangeDecoration = decoratedRange.rangeDecoration as Decoration
     const currentRange = liveRangeDecoration.range
 
-    const newRange = transformRange(
-      currentRange,
-      operation,
-      editorEngine.snapshot.context,
+    const newRange = mapRange(currentRange)
+
+    const contentTouched = change.entries.some((entry) =>
+      operationTouchesRange(entry.event.operation, currentRange, editorEngine),
     )
+    const clonedCurrentRange = cloneRange({
+      anchor: currentRange.anchor,
+      focus: currentRange.focus,
+    })
 
-    const killedByCollapse =
-      newRange !== null &&
-      isCollapsedRange(newRange) &&
-      !isCollapsedRange(currentRange)
-
-    const contentTouched = operationTouchesRange(
-      operation,
-      currentRange,
-      editorEngine,
-    )
-    const clonedCurrentRange = cloneRange(currentRange)
-
-    if (newRange === null || killedByCollapse) {
+    if (newRange === null) {
       mappings.push({
         id: liveRangeDecoration.id,
         previousRange: clonedCurrentRange,
@@ -501,7 +464,7 @@ function moveRegisteredDecoratedRanges(
       continue
     }
 
-    const moved = newRange !== currentRange
+    const moved = !hasSameAnchorAndFocus(newRange, currentRange)
 
     if (moved || contentTouched) {
       mappings.push({
@@ -581,11 +544,7 @@ export const rangeDecorationsMachine = setup({
           type: 'source removed'
           sourceKey: string
         }
-      | {
-          type: 'engine operation'
-          operation: EngineOperation
-          origin: 'local' | 'remote'
-        }
+      | {type: 'engine change'; change: Change}
       | {
           type: 'update read only'
           readOnly: boolean
@@ -764,9 +723,19 @@ export const rangeDecorationsMachine = setup({
       )
     },
     'move range decorations': ({context, event}) => {
-      if (event.type !== 'engine operation') {
+      if (event.type !== 'engine change') {
         return
       }
+
+      const origin =
+        event.change.cause.type === 'remote patches' ||
+        event.change.cause.type === 'value sync'
+          ? 'remote'
+          : 'local'
+      const mapRange = mapDecorationRangesThroughChange(
+        context.editorEngine,
+        event.change,
+      )
 
       const pendingNotifications: Array<{
         on: (mappings: Array<DecorationMapping>) => void
@@ -777,8 +746,9 @@ export const rangeDecorationsMachine = setup({
         if (source.kind === 'registered') {
           const result = moveRegisteredDecoratedRanges(
             source.decoratedRanges,
-            event.operation,
-            event.origin,
+            event.change,
+            mapRange,
+            origin,
             context.editorEngine,
             source.deadSelections,
           )
@@ -792,9 +762,8 @@ export const rangeDecorationsMachine = setup({
         } else if (!context.readOnly) {
           source.decoratedRanges = movePropDecoratedRanges(
             source.decoratedRanges,
-            event.operation,
-            event.origin,
-            context.editorEngine.snapshot.context,
+            mapRange,
+            origin,
           )
         }
       }
@@ -811,7 +780,7 @@ export const rangeDecorationsMachine = setup({
     },
   },
   actors: {
-    'engine operation listener': fromCallback(engineOperationCallback),
+    'engine change listener': fromCallback(engineChangeCallback),
   },
   guards: {
     'has range decorations': ({context}) =>
@@ -830,7 +799,7 @@ export const rangeDecorationsMachine = setup({
     sourceUpdateChanged: false,
   }),
   invoke: {
-    src: 'engine operation listener',
+    src: 'engine change listener',
     input: ({context}) => ({editorEngine: context.editorEngine}),
   },
   on: {
@@ -875,7 +844,7 @@ export const rangeDecorationsMachine = setup({
       states: {
         'idle': {
           on: {
-            'engine operation': {
+            'engine change': {
               target: 'moving range decorations',
               guard: 'has range decorations',
             },
