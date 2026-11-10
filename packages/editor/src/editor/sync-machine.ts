@@ -1,4 +1,4 @@
-import {applyAll, type Patch} from '@portabletext/patches'
+import {applyAll, set, type Patch} from '@portabletext/patches'
 import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import type {ActorRefFrom} from 'xstate'
 import {
@@ -6,6 +6,7 @@ import {
   assertEvent,
   assign,
   emit,
+  enqueueActions,
   fromCallback,
   not,
   raise,
@@ -32,6 +33,7 @@ import {
   isEqualChild,
   isEqualValues,
 } from '../internal-utils/equality'
+import {toKeyedPatchPath} from '../internal-utils/operation-to-patches'
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
 import {toEngineBlock} from '../internal-utils/values'
@@ -41,8 +43,16 @@ import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {PickFromUnion} from '../type-utils'
 import type {InvalidValueResolution} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {KeyedSegment} from '../types/paths'
+import {isRecord} from '../utils/asserters'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorSchema} from './editor-schema'
+
+type MintedSpanKey = {
+  blockSegment: number | KeyedSegment
+  childIndex: number
+  spanKey: string
+}
 
 type SyncValueEvent =
   | {
@@ -57,6 +67,10 @@ type SyncValueEvent =
   | {
       type: 'value changed'
       value: Array<PortableTextBlock> | undefined
+    }
+  | {
+      type: 'span keys minted'
+      keys: Array<MintedSpanKey>
     }
   | {
       type: 'done syncing'
@@ -79,13 +93,25 @@ const syncValueCallback: CallbackLogicFunction<
     value: Array<PortableTextBlock> | undefined
   }
 > = ({sendBack, input}) => {
+  // A stopped run (StrictMode replays the invoke, unmount stops it) must
+  // neither write to the engine nor report back, or it races the run that
+  // replaced it.
+  let stopped = false
   updateValue({
     context: input.context,
-    sendBack,
+    sendBack: (event) => {
+      if (!stopped) {
+        sendBack(event)
+      }
+    },
+    isStopped: () => stopped,
     editorEngine: input.editorEngine,
     value: input.value,
     streamBlocks: input.streamBlocks,
   })
+  return () => {
+    stopped = true
+  }
 }
 
 const syncValueLogic = fromCallback(syncValueCallback)
@@ -117,6 +143,7 @@ export const syncMachine = setup({
       editorEngine: PortableTextEditorEngine
       pendingValue: Array<PortableTextBlock> | undefined
       previousValue: Array<PortableTextBlock> | undefined
+      mintedSpanKeys: Array<MintedSpanKey>
     },
     input: {} as {
       initialValue: Array<PortableTextBlock> | undefined
@@ -159,6 +186,26 @@ export const syncMachine = setup({
         assertEvent(event, 'update value')
         return event.value
       },
+    }),
+    'record minted span keys': assign({
+      mintedSpanKeys: ({context, event}) => {
+        assertEvent(event, 'span keys minted')
+        return [...context.mintedSpanKeys, ...event.keys]
+      },
+    }),
+    'send span key repairs': enqueueActions(({context, enqueue}) => {
+      if (context.readOnly || context.mintedSpanKeys.length === 0) {
+        return
+      }
+
+      for (const patch of getSpanKeyRepairs(
+        context.editorEngine.snapshot.context.value,
+        context.mintedSpanKeys,
+      )) {
+        enqueue.emit({type: 'patch', patch})
+      }
+
+      enqueue.assign({mintedSpanKeys: []})
     }),
     'clear pending value': assign({
       pendingValue: undefined,
@@ -256,6 +303,7 @@ export const syncMachine = setup({
     editorEngine: input.editorEngine,
     pendingValue: undefined,
     previousValue: undefined,
+    mintedSpanKeys: [],
   }),
   entry: [
     raise(({context}) => {
@@ -264,7 +312,7 @@ export const syncMachine = setup({
   ],
   on: {
     'update readOnly': {
-      actions: ['assign readOnly'],
+      actions: ['assign readOnly', 'send span key repairs'],
     },
   },
   initial: 'idle',
@@ -401,6 +449,9 @@ export const syncMachine = setup({
         'patch': {
           actions: [emit(({event}) => event)],
         },
+        'span keys minted': {
+          actions: ['record minted span keys', 'send span key repairs'],
+        },
         'invalid value': {
           actions: [emit(({event}) => event)],
         },
@@ -436,6 +487,7 @@ export const syncMachine = setup({
 async function updateValue({
   context,
   sendBack,
+  isStopped,
   editorEngine,
   streamBlocks,
   value,
@@ -447,12 +499,14 @@ async function updateValue({
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
+  isStopped: () => boolean
   editorEngine: PortableTextEditorEngine
   streamBlocks: boolean
   value: PortableTextBlock[] | undefined
 }) {
   let isChanged = false
   let isValid = true
+  const mintedSpanKeys: Array<MintedSpanKey> = []
 
   const hadSelection = !!editorEngine.snapshot.context.selection
   // `streamBlocks` is true only for a fresh editor's first value sync
@@ -495,9 +549,14 @@ async function updateValue({
           ] of getStreamedBlocks({
             value,
           })) {
+            if (isStopped()) {
+              break
+            }
+
             const {blockChanged, blockValid} = syncBlock({
               context,
               sendBack,
+              mintedSpanKeys,
               block: currentBlock,
               index: currentBlockIndex,
               editorEngine,
@@ -533,6 +592,7 @@ async function updateValue({
         const {blockChanged, blockValid} = syncBlock({
           context,
           sendBack,
+          mintedSpanKeys,
           block,
           index,
           editorEngine,
@@ -551,6 +611,10 @@ async function updateValue({
         index++
       }
     }
+  }
+
+  if (isStopped()) {
+    return
   }
 
   if (!isValid) {
@@ -592,6 +656,10 @@ async function updateValue({
     sendBack({type: 'value changed', value})
   } else {
     debug.syncValue('remote value and local value are equal, no need to sync')
+  }
+
+  if (mintedSpanKeys.length > 0) {
+    sendBack({type: 'span keys minted', keys: mintedSpanKeys})
   }
 
   sendBack({type: 'done syncing', value, changed: isChanged})
@@ -693,6 +761,7 @@ function removeExtraBlocks({
 function syncBlock({
   context,
   sendBack,
+  mintedSpanKeys,
   block,
   index,
   editorEngine,
@@ -707,6 +776,7 @@ function syncBlock({
     schema: EditorSchema
   }
   sendBack: (event: SyncValueEvent) => void
+  mintedSpanKeys: Array<MintedSpanKey>
   block: PortableTextBlock
   index: number
   editorEngine: PortableTextEditorEngine
@@ -761,18 +831,46 @@ function syncBlock({
     validation.resolution?.autoResolve &&
     validation.resolution?.patches.length > 0
   ) {
-    // Only apply auto resolution if the value has been populated before and is different from the last one.
-    if (
+    const isTakeIn = context.previousValue === undefined
+    const isChangedWhileEditable =
       !context.readOnly &&
       context.previousValue &&
       context.previousValue !== value
-    ) {
+    const mintedSpanKey = getMintedSpanKey(
+      context.schema,
+      validation.resolution,
+      value,
+      index,
+    )
+
+    const warn = () =>
       console.warn(
-        `${validation.resolution.action} for block with _key '${block._key}'. ${validation.resolution?.description}`,
+        `${validation.resolution?.action} for block with _key '${block._key}'. ${validation.resolution?.description}`,
       )
-      validation.resolution.patches.forEach((patch) => {
-        sendBack({type: 'patch', patch})
-      })
+
+    if (mintedSpanKey && isTakeIn) {
+      // Held until the editor is editable, then checked against the engine's
+      // value, so a span replaced in the meantime gets no stale repair.
+      warn()
+      mintedSpanKeys.push(mintedSpanKey)
+    } else if (isChangedWhileEditable) {
+      warn()
+
+      if (mintedSpanKey) {
+        sendBack({
+          type: 'patch',
+          patch: set(mintedSpanKey.spanKey, [
+            mintedSpanKey.blockSegment,
+            'children',
+            mintedSpanKey.childIndex,
+            '_key',
+          ]),
+        })
+      } else {
+        validation.resolution.patches.forEach((patch) => {
+          sendBack({type: 'patch', patch})
+        })
+      }
     }
   }
 
@@ -940,6 +1038,67 @@ function withMovedBlockSelection({
   ) {
     applySelect(editorEngine, currentSelection)
   }
+}
+
+function getMintedSpanKey(
+  schema: EditorSchema,
+  resolution: InvalidValueResolution,
+  value: Array<PortableTextBlock>,
+  index: number,
+): MintedSpanKey | undefined {
+  const [patch] = resolution.patches
+  const blockPath = toKeyedPatchPath(value, [index])
+  const childIndex = patch?.path.at(-1)
+  const blockSegment = blockPath[0]
+
+  if (
+    resolution.i18n.description !==
+      'inputs.portable-text.invalid-value.missing-child-key.description' ||
+    patch?.type !== 'set' ||
+    !isRecord(patch.value) ||
+    !isSpan({schema}, patch.value) ||
+    typeof patch.value['_key'] !== 'string' ||
+    typeof childIndex !== 'number' ||
+    (typeof blockSegment !== 'number' && !isKeyedSegment(blockSegment))
+  ) {
+    return undefined
+  }
+
+  return {blockSegment, childIndex, spanKey: patch.value['_key']}
+}
+
+/**
+ * Built from the engine's current value, so a minted key the engine no longer
+ * holds (remote replacement, removal) yields no patch. The span is looked up
+ * by its minted key, so a remote insert before it moves the index along.
+ */
+function getSpanKeyRepairs(
+  value: Array<PortableTextBlock>,
+  mintedSpanKeys: Array<MintedSpanKey>,
+): Array<Patch> {
+  const patches: Array<Patch> = []
+
+  for (const {blockSegment, spanKey} of mintedSpanKeys) {
+    const block =
+      typeof blockSegment === 'number'
+        ? value.at(blockSegment)
+        : value.find((candidate) => candidate._key === blockSegment._key)
+    const children =
+      block && isRecord(block) && Array.isArray(block['children'])
+        ? block['children']
+        : []
+    const currentIndex = children.findIndex(
+      (child) => isRecord(child) && child['_key'] === spanKey,
+    )
+
+    if (currentIndex !== -1) {
+      patches.push(
+        set(spanKey, [blockSegment, 'children', currentIndex, '_key']),
+      )
+    }
+  }
+
+  return patches
 }
 
 /**

@@ -3274,13 +3274,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       expect(patches).toEqual([
         {
           type: 'set',
-          path: [{_key: 'b0'}, 'children', 0],
-          value: {
-            _type: 'span',
-            _key: 'k2',
-            text: 'hello changed',
-            marks: [],
-          },
+          path: [{_key: 'b0'}, 'children', 0, '_key'],
+          value: 'k2',
         },
       ])
       expect(editor.getSnapshot().context.value).toEqual([
@@ -3478,8 +3473,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     const repairPatch: Patch = {
       type: 'set',
-      path: [{_key: fooKey}, 'children', 0],
-      value: {_type: 'span', text: 'foo', marks: [], _key: 'k8'},
+      path: [{_key: fooKey}, 'children', 0, '_key'],
+      value: 'k8',
     }
 
     await vi.waitFor(() => {
@@ -3569,8 +3564,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     const repairPatch: Patch = {
       type: 'set',
-      path: [{_key: fooKey}, 'children', 0],
-      value: {_type: 'span', text: 'foo', marks: [], _key: 'k8'},
+      path: [{_key: fooKey}, 'children', 0, '_key'],
+      value: 'k8',
     }
 
     await vi.waitFor(() => {
@@ -3660,8 +3655,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     const repairPatch: Patch = {
       type: 'set',
-      path: [{_key: fooKey}, 'children', 0],
-      value: {_type: 'span', text: 'foo', marks: [], _key: 'k8'},
+      path: [{_key: fooKey}, 'children', 0, '_key'],
+      value: 'k8',
     }
 
     await vi.waitFor(() => {
@@ -3752,8 +3747,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     const repairPatch: Patch = {
       type: 'set',
-      path: [{_key: bazKey}, 'children', 0],
-      value: {_type: 'span', text: 'baz', marks: [], _key: 'k7'},
+      path: [{_key: bazKey}, 'children', 0, '_key'],
+      value: 'k7',
     }
 
     await vi.waitFor(() => {
@@ -3844,8 +3839,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     const repairPatch: Patch = {
       type: 'set',
-      path: [{_key: bazKey}, 'children', 0],
-      value: {_type: 'span', text: 'baz', marks: [], _key: 'k7'},
+      path: [{_key: bazKey}, 'children', 0, '_key'],
+      value: 'k7',
     }
 
     await vi.waitFor(() => {
@@ -3936,8 +3931,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
 
     const repairPatch: Patch = {
       type: 'set',
-      path: [{_key: bazKey}, 'children', 0],
-      value: {_type: 'span', text: 'baz', marks: [], _key: 'k7'},
+      path: [{_key: bazKey}, 'children', 0, '_key'],
+      value: 'k7',
     }
 
     await vi.waitFor(() => {
@@ -3987,7 +3982,7 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     consoleWarn.mockRestore()
   })
 
-  test('Scenario: a startup value with a keyless child is repaired in the engine without emitting patches', async () => {
+  test('Scenario: a startup value with a keyless child publishes its repair with the first edit', async () => {
     const patches: Array<Patch> = []
     const mutations: Array<MutationEvent> = []
     const {editor} = await createTestEditor({
@@ -4028,11 +4023,8 @@ describe('event.update value: auto-resolved invalid blocks', () => {
       ])
     })
 
-    // No mutation leaves a pristine editor on open. "Nothing was emitted"
-    // can't be awaited directly, so prove it with a causal sentinel: make
-    // one local edit and assert its patches are the only ones ever
-    // collected. Event ordering guarantees a would-be repair emission had
-    // flushed before the sentinel's.
+    // No mutation leaves a pristine editor on open. The repair goes out with
+    // the first local edit, in the same mutation and before the edit's patch.
     editor.send({
       type: 'select',
       at: {
@@ -4042,7 +4034,12 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     })
     editor.send({type: 'insert.text', text: '!'})
 
-    const sentinelPatch = {
+    const repairPatch: Patch = {
+      type: 'set',
+      path: [{_key: 'b0'}, 'children', 0, '_key'],
+      value: 'k2',
+    }
+    const sentinelPatch: Patch = {
       type: 'diffMatchPatch',
       path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
       value: stringifyPatches(makePatches(makeDiff('hello', 'hello!'))),
@@ -4050,9 +4047,9 @@ describe('event.update value: auto-resolved invalid blocks', () => {
     }
 
     await vi.waitFor(() => {
-      expect(patches).toEqual([sentinelPatch])
+      expect(patches).toEqual([repairPatch, sentinelPatch])
       expect(mutations.map((mutation) => mutation.patches)).toEqual([
-        [sentinelPatch],
+        [repairPatch, sentinelPatch],
       ])
     })
   })
