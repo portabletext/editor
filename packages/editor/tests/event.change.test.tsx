@@ -566,6 +566,13 @@ describe('event.change', () => {
           {
             type: 'change',
             origin: 'local',
+            operations: [],
+            patches: [{type: 'unset', path: [...prefix, 3], origin: 'local'}],
+            correction: true,
+          },
+          {
+            type: 'change',
+            origin: 'local',
             correction: true,
             operations: [
               {
@@ -635,6 +642,92 @@ describe('event.change', () => {
       },
     )
 
+    test.each(removedEntryCases())(
+      'Scenario: `resync` of $name at the $position position at $depth.name emits a `correction` with no operations and an `unset` patch for it',
+      async ({depth, position, entry}) => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKeys = [keyGenerator(), keyGenerator()]
+        const spanKeys = [keyGenerator(), keyGenerator()]
+        const blocks = [
+          textBlock(blockKeys[0]!, spanKeys[0]!, 'foo'),
+          textBlock(blockKeys[1]!, spanKeys[1]!, 'bar'),
+        ]
+        const {editor, prefix, wrap} = await createResyncEditor(
+          depth,
+          blocks,
+          keyGenerator,
+        )
+        const hostValue = wrap(withEntry(blocks, position, entry))
+        const editorValue = editor.getSnapshot().context.value
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: hostValue})
+
+        expect(editor.getSnapshot().context.value).toEqual(editorValue)
+        expect(changes).toEqual([
+          {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [...prefix, positionIndex(position)],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        ])
+        expect(applyAll(hostValue, localPatches(changes))).toEqual(editorValue)
+      },
+    )
+
+    test.each(loadDepths)(
+      'Scenario: `resync` of several non-object entries in one array at $name unsets them last index first',
+      async (depth) => {
+        const keyGenerator = createTestKeyGenerator()
+        const blockKeys = [keyGenerator(), keyGenerator()]
+        const spanKeys = [keyGenerator(), keyGenerator()]
+        const blocks = [
+          textBlock(blockKeys[0]!, spanKeys[0]!, 'foo'),
+          textBlock(blockKeys[1]!, spanKeys[1]!, 'bar'),
+        ]
+        const {editor, prefix, wrap} = await createResyncEditor(
+          depth,
+          blocks,
+          keyGenerator,
+        )
+        const hostValue = wrap([
+          null as never,
+          blocks[0]!,
+          'baz' as never,
+          blocks[1]!,
+          null as never,
+        ])
+        const editorValue = editor.getSnapshot().context.value
+        const changes = collectChanges(editor)
+
+        editor.send({type: 'resync', value: hostValue})
+
+        expect(editor.getSnapshot().context.value).toEqual(editorValue)
+        expect(changes).toEqual([
+          {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [4, 2, 0].map((index) => ({
+              type: 'unset',
+              path: [...prefix, index],
+              origin: 'local',
+            })),
+            correction: true,
+          },
+        ])
+        expect(applyAll(hostValue, localPatches(changes))).toEqual(editorValue)
+      },
+    )
+
     test('Scenario: A correction after `resync` is emitted as a local `change` with `correction`', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
@@ -668,8 +761,13 @@ describe('event.change', () => {
     const loadDefects: Array<{
       name: string
       leaf: (blockKey: string, spanKey: string) => Array<unknown>
-      repaired: (blockKey: string, spanKey: string) => Array<unknown>
+      repaired: (
+        blockKey: string,
+        spanKey: string,
+        depthName: string,
+      ) => Array<unknown>
       corrected: boolean
+      removal?: true
     }> = [
       {
         name: 'a text block with empty `children`',
@@ -797,26 +895,34 @@ describe('event.change', () => {
           textBlock(blockKey, `${spanKey}-c`, 'bar'),
           'baz',
         ],
-        repaired: (blockKey, spanKey) => [
+        repaired: (blockKey, spanKey, depthName) => [
           {
             _type: 'block',
             _key: blockKey,
             style: 'normal',
             markDefs: [],
-            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
+            children: [
+              {
+                _type: 'span',
+                _key: depthName === 'root' ? 'm-k4' : 'm-k3',
+                text: '',
+                marks: [],
+              },
+            ],
           },
           {
             _type: 'block',
-            _key: 'm-k3',
+            _key: depthName === 'root' ? 'm-k3' : 'm-k4',
             style: 'normal',
             markDefs: [],
             children: [
               {_type: 'span', _key: `${spanKey}-b`, text: 'foo', marks: []},
             ],
           },
-          textBlock('m-k4', `${spanKey}-c`, 'bar'),
+          textBlock('m-k2', `${spanKey}-c`, 'bar'),
         ],
         corrected: true,
+        removal: true,
       },
     ]
 
@@ -835,7 +941,7 @@ describe('event.change', () => {
           wrapperKey,
         )
         const expected = depth.wrap(
-          defect.repaired('a', 'a-span') as never,
+          defect.repaired('a', 'a-span', depth.name) as never,
           wrapperKey,
         )
         const records: Array<LoadRecord> = []
@@ -866,7 +972,118 @@ describe('event.change', () => {
                 ]
               : [],
           ),
-        ).toEqual(defect.corrected ? [{origin: 'local', correction: true}] : [])
+        ).toEqual(
+          defect.removal
+            ? [
+                {origin: 'local', correction: true},
+                {origin: 'local', correction: true},
+              ]
+            : defect.corrected
+              ? [{origin: 'local', correction: true}]
+              : [],
+        )
+      },
+    )
+
+    test.each(removedEntryCases())(
+      'Scenario: `load` of $name at the $position position at $depth.name emits a `correction` with no operations and an `unset` patch for it',
+      async ({depth, position, entry}) => {
+        const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+        const blocks = [
+          textBlock('a', 'a-span', 'foo'),
+          textBlock('b', 'b-span', 'bar'),
+        ]
+        const loaded = depth.wrap(
+          withEntry(blocks, position, entry),
+          wrapperKey,
+        )
+        const expected = depth.wrap(blocks, wrapperKey)
+        const records: Array<LoadRecord> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator: createTestKeyGenerator('m-'),
+          schemaDefinition: loadSchemaDefinition,
+          children: (
+            <>
+              <NodePlugin nodes={loadContainers} />
+              <LoadOnMount loads={[loaded.value]} records={records} />
+            </>
+          ),
+        })
+
+        const changes = loadChanges(records)
+        expect(editor.getSnapshot().context.value).toEqual(expected.value)
+        expect(changes).toEqual([
+          {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [...loaded.prefix, positionIndex(position)],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        ])
+        expect(applyAll(loaded.value, localPatches(changes))).toEqual(
+          expected.value,
+        )
+      },
+    )
+
+    test.each(loadDepths)(
+      'Scenario: `load` of several non-object entries in one array at $name unsets them last index first',
+      async (depth) => {
+        const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+        const blocks = [
+          textBlock('a', 'a-span', 'foo'),
+          textBlock('b', 'b-span', 'bar'),
+        ]
+        const loaded = depth.wrap(
+          [
+            null as never,
+            blocks[0]!,
+            'baz' as never,
+            blocks[1]!,
+            null as never,
+          ],
+          wrapperKey,
+        )
+        const expected = depth.wrap(blocks, wrapperKey)
+        const records: Array<LoadRecord> = []
+
+        const {editor} = await createTestEditor({
+          keyGenerator: createTestKeyGenerator('m-'),
+          schemaDefinition: loadSchemaDefinition,
+          children: (
+            <>
+              <NodePlugin nodes={loadContainers} />
+              <LoadOnMount loads={[loaded.value]} records={records} />
+            </>
+          ),
+        })
+
+        const changes = loadChanges(records)
+        expect(editor.getSnapshot().context.value).toEqual(expected.value)
+        expect(changes).toEqual([
+          {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [4, 2, 0].map((index) => ({
+              type: 'unset',
+              path: [...loaded.prefix, index],
+              origin: 'local',
+            })),
+            correction: true,
+          },
+        ])
+        expect(applyAll(loaded.value, localPatches(changes))).toEqual(
+          expected.value,
+        )
       },
     )
   })
@@ -5128,6 +5345,40 @@ const noteSchemaDefinition = defineSchema({
     },
   ],
 })
+
+function removedEntryCases() {
+  return loadDepths.flatMap((depth) =>
+    loadPositions.flatMap((position) =>
+      [
+        {name: 'a `null` entry', entry: null},
+        {name: 'a string entry', entry: 'baz'},
+      ].map(({name, entry}) => ({depth, position, name, entry})),
+    ),
+  )
+}
+
+function withEntry(
+  blocks: Array<PortableTextBlock>,
+  position: (typeof loadPositions)[number],
+  entry: unknown,
+): Array<PortableTextBlock> {
+  const index = positionIndex(position)
+  return [...blocks.slice(0, index), entry as never, ...blocks.slice(index)]
+}
+
+function localPatches(changes: Array<ChangeEvent>): Array<Patch> {
+  return changes.flatMap((change) =>
+    change.origin === 'local' ? change.patches : [],
+  )
+}
+
+function loadChanges(records: Array<LoadRecord>): Array<ChangeEvent> {
+  return records.flatMap((record) =>
+    record.type === 'event' && record.event.type === 'change'
+      ? [record.event]
+      : [],
+  )
+}
 
 function collectChanges(editor: Editor): Array<ChangeEvent> {
   const changes: Array<ChangeEvent> = []
