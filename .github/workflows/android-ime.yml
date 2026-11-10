@@ -72,6 +72,18 @@ jobs:
               run_minutes: 57,
               job_minutes: 188,
             }
+          - {
+              lang: ja,
+              file: tests/ja.enter.test.ts,
+              run_minutes: 51,
+              job_minutes: 176,
+            }
+          - {
+              lang: en,
+              file: tests/en.enter.test.ts,
+              run_minutes: 46,
+              job_minutes: 166,
+            }
         api: [36]
 
     steps:
