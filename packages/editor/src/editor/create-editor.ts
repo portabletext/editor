@@ -131,6 +131,13 @@ export function createInternalEditor(config: EditorConfig): {
     },
     send: (event) => {
       switch (event.type) {
+        case 'reset':
+          if (editorEngine.snapshot.status === 'loading') {
+            throw new Error('`reset` is only valid once the editor is ready')
+          }
+          syncActor.send(event)
+          break
+
         case 'load':
           if (editorEngine.snapshot.status === 'ready') {
             throw new Error('`load` is only valid while the editor is loading')

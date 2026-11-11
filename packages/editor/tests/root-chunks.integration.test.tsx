@@ -28,6 +28,7 @@ import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getChildren} from '../src/traversal/get-children'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {largeBlockCount} from '../test-utils/large-load'
 import {drawPositions, renderLargeLoad} from '../test-utils/large-load'
 import {textBlock} from '../test-utils/load-depths'
 import {loadDepths} from '../test-utils/load-depths'
@@ -3372,6 +3373,470 @@ describe('drawing a large first value after `ready`', () => {
     expect(document.querySelector('[data-pt-editor]')).toEqual(null)
     window.removeEventListener('error', onError)
   })
+})
+
+test('Scenario: reset during drawing in first chunk at root', async () => {
+  const depth = loadDepths[0]!,
+    position = drawPositions[0]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in middle chunk at root', async () => {
+  const depth = loadDepths[0]!,
+    position = drawPositions[1]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in last chunk at root', async () => {
+  const depth = loadDepths[0]!,
+    position = drawPositions[2]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in first chunk at callout', async () => {
+  const depth = loadDepths[1]!,
+    position = drawPositions[0]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in middle chunk at callout', async () => {
+  const depth = loadDepths[1]!,
+    position = drawPositions[1]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in last chunk at callout', async () => {
+  const depth = loadDepths[1]!,
+    position = drawPositions[2]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in first chunk at nested callout', async () => {
+  const depth = loadDepths[2]!,
+    position = drawPositions[0]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in middle chunk at nested callout', async () => {
+  const depth = loadDepths[2]!,
+    position = drawPositions[1]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in last chunk at nested callout', async () => {
+  const depth = loadDepths[2]!,
+    position = drawPositions[2]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in first chunk at table cell', async () => {
+  const depth = loadDepths[3]!,
+    position = drawPositions[0]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in middle chunk at table cell', async () => {
+  const depth = loadDepths[3]!,
+    position = drawPositions[1]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset during drawing in last chunk at table cell', async () => {
+  const depth = loadDepths[3]!,
+    position = drawPositions[2]!
+  const large = await renderLargeLoad({depth})
+  const reseted = large.blocksWith((key, index) =>
+    index === position.index ? `${key.blockKey} edited` : key.blockKey,
+  )
+
+  large.expectMidDraw()
+  large.editor.send({type: 'reset', value: large.wrap(reseted)})
+
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(reseted))
+  await large.drawToTheEnd()
+  await vi.waitFor(() =>
+    expect(
+      document
+        .querySelector('[data-pt-editor]')
+        ?.textContent?.includes(
+          `${large.keys[position.index]!.blockKey} edited`,
+        ),
+    ).toEqual(true),
+  )
+  await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+})
+
+test('Scenario: reset and apply [patches,reset] during drawing at root', async () => {
+  const depth = loadDepths[0]!,
+    interleaving = {order: ['patches', 'reset']}
+  const large = await renderLargeLoad({depth})
+  const last = largeBlockCount - 1
+  const resetValue = large.blocksWith((key, index) =>
+    index === last ? `${key.blockKey} resetValue` : key.blockKey,
+  )
+  const transaction = () =>
+    large.editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...set('transacted', [...large.spanPath(0), 'text']),
+          origin: 'remote' as const,
+        },
+      ],
+    })
+  const reset = () =>
+    large.editor.send({type: 'reset', value: large.wrap(resetValue)})
+
+  large.expectMidDraw()
+  for (const step of interleaving.order) {
+    if (step === 'patches') {
+      transaction()
+    } else {
+      reset()
+    }
+  }
+
+  const expected = large.blocksWith((key, index) =>
+    index === 0 && interleaving.order[0] === 'reset'
+      ? 'transacted'
+      : index === last
+        ? `${key.blockKey} resetValue`
+        : key.blockKey,
+  )
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(expected))
+  await large.drawToTheEnd()
+})
+
+test('Scenario: reset and apply [reset,patches] during drawing at root', async () => {
+  const depth = loadDepths[0]!,
+    interleaving = {order: ['reset', 'patches']}
+  const large = await renderLargeLoad({depth})
+  const last = largeBlockCount - 1
+  const resetValue = large.blocksWith((key, index) =>
+    index === last ? `${key.blockKey} resetValue` : key.blockKey,
+  )
+  const transaction = () =>
+    large.editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...set('transacted', [...large.spanPath(0), 'text']),
+          origin: 'remote' as const,
+        },
+      ],
+    })
+  const reset = () =>
+    large.editor.send({type: 'reset', value: large.wrap(resetValue)})
+
+  large.expectMidDraw()
+  for (const step of interleaving.order) {
+    if (step === 'patches') {
+      transaction()
+    } else {
+      reset()
+    }
+  }
+
+  const expected = large.blocksWith((key, index) =>
+    index === 0 && interleaving.order[0] === 'reset'
+      ? 'transacted'
+      : index === last
+        ? `${key.blockKey} resetValue`
+        : key.blockKey,
+  )
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(expected))
+  await large.drawToTheEnd()
+})
+
+test('Scenario: reset and apply [patches,reset] during drawing at table cell', async () => {
+  const depth = loadDepths[3]!,
+    interleaving = {order: ['patches', 'reset']}
+  const large = await renderLargeLoad({depth})
+  const last = largeBlockCount - 1
+  const resetValue = large.blocksWith((key, index) =>
+    index === last ? `${key.blockKey} resetValue` : key.blockKey,
+  )
+  const transaction = () =>
+    large.editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...set('transacted', [...large.spanPath(0), 'text']),
+          origin: 'remote' as const,
+        },
+      ],
+    })
+  const reset = () =>
+    large.editor.send({type: 'reset', value: large.wrap(resetValue)})
+
+  large.expectMidDraw()
+  for (const step of interleaving.order) {
+    if (step === 'patches') {
+      transaction()
+    } else {
+      reset()
+    }
+  }
+
+  const expected = large.blocksWith((key, index) =>
+    index === 0 && interleaving.order[0] === 'reset'
+      ? 'transacted'
+      : index === last
+        ? `${key.blockKey} resetValue`
+        : key.blockKey,
+  )
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(expected))
+  await large.drawToTheEnd()
+})
+
+test('Scenario: reset and apply [reset,patches] during drawing at table cell', async () => {
+  const depth = loadDepths[3]!,
+    interleaving = {order: ['reset', 'patches']}
+  const large = await renderLargeLoad({depth})
+  const last = largeBlockCount - 1
+  const resetValue = large.blocksWith((key, index) =>
+    index === last ? `${key.blockKey} resetValue` : key.blockKey,
+  )
+  const transaction = () =>
+    large.editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...set('transacted', [...large.spanPath(0), 'text']),
+          origin: 'remote' as const,
+        },
+      ],
+    })
+  const reset = () =>
+    large.editor.send({type: 'reset', value: large.wrap(resetValue)})
+
+  large.expectMidDraw()
+  for (const step of interleaving.order) {
+    if (step === 'patches') {
+      transaction()
+    } else {
+      reset()
+    }
+  }
+
+  const expected = large.blocksWith((key, index) =>
+    index === 0 && interleaving.order[0] === 'reset'
+      ? 'transacted'
+      : index === last
+        ? `${key.blockKey} resetValue`
+        : key.blockKey,
+  )
+  expect(large.editor.getSnapshot().context.value).toEqual(large.wrap(expected))
+  await large.drawToTheEnd()
 })
 
 test('Scenario: mounting an editable after headless load gates edits until the last chunk', async () => {

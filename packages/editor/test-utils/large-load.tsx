@@ -19,7 +19,7 @@ import {
 } from './load-depths'
 import {LoadOnMount} from './load-on-mount'
 
-const largeBlockCount = 3000
+export const largeBlockCount = 3000
 
 /**
  * At a container depth the value is many sibling containers rather than one

@@ -78,6 +78,7 @@ export interface PortableTextEditorEngine extends DOMEditor {
   undoStepId: string | undefined
 
   isDeferringMutations: boolean
+  clearPendingMutations: () => void
   /**
    * The last host value recorded by a value sync that changed the engine. A
    * pristine block equal to it is persisted content, not the local
