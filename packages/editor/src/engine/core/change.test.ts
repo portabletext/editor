@@ -343,6 +343,7 @@ function createBareEngine(
       value,
     },
     decoratorState: {},
+    status: 'ready',
   } as unknown as PortableTextEditorEngine['snapshot']
 
   return editor

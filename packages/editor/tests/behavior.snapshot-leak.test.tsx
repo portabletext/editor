@@ -45,6 +45,7 @@ describe('Snapshot leak surface', () => {
       'blockIndexMap',
       'context',
       'decoratorState',
+      'status',
     ])
     expect(Object.keys(snapshot.context).sort()).toEqual([
       'containers',
@@ -91,6 +92,7 @@ describe('Snapshot leak surface', () => {
       'blockIndexMap',
       'context',
       'decoratorState',
+      'status',
     ])
     expect(Object.keys(snapshot.context).sort()).toEqual([
       'containers',

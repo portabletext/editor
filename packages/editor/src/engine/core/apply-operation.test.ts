@@ -1100,6 +1100,7 @@ function createBareEditor(
       value,
     },
     decoratorState: {},
+    status: 'ready',
   } as PortableTextEditorEngine['snapshot']
 
   return editor
