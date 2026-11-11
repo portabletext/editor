@@ -363,13 +363,12 @@ function DecoratorButton(props: {schemaType: ToolbarDecoratorSchemaType}) {
 | Stream every operation (a socket)                                            | `editor.on('patch', ...)`                                                                                                 |
 | Apply another writer's changes while the user may be typing                  | `editor.send({type: 'apply', patches})` with other writers' patches                                                       |
 | Switch to another document                                                   | Remount: `<EditorProvider key={documentId} initialConfig={{schemaDefinition, initialValue}}>`                             |
-| A fresh snapshot of the same document arrives and nothing local is in flight | `editor.send({type: 'update value', value})`                                                                              |
+| A fresh snapshot of the same document arrives and nothing local is in flight | Remount with a new `key` and the snapshot as `initialValue`                                                               |
 
-- `update value` replaces every block that differs from the editor's current content, local edits included. It is not a setter for live sync, and it does not clear undo history.
 - Do not send the editor its own patches back. `apply` treats every patch as another writer's, and an echo of an `insert` or `diffMatchPatch` applies twice. Have the channel skip the sender, or drop your own echoes before you send.
 - Do not read live content from `mutation` for UI. It lags by design. Use `useEditorSelector`.
 
-The full sync loop, the `update value` caveats and the document switch are in [references/value-sync.md](references/value-sync.md).
+The full sync loop, snapshots and the document switch are in [references/value-sync.md](references/value-sync.md).
 
 ## Paste
 
@@ -426,6 +425,6 @@ The editor's own `createTestEditor` lives under `@portabletext/editor/test/vites
 
 ## References
 
-- [references/value-sync.md](references/value-sync.md): saving, remote patches with `apply`, `update value`, switching documents.
+- [references/value-sync.md](references/value-sync.md): saving, remote patches with `apply`, snapshots, switching documents.
 - [references/inline-objects-and-pickers.md](references/inline-objects-and-pickers.md): inserting inline objects from rules and pickers with the caret after them.
 - [references/testing.md](references/testing.md): the public test harness.
