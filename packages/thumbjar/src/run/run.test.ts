@@ -11,8 +11,8 @@ import {
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {deviceTestFileSeconds} from 'thumbjar/vitest'
 import {describe, expect, test, vi} from 'vitest'
+import {deviceTestFileSeconds} from '../device/budget.ts'
 
 const command = fileURLToPath(new URL('../bin.ts', import.meta.url))
 // The PREP FAILED line `thumbjar prepare` logs for a real CI boot whose Gboard never loaded the dictionary.
