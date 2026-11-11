@@ -16,7 +16,7 @@ The file extension is the discriminator, never a `.browser` suffix:
 - `*.test-d.ts` is type-level, using `expectTypeOf` from vitest
 - `gherkin-tests/*.feature` + racejar for behavior specs (`Feature({featureText, stepDefinitions, parameterTypes})`)
 
-When scaffolding a new package, mirror `plugin-sdk-value`'s vitest config: a `browser` project including `src/**/*.test.tsx` and a `unit` project including `src/**/*.test.ts`.
+When scaffolding a new package, mirror `plugin-paste-link`'s vitest config: a `browser` project including `src/**/*.test.tsx` and a `unit` project including `src/**/*.test.ts`.
 
 ## Choosing the form
 

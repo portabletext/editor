@@ -110,7 +110,6 @@
         "@portabletext/plugin-markdown-shortcuts",
         "@portabletext/plugin-one-line",
         "@portabletext/plugin-paste-link",
-        "@portabletext/plugin-sdk-value",
         "@portabletext/plugin-table",
         "@portabletext/plugin-typeahead-picker",
         "@portabletext/plugin-typography",
