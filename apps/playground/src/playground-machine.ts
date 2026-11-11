@@ -71,7 +71,6 @@ const editorMachine = setup({
       | {type: 'toggle debug mode'}
       | {type: 'toggle key generator'}
       | {type: 'toggle patch subscription'}
-      | {type: 'toggle value subscription'}
       | {type: 'toggle patches preview'}
       | {type: 'toggle selection preview'}
       | {type: 'toggle value preview'}
@@ -200,13 +199,6 @@ const editorMachine = setup({
       states: {
         active: {on: {'toggle patch subscription': {target: 'paused'}}},
         paused: {on: {'toggle patch subscription': {target: 'active'}}},
-      },
-    },
-    'value subscription': {
-      initial: 'active',
-      states: {
-        active: {on: {'toggle value subscription': {target: 'paused'}}},
-        paused: {on: {'toggle value subscription': {target: 'active'}}},
       },
     },
     'key generator': {
