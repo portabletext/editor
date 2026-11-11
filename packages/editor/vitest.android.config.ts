@@ -4,8 +4,8 @@ import {defineConfig} from 'vitest/config'
 
 /**
  * The Android device tests, kept out of `vitest.config.ts` so `vitest --run`
- * never needs an emulator. `android/run-on-device.sh` prepares the device and
- * runs the `device` project.
+ * never needs an emulator. `thumbjar run` prepares the device and runs
+ * the `device` project.
  */
 export default defineConfig({
   root: fileURLToPath(new URL('android', import.meta.url)),
@@ -28,7 +28,7 @@ export default defineConfig({
         pageUrl: 'http://localhost:8765/editor.html',
         summaryFile: process.env.GITHUB_STEP_SUMMARY,
         pageHint:
-          'Build it with `pnpm --filter @portabletext/editor build:android` and serve it with `android/run-on-device.sh`, see `android/README.md`.',
+          'Build it with `pnpm --filter @portabletext/editor build:android` and serve it with `thumbjar serve`, see `android/README.md`.',
       }),
     ],
   },

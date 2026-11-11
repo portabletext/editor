@@ -1,8 +1,7 @@
 {
   // The device tests and their configs run on Node 24's type stripping, so
-  // only erasable syntax compiles. The scripts `run-on-device.sh` and the
-  // workflow run with `node` are plain `.mjs`, typed with JSDoc, so they run
-  // on every Node the editor supports.
+  // only erasable syntax compiles. The workflow scripts are plain `.mjs`,
+  // typed with JSDoc, so they run on every Node the editor supports.
   "compilerOptions": {
     "target": "esnext",
     "module": "nodenext",

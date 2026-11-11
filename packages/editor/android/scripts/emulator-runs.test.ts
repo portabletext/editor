@@ -1,7 +1,6 @@
 import {spawnSync} from 'node:child_process'
 import {
   appendFileSync,
-  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -19,7 +18,6 @@ import {afterEach, describe, expect, test} from 'vitest'
 import {
   bootSeconds,
   cacheRevisions,
-  deviceVerdict,
   installCleanupPaths,
   installFailureLines,
   installLogTail,
@@ -34,19 +32,6 @@ const workflow = readFileSync(
   new URL('../../../../.github/workflows/android-ime.yml', import.meta.url),
   'utf8',
 )
-
-// What `adb get-state` answered on emulators in real runs of these tests.
-const recordedDead = {
-  stdout: '',
-  stderr: 'error: device offline\n',
-  status: 1,
-}
-const recordedGone = {
-  stdout: '',
-  stderr: "error: device 'emulator-5554' not found\n",
-  status: 1,
-}
-const recordedReachable = {stdout: 'device\n', stderr: '', status: 0}
 
 // What `sdkmanager --list` from cmdline-tools 12.0 printed on Nov 5 for an SDK with only `platform-tools`,
 // cut to the rows around the packages the cache holds and without the padding after each row.
@@ -85,13 +70,13 @@ const lostThenStalled =
   'EMULATOR_START at 100\nBOOTED at 160\nCHECKED lost at 700\n'
 const reachableThenStalled =
   'EMULATOR_START at 100\nBOOTED at 160\nCHECKED device at 700\n'
-// The prep failure `run-on-device.sh` records for a real CI boot whose Gboard never loaded the dictionary.
+// The prep failure `thumbjar run` records for a real CI boot whose Gboard never loaded the dictionary.
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
 const dictionaryNeverLoaded = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED device at 700\n`
 const dictionaryNeverLoadedLost = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED lost at 700\n`
 const dictionaryNeverLoadedUnchecked = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\n`
-// The prep failure `run-on-device.sh` records when the dictionary loaded but Gboard did not convert with it.
+// The prep failure `thumbjar run` records when the dictionary loaded but Gboard did not convert with it.
 const dictionaryCheckFailed =
   'EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: japanese dictionary check, see ja-dictionary.log\nCHECKED device at 700\n'
 const retryDictionaryNeverLoaded = `RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED device at 1600\n`
@@ -109,71 +94,6 @@ const retryInterrupted = 'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\n'
 // The key `cache-revisions` writes for `recordedList` on Linux.
 const cacheKey =
   'android-sdk-Linux-api36-google_apis_playstore-x86_64-image7-emulator37.2.13'
-
-describe(deviceVerdict.name, () => {
-  test('reads a device as reachable only when `adb get-state` prints `device`, whatever it prints on stderr', () => {
-    expect(
-      deviceVerdict({
-        stdout: 'device\n',
-        stderr: '* daemon not running; starting now at tcp:5037\n',
-        timedOut: false,
-      }),
-    ).toEqual('device')
-  })
-
-  test('reads the answers a real emulator gave, dead, gone and reachable', () => {
-    expect([
-      deviceVerdict({...recordedDead, timedOut: false}),
-      deviceVerdict({...recordedGone, timedOut: false}),
-      deviceVerdict({...recordedReachable, timedOut: false}),
-    ]).toEqual(['lost', 'lost', 'device'])
-  })
-
-  test('reads a device as lost when adb reports it offline or has no such device', () => {
-    expect([
-      deviceVerdict({stdout: 'offline\n', stderr: '', timedOut: false}),
-      deviceVerdict({
-        stdout: '',
-        stderr: 'error: device offline\n',
-        timedOut: false,
-      }),
-      deviceVerdict({
-        stdout: '',
-        stderr: 'error: no devices/emulators found\n',
-        timedOut: false,
-      }),
-      deviceVerdict({
-        stdout: '',
-        stderr: "error: device 'emulator-5554' not found\n",
-        timedOut: false,
-      }),
-    ]).toEqual(['lost', 'lost', 'lost', 'lost'])
-  })
-
-  test('gives no verdict for a device adb sees in another state, for any other error, or for an `adb get-state` that never answered', () => {
-    expect([
-      deviceVerdict({stdout: 'unauthorized\n', stderr: '', timedOut: false}),
-      deviceVerdict({stdout: 'bootloader\n', stderr: '', timedOut: false}),
-      deviceVerdict({stdout: 'recovery\n', stderr: '', timedOut: false}),
-      deviceVerdict({stdout: 'unknown\n', stderr: '', timedOut: false}),
-      deviceVerdict({
-        stdout: '',
-        stderr: 'error: cannot connect to daemon\n',
-        timedOut: false,
-      }),
-      deviceVerdict({stdout: '', stderr: '', timedOut: true}),
-      deviceVerdict({stdout: 'offline\n', stderr: '', timedOut: true}),
-    ]).toEqual([
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ])
-  })
-})
 
 describe(retryAfter.name, () => {
   test('retries a first run that never booted', () => {
@@ -1741,77 +1661,6 @@ describe('emulator-runs.mjs result after the emulator install', () => {
   })
 })
 
-describe('emulator-runs.mjs device-state', () => {
-  test('reads a device that prints `device` as reachable, whatever adb prints on stderr', () => {
-    expect(
-      deviceState({
-        stdout: 'device\n',
-        stderr:
-          '* daemon not running; starting now at tcp:5037\n* daemon started successfully\n',
-        status: 0,
-      }),
-    ).toEqual({timing: 'BOOTED at 160\nCHECKED device\n', status: 0})
-  })
-
-  test('marks the device lost when adb finds none', () => {
-    expect(
-      deviceState({
-        stdout: '',
-        stderr: 'error: no devices/emulators found\n',
-        status: 1,
-      }),
-    ).toEqual({timing: 'BOOTED at 160\nCHECKED lost\n', status: 0})
-  })
-
-  test('marks the device lost when adb reads it as offline', () => {
-    expect(deviceState({stdout: 'offline\n', stderr: '', status: 0})).toEqual({
-      timing: 'BOOTED at 160\nCHECKED lost\n',
-      status: 0,
-    })
-  })
-
-  test('marks the device lost when adb names the device it cannot find', () => {
-    expect(deviceState(recordedGone)).toEqual({
-      timing: 'BOOTED at 160\nCHECKED lost\n',
-      status: 0,
-    })
-  })
-
-  test('marks the device lost when adb fails with the device offline, as a dead emulator answered in a real run', () => {
-    expect(deviceState(recordedDead)).toEqual({
-      timing: 'BOOTED at 160\nCHECKED lost\n',
-      status: 0,
-    })
-  })
-
-  test('marks a reachable device as reachable, as it answered in a real run after a failed prep', () => {
-    expect(deviceState(recordedReachable)).toEqual({
-      timing: 'BOOTED at 160\nCHECKED device\n',
-      status: 0,
-    })
-  })
-
-  test('records no verdict, and fails, for an unauthorized device or any other adb error', () => {
-    expect([
-      deviceState({stdout: 'unauthorized\n', stderr: '', status: 0}),
-      deviceState({
-        stdout: '',
-        stderr: 'error: cannot connect to daemon\n',
-        status: 1,
-      }),
-    ]).toEqual([
-      {timing: 'BOOTED at 160\n', status: 1},
-      {timing: 'BOOTED at 160\n', status: 1},
-    ])
-  })
-
-  test('records no verdict, and fails, when `adb get-state` does not answer within its timeout', () => {
-    expect(
-      deviceState({stdout: '', stderr: '', status: 0, hang: true}),
-    ).toEqual({timing: 'BOOTED at 160\n', status: 1})
-  }, 15_000)
-})
-
 describe('emulator-runs.mjs imported from an entry `node` cannot resolve', () => {
   test('imports without running its command, from stdin and from an entry path that does not exist', () => {
     expect([
@@ -1848,14 +1697,14 @@ describe('emulator-runs.mjs run as `node`’s entry whose file is removed once l
         status: 2,
         stdout: '',
         stderr:
-          'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node android/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
         removed: true,
       },
       {
         status: 2,
         stdout: '',
         stderr:
-          'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node android/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
         removed: true,
       },
     ])
@@ -2466,52 +2315,6 @@ function workflowCommand(
       timing: `${timing}${readFileSync(join(directory, 'timing.txt'), 'utf8')
         .slice(timing.length)
         .replace(/^(EMULATOR_START) at \d+$/m, '$1')}`,
-    }
-  } finally {
-    rmSync(directory, {recursive: true, force: true})
-  }
-}
-
-function deviceState(adb: {
-  stdout: string
-  stderr: string
-  status: number
-  hang?: boolean
-}) {
-  const directory = mkdtempSync(join(tmpdir(), 'emulator-runs-'))
-  try {
-    writeFileSync(
-      join(directory, 'adb'),
-      adb.hang
-        ? '#!/usr/bin/env bash\nexec sleep 60\n'
-        : `#!/usr/bin/env bash\nprintf %s "$ADB_STDOUT"\nprintf %s "$ADB_STDERR" >&2\nexit ${adb.status}\n`,
-    )
-    chmodSync(join(directory, 'adb'), 0o755)
-    writeFileSync(join(directory, 'timing.txt'), 'BOOTED at 160\n')
-    const result = spawnSync(
-      'node',
-      [
-        'android/scripts/emulator-runs.mjs',
-        'device-state',
-        join(directory, 'timing.txt'),
-      ],
-      {
-        cwd: packageRoot,
-        encoding: 'utf8',
-        env: {
-          ...process.env,
-          PATH: `${directory}:${process.env.PATH}`,
-          ADB_STDOUT: adb.stdout,
-          ADB_STDERR: adb.stderr,
-        },
-      },
-    )
-    return {
-      timing: readFileSync(join(directory, 'timing.txt'), 'utf8').replace(
-        /^(CHECKED \w+) at \d+$/m,
-        '$1',
-      ),
-      status: result.status,
     }
   } finally {
     rmSync(directory, {recursive: true, force: true})
