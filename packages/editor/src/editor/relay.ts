@@ -83,9 +83,8 @@ export type EditorEmittedEvent =
  *   to content the editor received (remote patches or the initial value) is
  *   a correction too. A host that persists patches saves corrections like
  *   any other local change. A repair of a received value (a missing
- *   child `_key`, an empty `children` array, an unused mark definition)
- *   is a correction too, and the remote change holds the value as
- *   received. Corrections are not held back: one to the initial value,
+ *   child `_key`, an empty `children` array) is a correction too, and the
+ *   remote change holds the value as received. Corrections are not held back: one to the initial value,
  *   or to a value received while the editor is read-only, carries
  *   `patches` that no `patch` or `mutation` event emits.
  * - `origin: 'remote'`: one event per applied `apply` event that changes

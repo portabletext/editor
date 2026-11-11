@@ -224,11 +224,6 @@ function createActors(config: {
   const syncActor = createActor(syncMachine, {
     input: {
       initialValue: config.editorActor.getSnapshot().context.initialValue,
-      keyGenerator: config.editorActor.getSnapshot().context.keyGenerator,
-      readOnly: config.editorActor
-        .getSnapshot()
-        .matches({'edit mode': 'read only'}),
-      schema: config.editorActor.getSnapshot().context.schema,
       editorEngine: config.editorEngine,
     },
   })
@@ -286,7 +281,6 @@ function createActors(config: {
 
     const subscription = config.editorActor.subscribe((snapshot) => {
       const readOnly = snapshot.matches({'edit mode': 'read only'})
-      syncActor.send({type: 'update readOnly', readOnly})
 
       if (readOnly !== previousReadOnly) {
         previousReadOnly = readOnly

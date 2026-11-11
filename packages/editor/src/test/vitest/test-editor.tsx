@@ -1,4 +1,3 @@
-import {applyAll} from '@portabletext/patches'
 import {
   defineSchema,
   type PortableTextBlock,
@@ -20,9 +19,6 @@ import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
 
-// The editable gets the `textbox` role only after the initial value has
-// synced in batches of 10 blocks per task, so a large value on a loaded
-// runner can take over a second.
 const editableTimeout = 5_000
 
 type CreateTestEditorOptions = {
@@ -119,14 +115,10 @@ export async function createTestEditors(
   const onEditorEvent = vi.fn<(event: EditorEmittedEvent) => void>()
   const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
-  let sharedDocument = options.initialValue
-
   function relayMutation(event: EditorEmittedEvent, peer: Editor | null) {
     if (event.type !== 'mutation') {
       return
     }
-
-    sharedDocument = applyAll(sharedDocument, event.patches)
 
     peer?.send({
       type: 'apply',

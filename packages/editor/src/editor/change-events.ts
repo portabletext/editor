@@ -1,8 +1,5 @@
 import type {Patch} from '@portabletext/patches'
-import {
-  isPlaceholder,
-  isRepairSentAfterChange,
-} from '../engine/core/apply-context'
+import {isPlaceholder} from '../engine/core/apply-context'
 import {
   getChangeEntryKind,
   type Change,
@@ -96,8 +93,6 @@ function localRuns(change: Change): Array<{
     patches: Array<Patch>
   }> = []
 
-  const patchesSentAfterChange: Array<Patch> = []
-
   for (const entry of change.entries) {
     const kind = getChangeEntryKind(change, entry)
 
@@ -106,14 +101,8 @@ function localRuns(change: Change): Array<{
     }
 
     const operation = entry.event.operation
-    const patches = isRepairSentAfterChange(entry.event.context)
-      ? []
-      : entry.patches
+    const patches = entry.patches
     const lastRun = runs.at(-1)
-
-    if (isRepairSentAfterChange(entry.event.context)) {
-      patchesSentAfterChange.push(...entry.patches)
-    }
 
     if (lastRun !== undefined && lastRun.kind === kind) {
       lastRun.operations.push(operation)
@@ -123,11 +112,6 @@ function localRuns(change: Change): Array<{
 
     runs.push({kind, operations: [operation], patches: [...patches]})
   }
-
-  // A value sync's own entries are all corrections, so they form one run,
-  // and the `patch` events the sync sends for its repairs go out after
-  // every patch the change generated.
-  runs.at(-1)?.patches.push(...patchesSentAfterChange)
 
   return runs
 }
@@ -146,7 +130,7 @@ function isReported(
     return false
   }
 
-  if (change.cause.type !== 'value sync' || !change.cause.initial) {
+  if (change.cause.type !== 'value sync') {
     return true
   }
 

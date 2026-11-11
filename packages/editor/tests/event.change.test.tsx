@@ -1850,9 +1850,8 @@ describe('event.change', () => {
     ).toEqual(sessionPatches)
   })
 
-  test('Scenario: A first load that streams its blocks across ticks commits one change', async () => {
+  test('Scenario: A first load with multiple blocks commits one change', async () => {
     const keyGenerator = createTestKeyGenerator()
-    // `updateValue` yields a tick every 10 blocks, so 25 blocks span three.
     const initialValue = Array.from({length: 25}, () =>
       block(keyGenerator(), keyGenerator(), 'foo'),
     )
@@ -1876,12 +1875,12 @@ describe('event.change', () => {
     })
 
     await vi.waitFor(() => {
-      expect(committedCauses).toEqual([{type: 'value sync', initial: true}])
+      expect(committedCauses).toEqual([{type: 'value sync'}])
     })
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
-  test('Scenario: A remote patch sent before a streamed first load finishes arrives after the correction of the load', async () => {
+  test('Scenario: A remote patch sent before the first load finishes arrives after the correction of the load', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const duplicateKey = keyGenerator()

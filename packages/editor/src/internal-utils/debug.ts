@@ -19,6 +19,5 @@ export const debug = {
   selection: createDebugger('selection'),
   setup: createDebugger('setup'),
   state: createDebugger('state'),
-  syncValue: createDebugger('sync:value'),
   syncPatch: createDebugger('sync:patch'),
 }

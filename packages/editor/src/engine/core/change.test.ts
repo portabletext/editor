@@ -133,7 +133,7 @@ describe(withChange.name, () => {
     })
     const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
 
-    withChange(editor, {type: 'value sync', initial: false}, () => {
+    withChange(editor, {type: 'value sync'}, () => {
       editor.apply({type: 'insert.text', path: spanPath, offset: 3, text: '!'})
       withChange(editor, {type: 'behavior event'}, () => {
         editor.apply({
@@ -149,7 +149,7 @@ describe(withChange.name, () => {
     expect(editor.change).toEqual(undefined)
     expect(committed).toEqual([
       {
-        cause: {type: 'value sync', initial: false},
+        cause: {type: 'value sync'},
         operations: [
           {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
         ],
@@ -161,7 +161,7 @@ describe(withChange.name, () => {
         ],
       },
       {
-        cause: {type: 'value sync', initial: false},
+        cause: {type: 'value sync'},
         operations: [
           {type: 'insert.text', path: spanPath, offset: 5, text: '.'},
         ],
@@ -183,7 +183,7 @@ describe(resumeChange.name, () => {
       committed.push(change.entries.map((entry) => entry.event.operation))
     })
     const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const change = createChange({type: 'value sync', initial: true})
+    const change = createChange({type: 'value sync'})
 
     resumeChange(editor, change, () => {
       editor.apply({type: 'insert.text', path: spanPath, offset: 3, text: '!'})
@@ -225,7 +225,7 @@ describe(resumeChange.name, () => {
       })
     })
     const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const sync = createChange({type: 'value sync', initial: false})
+    const sync = createChange({type: 'value sync'})
 
     withChange(editor, {type: 'behavior event'}, () => {
       editor.apply({type: 'insert.text', path: spanPath, offset: 3, text: '!'})
@@ -250,7 +250,7 @@ describe(resumeChange.name, () => {
         ],
       },
       {
-        cause: {type: 'value sync', initial: false},
+        cause: {type: 'value sync'},
         operations: [
           {type: 'insert.text', path: spanPath, offset: 4, text: '?'},
         ],
@@ -289,7 +289,7 @@ describe(resumeChange.name, () => {
       })
     })
     const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const sync = createChange({type: 'value sync', initial: false})
+    const sync = createChange({type: 'value sync'})
     let resumed = false
 
     withChange(editor, {type: 'behavior event'}, () => {

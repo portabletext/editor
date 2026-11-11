@@ -15,4 +15,4 @@ The `update value` event and the `value changed` and `invalid value` notificatio
 </EditorProvider>
 ```
 
-The editor no longer validates the value it receives. A block of a type the schema does not know shows as a block object. A start value with a missing `_key` gets its key as a correction with `patches`. An unused mark definition is kept. `operation` listeners see one `set` of the whole value on mount.
+The editor no longer validates the value it receives. A block of a type the schema does not know shows as a block object. A start value with a missing `_key` gets its key as a correction with `patches`. An unused mark definition is kept. `operation` listeners see one `set` of the whole value on mount, followed by the editor's own corrections.
