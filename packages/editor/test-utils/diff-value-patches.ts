@@ -20,7 +20,7 @@ import {
  * `diffValue`-into-patches through the one applier).
  *
  * Keep in sync with `convertPatches`/`arrayifyPath` in
- * `packages/plugin-sdk-value/src/plugin.sdk-value.tsx`, the same translation
+ * `@portabletext/plugin-sdk-value` (`src/plugin.sdk-value.tsx`), the same translation
  * used by the SDK plugin's repair path. Deliberately duplicated (test-only,
  * for now) instead of exported.
  */
