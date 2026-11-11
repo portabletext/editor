@@ -1,4 +1,3 @@
-import {spawnSync} from 'node:child_process'
 import {
   appendFileSync,
   closeSync,
@@ -25,49 +24,13 @@ import {fileURLToPath} from 'node:url'
 // is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes, and, when
 // Gboard's Japanese dictionary never loaded, a `PREP DICTIONARY_NOT_LOADED` line, which `thumbjar prepare`'s
 // exit status decides, never the reason. Once its last stage has ended, it adds one `CHECKED <verdict>`
-// line in a single write: `skipped` when no check was needed, or the verdict of the device check after a
-// failed stage, `device` or `lost`, which the check writes itself before it does anything else. A booted
+// line in a single write: `skipped` when no check was needed, or the verdict of `thumbjar run`’s device check
+// after a failed stage, `device` or `lost`, which the check writes itself before it does anything else. A booted
 // run without that line ended before a check reached a verdict, by its run step's timeout, the check's own,
 // or an `adb get-state` that proved nothing, and nothing proves what happened to its device: the action
 // shuts the emulator down before any later step could look.
 
-/** The `adb get-state` read after a failed stage. Its process gets the rest of the script's cap to stop. */
-const DEVICE_STATE_MILLISECONDS = 5_000
-
 /** @typedef {'never booted' | 'unchecked' | 'lost' | 'dictionary not loaded' | 'reachable'} RunState */
-
-/**
- * What one `adb get-state` proves about the device, or `undefined` when it proves nothing. Only `device` on
- * stdout is reachable. Only an offline device, as `offline` on stdout or adb's `device offline` error, the
- * answer of a dead emulator, or adb finding no such device is lost. Its stderr also carries daemon start-up
- * lines. A device that is `unauthorized`, in `bootloader` or `recovery`, or in any other state is still
- * there, and an adb that never answered may only be slow, so neither is lost: a retry on a reachable device
- * could turn a real test failure into a passing retry.
- *
- * @param {{stdout: string, stderr: string, timedOut: boolean}} adb
- * @returns {'device' | 'lost' | undefined}
- */
-export function deviceVerdict(adb) {
-  if (adb.timedOut) {
-    return undefined
-  }
-  const state = adb.stdout.trim()
-  if (state === 'device') {
-    return 'device'
-  }
-  if (state === 'offline') {
-    return 'lost'
-  }
-  if (
-    state === '' &&
-    /^error: (device offline|no devices\/emulators found|device '[^']*' not found)$/m.test(
-      adb.stderr,
-    )
-  ) {
-    return 'lost'
-  }
-  return undefined
-}
 
 /**
  * Whether to run once more after a failed first run: only when its emulator never booted, adb lost the
@@ -575,26 +538,6 @@ if (!isMain()) {
       writeFileSync('android/out/cache-restored.txt', kept.join('\n'))
     }
   }
-} else if (command === 'device-state' && file !== undefined) {
-  const adb = spawnSync('adb', ['get-state'], {
-    encoding: 'utf8',
-    timeout: DEVICE_STATE_MILLISECONDS,
-    killSignal: 'SIGKILL',
-  })
-  const verdict = deviceVerdict({
-    stdout: adb.stdout ?? '',
-    stderr: adb.stderr ?? '',
-    timedOut: adb.error !== undefined,
-  })
-  if (verdict === undefined) {
-    process.exitCode = 1
-  } else {
-    appendFileSync(
-      file,
-      `CHECKED ${verdict} at ${Math.floor(Date.now() / 1000)}\n`,
-    )
-    process.stdout.write(`${verdict}\n`)
-  }
 } else if (command === 'retry' && file !== undefined) {
   const decision = retryAfter(readFileSync(file, 'utf8'))
   appendFileSync(
@@ -652,7 +595,7 @@ if (!isMain()) {
   }
 } else {
   console.error(
-    'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
+    'usage: node android/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
   )
   process.exitCode = 2
 }

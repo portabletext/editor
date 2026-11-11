@@ -1,21 +1,8 @@
-import {spawnSync} from 'node:child_process'
-import {
-  copyFileSync,
-  existsSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from 'node:fs'
-import {tmpdir} from 'node:os'
-import {basename, join} from 'node:path'
-import {fileURLToPath, pathToFileURL} from 'node:url'
-import {deviceTestFileSeconds} from 'thumbjar/vitest'
+import {readdirSync, readFileSync} from 'node:fs'
+import {fileURLToPath} from 'node:url'
+import {countDeviceTests} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
-import {countDeviceTests} from './budget.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const deviceFiles = readdirSync(new URL('../tests/', import.meta.url))
@@ -23,14 +10,6 @@ const deviceFiles = readdirSync(new URL('../tests/', import.meta.url))
   .map((name) => `tests/${name}`)
   .sort()
 describe(countDeviceTests.name, () => {
-  test('counts top-level tests, failing ones included, and nothing nested or in comments', () => {
-    expect(
-      countDeviceTests(
-        "test('a', () => {})\n// test('b')\ntest.fails('c', () => {\n  test('d')\n})\n",
-      ),
-    ).toEqual(2)
-  })
-
   test('counts each device test file the way Vitest collects it', async () => {
     const vitest = await createVitest('test', {
       root,
@@ -62,140 +41,6 @@ describe(countDeviceTests.name, () => {
     }
   }, 30_000)
 })
-
-describe('budget.mjs imported from an entry `node` cannot resolve', () => {
-  test('imports without running its command, from stdin and from an entry path that does not exist', () => {
-    expect([
-      importFromEntry(
-        fileURLToPath(new URL('budget.mjs', import.meta.url)),
-        '-',
-      ),
-      importFromEntry(
-        fileURLToPath(new URL('budget.mjs', import.meta.url)),
-        'missing',
-      ),
-    ]).toEqual([
-      {status: 0, stdout: 'imported\n', stderr: ''},
-      {status: 0, stdout: 'imported\n', stderr: ''},
-    ])
-  })
-})
-
-describe('budget.mjs run as `node`’s entry whose file is removed once loaded', () => {
-  test('still runs its command, with `import.meta.main` and with the fallback for Node without it', () => {
-    expect([
-      runRemovedAfterLoad(
-        fileURLToPath(new URL('budget.mjs', import.meta.url)),
-        [`${root}tests/ja.test.ts`],
-        'native',
-      ),
-      runRemovedAfterLoad(
-        fileURLToPath(new URL('budget.mjs', import.meta.url)),
-        [`${root}tests/ja.test.ts`],
-        'removed',
-      ),
-    ]).toEqual([
-      {
-        status: 0,
-        stdout: `${deviceTestFileSeconds(3)}\n`,
-        stderr: '',
-        removed: true,
-      },
-      {
-        status: 0,
-        stdout: `${deviceTestFileSeconds(3)}\n`,
-        stderr: '',
-        removed: true,
-      },
-    ])
-  })
-})
-
-function importFromEntry(script: string, entry: '-' | 'missing') {
-  const result = spawnSync('node', ['--input-type=module', '-'], {
-    encoding: 'utf8',
-    input: [
-      'if (process.env.ENTRY) process.argv[1] = process.env.ENTRY',
-      'await import(process.env.SCRIPT)',
-      "console.log('imported')",
-    ].join('\n'),
-    env: {
-      ...process.env,
-      SCRIPT: pathToFileURL(script).href,
-      ENTRY: entry === 'missing' ? join(tmpdir(), 'no-such-entry.mjs') : '',
-    },
-  })
-  return {status: result.status, stdout: result.stdout, stderr: result.stderr}
-}
-
-function runRemovedAfterLoad(
-  script: string,
-  args: string[],
-  mainFlag: 'native' | 'removed',
-) {
-  const directory = mkdtempSync(join(tmpdir(), 'removed-after-load-'))
-  try {
-    const entry = join(directory, basename(script))
-    copyFileSync(script, entry)
-    symlinkSync(join(root, '../node_modules'), join(directory, 'node_modules'))
-    // Removes the entry once Node has read it, and with `removed` takes away `import.meta.main`, so Node
-    // 24 runs the fallback Node 22 has.
-    writeFileSync(
-      join(directory, 'hooks.mjs'),
-      [
-        "import {unlinkSync} from 'node:fs'",
-        'export function load(url, context, nextLoad) {',
-        '  const result = nextLoad(url, context)',
-        '  return result instanceof Promise',
-        '    ? result.then((loaded) => afterLoad(url, loaded))',
-        '    : afterLoad(url, result)',
-        '}',
-        'function afterLoad(url, result) {',
-        '  if (url !== process.env.ENTRY_URL) return result',
-        '  unlinkSync(new URL(url))',
-        "  if (process.env.MAIN_FLAG !== 'removed') return result",
-        '  return {...result, source: `delete import.meta.main\\n${result.source}`}',
-        '}',
-      ].join('\n'),
-    )
-    writeFileSync(
-      join(directory, 'register.mjs'),
-      // `module.register()` is deprecated from Node 26 and warns on stderr, and Node 22.12 has no
-      // `module.registerHooks()`.
-      [
-        "import * as module from 'node:module'",
-        "import {load} from './hooks.mjs'",
-        'if (module.registerHooks) module.registerHooks({load})',
-        "else module.register('./hooks.mjs', import.meta.url)",
-      ].join('\n'),
-    )
-    const result = spawnSync(
-      'node',
-      [
-        '--import',
-        pathToFileURL(join(directory, 'register.mjs')).href,
-        entry,
-        ...args,
-      ],
-      {
-        encoding: 'utf8',
-        env: {
-          ...process.env,
-          ENTRY_URL: pathToFileURL(entry).href,
-          MAIN_FLAG: mainFlag,
-        },
-      },
-    )
-    return {
-      status: result.status,
-      stdout: result.stdout,
-      stderr: result.stderr,
-      removed: !existsSync(entry),
-    }
-  } finally {
-    rmSync(directory, {recursive: true, force: true})
-  }
-}
 
 describe('the workflow', () => {
   const workflow = readFileSync(
@@ -253,19 +98,18 @@ describe('the workflow', () => {
       scripts: [...workflow.matchAll(/^ {10}script: (.*)$/gm)].map(
         (match) => match[1],
       ),
-      languages: [...workflow.matchAll(/^ {10}IME_LANG: (.*)$/gm)].map(
-        (match) => match[1],
-      ),
+      // The keyboard goes to `thumbjar run` as a flag, nothing reads an environment variable for it.
+      keyboardEnvironment: workflow.includes('IME_LANG'),
     }).toEqual({
       job: 'Android IME (${{ matrix.suite.file }})',
       suiteName: `echo "name=$(basename '\${{ matrix.suite.file }}' .test.ts)" >> "$GITHUB_OUTPUT"`,
       artifact:
         'android-ime-${{ steps.suite.outputs.name }}-api${{ matrix.api }}-${{ github.run_attempt }}',
       scripts: [
-        'android/run-on-device.sh ${{ matrix.suite.file }}',
-        'android/run-on-device.sh ${{ matrix.suite.file }}',
+        'pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out',
+        'pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out',
       ],
-      languages: ['${{ matrix.suite.lang }}', '${{ matrix.suite.lang }}'],
+      keyboardEnvironment: false,
     })
   })
 })

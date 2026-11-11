@@ -43,8 +43,8 @@ jobs:
     # versions and changelogs. Other pull requests that touch `packages/editor/package.json` still run.
     if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
     runs-on: ubuntu-latest
-    # Backstops only: thumbjar and `run-on-device.sh` bound their own work and log the reason when they stop
-    # it, see the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
+    # Backstops only: `thumbjar run` bounds its own work and logs the reason when it stops the work, see
+    # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
     # step's cap, so a hang in every step still leaves time for `Result` and the artifact upload, and
     # `budget.test.ts` keeps it so.
     timeout-minutes: 255
@@ -237,8 +237,6 @@ jobs:
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
         continue-on-error: true
         timeout-minutes: 90
-        env:
-          IME_LANG: ${{ matrix.suite.lang }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -252,7 +250,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
-          script: android/run-on-device.sh ${{ matrix.suite.file }}
+          script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       # The emulator sometimes never comes online, adb loses it after boot, or
       # Gboard's Japanese dictionary never loads on that boot. Retry once on a
@@ -270,8 +268,6 @@ jobs:
         if: steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'
         continue-on-error: true
         timeout-minutes: 90
-        env:
-          IME_LANG: ${{ matrix.suite.lang }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -285,7 +281,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
-          script: android/run-on-device.sh ${{ matrix.suite.file }}
+          script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       - name: Boot time
         if: always()
