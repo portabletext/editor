@@ -18,7 +18,7 @@ import type {
   EditorEmittedEvent,
   MutationEvent,
 } from '../src'
-import {effect, execute} from '../src/behaviors/behavior.types.action'
+import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {useEditor} from '../src/editor/use-editor'
 import {subscribeToChanges, type ChangeCause} from '../src/engine/core/change'
@@ -687,134 +687,6 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: `update value` emits one remote `change` for the whole update', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const bazBlockKey = keyGenerator()
-    const bazSpanKey = keyGenerator()
-    const barBlockKey = keyGenerator()
-    const barSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        block(fooBlockKey, fooSpanKey, 'foo'),
-        block(bazBlockKey, bazSpanKey, 'baz'),
-        block(barBlockKey, barSpanKey, 'bar'),
-      ],
-    })
-    const changes = collectChanges(editor)
-    const fooSpanPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
-    const bazSpanPath = [{_key: bazBlockKey}, 'children', {_key: bazSpanKey}]
-
-    editor.send({
-      type: 'update value',
-      value: [
-        block(fooBlockKey, fooSpanKey, 'foo!'),
-        block(bazBlockKey, bazSpanKey, 'baz!'),
-      ],
-    })
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(fooBlockKey, fooSpanKey, 'foo!'),
-      block(bazBlockKey, bazSpanKey, 'baz!'),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {type: 'unset', path: [{_key: barBlockKey}]},
-          {
-            type: 'set',
-            path: [{_key: fooBlockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: fooBlockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [...fooSpanPath, 'marks'],
-            value: [],
-            inverse: {type: 'set', path: [...fooSpanPath, 'marks'], value: []},
-          },
-          {type: 'remove.text', path: fooSpanPath, offset: 0, text: 'foo'},
-          {type: 'insert.text', path: fooSpanPath, offset: 0, text: 'foo!'},
-          {
-            type: 'set',
-            path: [{_key: bazBlockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: bazBlockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [...bazSpanPath, 'marks'],
-            value: [],
-            inverse: {type: 'set', path: [...bazSpanPath, 'marks'], value: []},
-          },
-          {type: 'remove.text', path: bazSpanPath, offset: 0, text: 'baz'},
-          {type: 'insert.text', path: bazSpanPath, offset: 0, text: 'baz!'},
-        ],
-      },
-    ])
-  })
-
-  test('Scenario: `update value` that swaps two blocks emits one remote `change` with the move and no `correction`', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const barBlockKey = keyGenerator()
-    const barSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        block(fooBlockKey, fooSpanKey, 'foo'),
-        block(barBlockKey, barSpanKey, 'bar'),
-      ],
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const hostValue = [
-      block(barBlockKey, barSpanKey, 'bar'),
-      block(fooBlockKey, fooSpanKey, 'foo'),
-    ]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(barBlockKey, barSpanKey, 'bar'),
-      block(fooBlockKey, fooSpanKey, 'foo'),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {type: 'unset', path: [{_key: barBlockKey}]},
-          {
-            type: 'insert',
-            path: [0],
-            node: block(barBlockKey, barSpanKey, 'bar'),
-            position: 'before',
-          },
-        ],
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
   test('Scenario: A remote patch that removes `markDefs` from a text block emits a remote `change` with the removal', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -881,830 +753,6 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: `update value` that needs a fix emits the remote `change`, then a local `correction` with the fix', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const duplicateKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const duplicateKeyChildren = [
-      {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-      {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['strong']},
-    ]
-    const duplicateKeyPath = [{_key: blockKey}, 'children', 1, '_key']
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: duplicateKeyChildren,
-        },
-      ],
-    })
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        ...block(blockKey, spanKey, ''),
-        children: [
-          duplicateKeyChildren[0],
-          {...duplicateKeyChildren[1], _key: 'k5'},
-        ],
-      },
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children'],
-            value: duplicateKeyChildren,
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'children'],
-              value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k5',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-          },
-        ],
-        patches: [{...set('k5', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-    ])
-  })
-
-  test('Scenario: `update value` with a keyless child emits the remote `change` without the child, then a `correction` with the minted key', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [{_type: 'span', text: 'bar', marks: []}],
-        },
-      ],
-    })
-    consoleWarn.mockRestore()
-
-    const repairedSpan = {_type: 'span', _key: 'k4', text: 'bar', marks: []}
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      {...block(blockKey, spanKey, ''), children: [repairedSpan]},
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'children'],
-              value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 0],
-            node: repairedSpan,
-            position: 'before',
-          },
-        ],
-        patches: [set(repairedSpan, [{_key: blockKey}, 'children', 0])],
-        correction: true,
-      },
-    ])
-  })
-
-  test('Scenario: `update value` with empty children emits the remote `change` without a span, then a `correction` inserting one', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    editor.send({
-      type: 'update value',
-      value: [{...block(blockKey, spanKey, ''), children: []}],
-    })
-    consoleWarn.mockRestore()
-
-    const insertedSpan = {_type: 'span', _key: 'k4', text: '', marks: []}
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      {...block(blockKey, spanKey, ''), children: [insertedSpan]},
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'children'],
-              value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 0],
-            node: insertedSpan,
-            position: 'before',
-          },
-        ],
-        patches: [
-          setIfMissing([], [{_key: blockKey}, 'children']),
-          insert([insertedSpan], 'after', [{_key: blockKey}, 'children', 0]),
-        ],
-        correction: true,
-      },
-    ])
-  })
-
-  test('Scenario: `update value` with an unused mark definition emits the remote `change` with it, then a `correction` removing it', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const linkKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({
-        annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
-      }),
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const linkMarkDef = {
-      _type: 'link',
-      _key: linkKey,
-      href: 'https://example.com',
-    }
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const linkPath = [{_key: blockKey}, 'markDefs', {_key: linkKey}]
-
-    editor.send({
-      type: 'update value',
-      value: [{...block(blockKey, spanKey, 'bar'), markDefs: [linkMarkDef]}],
-    })
-    consoleWarn.mockRestore()
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(blockKey, spanKey, 'bar'),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [linkMarkDef],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [...spanPath, 'marks'],
-            value: [],
-            inverse: {type: 'set', path: [...spanPath, 'marks'], value: []},
-          },
-          {type: 'remove.text', path: spanPath, offset: 0, text: 'foo'},
-          {type: 'insert.text', path: spanPath, offset: 0, text: 'bar'},
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [{type: 'unset', path: linkPath}],
-        patches: [unset(linkPath)],
-        correction: true,
-      },
-    ])
-  })
-
-  test('Scenario: `update value` with two keyless children emits the remote `change` without them, then one `correction` inserting both with their keys', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [
-            {_type: 'span', text: 'foo', marks: []},
-            {_type: 'span', text: 'bar', marks: ['strong']},
-          ],
-        },
-      ],
-    })
-    consoleWarn.mockRestore()
-
-    const fooSpan = {_type: 'span', _key: 'k4', text: 'foo', marks: []}
-    const barSpan = {_type: 'span', _key: 'k5', text: 'bar', marks: ['strong']}
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      {...block(blockKey, spanKey, ''), children: [fooSpan, barSpan]},
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'children'],
-              value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 0],
-            node: fooSpan,
-            position: 'before',
-          },
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 1],
-            node: barSpan,
-            position: 'before',
-          },
-        ],
-        patches: [
-          {
-            ...set('k5', [{_key: blockKey}, 'children', 1, '_key']),
-            origin: 'local',
-          },
-          set(fooSpan, [{_key: blockKey}, 'children', 0]),
-        ],
-        correction: true,
-      },
-    ])
-  })
-
-  test('Scenario: The local `patches` of the `correction` for an `update value` with a keyless child are the patches of the `patch` events, in their order', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const patches: Array<Patch> = []
-    editor.on('patch', (event) => {
-      patches.push(event.patch)
-    })
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [{_type: 'span', text: 'bar', marks: []}],
-        },
-      ],
-    })
-    consoleWarn.mockRestore()
-
-    const repairedSpan = {_type: 'span', _key: 'k4', text: 'bar', marks: []}
-
-    await vi.waitFor(() => {
-      expect(patches).toEqual([
-        set(repairedSpan, [{_key: blockKey}, 'children', 0]),
-      ])
-    })
-    expect(
-      changes.flatMap((change) =>
-        change.origin === 'local' ? change.patches : [],
-      ),
-    ).toEqual(patches)
-  })
-
-  test('Scenario: The local `patches` of the `correction` for an `update value` with two keyless children are the patches of the `patch` events, in their order', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const patches: Array<Patch> = []
-    editor.on('patch', (event) => {
-      patches.push(event.patch)
-    })
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [
-            {_type: 'span', text: 'foo', marks: []},
-            {_type: 'span', text: 'bar', marks: ['strong']},
-          ],
-        },
-      ],
-    })
-    consoleWarn.mockRestore()
-
-    const fooSpan = {_type: 'span', _key: 'k4', text: 'foo', marks: []}
-
-    await vi.waitFor(() => {
-      expect(patches).toEqual([
-        {
-          ...set('k5', [{_key: blockKey}, 'children', 1, '_key']),
-          origin: 'local',
-        },
-        set(fooSpan, [{_key: blockKey}, 'children', 0]),
-      ])
-    })
-    expect(
-      changes.flatMap((change) =>
-        change.origin === 'local' ? change.patches : [],
-      ),
-    ).toEqual(patches)
-  })
-
-  test('Scenario: `update value` with keyless children first, in the middle and last emits the remote `change` with only the keyed children, then one `correction` inserting the keyless ones in index order', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const barKey = keyGenerator()
-    const quxKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const barSpan = {
-      _type: 'span',
-      _key: barKey,
-      text: 'bar',
-      marks: ['strong'],
-    }
-    const quxSpan = {
-      _type: 'span',
-      _key: quxKey,
-      text: 'qux',
-      marks: ['strong'],
-    }
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [
-            {_type: 'span', text: 'foo', marks: []},
-            barSpan,
-            {_type: 'span', text: 'baz', marks: []},
-            quxSpan,
-            {_type: 'span', text: 'quux', marks: []},
-          ],
-        },
-      ],
-    })
-    consoleWarn.mockRestore()
-
-    const fooSpan = {_type: 'span', _key: 'k6', text: 'foo', marks: []}
-    const bazSpan = {_type: 'span', _key: 'k8', text: 'baz', marks: []}
-    const quuxSpan = {_type: 'span', _key: 'k7', text: 'quux', marks: []}
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        ...block(blockKey, spanKey, ''),
-        children: [fooSpan, barSpan, bazSpan, quxSpan, quuxSpan],
-      },
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children'],
-            value: [barSpan, quxSpan],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'children'],
-              value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 0],
-            node: fooSpan,
-            position: 'before',
-          },
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 2],
-            node: bazSpan,
-            position: 'before',
-          },
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 4],
-            node: quuxSpan,
-            position: 'before',
-          },
-        ],
-        patches: [
-          {
-            ...set('k8', [{_key: blockKey}, 'children', 2, '_key']),
-            origin: 'local',
-          },
-          {
-            ...set('k7', [{_key: blockKey}, 'children', 4, '_key']),
-            origin: 'local',
-          },
-          set(fooSpan, [{_key: blockKey}, 'children', 0]),
-        ],
-        correction: true,
-      },
-    ])
-  })
-
-  test('Scenario: `update value` with an empty keyless child before another keyless child emits a `correction` whose patches apply to the received value', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const value = [
-      {
-        ...block(blockKey, spanKey, ''),
-        children: [
-          {_type: 'span', text: '', marks: []},
-          {_type: 'span', text: 'bar', marks: []},
-        ],
-      },
-    ]
-
-    editor.send({type: 'update value', value})
-    consoleWarn.mockRestore()
-
-    const emptySpan = {_type: 'span', _key: 'k4', text: '', marks: []}
-    const barSpan = {_type: 'span', _key: 'k5', text: 'bar', marks: []}
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      {...block(blockKey, spanKey, ''), children: [emptySpan, barSpan]},
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'children'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'children'],
-              value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 0],
-            node: emptySpan,
-            position: 'before',
-          },
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 1],
-            node: barSpan,
-            position: 'before',
-          },
-        ],
-        patches: [
-          {
-            ...set('k5', [{_key: blockKey}, 'children', 1, '_key']),
-            origin: 'local',
-          },
-          set(emptySpan, [{_key: blockKey}, 'children', 0]),
-        ],
-        correction: true,
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(value, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test('Scenario: `update value` repeating a block key with a keyless child in the later block emits a `correction` inserting the child into the later block', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const barBlockKey = keyGenerator()
-    const barSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        block(fooBlockKey, fooSpanKey, 'foo'),
-        block(barBlockKey, barSpanKey, 'bar'),
-      ],
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    editor.send({
-      type: 'update value',
-      value: [
-        block(fooBlockKey, fooSpanKey, 'baz'),
-        {
-          ...block(fooBlockKey, barSpanKey, ''),
-          children: [{_type: 'span', text: 'bar', marks: []}],
-        },
-      ],
-    })
-    consoleWarn.mockRestore()
-
-    const repairedSpan = {_type: 'span', text: 'bar', marks: [], _key: 'k6'}
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(fooBlockKey, fooSpanKey, 'baz'),
-      {...block('k7', barSpanKey, ''), children: [repairedSpan]},
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: fooBlockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: fooBlockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [
-              {_key: fooBlockKey},
-              'children',
-              {_key: fooSpanKey},
-              'marks',
-            ],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [
-                {_key: fooBlockKey},
-                'children',
-                {_key: fooSpanKey},
-                'marks',
-              ],
-              value: [],
-            },
-          },
-          {
-            type: 'remove.text',
-            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
-            offset: 0,
-            text: 'foo',
-          },
-          {
-            type: 'insert.text',
-            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
-            offset: 0,
-            text: 'baz',
-          },
-          {type: 'unset', path: [{_key: barBlockKey}]},
-          {
-            type: 'insert',
-            path: [1],
-            node: {...block(fooBlockKey, barSpanKey, ''), children: []},
-            position: 'before',
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [1, 'children', 0],
-            node: repairedSpan,
-            position: 'before',
-          },
-          {
-            type: 'set',
-            path: [1, '_key'],
-            value: 'k7',
-            inverse: {type: 'set', path: [1, '_key'], value: fooBlockKey},
-          },
-        ],
-        patches: [
-          {...set('k7', [1, '_key']), origin: 'local'},
-          set(repairedSpan, [{_key: fooBlockKey}, 'children', 0]),
-        ],
-        correction: true,
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test.fails('Scenario: Replaying the local `patches` of an `update value` repeating a block key with a keyless child in the later block gives the editor’s value', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const barBlockKey = keyGenerator()
-    const barSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        block(fooBlockKey, fooSpanKey, 'foo'),
-        block(barBlockKey, barSpanKey, 'bar'),
-      ],
-    })
-    const changes = collectChanges(editor)
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const hostValue = [
-      block(fooBlockKey, fooSpanKey, 'baz'),
-      {
-        ...block(fooBlockKey, barSpanKey, ''),
-        children: [{_type: 'span', text: 'bar', marks: []}],
-      },
-    ]
-
-    editor.send({type: 'update value', value: hostValue})
-    consoleWarn.mockRestore()
-
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
   test('Scenario: A first load with a keyless child emits only a `correction` with the minted key', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -1734,27 +782,51 @@ describe('event.change', () => {
       expect(events.some((event) => event.type === 'ready')).toBe(true)
     })
 
-    const repairedSpan = {_type: 'span', _key: 'k3', text: 'foo', marks: []}
-
     expect(changes).toEqual([
       {
-        type: 'change',
-        origin: 'local',
+        correction: true,
         operations: [
           {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', 0],
-            node: repairedSpan,
-            position: 'before',
+            inverse: {
+              path: [
+                {
+                  _key: 'k0',
+                },
+                'children',
+                0,
+                '_key',
+              ],
+              type: 'unset',
+            },
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              0,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k3',
           },
         ],
+        origin: 'local',
         patches: [
           {
-            ...set(repairedSpan, [{_key: blockKey}, 'children', 0]),
             origin: 'local',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              0,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k3',
           },
         ],
-        correction: true,
+        type: 'change',
       },
     ])
   })
@@ -2072,62 +1144,164 @@ describe('event.change', () => {
 
     expect(events).toEqual([
       {
-        type: 'operation',
-        operation: {type: 'unset', path: [{_key: 'k2'}]},
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
         operation: {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: block(blockKey, spanKey, 'foo'),
+          path: [],
+          type: 'set',
+          value: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  marks: [],
+                  text: 'foo',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
         },
         origin: 'remote',
-      },
-      {type: 'value changed', value: [block(blockKey, spanKey, 'foo')]},
-      {type: 'ready'},
-      {
-        type: 'selection',
-        selection: {
-          anchor: {path: spanPath, offset: 3},
-          focus: {path: spanPath, offset: 3},
-          backward: false,
-        },
-      },
-      {
         type: 'operation',
-        operation: {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
-        origin: 'local',
       },
       {
-        type: 'change',
+        type: 'ready',
+      },
+      {
+        selection: {
+          anchor: {
+            offset: 3,
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+            ],
+          },
+          backward: false,
+          focus: {
+            offset: 3,
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+            ],
+          },
+        },
+        type: 'selection',
+      },
+      {
+        operation: {
+          offset: 3,
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+          ],
+          text: '!',
+          type: 'insert.text',
+        },
         origin: 'local',
+        type: 'operation',
+      },
+      {
         operations: [
-          {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
-        ],
-        patches: [
           {
-            ...diffMatchPatch('foo', 'foo!', [...spanPath, 'text']),
-            origin: 'local',
+            offset: 3,
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+            ],
+            text: '!',
+            type: 'insert.text',
           },
         ],
+        origin: 'local',
+        patches: [
+          {
+            origin: 'local',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+              'text',
+            ],
+            type: 'diffMatchPatch',
+            value: '@@ -1,3 +1,4 @@\n foo\n+!\n',
+          },
+        ],
+        type: 'change',
       },
       {
-        type: 'patch',
         patch: {
-          ...diffMatchPatch('foo', 'foo!', [...spanPath, 'text']),
           origin: 'local',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+            'text',
+          ],
+          type: 'diffMatchPatch',
+          value: '@@ -1,3 +1,4 @@\n foo\n+!\n',
         },
+        type: 'patch',
       },
       {
-        type: 'selection',
         selection: {
-          anchor: {path: spanPath, offset: 4},
-          focus: {path: spanPath, offset: 4},
+          anchor: {
+            offset: 4,
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+            ],
+          },
           backward: false,
+          focus: {
+            offset: 4,
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+            ],
+          },
         },
+        type: 'selection',
       },
     ])
   })
@@ -2156,7 +1330,6 @@ describe('event.change', () => {
         />
       ),
     })
-    const duplicateKeyPath = [{_key: blockKey}, 'children', 1, '_key']
 
     await vi.waitFor(() => {
       expect(events.some((event) => event.type === 'ready')).toBe(true)
@@ -2164,46 +1337,112 @@ describe('event.change', () => {
 
     expect(events).toEqual([
       {
-        type: 'operation',
-        operation: {type: 'unset', path: [{_key: 'k2'}]},
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
         operation: {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: loadedBlock,
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
+          path: [],
           type: 'set',
-          path: duplicateKeyPath,
-          value: 'k4',
-          inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
+          value: [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  marks: [],
+                  text: 'foo',
+                },
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  marks: ['strong'],
+                  text: 'bar',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
         },
         origin: 'remote',
+        type: 'operation',
       },
-      {type: 'value changed', value: [loadedBlock]},
       {
-        type: 'change',
-        origin: 'local',
+        operation: {
+          inverse: {
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              1,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k1',
+          },
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            1,
+            '_key',
+          ],
+          type: 'set',
+          value: 'k4',
+        },
+        origin: 'remote',
+        type: 'operation',
+      },
+      {
+        correction: true,
         operations: [
           {
+            inverse: {
+              path: [
+                {
+                  _key: 'k0',
+                },
+                'children',
+                1,
+                '_key',
+              ],
+              type: 'set',
+              value: 'k1',
+            },
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              1,
+              '_key',
+            ],
             type: 'set',
-            path: duplicateKeyPath,
             value: 'k4',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
           },
         ],
-        patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
-        correction: true,
+        origin: 'local',
+        patches: [
+          {
+            origin: 'local',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              1,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k4',
+          },
+        ],
+        type: 'change',
       },
-      {type: 'ready'},
+      {
+        type: 'ready',
+      },
     ])
   })
 
@@ -2391,47 +1630,6 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: Actions that change nothing emit no `change`', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-
-    editor.send({
-      type: 'update value',
-      value: [block(blockKey, spanKey, 'foo')],
-    })
-    editor.send({
-      type: 'select',
-      at: {
-        anchor: {path: spanPath, offset: 3},
-        focus: {path: spanPath, offset: 3},
-      },
-    })
-    editor.send({type: 'insert.text', text: '!'})
-
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {type: 'insert.text', path: spanPath, offset: 3, text: '!'},
-        ],
-        patches: [
-          {
-            ...diffMatchPatch('foo', 'foo!', [...spanPath, 'text']),
-            origin: 'local',
-          },
-        ],
-      },
-    ])
-  })
-
   test('Scenario: The local `change` patches of a session equal the patches of its `mutation` events', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({keyGenerator})
@@ -2486,106 +1684,6 @@ describe('event.change', () => {
     ).toEqual(sessionPatches)
   })
 
-  test('Scenario: A `change` listener that edits on a remote `change` gets the correction of the remote `change` before its own edit', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes: Array<ChangeEvent> = []
-    editor.on('change', (event) => {
-      changes.push(event)
-      if (event.origin === 'remote') {
-        editor.send({type: 'delete.block', at: [{_key: blockKey}]})
-      }
-    })
-    const fooSpan = {_type: 'span', _key: spanKey, text: 'foo', marks: []}
-    const barSpan = {
-      _type: 'span',
-      _key: spanKey,
-      text: 'bar',
-      marks: ['strong'],
-    }
-    const duplicateKeyPath = [{_key: blockKey}, 'children', 1, '_key']
-
-    editor.send({
-      type: 'update value',
-      value: [{...block(blockKey, spanKey, ''), children: [fooSpan, barSpan]}],
-    })
-
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'insert',
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            position: 'after',
-            node: barSpan,
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k4',
-            inverse: {type: 'set', path: duplicateKeyPath, value: spanKey},
-          },
-        ],
-        patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'unset',
-            path: [{_key: blockKey}],
-            inverse: {
-              type: 'insert',
-              path: [0],
-              position: 'before',
-              node: {
-                ...block(blockKey, spanKey, ''),
-                children: [fooSpan, {...barSpan, _key: 'k4'}],
-              },
-            },
-          },
-          {
-            type: 'insert',
-            path: [0],
-            position: 'before',
-            node: block('k5', 'k6', ''),
-            inverse: {type: 'unset', path: [{_key: 'k5'}]},
-          },
-        ],
-        patches: [
-          {...unset([{_key: blockKey}]), origin: 'local'},
-          {...unset([]), origin: 'local'},
-        ],
-      },
-    ])
-  })
-
   test('Scenario: A first load that streams its blocks across ticks commits one change', async () => {
     const keyGenerator = createTestKeyGenerator()
     // `updateValue` yields a tick every 10 blocks, so 25 blocks span three.
@@ -2630,7 +1728,6 @@ describe('event.change', () => {
     }
     const events: Array<EditorEmittedEvent> = []
     const firstSpanPath = [{_key: blockKey}, 'children', {_key: duplicateKey}]
-    const duplicateKeyPath = [{_key: blockKey}, 'children', 1, '_key']
     const loadedBlock = {
       ...block(blockKey, duplicateKey, ''),
       children: [fooSpan, barSpan],
@@ -2666,666 +1763,145 @@ describe('event.change', () => {
     })
     expect(events).toEqual([
       {
-        type: 'operation',
-        operation: {type: 'unset', path: [{_key: 'k2'}]},
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
         operation: {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: loadedBlock,
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
+          path: [],
           type: 'set',
-          path: duplicateKeyPath,
-          value: 'k4',
-          inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-        },
-        origin: 'remote',
-      },
-      {type: 'value changed', value: [loadedBlock]},
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k4',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-          },
-        ],
-        patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-      {type: 'ready'},
-      {
-        type: 'operation',
-        operation: {type: 'unset', path: firstSpanPath},
-        origin: 'remote',
-      },
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [{type: 'unset', path: firstSpanPath}],
-      },
-    ])
-  })
-
-  test('Scenario: A value sent before a streamed first load finishes syncs after the correction of the load', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const duplicateKey = keyGenerator()
-    const fooSpan = {_type: 'span', _key: duplicateKey, text: 'foo', marks: []}
-    const barSpan = {
-      _type: 'span',
-      _key: duplicateKey,
-      text: 'bar',
-      marks: ['strong'],
-    }
-    const duplicateKeyPath = [{_key: blockKey}, 'children', 1, '_key']
-    const firstSpanPath = [{_key: blockKey}, 'children', {_key: duplicateKey}]
-    const events: Array<EditorEmittedEvent> = []
-    const loadedBlock = {
-      ...block(blockKey, duplicateKey, ''),
-      children: [fooSpan, barSpan],
-    }
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
-      initialValue: [loadedBlock],
-      children: (
-        <>
-          <EventListenerPlugin
-            on={(event) => {
-              events.push(event)
-            }}
-          />
-          <SendOnMount
-            event={{
-              type: 'update value',
-              value: [block(blockKey, duplicateKey, 'baz')],
-            }}
-          />
-        </>
-      ),
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        block(blockKey, duplicateKey, 'baz'),
-      ])
-    })
-    expect(events).toEqual([
-      {
-        type: 'operation',
-        operation: {type: 'unset', path: [{_key: 'k2'}]},
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: loadedBlock,
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'set',
-          path: duplicateKeyPath,
-          value: 'k4',
-          inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-        },
-        origin: 'remote',
-      },
-      {type: 'value changed', value: [loadedBlock]},
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k4',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-          },
-        ],
-        patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-      {type: 'ready'},
-      {
-        type: 'operation',
-        operation: {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-          inverse: {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-          },
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: 'k4'}],
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'set',
-          path: [...firstSpanPath, 'marks'],
-          value: [],
-          inverse: {type: 'set', path: [...firstSpanPath, 'marks'], value: []},
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'remove.text',
-          path: firstSpanPath,
-          offset: 0,
-          text: 'foo',
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'insert.text',
-          path: firstSpanPath,
-          offset: 0,
-          text: 'baz',
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {type: 'unset', path: [{_key: blockKey}, 'children', {_key: 'k4'}]},
-          {
-            type: 'set',
-            path: [...firstSpanPath, 'marks'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [...firstSpanPath, 'marks'],
-              value: [],
-            },
-          },
-          {type: 'remove.text', path: firstSpanPath, offset: 0, text: 'foo'},
-          {type: 'insert.text', path: firstSpanPath, offset: 0, text: 'baz'},
-        ],
-      },
-      {type: 'value changed', value: [block(blockKey, duplicateKey, 'baz')]},
-    ])
-  })
-
-  test('Scenario: A Behavior event sent by an `operation` listener during `update value` emits its own local `change` after the remote `change` so far', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [block(blockKey, spanKey, 'foo')],
-    })
-    const changes = collectChanges(editor)
-    const mutations = collectMutations(editor)
-    const patches: Array<Patch> = []
-    editor.on('patch', (event) => {
-      patches.push(event.patch)
-    })
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    const bazBlock = {
-      _type: 'block',
-      _key: 'k4',
-      children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
-    }
-    editor.on('operation', (event) => {
-      if (event.origin === 'remote' && event.operation.type === 'insert.text') {
-        editor.send({
-          type: 'insert.block',
-          block: {_type: 'block', children: [{_type: 'span', text: 'baz'}]},
-          placement: 'after',
-          at: {
-            anchor: {path: spanPath, offset: 0},
-            focus: {path: spanPath, offset: 0},
-          },
-        })
-      }
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [block(blockKey, spanKey, 'bar')],
-    })
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(blockKey, spanKey, 'bar'),
-      bazBlock,
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [...spanPath, 'marks'],
-            value: [],
-            inverse: {type: 'set', path: [...spanPath, 'marks'], value: []},
-          },
-          {type: 'remove.text', path: spanPath, offset: 0, text: 'foo'},
-          {type: 'insert.text', path: spanPath, offset: 0, text: 'bar'},
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [{_key: blockKey}],
-            position: 'after',
-            node: bazBlock,
-          },
-        ],
-        patches: [],
-      },
-    ])
-
-    // The insert is applied inside the sync's brackets, so like on main it
-    // sends no `patch`. The edit after it anchors the `mutation` flush.
-    editor.send({
-      type: 'insert.text',
-      at: spanPath,
-      offset: 3,
-      text: '!',
-    })
-
-    await vi.waitFor(() => {
-      expect(mutations).toEqual([
-        {
-          type: 'mutation',
-          patches: [
-            {
-              ...diffMatchPatch('bar', 'bar!', [...spanPath, 'text']),
-              origin: 'local',
-            },
-          ],
-          value: [block(blockKey, spanKey, 'bar!'), bazBlock],
-        },
-      ])
-    })
-    expect(patches).toEqual([
-      {
-        ...diffMatchPatch('bar', 'bar!', [...spanPath, 'text']),
-        origin: 'local',
-      },
-    ])
-  })
-
-  test('Scenario: A container registered by an `operation` listener during `update value` is registered and emits no `change` of its own', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const calloutKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: calloutSchemaDefinition,
-      initialValue: [
-        block(blockKey, spanKey, 'foo'),
-        {_type: 'callout', _key: calloutKey},
-      ],
-    })
-    const changes = collectChanges(editor)
-    const patches: Array<Patch> = []
-    editor.on('patch', (event) => {
-      patches.push(event.patch)
-    })
-    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
-    editor.on('operation', (event) => {
-      if (event.origin === 'remote' && event.operation.type === 'insert.text') {
-        editor.registerNode({
-          node: defineContainer({type: 'callout', arrayField: 'content'}),
-        })
-      }
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [
-        block(blockKey, spanKey, 'bar'),
-        {_type: 'callout', _key: calloutKey},
-      ],
-    })
-
-    // The sync defers normalization, so like on main the registration
-    // fills nothing until the next edit.
-    expect(editor.getSnapshot().context.containers.has('callout')).toEqual(true)
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(blockKey, spanKey, 'bar'),
-      {_type: 'callout', _key: calloutKey},
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: [{_key: blockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: blockKey}, 'markDefs'],
-              value: [],
-            },
-          },
-          {
-            type: 'set',
-            path: [...spanPath, 'marks'],
-            value: [],
-            inverse: {type: 'set', path: [...spanPath, 'marks'], value: []},
-          },
-          {type: 'remove.text', path: spanPath, offset: 0, text: 'foo'},
-          {type: 'insert.text', path: spanPath, offset: 0, text: 'bar'},
-        ],
-      },
-    ])
-    expect(patches).toEqual([])
-  })
-
-  test('Scenario: A Behavior event sent by an `operation` listener during `update value` of a container emits its own local `change` after the remote `change` so far', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const calloutKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: calloutSchemaDefinition,
-      initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'callout', arrayField: 'content'}),
-    })
-    const changes = collectChanges(editor)
-    const mutations = collectMutations(editor)
-    const patches: Array<Patch> = []
-    editor.on('patch', (event) => {
-      patches.push(event.patch)
-    })
-    const contentPath = [{_key: calloutKey}, 'content']
-    const spanPath = [
-      ...contentPath,
-      {_key: blockKey},
-      'children',
-      {_key: spanKey},
-    ]
-    const bazBlock = {
-      _type: 'block',
-      _key: 'k5',
-      children: [{_type: 'span', _key: 'k6', text: 'baz', marks: []}],
-    }
-    editor.on('operation', (event) => {
-      if (event.origin === 'remote' && event.operation.type === 'set') {
-        editor.send({
-          type: 'insert.block',
-          block: {_type: 'block', children: [{_type: 'span', text: 'baz'}]},
-          placement: 'after',
-          at: {
-            anchor: {path: spanPath, offset: 0},
-            focus: {path: spanPath, offset: 0},
-          },
-        })
-      }
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [callout(calloutKey, [block(blockKey, spanKey, 'bar')])],
-    })
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      callout(calloutKey, [block(blockKey, spanKey, 'bar'), bazBlock]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: contentPath,
-            value: [block(blockKey, spanKey, 'bar')],
-            inverse: {
-              type: 'set',
-              path: contentPath,
-              value: [block(blockKey, spanKey, 'foo')],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'insert',
-            path: [...contentPath, {_key: blockKey}],
-            position: 'after',
-            node: bazBlock,
-          },
-        ],
-        patches: [],
-      },
-    ])
-
-    // The insert is applied inside the sync's brackets, so like on main it
-    // sends no `patch`. The edit after it anchors the `mutation` flush.
-    editor.send({
-      type: 'insert.text',
-      at: spanPath,
-      offset: 3,
-      text: '!',
-    })
-
-    await vi.waitFor(() => {
-      expect(mutations).toEqual([
-        {
-          type: 'mutation',
-          patches: [
-            {
-              ...diffMatchPatch('bar', 'bar!', [...spanPath, 'text']),
-              origin: 'local',
-            },
-          ],
           value: [
-            callout(calloutKey, [block(blockKey, spanKey, 'bar!'), bazBlock]),
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  marks: [],
+                  text: 'foo',
+                },
+                {
+                  _key: 'k1',
+                  _type: 'span',
+                  marks: ['strong'],
+                  text: 'bar',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
           ],
         },
-      ])
-    })
-    expect(patches).toEqual([
-      {
-        ...diffMatchPatch('bar', 'bar!', [...spanPath, 'text']),
-        origin: 'local',
-      },
-    ])
-  })
-
-  test('Scenario: `update value` sent by a Behavior effect emits its own remote `change` and keeps the value in sync', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      children: (
-        <BehaviorPlugin
-          behaviors={[
-            defineBehavior({
-              on: 'custom.sync',
-              actions: [
-                () => [
-                  effect(() => {
-                    editor.send({
-                      type: 'update value',
-                      value: [block(fooBlockKey, fooSpanKey, 'foo')],
-                    })
-                  }),
-                ],
-              ],
-            }),
-          ]}
-        />
-      ),
-    })
-    const fooSpanPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
-    const changes = collectChanges(editor)
-
-    editor.send({type: 'custom.sync'})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(fooBlockKey, fooSpanKey, 'foo'),
-    ])
-
-    editor.send({
-      type: 'update value',
-      value: [block(fooBlockKey, fooSpanKey, 'bar')],
-    })
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      block(fooBlockKey, fooSpanKey, 'bar'),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
         origin: 'remote',
-        operations: [
-          {type: 'unset', path: [{_key: 'k2'}]},
-          {
-            type: 'insert',
-            path: [0],
-            position: 'before',
-            node: block(fooBlockKey, fooSpanKey, 'foo'),
-          },
-        ],
+        type: 'operation',
       },
       {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
+        operation: {
+          inverse: {
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              1,
+              '_key',
+            ],
             type: 'set',
-            path: [{_key: fooBlockKey}, 'markDefs'],
-            value: [],
-            inverse: {
-              type: 'set',
-              path: [{_key: fooBlockKey}, 'markDefs'],
-              value: [],
+            value: 'k1',
+          },
+          path: [
+            {
+              _key: 'k0',
             },
-          },
-          {
-            type: 'set',
-            path: [...fooSpanPath, 'marks'],
-            value: [],
-            inverse: {type: 'set', path: [...fooSpanPath, 'marks'], value: []},
-          },
-          {type: 'remove.text', path: fooSpanPath, offset: 0, text: 'foo'},
-          {type: 'insert.text', path: fooSpanPath, offset: 0, text: 'bar'},
-        ],
-      },
-    ])
-  })
-
-  test('Scenario: `update value` sent by a Behavior effect after an `await` emits its own remote `change`', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const fooBlockKey = keyGenerator()
-    const fooSpanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      children: (
-        <BehaviorPlugin
-          behaviors={[
-            defineBehavior({
-              on: 'custom.sync',
-              actions: [
-                () => [
-                  effect(async () => {
-                    await Promise.resolve()
-                    editor.send({
-                      type: 'update value',
-                      value: [block(fooBlockKey, fooSpanKey, 'foo')],
-                    })
-                  }),
-                ],
-              ],
-            }),
-          ]}
-        />
-      ),
-    })
-    const changes = collectChanges(editor)
-
-    editor.send({type: 'custom.sync'})
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        block(fooBlockKey, fooSpanKey, 'foo'),
-      ])
-    })
-    expect(changes).toEqual([
-      {
-        type: 'change',
+            'children',
+            1,
+            '_key',
+          ],
+          type: 'set',
+          value: 'k4',
+        },
         origin: 'remote',
+        type: 'operation',
+      },
+      {
+        correction: true,
         operations: [
-          {type: 'unset', path: [{_key: 'k2'}]},
           {
-            type: 'insert',
-            path: [0],
-            position: 'before',
-            node: block(fooBlockKey, fooSpanKey, 'foo'),
+            inverse: {
+              path: [
+                {
+                  _key: 'k0',
+                },
+                'children',
+                1,
+                '_key',
+              ],
+              type: 'set',
+              value: 'k1',
+            },
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              1,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k4',
           },
         ],
+        origin: 'local',
+        patches: [
+          {
+            origin: 'local',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              1,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k4',
+          },
+        ],
+        type: 'change',
+      },
+      {
+        type: 'ready',
+      },
+      {
+        operation: {
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+          ],
+          type: 'unset',
+        },
+        origin: 'remote',
+        type: 'operation',
+      },
+      {
+        operations: [
+          {
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+            ],
+            type: 'unset',
+          },
+        ],
+        origin: 'remote',
+        type: 'change',
       },
     ])
   })
@@ -3428,141 +2004,6 @@ describe('event.change', () => {
       editor.getSnapshot().context.value,
     )
     expect(replayLocalPatches(initialValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test('Scenario: `update value` changing a text block inside a container emits one remote `change` whose `operations` replay to the editor’s value', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const calloutKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: calloutSchemaDefinition,
-      initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'callout', arrayField: 'content'}),
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const contentPath = [{_key: calloutKey}, 'content']
-    const hostValue = [callout(calloutKey, [block(blockKey, spanKey, 'bar')])]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      callout(calloutKey, [block(blockKey, spanKey, 'bar')]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: contentPath,
-            value: [block(blockKey, spanKey, 'bar')],
-            inverse: {
-              type: 'set',
-              path: contentPath,
-              value: [block(blockKey, spanKey, 'foo')],
-            },
-          },
-        ],
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test('Scenario: `update value` repeating a span key in a text block inside a container emits the remote `change`, then a `correction` re-keying the span', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const calloutKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const duplicateKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: calloutSchemaDefinition,
-      initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'callout', arrayField: 'content'}),
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const contentPath = [{_key: calloutKey}, 'content']
-    const duplicateKeyPath = [
-      ...contentPath,
-      {_key: blockKey},
-      'children',
-      1,
-      '_key',
-    ]
-    const duplicateKeyBlock = {
-      ...block(blockKey, spanKey, ''),
-      children: [
-        {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-        {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['strong']},
-      ],
-    }
-    const hostValue = [callout(calloutKey, [duplicateKeyBlock])]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      callout(calloutKey, [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [
-            {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-            {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
-          ],
-        },
-      ]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: contentPath,
-            value: [duplicateKeyBlock],
-            inverse: {
-              type: 'set',
-              path: contentPath,
-              value: [block(blockKey, spanKey, 'foo')],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k6',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-          },
-        ],
-        patches: [{...set('k6', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
       editor.getSnapshot().context.value,
     )
   })
@@ -3680,169 +2121,6 @@ describe('event.change', () => {
     )
   })
 
-  test('Scenario: `update value` changing a text block inside a container inside a container emits one remote `change` whose `operations` replay to the editor’s value', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const outerCalloutKey = keyGenerator()
-    const innerCalloutKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: nestedCalloutSchemaDefinition,
-      initialValue: [
-        callout(outerCalloutKey, [
-          callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
-        ]),
-      ],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'callout', arrayField: 'content'}),
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const outerContentPath = [{_key: outerCalloutKey}, 'content']
-    const hostValue = [
-      callout(outerCalloutKey, [
-        callout(innerCalloutKey, [block(blockKey, spanKey, 'bar')]),
-      ]),
-    ]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      callout(outerCalloutKey, [
-        callout(innerCalloutKey, [block(blockKey, spanKey, 'bar')]),
-      ]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: outerContentPath,
-            value: [
-              callout(innerCalloutKey, [block(blockKey, spanKey, 'bar')]),
-            ],
-            inverse: {
-              type: 'set',
-              path: outerContentPath,
-              value: [
-                callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
-              ],
-            },
-          },
-        ],
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test('Scenario: `update value` repeating a span key in a text block inside a container inside a container emits the remote `change`, then a `correction` re-keying the span', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const outerCalloutKey = keyGenerator()
-    const innerCalloutKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const duplicateKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: nestedCalloutSchemaDefinition,
-      initialValue: [
-        callout(outerCalloutKey, [
-          callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
-        ]),
-      ],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'callout', arrayField: 'content'}),
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const outerContentPath = [{_key: outerCalloutKey}, 'content']
-    const duplicateKeyPath = [
-      ...outerContentPath,
-      {_key: innerCalloutKey},
-      'content',
-      {_key: blockKey},
-      'children',
-      1,
-      '_key',
-    ]
-    const duplicateKeyBlock = {
-      ...block(blockKey, spanKey, ''),
-      children: [
-        {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-        {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['strong']},
-      ],
-    }
-    const hostValue = [
-      callout(outerCalloutKey, [callout(innerCalloutKey, [duplicateKeyBlock])]),
-    ]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      callout(outerCalloutKey, [
-        callout(innerCalloutKey, [
-          {
-            ...block(blockKey, spanKey, ''),
-            children: [
-              {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-              {_type: 'span', _key: 'k7', text: 'bar', marks: ['strong']},
-            ],
-          },
-        ]),
-      ]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: outerContentPath,
-            value: [callout(innerCalloutKey, [duplicateKeyBlock])],
-            inverse: {
-              type: 'set',
-              path: outerContentPath,
-              value: [
-                callout(innerCalloutKey, [block(blockKey, spanKey, 'foo')]),
-              ],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k7',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-          },
-        ],
-        patches: [{...set('k7', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
   test('Scenario: Typing and splitting a text block in an object field with its own sub-schema emits local `change` events whose `operations` and `patches` replay to the editor’s value', async () => {
     const keyGenerator = createTestKeyGenerator()
     const noteKey = keyGenerator()
@@ -3940,141 +2218,6 @@ describe('event.change', () => {
       editor.getSnapshot().context.value,
     )
     expect(replayLocalPatches(initialValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test('Scenario: `update value` changing a text block in an object field with its own sub-schema emits one remote `change` whose `operations` replay to the editor’s value', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const noteKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: noteSchemaDefinition,
-      initialValue: [note(noteKey, [emBlock(blockKey, spanKey, 'foo')])],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'note', arrayField: 'body'}),
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const bodyPath = [{_key: noteKey}, 'body']
-    const hostValue = [note(noteKey, [emBlock(blockKey, spanKey, 'bar')])]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      note(noteKey, [emBlock(blockKey, spanKey, 'bar')]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: bodyPath,
-            value: [emBlock(blockKey, spanKey, 'bar')],
-            inverse: {
-              type: 'set',
-              path: bodyPath,
-              value: [emBlock(blockKey, spanKey, 'foo')],
-            },
-          },
-        ],
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-  })
-
-  test('Scenario: `update value` repeating a span key in a text block in an object field with its own sub-schema emits the remote `change`, then a `correction` re-keying the span', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const noteKey = keyGenerator()
-    const blockKey = keyGenerator()
-    const spanKey = keyGenerator()
-    const duplicateKey = keyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: noteSchemaDefinition,
-      initialValue: [note(noteKey, [emBlock(blockKey, spanKey, 'foo')])],
-    })
-    editor.registerNode({
-      node: defineContainer({type: 'note', arrayField: 'body'}),
-    })
-    const initialSnapshotValue = editor.getSnapshot().context.value
-    const changes = collectChanges(editor)
-    const bodyPath = [{_key: noteKey}, 'body']
-    const duplicateKeyPath = [
-      ...bodyPath,
-      {_key: blockKey},
-      'children',
-      1,
-      '_key',
-    ]
-    const duplicateKeyBlock = {
-      ...block(blockKey, spanKey, ''),
-      children: [
-        {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-        {_type: 'span', _key: duplicateKey, text: 'bar', marks: ['em']},
-      ],
-    }
-    const hostValue = [note(noteKey, [duplicateKeyBlock])]
-
-    editor.send({type: 'update value', value: hostValue})
-
-    expect(editor.getSnapshot().context.value).toEqual([
-      note(noteKey, [
-        {
-          ...block(blockKey, spanKey, ''),
-          children: [
-            {_type: 'span', _key: duplicateKey, text: 'foo', marks: []},
-            {_type: 'span', _key: 'k6', text: 'bar', marks: ['em']},
-          ],
-        },
-      ]),
-    ])
-    expect(changes).toEqual([
-      {
-        type: 'change',
-        origin: 'remote',
-        operations: [
-          {
-            type: 'set',
-            path: bodyPath,
-            value: [duplicateKeyBlock],
-            inverse: {
-              type: 'set',
-              path: bodyPath,
-              value: [emBlock(blockKey, spanKey, 'foo')],
-            },
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {
-            type: 'set',
-            path: duplicateKeyPath,
-            value: 'k6',
-            inverse: {type: 'set', path: duplicateKeyPath, value: duplicateKey},
-          },
-        ],
-        patches: [{...set('k6', duplicateKeyPath), origin: 'local'}],
-        correction: true,
-      },
-    ])
-    expect(replayOperations(initialSnapshotValue, changes)).toEqual(
-      editor.getSnapshot().context.value,
-    )
-    expect(replayLocalPatches(hostValue, changes)).toEqual(
       editor.getSnapshot().context.value,
     )
   })

@@ -818,21 +818,13 @@ describe('remote patches skip cosmetic normalization', () => {
     })
   })
 
-  test('Scenario: `update value` keeps adjacent same-mark spans as-is', async () => {
+  test('Scenario: `initialValue` keeps adjacent same-mark spans as-is', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
 
     const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({
-        decorators: [{name: 'strong'}, {name: 'em'}],
-      }),
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [
+      initialValue: [
         {
           _type: 'block',
           _key: blockKey,
@@ -844,6 +836,10 @@ describe('remote patches skip cosmetic normalization', () => {
           style: 'normal',
         },
       ],
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}, {name: 'em'}],
+      }),
     })
 
     // Adopted structure is kept byte-for-byte: cosmetic canonicalization
@@ -986,15 +982,10 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
   })
 
-  test('Scenario: `update value` keeps duplicate markDefs as-is', async () => {
+  test('Scenario: `initialValue` keeps duplicate markDefs as-is', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
-    })
 
     const storedValue = [
       {
@@ -1009,7 +1000,11 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
       },
     ]
 
-    editor.send({type: 'update value', value: storedValue})
+    const {editor} = await createTestEditor({
+      initialValue: storedValue,
+      keyGenerator,
+      schemaDefinition: defineSchema({annotations: [{name: 'link'}]}),
+    })
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(storedValue)

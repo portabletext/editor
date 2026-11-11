@@ -812,9 +812,7 @@ describe('event.patches sidecar arrays: multi-element and keyed tails', () => {
     })
 
     // The mark insert is included so the new markDef is referenced. An
-    // unreferenced markDef is orphaned data the editor strips (both the
-    // unused-markDefs normalization rule and `validateValue`'s
-    // auto-resolution remove it).
+    // unreferenced markDef is orphaned data that normalization can strip.
     editor.send({
       type: 'apply',
       patches: [

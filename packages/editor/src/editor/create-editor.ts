@@ -131,10 +131,6 @@ export function createInternalEditor(config: EditorConfig): {
     },
     send: (event) => {
       switch (event.type) {
-        case 'update value':
-          syncActor.send(event)
-          break
-
         case 'update readOnly':
           editorActor.send(event)
           break
@@ -268,12 +264,6 @@ function createActors(config: {
   config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
       switch (event.type) {
-        case 'invalid value':
-          config.relay.send(event)
-          break
-        case 'value changed':
-          config.relay.send(event)
-          break
         case 'patch':
           config.editorActor.send({
             ...event,

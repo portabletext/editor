@@ -509,7 +509,7 @@ export function applyOperation(
       // `transformPoint` returns the same reference when the operation doesn't
       // move the point. If neither endpoint moved, the selection is identity-
       // stable and we leave `editor.snapshot.context.selection` alone. This lets internal sync
-      // paths (e.g. remote patches arriving via `update value`) run set/unset/
+      // paths (e.g. remote patches) run set/unset/
       // insert.text operations without forcing downstream consumers to re-derive
       // selection-keyed state for no semantic reason.
       editor.snapshot.context.selection = {

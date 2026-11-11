@@ -176,121 +176,6 @@ describe('event.operation', () => {
     })
   })
 
-  test('Scenario: Operations from value sync are observed while patches are gated', async () => {
-    const {editor} = await createTestEditor()
-    const operations = collectOperations(editor)
-    const patches: Array<unknown> = []
-    editor.on('patch', (event) => patches.push(event.patch))
-
-    editor.send({type: 'update value', value: [block('b1', 'synced')]})
-
-    // Value sync replaces the empty editor's seed block, inserting at an
-    // index path (there is no sibling to anchor by key). Remote-applied
-    // operations don't need to be reversible, so the engine doesn't
-    // populate `inverse` for them.
-    await vi.waitFor(() => {
-      expect(operations).toEqual([
-        {
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
-        {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: block('b1', 'synced'),
-        },
-      ])
-    })
-
-    // `patch`/`mutation` are gated while the editor is pristine; the
-    // operation stream is not.
-    expect(patches).toEqual([])
-  })
-
-  test('Scenario: An auto-resolved block arrives as received, then its repair arrives as its own insert operation', async () => {
-    const {editor} = await createTestEditor()
-    const operations = collectOperations(editor)
-
-    // A text block with no children is auto-resolved by `validateValue` at
-    // sync ingress: the block is inserted as received, and the span the
-    // editor adds is a separate operation.
-    editor.send({type: 'update value', value: [emptyBlock('b1')]})
-
-    await vi.waitFor(() => {
-      expect(operations).toEqual([
-        {
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
-        {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: emptyBlock('b1'),
-        },
-        {
-          type: 'insert',
-          path: [{_key: 'b1'}, 'children', 0],
-          position: 'before',
-          node: {_type: 'span', _key: 'k2', text: '', marks: []},
-        },
-      ])
-    })
-  })
-
-  test('Scenario: Normalization fix operations are delivered adjacent to their trigger', async () => {
-    const {editor} = await createTestEditor()
-    const operations = collectOperations(editor)
-
-    // Duplicate child keys pass value validation (no dup-key check at
-    // ingress) and are repaired by engine normalization, which renames the
-    // second occurrence. Value sync applies in a batch, so the fix runs at
-    // the batch close and is delivered after its trigger (application
-    // order). The opposite, nested order for unbatched applies is pinned
-    // at the unit level in `operation-channel.test.ts`; the public
-    // contract is only adjacency, which is why the docs steer consumers
-    // toward snapshot-seeded recompute.
-    // The differing marks keep the two spans from also triggering the
-    // adjacent same-mark merge, so the rename is the only fix.
-    const dupBlock: PortableTextBlock = {
-      _type: 'block',
-      _key: 'b1',
-      style: 'normal',
-      markDefs: [],
-      children: [
-        {_type: 'span', _key: 'dup', text: 'one', marks: []},
-        {_type: 'span', _key: 'dup', text: 'two', marks: ['strong']},
-      ],
-    }
-    editor.send({type: 'update value', value: [dupBlock]})
-
-    await vi.waitFor(() => {
-      expect(operations).toEqual([
-        {
-          type: 'unset',
-          path: [{_key: 'k0'}],
-        },
-        {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: dupBlock,
-        },
-        {
-          type: 'set',
-          path: [{_key: 'b1'}, 'children', 1, '_key'],
-          value: 'k2',
-          inverse: {
-            type: 'set',
-            path: [{_key: 'b1'}, 'children', 1, '_key'],
-            value: 'dup',
-          },
-        },
-      ])
-    })
-  })
-
   test('Scenario: Undo and redo emit the operations they apply', async () => {
     const {editor, locator} = await createTestEditor({
       initialValue: [block('b1', 'foo')],
@@ -420,20 +305,38 @@ describe('event.operation', () => {
     await vi.waitFor(() => {
       expect(operations).toEqual([
         {
-          type: 'unset',
-          path: [{_key: 'k0'}],
+          path: [],
+          type: 'set',
+          value: [
+            {
+              _key: 'b1',
+              _type: 'block',
+              children: [
+                {
+                  _key: 'b1-span',
+                  _type: 'span',
+                  marks: [],
+                  text: '',
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
         },
         {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: block('b1', ''),
-        },
-        {
-          type: 'insert.text',
-          path: [{_key: 'b1'}, 'children', {_key: 'b1-span'}],
           offset: 0,
+          path: [
+            {
+              _key: 'b1',
+            },
+            'children',
+            {
+              _key: 'b1-span',
+            },
+          ],
           text: 'a',
+          type: 'insert.text',
         },
       ])
     })
@@ -637,16 +540,6 @@ function block(key: string, text: string): PortableTextBlock {
     style: 'normal',
     markDefs: [],
     children: [{_type: 'span', _key: `${key}-span`, text, marks: []}],
-  }
-}
-
-function emptyBlock(key: string): PortableTextBlock {
-  return {
-    _type: 'block',
-    _key: key,
-    style: 'normal',
-    markDefs: [],
-    children: [],
   }
 }
 

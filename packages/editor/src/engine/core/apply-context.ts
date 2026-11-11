@@ -15,13 +15,6 @@ export type ApplyContextFrame =
   | {kind: 'redo'}
   | {kind: 'normalization'}
   | {kind: 'placeholder'}
-  /**
-   * A `validateValue` auto-resolution applied to content received through
-   * `update value`. `patches` are the resolution's own patches for the
-   * operation, the ones the host receives for it. `sentAfterChange`: the
-   * sync sends them as its own `patch` events, which go out after every
-   * patch the change's operations generate.
-   */
   | {kind: 'repair'; patches: Array<Patch>; sentAfterChange: boolean}
 
 /**
