@@ -14,6 +14,8 @@ import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
+import {renderLargeLoad} from '../test-utils/large-load'
+import {loadDepths} from '../test-utils/load-depths'
 
 describe('event.history.undo', () => {
   test('Scenario: Undoing action sets', async () => {
@@ -1175,5 +1177,14 @@ describe('event.history.undo', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual(repairedValue)
     })
+  })
+  test('Scenario: `history.undo` while a large first value is drawn does nothing', async () => {
+    const large = await renderLargeLoad({depth: loadDepths[0]!})
+
+    large.editor.send({type: 'history.undo'})
+
+    expect(large.userChanges).toEqual([])
+    expect(large.engine.history).toEqual({undos: [], redos: []})
+    expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
   })
 })

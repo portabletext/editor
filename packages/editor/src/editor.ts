@@ -56,6 +56,23 @@ export type EditorEvent =
       type: 'update value'
       value: Array<PortableTextBlock> | undefined
     }
+  | {
+      /**
+       * The editor's first value, sent from a plugin's mount effect while
+       * the editor is loading, so `ready` fires with it in the snapshot.
+       * The whole value goes in during the first commit and is normalized
+       * once at the end of it. A `load` sent after another one in the same
+       * commit replaces it. `undefined` and `[]` both give the empty
+       * editor. Sending `load` after `ready` throws.
+       *
+       * Loading is not an edit: it emits no `change`, no `patch` and no
+       * `mutation` event and adds no history step. Only a fix the editor
+       * makes to the loaded value is emitted, as a `change` with
+       * `correction: true`.
+       */
+      type: 'load'
+      value: Array<PortableTextBlock> | undefined
+    }
 
 /**
  * @public
