@@ -1,4 +1,5 @@
 import type {Locator} from 'vitest/browser'
+import type {LargeLoad} from '../../../test-utils/large-load'
 import type {Editor} from '../../editor'
 
 /**
@@ -10,4 +11,5 @@ export type Context = {
   locator: Locator
   locatorB: Locator
   keyMap?: Map<string, string>
+  large?: LargeLoad
 }

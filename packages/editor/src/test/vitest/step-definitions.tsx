@@ -8,10 +8,12 @@ import {
 } from '@portabletext/test'
 import {Given, Then, When} from 'racejar'
 import {assert, expect, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
+import {page, userEvent} from 'vitest/browser'
 import {boundaryEquivalentSelections} from '../../../test-utils/boundary-equivalent'
 import {createTestSnapshot} from '../../../test-utils/create-test-snapshot'
 import {getEditorSelection} from '../../../test-utils/editor-selection'
+import {renderLargeLoad} from '../../../test-utils/large-load'
+import {loadDepths} from '../../../test-utils/load-depths'
 import {getSelectionText} from '../../../test-utils/selection-text'
 import {getTextBlockKey} from '../../../test-utils/text-block-key'
 import {getTextMarks} from '../../../test-utils/text-marks'
@@ -268,6 +270,52 @@ export const stepDefinitions = [
   ),
   Given('the editor state is', (context: Context, textspec: string) => {
     setEditorState(context, textspec)
+  }),
+
+  /**
+   * ```
+   * Given a large first value at "root"
+   * ```
+   */
+  Given(
+    'a large first value at {string}',
+    async (context: Context, depthName: string) => {
+      const depth = loadDepths.find((candidate) => candidate.name === depthName)
+      if (!depth) {
+        throw new Error(`Unknown depth: ${depthName}`)
+      }
+      const large = await renderLargeLoad({depth})
+
+      const path = large.spanPath(0)
+      large.editor.send({
+        type: 'select',
+        at: {anchor: {path, offset: 0}, focus: {path, offset: 0}},
+      })
+      context.editor = large.editor
+      context.locator = page.elementLocator(
+        document.querySelector<HTMLElement>('[data-pt-editor]')!,
+      )
+      context.large = large
+    },
+  ),
+
+  /**
+   * ```
+   * Then the editor is not editable
+   * ```
+   */
+  Then('the editor is not editable', (context: Context) => {
+    expect(context.large?.isEditable()).toEqual(false)
+  }),
+  Then('the large value is unchanged by the user', (context: Context) => {
+    const large = context.large!
+    expect(large.userChanges).toEqual([])
+    expect(large.engine.snapshot.context.value.length).toBeGreaterThan(0)
+  }),
+  Then('the editor is editable', async (context: Context) => {
+    await vi.waitFor(() => expect(context.large?.isEditable()).toEqual(true), {
+      timeout: 20_000,
+    })
   }),
 
   When('the selection is', selectionFromInput),

@@ -6,6 +6,8 @@ import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {renderLargeLoad} from '../test-utils/large-load'
+import {loadDepths} from '../test-utils/load-depths'
 
 /**
  * Select-all is editor-owned. Browsers cannot be trusted to build the range
@@ -237,6 +239,34 @@ describe('Feature: Select All', () => {
         },
         backward: false,
       })
+    })
+  })
+
+  describe('while a large first value is drawn', () => {
+    test('Scenario: select all and then typing or Backspace at root changes nothing', async () => {
+      const depth = loadDepths[0]!
+
+      const large = await renderLargeLoad({depth})
+
+      await userEvent.keyboard(selectAllChord)
+      await userEvent.keyboard('x')
+      await userEvent.keyboard('{Backspace}')
+
+      expect(large.userChanges).toEqual([])
+      expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
+    })
+
+    test('Scenario: select all and then typing or Backspace at table cell changes nothing', async () => {
+      const depth = loadDepths[3]!
+
+      const large = await renderLargeLoad({depth})
+
+      await userEvent.keyboard(selectAllChord)
+      await userEvent.keyboard('x')
+      await userEvent.keyboard('{Backspace}')
+
+      expect(large.userChanges).toEqual([])
+      expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
     })
   })
 })

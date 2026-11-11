@@ -10,6 +10,8 @@ import {
   defineContainer,
 } from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {renderLargeLoad} from '../test-utils/large-load'
+import {loadDepths} from '../test-utils/load-depths'
 
 describe('event.drag.drop', () => {
   test('Scenario: dragstart on an inline object drags only the inline object', async () => {
@@ -3563,6 +3565,66 @@ describe('event.drag.drop', () => {
       text.dispatchEvent(dragover)
 
       expect(dragover.defaultPrevented).toBe(true)
+    })
+  })
+
+  describe('while a large first value is drawn', () => {
+    test('Scenario: `drag.drop` from the first chunk at root does nothing', async () => {
+      const depth = loadDepths[0]!
+
+      const large = await renderLargeLoad({depth})
+      const dataTransfer = new DataTransfer()
+      const origin = {
+        anchor: {path: large.spanPath(0), offset: 0},
+        focus: {path: large.spanPath(0), offset: 3},
+      }
+
+      large.editor.send({
+        type: 'drag.drop',
+        originEvent: {dataTransfer},
+        dragOrigin: {selection: origin},
+        position: {
+          block: 'start',
+          isEditor: false,
+          isContainer: false,
+          selection: {
+            anchor: {path: large.spanPath(1), offset: 0},
+            focus: {path: large.spanPath(1), offset: 0},
+          },
+        },
+      })
+
+      expect(large.userChanges).toEqual([])
+      expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
+    })
+
+    test('Scenario: `drag.drop` from the first chunk at callout does nothing', async () => {
+      const depth = loadDepths[1]!
+
+      const large = await renderLargeLoad({depth})
+      const dataTransfer = new DataTransfer()
+      const origin = {
+        anchor: {path: large.spanPath(0), offset: 0},
+        focus: {path: large.spanPath(0), offset: 3},
+      }
+
+      large.editor.send({
+        type: 'drag.drop',
+        originEvent: {dataTransfer},
+        dragOrigin: {selection: origin},
+        position: {
+          block: 'start',
+          isEditor: false,
+          isContainer: false,
+          selection: {
+            anchor: {path: large.spanPath(1), offset: 0},
+            focus: {path: large.spanPath(1), offset: 0},
+          },
+        },
+      })
+
+      expect(large.userChanges).toEqual([])
+      expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
     })
   })
 })

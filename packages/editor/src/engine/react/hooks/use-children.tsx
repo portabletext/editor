@@ -9,7 +9,16 @@ import {
   isTextBlock,
   isTextBlockNode,
 } from '@portabletext/schema'
-import React, {useCallback, useContext, useRef, type JSX} from 'react'
+import {useSelector} from '@xstate/react'
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  type JSX,
+} from 'react'
+import {EditorActorContext} from '../../../editor/editor-actor-context'
 import {NewPipelineContext} from '../../../editor/new-pipeline-context'
 import {
   ParentContainerContext,
@@ -344,6 +353,31 @@ const useChildren = (props: {
       ? reconcileChildChunks(chunksRef.current, children)
       : buildRootChunks(children)
     chunksRef.current = renderChunks
+  }
+  const editorActor = useContext(EditorActorContext)
+  const isDrawing = useSelector(
+    editorActor,
+    (snapshot) => snapshot.context.isDrawing,
+  )
+  const [drawnChunkCount, setDrawnChunkCount] = useState(1)
+  const isDrawingRoot = renderAsChunks && isDrawing
+  const rootChunkCount = renderChunks?.length ?? 0
+  useEffect(() => {
+    if (!isDrawingRoot) {
+      return
+    }
+    if (drawnChunkCount >= rootChunkCount) {
+      editorActor.send({type: 'drawing finished'})
+      return
+    }
+    const timeout = setTimeout(
+      () => setDrawnChunkCount((count) => count + 1),
+      0,
+    )
+    return () => clearTimeout(timeout)
+  }, [drawnChunkCount, editorActor, isDrawingRoot, rootChunkCount])
+  if (isDrawingRoot && renderChunks) {
+    renderChunks = renderChunks.slice(0, drawnChunkCount)
   }
   const chunkElementCache = useRef(new Map<string, ChunkElementCache>())
   let chunkStart = 0
