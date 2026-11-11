@@ -134,8 +134,13 @@
     },
     "examples/*": {},
     ".": {
-      "entry": ["bundle-stats.config.ts", "build-config/*.d.ts"],
-      "ignoreDependencies": ["@playwright/test"]
+      "entry": [
+        "bundle-stats.config.ts",
+        "build-config/*.d.ts",
+        ".github/scripts/*.test.ts"
+      ],
+      "ignoreDependencies": ["@playwright/test"],
+      "project": ["**", ".github/scripts/**"]
     }
   }
 }
