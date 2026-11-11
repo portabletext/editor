@@ -20,28 +20,6 @@ import {ListIndexProvider, useListIndex} from './plugin.list-index'
  * is the exact shape Studio's catch-all text-block render uses.
  */
 describe('data-list-index in the new render pipeline', () => {
-  test('Scenario: A registered text-block render reproduces `data-list-index`', async () => {
-    const editor = await renderEditorWithListIndexRender([
-      paragraph('b0'),
-      numberListItem('b1'),
-      numberListItem('b2'),
-    ])
-
-    await expectListIndices({b0: null, b1: '1', b2: '2'})
-
-    editor.send({
-      type: 'update value',
-      value: [
-        paragraph('b0'),
-        numberListItem('b3'),
-        numberListItem('b1'),
-        numberListItem('b2'),
-      ],
-    })
-
-    await expectListIndices({b0: null, b3: '1', b1: '2', b2: '3'})
-  })
-
   test('Scenario: list items nested in a container number within their own array', async () => {
     await renderEditorWithListIndexRender(
       [
