@@ -17,6 +17,14 @@ import {
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {createTestEditor} from '../src/test/vitest'
 import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  objectFieldDepth,
+  textBlock,
+} from '../test-utils/load-depths'
+import {
   textBlockDepthsContainers,
   textBlockDepthsSchemaDefinition,
 } from '../test-utils/text-block-depths'
@@ -5207,4 +5215,723 @@ describe('registerDecorations with a compact range inside a field with its own s
     })
     expect(registration.getDecorations()).toEqual([])
   })
+})
+test('Scenario: reset tombstones a registered decoration at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at root while read-only', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at callout while read-only', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at nested callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[2]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at nested callout while read-only', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[2]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[3]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at table cell while read-only', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = loadDepths[3]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at object field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = objectFieldDepth
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
+})
+
+test('Scenario: reset tombstones a registered decoration at object field while read-only', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const depth = objectFieldDepth
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'bar')],
+    wrapperKey,
+  )
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const path = [
+    ...initial.prefix,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const range = {anchor: {path, offset: 1}, focus: {path, offset: 3}}
+  const id = keyGenerator()
+  const onMapped = vi.fn()
+  const registration = editor.registerDecorations({
+    decorations: [
+      {
+        id,
+        type: 'range',
+        range,
+        render: ({children}) => <span>{children}</span>,
+      },
+    ],
+    onMapped,
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.send({type: 'reset', value: next.value})
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  expect(registration.getDecorations()).toEqual([])
+  editor.send({type: 'reset', value: initial.value})
+  expect(registration.getDecorations()).toEqual([])
+  expect(onMapped.mock.calls).toEqual([
+    [
+      [
+        {
+          id,
+          previousRange: range,
+          newRange: null,
+          contentTouched: true,
+          origin: 'remote',
+        },
+      ],
+    ],
+  ])
+  registration.unregister()
 })

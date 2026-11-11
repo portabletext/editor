@@ -153,6 +153,22 @@ export function createMutationBatcher({
     }
   }
 
+  editorEngine.clearPendingMutations = () => {
+    pendingMutations = []
+    pendingPatchEvents = []
+    editorEngine.isDeferringMutations = false
+
+    if (flushInterval !== undefined) {
+      clearInterval(flushInterval)
+      flushInterval = undefined
+    }
+    if (typeDebounce !== undefined) {
+      clearTimeout(typeDebounce)
+      typeDebounce = undefined
+    }
+    isTyping = false
+  }
+
   return {
     subscribe: () => {
       const patchSubscription = editorActor.on('internal.patch', handlePatch)

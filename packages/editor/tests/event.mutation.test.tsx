@@ -5,6 +5,7 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import {createRef} from 'react'
 import {useState} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
@@ -15,11 +16,21 @@ import {
   type MutationEvent,
   type Patch,
 } from '../src'
+import {inTestChange} from '../src/engine/core/change.test-utils'
 import type {Path} from '../src/engine/interfaces/path'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+} from '../test-utils/load-depths'
+import {textBlock} from '../test-utils/load-depths'
 
 describe('event.mutation', () => {
   test('Scenario: Deferring mutation events when read-only', async () => {
@@ -485,3 +496,424 @@ function insertTextSync(locator: Locator, text: string) {
     element.dispatchEvent(new InputEvent('input', {bubbles: true}))
   }
 }
+
+test('Scenario: reset clears unsent edits at root', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  const events: Array<MutationEvent | {type: 'patch'; patch: Patch}> = []
+  editor.on('*', (event) => {
+    if (event.type === 'mutation' || event.type === 'patch') {
+      events.push(event)
+    }
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+    },
+  ])
+  events.length = 0
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey).value,
+  })
+
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() =>
+    expect(events).toEqual([
+      {
+        type: 'patch',
+        patch: {
+          type: 'diffMatchPatch',
+          path: [
+            ...initial.prefix,
+            {_key: blockKey},
+            'children',
+            {_key: spanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+          origin: 'local',
+        },
+      },
+      {
+        type: 'mutation',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            path: [
+              ...initial.prefix,
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ],
+            value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+            origin: 'local',
+          },
+        ],
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'barx', marks: []}],
+          },
+        ],
+      },
+    ]),
+  )
+})
+test('Scenario: reset clears unsent edits made while read-only at root', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  const events: Array<MutationEvent | {type: 'patch'; patch: Patch}> = []
+  editor.on('*', (event) => {
+    if (event.type === 'mutation' || event.type === 'patch') {
+      events.push(event)
+    }
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'update readOnly', readOnly: true})
+  inTestChange(engineRef.current!, () => {
+    engineRef.current!.apply({
+      type: 'insert.text',
+      path: point.path,
+      offset: 3,
+      text: 'x',
+    })
+  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+    },
+  ])
+  events.length = 0
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey).value,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() =>
+    expect(events).toEqual([
+      {
+        type: 'patch',
+        patch: {
+          type: 'diffMatchPatch',
+          path: [
+            ...initial.prefix,
+            {_key: blockKey},
+            'children',
+            {_key: spanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+          origin: 'local',
+        },
+      },
+      {
+        type: 'mutation',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            path: [
+              ...initial.prefix,
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ],
+            value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+            origin: 'local',
+          },
+        ],
+        value: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'barx', marks: []}],
+          },
+        ],
+      },
+    ]),
+  )
+})
+test('Scenario: reset clears unsent edits at callout', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  const events: Array<MutationEvent | {type: 'patch'; patch: Patch}> = []
+  editor.on('*', (event) => {
+    if (event.type === 'mutation' || event.type === 'patch') {
+      events.push(event)
+    }
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+        },
+      ],
+    },
+  ])
+  events.length = 0
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey).value,
+  })
+
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() =>
+    expect(events).toEqual([
+      {
+        type: 'patch',
+        patch: {
+          type: 'diffMatchPatch',
+          path: [
+            ...initial.prefix,
+            {_key: blockKey},
+            'children',
+            {_key: spanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+          origin: 'local',
+        },
+      },
+      {
+        type: 'mutation',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            path: [
+              ...initial.prefix,
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ],
+            value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+            origin: 'local',
+          },
+        ],
+        value: [
+          {
+            _type: 'callout',
+            _key: wrapperKey('callout'),
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'barx', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]),
+  )
+})
+test('Scenario: reset clears unsent edits made while read-only at callout', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  const events: Array<MutationEvent | {type: 'patch'; patch: Patch}> = []
+  editor.on('*', (event) => {
+    if (event.type === 'mutation' || event.type === 'patch') {
+      events.push(event)
+    }
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'update readOnly', readOnly: true})
+  inTestChange(engineRef.current!, () => {
+    engineRef.current!.apply({
+      type: 'insert.text',
+      path: point.path,
+      offset: 3,
+      text: 'x',
+    })
+  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+        },
+      ],
+    },
+  ])
+  events.length = 0
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey).value,
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() =>
+    expect(events).toEqual([
+      {
+        type: 'patch',
+        patch: {
+          type: 'diffMatchPatch',
+          path: [
+            ...initial.prefix,
+            {_key: blockKey},
+            'children',
+            {_key: spanKey},
+            'text',
+          ],
+          value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+          origin: 'local',
+        },
+      },
+      {
+        type: 'mutation',
+        patches: [
+          {
+            type: 'diffMatchPatch',
+            path: [
+              ...initial.prefix,
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ],
+            value: stringifyPatches(makePatches(makeDiff('bar', 'barx'))),
+            origin: 'local',
+          },
+        ],
+        value: [
+          {
+            _type: 'callout',
+            _key: wrapperKey('callout'),
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'barx', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ]),
+  )
+})

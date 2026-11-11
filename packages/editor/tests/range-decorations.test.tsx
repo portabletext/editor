@@ -32,6 +32,13 @@ import {
   getChildKeyFromSelectionPoint,
 } from '../src/utils/util.selection-point'
 import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  textBlock,
+} from '../test-utils/load-depths'
+import {
   getSelectionAfterText,
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
@@ -1401,4 +1408,292 @@ describe('RangeDecorations: multiple PortableTextEditables under one provider', 
       ).length,
     ).toEqual(1)
   })
+})
+
+test('Scenario: reset decoration insert before at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator()
+  const depth = loadDepths[0]!,
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const initial = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo bar')],
+    wrapperKey,
+  )
+  const onMoved = vi.fn()
+  const decoration: RangeDecoration = {
+    selection: {
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 4,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 7,
+      },
+    },
+    component: ({children}) => (
+      <span data-testid="reset-decoration">{children}</span>
+    ),
+    onMoved,
+  }
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    editableProps: {rangeDecorations: [decoration]},
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await vi.waitFor(() =>
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-testid="reset-decoration"]'),
+        (node) => node.textContent,
+      ),
+    ).toEqual(['bar']),
+  )
+  const next = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foXYo bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foXYo bar', marks: []}],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-testid="reset-decoration"]'),
+        (node) => node.textContent,
+      ),
+    ).toEqual(['o b']),
+  )
+  expect(onMoved.mock.calls).toEqual([])
+})
+test('Scenario: reset decoration span gone at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    replacementKey = keyGenerator()
+  const depth = loadDepths[0]!,
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const initial = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo bar')],
+    wrapperKey,
+  )
+  const onMoved = vi.fn()
+  const decoration: RangeDecoration = {
+    selection: {
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 4,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 7,
+      },
+    },
+    component: ({children}) => (
+      <span data-testid="reset-decoration">{children}</span>
+    ),
+    onMoved,
+  }
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    editableProps: {rangeDecorations: [decoration]},
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await vi.waitFor(() =>
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-testid="reset-decoration"]'),
+        (node) => node.textContent,
+      ),
+    ).toEqual(['bar']),
+  )
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'foo bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: replacementKey, text: 'foo bar', marks: []},
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-testid="reset-decoration"]'),
+        (node) => node.textContent,
+      ),
+    ).toEqual([]),
+  )
+  expect(onMoved.mock.calls).toEqual([
+    [{newSelection: null, rangeDecoration: decoration, origin: 'remote'}],
+  ])
+})
+test('Scenario: reset decoration span gone at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    replacementKey = keyGenerator()
+  const depth = loadDepths[1]!,
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const initial = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo bar')],
+    wrapperKey,
+  )
+  const onMoved = vi.fn()
+  const decoration: RangeDecoration = {
+    selection: {
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 4,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 7,
+      },
+    },
+    component: ({children}) => (
+      <span data-testid="reset-decoration">{children}</span>
+    ),
+    onMoved,
+  }
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    editableProps: {rangeDecorations: [decoration]},
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await vi.waitFor(() =>
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-testid="reset-decoration"]'),
+        (node) => node.textContent,
+      ),
+    ).toEqual(['bar']),
+  )
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'foo bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: replacementKey, text: 'foo bar', marks: []},
+          ],
+        },
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(
+      Array.from(
+        document.querySelectorAll('[data-testid="reset-decoration"]'),
+        (node) => node.textContent,
+      ),
+    ).toEqual([]),
+  )
+  expect(onMoved.mock.calls).toEqual([
+    [{newSelection: null, rangeDecoration: decoration, origin: 'remote'}],
+  ])
+})
+
+test('Scenario: reset freezes a prop decoration while read-only at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const replacementKey = keyGenerator()
+  const onMoved = vi.fn()
+  const decoration: RangeDecoration = {
+    selection: {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 1,
+      },
+      focus: {path: [{_key: blockKey}, 'children', {_key: spanKey}], offset: 3},
+    },
+    onMoved,
+    component: ({children}) => (
+      <span data-testid="frozen-reset-decoration">{children}</span>
+    ),
+  }
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [textBlock(blockKey, spanKey, 'foo')],
+    editableProps: {rangeDecorations: [decoration]},
+  })
+  await vi.waitFor(() =>
+    expect(
+      document.querySelector('[data-testid="frozen-reset-decoration"]')
+        ?.textContent,
+    ).toEqual('oo'),
+  )
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.send({
+    type: 'reset',
+    value: [textBlock(blockKey, replacementKey, 'bar')],
+  })
+  await vi.waitFor(() =>
+    expect(
+      document.querySelector('[data-testid="frozen-reset-decoration"]'),
+    ).toEqual(null),
+  )
+  expect(onMoved.mock.calls).toEqual([])
 })
