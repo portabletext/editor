@@ -12,16 +12,3 @@ export function withoutPatching(
     editor.isPatching = prev
   }
 }
-
-export function withPatching(
-  editor: PortableTextEditorEngine,
-  fn: () => void,
-): void {
-  const prev = editor.isPatching
-  editor.isPatching = true
-  try {
-    fn()
-  } finally {
-    editor.isPatching = prev
-  }
-}

@@ -109,10 +109,7 @@ type InternalEditorEvent =
       selection: EditorSelection
     }
   | {
-      type: 'done syncing value'
-    }
-  | {
-      type: 'syncing value'
+      type: 'done loading'
     }
   | {
       type: 'behavior event'
@@ -369,9 +366,6 @@ export const editorMachine = setup({
         })
       },
     }),
-    'discard all pending events': assign({
-      pendingEvents: [],
-    }),
     'defer incoming patches': assign({
       pendingIncomingPatchesEvents: ({context, event}) => {
         return event.type === 'internal.apply'
@@ -568,7 +562,7 @@ export const editorMachine = setup({
                 },
               ],
               on: {
-                'done syncing value': [
+                'done loading': [
                   {
                     target: '#editor.edit mode.read only.read only',
                     guard: ({context}) => context.initialReadOnly,
@@ -763,7 +757,7 @@ export const editorMachine = setup({
             'mutation': {
               actions: 'defer event',
             },
-            'done syncing value': {
+            'done loading': {
               target: 'set up',
             },
             'internal.apply': {
@@ -774,52 +768,25 @@ export const editorMachine = setup({
         'set up': {
           type: 'parallel',
           states: {
-            'value sync': {
+            'applying patches': {
               initial: 'idle',
               states: {
-                'idle': {
+                idle: {
                   entry: [
                     () => {
-                      debug.state('entry: setup->set up->value sync->idle')
+                      debug.state(
+                        'entry: setup->set up->applying patches->idle',
+                      )
                     },
                   ],
                   exit: [
                     () => {
-                      debug.state('exit: setup->set up->value sync->idle')
+                      debug.state('exit: setup->set up->applying patches->idle')
                     },
                   ],
                   on: {
                     'internal.apply': {
                       actions: [emit(({event}) => event)],
-                    },
-                    'syncing value': {
-                      target: 'syncing value',
-                    },
-                  },
-                },
-                'syncing value': {
-                  entry: [
-                    () => {
-                      debug.state(
-                        'entry: setup->set up->value sync->syncing value',
-                      )
-                    },
-                  ],
-                  exit: [
-                    () => {
-                      debug.state(
-                        'exit: setup->set up->value sync->syncing value',
-                      )
-                    },
-                    'emit pending incoming patches',
-                    'clear pending incoming patches',
-                  ],
-                  on: {
-                    'internal.apply': {
-                      actions: ['defer incoming patches'],
-                    },
-                    'done syncing value': {
-                      target: 'idle',
                     },
                   },
                 },
@@ -869,9 +836,6 @@ export const editorMachine = setup({
                         ],
                         'internal.apply': {
                           actions: 'discard conflicting pending patches',
-                        },
-                        'syncing value': {
-                          actions: 'discard all pending events',
                         },
                       },
                     },

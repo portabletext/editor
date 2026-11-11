@@ -170,7 +170,7 @@ export function invalidateVerifiedGroups(
  * duplicate-key normalization can skip groups whose membership is unchanged
  * (see `invalidateVerifiedGroups`).
  */
-export function subscribeUpdateValue(
+export function subscribeIndexMaps(
   context: Pick<EditorContext, 'keyGenerator' | 'schema'>,
   editor: PortableTextEditorEngine,
 ): () => void {

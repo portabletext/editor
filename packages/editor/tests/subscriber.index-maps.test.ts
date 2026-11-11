@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
-import type {EngineOperation} from '../engine/interfaces/operation'
-import {serializePath} from '../paths/serialize-path'
-import {invalidateVerifiedGroups} from './subscriber.update-value'
+import {invalidateVerifiedGroups} from '../src/editor/subscriber.index-maps'
+import type {EngineOperation} from '../src/engine/interfaces/operation'
+import {serializePath} from '../src/paths/serialize-path'
 
 /**
  * `invalidateVerifiedGroups` is the cache-invariant gate the dedup-scan

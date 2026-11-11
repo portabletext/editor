@@ -1,10 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {Editor} from '../interfaces/editor'
-import {
-  getRepairPatches,
-  isInNormalization,
-  isPlaceholder,
-} from './apply-context'
+import {isInNormalization, isPlaceholder} from './apply-context'
 import type {OperationEvent} from './operation-channel'
 
 /**
@@ -14,7 +10,7 @@ export type ChangeEntry = {
   event: OperationEvent
   /**
    * The local patches for the operation, set by patch generation as the
-   * apply completes, or a repair's resolution patches.
+   * apply completes.
    */
   patches: Array<Patch>
 }
@@ -22,13 +18,13 @@ export type ChangeEntry = {
 /**
  * Why a change was opened. Only the editor's entry points open a change,
  * and each names its cause: a Behavior event (a user action), remote
- * patches, a value sync (the first load or an updated value), or a
- * registration that reshapes existing content.
+ * patches, the initial load, or a registration that reshapes existing
+ * content.
  */
 export type ChangeCause =
   | {type: 'behavior event'}
   | {type: 'remote patches'}
-  | {type: 'value sync'; initial: boolean}
+  | {type: 'load'}
   | {type: 'registration'}
 
 /**
@@ -61,13 +57,11 @@ export function getChangeEntryKind(
 ): ChangeEntryKind {
   switch (change.cause.type) {
     case 'remote patches':
-    case 'value sync':
+    case 'load':
       // Remote content is applied without patching; what the editor then
-      // applies while patching, as a repair of what it received, or as the
-      // placeholder for a field it emptied, is its own fix of that content.
-      return entry.event.isPatching ||
-        getRepairPatches(entry.event.context) !== undefined ||
-        isPlaceholder(entry.event.context)
+      // applies while patching or as the placeholder for a field it emptied
+      // is its own fix of that content.
+      return entry.event.isPatching || isPlaceholder(entry.event.context)
         ? 'correction'
         : 'remote'
     case 'registration':
@@ -86,7 +80,7 @@ export function getChangeEntryKind(
  * returns or throws. An entry point reached while a change with the same
  * cause type is open joins it. One reached through public API while a
  * change with another cause type is open, such as an `operation` listener
- * that sends a Behavior event during a value sync, gets its own change:
+ * that sends a Behavior event during a load, gets its own change:
  * the open change is set aside like `resumeChange` does, and the new
  * change commits before the open one is restored.
  */
@@ -116,10 +110,8 @@ export function createChange(cause: ChangeCause): Change {
 }
 
 /**
- * Runs `fn` inside `change`, which may span several ticks: a value sync
- * that streams its blocks resumes its change once per tick and commits it
- * when the sync is done. A change open when `fn` starts is set aside until
- * `fn` returns.
+ * Runs `fn` inside `change`. A change open when `fn` starts is set aside
+ * until `fn` returns.
  */
 export function resumeChange<Result>(
   editor: Editor,
@@ -135,10 +127,9 @@ export function resumeChange<Result>(
   try {
     if (interrupted !== undefined) {
       // Public API can reach an entry point while a change with another
-      // cause is open: a Behavior effect can start a value sync, which runs
-      // on its own actor, and an `operation` listener can send a Behavior
-      // event while a value sync applies. What the interrupted change
-      // applied so far is published first, so the new change's operations
+      // cause is open: an `operation` listener can send a Behavior
+      // event while remote patches or the initial load apply. The interrupted
+      // change is published first, so the new change's operations
       // neither join it nor precede it.
       editor.change = undefined
       publishEntries(editor, interrupted)
@@ -202,7 +193,7 @@ function publishEntries(editor: Editor, change: Change): void {
 export function assertChangeOpen(editor: Editor, operation: {type: string}) {
   if (editor.change === undefined) {
     reportChangeError(
-      `\`${operation.type}\` was applied outside a change. Only an entry point (a Behavior event, remote patches, a value sync or a registration) may open one.`,
+      `\`${operation.type}\` was applied outside a change. Only an entry point (a Behavior event, remote patches, a load or a registration) may open one.`,
     )
   }
 }
@@ -243,7 +234,7 @@ export function recordApply(
 
   const entry: ChangeEntry = {
     event,
-    patches: getRepairPatches(event.context) ?? [],
+    patches: [],
   }
   change.entries.splice(position, 0, entry)
   change.entryByEvent.set(event, entry)

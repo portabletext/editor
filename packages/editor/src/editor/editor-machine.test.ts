@@ -1093,7 +1093,7 @@ function setUpPristineEditor(value: Array<PortableTextBlock>) {
   relay.start()
   editorActor.send({type: 'add editor engine', editor: engine})
   const unsubscribers = subscriptions.map((subscribe) => subscribe())
-  editorActor.send({type: 'done syncing value'})
+  editorActor.send({type: 'done loading'})
 
   engine.snapshot.context.containers = containers
   engine.snapshot.context.value = structuredClone(value)

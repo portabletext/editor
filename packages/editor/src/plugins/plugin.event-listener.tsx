@@ -8,13 +8,11 @@ import {useEditor} from '../editor/use-editor'
  *  - 'blurred'
  *  - 'editable'
  *  - 'focused'
- *  - 'invalid value'
  *  - 'mutation'
  *  - 'patch'
  *  - 'read only'
  *  - 'ready'
  *  - 'selection'
- *  - 'value changed'
  *
  * @example
  * Listen and log events.

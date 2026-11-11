@@ -2530,28 +2530,6 @@ describe('existing remote-patch corrections', () => {
       expectedPatches: [],
     },
     {
-      name: '`update value` into a container text block',
-      initialValue: [
-        {_type: 'container', _key: containerKey, content: [nestedBlock]},
-      ],
-      event: {
-        type: 'update value',
-        value: [
-          {
-            _type: 'container',
-            _key: containerKey,
-            content: [
-              {...nestedBlock, children: [...nestedBlock.children, 42]},
-            ],
-          },
-        ],
-      },
-      expectedValue: [
-        {_type: 'container', _key: containerKey, content: [nestedBlock]},
-      ],
-      expectedPatches: [],
-    },
-    {
       name: 'two primitives in one remote insert',
       initialValue: [block],
       event: {

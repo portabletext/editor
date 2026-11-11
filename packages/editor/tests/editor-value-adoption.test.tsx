@@ -40,10 +40,7 @@ describe('initialization', () => {
     // Adoption keeps the value exactly as given: the missing `style` is
     // not filled in on load.
     await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'value changed',
-        value: initialValue,
-      })
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
     expect(editor.getSnapshot().context.value).toStrictEqual([...initialValue])
 
@@ -103,10 +100,7 @@ describe('initialization', () => {
     })
 
     await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'value changed',
-        value: [completeBlock, bareBlock],
-      })
+      expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
     editor.send({
@@ -173,10 +167,6 @@ describe('initialization', () => {
     })
 
     await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'value changed',
-        value: initialValue,
-      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
@@ -205,10 +195,6 @@ describe('initialization', () => {
     })
 
     await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'value changed',
-        value: initialValue,
-      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
 
@@ -222,7 +208,7 @@ describe('initialization', () => {
     })
   })
 
-  test('Scenario: an empty array `initialValue` is adopted without an invalid value event', async () => {
+  test('Scenario: an empty array `initialValue` is adopted when ready', async () => {
     const initialValue: PortableTextBlock[] = []
     const initialSelection: EditorSelection = {
       anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
@@ -237,173 +223,7 @@ describe('initialization', () => {
     })
 
     await vi.waitFor(() => {
-      expect(onChange).not.toHaveBeenCalledWith({
-        type: 'invalid value',
-        value: initialValue,
-        resolution: {
-          action: 'Unset the value',
-          description:
-            'Editor value must be an array of Portable Text blocks, or undefined.',
-          item: initialValue,
-          patches: [
-            {
-              path: [],
-              type: 'unset',
-            },
-          ],
-        },
-      })
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'value changed',
-        value: initialValue,
-      })
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     })
-  })
-
-  test('Scenario: updating to a value with an invalid block type emits an invalid value event', async () => {
-    let value: PortableTextBlock[] = [helloBlock]
-    const initialSelection: EditorSelection = {
-      anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
-      focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
-    }
-    const onChange = vi.fn()
-    const {editor} = await createTestEditor({
-      children: <EventListenerPlugin on={onChange} />,
-      initialValue: value,
-      editableProps: {selection: initialSelection},
-    })
-
-    await vi.waitFor(() => {
-      expect(onChange).not.toHaveBeenCalledWith({
-        type: 'invalid value',
-        value,
-        resolution: {
-          action: 'Unset the value',
-          description:
-            'Editor value must be an array of Portable Text blocks, or undefined.',
-          item: value,
-          patches: [
-            {
-              path: [],
-              type: 'unset',
-            },
-          ],
-        },
-      })
-      expect(onChange).toHaveBeenCalledWith({type: 'value changed', value})
-    })
-    value = [{_type: 'banana', _key: '123'}]
-
-    editor.send({type: 'update value', value})
-
-    await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'invalid value',
-        value,
-        resolution: {
-          action: 'Remove the block',
-          description: "Block with _key '123' has invalid _type 'banana'",
-          item: value[0],
-          patches: [
-            {
-              path: [{_key: '123'}],
-              type: 'unset',
-            },
-          ],
-          i18n: {
-            action: 'inputs.portable-text.invalid-value.disallowed-type.action',
-            description:
-              'inputs.portable-text.invalid-value.disallowed-type.description',
-            values: {
-              key: '123',
-              typeName: 'banana',
-            },
-          },
-        },
-      })
-    })
-  })
-
-  test('Scenario: an invalid child in `initialValue` emits invalid value instead of value changed', async () => {
-    const initialValue: PortableTextBlock[] = [
-      helloBlock,
-      {
-        _key: 'abc',
-        _type: 'block',
-        markDefs: [],
-        children: [{_key: 'def', _type: 'span', marks: []}],
-      },
-    ]
-    const initialSelection: EditorSelection = {
-      anchor: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
-      focus: {path: [{_key: '123'}, 'children', {_key: '567'}], offset: 2},
-    }
-    const onChange = vi.fn()
-
-    await createTestEditor({
-      children: <EventListenerPlugin on={onChange} />,
-      initialValue,
-      editableProps: {selection: initialSelection},
-    })
-
-    await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'invalid value',
-        value: initialValue,
-        resolution: {
-          action: 'Write an empty text property to the object',
-          description:
-            "Child with _key 'def' in block with key 'abc' has missing or invalid text property!",
-          i18n: {
-            action:
-              'inputs.portable-text.invalid-value.invalid-span-text.action',
-            description:
-              'inputs.portable-text.invalid-value.invalid-span-text.description',
-            values: {
-              key: 'abc',
-              childKey: 'def',
-            },
-          },
-          item: {
-            _key: 'abc',
-            _type: 'block',
-            children: [
-              {
-                _key: 'def',
-                _type: 'span',
-                marks: [],
-              },
-            ],
-            markDefs: [],
-          },
-          patches: [
-            {
-              path: [
-                {
-                  _key: 'abc',
-                },
-                'children',
-                {
-                  _key: 'def',
-                },
-              ],
-              type: 'set',
-              value: {
-                _key: 'def',
-                _type: 'span',
-                marks: [],
-                text: '',
-              },
-            },
-          ],
-        },
-      })
-    })
-    expect(onChange).not.toHaveBeenCalledWith({
-      type: 'value changed',
-      value: initialValue,
-    })
-    expect(onChange).toHaveBeenCalledWith({type: 'ready'})
   })
 })

@@ -9,8 +9,8 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {setupRemotePatches} from './remote-patches'
 import {subscribeHistory} from './subscriber.history'
+import {subscribeIndexMaps} from './subscriber.index-maps'
 import {subscribePatchGeneration} from './subscriber.patch-generation'
-import {subscribeUpdateValue} from './subscriber.update-value'
 
 type EditorEngineConfig = {
   editorActor: EditorActor
@@ -86,7 +86,7 @@ export function createEditorEngine(
     editorActor: config.editorActor,
   })
 
-  subscribeUpdateValue(context, editorEngine)
+  subscribeIndexMaps(context, editorEngine)
   subscribePatchGeneration({
     editorActor: config.editorActor,
     editor: editorEngine,

@@ -1076,29 +1076,41 @@ describe('container normalization', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
+          _key: 'k0',
           _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              marks: [],
+              text: 'hello',
+            },
+          ],
           markDefs: [],
           style: 'normal',
         },
         {
+          _key: 'k2',
           _type: 'table',
-          _key: tableKey,
           rows: [
             {
+              _key: 'k8',
               _type: 'row',
-              _key: 'k6',
               cells: [
                 {
+                  _key: 'k9',
                   _type: 'cell',
-                  _key: 'k7',
                   content: [
                     {
+                      _key: 'k10',
                       _type: 'block',
-                      _key: 'k8',
                       children: [
-                        {_type: 'span', _key: 'k9', text: '', marks: []},
+                        {
+                          _key: 'k11',
+                          _type: 'span',
+                          marks: [],
+                          text: '',
+                        },
                       ],
                       markDefs: [],
                       style: 'normal',
@@ -1110,13 +1122,20 @@ describe('container normalization', () => {
           ],
         },
         {
+          _key: 'k3',
           _type: 'callout',
-          _key: calloutKey,
           content: [
             {
+              _key: 'k6',
               _type: 'block',
-              _key: 'k10',
-              children: [{_type: 'span', _key: 'k11', text: '', marks: []}],
+              children: [
+                {
+                  _key: 'k7',
+                  _type: 'span',
+                  marks: [],
+                  text: '',
+                },
+              ],
               markDefs: [],
               style: 'normal',
             },
@@ -1918,42 +1937,61 @@ describe('container normalization', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
+          _key: 'k0',
           _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'hello', marks: []}],
+          children: [
+            {
+              _key: 'k1',
+              _type: 'span',
+              marks: [],
+              text: 'hello',
+            },
+          ],
           markDefs: [],
           style: 'normal',
         },
         {
+          _key: 'k2',
           _type: 'callout',
-          _key: calloutKey,
           content: [
             {
+              _key: 'k13',
               _type: 'block',
-              _key: 'k7',
-              children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+              children: [
+                {
+                  _key: 'k14',
+                  _type: 'span',
+                  marks: [],
+                  text: '',
+                },
+              ],
               markDefs: [],
               style: 'normal',
             },
           ],
         },
         {
+          _key: 'k3',
           _type: 'table',
-          _key: tableKey,
           rows: [
             {
-              _type: 'row',
               _key: 'k9',
+              _type: 'row',
               cells: [
                 {
-                  _type: 'cell',
                   _key: 'k10',
+                  _type: 'cell',
                   content: [
                     {
-                      _type: 'block',
                       _key: 'k11',
+                      _type: 'block',
                       children: [
-                        {_type: 'span', _key: 'k12', text: '', marks: []},
+                        {
+                          _key: 'k12',
+                          _type: 'span',
+                          marks: [],
+                          text: '',
+                        },
                       ],
                       markDefs: [],
                       style: 'normal',
@@ -1965,13 +2003,20 @@ describe('container normalization', () => {
           ],
         },
         {
+          _key: 'k4',
           _type: 'figure',
-          _key: figureKey,
           caption: [
             {
+              _key: 'k7',
               _type: 'block',
-              _key: 'k13',
-              children: [{_type: 'span', _key: 'k14', text: '', marks: []}],
+              children: [
+                {
+                  _key: 'k8',
+                  _type: 'span',
+                  marks: [],
+                  text: '',
+                },
+              ],
               markDefs: [],
               style: 'normal',
             },

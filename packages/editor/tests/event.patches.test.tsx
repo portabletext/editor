@@ -502,89 +502,6 @@ describe('event.patches', () => {
     })
   })
 
-  test('Scenario: Patching while syncing incoming value', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const onEvent = vi.fn<() => EditorEmittedEvent>()
-    const {editor} = await createTestEditor({
-      children: <EventListenerPlugin on={onEvent} />,
-      keyGenerator,
-      schemaDefinition: defineSchema({
-        lists: [{name: 'bullet'}],
-        styles: [{name: 'normal'}, {name: 'h1'}],
-      }),
-    })
-
-    const listBlock = {
-      _key: keyGenerator(),
-      _type: 'block',
-      children: [
-        {
-          _key: keyGenerator(),
-          _type: 'span',
-          text: 'foo',
-          marks: [],
-        },
-      ],
-      level: 1,
-      listItem: 'bullet',
-      markDefs: [],
-      style: 'normal',
-    }
-    const headingBlock = {
-      _type: 'block',
-      _key: keyGenerator(),
-      children: [
-        {
-          _type: 'span',
-          _key: keyGenerator(),
-          text: 'foo',
-          marks: [],
-        },
-      ],
-      markDefs: [],
-      style: 'h1',
-    }
-
-    editor.send({
-      type: 'update value',
-      value: [listBlock],
-    })
-
-    await vi.waitFor(() => {
-      expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
-    })
-
-    editor.send({
-      type: 'apply',
-      patches: [
-        {
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-          origin: 'remote',
-        },
-        {
-          type: 'insert',
-          position: 'before',
-          path: [
-            {
-              _key: listBlock._key,
-            },
-          ],
-          items: [headingBlock],
-          origin: 'remote',
-        },
-      ],
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        headingBlock,
-        listBlock,
-      ])
-    })
-  })
-
   test('Scenario: Merging spans', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -6102,9 +6019,18 @@ describe('event.patches', () => {
     })
   })
 
-  test('Scenario: Typing into a pristine block synced in via `update value`', async () => {
+  test('Scenario: Typing into a pristine block synced in via `initialValue`', async () => {
     const patches: Array<Patch> = []
     const {editor, locator} = await createTestEditor({
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 's0', _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({}),
       children: (
@@ -6116,19 +6042,6 @@ describe('event.patches', () => {
           }}
         />
       ),
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          _key: 'b0',
-          _type: 'block',
-          children: [{_key: 's0', _type: 'span', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ],
     })
 
     await vi.waitFor(() => {
@@ -6153,431 +6066,6 @@ describe('event.patches', () => {
           path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
           value: stringifyPatches(makePatches(makeDiff('', 'a'))),
           origin: 'local',
-        },
-      ])
-    })
-  })
-
-  test('Scenario: Retyping after clearing the field when the host mirrors values', async () => {
-    const patches: Array<Patch> = []
-    const {editor, locator} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition: defineSchema({}),
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
-            }
-          }}
-        />
-      ),
-    })
-
-    // A host following the documented pattern: mirror the mutation's value
-    // back into `update value`. The echo of the editor's own placeholder
-    // must not count as a host persistence claim, or the retype below
-    // stops re-materializing the field it just unset.
-    const mutations: Array<Array<Patch>> = []
-    editor.on('mutation', (event) => {
-      mutations.push(event.patches)
-      editor.send({type: 'update value', value: event.value})
-    })
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, 'foo')
-
-    await vi.waitFor(() => {
-      expect(patches.at(-1)).toEqual({
-        type: 'diffMatchPatch',
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-        value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
-        origin: 'local',
-      })
-    })
-
-    // A model-level selection over the whole text plus one Backspace
-    // clears in a single flush on every platform (chord-based word
-    // deletion is OS-dependent).
-    editor.send({
-      type: 'select',
-      at: {
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
-      },
-    })
-    await userEvent.keyboard('{Backspace}')
-
-    // Waiting on the mutation (not the earlier per-patch relay) orders the
-    // echo before the retype: `editor.on` subscribers run in the emit
-    // turn, so once the clear's mutation is observed, the mirrored
-    // `update value` has already been sent.
-    await vi.waitFor(() => {
-      expect(mutations.at(-1)?.at(-1)).toEqual({
-        type: 'unset',
-        path: [],
-        origin: 'local',
-      })
-    })
-    const patchCountAfterClear = patches.length
-
-    await userEvent.type(locator, 'bar')
-
-    await vi.waitFor(() => {
-      expect(patches.slice(patchCountAfterClear)).toEqual([
-        {
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-          origin: 'local',
-        },
-        {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
-            {
-              _type: 'block',
-              _key: 'k0',
-              style: 'normal',
-              markDefs: [],
-              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-            },
-          ],
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('', 'b'))),
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('b', 'ba'))),
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('ba', 'bar'))),
-          origin: 'local',
-        },
-      ])
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
-        },
-      ])
-    })
-  })
-
-  test('Scenario: Retyping after a character-by-character clear when the host mirrors values', async () => {
-    const patches: Array<Patch> = []
-    const {editor, locator} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition: defineSchema({}),
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
-            }
-          }}
-        />
-      ),
-    })
-
-    // Unlike the single-flush clear above, a character-by-character clear
-    // spreads across flushes, so a host whose echoes trail the edits (as
-    // React state echoes do) delivers values the engine has moved past: a
-    // stale echo syncs as a genuine write and records the placeholder as
-    // the last synced value. The editor's own `unset([])` emission must
-    // override that: its stream destroyed the field, so the retype must
-    // rebuild it.
-    let lastMutationValue: Array<PortableTextBlock> | undefined
-    editor.on('mutation', (event) => {
-      lastMutationValue = event.value
-      editor.send({type: 'update value', value: event.value})
-    })
-    let remoteOperations = 0
-    editor.on('operation', (event) => {
-      if (event.origin === 'remote') {
-        remoteOperations++
-      }
-    })
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, 'foo')
-
-    await vi.waitFor(() => {
-      expect(patches.at(-1)).toEqual({
-        type: 'diffMatchPatch',
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-        value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
-        origin: 'local',
-      })
-    })
-    const typedValue = editor.getSnapshot().context.value
-
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
-
-    await vi.waitFor(() => {
-      expect(patches.at(-1)).toEqual({
-        type: 'unset',
-        path: [],
-        origin: 'local',
-      })
-    })
-    const clearedValue = editor.getSnapshot().context.value
-    await vi.waitFor(() => {
-      expect(lastMutationValue).toEqual(clearedValue)
-    })
-
-    // The trailing echoes: first the value from before the clear, which
-    // the engine has moved past, then the cleared value. Each must sync
-    // before the next is sent, since a newer `update value` replaces a
-    // pending one.
-    editor.send({type: 'update value', value: typedValue})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(typedValue)
-    })
-    editor.send({type: 'update value', value: clearedValue})
-
-    // The stale echo has written into the engine (a remote-origin
-    // operation) and the last write restored the placeholder. Only then
-    // has the poisoned value been recorded, which is the state the retype
-    // below must survive.
-    await vi.waitFor(() => {
-      expect(remoteOperations).toBeGreaterThan(0)
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-        },
-      ])
-    })
-    const patchCountAfterClear = patches.length
-
-    await userEvent.type(locator, 'bar')
-
-    await vi.waitFor(() => {
-      expect(patches.slice(patchCountAfterClear)).toEqual([
-        {
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-          origin: 'local',
-        },
-        {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [
-            {
-              _type: 'block',
-              _key: 'k0',
-              style: 'normal',
-              markDefs: [],
-              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-            },
-          ],
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('', 'b'))),
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('b', 'ba'))),
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('ba', 'bar'))),
-          origin: 'local',
-        },
-      ])
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
-        },
-      ])
-    })
-
-    // The host mirrors each batched `mutation` back as `update value`, and
-    // those batches trail the typing. Wait until the batch carrying "bar"
-    // has gone out, so no echo of the retype can collapse the selection
-    // made below.
-    await vi.waitFor(() => {
-      expect(lastMutationValue).toEqual(editor.getSnapshot().context.value)
-    })
-
-    // A second clear must unset the field again: the stale echo recorded
-    // during the first clear is spent by the rebuild above and may not
-    // make this transition treat the placeholder as persisted content.
-    const patchCountBeforeSecondClear = patches.length
-    editor.send({
-      type: 'select',
-      at: {
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
-      },
-    })
-    await userEvent.keyboard('{Backspace}')
-
-    await vi.waitFor(() => {
-      expect(patches.slice(patchCountBeforeSecondClear)).toEqual([
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('bar', ''))),
-          origin: 'local',
-        },
-        {
-          type: 'unset',
-          path: [],
-          origin: 'local',
-        },
-      ])
-    })
-  })
-
-  test('Scenario: A remote root `insert` after a self-emitted `unset` removes even a recorded placeholder', async () => {
-    const remoteBazBlock = {
-      _type: 'block',
-      _key: 'c0',
-      style: 'normal',
-      markDefs: [],
-      children: [{_type: 'span', _key: 'c1', text: 'baz', marks: []}],
-    }
-    const patches: Array<Patch> = []
-    const {editor, locator} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition: defineSchema({}),
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
-            }
-          }}
-        />
-      ),
-    })
-
-    // Build the same poisoned recording as 'Retyping after a
-    // character-by-character clear when the host mirrors values': trailing
-    // echoes land after the editor's own `unset([])` and record the
-    // placeholder as the last synced value. A remote root `insert` must
-    // override that recording the same way the local retype does.
-    let lastMutationValue: Array<PortableTextBlock> | undefined
-    editor.on('mutation', (event) => {
-      lastMutationValue = event.value
-      editor.send({type: 'update value', value: event.value})
-    })
-    let remoteOperations = 0
-    editor.on('operation', (event) => {
-      if (event.origin === 'remote') {
-        remoteOperations++
-      }
-    })
-
-    await userEvent.click(locator)
-    await userEvent.type(locator, 'foo')
-
-    await vi.waitFor(() => {
-      expect(patches.at(-1)).toEqual({
-        type: 'diffMatchPatch',
-        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
-        value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
-        origin: 'local',
-      })
-    })
-    const typedValue = editor.getSnapshot().context.value
-
-    await userEvent.keyboard('{Backspace}{Backspace}{Backspace}')
-
-    await vi.waitFor(() => {
-      expect(patches.at(-1)).toEqual({
-        type: 'unset',
-        path: [],
-        origin: 'local',
-      })
-    })
-    const clearedValue = editor.getSnapshot().context.value
-    await vi.waitFor(() => {
-      expect(lastMutationValue).toEqual(clearedValue)
-    })
-
-    // The trailing echoes: first the value from before the clear, which
-    // the engine has moved past, then the cleared value. Each must sync
-    // before the next is sent, since a newer `update value` replaces a
-    // pending one.
-    editor.send({type: 'update value', value: typedValue})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(typedValue)
-    })
-    editor.send({type: 'update value', value: clearedValue})
-
-    await vi.waitFor(() => {
-      expect(remoteOperations).toBeGreaterThan(0)
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
-        },
-      ])
-    })
-
-    editor.send({
-      type: 'apply',
-      patches: [
-        {type: 'setIfMissing', path: [], value: [], origin: 'remote'},
-        {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          items: [remoteBazBlock],
-          origin: 'remote',
-        },
-      ],
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'c0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 'c1', text: 'baz', marks: []}],
         },
       ])
     })
@@ -7051,15 +6539,9 @@ describe('event.patches', () => {
     )
   })
 
-  test('Scenario: Remote `insert` next to a pristine block synced in via `update value`', async () => {
+  test('Scenario: Remote `insert` next to a pristine block synced in via `initialValue`', async () => {
     const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition: defineSchema({}),
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [
+      initialValue: [
         {
           _key: 'b0',
           _type: 'block',
@@ -7068,6 +6550,8 @@ describe('event.patches', () => {
           style: 'normal',
         },
       ],
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
     })
 
     await vi.waitFor(() => {

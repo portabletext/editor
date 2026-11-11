@@ -10,7 +10,7 @@ import type {
 /**
  * The document-changing operations emitted through
  * `editor.on('operation', ...)`. Every change to the editor (local edits,
- * remote patches, value sync, normalization fixes, undo/redo) is expressed
+ * remote patches, load, normalization fixes, undo/redo) is expressed
  * as a sequence of these five operations.
  *
  * The vocabulary is closed: there are exactly five, listed explicitly so
