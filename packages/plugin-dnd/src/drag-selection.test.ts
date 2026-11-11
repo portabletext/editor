@@ -33,6 +33,7 @@ function createTestSnapshot(snapshot: {
     blockIndexMap,
     context,
     decoratorState: {},
+    status: 'ready',
   }
 }
 
