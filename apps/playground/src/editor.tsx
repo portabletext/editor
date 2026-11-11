@@ -37,7 +37,6 @@ import {
   CheckIcon,
   CodeIcon,
   CopyIcon,
-  FileJsonIcon,
   InfoIcon,
   LayersIcon,
   LinkIcon,
@@ -126,7 +125,6 @@ export function Editor(props: {
           >
             <EditorEventListener
               editorRef={props.editorRef}
-              value={value}
               on={(event) => {
                 if (event.type === 'mutation') {
                   props.editorRef.send(event)
@@ -293,13 +291,9 @@ function FullscreenAwareContainer(props: {children: React.ReactNode}) {
 function EditorEventListener(props: {
   editorRef: EditorActorRef
   on: (event: EditorEmittedEvent) => void
-  value: Array<PortableTextBlock> | undefined
 }) {
   const patchSubscriptionActive = useSelector(props.editorRef, (s) =>
     s.matches({'patch subscription': 'active'}),
-  )
-  const valueSubscriptionActive = useSelector(props.editorRef, (s) =>
-    s.matches({'value subscription': 'active'}),
   )
   const editor = useEditor()
 
@@ -338,15 +332,6 @@ function EditorEventListener(props: {
       subscription.unsubscribe()
     }
   }, [editor, props.on])
-
-  useEffect(() => {
-    if (valueSubscriptionActive) {
-      editor.send({
-        type: 'update value',
-        value: props.value,
-      })
-    }
-  }, [editor, props.value, valueSubscriptionActive])
 
   return null
 }
@@ -833,9 +818,6 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
   const patchesActive = useSelector(props.editorRef, (s) =>
     s.matches({'patch subscription': 'active'}),
   )
-  const valueActive = useSelector(props.editorRef, (s) =>
-    s.matches({'value subscription': 'active'}),
-  )
   const selection = useEditorSelector(editor, (s) => s.context.selection)
   const value = useEditorSelector(editor, (s) => s.context.value)
   const [showSelection, setShowSelection] = useState(false)
@@ -911,23 +893,6 @@ function EditorFooter(props: {editorRef: EditorActorRef; readOnly: boolean}) {
             </ToggleButton>
             <Tooltip>
               {patchesActive ? 'Receiving patches' : 'Not receiving patches'}
-            </Tooltip>
-          </TooltipTrigger>
-          <TooltipTrigger>
-            <ToggleButton
-              variant="ghost"
-              size="sm"
-              isSelected={valueActive}
-              onChange={() =>
-                props.editorRef.send({type: 'toggle value subscription'})
-              }
-            >
-              <FileJsonIcon className="size-3" />
-            </ToggleButton>
-            <Tooltip>
-              {valueActive
-                ? 'Receiving value updates'
-                : 'Not receiving value updates'}
             </Tooltip>
           </TooltipTrigger>
           <TooltipTrigger>
