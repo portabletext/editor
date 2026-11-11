@@ -5,9 +5,9 @@
 # that breaks exits before any test runs, with a PREP FAILED line naming the step, which goes to timing.txt
 # for the job summary. A prep that exits 3, Gboard's Japanese dictionary never loaded on this boot, also
 # writes a `PREP DICTIONARY_NOT_LOADED` line there, which the workflow retries once on a reachable device.
-# Every stage runs under `timeout -k`, with the caps `scripts/budget.mjs` sums into the workflow's step
-# timeout: reading the test stage's cap for the file, prep, the tests under that cap, the device check
-# after a failed prep or test stage and the diagnostics after the tests.
+# Every stage runs under `timeout -k`: reading the test stage's cap for the file with `scripts/budget.mjs`,
+# prep, the tests under that cap, the device check after a failed prep or test stage and the diagnostics
+# after the tests.
 # The device check reads `adb get-state` once the failed stage has ended, so it never changes a test's
 # outcome. It writes its own `CHECKED device` or `CHECKED lost` line to timing.txt before it logs anything,
 # and the workflow retries a lost device once. A check that never completes, or whose `adb get-state` proves
