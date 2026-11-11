@@ -6,6 +6,8 @@ import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {renderLargeLoad} from '../test-utils/large-load'
+import {loadDepths} from '../test-utils/load-depths'
 
 /**
  * Select-all is editor-owned. Browsers cannot be trusted to build the range
@@ -237,6 +239,104 @@ describe('Feature: Select All', () => {
         },
         backward: false,
       })
+    })
+  })
+
+  describe('while a large first value is drawn', () => {
+    test('Scenario: select all and then typing or Backspace at root changes nothing', async () => {
+      const depth = loadDepths[0]!
+
+      const large = await renderLargeLoad({depth})
+
+      const selection = {
+        anchor: {path: large.spanPath(0), offset: 0},
+        focus: {path: large.spanPath(0), offset: 0},
+        backward: false,
+      }
+      large.editor.send({type: 'select', at: selection})
+      large.expectMidDraw()
+
+      large.editor.send({
+        type: 'keyboard.keydown',
+        originEvent: {
+          key: 'a',
+          code: 'KeyA',
+          ctrlKey: !IS_MAC,
+          metaKey: IS_MAC,
+          altKey: false,
+          shiftKey: false,
+        },
+      })
+      large.expectMidDraw()
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.loaded.value,
+      )
+      expect(large.editor.getSnapshot().context.selection).toEqual(selection)
+      expect(large.userChanges).toEqual([])
+
+      large.editor.send({type: 'insert.text', text: 'x'})
+      large.expectMidDraw()
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.loaded.value,
+      )
+      expect(large.editor.getSnapshot().context.selection).toEqual(selection)
+      expect(large.userChanges).toEqual([])
+
+      large.editor.send({type: 'delete.backward', unit: 'character'})
+      large.expectMidDraw()
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.loaded.value,
+      )
+      expect(large.editor.getSnapshot().context.selection).toEqual(selection)
+      expect(large.userChanges).toEqual([])
+    })
+
+    test('Scenario: select all and then typing or Backspace at table cell changes nothing', async () => {
+      const depth = loadDepths[3]!
+
+      const large = await renderLargeLoad({depth})
+
+      const selection = {
+        anchor: {path: large.spanPath(0), offset: 0},
+        focus: {path: large.spanPath(0), offset: 0},
+        backward: false,
+      }
+      large.editor.send({type: 'select', at: selection})
+      large.expectMidDraw()
+
+      large.editor.send({
+        type: 'keyboard.keydown',
+        originEvent: {
+          key: 'a',
+          code: 'KeyA',
+          ctrlKey: !IS_MAC,
+          metaKey: IS_MAC,
+          altKey: false,
+          shiftKey: false,
+        },
+      })
+      large.expectMidDraw()
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.loaded.value,
+      )
+      expect(large.editor.getSnapshot().context.selection).toEqual(selection)
+      expect(large.userChanges).toEqual([])
+
+      large.editor.send({type: 'insert.text', text: 'x'})
+      large.expectMidDraw()
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.loaded.value,
+      )
+      expect(large.editor.getSnapshot().context.selection).toEqual(selection)
+      expect(large.userChanges).toEqual([])
+
+      large.editor.send({type: 'delete.backward', unit: 'character'})
+      large.expectMidDraw()
+      expect(large.editor.getSnapshot().context.value).toEqual(
+        large.loaded.value,
+      )
+      expect(large.editor.getSnapshot().context.selection).toEqual(selection)
+      expect(large.userChanges).toEqual([])
     })
   })
 })

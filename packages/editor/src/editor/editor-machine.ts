@@ -86,6 +86,10 @@ export type EditorActor = ActorRefFrom<typeof editorMachine>
  * @internal
  */
 type InternalEditorEvent =
+  | {type: 'drawing started'}
+  | {type: 'drawing finished'}
+  | {type: 'editable mounted'}
+  | {type: 'editable unmounted'}
   | ExternalEditorEvent
   | InternalApplyEvent
   | {
@@ -208,6 +212,8 @@ export const editorMachine = setup({
       pendingIncomingPatchesEvents: Array<InternalApplyEvent>
       pendingRegistrations: Array<RegistrableNode>
       schema: EditorSchema
+      isDrawing: boolean
+      hasEditable: boolean
       initialReadOnly: boolean
       initialValue: Array<PortableTextBlock> | undefined
       internalDrag?: {
@@ -496,6 +502,24 @@ export const editorMachine = setup({
 
       return context.editorEngine.operations.length > 0
     },
+    'editable is drawing and event is a user edit': ({context, event}) => {
+      if (
+        !context.isDrawing ||
+        !context.hasEditable ||
+        event.type !== 'behavior event'
+      ) {
+        return false
+      }
+
+      return !(
+        event.behaviorEvent.type === 'clipboard.copy' ||
+        event.behaviorEvent.type === 'mouse.click' ||
+        event.behaviorEvent.type === 'serialize' ||
+        event.behaviorEvent.type === 'serialization.failure' ||
+        event.behaviorEvent.type === 'serialization.success' ||
+        event.behaviorEvent.type === 'select'
+      )
+    },
     'engine is normalizing node': ({context}) => {
       if (!context.editorEngine) {
         return false
@@ -507,6 +531,8 @@ export const editorMachine = setup({
 }).createMachine({
   id: 'editor',
   context: ({input}) => ({
+    isDrawing: false,
+    hasEditable: false,
     behaviors: new Set(coreBehaviorsConfig),
     behaviorsSorted: false,
     initialConverters: input.converters ?? [],
@@ -519,6 +545,10 @@ export const editorMachine = setup({
     initialValue: input.initialValue,
   }),
   on: {
+    'drawing started': {actions: assign({isDrawing: true})},
+    'drawing finished': {actions: assign({isDrawing: false})},
+    'editable mounted': {actions: assign({hasEditable: true})},
+    'editable unmounted': {actions: assign({hasEditable: false})},
     'add behavior': {actions: 'add behavior to context'},
     'remove behavior': {actions: 'remove behavior from context'},
     'add editor engine': {
@@ -612,9 +642,15 @@ export const editorMachine = setup({
               target: '#editor.edit mode.read only.read only',
               actions: ['emit read only'],
             },
-            'behavior event': {
-              actions: ['sort behaviors', 'handle behavior event'],
-            },
+            'behavior event': [
+              {
+                guard: 'editable is drawing and event is a user edit',
+                actions: [],
+              },
+              {
+                actions: ['sort behaviors', 'handle behavior event'],
+              },
+            ],
             'blur': {
               actions: 'handle blur',
             },

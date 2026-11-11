@@ -44,6 +44,10 @@ export type Change = {
   entries: Array<ChangeEntry>
   entryByEvent: Map<OperationEvent, ChangeEntry>
   committed: boolean
+  /**
+   * Patches that remove entries the engine never held, in the host's value.
+   */
+  removalPatches?: Array<Patch>
 }
 
 export type ChangeListener = (change: Change) => void
@@ -170,7 +174,7 @@ export function commitChange(editor: Editor, change: Change): void {
 
   // Only applies that complete are recorded, so a change whose applies
   // all threw changed nothing.
-  if (change.entries.length > 0) {
+  if (change.entries.length > 0 || change.removalPatches?.length) {
     for (const listener of editor.changeListeners) {
       listener(change)
     }
@@ -189,6 +193,7 @@ function publishEntries(editor: Editor, change: Change): void {
   const published: Change = {...change, committed: true}
   change.entries = []
   change.entryByEvent = new Map()
+  change.removalPatches = undefined
 
   for (const listener of editor.changeListeners) {
     listener(published)

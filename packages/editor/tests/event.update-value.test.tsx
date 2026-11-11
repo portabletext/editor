@@ -4718,3 +4718,47 @@ function textBlock(
     style: 'normal',
   }
 }
+
+test('Scenario: first update without load still rejects a null span child', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const value = [
+    {
+      _key: blockKey,
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        null as never,
+        {_key: spanKey, _type: 'span', text: 'bar', marks: []},
+      ],
+    },
+  ]
+  const {editor} = await createTestEditor({keyGenerator})
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => events.push(event))
+  editor.send({type: 'update value', value})
+  await vi.waitFor(() => {
+    expect(events).toEqual([
+      {
+        type: 'invalid value',
+        resolution: {
+          patches: [{type: 'unset', path: [{_key: blockKey}, 'children', 0]}],
+          description:
+            "Child at index '0' in block with key 'k0' is not an object.",
+          action: 'Remove the item',
+          item: value[0],
+          i18n: {
+            description:
+              'inputs.portable-text.invalid-value.non-object-child.description',
+            action:
+              'inputs.portable-text.invalid-value.non-object-child.action',
+            values: {key: blockKey, index: 0},
+          },
+        },
+        value,
+      },
+    ])
+  })
+})
