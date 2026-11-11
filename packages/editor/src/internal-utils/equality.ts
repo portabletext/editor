@@ -38,7 +38,7 @@ export function isEqualValues(
   return true
 }
 
-export function isEqualBlocks(
+function isEqualBlocks(
   context: {schema: Schema},
   a: PortableTextBlock | Node,
   b: PortableTextBlock | Node,
@@ -238,7 +238,7 @@ export function isEqualChildren(
   return true
 }
 
-export function isEqualChild(
+function isEqualChild(
   a: ChildLike,
   b: ChildLike,
   spanTypeName: string,

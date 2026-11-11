@@ -64,10 +64,7 @@ test('Scenario: selecting across multiple blocks returns the sliced fragment', a
   }
 
   await vi.waitFor(() => {
-    expect(onChange).toHaveBeenCalledWith({
-      type: 'value changed',
-      value: initialValue,
-    })
+    expect(onChange).toHaveBeenCalledWith({type: 'ready'})
     expect(onChange).toHaveBeenCalledWith({type: 'ready'})
   })
 

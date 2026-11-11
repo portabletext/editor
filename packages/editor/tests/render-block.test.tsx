@@ -87,33 +87,56 @@ describe('registered render: blocks', () => {
 
     expect(renderBlockValues).toEqual([
       {
-        // Placeholder block
+        _key: 'k0',
         _type: 'block',
-        _key: 'k6',
         children: [
           {
+            _key: 'k1',
             _type: 'span',
-            _key: 'k7',
-            text: '',
             marks: [],
+            text: 'foo',
+          },
+          {
+            _key: 'k2',
+            _type: 'stock-ticker',
+            symbol: 'AAPL',
+          },
+          {
+            _key: 'k3',
+            _type: 'span',
+            marks: [],
+            text: '',
           },
         ],
         markDefs: [],
         style: 'normal',
       },
-      ...initialValue,
+      {
+        _key: 'k4',
+        _type: 'block',
+        children: [
+          {
+            _key: 'k5',
+            _type: 'span',
+            marks: [],
+            text: 'bar',
+          },
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
     ])
 
     await userEvent.click(barSpanLocator)
 
     await vi.waitFor(() =>
-      expect(renderBlockValues.slice(3)).toEqual([barBlock]),
+      expect(renderBlockValues.slice(2)).toEqual([barBlock]),
     )
 
     await userEvent.type(locator, '1')
 
     await vi.waitFor(() =>
-      expect(renderBlockValues.slice(4)).toEqual([
+      expect(renderBlockValues.slice(3)).toEqual([
         {
           ...barBlock,
           children: [
@@ -129,7 +152,7 @@ describe('registered render: blocks', () => {
     await userEvent.type(locator, '2')
 
     await vi.waitFor(() =>
-      expect(renderBlockValues.slice(5)).toEqual([
+      expect(renderBlockValues.slice(4)).toEqual([
         {
           ...barBlock,
           children: [
@@ -145,7 +168,7 @@ describe('registered render: blocks', () => {
     await userEvent.type(locator, '3')
 
     await vi.waitFor(() =>
-      expect(renderBlockValues.slice(6)).toEqual([
+      expect(renderBlockValues.slice(5)).toEqual([
         {
           ...barBlock,
           children: [

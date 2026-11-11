@@ -1,8 +1,8 @@
 import type {
-  InsertPatch as PteInsertPatch,
-  Patch as PtePatch,
   Path,
   PathSegment,
+  InsertPatch as PteInsertPatch,
+  Patch as PtePatch,
 } from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {diffValue, type SanityPatchOperations} from '@sanity/diff-patch'
@@ -15,10 +15,6 @@ import {
 } from '@sanity/json-match'
 
 /**
- * Diffs two Portable Text values into editor patches: the transport the
- * revised patch pipeline will ride (`update value` as
- * `diffValue`-into-patches through the one applier).
- *
  * Keep in sync with `convertPatches`/`arrayifyPath` in
  * `@portabletext/plugin-sdk-value` (`src/plugin.sdk-value.tsx`), the same translation
  * used by the SDK plugin's repair path. Deliberately duplicated (test-only,

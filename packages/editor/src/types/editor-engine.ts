@@ -79,14 +79,10 @@ export interface PortableTextEditorEngine extends DOMEditor {
 
   isDeferringMutations: boolean
   /**
-   * The last host value recorded by a value sync that changed the engine. A
-   * pristine block equal to it is persisted content, not the local
-   * placeholder. Syncs that write nothing are not recorded: hosts mirror
-   * `mutation.value` back as `update value`, and such an echo of the
-   * editor's own state (its placeholder included) is not a claim that the
-   * value is persisted. Patch generation also records the value when this
-   * editor's own `insert` puts a pristine block into an empty field, since
-   * the host then holds that block.
+   * The initial host value recorded when it changes the engine. A pristine
+   * block equal to it is persisted content. Patch generation also records
+   * the value when this editor's own `insert` puts a pristine block into
+   * an empty field, since the host then holds that block.
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
   /**

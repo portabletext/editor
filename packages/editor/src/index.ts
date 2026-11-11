@@ -99,7 +99,6 @@ export type {
   EditableAPIDeleteOptions,
   EditorSelection,
   EditorSelectionPoint,
-  InvalidValueResolution,
   OnCopyFn,
   OnPasteFn,
   OnPasteResult,

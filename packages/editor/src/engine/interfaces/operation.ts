@@ -125,7 +125,7 @@ type SetSelectionOperation =
 
 /**
  * A low-level operation applied by the editor engine. Every change to the
- * editor (local edits, remote patches, value sync, normalization fixes,
+ * editor (local edits, remote patches, load, normalization fixes,
  * undo/redo) is expressed as a sequence of these operations.
  *
  * The vocabulary is closed: the dot-named operations (`insert.text`,

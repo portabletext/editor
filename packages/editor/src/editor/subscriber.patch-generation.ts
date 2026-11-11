@@ -1,5 +1,4 @@
 import type {Patch} from '@portabletext/patches'
-import {getRepairPatches} from '../engine/core/apply-context'
 import {setChangeEntryPatches} from '../engine/core/change'
 import {
   subscribeToOperations,
@@ -24,20 +23,13 @@ export function subscribePatchGeneration({
 }): () => void {
   return subscribeToOperations(editor, (event) => {
     if (!event.isPatching) {
-      // Remote patch application and value sync apply operations with
+      // Remote patch application and load apply operations with
       // patching suppressed; bail before computing anything so those hot
       // paths pay nothing here.
       return
     }
 
-    // A repair of a received value carries the patches the host receives
-    // for it, which describe the repair, not the operation. The host
-    // already holds the block under repair, so the field lifecycle has
-    // nothing to add and must not read the block's shape mid-repair as an
-    // unpersisted placeholder.
-    const patches =
-      getRepairPatches(event.context) ??
-      addFieldLifecyclePatchesToEngine(editorActor, editor, event)
+    const patches = addFieldLifecyclePatchesToEngine(editorActor, editor, event)
 
     const localPatches = patches.map((patch) => ({
       ...patch,
@@ -78,7 +70,11 @@ function addFieldLifecyclePatchesToEngine(
         afterSnapshot: editor.snapshot,
       }),
     },
-    {schema, initialValue},
+    {
+      schema,
+      initialValue,
+      isInitialSync: editor.change?.cause.type === 'load',
+    },
   )
 
   editor.lastSyncedValue = state.lastSyncedValue

@@ -1,11 +1,6 @@
-import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
-import {userEvent} from 'vitest/browser'
-import type {EditorEmittedEvent, MutationEvent} from '../src/editor/relay'
-import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {describe, expect, test} from 'vitest'
 import {createTestEditor} from '../src/test/vitest'
-import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('Setup', () => {
   test('Scenario: Unknown block object', async () => {
@@ -26,118 +21,10 @@ describe('Setup', () => {
         children: [{_type: 'span', _key: keyGenerator(), text: 'bar'}],
       },
     ]
-    const events: Array<EditorEmittedEvent> = []
-    let mutationEvent: MutationEvent | undefined
-    let resolveFooBarMutation: () => void
-    const fooBarMutationPromise = new Promise<void>((resolve) => {
-      resolveFooBarMutation = resolve
-    })
+    const {editor} = await createTestEditor({initialValue, keyGenerator})
 
-    const {editor, locator} = await createTestEditor({
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            events.push(event)
-
-            if (
-              event.type === 'mutation' &&
-              toTextspec({
-                schema: compileSchema(defineSchema({})),
-                value: event.value ?? [],
-                selection: null,
-              }) === 'B: foo bar'
-            ) {
-              resolveFooBarMutation()
-              mutationEvent = event
-            }
-          }}
-        />
-      ),
-      initialValue,
-      keyGenerator,
-    })
-
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
-    })
-
-    expect(events.slice(0, 4)).toEqual([
-      // Sync applies the valid first block (replacing the seed block `k5`;
-      // the missing `markDefs`/`style` defaults are deferred until a local
-      // edit touches the block), then stops at the unknown block object.
-      {
-        type: 'operation',
-        operation: {type: 'unset', path: [{_key: 'k5'}]},
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: {
-            _key: 'k0',
-            _type: 'block',
-            children: [{_type: 'span', _key: 'k1', text: 'foo'}],
-          },
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'invalid value',
-        resolution: {
-          action: 'Remove the block',
-          description: "Block with _key 'k2' has invalid _type 'image'",
-          i18n: {
-            action: 'inputs.portable-text.invalid-value.disallowed-type.action',
-            description:
-              'inputs.portable-text.invalid-value.disallowed-type.description',
-            values: {key: 'k2', typeName: 'image'},
-          },
-          item: {_key: 'k2', _type: 'image'},
-          patches: [{type: 'unset', path: [{_key: 'k2'}]}],
-        },
-        value: initialValue,
-      },
-      {type: 'ready'},
-    ])
-
-    await userEvent.click(locator)
-    editor.send({
-      type: 'select',
-      at: getSelectionAfterText(editor.getSnapshot().context, 'foo'),
-    })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(
-        getSelectionAfterText(editor.getSnapshot().context, 'foo'),
-      )
-    })
-    await userEvent.type(locator, ' bar')
-
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar|')
-    })
-
-    await fooBarMutationPromise
-
-    await vi.waitFor(() => {
-      expect(mutationEvent?.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'k0',
-          children: [
-            {
-              _type: 'span',
-              _key: 'k1',
-              text: 'foo bar',
-              marks: [],
-            },
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: foo\n{IMAGE}\nB: bar',
+    )
   })
 })
