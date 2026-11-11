@@ -239,9 +239,6 @@ importers:
       '@portabletext/plugin-paste-link':
         specifier: workspace:*
         version: link:../../packages/plugin-paste-link
-      '@portabletext/plugin-sdk-value':
-        specifier: workspace:*
-        version: link:../../packages/plugin-sdk-value
       '@portabletext/plugin-table':
         specifier: workspace:*
         version: link:../../packages/plugin-table
@@ -782,7 +779,7 @@ importers:
         version: 19.2.3(@types/react@19.2.17)
       '@vitejs/plugin-react':
         specifier: catalog:tooling
-        version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+        version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.7)(@babel/runtime@7.29.7)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       '@vitest/browser':
         specifier: catalog:tooling
         version: 5.0.5(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))(vitest@5.0.5)
@@ -1390,88 +1387,6 @@ importers:
       vitest:
         specifier: catalog:tooling
         version: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-
-  packages/plugin-sdk-value:
-    dependencies:
-      '@portabletext/patches':
-        specifier: workspace:*
-        version: link:../patches
-      '@sanity/diff-match-patch':
-        specifier: 'catalog:'
-        version: 3.2.1
-      '@sanity/diff-patch':
-        specifier: ^6.0.0
-        version: 6.0.0
-      '@sanity/json-match':
-        specifier: ^1.0.5
-        version: 1.0.5
-      '@xstate/react':
-        specifier: 'catalog:'
-        version: 6.1.0(@types/react@19.2.17)(react@19.3.1)(xstate@5.33.2)
-      obug:
-        specifier: 'catalog:'
-        version: 3.0.0
-      xstate:
-        specifier: 'catalog:'
-        version: 5.33.2
-    devDependencies:
-      '@portabletext/editor':
-        specifier: workspace:*
-        version: link:../editor
-      '@portabletext/schema':
-        specifier: workspace:^
-        version: link:../schema
-      '@portabletext/test':
-        specifier: workspace:^
-        version: link:../test
-      '@sanity/pkg-utils':
-        specifier: catalog:tooling
-        version: 12.3.0(@babel/runtime@7.29.7)(@tsdown/css@0.22.14)(@types/node@24.12.2)(@volar/typescript@2.4.28)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(oxc-transform-react@0.145.0)(typescript@7.0.2)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-      '@sanity/sdk-react':
-        specifier: ^3.11.0
-        version: 3.11.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))(vitest@5.0.5)(xstate@5.33.2)
-      '@sanity/tsconfig':
-        specifier: catalog:tooling
-        version: 2.2.1
-      '@types/react':
-        specifier: ^19.2.17
-        version: 19.2.17
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.17)
-      '@vitejs/plugin-react':
-        specifier: catalog:tooling
-        version: 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.7)(@babel/runtime@7.29.7)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-      '@vitest/browser':
-        specifier: catalog:tooling
-        version: 5.0.5(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))(vitest@5.0.5)
-      '@vitest/browser-playwright':
-        specifier: catalog:tooling
-        version: 5.0.5(patch_hash=fff6ae88491c0cebf742bd0969831650fb7662f2c1c7f1f791fa2522af45fbeb)(playwright@1.62.1)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))(vitest@5.0.5)
-      jsdom:
-        specifier: ^27.2.0
-        version: 27.2.0
-      oxc-transform-react:
-        specifier: catalog:tooling
-        version: 0.145.0
-      react:
-        specifier: 'catalog:'
-        version: 19.3.1
-      react-dom:
-        specifier: 'catalog:'
-        version: 19.3.1(react@19.3.1)
-      typescript:
-        specifier: catalog:tooling
-        version: 7.0.2
-      vite:
-        specifier: catalog:tooling
-        version: 8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)
-      vitest:
-        specifier: catalog:tooling
-        version: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-      vitest-browser-react:
-        specifier: catalog:tooling
-        version: 2.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vitest@5.0.5)
 
   packages/plugin-table:
     dependencies:
@@ -3920,29 +3835,17 @@ packages:
   '@module-federation/error-codes@2.9.0':
     resolution: {integrity: sha512-IGpd+VRlji3NyGOGGTsk7YEmPRKcDoBK4YHqIuP+OQwyb2YhHCUHO2vW9RXeQxCuKwi+c6xkTweRYG+Umy+0Zw==}
 
-  '@module-federation/error-codes@2.9.2':
-    resolution: {integrity: sha512-MTpKubqsJSBgnuw+2Pli1kHL4INeHD5cGnHL84oRANwQAWK7b6lN3ZZTmL3FL6lYn65ImineqZNqGWBv5GQVLQ==}
-
   '@module-federation/managers@2.9.0':
     resolution: {integrity: sha512-8KhB2PF4g+M0hGaethU1H4GVWabLn5sF5TvnM6VxgAcDL4TfLY8aC/YobAXHG/SV0jpU5lsGe6s6xy6ccV0MQw==}
 
   '@module-federation/runtime-core@2.9.0':
     resolution: {integrity: sha512-dLykRYfpbEJBTdk2NlbNoVVTB196O3qujawTBguLABJkPCWETJNk60NR1yZO34eI+DTH+eGwHU3m7FddAWnbnw==}
 
-  '@module-federation/runtime-core@2.9.2':
-    resolution: {integrity: sha512-S9roTDqLtAWaaDBuug69ZnXXGEx0pUq/yG06J759bjRgfAg2P9+dWEv1q7rB2eMIp7HH4L6s3ColDRYdL6tJ9w==}
-
   '@module-federation/runtime@2.9.0':
     resolution: {integrity: sha512-3cyAav0hWP+dNvB7qrcK9CKxQn+JvkbRvLtZz3zS2g0EyxtDFDjgbHY0Afcf7oHf8IHhKeEdzb/3Kjr1Pjmr7A==}
 
-  '@module-federation/runtime@2.9.2':
-    resolution: {integrity: sha512-1lPZVy7TkMTTBMkkjgQt7jA+9FAx226yQqEz+X0lFAIbpxIWfpzNQLD+7IydEe83ZhDJpK3cv/9bn3jjQBZeqQ==}
-
   '@module-federation/sdk@2.9.0':
     resolution: {integrity: sha512-IMjObgBGQTXd33jTTCYcxvz8iOQGLsZ2QIPOj90rDxuBtJsN4WJwYyXqligrhY/e5p/BipUPdbIgKmWL7zFhTw==}
-
-  '@module-federation/sdk@2.9.2':
-    resolution: {integrity: sha512-ILtBFPuYpVcRA/Qay1lJ2hMtZI8fDE/v1n7xiN17e5qx5rSBR3FaamTsmRpN1hIt+gVnoa76CzOP/Y73d8hHNg==}
 
   '@module-federation/third-party-dts-extractor@2.9.0':
     resolution: {integrity: sha512-R1Xuqnqzw6wQxWV3yU9fX1FydXAeZF2TNVFAVo1N1oLBA2j5y7aUO/Fc3VSNgd9/gxMzJgTVBdA+nMiD2SFCgg==}
@@ -4707,6 +4610,10 @@ packages:
     engines: {node: '>=22.12'}
     peerDependencies:
       react: ^19
+
+  '@portabletext/sanity-bridge@4.1.5':
+    resolution: {integrity: sha512-6SL23FqPqoX90fc6jITEB3eYm3VYnZ6oERkQM++apTemi5KVuM7TdMPxWtnc7i9wmIYysdN6QDzVI1Vl/DVzkw==}
+    engines: {node: '>=22.12'}
 
   '@portabletext/to-html@6.0.0':
     resolution: {integrity: sha512-kMqr55pJDBsIyOHLeVccFMFfJxSdozS+A1TeYhiihIinSDhb6ibUxpQIpg0B1n54vZJJW8rDs+QayP3vQqLKUg==}
@@ -5755,12 +5662,6 @@ packages:
 
   '@sanity/sdk-react@3.0.0':
     resolution: {integrity: sha512-YAPk+IdHoaQasgHY/ZHgxsxOutD7uJFAp2aPzSWVJH10cmFEoMtEAy8nDetV+R1kEEd/g0pTlMgbb4HIJBDWKA==}
-    peerDependencies:
-      react: ^19.2.0
-      react-dom: ^19.2.0
-
-  '@sanity/sdk-react@3.11.0':
-    resolution: {integrity: sha512-yyt8DzzBIKbcAWBsjNJGd4YEPU5N/opBlGOX1DwBPT3LxDJlDsIrmlgJSDMUvAM716dg+Iued3brB+L9bT2VMg==}
     peerDependencies:
       react: ^19.2.0
       react-dom: ^19.2.0
@@ -9670,15 +9571,6 @@ packages:
     resolution: {integrity: sha512-3DpCr5HVdZ0caUjYE/kIHBEJN0mNP3ZCgf16c48uJ5TbWjorKVp+YG8W3XqlJ7vJAVNw6wNIImyPXmFydwmyng==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
-
-  react-error-boundary@6.1.6:
-    resolution: {integrity: sha512-CDXPnXDGyFIbkwaaJ6u+xgsRmJhSi6YdgUDW1vnyKHfXp1a9pfAlM+ZET2CDu80/A+8iRcmXN0NSY9BCCoWP5A==}
-    peerDependencies:
-      '@types/react': ^19.2.17
-      react: ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
 
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
@@ -13878,8 +13770,6 @@ snapshots:
 
   '@module-federation/error-codes@2.9.0': {}
 
-  '@module-federation/error-codes@2.9.2': {}
-
   '@module-federation/managers@2.9.0':
     dependencies:
       '@module-federation/sdk': 2.9.0
@@ -13889,26 +13779,13 @@ snapshots:
       '@module-federation/error-codes': 2.9.0
       '@module-federation/sdk': 2.9.0
 
-  '@module-federation/runtime-core@2.9.2':
-    dependencies:
-      '@module-federation/error-codes': 2.9.2
-      '@module-federation/sdk': 2.9.2
-
   '@module-federation/runtime@2.9.0':
     dependencies:
       '@module-federation/error-codes': 2.9.0
       '@module-federation/runtime-core': 2.9.0
       '@module-federation/sdk': 2.9.0
 
-  '@module-federation/runtime@2.9.2':
-    dependencies:
-      '@module-federation/error-codes': 2.9.2
-      '@module-federation/runtime-core': 2.9.2
-      '@module-federation/sdk': 2.9.2
-
   '@module-federation/sdk@2.9.0': {}
-
-  '@module-federation/sdk@2.9.2': {}
 
   '@module-federation/third-party-dts-extractor@2.9.0': {}
 
@@ -14399,6 +14276,15 @@ snapshots:
       '@portabletext/toolkit': 6.0.0
       '@portabletext/types': 4.0.2
       react: 19.3.1
+
+  '@portabletext/sanity-bridge@4.1.5(@types/react@19.3.0)(vitest@5.0.5)':
+    dependencies:
+      '@portabletext/schema': link:packages/schema
+      '@sanity/schema': 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
+      '@sanity/types': 6.21.0(@types/react@19.3.0)(vitest@5.0.5)
+    transitivePeerDependencies:
+      - '@types/react'
+      - vitest
 
   '@portabletext/to-html@6.0.0':
     dependencies:
@@ -15031,7 +14917,7 @@ snapshots:
       '@sanity/generate-help-url': 4.0.0
       '@sanity/schema': 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
       '@sanity/telemetry': 1.1.0(react@19.3.1)
-      '@sanity/types': 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
+      '@sanity/types': 6.21.0(@types/react@19.3.0)(vitest@5.0.5)
       '@sanity/workbench-cli': 2.5.2(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.7)(@babel/runtime@7.29.7)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(@types/node@24.12.2)(@types/react@19.3.0)(babel-plugin-react-compiler@1.0.0)(esbuild@0.28.2)(jiti@2.7.0)(oxc-transform-react@0.145.0)(terser@5.44.1)(tsx@4.23.12)(typescript@7.0.2)(vitest@5.0.5)(yaml@2.9.1)
       '@vitejs/plugin-react': 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.7)(@babel/runtime@7.29.7)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       chokidar: 5.0.0
@@ -15420,9 +15306,9 @@ snapshots:
 
   '@sanity/media-library-types@1.6.0': {}
 
-  '@sanity/media-library-types@1.8.0(@sanity/types@6.21.0(@types/react@19.2.17)(vitest@5.0.5))':
+  '@sanity/media-library-types@1.8.0(@sanity/types@5.31.2(@types/react@19.3.0))':
     dependencies:
-      '@sanity/types': 6.21.0(@types/react@19.2.17)(vitest@5.0.5)
+      '@sanity/types': 5.31.2(@types/react@19.3.0)
 
   '@sanity/media-library-types@1.8.0(@sanity/types@6.21.0(@types/react@19.3.0)(vitest@5.0.5))':
     dependencies:
@@ -15670,25 +15556,6 @@ snapshots:
       - use-sync-external-store
       - vitest
 
-  '@sanity/sdk-react@3.11.0(@types/react@19.2.17)(immer@11.0.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))(vitest@5.0.5)(xstate@5.33.2)':
-    dependencies:
-      '@module-federation/runtime': 2.9.2
-      '@sanity/client': 8.14.1(vitest@5.0.5)
-      '@sanity/message-protocol': 0.24.0
-      '@sanity/sdk': 3.11.0(@types/react@19.2.17)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))(vitest@5.0.5)(xstate@5.33.2)
-      '@sanity/types': 6.21.0(@types/react@19.2.17)(vitest@5.0.5)
-      react: 19.3.1
-      react-compiler-runtime: 1.0.0(react@19.3.1)
-      react-dom: 19.3.1(react@19.3.1)
-      react-error-boundary: 6.1.6(@types/react@19.2.17)(react@19.3.1)
-      rxjs: 7.8.2
-    transitivePeerDependencies:
-      - '@types/react'
-      - immer
-      - use-sync-external-store
-      - vitest
-      - xstate
-
   '@sanity/sdk@3.0.0(@types/react@19.3.0)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))(vitest@5.0.5)(xstate@5.33.2)':
     dependencies:
       '@sanity/bifur-client': 1.0.0
@@ -15702,39 +15569,12 @@ snapshots:
       '@sanity/message-protocol': 0.24.0
       '@sanity/mutate': 0.18.2(vitest@5.0.5)(xstate@5.33.2)
       '@sanity/telemetry': 1.1.0(react@19.3.1)
-      '@sanity/types': 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
+      '@sanity/types': 6.21.0(@types/react@19.3.0)(vitest@5.0.5)
       groq: 3.88.1-typegen-experimental.0
       groq-js: 2.0.0
       reselect: 5.3.0
       rxjs: 7.8.2
       zustand: 5.0.14(@types/react@19.3.0)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))
-    transitivePeerDependencies:
-      - '@types/react'
-      - immer
-      - react
-      - use-sync-external-store
-      - vitest
-      - xstate
-
-  '@sanity/sdk@3.11.0(@types/react@19.2.17)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))(vitest@5.0.5)(xstate@5.33.2)':
-    dependencies:
-      '@sanity/bifur-client': 2.0.2
-      '@sanity/client': 8.14.1(vitest@5.0.5)
-      '@sanity/comlink': 4.0.3
-      '@sanity/diff-match-patch': 3.2.1
-      '@sanity/diff-patch': 7.0.0
-      '@sanity/id-utils': 1.1.0
-      '@sanity/image-url': 2.1.1
-      '@sanity/json-match': 1.0.5
-      '@sanity/message-protocol': 0.24.0
-      '@sanity/mutate': 0.18.2(vitest@5.0.5)(xstate@5.33.2)
-      '@sanity/telemetry': 1.1.0(react@19.3.1)
-      '@sanity/types': 6.21.0(@types/react@19.2.17)(vitest@5.0.5)
-      groq: 6.20.0
-      groq-js: 2.0.1
-      reselect: 5.3.0
-      rxjs: 7.8.2
-      zustand: 5.0.16(@types/react@19.2.17)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1))
     transitivePeerDependencies:
       - '@types/react'
       - immer
@@ -15821,7 +15661,7 @@ snapshots:
   '@sanity/types@5.31.2(@types/react@19.3.0)':
     dependencies:
       '@sanity/client': 7.26.2
-      '@sanity/media-library-types': 1.6.0
+      '@sanity/media-library-types': 1.8.0(@sanity/types@5.31.2(@types/react@19.3.0))
       '@types/react': 19.3.0
 
   '@sanity/types@6.12.0(@types/react@19.3.0)(vitest@5.0.5)':
@@ -15837,14 +15677,6 @@ snapshots:
       '@sanity/client': 8.14.1(vitest@5.0.5)
       '@sanity/media-library-types': 1.6.0
       '@types/react': 19.3.0
-    transitivePeerDependencies:
-      - vitest
-
-  '@sanity/types@6.21.0(@types/react@19.2.17)(vitest@5.0.5)':
-    dependencies:
-      '@sanity/client': 8.14.1(vitest@5.0.5)
-      '@sanity/media-library-types': 1.8.0(@sanity/types@6.21.0(@types/react@19.2.17)(vitest@5.0.5))
-      '@types/react': 19.2.17
     transitivePeerDependencies:
       - vitest
 
@@ -16005,7 +15837,7 @@ snapshots:
       '@module-federation/runtime': 2.9.0
       '@module-federation/vite': 1.21.6(typescript@7.0.2)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       '@sanity/cli-core': 3.8.0(@types/node@24.12.2)(babel-plugin-react-compiler@1.0.0)(esbuild@0.28.2)(oxc-transform-react@0.145.0)(terser@5.44.1)(tsx@4.23.12)(vitest@5.0.5)(yaml@2.9.1)
-      '@sanity/types': 6.15.0(@types/react@19.3.0)(vitest@5.0.5)
+      '@sanity/types': 6.21.0(@types/react@19.3.0)(vitest@5.0.5)
       '@vitejs/plugin-react': 6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@8.0.7)(@babel/runtime@7.29.7)(rolldown@1.2.14)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1)))(babel-plugin-react-compiler@1.0.0)(oxc-transform-react@0.145.0)(vite@8.3.4(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
       form-data: 4.0.6
       rxjs: 7.8.2
@@ -20266,12 +20098,6 @@ snapshots:
     dependencies:
       react: 19.3.1
 
-  react-error-boundary@6.1.6(@types/react@19.2.17)(react@19.3.1):
-    dependencies:
-      react: 19.3.1
-    optionalDependencies:
-      '@types/react': 19.2.17
-
   react-fast-compare@3.2.2: {}
 
   react-focus-lock@2.13.7(@types/react@19.3.0)(react@19.3.1):
@@ -20785,7 +20611,7 @@ snapshots:
       '@portabletext/plugin-table': link:packages/plugin-table
       '@portabletext/plugin-typography': link:packages/plugin-typography
       '@portabletext/react': 8.0.1(react@19.3.1)
-      '@portabletext/sanity-bridge': link:packages/sanity-bridge
+      '@portabletext/sanity-bridge': 4.1.5(@types/react@19.3.0)(vitest@5.0.5)
       '@portabletext/to-html': 6.0.0
       '@portabletext/toolkit': 6.0.0
       '@rexxars/react-json-inspector': 9.0.1(react@19.3.1)
@@ -22224,13 +22050,6 @@ snapshots:
   zustand@5.0.14(@types/react@19.3.0)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1)):
     optionalDependencies:
       '@types/react': 19.3.0
-      immer: 11.0.1
-      react: 19.3.1
-      use-sync-external-store: 1.6.0(react@19.3.1)
-
-  zustand@5.0.16(@types/react@19.2.17)(immer@11.0.1)(react@19.3.1)(use-sync-external-store@1.6.0(react@19.3.1)):
-    optionalDependencies:
-      '@types/react': 19.2.17
       immer: 11.0.1
       react: 19.3.1
       use-sync-external-store: 1.6.0(react@19.3.1)

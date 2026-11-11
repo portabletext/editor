@@ -1,9 +1,0 @@
-{
-  "extends": "@sanity/tsconfig/strictest",
-  "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "./dist",
-    "exactOptionalPropertyTypes": false,
-    "noUncheckedIndexedAccess": false
-  }
-}
