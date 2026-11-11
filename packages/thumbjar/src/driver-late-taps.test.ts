@@ -59,7 +59,7 @@ for (const api of ['typeOnDevice', 'runOnDevice'] as const) {
     control.attempts = 0
     const running =
       api === 'typeOnDevice'
-        ? typeOnDevice({url, keyboard: 'en', prefix: '', words: []})
+        ? typeOnDevice(context, {url, keyboard: 'en', prefix: '', words: []})
         : runOnDevice(context, {url, keyboard: 'en', prefix: '', steps: []})
     await vi.advanceTimersByTimeAsync(
       (ATTEMPT_SECONDS + 2 * JOIN_GRACE_SECONDS) * 1000,
