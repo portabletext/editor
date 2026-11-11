@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs'
 import {describe, expect, test} from 'vitest'
 import {
+  countDeviceTests,
   CAPTURE_SEED_SECONDS,
   DEVICE_STATE_READ_SECONDS,
   DEVICE_TEST_TIMEOUT_SECONDS,
@@ -161,5 +162,15 @@ describe('`thumbjar fetch-u2-jar`', () => {
       retry: U2_JAR_RETRY_SECONDS,
       worst: FETCH_U2_JAR_WORST_SECONDS,
     }).toEqual({attempts: 3, attempt: 45, retry: 15, worst: 165})
+  })
+})
+
+describe(countDeviceTests.name, () => {
+  test('counts top-level tests, failing ones included, and nothing nested or in comments', () => {
+    expect(
+      countDeviceTests(
+        "test('a', () => {})\n// test('b')\ntest.fails('c', () => {\n  test('d')\n})\n",
+      ),
+    ).toEqual(2)
   })
 })

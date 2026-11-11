@@ -196,3 +196,15 @@ The unit tests parse real Gboard accessibility dumps and event logs from CI runs
 ## Known flakes
 
 The emulator is slow on hosted runners. Failures unrelated to the page come from the emulator never coming online, the CDP connection to Chrome dropping, or Gboard rendering only half its keys. Over 16 workflow runs, all 32 jobs were green and 5 of 96 tests needed their one driver retry.
+
+### Run one device test file
+
+From the package containing the Vitest config, with a freshly booted emulator and the page already built:
+
+```sh
+pnpm exec thumbjar run tests/ja.test.ts --keyboard ja --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
+```
+
+`thumbjar run <file> --keyboard ja|en --page-dir <dir> --config <config> --project <name>` serves the page directory, prepares Chrome and Gboard, runs just that file under `deviceTestFileSeconds(countDeviceTests(source))`, and records diagnostics. `--port` defaults to `8765` and `--out-dir` to `out`. Paths are relative to the current working directory; the test source is read relative to the page directory's parent, matching the device project's test root.
+
+The output directory holds `timing.txt`, `phases.log`, `http.log`, `vitest.log`, logcat, Chrome exit information and a final screenshot. Failed prep or tests trigger a bounded `adb get-state` check, which records `CHECKED device` or `CHECKED lost` only when adb proves that verdict. A successful test stage records `CHECKED skipped`. Prep failure exits 1; otherwise the command exits with the test stage's status. The HTTP server stops when the command exits.

@@ -3,6 +3,7 @@ import type {TestProjectInlineConfiguration} from 'vitest/config'
 import {DEVICE_TEST_TIMEOUT_SECONDS} from '../device/budget.ts'
 
 export {
+  countDeviceTests,
   deviceTestFileSeconds,
   FETCH_U2_JAR_WORST_SECONDS,
   prepWorstSeconds,

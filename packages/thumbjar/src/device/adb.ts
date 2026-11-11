@@ -15,6 +15,9 @@ import {
   type Inspection,
 } from './util.ts'
 
+const DEVICE_OFFLINE = 'device offline'
+const NO_DEVICES = 'no devices/emulators found'
+
 export class CommandError extends Error {
   override name = 'CommandError'
   /** Whether the command ran past its timeout, which a device adb lost and a slow one both cause. */
@@ -522,8 +525,43 @@ export function adbLostDevice(error: unknown): AdbLoss | undefined {
     : undefined
 }
 
+/**
+ * What one `adb get-state` proves about the device, or `undefined` when it proves nothing. Only `device` on
+ * stdout is reachable. Only an offline device, as `offline` on stdout or adb's `device offline` error, the
+ * answer of a dead emulator, or adb finding no such device is lost. Its stderr also carries daemon start-up
+ * lines. A device that is `unauthorized`, in `bootloader` or `recovery`, or in any other state is still
+ * there, and an adb that never answered may only be slow, so neither is lost: a retry on a reachable device
+ * could turn a real test failure into a passing retry.
+ */
+export function deviceVerdict(adb: {
+  stdout: string
+  stderr: string
+  timedOut: boolean
+}): 'device' | 'lost' | undefined {
+  if (adb.timedOut) {
+    return undefined
+  }
+  const state = adb.stdout.trim()
+  if (state === 'device') {
+    return 'device'
+  }
+  if (state === 'offline') {
+    return 'lost'
+  }
+  if (
+    state === '' &&
+    new RegExp(
+      `^error: (${DEVICE_OFFLINE}|${NO_DEVICES}|device '[^']*' not found)$`,
+      'm',
+    ).test(adb.stderr)
+  ) {
+    return 'lost'
+  }
+  return undefined
+}
+
 function lostDeviceMessage(message: string): boolean {
-  return /device offline|error: closed|no devices\/emulators found/.test(
+  return new RegExp(`${DEVICE_OFFLINE}|error: closed|${NO_DEVICES}`).test(
     message,
   )
 }

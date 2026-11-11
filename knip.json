@@ -70,6 +70,7 @@
         "src/vitest/setup.ts!",
         "src/bin.ts!",
         "src/prepare/*.ts!",
+        "src/run/*.ts!",
         "package.config.ts!",
         "src/device/*.ts",
         "src/gboard/*.ts",
