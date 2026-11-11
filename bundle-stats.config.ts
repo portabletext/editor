@@ -45,7 +45,6 @@ export default defineConfig({
       'packages/plugin-markdown-shortcuts',
       'packages/plugin-one-line',
       'packages/plugin-paste-link',
-      'packages/plugin-sdk-value',
       'packages/plugin-typeahead-picker',
       'packages/plugin-typography',
     ].map((root) => ({root, importTime: false})),
