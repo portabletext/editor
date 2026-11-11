@@ -62,12 +62,10 @@ export function toEngineBlock(
     return {_type, _key, ...rest, children}
   }
 
-  const {children: _originalChildren, ...blockObjectProps} = rest
-
   return {
     _type,
     _key,
-    ...blockObjectProps,
+    ...rest,
   }
 }
 

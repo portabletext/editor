@@ -56,6 +56,26 @@ const codeBlockContainer = [
   }),
 ]
 
+const childrenFieldSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {name: 'title', type: 'string'},
+        {name: 'children', type: 'array', of: [{type: 'block'}]},
+      ],
+    },
+  ],
+})
+
+const childrenFieldNodes = [
+  defineContainer({
+    type: 'callout',
+    arrayField: 'children',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+]
+
 describe('event.update value with containers', () => {
   test('Scenario: Update text inside a container line', async () => {
     const keyGenerator = createTestKeyGenerator()
@@ -1114,4 +1134,269 @@ describe('event.update value with containers', () => {
       )
     })
   })
+
+  test('Scenario: Updating a children container renders its new content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      callout(calloutKey, innerBlockKey, innerSpanKey, 'inside'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: <NodePlugin nodes={childrenFieldNodes} />,
+    })
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooinsidebar')
+    })
+    editor.send({
+      type: 'update value',
+      value: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        callout(calloutKey, innerBlockKey, innerSpanKey, 'inside!'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          title: 'T',
+          children: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside!', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooinside!bar')
+    })
+  })
+
+  test('Scenario: Updating a children container preserves its caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const nestedPath = [
+      {_key: calloutKey},
+      'children',
+      {_key: innerBlockKey},
+      'children',
+      {_key: innerSpanKey},
+    ]
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      callout(calloutKey, innerBlockKey, innerSpanKey, 'inside'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: <NodePlugin nodes={childrenFieldNodes} />,
+    })
+
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooinsidebar')
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: nestedPath, offset: 3},
+        focus: {path: nestedPath, offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: nestedPath, offset: 3},
+        focus: {path: nestedPath, offset: 3},
+        backward: false,
+      })
+    })
+    editor.send({
+      type: 'update value',
+      value: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        callout(calloutKey, innerBlockKey, innerSpanKey, 'inside!'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          title: 'T',
+          children: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside!', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooinside!bar')
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: nestedPath, offset: 3},
+        focus: {path: nestedPath, offset: 3},
+        backward: false,
+      })
+    })
+  })
+  test('Scenario: Replacing a callout at root keeps and renders its incoming blocks', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const replacementKey = keyGenerator()
+    const replacementBlockKey = keyGenerator()
+    const replacementSpanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        callout(calloutKey, innerBlockKey, innerSpanKey, 'baz'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+      children: <NodePlugin nodes={childrenFieldNodes} />,
+    })
+    editor.send({
+      type: 'update value',
+      value: [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        callout(replacementKey, replacementBlockKey, replacementSpanKey, 'baz'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: replacementKey,
+          title: 'T',
+          children: [
+            {
+              _type: 'block',
+              _key: replacementBlockKey,
+              children: [
+                {
+                  _type: 'span',
+                  _key: replacementSpanKey,
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(locator.element().textContent).toEqual('foobazbar')
+    })
+  })
 })
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function callout(key: string, blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'callout',
+    _key: key,
+    title: 'T',
+    children: [textBlock(blockKey, spanKey, text)],
+  }
+}

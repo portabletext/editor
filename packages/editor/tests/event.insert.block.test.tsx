@@ -1,4 +1,4 @@
-import type {Patch} from '@portabletext/patches'
+import {applyAll, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -11,6 +11,43 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {getFocusBlock} from '../src/selectors/selector.get-focus-block'
 import {createTestEditor} from '../src/test/vitest'
+
+const childrenFieldSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {name: 'title', type: 'string'},
+        {name: 'children', type: 'array', of: [{type: 'block'}]},
+      ],
+    },
+    {
+      name: 'gallery',
+      fields: [
+        {name: 'title', type: 'string'},
+        {
+          name: 'children',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'item',
+              fields: [{name: 'label', type: 'string'}],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const childrenFieldNodes = [
+  defineContainer({
+    type: 'callout',
+    arrayField: 'children',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+]
 
 describe('event.insert.block', () => {
   test('Scenario: Inserting block with custom _key', async () => {
@@ -3728,4 +3765,241 @@ describe('event.insert.block', () => {
       ])
     })
   })
+
+  test('Scenario: Inserting a gallery at root keeps its children', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const galleryKey = keyGenerator()
+    const itemKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const textPath = [{_key: barKey}, 'children', {_key: barSpanKey}]
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: textPath, offset: 3},
+        focus: {path: textPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: gallery(galleryKey, itemKey, 'a'),
+      placement: 'after',
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+      ])
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+      ])
+    })
+  })
+  test('Scenario: Inserting a callout at root keeps its children', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const textPath = [{_key: barKey}, 'children', {_key: barSpanKey}]
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={childrenFieldNodes} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: textPath, offset: 3},
+        focus: {path: textPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'insert.block',
+      block: callout(calloutKey, innerBlockKey, innerSpanKey, 'new'),
+      placement: 'after',
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          title: 'T',
+          children: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'new', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          title: 'T',
+          children: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'new', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ])
+    })
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('foobarnew')
+    })
+  })
 })
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function gallery(key: string, itemKey: string, label: string) {
+  return {
+    _type: 'gallery',
+    _key: key,
+    title: 'T',
+    children: [{_type: 'item', _key: itemKey, label}],
+  }
+}
+
+function callout(key: string, blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'callout',
+    _key: key,
+    title: 'T',
+    children: [textBlock(blockKey, spanKey, text)],
+  }
+}
