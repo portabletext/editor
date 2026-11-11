@@ -54,6 +54,7 @@ e.snapshot = {
     value: [] as any,
   },
   decoratorState: {},
+  status: 'ready',
 } as any
 // e.value reads through to e.snapshot.context.value via getter once defined
 const editor = plugins(e, {
