@@ -203,3 +203,11 @@ export const U2_JAR_RETRY_SECONDS = 15
 export const FETCH_U2_JAR_WORST_SECONDS =
   U2_JAR_ATTEMPTS * U2_JAR_ATTEMPT_SECONDS +
   (U2_JAR_ATTEMPTS - 1) * U2_JAR_RETRY_SECONDS
+
+/**
+ * The number of tests in a device test file: its top-level `test(` and `test.fails(` calls. A unit test
+ * checks the count against the tests Vitest collects from each file.
+ */
+export function countDeviceTests(source: string): number {
+  return source.match(/^test(\.fails)?\(/gm)?.length ?? 0
+}

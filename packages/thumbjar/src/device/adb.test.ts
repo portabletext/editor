@@ -4,7 +4,13 @@ import net from 'node:net'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {AdbConnection, run} from './adb.ts'
+import {
+  AdbConnection,
+  adbLostDevice,
+  CommandError,
+  deviceVerdict,
+  run,
+} from './adb.ts'
 import {
   GUARDED_INSPECTION,
   runAbortable,
@@ -154,3 +160,90 @@ function fakeSocket(): EventEmitter {
   vi.spyOn(net, 'connect').mockReturnValue(socket as never)
   return socket
 }
+
+// What `adb get-state` answered on emulators in real runs of these tests.
+const recordedDead = {
+  stdout: '',
+  stderr: 'error: device offline\n',
+  status: 1,
+}
+const recordedGone = {
+  stdout: '',
+  stderr: "error: device 'emulator-5554' not found\n",
+  status: 1,
+}
+const recordedReachable = {stdout: 'device\n', stderr: '', status: 0}
+
+describe(deviceVerdict.name, () => {
+  test('reads a device as reachable only when `adb get-state` prints `device`, whatever it prints on stderr', () => {
+    expect(
+      deviceVerdict({
+        stdout: 'device\n',
+        stderr: '* daemon not running; starting now at tcp:5037\n',
+        timedOut: false,
+      }),
+    ).toEqual('device')
+  })
+
+  test('reads the answers a real emulator gave, dead, gone and reachable', () => {
+    expect([
+      deviceVerdict({...recordedDead, timedOut: false}),
+      deviceVerdict({...recordedGone, timedOut: false}),
+      deviceVerdict({...recordedReachable, timedOut: false}),
+    ]).toEqual(['lost', 'lost', 'device'])
+  })
+
+  test('reads a device as lost when adb reports it offline or has no such device', () => {
+    expect([
+      deviceVerdict({stdout: 'offline\n', stderr: '', timedOut: false}),
+      deviceVerdict({
+        stdout: '',
+        stderr: 'error: device offline\n',
+        timedOut: false,
+      }),
+      deviceVerdict({
+        stdout: '',
+        stderr: 'error: no devices/emulators found\n',
+        timedOut: false,
+      }),
+      deviceVerdict({
+        stdout: '',
+        stderr: "error: device 'emulator-5554' not found\n",
+        timedOut: false,
+      }),
+    ]).toEqual(['lost', 'lost', 'lost', 'lost'])
+  })
+
+  test('gives no verdict for a device adb sees in another state, for any other error, or for an `adb get-state` that never answered', () => {
+    expect([
+      deviceVerdict({stdout: 'unauthorized\n', stderr: '', timedOut: false}),
+      deviceVerdict({stdout: 'bootloader\n', stderr: '', timedOut: false}),
+      deviceVerdict({stdout: 'recovery\n', stderr: '', timedOut: false}),
+      deviceVerdict({stdout: 'unknown\n', stderr: '', timedOut: false}),
+      deviceVerdict({
+        stdout: '',
+        stderr: 'error: cannot connect to daemon\n',
+        timedOut: false,
+      }),
+      deviceVerdict({stdout: '', stderr: '', timedOut: true}),
+      deviceVerdict({stdout: 'offline\n', stderr: '', timedOut: true}),
+    ]).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ])
+  })
+})
+
+describe(adbLostDevice.name, () => {
+  test("matches `error: closed` but does not match `device 'x' not found`", () => {
+    expect([
+      adbLostDevice(new CommandError('error: closed')),
+      adbLostDevice(new CommandError("device 'x' not found")),
+    ]).toEqual([{adbError: 'error: closed'}, undefined])
+  })
+})
