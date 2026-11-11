@@ -56,19 +56,9 @@ export function SyncPlugin(props: {channel: Channel}) {
 - A remote `unset` at the root path (`[]`) wipes undo history. Do not "sync" by sending a whole-document `unset` followed by a `set`.
 - On the server, `applyAll(value, patches)` from `@portabletext/patches` applies a batch to a stored value.
 
-## `update value`
-
-`editor.send({type: 'update value', value})` hands the editor the host's latest full snapshot.
-
-- A snapshot equal to the previous one the host sent is ignored, even if the editor has diverged through local edits since.
-- Any other snapshot is reconciled block by block against the editor's current content. Every block that differs is replaced by the snapshot's version. That includes blocks with local edits the snapshot does not contain yet, so those edits are lost.
-- It emits no `patch` or `mutation`, adds no undo step, and does not clear undo history.
-
-Use it only for a new snapshot of the same document that already includes everything the editor emitted, for example after a save round trip when nothing local is in flight. To apply other writers' changes while the user edits, send `apply`.
-
 ## Switching documents
 
-Remount the provider with a key:
+Remount the provider with a key to switch documents or show a new snapshot of the same document:
 
 ```tsx
 import {
@@ -97,6 +87,5 @@ export function NoteEditor(props: {
 
 The new key gives a new engine, the new value and an empty undo history. The alternatives fail:
 
-- `update value` with the other document swaps the content but keeps the first document's undo stack. If the two documents share block keys (common with templates), one undo replays an edit from document A into document B.
 - Changing `initialValue` without a key does nothing, because `initialConfig` is read once.
 - There is no public event that clears history. Remounting is the way to reset.
