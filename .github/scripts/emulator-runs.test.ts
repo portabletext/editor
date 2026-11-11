@@ -27,9 +27,9 @@ import {
   runResult,
 } from './emulator-runs.mjs'
 
-const packageRoot = fileURLToPath(new URL('../..', import.meta.url))
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url))
 const workflow = readFileSync(
-  new URL('../../../../.github/workflows/android-ime.yml', import.meta.url),
+  new URL('../workflows/android-ime.yml', import.meta.url),
   'utf8',
 )
 
@@ -662,7 +662,7 @@ describe('emulator-runs.mjs install-retry', () => {
       const start = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-start',
           sdk,
           '36',
@@ -689,7 +689,7 @@ describe('emulator-runs.mjs install-retry', () => {
       const retry = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-retry',
           sdk,
           '36',
@@ -742,7 +742,7 @@ describe('emulator-runs.mjs install-retry', () => {
       const retry = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-retry',
           sdk,
           '36',
@@ -1326,7 +1326,7 @@ describe('emulator-runs.mjs install-start', () => {
       const empty = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-start',
           emptySdk,
           '36',
@@ -1353,7 +1353,7 @@ describe('emulator-runs.mjs boot-seconds', () => {
       const boot = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'boot-seconds',
           'missing.txt',
         ],
@@ -1400,7 +1400,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       const result = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'result',
           'missing.txt',
           'skipped',
@@ -1439,7 +1439,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       const result = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'result',
           'missing.txt',
           'skipped',
@@ -1589,7 +1589,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
         const result = spawnSync(
           'node',
           [
-            join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+            join(repoRoot, '.github/scripts/emulator-runs.mjs'),
             'result',
             'missing.txt',
             'skipped',
@@ -1664,12 +1664,9 @@ describe('emulator-runs.mjs result after the emulator install', () => {
 describe('emulator-runs.mjs imported from an entry `node` cannot resolve', () => {
   test('imports without running its command, from stdin and from an entry path that does not exist', () => {
     expect([
+      importFromEntry(join(repoRoot, '.github/scripts/emulator-runs.mjs'), '-'),
       importFromEntry(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
-        '-',
-      ),
-      importFromEntry(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         'missing',
       ),
     ]).toEqual([
@@ -1683,12 +1680,12 @@ describe('emulator-runs.mjs run as `node`’s entry whose file is removed once l
   test('still runs its command, with `import.meta.main` and with the fallback for Node without it', () => {
     expect([
       runRemovedAfterLoad(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         [],
         'native',
       ),
       runRemovedAfterLoad(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         [],
         'removed',
       ),
@@ -1697,14 +1694,14 @@ describe('emulator-runs.mjs run as `node`’s entry whose file is removed once l
         status: 2,
         stdout: '',
         stderr:
-          'usage: node android/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
         removed: true,
       },
       {
         status: 2,
         stdout: '',
         stderr:
-          'usage: node android/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
         removed: true,
       },
     ])
@@ -1808,14 +1805,14 @@ describe('the workflow', () => {
       id: /^ {8}id: (.*)$/m.exec(install)?.[1],
       continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(install)?.[1],
       command:
-        /^ {10}(node android\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
+        /^ {10}(node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
           install,
         )?.[1],
     }).toEqual({
       id: 'install1',
       continueOnError: 'true',
       command:
-        'node android/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"',
+        'node ../../.github/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"',
     })
   })
 
@@ -1831,7 +1828,7 @@ describe('the workflow', () => {
       continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(install)?.[1],
       condition: /^ {8}if: (.*)$/m.exec(install)?.[1],
       command:
-        /^ {10}(node android\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
+        /^ {10}(node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
           install,
         )?.[1],
     }).toEqual({
@@ -1839,7 +1836,7 @@ describe('the workflow', () => {
       continueOnError: 'true',
       condition: "steps.install1.outcome == 'failure'",
       command:
-        'node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"',
+        'node ../../.github/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"',
     })
   })
 
@@ -1903,7 +1900,7 @@ describe('the workflow', () => {
       lookup: {
         continueOnError: 'true',
         command:
-          '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node android/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"',
+          '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node ../../.github/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"',
       },
       restore: {
         condition: "steps.sdk-key.outputs.key != ''",
@@ -1916,7 +1913,7 @@ describe('the workflow', () => {
         condition: "steps.sdk-key.outputs.key != ''",
         continueOnError: 'true',
         command:
-          'node android/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
+          'node ../../.github/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
         key: '${{ steps.sdk-key.outputs.key }}',
       },
       clear: {
@@ -2007,13 +2004,16 @@ describe('the workflow', () => {
       },
       keyedFile: {
         exists: existsSync(
-          new URL('../../../thumbjar/src/device/u2-jar.json', import.meta.url),
+          new URL(
+            '../../packages/thumbjar/src/device/u2-jar.json',
+            import.meta.url,
+          ),
         ),
         importedByJarModule:
           /^import jar from '\.\/u2-jar\.json' with \{type: 'json'\}$/m.test(
             readFileSync(
               new URL(
-                '../../../thumbjar/src/device/u2-jar.ts',
+                '../../packages/thumbjar/src/device/u2-jar.ts',
                 import.meta.url,
               ),
               'utf8',
@@ -2108,7 +2108,7 @@ describe('the workflow', () => {
           "github.ref == 'refs/heads/main' && steps.sdk-key.outputs.key != '' && steps.sdk-restore.outputs.cache-hit != 'true' && (steps.install1.outcome == 'success' || steps.install2.outcome == 'success')",
         continueOnError: 'true',
         command:
-          'node android/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
+          'node ../../.github/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
         key: '${{ steps.sdk-key.outputs.key }}',
       },
       save: {
@@ -2165,27 +2165,27 @@ describe('the workflow', () => {
   test('decides the retry and the result with `emulator-runs.mjs`', () => {
     expect({
       retry:
-        /^ {8}run: (node android\/scripts\/emulator-runs\.mjs retry .*)$/m.exec(
+        /^ {8}run: (node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs retry .*)$/m.exec(
           workflow,
         )?.[1],
       retryIf: /^ {8}id: run2\n {8}if: (.*)$/m.exec(workflow)?.[1],
       result:
-        /^ {8}run: (node android\/scripts\/emulator-runs\.mjs result .*)$/m.exec(
+        /^ {8}run: (node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs result .*)$/m.exec(
           workflow,
         )?.[1],
       bootTime:
-        /^ {10}(node android\/scripts\/emulator-runs\.mjs boot-seconds .*)$/m.exec(
+        /^ {10}(node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs boot-seconds .*)$/m.exec(
           workflow,
         )?.[1],
     }).toEqual({
       bootTime:
-        'node android/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt',
+        'node ../../.github/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt',
       retry:
-        'node android/scripts/emulator-runs.mjs retry android/out/timing.txt',
+        'node ../../.github/scripts/emulator-runs.mjs retry android/out/timing.txt',
       retryIf:
         "steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'",
       result:
-        'node android/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != \'skipped\' && steps.run2.outcome || steps.run1.outcome }}"',
+        'node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != \'skipped\' && steps.run2.outcome || steps.run1.outcome }}"',
     })
   })
 })
@@ -2216,10 +2216,7 @@ function runRemovedAfterLoad(
   try {
     const entry = join(directory, basename(script))
     copyFileSync(script, entry)
-    symlinkSync(
-      join(packageRoot, 'node_modules'),
-      join(directory, 'node_modules'),
-    )
+    symlinkSync(join(repoRoot, 'node_modules'), join(directory, 'node_modules'))
     // Removes the entry once Node has read it, and with `removed` takes away `import.meta.main`, so Node
     // 24 runs the fallback Node 22 has.
     writeFileSync(
@@ -2295,7 +2292,7 @@ function workflowCommand(
     writeFileSync(join(directory, 'summary'), '')
     const result = spawnSync(
       'node',
-      [join(packageRoot, 'android/scripts/emulator-runs.mjs'), ...args],
+      [join(repoRoot, '.github/scripts/emulator-runs.mjs'), ...args],
       {
         cwd: directory,
         encoding: 'utf8',
@@ -2324,7 +2321,7 @@ function workflowCommand(
 function sdkCommand(directory: string, args: string[], input?: string) {
   const result = spawnSync(
     'node',
-    [join(packageRoot, 'android/scripts/emulator-runs.mjs'), ...args],
+    [join(repoRoot, '.github/scripts/emulator-runs.mjs'), ...args],
     {
       cwd: directory,
       encoding: 'utf8',
@@ -2509,7 +2506,7 @@ describe('emulator-runs.mjs result with install logs', () => {
     const result = spawnSync(
       'node',
       [
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         'result',
         'android/out/timing.txt',
         'success',

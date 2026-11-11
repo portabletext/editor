@@ -595,7 +595,7 @@ if (!isMain()) {
   }
 } else {
   console.error(
-    'usage: node android/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
+    'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
   )
   process.exitCode = 2
 }
