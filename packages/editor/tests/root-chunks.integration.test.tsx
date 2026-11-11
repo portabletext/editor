@@ -5,21 +5,32 @@ import {
   type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import React, {StrictMode} from 'react'
-import {describe, expect, test, vi} from 'vitest'
+import React, {StrictMode, useEffect} from 'react'
+import {flushSync} from 'react-dom'
+import {createRoot} from 'react-dom/client'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {userEvent} from 'vitest/browser'
-import {EditorProvider, PortableTextEditable} from '../src'
+import {
+  EditorProvider,
+  PortableTextEditable,
+  useEditor,
+  type Editor,
+} from '../src'
 import type {RangeDecoration} from '../src'
 import {inTestChange} from '../src/engine/core/change.test-utils'
 import type {Path} from '../src/engine/interfaces/path'
 import {serializePath} from '../src/paths/serialize-path'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getChildren} from '../src/traversal/get-children'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {drawPositions, renderLargeLoad} from '../test-utils/large-load'
+import {textBlock} from '../test-utils/load-depths'
+import {loadDepths} from '../test-utils/load-depths'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -2741,3 +2752,761 @@ function valueBlockPaths(
     serializePath([...prefix, {_key: entry.node._key as string}]),
   )
 }
+
+describe('drawing a large first value after `ready`', () => {
+  test('Scenario: The editor becomes editable only after the last block is drawn at root', async () => {
+    const depth = loadDepths[0]!
+
+    const large = await renderLargeLoad({depth})
+
+    expect(large.isEditable()).toEqual(false)
+
+    const polls = await large.drawToTheEnd()
+
+    expect(polls.filter((poll) => poll.editable && !poll.lastDrawn)).toEqual([])
+    await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+  })
+
+  test('Scenario: The editor becomes editable only after the last block is drawn at callout', async () => {
+    const depth = loadDepths[1]!
+
+    const large = await renderLargeLoad({depth})
+
+    expect(large.isEditable()).toEqual(false)
+
+    const polls = await large.drawToTheEnd()
+
+    expect(polls.filter((poll) => poll.editable && !poll.lastDrawn)).toEqual([])
+    await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+  })
+
+  test('Scenario: The editor becomes editable only after the last block is drawn at nested callout', async () => {
+    const depth = loadDepths[2]!
+
+    const large = await renderLargeLoad({depth})
+
+    expect(large.isEditable()).toEqual(false)
+
+    const polls = await large.drawToTheEnd()
+
+    expect(polls.filter((poll) => poll.editable && !poll.lastDrawn)).toEqual([])
+    await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+  })
+
+  test('Scenario: The editor becomes editable only after the last block is drawn at table cell', async () => {
+    const depth = loadDepths[3]!
+
+    const large = await renderLargeLoad({depth})
+
+    expect(large.isEditable()).toEqual(false)
+
+    const polls = await large.drawToTheEnd()
+
+    expect(polls.filter((poll) => poll.editable && !poll.lastDrawn)).toEqual([])
+    await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+  })
+
+  test('Scenario: The gate opens after the last block of a value with 10% tables is drawn, and then typing works', async () => {
+    const large = await renderLargeLoad({depth: loadDepths[0]!, tableEvery: 10})
+
+    large.expectMidDraw()
+    await large.drawToTheEnd()
+    await vi.waitFor(() => expect(large.isEditable()).toEqual(true))
+    await userEvent.click(
+      document.querySelector(
+        `[data-pt-block][data-pt-path$='_key=="${large.keys[1]!.blockKey}"]']`,
+      )!,
+    )
+    large.editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: large.spanPath(1), offset: 0},
+        focus: {path: large.spanPath(1), offset: 0},
+      },
+    })
+    await userEvent.keyboard('x')
+
+    await vi.waitFor(() => expect(large.userChanges.length).toBeGreaterThan(0))
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the first chunk at root', async () => {
+    const depth = loadDepths[0]!
+
+    const position = drawPositions[0]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the middle chunk at root', async () => {
+    const depth = loadDepths[0]!
+
+    const position = drawPositions[1]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the last chunk at root', async () => {
+    const depth = loadDepths[0]!
+
+    const position = drawPositions[2]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the first chunk at callout', async () => {
+    const depth = loadDepths[1]!
+
+    const position = drawPositions[0]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the middle chunk at callout', async () => {
+    const depth = loadDepths[1]!
+
+    const position = drawPositions[1]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the last chunk at callout', async () => {
+    const depth = loadDepths[1]!
+
+    const position = drawPositions[2]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the first chunk at nested callout', async () => {
+    const depth = loadDepths[2]!
+
+    const position = drawPositions[0]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the middle chunk at nested callout', async () => {
+    const depth = loadDepths[2]!
+
+    const position = drawPositions[1]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the last chunk at nested callout', async () => {
+    const depth = loadDepths[2]!
+
+    const position = drawPositions[2]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the first chunk at table cell', async () => {
+    const depth = loadDepths[3]!
+
+    const position = drawPositions[0]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the middle chunk at table cell', async () => {
+    const depth = loadDepths[3]!
+
+    const position = drawPositions[1]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: A remote transaction touching a drawn and an undrawn block in either order applies in order at the last chunk at table cell', async () => {
+    const depth = loadDepths[3]!
+
+    const position = drawPositions[2]!
+
+    const large = await renderLargeLoad({depth})
+    const drawnIndex = 0
+    const patchFor = (index: number, text: string) =>
+      set(text, [...large.spanPath(index), 'text'])
+
+    large.expectMidDraw()
+    for (const order of [
+      [drawnIndex, position.index],
+      [position.index, drawnIndex],
+    ]) {
+      large.editor.send({
+        type: 'apply',
+        patches: order.map((index) => ({
+          ...patchFor(index, `patched-${index}`),
+          origin: 'remote' as const,
+        })),
+      })
+    }
+
+    const patchedIndexes = new Set([drawnIndex, position.index])
+    expect(large.editor.getSnapshot().context.value).toEqual(
+      large.wrap(
+        large.blocksWith((key, index) =>
+          patchedIndexes.has(index) ? `patched-${index}` : key.blockKey,
+        ),
+      ),
+    )
+    await large.drawToTheEnd()
+    for (const index of patchedIndexes) {
+      await vi.waitFor(() =>
+        expect(
+          document
+            .querySelector('[data-pt-editor]')
+            ?.textContent?.includes(`patched-${index}`),
+        ).toEqual(true),
+      )
+    }
+  })
+
+  test('Scenario: Unmounting during the draw leaves no errors and no later paint', async () => {
+    const errors: Array<unknown> = []
+    const onError = (event: ErrorEvent) => errors.push(event.error)
+    window.addEventListener('error', onError)
+    const large = await renderLargeLoad({depth: loadDepths[0]!})
+
+    large.expectMidDraw()
+    await large.unmount()
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect(errors).toEqual([])
+    expect(document.querySelector('[data-pt-editor]')).toEqual(null)
+    window.removeEventListener('error', onError)
+  })
+})
+
+test('Scenario: mounting an editable after headless load gates edits until the last chunk', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const value = Array.from({length: 400}, () =>
+    textBlock(keyGenerator(), keyGenerator(), 'foo'),
+  )
+  const editorRef = React.createRef<Editor>()
+  function Loader() {
+    const editor = useEditor()
+    useEffect(() => {
+      editor.send({type: 'load', value})
+    }, [editor])
+    return null
+  }
+  const container = document.body.appendChild(document.createElement('div'))
+  const root = createRoot(container)
+  onTestFinished(() => {
+    root.unmount()
+    container.remove()
+  })
+  function App({editable}: {editable: boolean}) {
+    return (
+      <EditorProvider initialConfig={{keyGenerator, schemaDefinition: {}}}>
+        <EditorRefPlugin ref={editorRef} />
+        <Loader />
+        {editable ? <PortableTextEditable /> : null}
+      </EditorProvider>
+    )
+  }
+  root.render(<App editable={false} />)
+  await vi.waitFor(() =>
+    expect(editorRef.current?.getSnapshot().status).toEqual('ready'),
+  )
+  flushSync(() => root.render(<App editable />))
+  expect(
+    container
+      .querySelector('[data-pt-editor]')
+      ?.getAttribute('contenteditable'),
+  ).toEqual('false')
+  expect(container.querySelectorAll('[data-pt-block]').length < 400).toEqual(
+    true,
+  )
+  const editor = editorRef.current!
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(editor.getSnapshot().context.value).toEqual(value)
+  await vi.waitFor(() => {
+    expect(container.querySelectorAll('[data-pt-block]').length).toEqual(400)
+    expect(
+      container
+        .querySelector('[data-pt-editor]')
+        ?.getAttribute('contenteditable'),
+    ).toEqual('true')
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'barfoo', marks: []}],
+    },
+    ...value.slice(1),
+  ])
+})
+
+test('Scenario: unmounting an editable during drawing permits edits', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const value = Array.from({length: 400}, () =>
+    textBlock(keyGenerator(), keyGenerator(), 'foo'),
+  )
+  const editorRef = React.createRef<Editor>()
+  function Loader() {
+    const editor = useEditor()
+    useEffect(() => {
+      editor.send({type: 'load', value})
+    }, [editor])
+    return null
+  }
+  const container = document.body.appendChild(document.createElement('div'))
+  const root = createRoot(container)
+  onTestFinished(() => {
+    root.unmount()
+    container.remove()
+  })
+  function App({editable}: {editable: boolean}) {
+    return (
+      <EditorProvider initialConfig={{keyGenerator, schemaDefinition: {}}}>
+        <EditorRefPlugin ref={editorRef} />
+        <Loader />
+        {editable ? <PortableTextEditable /> : null}
+      </EditorProvider>
+    )
+  }
+  root.render(<App editable={false} />)
+  await vi.waitFor(() =>
+    expect(editorRef.current?.getSnapshot().status).toEqual('ready'),
+  )
+  flushSync(() => root.render(<App editable />))
+  expect(
+    container
+      .querySelector('[data-pt-editor]')
+      ?.getAttribute('contenteditable'),
+  ).toEqual('false')
+  expect(container.querySelectorAll('[data-pt-block]').length < 400).toEqual(
+    true,
+  )
+  const editor = editorRef.current!
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(editor.getSnapshot().context.value).toEqual(value)
+  flushSync(() => root.render(<App editable={false} />))
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'barfoo', marks: []}],
+    },
+    ...value.slice(1),
+  ])
+})

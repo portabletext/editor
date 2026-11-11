@@ -51,23 +51,31 @@ export function EditorProvider(props: EditorProviderProps) {
   useEffect(() => {
     const unsubscribers: Array<() => void> = []
 
-    // Doesn't need to start before `editorActor`: xstate buffers events
-    // sent to an actor before `.start()` and delivers them once it starts.
-    internalEditor.actors.rangeDecorationsActor.start()
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) {
+        return
+      }
 
-    for (const subscription of internalEditor.subscriptions) {
-      unsubscribers.push(subscription())
-    }
+      // Doesn't need to start before `editorActor`: xstate buffers events
+      // sent to an actor before `.start()` and delivers them once it starts.
+      internalEditor.actors.rangeDecorationsActor.start()
 
-    internalEditor.actors.editorActor.start()
-    internalEditor.actors.editorActor.send({
-      type: 'add editor engine',
-      editor: internalEditor.editorEngine,
+      for (const subscription of internalEditor.subscriptions) {
+        unsubscribers.push(subscription())
+      }
+
+      internalEditor.actors.editorActor.start()
+      internalEditor.actors.editorActor.send({
+        type: 'add editor engine',
+        editor: internalEditor.editorEngine,
+      })
+      internalEditor.relay.start()
+      internalEditor.actors.syncActor.start()
     })
-    internalEditor.relay.start()
-    internalEditor.actors.syncActor.start()
 
     return () => {
+      cancelled = true
       for (const unsubscribe of unsubscribers) {
         unsubscribe()
       }

@@ -13,6 +13,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
+import {LoadOnMount, type LoadRecord} from '../test-utils/load-on-mount'
 
 describe('event.patch', () => {
   test('Scenario: Deleting empty block above non-empty text block', async () => {
@@ -700,5 +701,154 @@ describe('event.patch', () => {
         unset([]),
       ].map((patch) => ({...patch, origin: 'local'})),
     )
+  })
+  describe('the base after a first value', () => {
+    async function patchesAfterEmptyingAndTyping(
+      feed: 'update value' | 'load',
+      value: Array<PortableTextBlock> | undefined,
+    ) {
+      const keyGenerator = createTestKeyGenerator()
+      const patches: Array<Patch> = []
+      const records: Array<LoadRecord> = []
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        children: (
+          <>
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'patch') {
+                  patches.push(event.patch)
+                }
+              }}
+            />
+            {feed === 'load' ? (
+              <LoadOnMount loads={[value]} records={records} />
+            ) : null}
+          </>
+        ),
+      })
+
+      if (feed === 'update value') {
+        editor.send({type: 'update value', value})
+      }
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value.length).toBeGreaterThan(0)
+      })
+      patches.length = 0
+
+      await userEvent.click(locator)
+      await userEvent.type(locator, 'f')
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+      })
+
+      return {patches, records}
+    }
+
+    test('Scenario: A first character typed after a `load` of undefined emits the patches `update value` gives', async () => {
+      const value = undefined
+
+      const afterLoad = await patchesAfterEmptyingAndTyping('load', value)
+      const afterUpdateValue = await patchesAfterEmptyingAndTyping(
+        'update value',
+        value,
+      )
+
+      expect(afterLoad.records[0]).toEqual({
+        type: 'ready',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          },
+        ],
+        status: 'ready',
+      })
+      expect(afterLoad.patches).toEqual(afterUpdateValue.patches)
+      expect(afterLoad.patches).toEqual([
+        {...setIfMissing([], []), origin: 'local'},
+        {
+          ...insert(
+            [
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+              },
+            ],
+            'before',
+            [0],
+          ),
+          origin: 'local',
+        },
+        {
+          ...diffMatchPatch('', 'f', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+          origin: 'local',
+        },
+      ])
+    })
+
+    test('Scenario: A first character typed after a `load` of an empty array emits the patches `update value` gives', async () => {
+      const value: [] = []
+
+      const afterLoad = await patchesAfterEmptyingAndTyping('load', value)
+      const afterUpdateValue = await patchesAfterEmptyingAndTyping(
+        'update value',
+        value,
+      )
+
+      expect(afterLoad.records[0]).toEqual({
+        type: 'ready',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          },
+        ],
+        status: 'ready',
+      })
+      expect(afterLoad.patches).toEqual(afterUpdateValue.patches)
+      expect(afterLoad.patches).toEqual([
+        {...setIfMissing([], []), origin: 'local'},
+        {
+          ...insert(
+            [
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+              },
+            ],
+            'before',
+            [0],
+          ),
+          origin: 'local',
+        },
+        {
+          ...diffMatchPatch('', 'f', [
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+            'text',
+          ]),
+          origin: 'local',
+        },
+      ])
+    })
   })
 })

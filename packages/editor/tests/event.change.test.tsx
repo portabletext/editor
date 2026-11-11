@@ -26,10 +26,5799 @@ import {useEngineStatic} from '../src/engine/react/hooks/use-engine-static'
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {objectFieldDepth} from '../test-utils/load-depths'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  textBlock,
+} from '../test-utils/load-depths'
+import {LoadOnMount, type LoadRecord} from '../test-utils/load-on-mount'
 
 describe('event.change', () => {
+  test('Scenario: `load` removes a null entry at position 0 in root with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), null as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 0 in root with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), 'baz' as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 1 in root with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), null as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 1 in root with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), 'baz' as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 2 in root with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), null as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 2 in root with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), 'baz' as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes several entries in descending order in root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
+    const second = textBlock(keyGenerator(), keyGenerator(), 'bar')
+    const depth = loadDepths[0]!
+    const loaded = depth.wrap(
+      [null as never, first, 'baz' as never, second, 7 as never],
+      wrapperKey,
+    )
+    const expected = depth.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 4], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 0 in callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), null as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 0 in callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), 'baz' as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 1 in callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), null as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 1 in callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), 'baz' as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 2 in callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), null as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 2 in callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), 'baz' as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes several entries in descending order in callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
+    const second = textBlock(keyGenerator(), keyGenerator(), 'bar')
+    const depth = loadDepths[1]!
+    const loaded = depth.wrap(
+      [null as never, first, 'baz' as never, second, 7 as never],
+      wrapperKey,
+    )
+    const expected = depth.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 4], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 0 in nested callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), null as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 0 in nested callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), 'baz' as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 1 in nested callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), null as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 1 in nested callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), 'baz' as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 2 in nested callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), null as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 2 in nested callout with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), 'baz' as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes several entries in descending order in nested callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
+    const second = textBlock(keyGenerator(), keyGenerator(), 'bar')
+    const depth = loadDepths[2]!
+    const loaded = depth.wrap(
+      [null as never, first, 'baz' as never, second, 7 as never],
+      wrapperKey,
+    )
+    const expected = depth.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 4], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 0 in table cell with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), null as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 0 in table cell with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 0), 'baz' as never, ...blocks.slice(0)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 1 in table cell with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), null as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 1 in table cell with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 1), 'baz' as never, ...blocks.slice(1)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 1], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a null entry at position 2 in table cell with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), null as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes a string entry at position 2 in table cell with patches only', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const blocks = [
+      textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      textBlock(keyGenerator(), keyGenerator(), 'bar'),
+    ]
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [...blocks.slice(0, 2), 'baz' as never, ...blocks.slice(2)],
+      wrapperKey,
+    )
+    const expected = depth.wrap(blocks, wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+  test('Scenario: `load` removes several entries in descending order in table cell', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
+    const second = textBlock(keyGenerator(), keyGenerator(), 'bar')
+    const depth = loadDepths[3]!
+    const loaded = depth.wrap(
+      [null as never, first, 'baz' as never, second, 7 as never],
+      wrapperKey,
+    )
+    const expected = depth.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[loaded.value]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual(expected)
+    expect(records).toEqual([
+      {
+        type: 'event',
+        event: {
+          type: 'change',
+          origin: 'local',
+          operations: [],
+          patches: [
+            {type: 'unset', path: [...loaded.prefix, 4], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 2], origin: 'local'},
+            {type: 'unset', path: [...loaded.prefix, 0], origin: 'local'},
+          ],
+          correction: true,
+        },
+      },
+      {type: 'ready', value: expected, status: 'ready'},
+    ])
+  })
+
+  test('Scenario: `load` corrections address duplicate containers at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const containerKey = keyGenerator()
+    const first = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [textBlock(keyGenerator(), keyGenerator(), 'foo')],
+    }
+    const second = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [
+        null,
+        textBlock(keyGenerator(), keyGenerator(), 'bar'),
+        'baz',
+        7,
+      ],
+    }
+    const host = loadDepths[0]!.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` corrections address duplicate containers at callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const containerKey = keyGenerator()
+    const first = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [textBlock(keyGenerator(), keyGenerator(), 'foo')],
+    }
+    const second = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [
+        null,
+        textBlock(keyGenerator(), keyGenerator(), 'bar'),
+        'baz',
+        7,
+      ],
+    }
+    const host = loadDepths[1]!.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` corrections address duplicate containers at nested callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const containerKey = keyGenerator()
+    const first = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [textBlock(keyGenerator(), keyGenerator(), 'foo')],
+    }
+    const second = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [
+        null,
+        textBlock(keyGenerator(), keyGenerator(), 'bar'),
+        'baz',
+        7,
+      ],
+    }
+    const host = loadDepths[2]!.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` corrections address duplicate containers at table cell', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const containerKey = keyGenerator()
+    const first = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [textBlock(keyGenerator(), keyGenerator(), 'foo')],
+    }
+    const second = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [
+        null,
+        textBlock(keyGenerator(), keyGenerator(), 'bar'),
+        'baz',
+        7,
+      ],
+    }
+    const host = loadDepths[3]!.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` corrections address duplicate containers at object field', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const wrapperKey = createWrapperKeys(keyGenerator)
+    const containerKey = keyGenerator()
+    const first = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [textBlock(keyGenerator(), keyGenerator(), 'foo')],
+    }
+    const second = {
+      _type: 'callout',
+      _key: containerKey,
+      content: [
+        null,
+        textBlock(keyGenerator(), keyGenerator(), 'bar'),
+        'baz',
+        7,
+      ],
+    }
+    const host = objectFieldDepth.wrap([first, second], wrapperKey).value
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: loadSchemaDefinition,
+      children: (
+        <>
+          <NodePlugin nodes={loadContainers} />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` keeps named text block children in an object field with clean input', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const block = {
+      ...textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      _type: 'line',
+    }
+    const host = [{_type: 'note', _key: noteKey, body: [block]}]
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'note',
+            fields: [
+              {
+                name: 'body',
+                type: 'array',
+                of: [
+                  {
+                    type: 'block',
+                    name: 'line',
+                    styles: [{name: 'normal'}],
+                    decorators: [{name: 'em'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'note', arrayField: 'body'})]}
+          />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'note', _key: noteKey, body: [block]},
+    ])
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` keeps named text block children in an object field with null input', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const block = {
+      ...textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      _type: 'line',
+    }
+    const host = [{_type: 'note', _key: noteKey, body: [null, block]}]
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'note',
+            fields: [
+              {
+                name: 'body',
+                type: 'array',
+                of: [
+                  {
+                    type: 'block',
+                    name: 'line',
+                    styles: [{name: 'normal'}],
+                    decorators: [{name: 'em'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'note', arrayField: 'body'})]}
+          />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'note', _key: noteKey, body: [block]},
+    ])
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` keeps named text block children in an object field with string input', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const block = {
+      ...textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      _type: 'line',
+    }
+    const host = [{_type: 'note', _key: noteKey, body: ['baz', block]}]
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'note',
+            fields: [
+              {
+                name: 'body',
+                type: 'array',
+                of: [
+                  {
+                    type: 'block',
+                    name: 'line',
+                    styles: [{name: 'normal'}],
+                    decorators: [{name: 'em'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'note', arrayField: 'body'})]}
+          />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'note', _key: noteKey, body: [block]},
+    ])
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+  test('Scenario: `load` keeps named text block children in an object field with number input', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const noteKey = keyGenerator()
+    const block = {
+      ...textBlock(keyGenerator(), keyGenerator(), 'foo'),
+      _type: 'line',
+    }
+    const host = [{_type: 'note', _key: noteKey, body: [7, block]}]
+    const records: Array<LoadRecord> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'note',
+            fields: [
+              {
+                name: 'body',
+                type: 'array',
+                of: [
+                  {
+                    type: 'block',
+                    name: 'line',
+                    styles: [{name: 'normal'}],
+                    decorators: [{name: 'em'}],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'note', arrayField: 'body'})]}
+          />
+          <LoadOnMount loads={[host]} records={records} />
+        </>
+      ),
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'note', _key: noteKey, body: [block]},
+    ])
+    const patches = records.flatMap((record) =>
+      record.type === 'event' &&
+      record.event.type === 'change' &&
+      record.event.origin === 'local'
+        ? record.event.patches
+        : [],
+    )
+    expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+  })
+
+  describe('load', () => {
+    test('Scenario: `load` of a text block with empty `children` at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k2',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+            ],
+            patches: [
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k2',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+              {
+                type: 'unset',
+                path: [],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'm-k2',
+                  text: '',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a span missing `marks` at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo',
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a block missing `_key` at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: 'm-k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [0, '_key'],
+                value: 'm-k2',
+                inverse: {
+                  type: 'unset',
+                  path: [0, '_key'],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [0, '_key'],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k0',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+              _key: 'm-k2',
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of duplicate block keys at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock(blockKey, secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock('m-k2', secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [1, '_key'],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [1, '_key'],
+                  value: 'k0',
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [1, '_key'],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'm-k2',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: 'bar',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of an unknown mark at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo',
+                  marks: ['unknown'],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a non-object entry at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), 'bar'] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [1],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a `null` entry at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), null] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [1],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of empty children, a missing key, a duplicate key and a non-object entry together at root emits only corrections', async () => {
+      const depth = loadDepths[0]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const thirdSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock(blockKey, thirdSpanKey, 'bar'),
+          'baz',
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: depth.name === 'root' ? 'm-k4' : 'm-k3',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+          {
+            _type: 'block',
+            _key: depth.name === 'root' ? 'm-k3' : 'm-k4',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock('m-k2', thirdSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [3],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [2, '_key'],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [2, '_key'],
+                  value: 'k0',
+                },
+              },
+              {
+                type: 'set',
+                path: [1, '_key'],
+                value: 'm-k3',
+                inverse: {
+                  type: 'unset',
+                  path: [1, '_key'],
+                },
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k4',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [2, '_key'],
+                value: 'm-k2',
+                origin: 'local',
+              },
+              {
+                type: 'set',
+                path: [1, '_key'],
+                value: 'm-k3',
+                origin: 'local',
+              },
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k4',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'm-k4',
+                  text: '',
+                  marks: [],
+                },
+              ],
+            },
+            {
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo',
+                  marks: [],
+                },
+              ],
+              _key: 'm-k3',
+            },
+            {
+              _type: 'block',
+              _key: 'm-k2',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: 'bar',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a text block with empty `children` at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k2',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+            ],
+            patches: [
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k2',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'm-k2',
+                      text: '',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a span missing `marks` at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k1',
+                      text: 'foo',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a block missing `_key` at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: 'm-k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  0,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'unset',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    0,
+                    '_key',
+                  ],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  0,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k0',
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                  _key: 'm-k2',
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of duplicate block keys at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock(blockKey, secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock('m-k2', secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    1,
+                    '_key',
+                  ],
+                  value: 'k0',
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k1',
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'm-k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k2',
+                      text: 'bar',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of an unknown mark at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k1',
+                      text: 'foo',
+                      marks: ['unknown'],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a non-object entry at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), 'bar'] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  1,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k1',
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a `null` entry at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), null] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  1,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k1',
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of empty children, a missing key, a duplicate key and a non-object entry together at callout emits only corrections', async () => {
+      const depth = loadDepths[1]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const thirdSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock(blockKey, thirdSpanKey, 'bar'),
+          'baz',
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: depth.name === 'root' ? 'm-k4' : 'm-k3',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+          {
+            _type: 'block',
+            _key: depth.name === 'root' ? 'm-k3' : 'm-k4',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock('m-k2', thirdSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  3,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  2,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    2,
+                    '_key',
+                  ],
+                  value: 'k0',
+                },
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k3',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k4',
+                inverse: {
+                  type: 'unset',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    1,
+                    '_key',
+                  ],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  2,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k3',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k4',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'm-k3',
+                      text: '',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k1',
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                  _key: 'm-k4',
+                },
+                {
+                  _type: 'block',
+                  _key: 'm-k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: 'k2',
+                      text: 'bar',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a text block with empty `children` at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k2',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+            ],
+            patches: [
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k2',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'm-k2',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a span missing `marks` at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'foo',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a block missing `_key` at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: 'm-k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  0,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'unset',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'content',
+                    0,
+                    '_key',
+                  ],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  0,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k0',
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                      _key: 'm-k2',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of duplicate block keys at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock(blockKey, secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock('m-k2', secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'content',
+                    1,
+                    '_key',
+                  ],
+                  value: 'k0',
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'm-k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k2',
+                          text: 'bar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of an unknown mark at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'foo',
+                          marks: ['unknown'],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a non-object entry at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), 'bar'] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  1,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a `null` entry at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), null] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  1,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of empty children, a missing key, a duplicate key and a non-object entry together at nested callout emits only corrections', async () => {
+      const depth = loadDepths[2]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const thirdSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock(blockKey, thirdSpanKey, 'bar'),
+          'baz',
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: depth.name === 'root' ? 'm-k4' : 'm-k3',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+          {
+            _type: 'block',
+            _key: depth.name === 'root' ? 'm-k3' : 'm-k4',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock('m-k2', thirdSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  3,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  2,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'content',
+                    2,
+                    '_key',
+                  ],
+                  value: 'k0',
+                },
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k3',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k4',
+                inverse: {
+                  type: 'unset',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'content',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'content',
+                    1,
+                    '_key',
+                  ],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  2,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k3',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'content',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k4',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'callout',
+              _key: 'w-k0',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'w-k1',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'm-k3',
+                          text: '',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k1',
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                      _key: 'm-k4',
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'm-k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: 'k2',
+                          text: 'bar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a text block with empty `children` at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'm-k2', text: '', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k2',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+            ],
+            patches: [
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k2',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'm-k2',
+                              text: '',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a span missing `marks` at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo'}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo',
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a block missing `_key` at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: 'm-k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  0,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'unset',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'rows',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'cells',
+                    {
+                      _key: 'w-k2',
+                    },
+                    'content',
+                    0,
+                    '_key',
+                  ],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  0,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k0',
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                          _key: 'm-k2',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of duplicate block keys at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock(blockKey, secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          textBlock(blockKey, spanKey, 'foo'),
+          textBlock('m-k2', secondSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'rows',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'cells',
+                    {
+                      _key: 'w-k2',
+                    },
+                    'content',
+                    1,
+                    '_key',
+                  ],
+                  value: 'k0',
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {
+                          _type: 'block',
+                          _key: 'm-k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k2',
+                              text: 'bar',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of an unknown mark at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo', ['unknown'])] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo',
+                              marks: ['unknown'],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a non-object entry at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), 'bar'] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  1,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of a `null` entry at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const spanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo'), null] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [textBlock(blockKey, spanKey, 'foo')] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  1,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+
+    test('Scenario: `load` of empty children, a missing key, a duplicate key and a non-object entry together at table cell emits only corrections', async () => {
+      const depth = loadDepths[3]!
+
+      const keyGenerator = createTestKeyGenerator('m-')
+      const fixtureKeyGenerator = createTestKeyGenerator()
+      const wrapperKey = createWrapperKeys(createTestKeyGenerator('w-'))
+      const blockKey = fixtureKeyGenerator()
+      const secondSpanKey = fixtureKeyGenerator()
+      const thirdSpanKey = fixtureKeyGenerator()
+      const loaded = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [],
+          },
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock(blockKey, thirdSpanKey, 'bar'),
+          'baz',
+        ] as never,
+        wrapperKey,
+      )
+      const expected = depth.wrap(
+        [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: depth.name === 'root' ? 'm-k4' : 'm-k3',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+          {
+            _type: 'block',
+            _key: depth.name === 'root' ? 'm-k3' : 'm-k4',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+            ],
+          },
+          textBlock('m-k2', thirdSpanKey, 'bar'),
+        ] as never,
+        wrapperKey,
+      )
+      const records: Array<LoadRecord> = []
+
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: loadSchemaDefinition,
+        children: (
+          <>
+            <NodePlugin nodes={loadContainers} />
+            <LoadOnMount loads={[loaded.value]} records={records} />
+          </>
+        ),
+      })
+
+      expect(editor.getSnapshot().context.value).toEqual(expected.value)
+      expect(records).toEqual([
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [],
+            patches: [
+              {
+                type: 'unset',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  3,
+                ],
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'event',
+          event: {
+            type: 'change',
+            origin: 'local',
+            operations: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  2,
+                  '_key',
+                ],
+                value: 'm-k2',
+                inverse: {
+                  type: 'set',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'rows',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'cells',
+                    {
+                      _key: 'w-k2',
+                    },
+                    'content',
+                    2,
+                    '_key',
+                  ],
+                  value: 'k0',
+                },
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                node: {
+                  _type: 'span',
+                  _key: 'm-k3',
+                  text: '',
+                  marks: [],
+                },
+                position: 'before',
+              },
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k4',
+                inverse: {
+                  type: 'unset',
+                  path: [
+                    {
+                      _key: 'w-k0',
+                    },
+                    'rows',
+                    {
+                      _key: 'w-k1',
+                    },
+                    'cells',
+                    {
+                      _key: 'w-k2',
+                    },
+                    'content',
+                    1,
+                    '_key',
+                  ],
+                },
+              },
+            ],
+            patches: [
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  2,
+                  '_key',
+                ],
+                value: 'm-k2',
+                origin: 'local',
+              },
+              {
+                type: 'setIfMissing',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                ],
+                value: [],
+                origin: 'local',
+              },
+              {
+                type: 'insert',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  {
+                    _key: 'k0',
+                  },
+                  'children',
+                  0,
+                ],
+                position: 'before',
+                items: [
+                  {
+                    _type: 'span',
+                    _key: 'm-k3',
+                    text: '',
+                    marks: [],
+                  },
+                ],
+                origin: 'local',
+              },
+              {
+                type: 'set',
+                path: [
+                  {
+                    _key: 'w-k0',
+                  },
+                  'rows',
+                  {
+                    _key: 'w-k1',
+                  },
+                  'cells',
+                  {
+                    _key: 'w-k2',
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+                value: 'm-k4',
+                origin: 'local',
+              },
+            ],
+            correction: true,
+          },
+        },
+        {
+          type: 'ready',
+          value: [
+            {
+              _type: 'table',
+              _key: 'w-k0',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'w-k1',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'w-k2',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'm-k3',
+                              text: '',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {
+                          _type: 'block',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                          _key: 'm-k4',
+                        },
+                        {
+                          _type: 'block',
+                          _key: 'm-k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k2',
+                              text: 'bar',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          status: 'ready',
+        },
+      ])
+    })
+  })
+
   test('Scenario: Typing emits one local `change` per keystroke with its operations and patches', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -4430,3 +10219,322 @@ function getTextAt(
 
   return (span as {text?: string} | undefined)?.text ?? ''
 }
+
+test('Scenario: interrupted load corrections replay to the editor value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
+  const second = textBlock(keyGenerator(), keyGenerator(), 'bar')
+  const host = [first, null, second]
+  const patches: Array<Patch> = []
+  function Loader() {
+    const editor = useEditor()
+    useEffect(() => {
+      const changes = editor.on('change', (event) => {
+        if (event.origin === 'local') {
+          patches.push(...event.patches)
+        }
+      })
+      let selected = false
+      const operations = editor.on('operation', (event) => {
+        if (
+          !selected &&
+          event.operation.type === 'set' &&
+          event.operation.path.length === 0
+        ) {
+          selected = true
+          const path = [{_key: first._key}, 'children', {_key: 'k1'}]
+          editor.send({
+            type: 'select',
+            at: {anchor: {path, offset: 1}, focus: {path, offset: 1}},
+          })
+        }
+      })
+      editor.send({type: 'load', value: host as Array<PortableTextBlock>})
+      return () => {
+        changes.unsubscribe()
+        operations.unsubscribe()
+      }
+    }, [editor])
+    return null
+  }
+  const {editor} = await createTestEditor({keyGenerator, children: <Loader />})
+  expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+})
+test('Scenario: load removes a null children entry at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
+  }
+  const expected = [block]
+  const incoming = [{...block, children: [null as never, ...block.children]}]
+  const records: Array<LoadRecord> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <LoadOnMount loads={[incoming]} records={records} />
+      </>
+    ),
+  })
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(records).toEqual([
+    {
+      type: 'event',
+      event: {
+        type: 'change',
+        origin: 'local',
+        operations: [],
+        patches: [
+          {
+            type: 'unset',
+            path: [{_key: blockKey}, 'children', 0],
+            origin: 'local',
+          },
+        ],
+        correction: true,
+      },
+    },
+    {type: 'ready', value: expected, status: 'ready'},
+  ])
+  expect(
+    applyAll(
+      incoming,
+      records.flatMap((record) =>
+        record.type === 'event' &&
+        record.event.type === 'change' &&
+        record.event.origin === 'local'
+          ? (record.event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+
+test('Scenario: load removes a null markDefs entry at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const markKey = keyGenerator()
+
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [{_key: markKey, _type: 'link'}],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: [markKey]}],
+  }
+  const expected = [block]
+  const incoming = [{...block, markDefs: [null as never, ...block.markDefs]}]
+  const records: Array<LoadRecord> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <LoadOnMount loads={[incoming]} records={records} />
+      </>
+    ),
+  })
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(records).toEqual([
+    {
+      type: 'event',
+      event: {
+        type: 'change',
+        origin: 'local',
+        operations: [],
+        patches: [
+          {
+            type: 'unset',
+            path: [{_key: blockKey}, 'markDefs', 0],
+            origin: 'local',
+          },
+        ],
+        correction: true,
+      },
+    },
+    {type: 'ready', value: expected, status: 'ready'},
+  ])
+  expect(
+    applyAll(
+      incoming,
+      records.flatMap((record) =>
+        record.type === 'event' &&
+        record.event.type === 'change' &&
+        record.event.origin === 'local'
+          ? (record.event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+
+test('Scenario: load removes a null children entry at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+
+  const wrapperKey = keyGenerator()
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
+  }
+  const expected = [{_key: wrapperKey, _type: 'callout', content: [block]}]
+  const incoming = [
+    {
+      _key: wrapperKey,
+      _type: 'callout',
+      content: [{...block, children: [null as never, ...block.children]}],
+    },
+  ]
+  const records: Array<LoadRecord> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <LoadOnMount loads={[incoming]} records={records} />
+      </>
+    ),
+  })
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(records).toEqual([
+    {
+      type: 'event',
+      event: {
+        type: 'change',
+        origin: 'local',
+        operations: [],
+        patches: [
+          {
+            type: 'unset',
+            path: [
+              {_key: wrapperKey},
+              'content',
+              {_key: blockKey},
+              'children',
+              0,
+            ],
+            origin: 'local',
+          },
+        ],
+        correction: true,
+      },
+    },
+    {type: 'ready', value: expected, status: 'ready'},
+  ])
+  expect(
+    applyAll(
+      incoming,
+      records.flatMap((record) =>
+        record.type === 'event' &&
+        record.event.type === 'change' &&
+        record.event.origin === 'local'
+          ? (record.event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+
+test('Scenario: load removes a null markDefs entry at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const markKey = keyGenerator()
+  const wrapperKey = keyGenerator()
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [{_key: markKey, _type: 'link'}],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: [markKey]}],
+  }
+  const expected = [{_key: wrapperKey, _type: 'callout', content: [block]}]
+  const incoming = [
+    {
+      _key: wrapperKey,
+      _type: 'callout',
+      content: [{...block, markDefs: [null as never, ...block.markDefs]}],
+    },
+  ]
+  const records: Array<LoadRecord> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <LoadOnMount loads={[incoming]} records={records} />
+      </>
+    ),
+  })
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(records).toEqual([
+    {
+      type: 'event',
+      event: {
+        type: 'change',
+        origin: 'local',
+        operations: [],
+        patches: [
+          {
+            type: 'unset',
+            path: [
+              {_key: wrapperKey},
+              'content',
+              {_key: blockKey},
+              'markDefs',
+              0,
+            ],
+            origin: 'local',
+          },
+        ],
+        correction: true,
+      },
+    },
+    {type: 'ready', value: expected, status: 'ready'},
+  ])
+  expect(
+    applyAll(
+      incoming,
+      records.flatMap((record) =>
+        record.type === 'event' &&
+        record.event.type === 'change' &&
+        record.event.origin === 'local'
+          ? (record.event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})

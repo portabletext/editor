@@ -20,6 +20,7 @@ import {
   type RenderLeafProps,
 } from '../engine/react/components/editable'
 import {useEngine} from '../engine/react/hooks/use-engine'
+import {useIsomorphicLayoutEffect} from '../engine/react/hooks/use-isomorphic-layout-effect'
 import {attachRef} from '../engine/react/utils/attach-ref'
 import {resolveSelection} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
@@ -119,12 +120,22 @@ export const PortableTextEditable = forwardRef<
   const portableTextEditor = usePortableTextEditor()
 
   const editorActor = useContext(EditorActorContext)
+  useIsomorphicLayoutEffect(() => {
+    editorActor.send({type: 'editable mounted'})
+    return () => editorActor.send({type: 'editable unmounted'})
+  }, [editorActor])
+
   const relay = useContext(RelayContext)
   const editorEngine = useEngine()
   const schema = editorEngine.snapshot.context.schema
-  const readOnly = useSelector(editorActor, (s) =>
-    s.matches({'edit mode': 'read only'}),
+  const isReadOnly = useSelector(editorActor, (snapshot) =>
+    snapshot.matches({'edit mode': 'read only'}),
   )
+  const isDrawing = useSelector(
+    editorActor,
+    (snapshot) => snapshot.context.isDrawing,
+  )
+  const readOnly = isReadOnly || isDrawing
   const validateSelectionActor = useActorRef(validateSelectionMachine, {
     input: {
       editorEngine,
