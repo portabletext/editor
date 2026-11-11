@@ -258,17 +258,7 @@ function createActors(config: {
 
   config.subscriptions.push(() => {
     const subscription = syncActor.on('*', (event) => {
-      switch (event.type) {
-        case 'patch':
-          config.editorActor.send({
-            ...event,
-            type: 'internal.patch',
-          })
-          break
-
-        default:
-          config.editorActor.send(event)
-      }
+      config.editorActor.send(event)
     })
 
     return () => {

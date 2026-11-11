@@ -1,4 +1,3 @@
-import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {emit, setup, type ActorRefFrom} from 'xstate'
 import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
@@ -20,10 +19,7 @@ export const syncMachine = setup({
       initialValue: Array<PortableTextBlock> | undefined
       editorEngine: PortableTextEditorEngine
     },
-    emitted: {} as
-      | {type: 'patch'; patch: Patch}
-      | {type: 'done syncing value'}
-      | {type: 'syncing value'},
+    emitted: {} as {type: 'done syncing value'} | {type: 'syncing value'},
   },
   actions: {
     'load initial value': ({context}) => {

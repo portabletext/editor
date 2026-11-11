@@ -73,11 +73,7 @@ function addFieldLifecyclePatchesToEngine(
     {
       schema,
       initialValue,
-      isInitialSync:
-        editor.change?.cause.type === 'value sync' &&
-        event.context.some(
-          (frame) => frame.kind === 'remote' && frame.source === 'initial-sync',
-        ),
+      isInitialSync: editor.change?.cause.type === 'value sync',
     },
   )
 
