@@ -34,6 +34,7 @@ import {start} from '../engine/editor/start'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {Node} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
+import {rangePoints} from '../engine/range/range-points'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applyDeselect, applySelect} from '../internal-utils/apply-selection'
 import {debug} from '../internal-utils/debug'
@@ -49,7 +50,7 @@ import {
 } from '../internal-utils/remove-non-objects'
 import {safeStringify} from '../internal-utils/safe-json'
 import {validateValue} from '../internal-utils/validateValue'
-import {toEngineBlock} from '../internal-utils/values'
+import {isEqualToEmptyEditor, toEngineBlock} from '../internal-utils/values'
 import {getNode} from '../traversal/get-node'
 import {hasNode} from '../traversal/has-node'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
@@ -177,6 +178,7 @@ export const syncMachine = setup({
           type: 'load'
           value: Array<PortableTextBlock> | undefined
         }
+      | {type: 'reset'; value: Array<PortableTextBlock> | undefined}
       | {type: 'first value'}
       | {
           type: 'update readOnly'
@@ -211,6 +213,17 @@ export const syncMachine = setup({
     'assign pending value': assign({
       pendingValue: ({event}) => {
         assertEvent(event, 'update value')
+        return event.value
+      },
+    }),
+    'reset': ({context, event}) => {
+      assertEvent(event, 'reset')
+      context.editorEngine.clearPendingMutations()
+      resetValue({context, value: event.value})
+    },
+    'record reset value': assign({
+      previousValue: ({event}) => {
+        assertEvent(event, 'reset')
         return event.value
       },
     }),
@@ -332,6 +345,10 @@ export const syncMachine = setup({
     }),
   ],
   on: {
+    'reset': {
+      target: '.idle',
+      actions: ['clear pending value', 'reset', 'record reset value'],
+    },
     'update readOnly': {
       actions: ['assign readOnly'],
     },
@@ -717,6 +734,86 @@ async function updateValue({
   }
 
   sendBack({type: 'done syncing', value, changed: isChanged})
+}
+
+function resetValue({
+  context,
+  value,
+}: {
+  context: {
+    schema: EditorSchema
+    editorEngine: PortableTextEditorEngine
+  }
+  value: Array<PortableTextBlock> | undefined
+}) {
+  const editorEngine = context.editorEngine
+  const next = removeNonObjects(
+    {
+      schema: context.schema,
+      containers: editorEngine.snapshot.context.containers,
+    },
+    value ?? [],
+  )
+  const change = createChange({
+    type: 'value sync',
+    initial: false,
+    reset: true,
+  })
+  change.removalPatches = getNonObjectRemovalPatches(
+    {
+      schema: context.schema,
+      containers: editorEngine.snapshot.context.containers,
+    },
+    value ?? [],
+  )
+
+  resumeChange(editorEngine, change, () => {
+    withRemoteChanges(editorEngine, 'reset', () => {
+      withoutNormalizing(editorEngine, () => {
+        pluginWithoutHistory(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
+            const operations: Array<EngineOperation> =
+              next.length === 0
+                ? isEqualToEmptyEditor(
+                    undefined,
+                    editorEngine.snapshot.context.value,
+                    context.schema,
+                  )
+                  ? []
+                  : [{type: 'set', path: [], value: []}]
+                : [{type: 'set', path: [], value: next}]
+
+            for (const operation of operations) {
+              editorEngine.apply(operation)
+            }
+          })
+        })
+      })
+      const selection = editorEngine.snapshot.context.selection
+      if (selection) {
+        const nextSelection = {...selection}
+        for (const [point, endpoint] of rangePoints(selection)) {
+          if (!hasNode(editorEngine.snapshot, point.path)) {
+            const blockPath = point.path.slice(0, -2)
+            nextSelection[endpoint] = start(
+              editorEngine,
+              hasNode(editorEngine.snapshot, blockPath) ? blockPath : [],
+            )
+          }
+        }
+        pluginWithoutHistory(editorEngine, () => {
+          withoutPatching(editorEngine, () => {
+            applySelect(editorEngine, nextSelection)
+          })
+        })
+      }
+    })
+  })
+
+  commitChange(editorEngine, change)
+  editorEngine.onChange()
+  editorEngine.history = {undos: [], redos: []}
+  editorEngine.lastSyncedValue = value
 }
 
 function loadValue({

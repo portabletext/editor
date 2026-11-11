@@ -50,8 +50,8 @@ export type EditorEvent =
        * content.
        *
        * To change content programmatically, use editing events so the
-       * change flows through behaviors and emits patches; to reset the
-       * editor wholesale, remount it with a fresh `initialValue`.
+       * change flows through behaviors and emits patches; to replace the
+       * whole value and clear history and unsent edits, send `reset`.
        */
       type: 'update value'
       value: Array<PortableTextBlock> | undefined
@@ -71,6 +71,27 @@ export type EditorEvent =
        * `correction: true`.
        */
       type: 'load'
+      value: Array<PortableTextBlock> | undefined
+    }
+  | {
+      /**
+       * Replace the whole value after `ready`. `undefined` and `[]` give the
+       * empty editor. Sending `reset` before `ready` throws.
+       *
+       * Reset clears undo and redo history, pending value updates, and edits
+       * not yet emitted, including edits made while read-only. Already emitted
+       * patches are not recalled. Changed content emits one remote `change`
+       * with a root `set`, followed by any corrections, without `value changed`.
+       * An equal value emits no change.
+       *
+       * Carets and range decorations keep their key paths and offsets. A caret
+       * whose span key is gone goes to offset 0 of its replacement. A decoration
+       * whose span key is gone is removed and its `onMoved` callback receives
+       * `newSelection: null` with remote origin. A prop decoration does not move
+       * while the editor is read-only. Reusing a text block object preserves its
+       * drawing and any composition in it.
+       */
+      type: 'reset'
       value: Array<PortableTextBlock> | undefined
     }
 

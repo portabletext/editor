@@ -22,6 +22,7 @@ function createTestEngine(keyGenerator: () => string) {
   e.containers = new Map()
   e.blockIndexMap = new Map()
   e.verifiedUniqueChildGroups = new Set()
+  e.clearPendingMutations = () => {}
   e.snapshot = {
     blockIndexMap: e.blockIndexMap,
     context: {
@@ -181,4 +182,82 @@ describe('sync machine', () => {
     expect(result).toEqual({blockAtIndex: value[0], oldBlock: value[4]})
     expect(readIndexes).toEqual([0, 4, 4])
   })
+})
+
+test('Scenario: reset while syncing exits to idle and records its own sync base', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator()
+  const {editor, schema} = createTestEngine(keyGenerator)
+  const initial = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const next = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+    },
+  ]
+  const actor = createActor(syncMachine, {
+    input: {
+      initialValue: initial,
+      keyGenerator,
+      schema,
+      readOnly: false,
+      editorEngine: editor,
+    },
+  })
+  actor.start()
+  await vi.waitFor(() => expect(actor.getSnapshot().value).toEqual('idle'))
+  actor.on('syncing value', () => actor.send({type: 'reset', value: next}))
+  actor.send({
+    type: 'update value',
+    value: [
+      {
+        ...initial[0]!,
+        children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+      },
+    ],
+  })
+  await vi.waitFor(() =>
+    expect(editor.snapshot.context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+      },
+    ]),
+  )
+  expect(actor.getSnapshot().value).toEqual('idle')
+  expect(actor.getSnapshot().context.pendingValue).toEqual(undefined)
+  expect(actor.getSnapshot().context.previousValue).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+    },
+  ])
+  expect(editor.lastSyncedValue).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+    },
+  ])
+  actor.stop()
 })

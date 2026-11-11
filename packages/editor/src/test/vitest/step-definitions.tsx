@@ -74,6 +74,14 @@ function setEditorState(context: Context, textspec: string): void {
   })
 }
 
+function resetEditor(context: Context, textspec: string): void {
+  const {schema, keyGenerator, containers} =
+    context.editor.getSnapshot().context
+  const {blocks} = fromTextspec({schema, keyGenerator, containers}, textspec)
+
+  context.editor.send({type: 'reset', value: blocks})
+}
+
 async function assertEditorState(
   context: Context,
   textspec: string,
@@ -298,6 +306,16 @@ export const stepDefinitions = [
       context.large = large
     },
   ),
+
+  When(
+    'the editor is reset to {string}',
+    (context: Context, textspec: string) => {
+      resetEditor(context, textspec.replace(/;;/g, '\n'))
+    },
+  ),
+  When('the editor is reset to', (context: Context, textspec: string) => {
+    resetEditor(context, textspec)
+  }),
 
   /**
    * ```

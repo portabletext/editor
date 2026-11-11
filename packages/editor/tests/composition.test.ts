@@ -16,7 +16,9 @@ import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.edit
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextBlock} from '../src/traversal/get-text-block'
 import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+import {textBlock} from '../test-utils/load-depths'
 
 const isChromium = server.browser === 'chromium'
 
@@ -2276,3 +2278,110 @@ function targetText(
     ? child.text
     : undefined
 }
+
+test.skipIf(!isChromium)(
+  'Scenario: reset preserves composition in a shared text block',
+  async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const otherBlockKey = keyGenerator(),
+      otherSpanKey = keyGenerator(),
+      blockKey = keyGenerator(),
+      spanKey = keyGenerator()
+    const initial = [
+      textBlock(otherBlockKey, otherSpanKey, 'foo'),
+      textBlock(blockKey, spanKey, 'foo bar'),
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue: initial,
+    })
+    await userEvent.click(locator)
+    const point = {
+      path: [{_key: blockKey}, 'children', {_key: spanKey}],
+      offset: 7,
+    }
+    editor.send({type: 'select', at: {anchor: point, focus: point}})
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.anchorOffset).toEqual(7),
+    )
+    enableCompositionKeyEvents()
+    const compositionEvents: Array<string> = []
+    const record = (event: Event) => compositionEvents.push(event.type)
+    const editable = locator.element()
+    editable.addEventListener('compositionstart', record)
+    editable.addEventListener('compositionupdate', record)
+    editable.addEventListener('compositionend', record)
+    const session = cdp()
+    await session.send('Input.imeSetComposition', {
+      text: 'ｓ',
+      selectionStart: 1,
+      selectionEnd: 1,
+    })
+    await vi.waitFor(() => expect(editable.textContent).toEqual('foofoo barｓ'))
+    await session.send('Input.imeSetComposition', {
+      text: 'す',
+      selectionStart: 1,
+      selectionEnd: 1,
+    })
+    await vi.waitFor(() => expect(editable.textContent).toEqual('foofoo barす'))
+    const shared = getTextBlock(editor.getSnapshot(), [{_key: blockKey}])!.node
+    const next = [textBlock(otherBlockKey, otherSpanKey, 'baz'), shared]
+    editor.send({type: 'reset', value: next})
+    await vi.waitFor(() => expect(editable.textContent).toEqual('bazfoo barす'))
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: otherBlockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: otherSpanKey, text: 'baz', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo bar', marks: []}],
+      },
+    ])
+    await session.send('Input.imeSetComposition', {
+      text: 'すし',
+      selectionStart: 2,
+      selectionEnd: 2,
+    })
+    await vi.waitFor(() =>
+      expect(editable.textContent).toEqual('bazfoo barすし'),
+    )
+    await session.send('Input.insertText', {text: 'すし'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: otherBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo barすし', marks: []},
+          ],
+        },
+      ]),
+    )
+    expect(compositionEvents).toEqual([
+      'compositionstart',
+      'compositionupdate',
+      'compositionupdate',
+      'compositionupdate',
+      'compositionupdate',
+      'compositionend',
+    ])
+  },
+)

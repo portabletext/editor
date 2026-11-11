@@ -1,5 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
+import {createRef} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -11,10 +12,13 @@ import {
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 import {renderLargeLoad} from '../test-utils/large-load'
+import {textBlock} from '../test-utils/load-depths'
 import {loadDepths} from '../test-utils/load-depths'
 
 describe('event.history.undo', () => {
@@ -1187,4 +1191,37 @@ describe('event.history.undo', () => {
     expect(large.engine.history).toEqual({undos: [], redos: []})
     expect(large.isDrawn(large.keys.at(-1)!.blockKey)).toEqual(false)
   })
+})
+
+test('Scenario: reset clears both undo and redo history', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator()
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [textBlock(blockKey, spanKey, 'foo')],
+    children: <InternalEditorEngineRefPlugin ref={engineRef} />,
+  })
+  const point = {
+    path: [{_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  editor.send({type: 'history.undo'})
+  expect(engineRef.current!.history.redos.length).toEqual(1)
+  editor.send({type: 'reset', value: [textBlock(blockKey, spanKey, 'bar')]})
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+  editor.send({type: 'history.redo'})
+  editor.send({type: 'history.undo'})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+    },
+  ])
 })

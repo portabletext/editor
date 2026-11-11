@@ -147,7 +147,7 @@ function localRuns(change: Change): Array<{
 /**
  * Selection changes and the first load's remote operations are applied
  * like any other operation but are not changes to report, and neither is
- * a placeholder the first load inserts: the one in the snapshot is never
+ * a placeholder a value sync inserts: the one in the snapshot is never
  * reported. A correction to the first load is.
  */
 function isReported(
@@ -158,8 +158,12 @@ function isReported(
     return false
   }
 
-  if (change.cause.type !== 'value sync' || !change.cause.initial) {
+  if (change.cause.type !== 'value sync') {
     return true
+  }
+
+  if (!change.cause.initial) {
+    return !(change.cause.reset && isPlaceholder(entry.event.context))
   }
 
   return (

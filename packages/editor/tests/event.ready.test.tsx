@@ -713,6 +713,26 @@ describe('event.ready', () => {
   })
 })
 
+test('Scenario: reset before ready throws', async () => {
+  const errors: Array<string> = []
+  function ResetBeforeReady() {
+    const editor = useEditor()
+    try {
+      editor.send({type: 'reset', value: []})
+    } catch (error) {
+      if (error instanceof Error) {
+        errors.push(error.message)
+      }
+    }
+    return null
+  }
+  await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    children: <ResetBeforeReady />,
+  })
+  expect(errors).toEqual(['`reset` is only valid once the editor is ready'])
+})
+
 test('Scenario: StrictMode replay replaces the first load before ready', async () => {
   const keyGenerator = createTestKeyGenerator()
   const first = [textBlock(keyGenerator(), keyGenerator(), 'foo')]
@@ -846,4 +866,38 @@ test('Scenario: mounted editable blocks an edit from ready before the first draw
   )
   expect(loadedTextAtReady).toEqual([false])
   expect(editorRef.current?.getSnapshot().context.value).toEqual(value)
+})
+
+test('Scenario: headless load then reset accepts an edit after ready', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const value = [textBlock(keyGenerator(), keyGenerator(), 'foo')]
+  const editorRef = React.createRef<Editor>()
+  const loads = [value]
+  const records: Array<LoadRecord> = []
+  await render(
+    <EditorProvider initialConfig={{keyGenerator, schemaDefinition: {}}}>
+      <EditorRefPlugin ref={editorRef} />
+      <LoadOnMount loads={loads} records={records} />
+    </EditorProvider>,
+  )
+  const editor = editorRef.current!
+  await vi.waitFor(() => expect(editor.getSnapshot().status).toEqual('ready'))
+  editor.send({type: 'reset', value})
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'k0',
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: 'k1', _type: 'span', text: 'barfoo', marks: []}],
+    },
+  ])
 })

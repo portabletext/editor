@@ -10220,6 +10220,344 @@ function getTextAt(
   return (span as {text?: string} | undefined)?.text ?? ''
 }
 
+test('Scenario: reset emits the complete changed change sequence at root', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  const next = depth.wrap(
+    [textBlock(blockKey, spanKey, 'bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+    },
+  ])
+
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'remote',
+      operations: [
+        {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: spanKey, text: 'bar', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+})
+test('Scenario: reset emits the complete equal change sequence at root', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  const next = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ])
+  events.length = 0
+  editor.send({type: 'reset', value: structuredClone(next)})
+  expect(events).toEqual([])
+})
+test('Scenario: reset emits the complete non-object change sequence at root', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  editor.send({
+    type: 'reset',
+    value: depth.wrap(
+      [textBlock(blockKey, spanKey, 'foo'), null as never],
+      wrapperKey,
+    ).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ])
+
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: [{type: 'unset', path: [...initial.prefix, 1], origin: 'local'}],
+      correction: true,
+    },
+  ])
+})
+test('Scenario: reset emits the complete changed change sequence at callout', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  const next = depth.wrap(
+    [textBlock(blockKey, spanKey, 'bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+        },
+      ],
+    },
+  ])
+
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'remote',
+      operations: [
+        {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'callout',
+              _key: wrapperKey('callout'),
+              content: [
+                {
+                  _type: 'block',
+                  _key: blockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: spanKey, text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+})
+test('Scenario: reset emits the complete equal change sequence at callout', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  const next = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    },
+  ])
+  events.length = 0
+  editor.send({type: 'reset', value: structuredClone(next)})
+  expect(events).toEqual([])
+})
+test('Scenario: reset emits the complete non-object change sequence at callout', async () => {
+  const keyGenerator = createTestKeyGenerator(),
+    blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  editor.send({
+    type: 'reset',
+    value: depth.wrap(
+      [textBlock(blockKey, spanKey, 'foo'), null as never],
+      wrapperKey,
+    ).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    },
+  ])
+
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: [{type: 'unset', path: [...initial.prefix, 1], origin: 'local'}],
+      correction: true,
+    },
+  ])
+})
+
+test('Scenario: interrupted reset corrections replay to the editor value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
+  const second = textBlock(keyGenerator(), keyGenerator(), 'bar')
+  const {editor} = await createTestEditor({keyGenerator, initialValue: [first]})
+  const patches: Array<Patch> = []
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      patches.push(...event.patches)
+    }
+  })
+  let selected = false
+  editor.on('operation', (event) => {
+    if (
+      !selected &&
+      event.operation.type === 'set' &&
+      event.operation.path.length === 0
+    ) {
+      selected = true
+      const path = [{_key: first._key}, 'children', {_key: 'k1'}]
+      editor.send({
+        type: 'select',
+        at: {anchor: {path, offset: 1}, focus: {path, offset: 1}},
+      })
+    }
+  })
+  const host = [first, null, second]
+  editor.send({type: 'reset', value: host as Array<PortableTextBlock>})
+  expect(applyAll(host, patches)).toEqual(editor.getSnapshot().context.value)
+})
+
 test('Scenario: interrupted load corrections replay to the editor value', async () => {
   const keyGenerator = createTestKeyGenerator()
   const first = textBlock(keyGenerator(), keyGenerator(), 'foo')
@@ -10533,6 +10871,268 @@ test('Scenario: load removes a null markDefs entry at callout', async () => {
         record.event.type === 'change' &&
         record.event.origin === 'local'
           ? (record.event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+test('Scenario: reset removes a null children entry at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
+  }
+  const expected = [block]
+  const incoming = [{...block, children: [null as never, ...block.children]}]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    initialValue: expected,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  editor.send({type: 'reset', value: incoming})
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'children', 0],
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+  expect(
+    applyAll(
+      incoming,
+      events.flatMap((event) =>
+        event.type === 'change' && event.origin === 'local'
+          ? (event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+
+test('Scenario: reset removes a null markDefs entry at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const markKey = keyGenerator()
+
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [{_key: markKey, _type: 'link'}],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: [markKey]}],
+  }
+  const expected = [block]
+  const incoming = [{...block, markDefs: [null as never, ...block.markDefs]}]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    initialValue: expected,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  editor.send({type: 'reset', value: incoming})
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: [
+        {
+          type: 'unset',
+          path: [{_key: blockKey}, 'markDefs', 0],
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+  expect(
+    applyAll(
+      incoming,
+      events.flatMap((event) =>
+        event.type === 'change' && event.origin === 'local'
+          ? (event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+
+test('Scenario: reset removes a null children entry at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+
+  const wrapperKey = keyGenerator()
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
+  }
+  const expected = [{_key: wrapperKey, _type: 'callout', content: [block]}]
+  const incoming = [
+    {
+      _key: wrapperKey,
+      _type: 'callout',
+      content: [{...block, children: [null as never, ...block.children]}],
+    },
+  ]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    initialValue: expected,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  editor.send({type: 'reset', value: incoming})
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: [
+        {
+          type: 'unset',
+          path: [
+            {_key: wrapperKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            0,
+          ],
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+  expect(
+    applyAll(
+      incoming,
+      events.flatMap((event) =>
+        event.type === 'change' && event.origin === 'local'
+          ? (event.patches ?? [])
+          : [],
+      ),
+    ),
+  ).toEqual(editor.getSnapshot().context.value)
+})
+
+test('Scenario: reset removes a null markDefs entry at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const markKey = keyGenerator()
+  const wrapperKey = keyGenerator()
+  const schemaDefinition = {
+    ...loadSchemaDefinition,
+    annotations: [{name: 'link'}],
+  }
+  const block = {
+    _key: blockKey,
+    _type: 'block',
+    style: 'normal',
+    markDefs: [{_key: markKey, _type: 'link'}],
+    children: [{_key: spanKey, _type: 'span', text: 'bar', marks: [markKey]}],
+  }
+  const expected = [{_key: wrapperKey, _type: 'callout', content: [block]}]
+  const incoming = [
+    {
+      _key: wrapperKey,
+      _type: 'callout',
+      content: [{...block, markDefs: [null as never, ...block.markDefs]}],
+    },
+  ]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    initialValue: expected,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const events: Array<EditorEmittedEvent> = []
+  editor.on('*', (event) => {
+    if (event.type !== 'operation') {
+      events.push(event)
+    }
+  })
+  editor.send({type: 'reset', value: incoming})
+  expect(editor.getSnapshot().context.value).toEqual(expected)
+  expect(events).toEqual([
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [],
+      patches: [
+        {
+          type: 'unset',
+          path: [
+            {_key: wrapperKey},
+            'content',
+            {_key: blockKey},
+            'markDefs',
+            0,
+          ],
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+  expect(
+    applyAll(
+      incoming,
+      events.flatMap((event) =>
+        event.type === 'change' && event.origin === 'local'
+          ? (event.patches ?? [])
           : [],
       ),
     ),

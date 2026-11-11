@@ -22,6 +22,7 @@ import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
 import {getChildren} from '../traversal/get-children'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {hasNode} from '../traversal/has-node'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {walkPath} from '../traversal/walk-path'
@@ -403,9 +404,19 @@ function movePropDecoratedRanges(
   decoratedRanges: Array<DecoratedRange>,
   operation: EngineOperation,
   origin: 'local' | 'remote',
-  snapshotContext: PortableTextEditorEngine['snapshot']['context'],
+  snapshot: TraversalSnapshot,
 ): Array<DecoratedRange> {
   const next: Array<DecoratedRange> = []
+  const replacementSnapshot =
+    origin === 'remote' &&
+    operation.type === 'set' &&
+    operation.path.length === 0 &&
+    Array.isArray(operation.value)
+      ? {
+          context: {...snapshot.context, value: operation.value},
+          blockIndexMap: new Map<string, number>(),
+        }
+      : undefined
 
   for (const decoratedRange of decoratedRanges) {
     const rangeDecoration = decoratedRange.rangeDecoration as RangeDecoration
@@ -420,11 +431,12 @@ function movePropDecoratedRanges(
       continue
     }
 
-    const newRange = transformRange(
-      currentSelection,
-      operation,
-      snapshotContext,
-    )
+    const newRange =
+      replacementSnapshot &&
+      (!hasNode(replacementSnapshot, currentSelection.anchor.path) ||
+        !hasNode(replacementSnapshot, currentSelection.focus.path))
+        ? null
+        : transformRange(currentSelection, operation, snapshot.context)
 
     if (
       (newRange && newRange !== currentSelection) ||
@@ -506,16 +518,27 @@ function moveRegisteredDecoratedRanges(
 } {
   const next: Array<DecoratedRange> = []
   const mappings: Array<DecorationMapping> = []
+  const replacementSnapshot =
+    origin === 'remote' &&
+    operation.type === 'set' &&
+    operation.path.length === 0 &&
+    Array.isArray(operation.value)
+      ? {
+          context: {...editorEngine.snapshot.context, value: operation.value},
+          blockIndexMap: new Map<string, number>(),
+        }
+      : undefined
 
   for (const decoratedRange of decoratedRanges) {
     const liveRangeDecoration = decoratedRange.rangeDecoration as Decoration
     const currentRange = liveRangeDecoration.range
 
-    const newRange = transformRange(
-      currentRange,
-      operation,
-      editorEngine.snapshot.context,
-    )
+    const newRange =
+      replacementSnapshot &&
+      (!hasNode(replacementSnapshot, currentRange.anchor.path) ||
+        !hasNode(replacementSnapshot, currentRange.focus.path))
+        ? null
+        : transformRange(currentRange, operation, editorEngine.snapshot.context)
 
     const killedByCollapse =
       newRange !== null &&
@@ -838,7 +861,7 @@ export const rangeDecorationsMachine = setup({
             source.decoratedRanges,
             event.operation,
             event.origin,
-            context.editorEngine.snapshot.context,
+            context.editorEngine.snapshot,
           )
         }
       }

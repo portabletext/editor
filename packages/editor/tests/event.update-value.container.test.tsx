@@ -5,6 +5,14 @@ import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  objectFieldDepth,
+  textBlock,
+} from '../test-utils/load-depths'
 
 const schemaDefinition = defineSchema({
   blockObjects: [
@@ -1114,4 +1122,463 @@ describe('event.update value with containers', () => {
       )
     })
   })
+})
+
+test('Scenario: reset abandons a parked update at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[0]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  vi.useFakeTimers()
+  try {
+    editor.send({type: 'insert.text', text: 'x'})
+    editor.send({
+      type: 'update value',
+      value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+        .value,
+    })
+    const next = depth.wrap(
+      [textBlock(blockKey, spanKey, 'baz')],
+      wrapperKey,
+    ).value
+    editor.send({type: 'reset', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+      },
+    ])
+    vi.advanceTimersByTime(2000)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+      },
+    ])
+    editor.send({type: 'update value', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+      },
+    ])
+  } finally {
+    vi.useRealTimers()
+  }
+})
+test('Scenario: reset abandons a parked update at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[1]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  vi.useFakeTimers()
+  try {
+    editor.send({type: 'insert.text', text: 'x'})
+    editor.send({
+      type: 'update value',
+      value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+        .value,
+    })
+    const next = depth.wrap(
+      [textBlock(blockKey, spanKey, 'baz')],
+      wrapperKey,
+    ).value
+    editor.send({type: 'reset', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: wrapperKey('callout'),
+        content: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+    vi.advanceTimersByTime(2000)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: wrapperKey('callout'),
+        content: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+    editor.send({type: 'update value', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: wrapperKey('callout'),
+        content: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+  } finally {
+    vi.useRealTimers()
+  }
+})
+test('Scenario: reset abandons a parked update at nested callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[2]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  vi.useFakeTimers()
+  try {
+    editor.send({type: 'insert.text', text: 'x'})
+    editor.send({
+      type: 'update value',
+      value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+        .value,
+    })
+    const next = depth.wrap(
+      [textBlock(blockKey, spanKey, 'baz')],
+      wrapperKey,
+    ).value
+    editor.send({type: 'reset', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: wrapperKey('outer'),
+        content: [
+          {
+            _type: 'callout',
+            _key: wrapperKey('inner'),
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    vi.advanceTimersByTime(2000)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: wrapperKey('outer'),
+        content: [
+          {
+            _type: 'callout',
+            _key: wrapperKey('inner'),
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    editor.send({type: 'update value', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: wrapperKey('outer'),
+        content: [
+          {
+            _type: 'callout',
+            _key: wrapperKey('inner'),
+            content: [
+              {
+                _type: 'block',
+                _key: blockKey,
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  } finally {
+    vi.useRealTimers()
+  }
+})
+test('Scenario: reset abandons a parked update at table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[3]!
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  vi.useFakeTimers()
+  try {
+    editor.send({type: 'insert.text', text: 'x'})
+    editor.send({
+      type: 'update value',
+      value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+        .value,
+    })
+    const next = depth.wrap(
+      [textBlock(blockKey, spanKey, 'baz')],
+      wrapperKey,
+    ).value
+    editor.send({type: 'reset', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: wrapperKey('table'),
+        rows: [
+          {
+            _type: 'row',
+            _key: wrapperKey('row'),
+            cells: [
+              {
+                _type: 'cell',
+                _key: wrapperKey('cell'),
+                content: [
+                  {
+                    _type: 'block',
+                    _key: blockKey,
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    vi.advanceTimersByTime(2000)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: wrapperKey('table'),
+        rows: [
+          {
+            _type: 'row',
+            _key: wrapperKey('row'),
+            cells: [
+              {
+                _type: 'cell',
+                _key: wrapperKey('cell'),
+                content: [
+                  {
+                    _type: 'block',
+                    _key: blockKey,
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    editor.send({type: 'update value', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: wrapperKey('table'),
+        rows: [
+          {
+            _type: 'row',
+            _key: wrapperKey('row'),
+            cells: [
+              {
+                _type: 'cell',
+                _key: wrapperKey('cell'),
+                content: [
+                  {
+                    _type: 'block',
+                    _key: blockKey,
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: spanKey, text: 'baz', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  } finally {
+    vi.useRealTimers()
+  }
+})
+test('Scenario: reset abandons a parked update at object field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = objectFieldDepth
+  const initial = depth.wrap([textBlock(blockKey, spanKey, 'foo')], wrapperKey)
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 3,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  vi.useFakeTimers()
+  try {
+    editor.send({type: 'insert.text', text: 'x'})
+    editor.send({
+      type: 'update value',
+      value: depth.wrap([textBlock(blockKey, spanKey, 'bar')], wrapperKey)
+        .value,
+    })
+    const next = depth.wrap(
+      [textBlock(blockKey, spanKey, 'baz')],
+      wrapperKey,
+    ).value
+    editor.send({type: 'reset', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: wrapperKey('note'),
+        body: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+    vi.advanceTimersByTime(2000)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: wrapperKey('note'),
+        body: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+    editor.send({type: 'update value', value: next})
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: wrapperKey('note'),
+        body: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+  } finally {
+    vi.useRealTimers()
+  }
 })

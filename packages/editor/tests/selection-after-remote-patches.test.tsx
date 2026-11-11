@@ -5,13 +5,24 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
+import {createRef} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import type {Path} from '../src/engine/interfaces/path'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 import {whenTheCaretIsPutAfter} from '../test-utils/caret-placement'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  objectFieldDepth,
+  textBlock,
+} from '../test-utils/load-depths'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 describe('Feature: Selection adjustment after remote patches', () => {
@@ -838,3 +849,949 @@ function block(
     style: 'normal',
   }
 }
+
+test('Scenario: reset keeps the caret for a equal value at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[0]!
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo bar'),
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+    ],
+    wrapperKey,
+  )
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  const value = editor.getSnapshot().context.value
+  const next = structuredClone(value)
+  expect(engineRef.current!.history.undos.length).toEqual(1)
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo xbar', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: otherBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: otherSpanKey, text: 'baz', marks: []}],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+    }),
+  )
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+})
+test('Scenario: reset keeps the caret for a moved value at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[0]!
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo bar'),
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+    ],
+    wrapperKey,
+  )
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  const next = depth.wrap(
+    [
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+      textBlock(blockKey, spanKey, 'foo xbar'),
+    ],
+    wrapperKey,
+  ).value
+  expect(engineRef.current!.history.undos.length).toEqual(1)
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: otherBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: otherSpanKey, text: 'baz', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo xbar', marks: []}],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+    }),
+  )
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+})
+test('Scenario: reset keeps the caret for a equal value at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[1]!
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo bar'),
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+    ],
+    wrapperKey,
+  )
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  const value = editor.getSnapshot().context.value
+  const next = structuredClone(value)
+  expect(engineRef.current!.history.undos.length).toEqual(1)
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo xbar', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: otherBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+          ],
+        },
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+    }),
+  )
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+})
+test('Scenario: reset keeps the caret for a moved value at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[1]!
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo bar'),
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+    ],
+    wrapperKey,
+  )
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  const next = depth.wrap(
+    [
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+      textBlock(blockKey, spanKey, 'foo xbar'),
+    ],
+    wrapperKey,
+  ).value
+  expect(engineRef.current!.history.undos.length).toEqual(1)
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: otherBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foo xbar', marks: []},
+          ],
+        },
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+    }),
+  )
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+})
+test('Scenario: reset keeps the caret for a equal value at table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[3]!
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo bar'),
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+    ],
+    wrapperKey,
+  )
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  const value = editor.getSnapshot().context.value
+  const next = structuredClone(value)
+  expect(engineRef.current!.history.undos.length).toEqual(1)
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'table',
+      _key: wrapperKey('table'),
+      rows: [
+        {
+          _type: 'row',
+          _key: wrapperKey('row'),
+          cells: [
+            {
+              _type: 'cell',
+              _key: wrapperKey('cell'),
+              content: [
+                {
+                  _type: 'block',
+                  _key: blockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: spanKey, text: 'foo xbar', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: otherBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+    }),
+  )
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+})
+test('Scenario: reset keeps the caret for a moved value at table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[3]!
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo bar'),
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+    ],
+    wrapperKey,
+  )
+  const engineRef = createRef<PortableTextEditorEngine>()
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <>
+        <NodePlugin nodes={loadContainers} />
+        <InternalEditorEngineRefPlugin ref={engineRef} />
+      </>
+    ),
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({type: 'insert.text', text: 'x'})
+  const next = depth.wrap(
+    [
+      textBlock(otherBlockKey, otherSpanKey, 'baz'),
+      textBlock(blockKey, spanKey, 'foo xbar'),
+    ],
+    wrapperKey,
+  ).value
+  expect(engineRef.current!.history.undos.length).toEqual(1)
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'table',
+      _key: wrapperKey('table'),
+      rows: [
+        {
+          _type: 'row',
+          _key: wrapperKey('row'),
+          cells: [
+            {
+              _type: 'cell',
+              _key: wrapperKey('cell'),
+              content: [
+                {
+                  _type: 'block',
+                  _key: otherBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: blockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: spanKey, text: 'foo xbar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 5,
+      },
+    }),
+  )
+  expect(engineRef.current!.history).toEqual({undos: [], redos: []})
+})
+test('Scenario: reset caret insert before at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo bar')],
+    wrapperKey,
+  )
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  const next = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foXYo bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foXYo bar', marks: []}],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 4,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+        ],
+        offset: 4,
+      },
+    }),
+  )
+})
+test('Scenario: reset caret span gone at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    replacementKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[0]!
+  const initial = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo bar')],
+    wrapperKey,
+  )
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'foo bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: replacementKey, text: 'foo bar', marks: []},
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: replacementKey},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: replacementKey},
+        ],
+        offset: 0,
+      },
+    }),
+  )
+})
+test('Scenario: reset caret span gone at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    replacementKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator),
+    depth = loadDepths[1]!
+  const initial = depth.wrap(
+    [textBlock(blockKey, spanKey, 'foo bar')],
+    wrapperKey,
+  )
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await userEvent.click(locator)
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  const next = depth.wrap(
+    [textBlock(blockKey, replacementKey, 'foo bar')],
+    wrapperKey,
+  ).value
+  editor.send({type: 'reset', value: next})
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: replacementKey, text: 'foo bar', marks: []},
+          ],
+        },
+      ],
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(editor.getSnapshot().context.selection).toEqual({
+      backward: false,
+      anchor: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: replacementKey},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          ...initial.prefix,
+          {_key: blockKey},
+          'children',
+          {_key: replacementKey},
+        ],
+        offset: 0,
+      },
+    }),
+  )
+})
+
+test('Scenario: reset moves a caret to the normalized empty span at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[0]!
+  const block = textBlock(blockKey, spanKey, 'foo bar')
+  const initial = depth.wrap([block], wrapperKey)
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await expect.element(locator).toHaveTextContent('foo bar')
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([{...block, children: []}], wrapperKey).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual(
+    depth.wrap([textBlock(blockKey, 'k4', '')], wrapperKey).value,
+  )
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k4'}],
+      offset: 0,
+    },
+    focus: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k4'}],
+      offset: 0,
+    },
+    backward: false,
+  })
+})
+
+test('Scenario: reset moves a caret to the normalized empty span at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[1]!
+  const block = textBlock(blockKey, spanKey, 'foo bar')
+  const initial = depth.wrap([block], wrapperKey)
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await expect.element(locator).toHaveTextContent('foo bar')
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([{...block, children: []}], wrapperKey).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual(
+    depth.wrap([textBlock(blockKey, 'k5', '')], wrapperKey).value,
+  )
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k5'}],
+      offset: 0,
+    },
+    focus: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k5'}],
+      offset: 0,
+    },
+    backward: false,
+  })
+})
+
+test('Scenario: reset moves a caret to the normalized empty span at nested callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[2]!
+  const block = textBlock(blockKey, spanKey, 'foo bar')
+  const initial = depth.wrap([block], wrapperKey)
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await expect.element(locator).toHaveTextContent('foo bar')
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([{...block, children: []}], wrapperKey).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual(
+    depth.wrap([textBlock(blockKey, 'k6', '')], wrapperKey).value,
+  )
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k6'}],
+      offset: 0,
+    },
+    focus: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k6'}],
+      offset: 0,
+    },
+    backward: false,
+  })
+})
+
+test('Scenario: reset moves a caret to the normalized empty span at table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = loadDepths[3]!
+  const block = textBlock(blockKey, spanKey, 'foo bar')
+  const initial = depth.wrap([block], wrapperKey)
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await expect.element(locator).toHaveTextContent('foo bar')
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([{...block, children: []}], wrapperKey).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual(
+    depth.wrap([textBlock(blockKey, 'k7', '')], wrapperKey).value,
+  )
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k7'}],
+      offset: 0,
+    },
+    focus: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k7'}],
+      offset: 0,
+    },
+    backward: false,
+  })
+})
+
+test('Scenario: reset moves a caret to the normalized empty span at object field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const wrapperKey = createWrapperKeys(keyGenerator)
+  const depth = objectFieldDepth
+  const block = textBlock(blockKey, spanKey, 'foo bar')
+  const initial = depth.wrap([block], wrapperKey)
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: <NodePlugin nodes={loadContainers} />,
+  })
+  await expect.element(locator).toHaveTextContent('foo bar')
+  const point = {
+    path: [...initial.prefix, {_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 4,
+  }
+  editor.send({type: 'select', at: {anchor: point, focus: point}})
+  editor.send({
+    type: 'reset',
+    value: depth.wrap([{...block, children: []}], wrapperKey).value,
+  })
+  expect(editor.getSnapshot().context.value).toEqual(
+    depth.wrap([textBlock(blockKey, 'k5', '')], wrapperKey).value,
+  )
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k5'}],
+      offset: 0,
+    },
+    focus: {
+      path: [...initial.prefix, {_key: blockKey}, 'children', {_key: 'k5'}],
+      offset: 0,
+    },
+    backward: false,
+  })
+})

@@ -21,6 +21,14 @@ import {
   defineTextBlock,
 } from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextBlock} from '../src/traversal/get-text-block'
+import {
+  createWrapperKeys,
+  loadContainers,
+  loadDepths,
+  loadSchemaDefinition,
+  textBlock,
+} from '../test-utils/load-depths'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
 /**
@@ -588,4 +596,145 @@ describe('Registered nodes: typing render counts', () => {
         `median commit: ${registered.medianCommitDuration.toFixed(3)}ms across ${registered.commitCount} commits`,
     )
   }, 120_000)
+})
+
+test('Scenario: reset reuses the shared text block drawing at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const depth = loadDepths[0]!,
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo'),
+      textBlock(otherBlockKey, otherSpanKey, 'bar'),
+    ],
+    wrapperKey,
+  )
+  const renders: Array<string> = []
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <NodePlugin
+        nodes={[
+          ...loadContainers,
+          defineTextBlock({
+            type: 'block',
+            render: ({node, children}) => {
+              renders.push(node._key)
+              return <div>{children}</div>
+            },
+          }),
+        ]}
+      />
+    ),
+  })
+  const shared = getTextBlock(editor.getSnapshot(), [
+    ...initial.prefix,
+    {_key: blockKey},
+  ])!.node
+  const next = depth.wrap(
+    [shared, textBlock(otherBlockKey, otherSpanKey, 'baz')],
+    wrapperKey,
+  ).value
+  renders.length = 0
+  editor.send({type: 'reset', value: next})
+  await vi.waitFor(() =>
+    expect(locator.element().textContent).toEqual('foobaz'),
+  )
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: otherBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: otherSpanKey, text: 'baz', marks: []}],
+    },
+  ])
+  expect(renders).toEqual([otherBlockKey])
+})
+test('Scenario: reset reuses the shared text block drawing at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator(),
+    spanKey = keyGenerator(),
+    otherBlockKey = keyGenerator(),
+    otherSpanKey = keyGenerator()
+  const depth = loadDepths[1]!,
+    wrapperKey = createWrapperKeys(keyGenerator)
+  const initial = depth.wrap(
+    [
+      textBlock(blockKey, spanKey, 'foo'),
+      textBlock(otherBlockKey, otherSpanKey, 'bar'),
+    ],
+    wrapperKey,
+  )
+  const renders: Array<string> = []
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: loadSchemaDefinition,
+    initialValue: initial.value,
+    children: (
+      <NodePlugin
+        nodes={[
+          ...loadContainers,
+          defineTextBlock({
+            type: 'block',
+            render: ({node, children}) => {
+              renders.push(node._key)
+              return <div>{children}</div>
+            },
+          }),
+        ]}
+      />
+    ),
+  })
+  const shared = getTextBlock(editor.getSnapshot(), [
+    ...initial.prefix,
+    {_key: blockKey},
+  ])!.node
+  const next = depth.wrap(
+    [shared, textBlock(otherBlockKey, otherSpanKey, 'baz')],
+    wrapperKey,
+  ).value
+  renders.length = 0
+  editor.send({type: 'reset', value: next})
+  await vi.waitFor(() =>
+    expect(locator.element().textContent).toEqual('foobaz'),
+  )
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'callout',
+      _key: wrapperKey('callout'),
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: otherBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: otherSpanKey, text: 'baz', marks: []},
+          ],
+        },
+      ],
+    },
+  ])
+  expect(renders).toEqual([otherBlockKey])
 })

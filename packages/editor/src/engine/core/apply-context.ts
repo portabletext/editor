@@ -12,7 +12,7 @@ import type {OperationOrigin} from './operation-channel'
 export type ApplyContextFrame =
   | {
       kind: 'remote'
-      source: 'patches' | 'update-value' | 'initial-sync' | 'load'
+      source: 'patches' | 'update-value' | 'initial-sync' | 'load' | 'reset'
     }
   | {kind: 'undo'}
   | {kind: 'redo'}
