@@ -334,6 +334,11 @@ export const editorMachine = setup({
         enqueue.emit(event)
       }
     }),
+    'set status ready': ({context}) => {
+      if (context.editorEngine) {
+        context.editorEngine.snapshot.status = 'ready'
+      }
+    },
     'emit ready': emit({type: 'ready'}),
     'clear pending events': assign({
       pendingEvents: [],
@@ -752,6 +757,7 @@ export const editorMachine = setup({
             () => {
               debug.state('exit: setup->setting up')
             },
+            'set status ready',
             'emit ready',
             'emit pending incoming patches',
             'clear pending incoming patches',

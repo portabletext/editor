@@ -169,6 +169,7 @@ function createBareEditor(
       value,
     },
     decoratorState: {},
+    status: 'ready',
   } as Editor['snapshot']
 
   return editor
