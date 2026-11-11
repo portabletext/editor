@@ -1142,21 +1142,16 @@ describe('the job summary', () => {
       mkdtempSync(join(tmpdir(), 'thumbjar-summary-')),
       'summary.md',
     )
-    vi.stubEnv('GITHUB_STEP_SUMMARY', summaryFile)
-    let result: Awaited<ReturnType<typeof runSuite>>
-    try {
-      result = await runSuite({
-        root,
-        file: 'src/fixtures/suites/every-outcome.ts',
-        setupFiles: [
-          'src/fixtures/suites/gboard-device.ts',
-          'src/vitest/setup.ts',
-        ],
-        testTimeout: 15_000,
-      })
-    } finally {
-      vi.unstubAllEnvs()
-    }
+    const result = await runSuite({
+      root,
+      file: 'src/fixtures/suites/every-outcome.ts',
+      setupFiles: [
+        'src/fixtures/suites/gboard-device.ts',
+        'src/vitest/setup.ts',
+      ],
+      testTimeout: 15_000,
+      provide: {thumbjarSummaryFile: summaryFile},
+    })
 
     expect({result, summary: readFileSync(summaryFile, 'utf8')}).toEqual({
       result: {
@@ -1218,21 +1213,16 @@ describe('the job summary', () => {
       mkdtempSync(join(tmpdir(), 'thumbjar-summary-')),
       'summary.md',
     )
-    vi.stubEnv('GITHUB_STEP_SUMMARY', summaryFile)
-    let result: Awaited<ReturnType<typeof runSuite>>
-    try {
-      result = await runSuite({
-        root,
-        file: 'src/fixtures/suites/nested-outcomes.ts',
-        setupFiles: [
-          'src/fixtures/suites/gboard-device.ts',
-          'src/vitest/setup.ts',
-        ],
-        testTimeout: 15_000,
-      })
-    } finally {
-      vi.unstubAllEnvs()
-    }
+    const result = await runSuite({
+      root,
+      file: 'src/fixtures/suites/nested-outcomes.ts',
+      setupFiles: [
+        'src/fixtures/suites/gboard-device.ts',
+        'src/vitest/setup.ts',
+      ],
+      testTimeout: 15_000,
+      provide: {thumbjarSummaryFile: summaryFile},
+    })
 
     expect({result, summary: readFileSync(summaryFile, 'utf8')}).toEqual({
       result: {

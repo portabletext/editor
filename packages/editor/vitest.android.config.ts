@@ -26,6 +26,7 @@ export default defineConfig({
         include: ['tests/*.test.ts'],
         outDir: fileURLToPath(new URL('android/out', import.meta.url)),
         pageUrl: 'http://localhost:8765/editor.html',
+        summaryFile: process.env.GITHUB_STEP_SUMMARY,
         pageHint:
           'Build it with `pnpm --filter @portabletext/editor build:android` and serve it with `android/run-on-device.sh`, see `android/README.md`.',
       }),
