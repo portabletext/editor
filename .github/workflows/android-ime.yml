@@ -64,25 +64,25 @@ jobs:
               lang: ja,
               file: tests/ja.test.ts,
               run_minutes: 62,
-              job_minutes: 198,
+              job_minutes: 200,
             }
           - {
               lang: en,
               file: tests/en.test.ts,
               run_minutes: 57,
-              job_minutes: 188,
+              job_minutes: 190,
             }
           - {
               lang: ja,
               file: tests/ja.enter.test.ts,
               run_minutes: 51,
-              job_minutes: 176,
+              job_minutes: 178,
             }
           - {
               lang: en,
               file: tests/en.enter.test.ts,
               run_minutes: 46,
-              job_minutes: 166,
+              job_minutes: 168,
             }
         api: [36]
 
@@ -242,6 +242,17 @@ jobs:
         working-directory: packages/editor
         run: mkdir -p android/out && echo "EMULATOR_START at $(date +%s)" | tee android/out/timing.txt
 
+      # The emulator process sometimes vanishes at a Chrome force-stop with nothing on the record. This samples
+      # host memory and the emulator's process until the capture step, so the next loss says when and why.
+      - name: Start the host sampler
+        if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
+        timeout-minutes: 1
+        working-directory: packages/editor
+        run: |
+          setsid nohup bash android/scripts/host-sampler.sh android/out/host.log > /dev/null 2>&1 < /dev/null &
+          sleep 1
+          echo started
+
       # Boot, device prep and the tests, see the budget in `packages/editor/android/README.md`.
       - name: Run on emulator
         id: run1
@@ -305,6 +316,16 @@ jobs:
         run: |
           node android/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt
           cat android/out/phases.log || true
+
+      # Stops the sampler and reads the kernel log, disk, memory and the emulator's crash data while the host
+      # still holds them, then names each emulator exit the sampler saw in the job summary.
+      - name: Capture host evidence
+        if: always()
+        timeout-minutes: 1
+        working-directory: packages/editor
+        run: |
+          bash android/scripts/host-capture.sh android/out
+          node android/scripts/emulator-runs.mjs host-evidence android/out || true
 
       # The run steps continue on error so the retry can follow. This step
       # turns the job red when the last run failed, and names a failure of the

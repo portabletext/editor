@@ -169,6 +169,58 @@ export function bootSeconds(timing) {
 }
 
 /**
+ * What the host sampler and the kernel log say about the emulator process exiting, one line for each exit
+ * the sampler saw. An exit within 120 seconds after a `DONE` line in `timing.txt` is the teardown's own kill.
+ *
+ * @param {string} hostLog
+ * @param {string} dmesg
+ * @param {string} timing
+ * @returns {string[]}
+ */
+export function hostEvidence(hostLog, dmesg, timing) {
+  if (hostLog.trim() === '') {
+    return ['host evidence: no host sampler log']
+  }
+  const exits = [...hostLog.matchAll(/^QEMU_GONE pid=(\d+) at (\d+)$/gm)]
+  if (exits.length === 0) {
+    return ['host evidence: the host sampler saw no emulator process exit']
+  }
+  const runs = splitRuns(timing).map((run) => ({
+    start: Number(/^EMULATOR_START at (\d+)$/m.exec(run)?.[1] ?? Number.NaN),
+    done: [...run.matchAll(/^DONE at (\d+)$/gm)].map((match) =>
+      Number(match[1]),
+    ),
+  }))
+  return exits.map(([, pid, epoch]) => {
+    const exitedAt = Number(epoch)
+    // A run's own DONE is the only one its emulator's exit can follow. Only a log with no start lines counts every
+    // DONE, and when start lines exist but none is at or before the exit, no run had started and the exit is mid-run.
+    const started = runs.filter((run) => run.start <= exitedAt)
+    const candidates = runs.every((run) => Number.isNaN(run.start))
+      ? runs
+      : started.slice(-1)
+    const doneEpochs = candidates.flatMap((run) => run.done)
+    const clock = new Date(exitedAt * 1000).toISOString().slice(11, 19)
+    const where = doneEpochs.some(
+      (done) => exitedAt - done >= 0 && exitedAt - done <= 120,
+    )
+      ? 'at teardown'
+      : 'mid-run'
+    let verdict = ''
+    if (dmesg.includes(`Out of memory: Killed process ${pid} (qemu-system`)) {
+      verdict = ', host OOM'
+    } else if (
+      new RegExp(
+        `qemu-system[^\\n]*\\[${pid}\\][^\\n]*(segfault|trap)|traps: qemu-system[^\\n]*\\[${pid}\\]`,
+      ).test(dmesg)
+    ) {
+      verdict = ', emulator crashed'
+    }
+    return `host evidence: emulator process ${pid} exited at ${clock} UTC, ${where}${verdict}`
+  })
+}
+
+/**
  * Paths the install retry clears: those created by the first install attempt, and the packages restored
  * from the cache, which a failed attempt may have left broken or half replaced.
  *
@@ -586,6 +638,18 @@ if (!isMain()) {
   }
   report(result.line)
   process.exitCode = result.passed ? 0 : 1
+} else if (command === 'host-evidence' && file !== undefined) {
+  try {
+    for (const line of hostEvidence(
+      readOrEmpty(join(file, 'host.log')),
+      readOrEmpty(join(file, 'host-dmesg.txt')),
+      readOrEmpty(join(file, 'timing.txt')),
+    )) {
+      report(line)
+    }
+  } catch {
+    // Evidence never fails the job.
+  }
 } else {
   console.error(
     'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
@@ -809,6 +873,18 @@ function readTail(path) {
     return buffer.toString('utf8', 0, read)
   } finally {
     closeSync(descriptor)
+  }
+}
+
+/**
+ * @param {string} path
+ * @returns {string}
+ */
+function readOrEmpty(path) {
+  try {
+    return readFileSync(path, 'utf8')
+  } catch {
+    return ''
   }
 }
 

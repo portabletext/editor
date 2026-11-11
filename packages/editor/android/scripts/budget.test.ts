@@ -333,7 +333,7 @@ describe('the workflow', () => {
     }).toEqual({worst: 165, headroom: 15, minutes: 3, step: 3})
   })
 
-  test('caps the run steps of the files of three tests at 62 minutes and the job at 198 for Japanese and at 57 and 188 for English, and those of the files of two tests at 51 and 176 and at 46 and 166', () => {
+  test('caps the run steps of the files of three tests at 62 minutes and the job at 200 for Japanese and at 57 and 190 for English, and those of the files of two tests at 51 and 178 and at 46 and 168', () => {
     expect(
       rows.map(({lang, runMinutes, jobMinutes}) => ({
         lang,
@@ -341,10 +341,10 @@ describe('the workflow', () => {
         jobMinutes,
       })),
     ).toEqual([
-      {lang: 'ja', runMinutes: 62, jobMinutes: 198},
-      {lang: 'en', runMinutes: 57, jobMinutes: 188},
-      {lang: 'ja', runMinutes: 51, jobMinutes: 176},
-      {lang: 'en', runMinutes: 46, jobMinutes: 166},
+      {lang: 'ja', runMinutes: 62, jobMinutes: 200},
+      {lang: 'en', runMinutes: 57, jobMinutes: 190},
+      {lang: 'ja', runMinutes: 51, jobMinutes: 178},
+      {lang: 'en', runMinutes: 46, jobMinutes: 168},
     ])
   })
 })
