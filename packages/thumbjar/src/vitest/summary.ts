@@ -1,5 +1,5 @@
 // A device test file's lines in the job summary, which the setup file `deviceProject` adds writes to
-// `GITHUB_STEP_SUMMARY` after the file's tests.
+// its `summaryFile` after the file's tests.
 
 import type {DriverRun} from '../driver.ts'
 

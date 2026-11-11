@@ -1,5 +1,5 @@
 import {appendFileSync} from 'node:fs'
-import {afterAll, type RunnerTask, type RunnerTestCase} from 'vitest'
+import {afterAll, inject, type RunnerTask, type RunnerTestCase} from 'vitest'
 import {unstoppedProcesses} from '../device/adb.ts'
 import {driverRuns, lastDriverRun} from '../driver.ts'
 import {summaryLines, tapsBlock, testOutcome} from './summary.ts'
@@ -13,7 +13,7 @@ afterAll(({}, file) => {
       console.error(tapsBlock(test.name, taps))
     }
   }
-  const summaryFile = process.env.GITHUB_STEP_SUMMARY
+  const summaryFile = inject('thumbjarSummaryFile')
   if (summaryFile) {
     appendFileSync(
       summaryFile,

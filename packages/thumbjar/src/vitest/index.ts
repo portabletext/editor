@@ -12,6 +12,7 @@ declare module 'vitest' {
   export interface ProvidedContext {
     thumbjarPageUrl: string
     thumbjarPageHint: string
+    thumbjarSummaryFile?: string | undefined
   }
 }
 
@@ -30,6 +31,8 @@ export type DeviceProjectOptions = {
   pageHint: string
   /** Where `typeOnDevice` writes its artifacts, relative to the working directory. `out` unless given. */
   outDir?: string
+  /** A file the setup file appends each test file's outcome counts to, such as GitHub's job summary. None is written unless given. */
+  summaryFile?: string | undefined
   /** More setup files, run after thumbjar's own. */
   setupFiles?: string[]
 }
@@ -42,7 +45,7 @@ export type DeviceProjectOptions = {
  * Global setup fails the run before any test when `adb` has no device or `pageUrl` does not answer.
  * A setup file fails a test file in which an adb process outlived SIGKILL or the page threw while the
  * driver typed, or whose `test.fails` test ended inconclusive, with the device offline, on a driver fault or
- * never completed. With `GITHUB_STEP_SUMMARY` set, it appends the file's outcome counts to it.
+ * never completed. With `summaryFile` given, it appends the file's outcome counts to it.
  *
  * @example
  * ```ts
@@ -68,6 +71,7 @@ export function deviceProject({
   pageUrl,
   pageHint,
   outDir = 'out',
+  summaryFile,
   setupFiles = [],
 }: DeviceProjectOptions): TestProjectInlineConfiguration {
   return {
@@ -82,7 +86,11 @@ export function deviceProject({
         fileURLToPath(import.meta.resolve('thumbjar/vitest/setup')),
         ...setupFiles,
       ],
-      provide: {thumbjarPageUrl: pageUrl, thumbjarPageHint: pageHint},
+      provide: {
+        thumbjarPageUrl: pageUrl,
+        thumbjarPageHint: pageHint,
+        thumbjarSummaryFile: summaryFile,
+      },
       env: {THUMBJAR_OUT_DIR: outDir},
       fileParallelism: false,
       // The driver retries its own faults once. A failed assertion is a result of the page and never reruns.
