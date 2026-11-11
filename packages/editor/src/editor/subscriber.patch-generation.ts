@@ -78,7 +78,15 @@ function addFieldLifecyclePatchesToEngine(
         afterSnapshot: editor.snapshot,
       }),
     },
-    {schema, initialValue},
+    {
+      schema,
+      initialValue,
+      isInitialSync:
+        editor.change?.cause.type === 'value sync' &&
+        event.context.some(
+          (frame) => frame.kind === 'remote' && frame.source === 'initial-sync',
+        ),
+    },
   )
 
   editor.lastSyncedValue = state.lastSyncedValue

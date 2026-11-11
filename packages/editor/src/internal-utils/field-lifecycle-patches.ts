@@ -19,10 +19,15 @@ export function addFieldLifecyclePatches(
     patches: Array<Patch>
   },
   context: {
+    isInitialSync?: boolean
     schema: EditorSchema
     initialValue: Array<PortableTextBlock> | undefined
   },
 ): {patches: Array<Patch>; state: FieldLifecycleState} {
+  if (context.isInitialSync) {
+    return {patches: edit.patches, state}
+  }
+
   const {operation, beforeValue, afterValue} = edit
   const {schema, initialValue} = context
   let lastSyncedValue = state.lastSyncedValue

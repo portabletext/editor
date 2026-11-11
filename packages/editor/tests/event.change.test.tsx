@@ -26,6 +26,7 @@ import {useEngineStatic} from '../src/engine/react/hooks/use-engine-static'
 import {safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -824,6 +825,171 @@ describe('event.change', () => {
             ],
             type: 'set',
             value: 'k3',
+          },
+        ],
+        type: 'change',
+      },
+    ])
+  })
+
+  test('Scenario: A first load with an empty keyless child emits only the repair patches', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const changes: Array<ChangeEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+    await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          ...block(blockKey, '', ''),
+          children: [{_type: 'span', text: '', marks: []}],
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            events.push(event)
+            if (event.type === 'change') {
+              changes.push(event)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(events.some((event) => event.type === 'ready')).toBe(true)
+    })
+
+    expect(changes).toEqual([
+      {
+        correction: true,
+        operations: [
+          {
+            inverse: {
+              path: [
+                {
+                  _key: 'k0',
+                },
+                'children',
+                0,
+                '_key',
+              ],
+              type: 'unset',
+            },
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              0,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k3',
+          },
+        ],
+        origin: 'local',
+        patches: [
+          {
+            origin: 'local',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              0,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k3',
+          },
+        ],
+        type: 'change',
+      },
+    ])
+  })
+
+  test('Scenario: A registered container with an empty keyless child emits only the repair patches', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const changes: Array<ChangeEvent> = []
+    const events: Array<EditorEmittedEvent> = []
+    await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchemaDefinition,
+      initialValue: [
+        callout(calloutKey, [
+          {
+            ...block(blockKey, '', ''),
+            children: [{_type: 'span', text: '', marks: []}],
+          },
+        ]),
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              events.push(event)
+              if (event.type === 'change') {
+                changes.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(events.some((event) => event.type === 'ready')).toBe(true)
+    })
+
+    expect(changes).toEqual([
+      {
+        correction: true,
+        operations: [
+          {
+            inverse: {
+              path: [
+                {_key: 'k1'},
+                'content',
+                {_key: 'k0'},
+                'children',
+                0,
+                '_key',
+              ],
+              type: 'unset',
+            },
+            path: [
+              {_key: 'k1'},
+              'content',
+              {_key: 'k0'},
+              'children',
+              0,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k4',
+          },
+        ],
+        origin: 'local',
+        patches: [
+          {
+            origin: 'local',
+            path: [
+              {_key: 'k1'},
+              'content',
+              {_key: 'k0'},
+              'children',
+              0,
+              '_key',
+            ],
+            type: 'set',
+            value: 'k4',
           },
         ],
         type: 'change',
