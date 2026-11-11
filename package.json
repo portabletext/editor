@@ -21,7 +21,7 @@
     "check:format": "oxfmt --check . && prettier --check \"**/*.{astro,feature}\"",
     "check:knip": "NODE_OPTIONS=\"$NODE_OPTIONS --conditions=source\" knip",
     "check:lint": "oxlint",
-    "check:types": "turbo check:types",
+    "check:types": "turbo check:types && tsc --project .github/scripts/tsconfig.json",
     "check:types:watch": "turbo check:types:watch",
     "clean": "turbo clean && del .turbo && del node_modules",
     "dev": "turbo dev",
@@ -43,7 +43,7 @@
     "test:browser:chromium": "turbo test:browser:chromium",
     "test:browser:firefox": "turbo test:browser:firefox",
     "test:browser:webkit": "turbo test:browser:webkit",
-    "test:unit": "turbo test:unit && node --test .changeset/annotate-lockstep-releases.test.mjs",
+    "test:unit": "turbo test:unit && node --test .changeset/annotate-lockstep-releases.test.mjs && vitest run",
     "test:unit:watch": "turbo test:unit:watch",
     "test:watch": "turbo test:watch"
   },
@@ -53,6 +53,7 @@
     "@playwright/test": "^1.62.1",
     "@rexxars/bundle-stats": "catalog:",
     "@sanity/prettier-config": "^3.0.0",
+    "@types/node": "catalog:tooling",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/react-is": "^19.2.0",
@@ -66,7 +67,9 @@
     "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-gherkin": "^3.1.4",
-    "turbo": "^2.6.3"
+    "turbo": "^2.6.3",
+    "typescript": "catalog:tooling",
+    "vitest": "catalog:tooling"
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern",
