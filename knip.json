@@ -69,6 +69,7 @@
         "src/vitest/global-setup.ts!",
         "src/vitest/setup.ts!",
         "src/bin.ts!",
+        "src/guard.ts!",
         "src/prepare/*.ts!",
         "src/run/*.ts!",
         "package.config.ts!",
