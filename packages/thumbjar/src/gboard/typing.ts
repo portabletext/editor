@@ -674,11 +674,11 @@ async function runStep(
 /**
  * Throw a driver fault for a digit in `text` that `inputs` does not hold.
  *
- * The one place the driver reads the page's text to classify a fault. The symbol check classifies
- * from the tap's `beforeinput` instead. A digit neither the prefix nor the letters hold can only
- * come from a tap that landed as a long press on a key's number hint. An editor that produced one
- * every time would fault twice and fail the test, so a retry can only hide an editor that produces
- * it intermittently.
+ * The one place the driver reads the page's text to classify a fault. The symbol check classifies from
+ * the tap's `beforeinput` instead. A digit neither the prefix nor
+ * the letters hold can only come from a tap that landed as a long press on a key's number hint. An
+ * editor that produced one every time would fault twice and fail the test, so a retry can only hide an
+ * editor that produces it intermittently.
  */
 function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
   const digit = unexpectedDigit(text, inputs)
@@ -692,6 +692,7 @@ function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
 /**
  * Classify recorded popup characters only when every tap has one ordered
  * `insertText` beforeinput matching its character or a recorded popup.
+ * A step whose taps include a letter is never classified as a symbol mistap.
  */
 function throwOnSymbolMistap(
   record: StepRecord,

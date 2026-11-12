@@ -1369,6 +1369,14 @@ test('classified mistaps under runOnDevice', async () => {
         name: 'Scenario: a timeout during a mistap restart keeps its reason',
         state: 'passed',
       },
+      {
+        name: 'Scenario: a Dash mistap restart with an offline force-stop ends device offline',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: a Dash mistap restart whose old Chrome never stops ends inconclusive',
+        state: 'passed',
+      },
     ],
   })
 }, 30_000)
