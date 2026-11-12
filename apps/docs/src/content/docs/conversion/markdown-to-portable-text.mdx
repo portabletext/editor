@@ -5,7 +5,7 @@ description: Convert Markdown strings into Portable Text blocks using @portablet
 
 import {PackageManagers} from 'starlight-package-managers'
 
-{/* The schema, matcher, and supported-features tables mirror packages/markdown/README.md. Keep the twins in sync: a claim corrected in one place is stale in the other. The Round-trip behavior section is a summary; [Markdown round-tripping](/conversion/markdown-round-tripping/) is canonical. */}
+{/* The schema, matcher, and supported-features tables mirror https://github.com/portabletext/markdown#readme. Keep the twins in sync: a claim corrected in one place is stale in the other. The Round-trip behavior section is a summary; [Markdown round-tripping](/conversion/markdown-round-tripping/) is canonical. */}
 
 :::note[Prerequisites]
 This guide covers `@portabletext/markdown` **v1.x** ([changelog](https://github.com/portabletext/editor/releases)). No framework dependencies. Works in Node.js, Deno, edge runtimes, and browsers.
@@ -48,7 +48,7 @@ The default schema includes:
 | `blockObjects`  | `code`, `image`, `horizontal-rule`, `html`, `table`, `callout` |
 | `inlineObjects` | `image`                                                        |
 
-To use a custom schema, build one with `compileSchema` and `defineSchema` from `@portabletext/schema` and pass it as the `schema` option; a Sanity schema converts first through `@portabletext/sanity-bridge`. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#schema-configuration) has the configuration recipes for both.
+To use a custom schema, build one with `compileSchema` and `defineSchema` from `@portabletext/schema` and pass it as the `schema` option; a Sanity schema converts first through `@portabletext/sanity-bridge`. The [package README](https://github.com/portabletext/markdown#schema-configuration) has the configuration recipes for both.
 
 ## Matchers
 
@@ -72,7 +72,7 @@ Matchers control how Markdown elements map to schema types. The library includes
 |            | `html`           | HTML blocks           | `'html'`            |
 |            | `callout`        | `> [!NOTE]`, etc.     | `'callout'`         |
 
-Override a matcher when your schema uses a different name for a type (say, `'heading 1'` instead of `'h1'`): pass your own function under the matcher's group and name, resolve the type against `context.schema`, and return its name, or `undefined` to skip the element. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#configuring-matchers) has worked matcher recipes, including the structural `table`, `list`, and `blockquote` shapes.
+Override a matcher when your schema uses a different name for a type (say, `'heading 1'` instead of `'h1'`): pass your own function under the matcher's group and name, resolve the type against `context.schema`, and return its name, or `undefined` to skip the element. The [package README](https://github.com/portabletext/markdown#configuring-matchers) has worked matcher recipes, including the structural `table`, `list`, and `blockquote` shapes.
 
 ## Supported features
 
@@ -103,7 +103,7 @@ This package uses markdown-it as its Markdown parser. Remark and unified plugins
 
 ## Reporting degradation
 
-A construct the schema can't represent (an undeclared decorator, a table with no `table` block object, and so on) degrades to a lossier shape by default rather than failing, silently: nothing reaches the console. `onDegradation` covers what an import pipeline or an agent that can't afford to lose content silently needs: a function is called once, after the whole document has been walked, only when at least one construct degraded, with every `Degradation` (`type`, `message`, `line` when available, `snippet` when there's source text to quote) in encounter order and a canonical grouped `message`, to observe the losses. Enforce against them by throwing your own error from inside that callback instead of returning lossy Portable Text; the throw propagates out of `markdownToPortableText`. The [package README](https://github.com/portabletext/editor/tree/main/packages/markdown#reporting-degradation) has the full option shape, an enforce example, and the report object's fields.
+A construct the schema can't represent (an undeclared decorator, a table with no `table` block object, and so on) degrades to a lossier shape by default rather than failing, silently: nothing reaches the console. `onDegradation` covers what an import pipeline or an agent that can't afford to lose content silently needs: a function is called once, after the whole document has been walked, only when at least one construct degraded, with every `Degradation` (`type`, `message`, `line` when available, `snippet` when there's source text to quote) in encounter order and a canonical grouped `message`, to observe the losses. Enforce against them by throwing your own error from inside that callback instead of returning lossy Portable Text; the throw propagates out of `markdownToPortableText`. The [package README](https://github.com/portabletext/markdown#reporting-degradation) has the full option shape, an enforce example, and the report object's fields.
 
 ## Round-trip behavior
 
@@ -120,4 +120,4 @@ Converting Markdown to Portable Text and back isn't a lossless mirror: translati
 ## Further reading
 
 - [Markdown rendering guide](/rendering/markdown/) for converting PT blocks to Markdown strings
-- [`@portabletext/markdown` on GitHub](https://github.com/portabletext/editor/tree/main/packages/markdown) for full API documentation and changelog
+- [`@portabletext/markdown` on GitHub](https://github.com/portabletext/markdown) for full API documentation and changelog
