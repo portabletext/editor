@@ -1,3 +1,5 @@
+import {ChildProcess} from 'node:child_process'
+import * as childProcesses from 'node:child_process'
 import {
   chmodSync,
   mkdtempSync,
@@ -18,6 +20,10 @@ vi.mock('../device/budget.ts', async (importOriginal) => ({
   GLOBAL_SETUP_ADB_SECONDS: 0.5,
 }))
 
+vi.mock(import('node:child_process'), async (importOriginal) => ({
+  ...(await importOriginal()),
+}))
+
 let directory: string
 const leftRunning: number[] = []
 
@@ -28,6 +34,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.restoreAllMocks()
   for (const pid of leftRunning.splice(0)) {
     try {
       process.kill(pid, 'SIGKILL')
@@ -85,6 +92,16 @@ describe('the global setup', () => {
 
   test('names a missing adb', async () => {
     vi.stubEnv('PATH', directory)
+    vi.spyOn(childProcesses, 'spawn').mockImplementation(() => {
+      const child = new ChildProcess()
+      queueMicrotask(() =>
+        child.emit(
+          'error',
+          Object.assign(new Error('spawn adb ENOENT'), {code: 'ENOENT'}),
+        ),
+      )
+      return child
+    })
 
     await expect(setup()).rejects.toThrow(
       'No Android device to type on (adb is not on PATH). Boot an API 36 Play Store emulator and run `thumbjar prepare`, see the thumbjar README.',

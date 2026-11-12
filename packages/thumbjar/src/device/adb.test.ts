@@ -1,5 +1,7 @@
+import {ChildProcess} from 'node:child_process'
+import * as childProcesses from 'node:child_process'
 import {EventEmitter} from 'node:events'
-import {existsSync, mkdtempSync, readFileSync, rmSync, watch} from 'node:fs'
+import {mkdtempSync, rmSync} from 'node:fs'
 import net from 'node:net'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
@@ -11,12 +13,17 @@ import {
   deviceVerdict,
   run,
 } from './adb.ts'
+import {KILL_GRACE_SECONDS} from './budget.ts'
 import {
   GUARDED_INSPECTION,
   runAbortable,
   runInspecting,
   UNPRINTABLE_ERROR,
 } from './util.ts'
+
+vi.mock(import('node:child_process'), async (importOriginal) => ({
+  ...(await importOriginal()),
+}))
 
 let directory: string
 
@@ -27,19 +34,22 @@ beforeEach(() => {
 afterEach(() => {
   rmSync(directory, {recursive: true, force: true})
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 describe(run.name, () => {
   test('an aborted run settles only after a process that ignores SIGTERM has exited', async () => {
     const ready = join(directory, 'ready')
+    const child = controlledChild()
     const controller = new AbortController()
     const running = runAbortable(controller.signal, () =>
       run(process.execPath, ['-e', ignoreSigterm(ready)], 60),
     ).catch((error: Error) => error.message)
-    await fileAppears(ready)
-    const pid = Number(readFileSync(ready, 'utf8'))
+    await child.spawned
+    const pid = child.pid
 
     controller.abort(new Error('attempt timed out'))
+    await child.stop(running)
 
     expect({settled: await running, alive: isAlive(pid)}).toEqual({
       settled: 'attempt timed out',
@@ -49,13 +59,16 @@ describe(run.name, () => {
 
   test('a timed-out run settles only after the process has exited', async () => {
     const ready = join(directory, 'ready')
+    const child = controlledChild()
     const running = run(
       process.execPath,
       ['-e', ignoreSigterm(ready)],
       0.5,
     ).catch((error: Error) => error.message)
-    await fileAppears(ready)
-    const pid = Number(readFileSync(ready, 'utf8'))
+    await child.spawned
+    const pid = child.pid
+    await vi.advanceTimersByTimeAsync(500)
+    await child.stop(running)
 
     expect({settled: await running, alive: isAlive(pid)}).toEqual({
       settled: `${process.execPath} -e ${ignoreSigterm(ready)} timed out after 0.5s`,
@@ -126,19 +139,42 @@ function ignoreSigterm(ready: string): string {
   return `process.on('SIGTERM', () => {}); const fs = require('node:fs'); fs.writeFileSync(${JSON.stringify(`${ready}.tmp`)}, String(process.pid)); fs.renameSync(${JSON.stringify(`${ready}.tmp`)}, ${JSON.stringify(ready)}); setInterval(() => {}, 1000)`
 }
 
-function fileAppears(path: string): Promise<void> {
-  return new Promise((resolve) => {
-    const watcher = watch(directory, () => {
-      if (existsSync(path)) {
-        watcher.close()
-        resolve()
-      }
-    })
-    if (existsSync(path)) {
-      watcher.close()
-      resolve()
-    }
+function controlledChild() {
+  vi.useFakeTimers()
+  const child = new ChildProcess()
+  const spawned = Promise.withResolvers<void>()
+  const pid = 123456789
+  let alive = true
+  vi.spyOn(childProcesses, 'spawn').mockImplementation(() => {
+    spawned.resolve()
+    return child
   })
+  const kill = vi.spyOn(child, 'kill').mockReturnValue(true)
+  vi.spyOn(process, 'kill').mockImplementation((target, signal) => {
+    expect([target, signal]).toEqual([pid, 0])
+    if (alive) {
+      return true
+    }
+    throw new Error('process exited')
+  })
+  return {
+    pid,
+    spawned: spawned.promise,
+    stop: async (running: Promise<unknown>) => {
+      let settled = false
+      void running.then(() => {
+        settled = true
+      })
+      expect(kill.mock.calls).toEqual([['SIGTERM']])
+      await vi.advanceTimersByTimeAsync(KILL_GRACE_SECONDS * 1000)
+      expect({signals: kill.mock.calls, settled}).toEqual({
+        signals: [['SIGTERM'], ['SIGKILL']],
+        settled: false,
+      })
+      alive = false
+      child.emit('close', null, 'SIGKILL')
+    },
+  }
 }
 
 function isAlive(pid: number): boolean {
