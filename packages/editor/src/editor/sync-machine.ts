@@ -33,7 +33,7 @@ export const syncMachine = setup({
           withoutNormalizing(editorEngine, () => {
             pluginWithoutHistory(editorEngine, () => {
               withoutPatching(editorEngine, () => {
-                editorEngine.apply({type: 'set', path: [], value})
+                editorEngine.apply({type: 'set', path: [], value: [...value]})
               })
             })
           })
