@@ -1,4 +1,5 @@
-// Download the uiautomator2 server jar into .cache before the emulator boots, so no test pays for it.
+// Download the uiautomator2 server jar into the calling package's cache before the emulator boots, so
+// no test pays for it.
 
 import {U2_JAR_ATTEMPTS, U2_JAR_RETRY_SECONDS} from '../device/budget.ts'
 import {ensureJar} from '../device/u2-jar.ts'

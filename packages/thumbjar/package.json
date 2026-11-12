@@ -54,8 +54,11 @@
   "scripts": {
     "build": "pkg-utils build --strict --check",
     "check:types": "tsc --noEmit --pretty --project tsconfig.json && tsc --noEmit --pretty --project tsconfig.page.json",
-    "clean": "del .turbo && del .cache && del dist && del out && del node_modules",
+    "clean": "del .turbo && del dist && del out && del node_modules",
     "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "find-cache-directory": "^6.0.0"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "catalog:tooling",
