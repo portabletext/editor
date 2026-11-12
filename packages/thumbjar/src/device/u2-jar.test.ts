@@ -31,11 +31,73 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.unstubAllEnvs()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   rmSync(directory, {recursive: true, force: true})
 })
 
 describe(ensureJar.name, () => {
+  test('uses the package cache above the calling process cwd by default', async () => {
+    const packageDirectory = join(directory, 'package')
+    const cwd = join(packageDirectory, 'nested')
+    const cachedPath = join(
+      packageDirectory,
+      'node_modules',
+      '.cache',
+      'thumbjar',
+      'u2.jar',
+    )
+    mkdirSync(cwd, {recursive: true})
+    mkdirSync(join(packageDirectory, 'node_modules', '.cache', 'thumbjar'), {
+      recursive: true,
+    })
+    writeFileSync(join(packageDirectory, 'package.json'), '{}')
+    writeFileSync(cachedPath, foo.data)
+    vi.spyOn(process, 'cwd').mockReturnValue(cwd)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => {
+        throw new Error('no download expected')
+      }),
+    )
+
+    await expect(ensureJar({url, sha256: foo.sha256})).resolves.toEqual({
+      path: cachedPath,
+      downloaded: false,
+    })
+  })
+
+  test('uses `CACHE_DIR` for the default path', async () => {
+    const cacheDirectory = join(directory, 'cache')
+    const cachedPath = join(cacheDirectory, 'thumbjar', 'u2.jar')
+    mkdirSync(join(cacheDirectory, 'thumbjar'), {recursive: true})
+    writeFileSync(cachedPath, foo.data)
+    vi.stubEnv('CACHE_DIR', cacheDirectory)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => {
+        throw new Error('no download expected')
+      }),
+    )
+
+    await expect(ensureJar({url, sha256: foo.sha256})).resolves.toEqual({
+      path: cachedPath,
+      downloaded: false,
+    })
+  })
+
+  test('rejects a default path outside a package', async () => {
+    const cwd = join(directory, 'not-a-package')
+    mkdirSync(cwd)
+    vi.spyOn(process, 'cwd').mockReturnValue(cwd)
+    vi.stubEnv('CACHE_DIR', '')
+
+    await expect(ensureJar()).rejects.toThrowError(
+      `Cannot find a cache directory from cwd ${cwd}; run inside a package or set CACHE_DIR`,
+    )
+  })
+
   test('returns a jar already at its path with its pinned hash without downloading it', async () => {
     mkdirSync(join(directory, '.cache'))
     writeFileSync(path, foo.data)
