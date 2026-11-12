@@ -211,7 +211,7 @@ From the package containing the Vitest config, with a freshly booted emulator an
 pnpm exec thumbjar run tests/ja.test.ts --keyboard ja --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 ```
 
-The commands require Node 24 and `adb` on PATH on Linux or macOS. `run` resolves Vitest from the current working directory’s package and starts it with Node.
+The commands require Node 24 and `adb` on PATH. They have been run on Linux. `run` resolves Vitest from the current working directory’s package and starts it with Node.
 
 `thumbjar run <file> --keyboard ja|en --page-dir <dir> --config <config> --project <name>` serves the page directory, prepares Chrome and Gboard, runs just that file under `deviceTestFileSeconds(countDeviceTests(source))`, and records diagnostics. `--port` defaults to `8765` and `--out-dir` to `out`. Paths are relative to the current working directory; the test source is read relative to the page directory's parent, matching the device project's test root.
 
