@@ -1,9 +1,10 @@
-import {spawn} from 'node:child_process'
 import {mkdtempSync, openSync, closeSync, readFileSync, rmSync} from 'node:fs'
-import {constants, tmpdir} from 'node:os'
+import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {setTimeout as delay} from 'node:timers/promises'
 import {fileURLToPath} from 'node:url'
+import {KILL_GRACE_SECONDS} from './device/budget.ts'
+import {runChildProcess} from './process-child.ts'
+export {killGroup} from './process-child.ts'
 
 type Output = (chunk: Buffer) => void
 
@@ -28,114 +29,86 @@ export async function execute(
   const mergedFile = merged === undefined ? undefined : join(merged, 'output')
   const descriptor =
     mergedFile === undefined ? undefined : openSync(mergedFile, 'w')
-  const child = spawn(command, args, {
-    detached: options.group !== false,
-    stdio: ['ignore', descriptor ?? 'pipe', descriptor ?? 'pipe'],
-  })
-  let stdout = ''
-  let stderr = ''
-  child.stdout?.on('data', (chunk: Buffer) => {
-    if (options.collect !== false) {
-      stdout += chunk.toString()
-    }
-    options.stdout?.(chunk)
-  })
-  child.stderr?.on('data', (chunk: Buffer) => {
-    if (options.collect !== false) {
-      stderr += chunk.toString()
-    }
-    options.stderr?.(chunk)
-  })
-  let timedOut = false
-  let killed = false
-  const grace = new AbortController()
-  const deadline =
-    options.seconds === undefined
-      ? undefined
-      : AbortSignal.timeout(options.seconds * 1000)
-  const stop = () => {
-    if (timedOut) {
-      return
-    }
-    timedOut = true
-    if (options.group === false) {
-      child.kill('SIGTERM')
-    } else {
-      killGroup(child.pid, 'SIGTERM')
-    }
-    void delay(
-      Math.min(
-        options.killAfter,
-        options.signal?.reason instanceof Deadline
-          ? options.signal.reason.killAfter
-          : options.killAfter,
-      ) * 1000,
-      undefined,
-      {signal: grace.signal},
+  let removeAbort = () => {}
+  let guardedStatus: number | undefined
+  try {
+    const guarded = options.group !== false
+    const result = await runChildProcess(
+      guarded ? process.execPath : command,
+      guarded
+        ? [
+            entry('guard'),
+            JSON.stringify({
+              command,
+              args,
+              seconds: options.seconds,
+              killAfter: options.killAfter,
+            }),
+          ]
+        : args,
+      {
+        ...(guarded
+          ? {
+              detached: true,
+              ipc: true,
+              onSpawn: (child) => {
+                child.on('message', (message: {status: number}) => {
+                  guardedStatus = message.status
+                })
+                const abort = () => {
+                  if (child.connected) {
+                    child.send(
+                      {
+                        killAfter:
+                          options.signal?.reason instanceof Deadline
+                            ? options.signal.reason.killAfter
+                            : options.killAfter,
+                      },
+                      () => {},
+                    )
+                  }
+                }
+                options.signal?.addEventListener('abort', abort, {once: true})
+                removeAbort = () =>
+                  options.signal?.removeEventListener('abort', abort)
+              },
+            }
+          : {
+              ...(options.seconds === undefined
+                ? {}
+                : {seconds: options.seconds}),
+              ...(options.signal === undefined ? {} : {signal: options.signal}),
+            }),
+        killAfter: options.killAfter,
+        killWait: KILL_GRACE_SECONDS,
+        output: descriptor ?? 'pipe',
+        ...(options.collect === undefined ? {} : {collect: options.collect}),
+        ...(options.stdout === undefined ? {} : {stdout: options.stdout}),
+        ...(options.stderr === undefined ? {} : {stderr: options.stderr}),
+        release: true,
+      },
     )
-      .then(() => {
-        killed = true
-        if (options.signal?.reason instanceof Deadline) {
-          options.signal.reason.status = 137
-        }
-        options.group === false
-          ? child.kill('SIGKILL')
-          : killGroup(child.pid, 'SIGKILL')
-      })
-      .catch(() => {})
-  }
-  deadline?.addEventListener('abort', stop, {once: true})
-  options.signal?.addEventListener('abort', stop, {once: true})
-  const status = await new Promise<number>((resolve) => {
-    child.once('error', (error) => {
-      const message = `${error.message}\n`
+    let stdout = result.stdout
+    let stderr = result.stderr
+    if (result.error) {
+      const message = `${result.error.message}\n`
       stderr += message
       options.stderr?.(Buffer.from(message))
-      resolve(127)
-    })
-    child.once('close', (code, signal) =>
-      resolve(
-        killed
-          ? 137
-          : timedOut
-            ? 124
-            : (code ??
-              (signal === null ? 143 : 128 + constants.signals[signal])),
-      ),
-    )
-  })
-  if (descriptor !== undefined) {
-    closeSync(descriptor)
-  }
-  if (mergedFile !== undefined) {
-    const output = readFileSync(mergedFile)
-    stdout = output.toString()
-    options.stdout?.(output)
-    rmSync(merged!, {recursive: true, force: true})
-  }
-  if (timedOut) {
-    options.group === false
-      ? child.kill('SIGKILL')
-      : killGroup(child.pid, 'SIGKILL')
-  }
-  grace.abort()
-  deadline?.removeEventListener('abort', stop)
-  options.signal?.removeEventListener('abort', stop)
-  options.signal?.throwIfAborted()
-  return {status, stdout, stderr}
-}
-
-export function killGroup(pid: number | undefined, signal: NodeJS.Signals) {
-  if (pid === undefined) {
-    return
-  }
-  try {
-    process.kill(-pid, signal)
-  } catch (error) {
-    if (
-      !(error instanceof Error && 'code' in error && error.code === 'ESRCH')
-    ) {
-      throw error
+    }
+    if (mergedFile !== undefined) {
+      const output = readFileSync(mergedFile)
+      stdout = output.toString()
+      options.stdout?.(output)
+    }
+    options.signal?.throwIfAborted()
+    return {status: guardedStatus ?? result.status, stdout, stderr}
+  } finally {
+    removeAbort()
+    if (descriptor !== undefined) {
+      closeSync(descriptor)
+    }
+    if (merged !== undefined) {
+      rmSync(merged, {recursive: true, force: true})
     }
   }
 }
@@ -163,7 +136,7 @@ export function termination() {
 }
 
 export class Deadline extends Error {
-  status = 124
+  readonly status = 124
   readonly seconds: number
   readonly killAfter: number
   constructor(seconds: number, killAfter: number) {
@@ -183,18 +156,23 @@ export async function within<Result>(
   const deadline = AbortSignal.timeout(seconds * 1000)
   const abort = () => controller.abort(new Deadline(seconds, killAfter))
   deadline.addEventListener('abort', abort, {once: true})
+  const combined = AbortSignal.any([signal, controller.signal])
   try {
-    return await task(AbortSignal.any([signal, controller.signal]))
+    return await task(combined)
+  } catch (error) {
+    combined.throwIfAborted()
+    throw error
   } finally {
     deadline.removeEventListener('abort', abort)
   }
 }
 
 export function entry(name: string) {
+  const source = import.meta.url.endsWith('.ts')
   return fileURLToPath(
     new URL(
-      `${name}.${import.meta.url.endsWith('.ts') ? 'ts' : 'js'}`,
-      import.meta.url,
+      `${source ? 'src' : 'dist'}/${name}.${source ? 'ts' : 'js'}`,
+      import.meta.resolve('thumbjar/package.json'),
     ),
   )
 }

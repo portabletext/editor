@@ -15,6 +15,8 @@ import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {describe, expect, test, vi} from 'vitest'
 
+let readersAtReturn: number[] = []
+
 const prepareScript = fileURLToPath(new URL('prepare.ts', import.meta.url))
 const realSleep = spawnSync('bash', ['-c', 'command -v sleep'], {
   encoding: 'utf8',
@@ -84,6 +86,24 @@ test('prepares with no timeout, setsid or pnpm on PATH', async () => {
     server.kill()
   }
 }, 60_000)
+
+test('returns a prep deadline as status 1 when it interrupts the settle pause', () => {
+  const result = deadlinePrep(false)
+  expect(result).toEqual({status: 1, failure: 'PREP FAILED: prep ran past 1s'})
+}, 15_000)
+
+test('returns a prep deadline as status 1 when it interrupts the HTTP retry pause', () => {
+  expect(deadlinePrep(false, true)).toEqual({
+    status: 1,
+    failure: 'PREP FAILED: prep ran past 5s',
+    reachedHTTP: true,
+  })
+}, 15_000)
+
+test('keeps the prep deadline status when its stage needs SIGKILL', () => {
+  const result = deadlinePrep(true)
+  expect(result).toEqual({status: 1, failure: 'PREP FAILED: prep ran past 1s'})
+}, 15_000)
 
 describe('prepare.sh', () => {
   test('disables Play Store before the settle and logs one line saying the disable succeeded and Play Store is listed as disabled', () => {
@@ -458,7 +478,7 @@ describe('prepare.sh exit status', () => {
           'CAPTURE boot_id=62cd1ade-9b02-4723-ba9e-2749dda3d074 btime=1793514968',
       },
     ])
-  })
+  }, 15_000)
 })
 
 describe('prepare.sh on the retry, in the out dir of a prep whose dictionary never loaded', () => {
@@ -478,7 +498,7 @@ describe('prepare.sh on the retry, in the out dir of a prep whose dictionary nev
         failure: `PREP FAILED: ${CAPTURE_FAULT} See ja-dictionary.log for the dictionary lines it saw.`,
       },
     ])
-  })
+  }, 15_000)
 
   test('exits 1 for a wait that exited 3 without a reason of its own, whatever reason the first wait left in `ja-dictionary.log`', () => {
     expect(
@@ -501,7 +521,7 @@ describe('prepare.sh on the retry, in the out dir of a prep whose dictionary nev
           'PREP FAILED: japanese dictionary wait gave no reason, see ja-dictionary.log',
       },
     ])
-  })
+  }, 15_000)
 })
 
 describe('prepare.sh on the retry, in an out dir whose `ja-dictionary.log` ends in a line cut off before its newline', () => {
@@ -544,6 +564,7 @@ describe('prepare.sh with a boot capture reader that ignores SIGTERM', () => {
       readersStarted: true,
       readersLeft: [],
     })
+    expect(readersAtReturn).toEqual([])
   }, 30_000)
 
   test('stops the reader before it returns from a prep whose dictionary never loaded, and exits 3 for it through the deadline', async () => {
@@ -552,6 +573,7 @@ describe('prepare.sh with a boot capture reader that ignores SIGTERM', () => {
       readersStarted: true,
       readersLeft: [],
     })
+    expect(readersAtReturn).toEqual([])
   }, 30_000)
 
   test('stops the reader before it returns from a prep that ran past its deadline', async () => {
@@ -560,11 +582,20 @@ describe('prepare.sh with a boot capture reader that ignores SIGTERM', () => {
       readersStarted: true,
       readersLeft: [],
     })
+    expect(readersAtReturn).toEqual([])
   }, 30_000)
 
   test('stops the reader before it exits when the prep is terminated from outside', async () => {
     expect(await prepareWithStubbornReader({path: 'terminated'})).toEqual({
       status: 143,
+      readersStarted: true,
+      readersLeft: [],
+    })
+    expect(readersAtReturn).toEqual([])
+  }, 30_000)
+  test('ends the capture worker and its adb when prepare is SIGKILLed', async () => {
+    expect(await prepareWithStubbornReader({path: 'killed'})).toEqual({
+      status: null,
       readersStarted: true,
       readersLeft: [],
     })
@@ -736,7 +767,7 @@ exit 0
 async function prepareWithStubbornReader({
   path,
 }: {
-  path: 'passes' | 'never loads' | 'runs past' | 'terminated'
+  path: 'passes' | 'never loads' | 'runs past' | 'terminated' | 'killed'
 }) {
   const directory = mkdtempSync(join(tmpdir(), 'thumbjar-prepare-reader-'))
   const readers = join(directory, 'readers')
@@ -751,6 +782,7 @@ case "$*" in
   "logcat -v epoch -b main")
     trap '' TERM
     echo $$ >> ${readers}
+    echo $PPID >> ${join(directory, 'capture-pids')}
     while :; do ${realSleep} 0.2; done
     ;;
   "shell cat /proc/sys/kernel/random/boot_id") echo 62cd1ade-9b02-4723-ba9e-2749dda3d074 ;;
@@ -800,19 +832,37 @@ exit 0
     const exited = new Promise<number | null>((resolve) =>
       script.once('exit', (code) => resolve(code)),
     )
-    if (path === 'terminated') {
+    if (path === 'terminated' || path === 'killed') {
       await vi.waitFor(
         () => {
           expect(existsSync(waiting)).toEqual(true)
         },
         {timeout: 10_000},
       )
-      process.kill(script.pid ?? 0, 'SIGTERM')
+      process.kill(script.pid ?? 0, path === 'killed' ? 'SIGKILL' : 'SIGTERM')
     }
     const status = await exited
+    if (path !== 'killed') {
+      readersAtReturn = JSON.parse(
+        readFileSync(join(directory, 'at-return.json'), 'utf8'),
+      )
+    }
     const started = existsSync(readers)
       ? readFileSync(readers, 'utf8').trim().split('\n').map(Number)
       : []
+    if (path === 'killed') {
+      const captures = readFileSync(join(directory, 'capture-pids'), 'utf8')
+        .trim()
+        .split('\n')
+        .map(Number)
+      await vi.waitFor(
+        () =>
+          expect(
+            [...started, ...captures].filter((pid) => isAlive(pid)),
+          ).toEqual([]),
+        {timeout: 8000},
+      )
+    }
     const left = started.filter((pid) => isAlive(pid))
     for (const pid of left) {
       process.kill(pid, 'SIGKILL')
@@ -822,12 +872,26 @@ exit 0
     } catch {}
     return {status, readersStarted: started.length > 0, readersLeft: left}
   } finally {
+    for (const name of ['readers', 'capture-pids']) {
+      const path = join(directory, name)
+      if (existsSync(path)) {
+        for (const pid of readFileSync(path, 'utf8')
+          .trim()
+          .split('\n')
+          .map(Number)) {
+          try {
+            process.kill(pid, 'SIGKILL')
+          } catch {}
+        }
+      }
+    }
     rmSync(directory, {recursive: true, force: true})
   }
 }
 
 function scriptFor(path: string, directory: string): string {
-  const source = `import {prepare} from ${JSON.stringify(prepareScript)}
+  const source = `import {existsSync, readFileSync, writeFileSync} from 'node:fs'
+import {prepare} from ${JSON.stringify(prepareScript)}
 process.exitCode = await prepare({
   keyboard: process.env.THUMBJAR_KEYBOARD,
   out: process.env.THUMBJAR_OUT_DIR,
@@ -840,6 +904,8 @@ process.exitCode = await prepare({
   sleep: async () => {}, request: async () => true,
   deadline: undefined,
 })
+const readers=${JSON.stringify(join(directory, 'readers'))}
+if(existsSync(readers))writeFileSync(${JSON.stringify(join(directory, 'at-return.json'))},JSON.stringify(readFileSync(readers,'utf8').trim().split('\\n').map(Number).filter(pid=>{try{return !/^\\d+ \\(.*\\) Z /.test(readFileSync('/proc/'+pid+'/stat','utf8'))}catch{return false}})))
 `
   const shortened =
     path === 'runs past'
@@ -887,4 +953,51 @@ function playStoreAnswer(answer: 'disabled' | 'refused' | 'hung') {
     return "echo \"Exception occurred while executing 'disable-user':\" >&2; echo 'java.lang.SecurityException: Shell cannot change component state for com.android.vending/null to 3' >&2; exit 255"
   }
   return `exec ${realSleep} 60`
+}
+
+function deadlinePrep(stubborn: boolean, http = false) {
+  const directory = mkdtempSync(join(tmpdir(), 'thumbjar-deadline-'))
+  try {
+    const bin = join(directory, 'bin')
+    mkdirSync(bin)
+    writeFileSync(
+      join(bin, 'adb'),
+      `#!${process.execPath}
+${stubborn ? "process.on('SIGTERM', () => {}); setInterval(() => {}, 1000)" : ''}
+`,
+    )
+    chmodSync(join(bin, 'adb'), 0o755)
+    const bootstrap = join(directory, 'prep.mjs')
+    writeFileSync(
+      bootstrap,
+      `import {prepare,prepDeadlines} from ${JSON.stringify(prepareScript)}
+${stubborn ? 'prepDeadlines.adb.killAfter=20' : ''}
+process.exitCode = await prepare({keyboard:'en', out:${JSON.stringify(join(directory, 'out'))}, pageUrl:'http://localhost:1/', port:'', booted:0}, {deadline:${http ? 5 : 1}${http ? ',sleep:async()=>{}' : ''}})
+`,
+    )
+    const result = spawnSync(process.execPath, [bootstrap], {
+      encoding: 'utf8',
+      env: {...process.env, PATH: `${bin}:${process.env.PATH}`},
+    })
+    const phases = join(directory, 'out/phases.log')
+    return {
+      ...(http
+        ? {
+            reachedHTTP:
+              existsSync(phases) &&
+              readFileSync(phases, 'utf8').includes(' logcat\n'),
+          }
+        : {}),
+      status: result.status,
+      failure: existsSync(phases)
+        ? readFileSync(phases, 'utf8')
+            .trimEnd()
+            .split('\n')
+            .at(-1)
+            ?.replace(/^PHASE \d\d:\d\d:\d\d /, '')
+        : undefined,
+    }
+  } finally {
+    rmSync(directory, {recursive: true, force: true})
+  }
 }

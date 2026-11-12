@@ -10,39 +10,22 @@ import {
   DIAGNOSTICS_SECONDS,
   RUN_SERVER_KILL_SECONDS,
 } from '../device/budget.ts'
-import {
-  Deadline,
-  entry,
-  execute,
-  killGroup,
-  termination,
-  within,
-} from '../process.ts'
+import {Deadline, entry, execute, termination, within} from '../process.ts'
 
-export async function run(
-  options: {
-    file: string
-    keyboard: string
-    pageDir: string
-    config: string
-    project: string
-    port: string
-    out: string
-  },
-  dependencies: {
-    command?: string
-    phase?: (
-      message: string,
-      write: () => void,
-      signal: AbortSignal,
-    ) => Promise<void>
-  } = {},
-): Promise<number> {
+export async function run(options: {
+  file: string
+  keyboard: string
+  pageDir: string
+  config: string
+  project: string
+  port: string
+  out: string
+}): Promise<number> {
   const {file, keyboard, pageDir, config, project, port, out} = options
   mkdirSync(out, {recursive: true})
   const stop = termination()
   const serverStop = new AbortController()
-  const command = dependencies.command ?? entry('bin')
+  const command = entry('bin')
   const timing = (line: string, print = false) => {
     const text = `${line}\n`
     appendFileSync(join(out, 'timing.txt'), text)
@@ -50,22 +33,15 @@ export async function run(
       process.stdout.write(text)
     }
   }
-  const log = async (message: string) => {
+  const log = (message: string) => {
     stop.signal.throwIfAborted()
-    const write = () => {
-      const now = new Date()
-      const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
-        .map((value) => String(value).padStart(2, '0'))
-        .join(':')
-      const line = `PHASE ${time} ${message}\n`
-      appendFileSync(join(out, 'phases.log'), line)
-      process.stdout.write(line)
-    }
-    if (dependencies.phase) {
-      await dependencies.phase(message, write, stop.signal)
-    } else {
-      write()
-    }
+    const now = new Date()
+    const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
+      .map((value) => String(value).padStart(2, '0'))
+      .join(':')
+    const line = `PHASE ${time} ${message}\n`
+    appendFileSync(join(out, 'phases.log'), line)
+    process.stdout.write(line)
   }
   const skipped = () => timing(`CHECKED skipped at ${epoch()}`)
   const deviceCheck = async () => {
@@ -84,7 +60,6 @@ export async function run(
     )
   }
   let server: Promise<unknown> | undefined
-  let logcat: number | undefined
   try {
     const booted = epoch()
     timing(`BOOTED at ${booted}`, true)
@@ -173,7 +148,6 @@ export async function run(
       ],
       {detached: true, stdio: 'ignore'},
     )
-    logcat = capture.pid
     capture.unref()
     await log(`tests start, ${file} under ${seconds} seconds`)
     appendFileSync(join(out, 'vitest.log'), '')
@@ -181,17 +155,27 @@ export async function run(
       appendFileSync(join(out, 'vitest.log'), chunk)
       process.stdout.write(chunk)
     }
-    const tests = await execute(
-      process.execPath,
-      [vitestBin(), 'run', '--config', config, '--project', project, file],
-      {
-        seconds: Number(seconds),
-        killAfter: RUN_TEST_KILL_SECONDS,
-        signal: stop.signal,
-        stdout: testOutput,
-        stderr: testOutput,
-      },
-    )
+    let tests = {status: 1}
+    try {
+      tests = await execute(
+        process.execPath,
+        [vitestBin(), 'run', '--config', config, '--project', project, file],
+        {
+          seconds: Number(seconds),
+          killAfter: RUN_TEST_KILL_SECONDS,
+          signal: stop.signal,
+          stdout: testOutput,
+          stderr: testOutput,
+        },
+      )
+    } catch (error) {
+      stop.signal.throwIfAborted()
+      testOutput(
+        Buffer.from(
+          `Unable to start Vitest: ${error instanceof Error ? error.message : String(error)}\n`,
+        ),
+      )
+    }
     await log(`tests rc=${tests.status}`)
     if (tests.status === 0) {
       skipped()
@@ -241,13 +225,10 @@ export async function run(
     return tests.status
   } catch (error) {
     if (stop.signal.aborted) {
-      return stop.status()
+      return 1
     }
     throw error
   } finally {
-    if (stop.signal.aborted) {
-      killGroup(logcat, 'SIGKILL')
-    }
     serverStop.abort()
     await server
     stop.dispose()

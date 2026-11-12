@@ -5,6 +5,7 @@ export default defineConfig({
   // Private, so no release tags: nothing renders its API docs.
   tsdoc: false,
   bundles: [
+    {source: './src/guard.ts', import: './dist/guard.js', runtime: 'node'},
     {
       source: './src/prepare/capture.ts',
       import: './dist/prepare/capture.js',
