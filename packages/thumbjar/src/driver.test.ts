@@ -1295,3 +1295,87 @@ describe('the taps a failed test prints', () => {
     })
   }, 60_000)
 })
+
+test('classified mistaps under runOnDevice', async () => {
+  expect(
+    await runSuite({
+      root,
+      file: 'src/fixtures/suites/run-mistaps.ts',
+      setupFiles: ['src/fixtures/suites/gboard-device.ts'],
+      testTimeout: 15_000,
+    }),
+  ).toEqual({
+    file: 'passed',
+    errors: [],
+    tests: [
+      {name: 'Scenario: en retries a symbol popup', state: 'passed'},
+      {name: 'Scenario: ja retries a symbol popup', state: 'passed'},
+      {name: 'Scenario: retries a digit', state: 'passed'},
+      {name: 'Scenario: repeated _ is inconclusive', state: 'passed'},
+      {name: 'Scenario: repeated 7 is inconclusive', state: 'passed'},
+      {
+        name: 'Scenario: editor result - to _  is returned once',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: editor result - to ~  is returned once',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: editor result ~ to ~  is returned once',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: missing beforeinputs cannot classify a symbol',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: extra beforeinputs cannot classify a symbol',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: reordered beforeinputs cannot classify a symbol',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: unmatched following tap beforeinputs cannot classify a symbol',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: multiple characters beforeinputs cannot classify a symbol',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: a page exception takes precedence over a symbol mistap',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: typeOnDevice counts a digit mistap retry',
+        state: 'passed',
+      },
+    ],
+  })
+}, 30_000)
+
+test('test.fails cannot hide repeated mistaps', async () => {
+  const result = await runSuite({
+    root,
+    file: 'src/fixtures/suites/run-mistap-fails.ts',
+    setupFiles: ['src/fixtures/suites/gboard-device.ts', 'src/vitest/setup.ts'],
+    testTimeout: 15_000,
+  })
+  expect(result.file).toEqual('failed')
+  expect(result.tests).toEqual([
+    {
+      name: 'Scenario: inconclusive _ cannot be an expected failure',
+      state: 'passed',
+    },
+    {
+      name: 'Scenario: inconclusive 7 cannot be an expected failure',
+      state: 'passed',
+    },
+  ])
+  expect(result.errors).toEqual([
+    "In \"Scenario: inconclusive _ cannot be an expected failure\" the driver ended inconclusive: mistap: key 'Dash' typed '_' instead of '-'. In \"Scenario: inconclusive 7 cannot be an expected failure\" the driver ended inconclusive: mistap: digit 7 in typed text '7' that neither the prefix nor the letters hold. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.",
+  ])
+}, 30_000)

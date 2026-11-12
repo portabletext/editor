@@ -1,9 +1,9 @@
 // Type through Gboard's own keys into a page in Android Chrome and read the result back over CDP.
 //
 // A device test calls `typeOnDevice` or `runOnDevice` and asserts on what it returns. Both go through
-// `drive`, which retries only driver faults, and `runOnDevice` only the way `strictRetry` allows. The one
-// fault an attempt classifies from the typed text is a digit that neither the prefix nor the letters hold,
-// see `throwOnUnexpectedDigit`.
+// `drive`, which retries only driver faults, and `runOnDevice` only the way `strictRetry` allows.
+// Classified mistaps include unexpected digits in the typed text and recorded symbol popup characters
+// in the tapped key's own `beforeinput` event.
 
 import {mkdirSync} from 'node:fs'
 import type {TestContext} from 'vitest'
@@ -50,6 +50,7 @@ import {
   ChromeNotRestarted,
   closeChrome,
   dumpFailure,
+  MistapError,
   outDir,
   readDeviceState,
   runInChrome,
@@ -84,6 +85,8 @@ const WATCHDOG_SECONDS = ATTEMPT_SECONDS - 15
 export type DriverRun = {
   test: string
   fails: boolean
+  /** Classified mistaps for which this call began its one retry. */
+  mistapRetries?: number
   /**
    * `driving` until the driver returned a result and cleaned up, `faulted` when it ended on a driver fault,
    * after one attempt or two. A second attempt's timeout before any input stays `faulted` whatever `adb get-state`
@@ -100,7 +103,8 @@ export type DriverRun = {
    * `inconclusive`, for `runOnDevice` only, when a driver fault came after the attempt sent input, which
    * may still reach a page a retry would type into, when the restart before the retry could not show
    * a fresh Chrome, or when the test timed out while the driver decided whether to retry a first attempt's
-   * timeout before any input. The call says nothing about the page and is never retried.
+   * timeout before any input, or after a classified mistap on the second attempt. A first classified
+   * mistap is retried once. An inconclusive call says nothing about the page.
    * `device-offline`, for `runOnDevice` only, when an adb call of any step failed on adb's own error for a
    * lost device, the restart's force-stop included, which its `reason` quotes, or timed out and the `adb get-state` read for that timeout completed with an
    * answer other than `device`. It is never retried on that device.
@@ -231,9 +235,10 @@ export async function typeOnDevice(
  * A step that throws is a driver fault. After it, the page's text, selection and focus are read into the
  * step's record, on a clock of their own once the attempt stopped. A fault that came before the attempt
  * sent any input is retried once, only after the old Chrome stopped and only into a Chrome whose pid is
- * new. A fault after input, a restart that cannot show a fresh Chrome, and an adb call that means adb lost
- * the device are never retried, and the call's `driverRuns` record says `inconclusive` or
- * `device-offline` and why. When a step of the last attempt threw, the call rejects with a new `Error`
+ * new. A classified digit or symbol mistap is also retried once through that restart path, and a second
+ * mistap ends `inconclusive` with its message. Any other fault after input, a restart that cannot show a
+ * fresh Chrome, and an adb call that means adb lost the device are never retried, and the call's
+ * `driverRuns` record says `inconclusive` or `device-offline` and why. When a step of the last attempt threw, the call rejects with a new `Error`
  * whose message is the step's error message followed by a line per step of that attempt: its position,
  * type, status, reason and `textAfter`. Its `cause` is the value the step threw. Any other failure
  * rejects with its error unchanged. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
@@ -520,6 +525,9 @@ async function driveAfterPrevious<T>(
             record,
             pend,
             classify,
+            () => {
+              run.mistapRetries = (run.mistapRetries ?? 0) + 1
+            },
           )
         : await withDriverRetry({
             name,
@@ -531,9 +539,15 @@ async function driveAfterPrevious<T>(
               ),
             restart: () =>
               withDeadline('restarting Chrome', RESTART_SECONDS, closeChrome),
-            canRetry: (error) =>
-              pageException(error) === undefined &&
-              unstoppedProcesses().length === 0,
+            canRetry: (error) => {
+              const retry =
+                pageException(error) === undefined &&
+                unstoppedProcesses().length === 0
+              if (retry && isInstance(error, MistapError)) {
+                run.mistapRetries = (run.mistapRetries ?? 0) + 1
+              }
+              return retry
+            },
             describeError: inspection.describe,
           })
     } catch (error) {
@@ -576,9 +590,10 @@ type TerminalOutcome = {
 }
 
 /**
- * `runOnDevice`'s retry. A fault after the attempt sent input is `inconclusive`, and a failed adb call that
- * means adb lost the device is `device-offline`, and neither is retried. Any other fault is retried once,
- * only after the old Chrome stopped and only into a Chrome whose pid is new, and a restart or a check that
+ * `runOnDevice`'s retry. A classified mistap is retried once even after input, and a second ends
+ * `inconclusive` with its message. Any other fault after the attempt sent input is `inconclusive`, and
+ * a failed adb call that means adb lost the device is `device-offline`, and neither is retried. Any other
+ * fault is retried once, only after the old Chrome stopped and only into a Chrome whose pid is new, and a restart or a check that
  * cannot show that ends the call `inconclusive`, or `device-offline` when adb lost the device.
  *
  * The moment an attempt fails, before its failure dump, `classify` runs `terminalOutcome`, which reads the
@@ -601,6 +616,7 @@ async function strictRetry<T>(
   record: (outcome: TerminalOutcome) => void,
   pend: (outcome: TerminalOutcome | undefined) => void,
   classify: (decide: () => void) => void,
+  onMistapRetry: () => void,
 ): Promise<T> {
   let previousChrome: string[] | undefined
   const state = oneDeviceStateRead()
@@ -688,6 +704,9 @@ async function strictRetry<T>(
     }
     const fault = thrown
     pend(undefined)
+    if (isInstance(fault, MistapError)) {
+      onMistapRetry()
+    }
     phase(`RETRY ${name}: ${inspection.describe(fault)}`)
     console.warn(
       `Driver fault in ${name}, restarting Chrome and typing again: ${inspection.describe(fault)}`,
@@ -744,9 +763,9 @@ async function strictRetry<T>(
 
 /**
  * The outcome an attempt that failed with `fault` ends the call on, decided from the fault alone, with no
- * device call, or no `ended` when the call may still retry it: a fault before input on the first attempt,
- * which a timeout leaves to the state read. adb's own error for a lost device is `device-offline` here,
- * since adb itself said so. `lost` is how adb may have lost the device, read once for the whole failure.
+ * device call, or no `ended` when the call may still retry it: a classified mistap or a fault before
+ * input on the first attempt, which a timeout leaves to the state read. adb's own error for a lost
+ * device is `device-offline` here, since adb itself said so. `lost` is how adb may have lost the device, read once for the whole failure.
  */
 function terminalOutcome(
   fault: unknown,
@@ -778,6 +797,15 @@ function terminalOutcome(
       lost,
     }
   }
+  if (isInstance(fault, MistapError)) {
+    return {
+      ended:
+        number === 1 && unstoppedProcesses().length === 0
+          ? undefined
+          : {state: 'inconclusive', reason: inspection.message(fault)},
+      lost,
+    }
+  }
   if (hooks.inputSent) {
     return {ended: afterInput(), lost}
   }
@@ -797,6 +825,7 @@ function pageExceptionOutcome(
   }
 }
 
+/** An unclassified fault after input cannot safely be retried. */
 function afterInput(): TerminalOutcome {
   return {
     state: 'inconclusive',
