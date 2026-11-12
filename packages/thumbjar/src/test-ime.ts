@@ -2,7 +2,12 @@
 import {expect, vi} from 'vitest'
 import {adb, shellQuote} from './device/adb.ts'
 import {cdpEval, setCurrentUrl} from './device/cdp.ts'
-import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './gboard/field.ts'
+import {
+  FIELD_EDITABLE,
+  FIELD_FOCUSED,
+  FIELD_RECT,
+  FOCUS_FIELD,
+} from './gboard/field.ts'
 
 export const ime = {
   compose: (text: string) => imeCommand('compose', {text}),
@@ -41,6 +46,13 @@ export async function openTestImePage(url: string): Promise<void> {
     },
     {timeout: 30_000},
   )
+  // An editor renders read-only until its first value is in, and a tap on it then focuses nothing.
+  await vi.waitFor(
+    async () => {
+      expect(await cdpEval(FIELD_EDITABLE)).toEqual(true)
+    },
+    {timeout: 30_000},
+  )
   const field = (await cdpEval(FIELD_RECT)) as {
     x: number
     y: number
@@ -48,7 +60,7 @@ export async function openTestImePage(url: string): Promise<void> {
     screenHeight: number
     innerHeight: number
   }
-  await adb([
+  const tap = [
     'shell',
     'input',
     'tap',
@@ -59,13 +71,19 @@ export async function openTestImePage(url: string): Promise<void> {
           field.devicePixelRatio,
       ),
     ),
-  ])
+  ]
+  await adb(tap)
+  let tapped = 1
   await vi.waitFor(
     async () => {
+      if ((await cdpEval(FIELD_FOCUSED)) !== true && tapped < 4) {
+        tapped++
+        await adb(tap)
+      }
       expect(await cdpEval(FIELD_FOCUSED)).toEqual(true)
       expect(await imeCommand('state')).toMatch(/^state:/)
     },
-    {timeout: 10_000},
+    {timeout: 20_000, interval: 2_000},
   )
   await cdpEval(FOCUS_FIELD)
 }
