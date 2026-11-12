@@ -14,6 +14,7 @@ import type {RangeDecoration} from '../src'
 import {inTestChange} from '../src/engine/core/change.test-utils'
 import type {Path} from '../src/engine/interfaces/path'
 import {serializePath} from '../src/paths/serialize-path'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {
@@ -2955,6 +2956,18 @@ describe('chunked drawing against real engine editing', () => {
     const innerValue = Array.from({length: 250}, (_, index) =>
       textBlock(`inner ${index}`),
     )
+    const nestedEditorsReady: Array<() => void> = []
+    const nestedEditorReady = (editorIndex: number) =>
+      new Promise<void>((resolve) => {
+        nestedEditorsReady[editorIndex] = resolve
+      })
+    let readyNestedEditors = 0
+    const onNestedEditorEvent = (event: {type: string}) => {
+      if (event.type === 'ready') {
+        nestedEditorsReady[readyNestedEditors]?.()
+        readyNestedEditors++
+      }
+    }
     const image = defineBlockObject({
       type: 'image',
       render: ({attributes, children}) => (
@@ -2969,6 +2982,7 @@ describe('chunked drawing against real engine editing', () => {
               }}
             >
               <PortableTextEditable />
+              <EventListenerPlugin on={onNestedEditorEvent} />
             </EditorProvider>
           </div>
         </div>
@@ -3002,10 +3016,14 @@ describe('chunked drawing against real engine editing', () => {
       .element(page.getByText('tail 249', {exact: true}))
       .toBeVisible()
     expect(nestedBlocks(0)).toEqual([])
+    const firstNestedReady = nestedEditorReady(0)
     await first.rerender(outerEditor([image]))
+    await firstNestedReady
     await vi.waitFor(() => expect(nestedBlocks(0)).toHaveLength(250))
 
+    const secondNestedReady = nestedEditorReady(1)
     await render(outerEditor([image]))
+    await secondNestedReady
     await vi.waitFor(() => expect(nestedBlocks(1)).toHaveLength(250))
     expect(nestedBlocks(0)).toEqual(nestedBlocks(1))
   })
