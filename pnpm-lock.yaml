@@ -216,8 +216,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/keyboard-shortcuts
       '@portabletext/markdown':
-        specifier: ^2.9.3
-        version: 2.9.3
+        specifier: ^2.9.4
+        version: 2.9.4
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
@@ -454,8 +454,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/keyboard-shortcuts
       '@portabletext/markdown':
-        specifier: ^2.9.3
-        version: 2.9.3
+        specifier: ^2.9.4
+        version: 2.9.4
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
@@ -4571,8 +4571,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@portabletext/markdown@2.9.3':
-    resolution: {integrity: sha512-oDx5zwHCdCiHZ9xRbBDh5nALUORy2ZCoW+OpZSTpNt69agA8jrdUktl+74qWKdE1BBra7Jj2tLDgFpl5m0Rilw==}
+  '@portabletext/markdown@2.9.4':
+    resolution: {integrity: sha512-BMR7UF19QB7qbZBzG2FeSjTlE8AV4HFJq/XufLVfGzX8v9Qd7s1eetpQEKSHssjrmxXHmmqo0KKoiUhfRaCU9w==}
     engines: {node: '>=22.12'}
 
   '@portabletext/react@8.0.1':
@@ -14241,7 +14241,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@portabletext/markdown@2.9.3':
+  '@portabletext/markdown@2.9.4':
     dependencies:
       '@mdit/plugin-alert': 2.0.1(markdown-it@15.0.3)
       '@portabletext/schema': link:packages/schema
