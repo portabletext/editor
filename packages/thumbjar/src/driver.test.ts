@@ -1310,19 +1310,27 @@ test('classified mistaps under runOnDevice', async () => {
     tests: [
       {name: 'Scenario: en retries a symbol popup', state: 'passed'},
       {name: 'Scenario: ja retries a symbol popup', state: 'passed'},
+      {
+        name: 'Scenario: en retries a Space-committed Dash mistap',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: a Space tap with non-space insertText cannot classify a symbol',
+        state: 'passed',
+      },
       {name: 'Scenario: retries a digit', state: 'passed'},
       {name: 'Scenario: repeated _ is inconclusive', state: 'passed'},
       {name: 'Scenario: repeated 7 is inconclusive', state: 'passed'},
       {
-        name: 'Scenario: editor result - to _  is returned once',
+        name: 'Scenario: an editor that rewrites - as _ keeps its text',
         state: 'passed',
       },
       {
-        name: 'Scenario: editor result - to ~  is returned once',
+        name: 'Scenario: an editor that rewrites - as ~ keeps its text',
         state: 'passed',
       },
       {
-        name: 'Scenario: editor result ~ to ~  is returned once',
+        name: 'Scenario: an unrecorded ~ keeps the editor text',
         state: 'passed',
       },
       {
@@ -1351,6 +1359,14 @@ test('classified mistaps under runOnDevice', async () => {
       },
       {
         name: 'Scenario: typeOnDevice counts a digit mistap retry',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: a timeout after mistap classification keeps its reason',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: a timeout during a mistap restart keeps its reason',
         state: 'passed',
       },
     ],

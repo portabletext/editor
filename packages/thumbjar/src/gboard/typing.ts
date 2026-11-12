@@ -105,6 +105,7 @@ export type Typed = {
   compositionstartPerWord: number[]
 }
 
+/** A classified digit long press or recorded symbol popup eligible for one retry. */
 export class MistapError extends Error {}
 
 /** The keys the driver tapped in one step and the events the page recorded during it. */
@@ -673,10 +674,11 @@ async function runStep(
 /**
  * Throw a driver fault for a digit in `text` that `inputs` does not hold.
  *
- * The one place the driver reads the page's text to classify a fault. A digit neither the prefix nor
- * the letters hold can only come from a tap that landed as a long press on a key's number hint. An
- * editor that produced one every time would fault twice and fail the test, so a retry can only hide an
- * editor that produces it intermittently.
+ * The one place the driver reads the page's text to classify a fault. The symbol check classifies
+ * from the tap's `beforeinput` instead. A digit neither the prefix nor the letters hold can only
+ * come from a tap that landed as a long press on a key's number hint. An editor that produced one
+ * every time would fault twice and fail the test, so a retry can only hide an editor that produces
+ * it intermittently.
  */
 function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
   const digit = unexpectedDigit(text, inputs)
@@ -687,6 +689,10 @@ function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
   }
 }
 
+/**
+ * Classify recorded popup characters only when every tap has one ordered
+ * `insertText` beforeinput matching its character or a recorded popup.
+ */
 function throwOnSymbolMistap(
   record: StepRecord,
   keyboard: RunOnDeviceOptions['keyboard'],
@@ -706,7 +712,8 @@ function throwOnSymbolMistap(
   ) {
     return
   }
-  const pairs = keys.map((key, index) => {
+  const pairs = keys.map((label, index) => {
+    const key = SPACE_KEYS.includes(label) ? ' ' : label
     const entry = Object.values(LAYOUTS[keyboard])
       .flatMap((layout) => Object.entries(layout.keys))
       .find(([character]) => character === key)?.[1]
