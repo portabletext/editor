@@ -1,10 +1,12 @@
-import type {SelectorFields} from '../device/u2.ts'
+import {UiObjectNotFoundError, type SelectorFields} from '../device/u2.ts'
+
+export const TWELVE = '^12 (keys|キー)$'
 
 type LayoutDevice = {
   find(fields: SelectorFields): {
     exists(): Promise<boolean>
     wait(seconds: number): Promise<boolean>
-    click(): Promise<void>
+    click(timeout?: number): Promise<void>
   }
 }
 
@@ -16,13 +18,19 @@ export async function openJapaneseLayouts(
     resourceId: 'android:id/title',
     textMatches: '^(Japanese|日本語)$',
   })
-  const twelve = device.find({descriptionMatches: '^12 (keys|キー)$'})
+  const twelve = device.find({descriptionMatches: TWELVE})
   await row.click()
   if (await twelve.wait(15)) {
     return
   }
   if (await row.exists()) {
-    await row.click()
+    try {
+      await row.click(1)
+    } catch (error) {
+      if (!(error instanceof UiObjectNotFoundError)) {
+        throw error
+      }
+    }
     if (await twelve.wait(15)) {
       return
     }

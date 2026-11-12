@@ -8,7 +8,7 @@ import {writeFileSync} from 'node:fs'
 import {adbOutput, adbPassthrough} from '../device/adb.ts'
 import {Device, type UiObject} from '../device/u2.ts'
 import {pySorted, sleep} from '../device/util.ts'
-import {openJapaneseLayouts} from './open-japanese-layouts.ts'
+import {openJapaneseLayouts, TWELVE} from './open-japanese-layouts.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 const out = process.argv[2]!
@@ -16,7 +16,6 @@ let step = 0
 
 // Gboard preselects 12 keys (kana flick) and opens on it, so keep QWERTY (romaji) as the only layout.
 // Gboard v12 labels the tiles in English, v15 in Japanese (12 キー, 手書き).
-const TWELVE = '^12 (keys|キー)$'
 const QWERTY = '^QWERTY$'
 const HANDWRITING = '^(Handwriting|手書き)$'
 
