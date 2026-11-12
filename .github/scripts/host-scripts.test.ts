@@ -16,7 +16,10 @@ import {describe, expect, test, vi} from 'vitest'
 const sampler = fileURLToPath(new URL('host-sampler.sh', import.meta.url))
 const capture = fileURLToPath(new URL('host-capture.sh', import.meta.url))
 
-describe('host-sampler.sh and host-capture.sh', () => {
+// The scripts run on the Linux CI runners and read /proc, which macOS and Windows don't have.
+const describeOnLinux = describe.runIf(process.platform === 'linux')
+
+describeOnLinux('host-sampler.sh and host-capture.sh', () => {
   test('Scenario: The emulator process is killed and the capture stops the sampler', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
     const crashDirectory = join(directory, 'crash')
@@ -122,86 +125,101 @@ describe('host-sampler.sh and host-capture.sh', () => {
   })
 })
 
-describe('host-capture.sh with a pid file that names another process', () => {
-  test('Scenario: The pid file names a process that is not the sampler', () => {
-    const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
-    const unrelated = spawn('sleep', ['32'], {stdio: 'ignore'})
-    try {
-      writeFileSync(join(directory, 'host-sampler.pid'), String(unrelated.pid))
+describeOnLinux(
+  'host-capture.sh with a pid file that names another process',
+  () => {
+    test('Scenario: The pid file names a process that is not the sampler', () => {
+      const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
+      const unrelated = spawn('sleep', ['32'], {stdio: 'ignore'})
+      try {
+        writeFileSync(
+          join(directory, 'host-sampler.pid'),
+          String(unrelated.pid),
+        )
 
-      const result = spawnSync('bash', [capture, directory], {
-        encoding: 'utf8',
-        env: {...process.env, HOST_DMESG_CMD: 'true'},
-      })
+        const result = spawnSync('bash', [capture, directory], {
+          encoding: 'utf8',
+          env: {...process.env, HOST_DMESG_CMD: 'true'},
+        })
 
-      // A terminated child stays a zombie until the test reaps it, so its state is read, not whether the pid exists.
-      const state = readFileSync(`/proc/${unrelated.pid}/stat`, 'utf8')
-        .split(') ')[1]!
-        .charAt(0)
-      expect({status: result.status, state}).toEqual({
-        status: 0,
-        state: 'S',
-      })
-    } finally {
-      unrelated.kill('SIGKILL')
-      rmSync(directory, {recursive: true, force: true})
-    }
-  })
-})
+        // A terminated child stays a zombie until the test reaps it, so its state is read, not whether the pid exists.
+        const state = readFileSync(`/proc/${unrelated.pid}/stat`, 'utf8')
+          .split(') ')[1]!
+          .charAt(0)
+        expect({status: result.status, state}).toEqual({
+          status: 0,
+          state: 'S',
+        })
+      } finally {
+        unrelated.kill('SIGKILL')
+        rmSync(directory, {recursive: true, force: true})
+      }
+    })
+  },
+)
 
-describe('host-capture.sh with a pid file that names a process whose argument only contains the sampler name', () => {
-  test('Scenario: The pid file names a process run with a path that continues past host-sampler.sh', () => {
-    const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
-    const lookalike = spawn(
-      'bash',
-      ['-c', 'sleep 32; true', '/old/android/scripts/host-sampler.sh.backup'],
-      {stdio: 'ignore'},
-    )
-    try {
-      writeFileSync(join(directory, 'host-sampler.pid'), String(lookalike.pid))
-
-      const result = spawnSync('bash', [capture, directory], {
-        encoding: 'utf8',
-        env: {...process.env, HOST_DMESG_CMD: 'true'},
-      })
-
-      const state = readFileSync(`/proc/${lookalike.pid}/stat`, 'utf8')
-        .split(') ')[1]!
-        .charAt(0)
-      expect({status: result.status, state}).toEqual({
-        status: 0,
-        state: 'S',
-      })
-    } finally {
-      lookalike.kill('SIGKILL')
-      rmSync(directory, {recursive: true, force: true})
-    }
-  })
-})
-
-describe('host-capture.sh with a pid file that names a process that has exited', () => {
-  test('Scenario: The pid file names a process that no longer exists and the capture runs with errexit', () => {
-    const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
-    try {
-      const exited = spawnSync('true')
-      writeFileSync(join(directory, 'host-sampler.pid'), String(exited.pid))
-
-      const result = spawnSync(
+describeOnLinux(
+  'host-capture.sh with a pid file that names a process whose argument only contains the sampler name',
+  () => {
+    test('Scenario: The pid file names a process run with a path that continues past host-sampler.sh', () => {
+      const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
+      const lookalike = spawn(
         'bash',
-        ['-e', '-o', 'pipefail', capture, directory],
-        {encoding: 'utf8', env: {...process.env, HOST_DMESG_CMD: 'true'}},
+        ['-c', 'sleep 32; true', '/old/android/scripts/host-sampler.sh.backup'],
+        {stdio: 'ignore'},
       )
+      try {
+        writeFileSync(
+          join(directory, 'host-sampler.pid'),
+          String(lookalike.pid),
+        )
 
-      expect({
-        status: result.status,
-        stderr: result.stderr,
-        wroteMemory: existsSync(join(directory, 'host-memory.txt')),
-      }).toEqual({status: 0, stderr: '', wroteMemory: true})
-    } finally {
-      rmSync(directory, {recursive: true, force: true})
-    }
-  })
-})
+        const result = spawnSync('bash', [capture, directory], {
+          encoding: 'utf8',
+          env: {...process.env, HOST_DMESG_CMD: 'true'},
+        })
+
+        const state = readFileSync(`/proc/${lookalike.pid}/stat`, 'utf8')
+          .split(') ')[1]!
+          .charAt(0)
+        expect({status: result.status, state}).toEqual({
+          status: 0,
+          state: 'S',
+        })
+      } finally {
+        lookalike.kill('SIGKILL')
+        rmSync(directory, {recursive: true, force: true})
+      }
+    })
+  },
+)
+
+describeOnLinux(
+  'host-capture.sh with a pid file that names a process that has exited',
+  () => {
+    test('Scenario: The pid file names a process that no longer exists and the capture runs with errexit', () => {
+      const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
+      try {
+        const exited = spawnSync('true')
+        writeFileSync(join(directory, 'host-sampler.pid'), String(exited.pid))
+
+        const result = spawnSync(
+          'bash',
+          ['-e', '-o', 'pipefail', capture, directory],
+          {encoding: 'utf8', env: {...process.env, HOST_DMESG_CMD: 'true'}},
+        )
+
+        expect({
+          status: result.status,
+          stderr: result.stderr,
+          wroteMemory: existsSync(join(directory, 'host-memory.txt')),
+        }).toEqual({status: 0, stderr: '', wroteMemory: true})
+      } finally {
+        rmSync(directory, {recursive: true, force: true})
+      }
+    })
+  },
+)
 
 function isAlive(pid: number) {
   try {
