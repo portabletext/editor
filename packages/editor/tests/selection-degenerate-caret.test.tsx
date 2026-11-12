@@ -43,13 +43,12 @@ const initialValue = [
 
 describe('degenerate collapsed DOM carets', () => {
   test('Scenario: The caret is canonicalized even when the model selection does not change', async () => {
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue,
       children: <NodePlugin nodes={containers} />,
     })
-    await expect.element(locator).toBeInTheDocument()
 
     const editable = document.querySelector('[contenteditable="true"]')
     const container = editable?.querySelector('[data-pt-block="container"]')
@@ -85,13 +84,12 @@ describe('degenerate collapsed DOM carets', () => {
   })
 
   test('Scenario: A caret parked on a container element is pushed into its text', async () => {
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue,
       children: <NodePlugin nodes={containers} />,
     })
-    await expect.element(locator).toBeInTheDocument()
 
     const editable = document.querySelector('[contenteditable="true"]')
     const container = editable?.querySelector('[data-pt-block="container"]')

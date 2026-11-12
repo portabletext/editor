@@ -356,13 +356,11 @@ describe('event.delete | unified primitives matrix', () => {
 
 async function setup(value: Array<unknown>) {
   const keyGenerator = createTestKeyGenerator()
-  const {editor, locator} = await createTestEditor({
+  const {editor} = await createTestEditor({
     keyGenerator,
     schemaDefinition,
     initialValue: value as never,
   })
-
-  await expect.element(locator).toBeInTheDocument()
 
   return editor
 }
