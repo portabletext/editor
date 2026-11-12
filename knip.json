@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignoreDependencies": ["@types/react", "@types/react-dom", "@types/react-is"],
-  "ignore": ["oxlint-plugins/**", "packages/*/bundle-tests/**"],
+  "ignore": ["oxlint-plugins/**", "packages/*/bundle-tests/**", "probe3/**"],
   "workspaces": {
     "packages/*": {
       "entry": ["src/index.ts!", "package.config.ts!"],
@@ -27,6 +27,7 @@
         "vitest.android.config.ts",
         "android/vite.config.ts",
         "android/page/editor.tsx",
+        "android/page/gherkin.tsx",
         "android/scripts/fixtures/suites/*.ts"
       ],
       "ignoreDependencies": [

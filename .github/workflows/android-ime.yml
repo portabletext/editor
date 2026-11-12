@@ -63,6 +63,7 @@ jobs:
           - {lang: en, file: tests/en.test.ts}
           - {lang: ja, file: tests/ja.enter.test.ts}
           - {lang: en, file: tests/en.enter.test.ts}
+          - {lang: en, file: tests/en.gherkin.test.ts}
         api: [36]
 
     steps:
