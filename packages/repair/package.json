@@ -52,6 +52,7 @@
     "@portabletext/schema": "workspace:^"
   },
   "devDependencies": {
+    "@portabletext/test": "workspace:^",
     "@sanity/pkg-utils": "catalog:tooling",
     "@sanity/tsconfig": "catalog:tooling",
     "typescript": "catalog:tooling",

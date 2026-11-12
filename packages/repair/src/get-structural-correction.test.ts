@@ -1,4 +1,5 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {getStructuralCorrection} from './get-structural-correction'
 
@@ -159,19 +160,19 @@ describe(getStructuralCorrection.name, () => {
       getStructuralCorrection(context, {
         node: {_type: schema.span.name, _key: '', text: 42},
         path: [0],
-        parent: undefined,
+        parent: {node: {_type: schema.block.name, children: []}, path: []},
         siblings: () => [{_key: ''}, {_key: ''}],
       }),
       getStructuralCorrection(context, {
         node: {_type: schema.span.name, _key: 'duplicate', text: 42},
         path: [0],
-        parent: undefined,
+        parent: {node: {_type: schema.block.name, children: []}, path: []},
         siblings: () => [{_key: 'duplicate'}, {_key: 'duplicate'}],
       }),
       getStructuralCorrection(context, {
         node: {_type: schema.span.name, _key: 'unique', text: 42},
         path: [0],
-        parent: undefined,
+        parent: {node: {_type: schema.block.name, children: []}, path: []},
         siblings: () => [{_key: 'unique'}],
       }),
     ]).toEqual([
@@ -197,7 +198,7 @@ describe(getStructuralCorrection.name, () => {
         {
           node: {_type: schema.span.name, _key: 'span', text: 42},
           path: [0, 'children', {_key: 'span'}],
-          parent: undefined,
+          parent: {node: {_type: schema.block.name, children: []}, path: []},
           siblings: () => [],
         },
       ),
@@ -224,5 +225,52 @@ describe(getStructuralCorrection.name, () => {
       type: 'missing-children',
       patches: [{type: 'set', path: [{_key: 'block'}, 'children'], value: []}],
     })
+  })
+
+  test('keeps a span at block position intact', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const spanKey = keyGenerator()
+    const node = {
+      _type: schema.span.name,
+      _key: spanKey,
+      text: 42,
+      marks: [],
+      custom: 'foo',
+    }
+    expect(
+      getStructuralCorrection(
+        {schema, keyGenerator},
+        {node, path: [{_key: spanKey}], parent: undefined, siblings: () => []},
+      ),
+    ).toEqual(undefined)
+    expect(node).toEqual({
+      _type: 'span',
+      _key: 'k0',
+      text: 42,
+      marks: [],
+      custom: 'foo',
+    })
+  })
+
+  test('keeps a text block inside a text block children intact', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const parentKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const node = {_type: schema.block.name, _key: blockKey, custom: 'foo'}
+    expect(
+      getStructuralCorrection(
+        {schema, keyGenerator},
+        {
+          node,
+          path: [{_key: parentKey}, 'children', {_key: blockKey}],
+          parent: {
+            node: {_type: schema.block.name, _key: parentKey, children: [node]},
+            path: [{_key: parentKey}],
+          },
+          siblings: () => [node],
+        },
+      ),
+    ).toEqual(undefined)
+    expect(node).toEqual({_type: 'block', _key: 'k1', custom: 'foo'})
   })
 })
