@@ -103,8 +103,9 @@ export type DriverRun = {
    * `inconclusive`, for `runOnDevice` only, when a driver fault came after the attempt sent input, which
    * may still reach a page a retry would type into, when the restart before the retry could not show
    * a fresh Chrome, or when the test timed out while the driver decided whether to retry a first attempt's
-   * timeout before any input, or after a classified mistap on the second attempt. A first classified mistap is retried once. A timeout before the second
-   * attempt begins, including during the restart, also ends `inconclusive` with the mistap message. An inconclusive call says nothing about the page.
+   * timeout before any input, or after a classified mistap on the second attempt. A first classified
+   * mistap is retried once. A timeout before the second attempt begins, including during the restart,
+   * also ends `inconclusive` with the mistap message. An inconclusive call says nothing about the page.
    * `device-offline`, for `runOnDevice` only, when an adb call of any step failed on adb's own error for a
    * lost device, the restart's force-stop included, which its `reason` quotes, or timed out and the `adb get-state` read for that timeout completed with an
    * answer other than `device`. It is never retried on that device.
@@ -237,12 +238,12 @@ export async function typeOnDevice(
  * sent any input is retried once, only after the old Chrome stopped and only into a Chrome whose pid is
  * new. A classified digit or symbol mistap is also retried once through that restart path, and a second
  * mistap ends `inconclusive` with its message. Any other fault after input, a restart that cannot show a
- * fresh Chrome, and an adb call that means adb lost
- * the device are never retried, and the call's `driverRuns` record says `inconclusive` or
- * `device-offline` and why. When a step of the last attempt threw, the call rejects with a new `Error`
- * whose message is the step's error message followed by a line per step of that attempt: its position,
- * type, status, reason and `textAfter`. Its `cause` is the value the step threw. Any other failure
- * rejects with its error unchanged. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
+ * fresh Chrome, and an adb call that means adb lost the device are never retried, and the call's
+ * `driverRuns` record says `inconclusive` or `device-offline` and why. When a step of the last attempt
+ * threw, the call rejects with a new `Error` whose message is the step's error message followed by a
+ * line per step of that attempt: its position, type, status, reason and `textAfter`. Its `cause` is the
+ * value the step threw. Any other failure rejects with its error unchanged. Artifacts go to
+ * `<outDir>/<keyboard>-<test name>*`.
  *
  * @example
  * ```ts
@@ -592,11 +593,12 @@ type TerminalOutcome = {
 }
 
 /**
- * `runOnDevice`'s retry. A classified mistap is retried once even after input, and a second ends `inconclusive` with its message. Any other fault after the attempt sent
- * input is `inconclusive`, and a failed adb call that
- * means adb lost the device is `device-offline`, and neither is retried. Any other fault is retried once,
- * only after the old Chrome stopped and only into a Chrome whose pid is new, and a restart or a check that
- * cannot show that ends the call `inconclusive`, or `device-offline` when adb lost the device.
+ * `runOnDevice`'s retry. A classified mistap is retried once even after input, and a second ends
+ * `inconclusive` with its message. Any other fault after the attempt sent input is `inconclusive`, and a
+ * failed adb call that means adb lost the device is `device-offline`, and neither is retried. Any other
+ * fault is retried once, only after the old Chrome stopped and only into a Chrome whose pid is new, and
+ * a restart or a check that cannot show that ends the call `inconclusive`, or `device-offline` when adb
+ * lost the device.
  *
  * The moment an attempt fails, before its failure dump, `classify` runs `terminalOutcome`, which reads the
  * fault once and decides from it alone whether the call ends there, and if so passes the outcome to
@@ -608,7 +610,8 @@ type TerminalOutcome = {
  * before input that the call may retry records nothing, but until the retry's restart begins `pend` holds
  * the outcome a test timeout ends it on, the one it would end on if that fault were final: `inconclusive`
  * and unconfirmed for a timeout, whose retry also waits for the state read, and `faulted` for any other
- * fault. A first classified mistap pends `inconclusive` with its message until the second attempt begins. The call always rejects with the attempt's own fault.
+ * fault. A first classified mistap pends `inconclusive` with its message until the second attempt
+ * begins. The call always rejects with the attempt's own fault.
  */
 async function strictRetry<T>(
   name: string,
@@ -774,9 +777,9 @@ async function strictRetry<T>(
 /**
  * The outcome an attempt that failed with `fault` ends the call on, decided from the fault alone, with no
  * device call, or no `ended` when the call may still retry it: a classified mistap or a fault before
- * input on the first attempt,
- * which a timeout leaves to the state read. adb's own error for a lost device is `device-offline` here,
- * since adb itself said so. `lost` is how adb may have lost the device, read once for the whole failure.
+ * input on the first attempt, which a timeout leaves to the state read. adb's own error for a lost
+ * device is `device-offline` here, since adb itself said so. `lost` is how adb may have lost the device,
+ * read once for the whole failure.
  */
 function terminalOutcome(
   fault: unknown,
