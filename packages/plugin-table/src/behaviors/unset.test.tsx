@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -161,21 +161,17 @@ describe('custom.unset.row', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [twoByTwoR1],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [twoByTwoR1],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: unsetting a row through a cell path removes the closest row', async () => {
@@ -191,21 +187,17 @@ describe('custom.unset.row', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'r1c0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [twoByTwoR0],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [twoByTwoR0],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 })
 
@@ -223,30 +215,26 @@ describe('custom.unset.column', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [twoByTwoR0C1],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [twoByTwoR1C1],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [twoByTwoR0C1],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [twoByTwoR1C1],
+          },
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 })
 
@@ -393,34 +381,26 @@ describe('custom.unset.row — selection recovery', () => {
       type: 'custom.unset.row',
       at: [{_key: 't0'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'r1c1'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR0, threeRowR2],
-        },
-      ])
-      const recovered = pointInSpan('r2', 'r2c1')
-      expect(snapshot.context.selection).toEqual({
-        anchor: recovered,
-        focus: recovered,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR0, threeRowR2],
+      },
+    ])
+    const recovered = pointInSpan('r2', 'r2c1')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: recovered,
+      focus: recovered,
+      backward: false,
     })
 
     editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual(threeRowValue)
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 
@@ -439,34 +419,26 @@ describe('custom.unset.row — selection recovery', () => {
       type: 'custom.unset.row',
       at: [{_key: 't0'}, 'rows', {_key: 'r2'}, 'cells', {_key: 'r2c0'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR0, threeRowR1],
-        },
-      ])
-      const recovered = pointInSpan('r1', 'r1c0')
-      expect(snapshot.context.selection).toEqual({
-        anchor: recovered,
-        focus: recovered,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR0, threeRowR1],
+      },
+    ])
+    const recovered = pointInSpan('r1', 'r1c0')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: recovered,
+      focus: recovered,
+      backward: false,
     })
 
     editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual(threeRowValue)
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 
@@ -485,33 +457,25 @@ describe('custom.unset.row — selection recovery', () => {
       type: 'custom.unset.row',
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR2],
-        },
-      ])
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR2],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
 
     editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual(threeRowValue)
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 
@@ -531,33 +495,25 @@ describe('custom.unset.row — selection recovery', () => {
       type: 'custom.unset.row',
       at: [{_key: 't0'}, 'rows', {_key: 'r1'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR0, threeRowR2],
-        },
-      ])
-      expect(snapshot.context.selection).toEqual({
-        anchor,
-        focus,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR0, threeRowR2],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor,
+      focus,
+      backward: false,
     })
 
     editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual(threeRowValue)
-      expect(snapshot.context.selection).toEqual({
-        anchor,
-        focus,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor,
+      focus,
+      backward: false,
     })
   })
 
@@ -594,43 +550,35 @@ describe('custom.unset.column — selection recovery', () => {
       type: 'custom.unset.column',
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [twoByTwoR0C1],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [twoByTwoR1C1],
-            },
-          ],
-        },
-      ])
-      const recovered = pointInSpan('r0', 'r0c1')
-      expect(snapshot.context.selection).toEqual({
-        anchor: recovered,
-        focus: recovered,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [twoByTwoR0C1],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [twoByTwoR1C1],
+          },
+        ],
+      },
+    ])
+    const recovered = pointInSpan('r0', 'r0c1')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: recovered,
+      focus: recovered,
+      backward: false,
     })
 
     editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual(twoByTwoValue)
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 
@@ -649,43 +597,35 @@ describe('custom.unset.column — selection recovery', () => {
       type: 'custom.unset.column',
       at: [{_key: 't0'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'r1c1'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [twoByTwoR0C0],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [twoByTwoR1C0],
-            },
-          ],
-        },
-      ])
-      const recovered = pointInSpan('r1', 'r1c0')
-      expect(snapshot.context.selection).toEqual({
-        anchor: recovered,
-        focus: recovered,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [twoByTwoR0C0],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [twoByTwoR1C0],
+          },
+        ],
+      },
+    ])
+    const recovered = pointInSpan('r1', 'r1c0')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: recovered,
+      focus: recovered,
+      backward: false,
     })
 
     editor.send({type: 'history.undo'})
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual(twoByTwoValue)
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 
@@ -769,15 +709,11 @@ describe('custom.unset.table', () => {
       at: [{_key: 't0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([placeholderBlock])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([placeholderBlock])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: unsetting the table through a row path removes the table', async () => {
@@ -793,15 +729,11 @@ describe('custom.unset.table', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([placeholderBlock])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([placeholderBlock])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: unsetting the table through a cell path removes the table', async () => {
@@ -817,15 +749,11 @@ describe('custom.unset.table', () => {
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([placeholderBlock])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([placeholderBlock])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: unsetting the table at a path outside any table leaves the value unchanged', async () => {
@@ -861,15 +789,11 @@ describe('custom.unset.table — selection recovery', () => {
       type: 'custom.unset.table',
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([preBlock, postBlock])
-      expect(snapshot.context.selection).toEqual({
-        anchor: postPoint,
-        focus: postPoint,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([preBlock, postBlock])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: postPoint,
+      focus: postPoint,
+      backward: false,
     })
   })
 
@@ -888,15 +812,11 @@ describe('custom.unset.table — selection recovery', () => {
       type: 'custom.unset.table',
       at: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([preBlock])
-      expect(snapshot.context.selection).toEqual({
-        anchor: prePoint,
-        focus: prePoint,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([preBlock])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: prePoint,
+      focus: prePoint,
+      backward: false,
     })
   })
 
@@ -914,15 +834,11 @@ describe('custom.unset.table — selection recovery', () => {
       type: 'custom.unset.table',
       at: [{_key: 't0'}],
     })
-
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([preBlock, postBlock])
-      expect(snapshot.context.selection).toEqual({
-        anchor: prePoint,
-        focus: prePoint,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([preBlock, postBlock])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: prePoint,
+      focus: prePoint,
+      backward: false,
     })
   })
 })
