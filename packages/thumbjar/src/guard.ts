@@ -1,6 +1,11 @@
 import {KILL_GRACE_SECONDS} from './device/budget.ts'
 import {killGroup, runChildProcess, type ChildOptions} from './process-child.ts'
 
+if (process.send === undefined) {
+  process.stderr.write('thumbjar guard must be started by thumbjar\n')
+  process.exit(2)
+}
+
 const {
   command,
   args,

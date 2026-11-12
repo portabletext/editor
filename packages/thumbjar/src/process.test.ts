@@ -1,7 +1,8 @@
+import {spawnSync} from 'node:child_process'
 import {existsSync, readdirSync, readFileSync} from 'node:fs'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {expect, test} from 'vitest'
-import {entry} from './process.ts'
+import {expect, test, vi} from 'vitest'
+import {entry, execute} from './process.ts'
 
 const workers = [
   'bin',
@@ -67,4 +68,44 @@ test('resolves every default worker from the built package root', async () => {
     {name: 'run/check', exists: true, path: true},
     {name: 'run/logcat', exists: true, path: true},
   ])
+})
+
+test('ends the stage before execute resolves when only its guard is SIGKILLed', async () => {
+  let stagePid: number | undefined
+  let guardPid: number | undefined
+  const running = execute('bash', ['-c', 'echo "$$ $PPID"; exec sleep 301.5'], {
+    seconds: 3,
+    killAfter: 2,
+    stdout: (chunk) => {
+      ;[stagePid, guardPid] = chunk.toString().trim().split(' ').map(Number)
+    },
+  })
+  try {
+    await vi.waitFor(() => expect(typeof guardPid).toEqual('number'))
+    process.kill(guardPid!, 'SIGKILL')
+    expect((await running).status).toEqual(137)
+    expect(
+      existsSync(`/proc/${stagePid}/stat`) &&
+        !/^\d+ \(.*\) Z /.test(readFileSync(`/proc/${stagePid}/stat`, 'utf8')),
+    ).toEqual(false)
+  } finally {
+    for (const pid of [stagePid, guardPid]) {
+      if (pid !== undefined) {
+        try {
+          process.kill(pid, 'SIGKILL')
+        } catch {}
+      }
+    }
+    await running
+  }
+}, 10_000)
+
+test('requires thumbjar to start a guard with IPC', () => {
+  const result = spawnSync(process.execPath, [entry('guard')], {
+    encoding: 'utf8',
+  })
+  expect({status: result.status, stderr: result.stderr}).toEqual({
+    status: 2,
+    stderr: 'thumbjar guard must be started by thumbjar\n',
+  })
 })

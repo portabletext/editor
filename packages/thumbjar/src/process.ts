@@ -3,7 +3,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {KILL_GRACE_SECONDS} from './device/budget.ts'
-import {runChildProcess} from './process-child.ts'
+import {killGroup, runChildProcess} from './process-child.ts'
 export {killGroup} from './process-child.ts'
 
 type Output = (chunk: Buffer) => void
@@ -52,6 +52,7 @@ export async function execute(
               detached: true,
               ipc: true,
               onSpawn: (child) => {
+                child.once('exit', () => killGroup(child.pid, 'SIGKILL'))
                 child.on('message', (message: {status: number}) => {
                   guardedStatus = message.status
                 })

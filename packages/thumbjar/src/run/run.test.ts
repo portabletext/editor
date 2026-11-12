@@ -25,22 +25,29 @@ let lastRunExit: number | null = null
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
 
-test('bounds every stage after the run process group is killed', async () => {
-  const directory = mkdtempSync(join(tmpdir(), 'thumbjar-orphan-'))
-  const pids = join(directory, 'pids')
-  const cap = 1
-  const logcatSeconds =
-    cap +
-    RUN_TEST_KILL_SECONDS +
-    COMMAND_READ_SECONDS +
-    COMMAND_KILL_SECONDS +
-    DIAGNOSTICS_SECONDS +
-    COMMAND_KILL_SECONDS
-  const logcatBound = logcatSeconds + COMMAND_KILL_SECONDS
-  try {
-    const bin = join(directory, 'bin')
-    mkdirSync(bin)
-    const stage = `import {appendFileSync} from 'node:fs'
+const orphanTestCap = 1
+const orphanRecorderBound =
+  orphanTestCap +
+  RUN_TEST_KILL_SECONDS +
+  COMMAND_READ_SECONDS +
+  COMMAND_KILL_SECONDS +
+  DIAGNOSTICS_SECONDS +
+  COMMAND_KILL_SECONDS +
+  COMMAND_KILL_SECONDS
+
+const orphanTestTimeout = (5 + orphanRecorderBound + 1 + 10) * 1000
+
+test(
+  'bounds every stage after the run process group is killed',
+  async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'thumbjar-orphan-'))
+    const pids = join(directory, 'pids')
+    const cap = orphanTestCap
+    const logcatBound = orphanRecorderBound
+    try {
+      const bin = join(directory, 'bin')
+      mkdirSync(bin)
+      const stage = `import {appendFileSync} from 'node:fs'
 import {spawn} from 'node:child_process'
 import {createServer} from 'node:net'
 const kind=process.argv[2]
@@ -51,103 +58,105 @@ if(kind==='serve')createServer().listen(0,'127.0.0.1')
 if(kind!=='serve') process.on('SIGTERM',()=>{})
 setInterval(()=>{},1000)
 `
-    const stageFile = join(directory, 'stage.mjs')
-    writeFileSync(stageFile, stage)
-    const loader = join(directory, 'loader.mjs')
-    writeFileSync(
-      loader,
-      `import {registerHooks} from 'node:module'
+      const stageFile = join(directory, 'stage.mjs')
+      writeFileSync(stageFile, stage)
+      const loader = join(directory, 'loader.mjs')
+      writeFileSync(
+        loader,
+        `import {registerHooks} from 'node:module'
 registerHooks({load(url,context,next){if(url.endsWith('/bin.ts') && ['serve','prepare'].includes(process.argv[2]))return {format:'module',shortCircuit:true,source:${JSON.stringify(`await import(${JSON.stringify(stageFile)})`)}};if(url.endsWith('/run/cap.ts'))return {format:'module',shortCircuit:true,source:'process.stdout.write("${cap}")'};return next(url,context)}})
 `,
-    )
-    const vitest = join(directory, 'node_modules/vitest')
-    mkdirSync(vitest, {recursive: true})
-    writeFileSync(
-      join(vitest, 'package.json'),
-      JSON.stringify({bin: './vitest.mjs'}),
-    )
-    writeFileSync(
-      join(vitest, 'vitest.mjs'),
-      `process.argv[2]='vitest';await import(${JSON.stringify(stageFile)})`,
-    )
-    writeFileSync(
-      join(bin, 'adb'),
-      `#!${process.execPath}
+      )
+      const vitest = join(directory, 'node_modules/vitest')
+      mkdirSync(vitest, {recursive: true})
+      writeFileSync(
+        join(vitest, 'package.json'),
+        JSON.stringify({bin: './vitest.mjs'}),
+      )
+      writeFileSync(
+        join(vitest, 'vitest.mjs'),
+        `process.argv[2]='vitest';await import(${JSON.stringify(stageFile)})`,
+      )
+      writeFileSync(
+        join(bin, 'adb'),
+        `#!${process.execPath}
 const fs=require('node:fs')
 if(process.argv.slice(2).join(' ')==='logcat -v time') {fs.appendFileSync(${JSON.stringify(pids)},'logcat '+process.pid+' '+process.ppid+'\\n');setInterval(()=>{},1000)}
 `,
-    )
-    chmodSync(join(bin, 'adb'), 0o755)
-    const bootstrap = join(directory, 'run.mjs')
-    writeFileSync(
-      bootstrap,
-      `process.argv=[process.argv[0],${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))},'run','foo','--keyboard','en','--page-dir','.','--config','foo','--project','foo','--out-dir','out'];await import(${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))})
-`,
-    )
-    const child = spawn(process.execPath, ['--import', loader, bootstrap], {
-      cwd: directory,
-      detached: true,
-      stdio: 'ignore',
-      env: {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        NODE_PATH: '',
-        NODE_OPTIONS: `--import=${loader}`,
-      },
-    })
-    await vi.waitFor(
-      () =>
-        expect(readFileSync(pids, 'utf8').includes('descendant ')).toEqual(
-          true,
-        ),
-      {timeout: 5000},
-    )
-    const killedAt = Date.now()
-    const remaining = (seconds: number) =>
-      Math.max(1, killedAt + seconds * 1000 + 1000 - Date.now())
-    process.kill(-child.pid!, 'SIGKILL')
-    const started = readFileSync(pids, 'utf8')
-      .trim()
-      .split('\n')
-      .map((line) => line.split(' '))
-    const serve = started.find(([name]) => name === 'serve')!
-    await vi.waitFor(
-      () => expect(processAlive(Number(serve[1]))).toEqual(false),
-      {timeout: remaining(RUN_TEST_KILL_SECONDS)},
-    )
-    const stagePids = started
-      .filter(
-        ([name]) =>
-          name === 'vitest' || name === 'descendant' || name === 'serve',
       )
-      .map(([, pid]) => Number(pid))
-    await vi.waitFor(
-      () => expect(stagePids.filter((pid) => processAlive(pid))).toEqual([]),
-      {timeout: remaining(cap + RUN_TEST_KILL_SECONDS)},
-    )
-    const recorder = started.find(([name]) => name === 'logcat')!
-    expect(processAlive(Number(recorder[2]))).toEqual(true)
-    expect(
-      readFileSync(`/proc/${recorder[2]}/cmdline`, 'utf8').includes(
-        '/run/logcat.ts',
-      ),
-    ).toEqual(true)
-    await vi.waitFor(
-      () => expect(processAlive(Number(recorder[1]))).toEqual(false),
-      {timeout: remaining(logcatBound)},
-    )
-  } finally {
-    if (existsSync(pids)) {
-      for (const line of readFileSync(pids, 'utf8').trim().split('\n')) {
-        const pid = Number(line.split(' ')[1])
-        try {
-          process.kill(pid, 'SIGKILL')
-        } catch {}
+      chmodSync(join(bin, 'adb'), 0o755)
+      const bootstrap = join(directory, 'run.mjs')
+      writeFileSync(
+        bootstrap,
+        `process.argv=[process.argv[0],${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))},'run','foo','--keyboard','en','--page-dir','.','--config','foo','--project','foo','--out-dir','out'];await import(${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))})
+`,
+      )
+      const child = spawn(process.execPath, ['--import', loader, bootstrap], {
+        cwd: directory,
+        detached: true,
+        stdio: 'ignore',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          NODE_PATH: '',
+          NODE_OPTIONS: `--import=${loader}`,
+        },
+      })
+      await vi.waitFor(
+        () =>
+          expect(readFileSync(pids, 'utf8').includes('descendant ')).toEqual(
+            true,
+          ),
+        {timeout: 5000},
+      )
+      const killedAt = Date.now()
+      const remaining = (seconds: number) =>
+        Math.max(1, killedAt + seconds * 1000 + 1000 - Date.now())
+      process.kill(-child.pid!, 'SIGKILL')
+      const started = readFileSync(pids, 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => line.split(' '))
+      const serve = started.find(([name]) => name === 'serve')!
+      await vi.waitFor(
+        () => expect(processAlive(Number(serve[1]))).toEqual(false),
+        {timeout: remaining(RUN_TEST_KILL_SECONDS)},
+      )
+      const stagePids = started
+        .filter(
+          ([name]) =>
+            name === 'vitest' || name === 'descendant' || name === 'serve',
+        )
+        .map(([, pid]) => Number(pid))
+      await vi.waitFor(
+        () => expect(stagePids.filter((pid) => processAlive(pid))).toEqual([]),
+        {timeout: remaining(cap + RUN_TEST_KILL_SECONDS)},
+      )
+      const recorder = started.find(([name]) => name === 'logcat')!
+      expect(processAlive(Number(recorder[2]))).toEqual(true)
+      expect(
+        readFileSync(`/proc/${recorder[2]}/cmdline`, 'utf8').includes(
+          '/run/logcat.ts',
+        ),
+      ).toEqual(true)
+      await vi.waitFor(
+        () => expect(processAlive(Number(recorder[1]))).toEqual(false),
+        {timeout: remaining(logcatBound)},
+      )
+    } finally {
+      if (existsSync(pids)) {
+        for (const line of readFileSync(pids, 'utf8').trim().split('\n')) {
+          const pid = Number(line.split(' ')[1])
+          try {
+            process.kill(pid, 'SIGKILL')
+          } catch {}
+        }
       }
+      rmSync(directory, {recursive: true, force: true})
     }
-    rmSync(directory, {recursive: true, force: true})
-  }
-}, 110_000)
+  },
+  orphanTestTimeout,
+)
 
 describe('thumbjar run', () => {
   test('prepares the language it is given and runs only the file it is given, under that file’s cap', () => {
