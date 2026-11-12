@@ -1,5 +1,28 @@
 # Changelog
 
+## 8.2.13
+
+### Patch Changes
+
+- [#3606](https://github.com/portabletext/editor/pull/3606) [`f21cacd`](https://github.com/portabletext/editor/commit/f21cacd644160e6748e1872afc295f65c1c73c52) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate the `hotkeys`, `onCopy`, `onCut`, and `onPaste` props
+  
+  The `hotkeys`, `onCopy`, `onCut`, and `onPaste` props on `PortableTextEditable` are deprecated in favor of `keyboard.keydown`, `clipboard.copy`, `clipboard.cut`, and `clipboard.paste` Behaviors, respectively. The props keep working.
+
+- [#3620](https://github.com/portabletext/editor/pull/3620) [`5d069dc`](https://github.com/portabletext/editor/commit/5d069dcf1f918a271e0064e1923d511e9680e75a) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate the `onBeforeInput` prop
+  
+  The `onBeforeInput` prop on `PortableTextEditable` is deprecated in favor of a Behavior on the event to intercept, or a `beforeinput` listener on a parent element. The prop keeps working.
+
+- [#3613](https://github.com/portabletext/editor/pull/3613) [`262ff32`](https://github.com/portabletext/editor/commit/262ff329d1d1311776b444db6f9f160ec4fae8ca) Thanks [@christianhg](https://github.com/christianhg)! - fix: deprecate the `selection` prop
+  
+  The `selection` prop on `PortableTextEditable` is deprecated in favor of sending a `select` event when the editor emits `ready`. The prop keeps working.
+
+- [#3621](https://github.com/portabletext/editor/pull/3621) [`5502ad2`](https://github.com/portabletext/editor/commit/5502ad2253dfa367477f32010905f4c4272835d0) Thanks [@christianhg](https://github.com/christianhg)! - fix: preserve arrays in deep unsets and expand tuple ranges
+  
+  A remote unset whose path continues past an array with a property name, such as `marks` followed by `"1:"`, turned the array into an object, and the editor crashed when it rendered the span. The array is now left unchanged. A remote unset whose last segment is an index range, such as `[1, '']`, removes the items it covers the way Content Lake does.
+- Updated dependencies [[`ee00bd0`](https://github.com/portabletext/editor/commit/ee00bd04df1b2b00af581a2a48ad029cff505e48)]:
+  - @portabletext/patches@3.0.5
+  - @portabletext/repair@1.0.3
+
 ## 8.2.12
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.5
+
+### Patch Changes
+
+- [#3610](https://github.com/portabletext/editor/pull/3610) [`ee00bd0`](https://github.com/portabletext/editor/commit/ee00bd04df1b2b00af581a2a48ad029cff505e48) Thanks [@christianhg](https://github.com/christianhg)! - fix: skip `null` items when `applyAll` looks an item up by `_key`
+  
+  A patch that addresses an array item by `_key` threw when the array also held a `null` item. `applyAll` now skips items that aren't objects and applies the patch to the keyed item, as Sanity does.
+
 ## 3.0.4
 
 ### Patch Changes
