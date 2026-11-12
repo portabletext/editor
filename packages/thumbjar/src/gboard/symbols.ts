@@ -24,12 +24,12 @@ export const TEXT_SYMBOLS = ['-', ' ']
  * `Space` does: Gboard returns to the letters by itself after it (the fail dump of a device run shows the
  * letter layout and the page text `- `). Every other key keeps its layout.
  */
-const LAYOUTS: Record<
+export const LAYOUTS: Record<
   RunOnDeviceOptions['keyboard'],
   Record<
     string,
     {
-      keys: Record<string, {label: string; to?: string}>
+      keys: Record<string, {label: string; to?: string; popup?: string[]}>
       next: Record<string, string>
     }
   >
@@ -37,7 +37,10 @@ const LAYOUTS: Record<
   en: {
     letters: {keys: {}, next: {symbols: 'Symbol keyboard'}},
     symbols: {
-      keys: {'-': {label: 'Dash'}, ' ': {label: 'Space', to: 'letters'}},
+      keys: {
+        '-': {label: 'Dash', popup: ['—', '_', '–', '·']},
+        ' ': {label: 'Space', to: 'letters'},
+      },
       next: {letters: 'Letter keyboard'},
     },
   },
@@ -49,7 +52,7 @@ const LAYOUTS: Record<
       next: {richSymbols: '記号キーボード', letters: 'かな入力キーボード'},
     },
     richSymbols: {
-      keys: {'-': {label: 'ダッシュ'}},
+      keys: {'-': {label: 'ダッシュ', popup: ['・', '–', '_', '—']}},
       next: {pad: '文字キーボード'},
     },
   },

@@ -115,7 +115,22 @@ export function summaryLines(
       ? `${names.length} ${outcome} (${names.join(', ')})`
       : `0 ${outcome}`
   })
+  const mistaps = new Map<string, number>()
+  for (const run of runs) {
+    if (run.mistapRetries) {
+      mistaps.set(run.test, (mistaps.get(run.test) ?? 0) + run.mistapRetries)
+    }
+  }
+  const retryCount = [...mistaps.values()].reduce(
+    (total, count) => total + count,
+    0,
+  )
   const notes = [
+    ...(retryCount > 0
+      ? [
+          `${retryCount} mistap retries (${[...mistaps].map(([name, count]) => `"${name}": ${count}`).join(', ')})`,
+        ]
+      : []),
     ...(runs.some((run) => run.deviceAnswered) ? [DEVICE_ANSWERED_NOTE] : []),
     ...(runs.some((run) => run.deviceUnconfirmed)
       ? [DEVICE_UNCONFIRMED_NOTE]

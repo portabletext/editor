@@ -36,6 +36,13 @@ const device = vi.hoisted(() => {
     keyboard: 'en' as 'en' | 'ja',
     layout: 'letters' as Layout,
     text: '',
+    recordEvents: false,
+    beforeinputEvents: undefined as
+      | Array<{type: string; inputType: string; data: string}>
+      | undefined,
+    events: [] as Array<{type: string; inputType: string; data: string}>,
+    typedOverrides: [] as Array<string | undefined>,
+    rewrittenText: undefined as string | undefined,
     composing: '',
     focused: true,
     /** The candidate the strip offers once letters are composing, none when `undefined`. */
@@ -290,6 +297,7 @@ function deviceAnswer(args: string[]): ProcessAnswer {
     device.text =
       url === undefined ? '' : (new URL(url).searchParams.get('prefix') ?? '')
     device.composing = ''
+    device.events = []
     device.focused = true
     if (device.chromePid === 0) {
       device.chromePid = device.nextPid
@@ -389,6 +397,11 @@ function press(xCoordinate: number, yCoordinate: number): void {
   }
   if (key.id === 'key_pos_ime_action' || key.id === 'key_pos_space') {
     const separator = key.id === 'key_pos_space' ? ' ' : '\n'
+    device.events.push({
+      type: 'beforeinput',
+      inputType: 'insertText',
+      data: separator,
+    })
     device.text += device.composing === '' ? separator : device.composing
     device.composing = ''
     if (
@@ -407,7 +420,15 @@ function press(xCoordinate: number, yCoordinate: number): void {
     device.composing = ''
     return
   }
-  const typed = TYPED[key.label] ?? (key.label.length === 1 ? key.label : '')
+  const typed =
+    device.typedOverrides[device.attempt - 1] ??
+    TYPED[key.label] ??
+    (key.label.length === 1 ? key.label : '')
+  device.events.push({
+    type: 'beforeinput',
+    inputType: 'insertText',
+    data: typed,
+  })
   if (device.keyboard === 'ja' && device.layout === 'letters') {
     device.composing += typed.toLowerCase()
     return
@@ -488,8 +509,15 @@ function pageReply(expression: string): unknown {
     if (lostFrom !== undefined && device.reads >= lostFrom) {
       throw new Error(`read ${device.reads} of the page failed`)
     }
-    const text = device.text + device.composing
-    const state = {text, events: []}
+    const text = device.rewrittenText ?? device.text + device.composing
+    const state = {
+      text,
+      events: device.recordEvents
+        ? device.events.length > 0
+          ? (device.beforeinputEvents ?? device.events)
+          : []
+        : [],
+    }
     if (expression === 'window.__state()') {
       return state
     }

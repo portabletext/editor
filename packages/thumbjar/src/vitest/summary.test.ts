@@ -62,3 +62,19 @@ describe(summaryLines.name, () => {
     )
   })
 })
+
+test('prints every mistap retry and its test name under either driver', () => {
+  expect(
+    summaryLines(
+      'a.test.ts',
+      [],
+      [
+        {test: 'symbol', fails: false, state: 'complete', mistapRetries: 1},
+        {test: 'digit', fails: false, state: 'inconclusive', mistapRetries: 1},
+        {test: 'symbol', fails: false, state: 'complete', mistapRetries: 1},
+      ],
+    ),
+  ).toEqual(
+    '`a.test.ts`: 0 passed, 0 failed, 0 expected failure, 0 inconclusive, 0 device offline, 0 driver fault\n\n3 mistap retries ("symbol": 2, "digit": 1)\n',
+  )
+})

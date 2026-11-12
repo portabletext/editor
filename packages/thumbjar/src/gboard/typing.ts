@@ -55,7 +55,7 @@ import type {
 import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './field.ts'
 import {packageKeys, packageNodes, type PackageNode} from './hierarchy.ts'
 import {LETTERS} from './support.ts'
-import {TEXT_SYMBOLS, typeSymbols} from './symbols.ts'
+import {LAYOUTS, TEXT_SYMBOLS, typeSymbols} from './symbols.ts'
 
 export {adbLostDevice, type AdbLoss} from '../device/adb.ts'
 
@@ -104,6 +104,8 @@ export type Typed = {
   /** `compositionstart` events while each word was typed and committed. */
   compositionstartPerWord: number[]
 }
+
+export class MistapError extends Error {}
 
 /** The keys the driver tapped in one step and the events the page recorded during it. */
 export type StepTaps = {keys: string[]; events: PageEvent[]}
@@ -266,6 +268,9 @@ export async function runInChrome(
         )
         .join(''),
   )
+  for (const record of records) {
+    throwOnSymbolMistap(record, keyboard)
+  }
   return run
 }
 
@@ -676,9 +681,56 @@ async function runStep(
 function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
   const digit = unexpectedDigit(text, inputs)
   if (digit !== undefined) {
-    throw new Error(
+    throw new MistapError(
       `mistap: digit ${digit} in typed text ${pyRepr(text)} that neither the prefix nor the letters hold`,
     )
+  }
+}
+
+function throwOnSymbolMistap(
+  record: StepRecord,
+  keyboard: RunOnDeviceOptions['keyboard'],
+): void {
+  const keys = record.keys ?? []
+  const beforeinputs = record.events.filter(
+    (event) => event.type === 'beforeinput',
+  )
+  if (
+    keys.length !== beforeinputs.length ||
+    beforeinputs.some(
+      (event) =>
+        event.inputType !== 'insertText' ||
+        typeof event.data !== 'string' ||
+        [...event.data].length !== 1,
+    )
+  ) {
+    return
+  }
+  const pairs = keys.map((key, index) => {
+    const entry = Object.values(LAYOUTS[keyboard])
+      .flatMap((layout) => Object.entries(layout.keys))
+      .find(([character]) => character === key)?.[1]
+    return {key, entry, data: beforeinputs[index]!.data}
+  })
+  if (
+    pairs.some(
+      ({key, entry, data}) =>
+        typeof data !== 'string' ||
+        (data !== key && !entry?.popup?.includes(data)),
+    )
+  ) {
+    return
+  }
+  for (const {key, entry, data} of pairs) {
+    if (
+      typeof data === 'string' &&
+      data !== key &&
+      entry?.popup?.includes(data)
+    ) {
+      throw new MistapError(
+        `mistap: key ${pyRepr(entry.label)} typed ${pyRepr(data)} instead of ${pyRepr(key)}`,
+      )
+    }
   }
 }
 
