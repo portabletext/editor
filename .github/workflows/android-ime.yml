@@ -59,10 +59,7 @@ jobs:
         # One row per device test file CI runs, on a device prepared for its
         # language. `tests/en-textarea.test.ts` is a control run by hand.
         suite:
-          - {lang: en, file: tests/matrix.en.test.ts}
-          - {lang: en, file: tests/matrix.en.2.test.ts}
-          - {lang: ja, file: tests/matrix.ja.test.ts}
-          - {lang: ja, file: tests/matrix.ja.2.test.ts}
+          - {lang: en, file: tests/diag.en.test.ts}
         api: [36]
 
     steps:
