@@ -108,10 +108,17 @@ if(process.argv.slice(2).join(' ')==='logcat -v time') {fs.appendFileSync(${JSON
         },
       })
       await vi.waitFor(
-        () =>
-          expect(readFileSync(pids, 'utf8').includes('descendant ')).toEqual(
-            true,
-          ),
+        () => {
+          const started = readFileSync(pids, 'utf8')
+            .trim()
+            .split('\n')
+            .map((line) => line.split(' ')[0])
+          expect(
+            ['serve', 'vitest', 'descendant', 'logcat'].every((name) =>
+              started.includes(name),
+            ),
+          ).toEqual(true)
+        },
         {timeout: 5000},
       )
       const killedAt = Date.now()
