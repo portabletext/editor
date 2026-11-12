@@ -12,6 +12,7 @@ export async function execute(
   command: string,
   args: string[],
   options: {
+    env?: NodeJS.ProcessEnv
     seconds?: number
     group?: boolean
     collect?: boolean
@@ -80,6 +81,7 @@ export async function execute(
                 : {seconds: options.seconds}),
               ...(options.signal === undefined ? {} : {signal: options.signal}),
             }),
+        ...(options.env === undefined ? {} : {env: options.env}),
         killAfter: options.killAfter,
         killWait: KILL_GRACE_SECONDS,
         output: descriptor ?? 'pipe',
@@ -176,4 +178,21 @@ export function entry(name: string) {
       import.meta.resolve('thumbjar/package.json'),
     ),
   )
+}
+
+export function deviceEnvironment(options: {
+  keyboard: string
+  out: string
+  pageUrl: string
+  port: string
+  booted: number
+}): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    THUMBJAR_KEYBOARD: options.keyboard,
+    THUMBJAR_OUT_DIR: options.out,
+    THUMBJAR_PAGE_URL: options.pageUrl,
+    THUMBJAR_PAGE_PORT: options.port,
+    THUMBJAR_BOOTED: String(options.booted),
+  }
 }

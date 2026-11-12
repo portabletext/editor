@@ -37,7 +37,8 @@ import {
 import {
   Deadline,
   entry,
-  execute,
+  execute as executeChild,
+  deviceEnvironment,
   killGroup,
   termination,
   within,
@@ -106,6 +107,9 @@ export async function prepare(
   } = {},
 ): Promise<number> {
   const {keyboard, out, pageUrl, port, booted} = options
+  const env = deviceEnvironment(options)
+  const execute: typeof executeChild = (command, args, options) =>
+    executeChild(command, args, {...options, env})
   mkdirSync(out, {recursive: true})
   const stop = termination()
   const sleep =
@@ -253,6 +257,7 @@ export async function prepare(
       try {
         reader = spawn(process.execPath, [entry('prepare/capture')], {
           detached: true,
+          env,
           stdio: ['ignore', descriptor, descriptor, 'ipc'],
         })
       } finally {
@@ -369,7 +374,7 @@ export async function prepare(
             prepDeadlines.diagnose.seconds,
             prepDeadlines.diagnose.killAfter,
             signal,
-            (diagnoseSignal) => diagnose(out, diagnoseSignal),
+            (diagnoseSignal) => diagnose(out, diagnoseSignal, env),
           )
         } catch (error) {
           signal.throwIfAborted()

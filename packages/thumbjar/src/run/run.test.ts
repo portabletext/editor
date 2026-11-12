@@ -99,6 +99,11 @@ if(process.argv.slice(2).join(' ')==='logcat -v time') {fs.appendFileSync(${JSON
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
           NODE_PATH: '',
+          THUMBJAR_KEYBOARD: undefined,
+          THUMBJAR_OUT_DIR: undefined,
+          THUMBJAR_PAGE_URL: undefined,
+          THUMBJAR_PAGE_PORT: undefined,
+          THUMBJAR_BOOTED: undefined,
           NODE_OPTIONS: `--import=${loader}`,
         },
       })
@@ -705,6 +710,11 @@ esac
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
           NODE_PATH: '',
+          THUMBJAR_KEYBOARD: undefined,
+          THUMBJAR_OUT_DIR: undefined,
+          THUMBJAR_PAGE_URL: undefined,
+          THUMBJAR_PAGE_PORT: undefined,
+          THUMBJAR_BOOTED: undefined,
           NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${join(directory, 'hooks.mjs')}`,
         },
       },
@@ -808,6 +818,11 @@ esac
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
           NODE_PATH: '',
+          THUMBJAR_KEYBOARD: undefined,
+          THUMBJAR_OUT_DIR: undefined,
+          THUMBJAR_PAGE_URL: undefined,
+          THUMBJAR_PAGE_PORT: undefined,
+          THUMBJAR_BOOTED: undefined,
           NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${join(directory, 'hooks.mjs')}`,
         },
       },
@@ -859,12 +874,36 @@ function runBootstrap(
     missingVitest?: boolean
   },
 ) {
+  writeFileSync(
+    join(directory, 'environment.mjs'),
+    `import {deepStrictEqual} from 'node:assert'
+const keys=['THUMBJAR_RUN_CAP','THUMBJAR_RUN_CHECK','THUMBJAR_KEYBOARD','THUMBJAR_OUT_DIR','THUMBJAR_PAGE_URL','THUMBJAR_PAGE_PORT','THUMBJAR_BOOTED']
+deepStrictEqual(Object.fromEntries(keys.map(key=>[key,process.env[key]??null])),{
+  THUMBJAR_RUN_CAP:${JSON.stringify(fileURLToPath(new URL('cap.ts', import.meta.url)))},
+  THUMBJAR_RUN_CHECK:${JSON.stringify(fileURLToPath(new URL('check.ts', import.meta.url)))},
+  THUMBJAR_KEYBOARD:null,THUMBJAR_OUT_DIR:null,THUMBJAR_PAGE_URL:null,THUMBJAR_PAGE_PORT:null,THUMBJAR_BOOTED:null
+})
+`,
+  )
   const dispatch = join(directory, 'dispatch.mjs')
   const fixture = join(directory, 'bin/commands.sh')
   writeFileSync(
     dispatch,
-    `import {spawnSync} from 'node:child_process'
-const result = spawnSync('/bin/bash', [${JSON.stringify(fixture)}, 'exec', 'thumbjar', ...process.argv.slice(2)], {stdio: 'inherit'})
+    `import ${JSON.stringify(join(directory, 'environment.mjs'))}
+import {spawnSync} from 'node:child_process'
+import {deepStrictEqual} from 'node:assert'
+import {join, relative} from 'node:path'
+const args=process.argv.slice(2)
+const out=join(process.cwd(),'android/out')
+if(args[0]==='serve'){
+  deepStrictEqual(args[1],join(process.cwd(),'android/dist'))
+  args[1]=relative(process.cwd(),args[1])
+}else{
+  const index=args.indexOf('--out-dir')+1
+  deepStrictEqual(args[index],out)
+  args[index]=relative(process.cwd(),args[index])
+}
+const result = spawnSync('/bin/bash', [${JSON.stringify(fixture)}, 'exec', 'thumbjar', ...args], {stdio: 'inherit'})
 process.exit(result.status ?? 1)
 `,
   )
@@ -876,7 +915,8 @@ process.exit(result.status ?? 1)
   )
   writeFileSync(
     join(vitest, 'vitest.mjs'),
-    `import {spawnSync} from 'node:child_process'
+    `import ${JSON.stringify(join(directory, 'environment.mjs'))}
+import {spawnSync} from 'node:child_process'
 const result = spawnSync('/bin/bash', [${JSON.stringify(fixture)}, 'exec', 'vitest', ...process.argv.slice(2)], {stdio: 'inherit'})
 process.exit(result.status ?? 1)
 `,
