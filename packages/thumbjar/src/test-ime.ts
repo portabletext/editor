@@ -97,6 +97,19 @@ export async function openTestImePage(url: string): Promise<void> {
     phase(`test IME: focused by script after the tap failed`)
   }
   await cdpEval(FOCUS_FIELD)
+  if ((await imeCommand('state')) === 'state:none') {
+    const started = Date.now()
+    await adb(['shell', 'input', 'keyevent', 'KEYCODE_BACK'])
+    if ((await cdpEval(`location.href`)) !== url) await openTestImePage(url)
+    await cdpEval(FOCUS_FIELD)
+    await vi.waitFor(
+      async () => {
+        expect(await imeCommand('state')).toMatch(/^state:-?\d+:-?\d+:/)
+      },
+      {timeout: 10_000, interval: 250},
+    )
+    phase(`test IME: connected after Back in ${Date.now() - started}ms`)
+  }
 }
 
 export async function readImeSnapshot(): Promise<unknown> {
