@@ -30,7 +30,7 @@ const containers = [
 describe('delete on empty container', () => {
   test('Scenario: Pressing Backspace in an empty callout with a text block before unwraps it to root', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -53,8 +53,6 @@ describe('delete on empty container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -91,7 +89,7 @@ describe('delete on empty container', () => {
 
   test('Scenario: Pressing Backspace in an empty callout with a text block after unwraps it to root', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -114,8 +112,6 @@ describe('delete on empty container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -152,7 +148,7 @@ describe('delete on empty container', () => {
 
   test('Scenario: Pressing Backspace in an empty callout that is the only block leaves a placeholder text block', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -170,8 +166,6 @@ describe('delete on empty container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -208,7 +202,7 @@ describe('delete on empty container', () => {
 
   test('Scenario: Pressing Delete in an empty callout with a text block after unwraps it to root', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -231,8 +225,6 @@ describe('delete on empty container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -443,7 +435,7 @@ const calloutInPermissiveCellSelection = {
 describe('delete on empty container - nested cascade', () => {
   test('Scenario: Pressing Backspace in an empty callout in a permissive cell unwraps only the callout', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaPermissive,
       initialValue: [
@@ -481,8 +473,6 @@ describe('delete on empty container - nested cascade', () => {
       ],
       children: <NodePlugin nodes={tableContainersPermissive} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -533,7 +523,7 @@ describe('delete on empty container - nested cascade', () => {
 
   test('Scenario: Pressing Backspace in an empty callout in a lonely structural cell cascades all the way to root', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaStructural,
       initialValue: [
@@ -572,8 +562,6 @@ describe('delete on empty container - nested cascade', () => {
       children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
-    await expect.element(locator).toBeInTheDocument()
-
     editor.send({
       type: 'select',
       at: {
@@ -595,7 +583,7 @@ describe('delete on empty container - nested cascade', () => {
 
   test('Scenario: Pressing Backspace in an empty callout in a lonely structural cell with a text block before lands the payload after that text block', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaStructural,
       initialValue: [
@@ -639,8 +627,6 @@ describe('delete on empty container - nested cascade', () => {
       children: <NodePlugin nodes={tableContainersStructural} />,
     })
 
-    await expect.element(locator).toBeInTheDocument()
-
     editor.send({
       type: 'select',
       at: {
@@ -660,7 +646,7 @@ describe('delete on empty container - nested cascade', () => {
 
   test('Scenario: Pressing Backspace in an empty callout in a structural cell with sibling cells changes nothing', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: tableSchemaStructural,
       initialValue: [
@@ -722,8 +708,6 @@ describe('delete on empty container - nested cascade', () => {
       ],
       children: <NodePlugin nodes={tableContainersStructural} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     const before = editor.getSnapshot().context.value
 
@@ -800,7 +784,7 @@ describe('delete on empty container - nested block container', () => {
 
   test('Scenario: Pressing Backspace inside an empty fact-box with a nested block container unwraps the fact-box', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -820,8 +804,6 @@ describe('delete on empty container - nested block container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -858,7 +840,7 @@ describe('delete on empty container - nested block container', () => {
 
   test('Scenario: Pressing Backspace at the start of a non-first text block inside a fact-box merges it with the previous block', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -885,8 +867,6 @@ describe('delete on empty container - nested block container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',

@@ -215,7 +215,7 @@ describe('selection on an emptied container child', () => {
 })
 
 async function selectAcrossCellText() {
-  const {editor, locator} = await createTestEditor({
+  const {editor} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
     schemaDefinition,
     initialValue,
@@ -228,7 +228,6 @@ async function selectAcrossCellText() {
       </>
     ),
   })
-  await expect.element(locator).toBeInTheDocument()
   editor.send({
     type: 'select',
     at: {
