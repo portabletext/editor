@@ -34,6 +34,64 @@ describe('the Japanese device tests', () => {
     })
   }, 30_000)
 
+  test('passes every case when Space converts a word to kanji', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'tests/ja.test.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/typing-commits-kanji-with-space.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'passed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: Typing kyou twice into a plain contenteditable',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Typing kyou twice into an empty block',
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: Typing kyou twice after existing text',
+          state: 'passed',
+        },
+      ],
+    })
+  }, 30_000)
+
+  test('fails every case when a tapped kanji candidate remains kana', async () => {
+    expect(
+      await runSuite({
+        root,
+        file: 'tests/ja.test.ts',
+        setupFiles: [
+          'scripts/fixtures/suites/typing-keeps-kana-after-picking-kanji.ts',
+        ],
+      }),
+    ).toEqual({
+      file: 'failed',
+      errors: [],
+      tests: [
+        {
+          name: 'Scenario: Typing kyou twice into a plain contenteditable',
+          state: 'failed',
+        },
+        {
+          name: 'Scenario: Typing kyou twice into an empty block',
+          state: 'failed',
+        },
+        {
+          name: 'Scenario: Typing kyou twice after existing text',
+          state: 'failed',
+        },
+      ],
+    })
+  }, 30_000)
+
   test('fails every case when the text is right but the page recorded no composition', async () => {
     expect(
       await runSuite({
