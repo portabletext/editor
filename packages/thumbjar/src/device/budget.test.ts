@@ -174,3 +174,9 @@ describe(countDeviceTests.name, () => {
     ).toEqual(2)
   })
 })
+
+test('accepts a declared count for data-driven device suites', () => {
+  expect(
+    countDeviceTests('// thumbjar-test-count: 13\nFeature({featureText})'),
+  ).toEqual(13)
+})

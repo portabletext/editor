@@ -823,3 +823,28 @@ describe(recordInput.name, () => {
     })
   })
 })
+
+test('awaits a named page action and rejects inherited action names', async () => {
+  document.body.innerHTML = ''
+  let value = 'foo'
+  recordInput({
+    getText: () => value,
+    getState: () => value,
+    actions: {
+      replace: async (args) => {
+        await Promise.resolve()
+        value = String(args)
+      },
+    },
+  })
+  await window.__action('replace', 'bar')
+  expect(window.__state()).toEqual({
+    text: 'bar',
+    dom: undefined,
+    events: [],
+    state: 'bar',
+  })
+  await expect(window.__action('toString')).rejects.toThrow(
+    'Unknown page action: toString',
+  )
+})

@@ -37,6 +37,9 @@ const device = vi.hoisted(() => {
     layout: 'letters' as Layout,
     text: '',
     recordEvents: false,
+    pageState: undefined as unknown,
+    pageActions: [] as string[],
+    pageActionErrors: [] as unknown[],
     beforeinputEvents: undefined as
       | Array<{type: string; inputType: string; data: string}>
       | undefined,
@@ -484,6 +487,14 @@ function pageReply(expression: string): unknown {
       screenHeight: 800,
     }
   }
+  if (expression.startsWith('window.__action(')) {
+    device.pageActions.push(expression)
+    const error = device.pageActionErrors.shift()
+    if (error !== undefined) {
+      throw error
+    }
+    return undefined
+  }
   if (expression === FIELD_FOCUSED) {
     device.evaluations.push('focused')
     return device.focused
@@ -512,6 +523,7 @@ function pageReply(expression: string): unknown {
     const text = device.rewrittenText ?? device.text + device.composing
     const state = {
       text,
+      ...(device.pageState === undefined ? {} : {state: device.pageState}),
       events: device.recordEvents
         ? device.events.length > 0
           ? (device.beforeinputEvents ?? device.events)

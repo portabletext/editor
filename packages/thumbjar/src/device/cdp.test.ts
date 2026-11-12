@@ -24,6 +24,16 @@ afterEach(() => {
 })
 
 describe(cdpEval.name, () => {
+  test('a page action transport fault is evaluated only once', async () => {
+    const targetLists = stubDroppedTargets()
+    setCurrentUrl(page)
+    await expect(
+      cdpEval('window.__action("select", null)', false),
+    ).rejects.toThrow('target list dropped')
+    expect(targetLists).toEqual(['/json'])
+    expect(forward.calls).toEqual(0)
+  })
+
   test('a reply whose expression threw in the page rejects with the exception, without a second evaluation', async () => {
     const evaluations = stubPage({
       result: {

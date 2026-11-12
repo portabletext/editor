@@ -209,5 +209,9 @@ export const FETCH_U2_JAR_WORST_SECONDS =
  * checks the count against the tests Vitest collects from each file.
  */
 export function countDeviceTests(source: string): number {
+  const declared = /^\/\/ thumbjar-test-count: ([1-9]\d*)$/m.exec(source)
+  if (declared) {
+    return Number(declared[1])
+  }
   return source.match(/^test(\.fails)?\(/gm)?.length ?? 0
 }

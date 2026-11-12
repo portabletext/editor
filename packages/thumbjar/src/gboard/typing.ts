@@ -262,15 +262,17 @@ export async function runInChrome(
   phase(
     `ran ${pyRepr(run.text)} steps=${records.map((record) => `${record.type}:${record.status}`).join('/')}`,
   )
-  throwOnUnexpectedDigit(
-    run.text,
-    prefix +
-      steps
-        .map((step) =>
-          step.type === 'compose' ? (step.letters ?? step.text) : '',
-        )
-        .join(''),
-  )
+  if (!steps.some((step) => step.type === 'page')) {
+    throwOnUnexpectedDigit(
+      run.text,
+      prefix +
+        steps
+          .map((step) =>
+            step.type === 'compose' ? (step.letters ?? step.text) : '',
+          )
+          .join(''),
+    )
+  }
   for (const record of records) {
     throwOnSymbolMistap(record, keyboard)
   }
@@ -654,6 +656,12 @@ async function runStep(
     return device.click(...center)
   }
   switch (step.type) {
+    case 'page':
+      await cdpEval(
+        `window.__action(${JSON.stringify(step.action)}, ${JSON.stringify(step.args ?? null)})`,
+        false,
+      )
+      return undefined
     case 'compose':
       return compose(device, name, result, {
         letters: step.letters ?? step.text,

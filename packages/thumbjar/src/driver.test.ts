@@ -1403,3 +1403,27 @@ test('test.fails cannot hide repeated mistaps', async () => {
     "In \"Scenario: inconclusive _ cannot be an expected failure\" the driver ended inconclusive: mistap: key 'Dash' typed '_' instead of '-'. In \"Scenario: inconclusive 7 cannot be an expected failure\" the driver ended inconclusive: mistap: digit 7 in typed text '7' that neither the prefix nor the letters hold. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.",
   ])
 }, 30_000)
+
+test('page actions share whole-case retry and input boundaries', async () => {
+  expect(
+    await runSuite({
+      root,
+      file: 'src/fixtures/suites/page-actions.ts',
+      setupFiles: ['src/fixtures/suites/gboard-device.ts'],
+      testTimeout: 15_000,
+    }),
+  ).toEqual({
+    file: 'passed',
+    errors: [],
+    tests: [
+      {
+        name: 'Scenario: A page transport fault before input replays the whole case',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: A page transport fault in step five after input in step two is inconclusive',
+        state: 'passed',
+      },
+    ],
+  })
+})

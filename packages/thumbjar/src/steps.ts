@@ -38,7 +38,18 @@ export type EnterStep = {type: 'enter'}
 /** Tap Backspace `times` times, once by default. */
 export type BackspaceStep = {type: 'backspace'; times?: number}
 
-export type Step = ComposeStep | EnterStep | BackspaceStep
+export type Json =
+  | null
+  | boolean
+  | number
+  | string
+  | Json[]
+  | {[key: string]: Json}
+
+/** Call a handler registered by the page, then read the usual step boundary. */
+export type PageStep = {type: 'page'; action: string; args?: Json}
+
+export type Step = ComposeStep | EnterStep | BackspaceStep | PageStep
 
 /**
  * `done` when the step ran, `failed` when it threw, which ends the attempt, and `skipped` for a step that

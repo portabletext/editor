@@ -25,6 +25,10 @@ export function unsupportedReason(
   switch (step.type) {
     case 'compose':
       return unsupportedCompose(step, keyboard)
+    case 'page':
+      return typeof step.action === 'string' && step.action.length > 0
+        ? undefined
+        : 'a `page` step needs a nonempty action name'
     case 'enter':
       return undefined
     case 'backspace':
@@ -68,7 +72,10 @@ function stepType(step: Step): Step['type'] | undefined {
     return undefined
   }
   const type: unknown = step.type
-  return type === 'compose' || type === 'enter' || type === 'backspace'
+  return type === 'compose' ||
+    type === 'enter' ||
+    type === 'backspace' ||
+    type === 'page'
     ? type
     : undefined
 }

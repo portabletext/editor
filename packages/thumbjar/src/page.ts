@@ -1,5 +1,8 @@
+import type {Json} from './steps.ts'
+
 declare global {
   interface Window {
+    __action: (name: string, args?: Json) => Promise<void>
     __state: () => unknown
     __field: () => HTMLElement | null
     /** The field's text and direction-aware selection in UTF-16 offsets, or `null` outside the field. */
@@ -70,15 +73,23 @@ const EVENT_TYPES = [
 export function recordInput({
   getText,
   getState,
+  actions = {},
   field,
 }: {
   /** The text `window.__state()` reports, read when the driver calls it. */
   getText: () => string | null
   /** Optional JSON state read alongside the text; exceptions propagate to the driver. */
   getState?: () => unknown
+  actions?: Record<string, (args: Json | undefined) => void | Promise<void>>
   /** The field to type into and record on, for a page with no editor model of its own. */
   field?: HTMLElement | HTMLTextAreaElement | HTMLInputElement
 }): void {
+  window.__action = async (name, args) => {
+    if (!Object.hasOwn(actions, name)) {
+      throw new Error(`Unknown page action: ${name}`)
+    }
+    await actions[name]!(args)
+  }
   const events: Array<Record<string, unknown>> = []
   const log = document.getElementById('log')
   for (const type of EVENT_TYPES) {
