@@ -2,6 +2,7 @@
 import {expect, vi} from 'vitest'
 import {adb, shellQuote} from './device/adb.ts'
 import {cdpEval, setCurrentUrl} from './device/cdp.ts'
+import {phase} from './device/util.ts'
 import {
   FIELD_EDITABLE,
   FIELD_FOCUSED,
@@ -73,18 +74,28 @@ export async function openTestImePage(url: string): Promise<void> {
     ),
   ]
   await adb(tap)
-  let tapped = 1
-  await vi.waitFor(
-    async () => {
-      if ((await cdpEval(FIELD_FOCUSED)) !== true && tapped < 4) {
-        tapped++
-        await adb(tap)
-      }
-      expect(await cdpEval(FIELD_FOCUSED)).toEqual(true)
-      expect(await imeCommand('state')).toMatch(/^state:/)
-    },
-    {timeout: 20_000, interval: 2_000},
-  )
+  const focused = async () => {
+    expect(await cdpEval(FIELD_FOCUSED)).toEqual(true)
+    expect(await imeCommand('state')).toMatch(/^state:/)
+  }
+  try {
+    await vi.waitFor(focused, {timeout: 6_000, interval: 1_000})
+  } catch {
+    // Record why the tap focused nothing, then focus the field from the page as the Gboard driver does.
+    const diagnosis = await cdpEval(focusDiagnosis(field.x, field.y))
+    phase(`test IME: tap focused nothing ${JSON.stringify(diagnosis)}`)
+    await cdpEval(FOCUS_FIELD)
+    try {
+      await vi.waitFor(focused, {timeout: 10_000, interval: 1_000})
+    } catch (error) {
+      const after = await cdpEval(focusDiagnosis(field.x, field.y))
+      throw new Error(
+        `test IME: field not focused after a tap and a script focus: ${JSON.stringify({tap: diagnosis, script: after})}`,
+        {cause: error},
+      )
+    }
+    phase(`test IME: focused by script after the tap failed`)
+  }
   await cdpEval(FOCUS_FIELD)
 }
 
@@ -139,4 +150,8 @@ async function imeCommand(
   )
     throw new Error(`test IME ${op}: ${result ?? output}`)
   return result
+}
+
+function focusDiagnosis(x: number, y: number): string {
+  return `(() => { const describe = (element) => element ? element.outerHTML.slice(0, 160) : null; const field = window.__field(); const rect = field ? field.getBoundingClientRect() : null; return {field: describe(field), editable: field ? field.isContentEditable : null, active: describe(document.activeElement), hit: describe(document.elementFromPoint(${x}, ${y})), rect: rect ? [rect.left, rect.top, rect.width, rect.height] : null, innerHeight, screenHeight: screen.height, devicePixelRatio, hasFocus: document.hasFocus(), visibility: document.visibilityState} })()`
 }
