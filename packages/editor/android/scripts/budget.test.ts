@@ -19,7 +19,14 @@ describe(countDeviceTests.name, () => {
       reporters: [],
     })
     try {
-      const {testModules} = await vitest.collect()
+      const {testModules} = await vitest.collect(undefined, {
+        staticParse: false,
+      })
+      expect(
+        testModules.flatMap((module) =>
+          module.errors().map((error) => error.message),
+        ),
+      ).toEqual([])
 
       expect(
         Object.fromEntries(
@@ -64,6 +71,7 @@ describe('the workflow', () => {
       {lang: 'en', file: 'tests/en.test.ts'},
       {lang: 'ja', file: 'tests/ja.enter.test.ts'},
       {lang: 'en', file: 'tests/en.enter.test.ts'},
+      {lang: 'en', file: 'tests/en.gherkin.test.ts'},
     ])
   })
 

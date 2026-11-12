@@ -14,6 +14,7 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         editor: page('editor.html'),
+        gherkin: page('gherkin.html'),
         plain: page('plain.html'),
         textarea: page('textarea.html'),
       },
