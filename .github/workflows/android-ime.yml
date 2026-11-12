@@ -250,11 +250,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           pre-emulator-launch-script: |
-            cfg="$HOME/.android/avd/test.avd/config.ini"
-            grep -n "hw.keyboard" "$cfg" || echo "no hw.keyboard line"
-            sed -i "/^hw.keyboard[ =]/d" "$cfg"
-            echo "hw.keyboard=no" >> "$cfg"
-            grep -n "hw.keyboard" "$cfg"
+            sed -i "/^hw.keyboard[ =]/d" "$HOME/.android/avd/test.avd/config.ini"
+            echo "hw.keyboard=no" >> "$HOME/.android/avd/test.avd/config.ini"
+            grep -n "hw.keyboard" "$HOME/.android/avd/test.avd/config.ini"
           working-directory: packages/editor
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
@@ -287,11 +285,9 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           pre-emulator-launch-script: |
-            cfg="$HOME/.android/avd/test.avd/config.ini"
-            grep -n "hw.keyboard" "$cfg" || echo "no hw.keyboard line"
-            sed -i "/^hw.keyboard[ =]/d" "$cfg"
-            echo "hw.keyboard=no" >> "$cfg"
-            grep -n "hw.keyboard" "$cfg"
+            sed -i "/^hw.keyboard[ =]/d" "$HOME/.android/avd/test.avd/config.ini"
+            echo "hw.keyboard=no" >> "$HOME/.android/avd/test.avd/config.ini"
+            grep -n "hw.keyboard" "$HOME/.android/avd/test.avd/config.ini"
           working-directory: packages/editor
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
