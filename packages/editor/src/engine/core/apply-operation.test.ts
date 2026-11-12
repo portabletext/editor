@@ -1,16 +1,9 @@
-import {
-  compileSchema,
-  defineSchema,
-  type PortableTextBlock,
-} from '@portabletext/schema'
+import {type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {createBareEditor} from '../../../test-utils/create-bare-editor.test-util'
 import {withRemoteChanges} from '../../engine-plugins/engine-plugin.remote-changes'
-import {buildIndexMaps} from '../../internal-utils/build-index-maps'
 import {serializePath} from '../../paths/serialize-path'
-import {resolveContainers} from '../../schema/resolve-containers-batch'
-import type {PortableTextEditorEngine} from '../../types/editor-engine'
-import {createEditor} from '../create-editor'
 import {applyOperation} from './apply-operation'
 
 describe(applyOperation.name, () => {
@@ -979,39 +972,4 @@ function textBlock({
       {_key: spanKey, _type: 'span', text: 'foo', marks: [markDefKey]},
     ],
   }
-}
-
-function createBareEditor(
-  value: Array<PortableTextBlock>,
-): PortableTextEditorEngine {
-  const schema = compileSchema(
-    defineSchema({
-      annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
-      blockObjects: [{name: 'image'}],
-      decorators: [{name: 'strong'}, {name: 'em'}],
-    }),
-  )
-  const editor = createEditor() as PortableTextEditorEngine
-  const containers = resolveContainers(schema, [])
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, containers, value}, {blockIndexMap})
-
-  editor.containers = new Map()
-  editor.blockIndexMap = blockIndexMap
-  editor.verifiedUniqueChildGroups = new Set()
-  editor.snapshot = {
-    blockIndexMap,
-    context: {
-      containers,
-      converters: [],
-      keyGenerator: createTestKeyGenerator('generated-'),
-      readOnly: false,
-      schema,
-      selection: null,
-      value,
-    },
-    decoratorState: {},
-  } as PortableTextEditorEngine['snapshot']
-
-  return editor
 }
