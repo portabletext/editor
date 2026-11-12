@@ -13,9 +13,11 @@ export default defineConfig({
     emptyOutDir: true,
     rolldownOptions: {
       input: {
-        editor: page('editor.html'),
-        plain: page('plain.html'),
-        textarea: page('textarea.html'),
+        'editor': page('editor.html'),
+        'plain': page('plain.html'),
+        'prevent': page('prevent.html'),
+        'editor-bold': page('editor-bold.html'),
+        'textarea': page('textarea.html'),
       },
     },
   },
