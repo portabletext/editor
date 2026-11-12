@@ -3,6 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
+import {isTextBlock} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -18,12 +19,14 @@ import {
 } from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
 import {serializePath} from '../../paths/serialize-path'
+import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
 import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
 import {isObject} from '../../traversal/is-object'
+import {isNonArrayObject} from '../../utils/is-non-array-object'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Path} from '../interfaces/path'
@@ -38,6 +41,42 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   entry,
 ) => {
   const [node, path] = entry
+  const arrays: Array<{value: unknown[]; path: Path}> = []
+  if (isEditor(node)) {
+    arrays.push({value: node.snapshot.context.value, path: []})
+  } else if (isTextBlock(editor.snapshot.context, node)) {
+    if (Array.isArray(node.children)) {
+      arrays.push({value: node.children, path: [...path, 'children']})
+    }
+    if (Array.isArray(node.markDefs)) {
+      arrays.push({value: node.markDefs, path: [...path, 'markDefs']})
+    }
+  } else if (isObject(editor.snapshot, node)) {
+    const container = resolveContainerAt(
+      editor.snapshot.context.containers,
+      editor.snapshot.context.value,
+      path,
+    )
+    if (container && 'field' in container) {
+      const value = node[container.field.name]
+      if (Array.isArray(value)) {
+        arrays.push({value, path: [...path, container.field.name]})
+      }
+    }
+  }
+  let removed = false
+  for (const array of arrays) {
+    for (let index = array.value.length - 1; index >= 0; index--) {
+      const child = array.value[index]
+      if (!isNonArrayObject(child)) {
+        editor.apply({type: 'unset', path: [...array.path, index]})
+        removed = true
+      }
+    }
+  }
+  if (removed) {
+    return
+  }
 
   /**
    * Add a placeholder block when the editor is empty
@@ -236,7 +275,7 @@ function getSiblings(
 
   const seenKeys = new Set<string>()
   for (const sibling of siblings) {
-    if (sibling._key === undefined) {
+    if (sibling == null || sibling._key === undefined) {
       continue
     }
     if (seenKeys.has(sibling._key)) {

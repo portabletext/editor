@@ -15,6 +15,7 @@ import {toKeyedPatchPath} from '../../internal-utils/operation-to-patches'
 import {safeStringify} from '../../internal-utils/safe-json'
 import {serializePath} from '../../paths/serialize-path'
 import type {EditorSelection} from '../../types/editor'
+import {isNonArrayObject} from '../../utils/is-non-array-object'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
 import type {EngineOperation} from '../interfaces/operation'
@@ -101,8 +102,9 @@ export function applyOperation(
               frame.kind === 'undo' ||
               frame.kind === 'redo',
           ) &&
+          node != null &&
           node._key !== undefined &&
-          children.some((sibling) => sibling._key === node._key)
+          children.some((sibling) => sibling?._key === node._key)
         ) {
           node = {...node, _key: editor.snapshot.context.keyGenerator()}
           op.node = node
@@ -125,7 +127,7 @@ export function applyOperation(
           op.inverse = {
             type: 'unset',
             path:
-              node._key !== undefined
+              node != null && node._key !== undefined
                 ? replaceLastSegment(path, {_key: node._key})
                 : path,
           }
@@ -220,11 +222,10 @@ export function applyOperation(
 
       if (propertyPath.length === 0) {
         // Full node replacement: replace the node at the path with value
-        if (
-          value !== null &&
-          typeof value === 'object' &&
-          !Array.isArray(value)
-        ) {
+        if (isNonArrayObject(value) || hasRemoteFrame(editor.applyContext)) {
+          if (!isNonArrayObject(value)) {
+            moveSelectionOutOfNode(editor, path)
+          }
           modifyDescendant(editor, nodes, () => {
             return value as Node
           })
@@ -309,70 +310,7 @@ export function applyOperation(
         // `findNearestSpans` anchors on the removed node's position, so the
         // node must still be in the tree (and in `blockIndexMap`) to resolve
         // document order for keyed segments.
-        if (editor.snapshot.context.selection) {
-          let selection: EditorSelection = {
-            ...editor.snapshot.context.selection,
-          }
-
-          // Selection paths are keyed, so key the removed path too. A
-          // numeric segment would neither match the selection in
-          // `transformPoint` nor count as a sibling in `isSiblingPath`.
-          const removedPath = toKeyedPatchPath(
-            editor.snapshot.context.value,
-            path,
-          )
-
-          for (const [point, key] of rangePoints(selection)) {
-            const result = transformPoint(editor.snapshot.context, point, {
-              ...op,
-              path: removedPath,
-            })
-
-            if (result != null) {
-              selection[key] = result
-            } else {
-              // The point sat inside the removed subtree; move it to
-              // the span nearest to the removed node in document
-              // order.
-              const {previousSpan, nextSpan} = findNearestSpans(
-                editor.snapshot,
-                removedPath,
-              )
-
-              const preferNext =
-                nextSpan !== undefined &&
-                (previousSpan === undefined ||
-                  (!isSiblingPath(previousSpan.path, removedPath) &&
-                    commonPath(previousSpan.path, removedPath).length <=
-                      commonPath(nextSpan.path, removedPath).length))
-
-              if (preferNext) {
-                selection[key] = {path: nextSpan.path, offset: 0}
-              } else if (previousSpan) {
-                selection[key] = {
-                  path: previousSpan.path,
-                  offset: previousSpan.node.text.length,
-                }
-              } else {
-                const ownSpan = firstSpanIn(editor.snapshot, removedPath)
-
-                if (!ownSpan) {
-                  selection = null
-                  break
-                }
-
-                selection[key] = {path: ownSpan.path, offset: 0}
-              }
-            }
-          }
-
-          editor.snapshot.context.selection = selection
-            ? {
-                ...selection,
-                backward: isBackwardRange(selection, editor.snapshot.context),
-              }
-            : null
-        }
+        moveSelectionOutOfNode(editor, path)
 
         modifyChildren(editor, target.nodes.slice(0, -1), (children) => {
           const index = removedNode.index
@@ -666,5 +604,69 @@ function deepUnsetObject(
   return {
     ...object,
     [head!]: deepUnsetObject(currentValue as Record<string, unknown>, tail),
+  }
+}
+
+function moveSelectionOutOfNode(editor: Editor, path: Path): void {
+  if (editor.snapshot.context.selection) {
+    let selection: EditorSelection = {
+      ...editor.snapshot.context.selection,
+    }
+
+    // Selection paths are keyed, so key the removed path too. A
+    // numeric segment would neither match the selection in
+    // `transformPoint` nor count as a sibling in `isSiblingPath`.
+    const removedPath = toKeyedPatchPath(editor.snapshot.context.value, path)
+
+    for (const [point, key] of rangePoints(selection)) {
+      const result = transformPoint(editor.snapshot.context, point, {
+        type: 'unset',
+        path: removedPath,
+      })
+
+      if (result != null) {
+        selection[key] = result
+      } else {
+        // The point sat inside the removed subtree; move it to
+        // the span nearest to the removed node in document
+        // order.
+        const {previousSpan, nextSpan} = findNearestSpans(
+          editor.snapshot,
+          removedPath,
+        )
+
+        const preferNext =
+          nextSpan !== undefined &&
+          (previousSpan === undefined ||
+            (!isSiblingPath(previousSpan.path, removedPath) &&
+              commonPath(previousSpan.path, removedPath).length <=
+                commonPath(nextSpan.path, removedPath).length))
+
+        if (preferNext) {
+          selection[key] = {path: nextSpan.path, offset: 0}
+        } else if (previousSpan) {
+          selection[key] = {
+            path: previousSpan.path,
+            offset: previousSpan.node.text.length,
+          }
+        } else {
+          const ownSpan = firstSpanIn(editor.snapshot, removedPath)
+
+          if (!ownSpan) {
+            selection = null
+            break
+          }
+
+          selection[key] = {path: ownSpan.path, offset: 0}
+        }
+      }
+    }
+
+    editor.snapshot.context.selection = selection
+      ? {
+          ...selection,
+          backward: isBackwardRange(selection, editor.snapshot.context),
+        }
+      : null
   }
 }

@@ -8,6 +8,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {getChildren, getNodeChildren} from './get-children'
 import {resolveChildEntryIndex} from './resolve-child-entry-index'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -72,6 +73,9 @@ export function* getNodeDescendants(
   // name is not part of paths. For standalone nodes (a real {_key, _type, ...}
   // passed in by callers like getDirtyPaths), the field name IS part of the
   // path.
+  if (!isNonArrayObject(node)) {
+    return
+  }
   const isRoot = !('_key' in node) && !('_type' in node)
   yield* walkStandalone(context, node, [], isRoot)
 }
@@ -93,6 +97,9 @@ function* walkStandalone(
 
   for (let childIndex = 0; childIndex < next.children.length; childIndex++) {
     const child = next.children[childIndex]!
+    if (!isNonArrayObject(child)) {
+      continue
+    }
     const childPath: Path = isRoot
       ? [nodeSegment(child, childIndex)]
       : [...path, next.fieldName, nodeSegment(child, childIndex)]
@@ -281,7 +288,7 @@ function boundaryChildIndex(
   }
 
   const resolvedIndex = resolveChildEntryIndex(
-    snapshot.blockIndexMap,
+    snapshot,
     children,
     boundary.slice(0, childPathLength),
   )

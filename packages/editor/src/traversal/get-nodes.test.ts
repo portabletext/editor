@@ -4,6 +4,7 @@ import {
   isSpan,
   isTextBlock,
 } from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {
@@ -13,6 +14,7 @@ import {
 import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getNodeDescendants, getNodes} from './get-nodes'
+import {getSibling} from './get-sibling'
 import {
   createNodeTraversalTestbed,
   resolveTestbedContainers,
@@ -21,6 +23,248 @@ import {
 
 describe(getNodes.name, () => {
   const testbed = createNodeTraversalTestbed()
+
+  test('non-object entries are skipped at every depth', () => {
+    const nonObjectValues = [null, false, 0, '', 'oops', 5, true]
+    const nestedBlock = {
+      ...testbed.textBlock1,
+      children: [...testbed.textBlock1.children, ...nonObjectValues],
+    }
+    const rootSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: nonObjectValues as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect([...getNodes(rootSnapshot)]).toEqual([])
+    expect([
+      ...getNodes({
+        context: {...testbed.snapshot.context, value: [nestedBlock]},
+        blockIndexMap: new Map<string, number>(),
+      }),
+    ]).toEqual([
+      {node: nestedBlock, path: [{_key: 'k3'}]},
+      {
+        node: testbed.span1,
+        path: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+      },
+      {
+        node: testbed.stockTicker1,
+        path: [{_key: 'k3'}, 'children', {_key: 'k1'}],
+      },
+      {
+        node: testbed.span2,
+        path: [{_key: 'k3'}, 'children', {_key: 'k2'}],
+      },
+    ])
+  })
+
+  test('numeric boundaries use raw positions around non-objects and keyless nodes', () => {
+    const first = {...testbed.textBlock1, _key: undefined}
+    const second = {...testbed.textBlock2, _key: undefined}
+    const third = {...testbed.cellBlock1, _key: undefined}
+    const siblingSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [first, null, second] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [first, 'oops', second, third] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    const keyedSnapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [
+          testbed.textBlock1,
+          null,
+          testbed.image,
+          testbed.textBlock2,
+        ] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+
+    expect(getSibling(siblingSnapshot, [0], {direction: 'next'})).toEqual({
+      node: second,
+      path: [2],
+    })
+    expect(getSibling(siblingSnapshot, [2], {direction: 'previous'})).toEqual({
+      node: first,
+      path: [0],
+    })
+
+    expect([...getNodes(snapshot, {from: [2], to: [2]})]).toEqual([
+      {node: second, path: [2]},
+    ])
+    expect(getSibling(keyedSnapshot, [2], {direction: 'previous'})).toEqual({
+      node: testbed.textBlock1,
+      path: [{_key: testbed.textBlock1._key}],
+    })
+    expect(getSibling(keyedSnapshot, [2], {direction: 'next'})).toEqual({
+      node: testbed.textBlock2,
+      path: [{_key: testbed.textBlock2._key}],
+    })
+    expect([...getNodes(keyedSnapshot, {from: [2], to: [2]})]).toEqual([
+      {node: testbed.image, path: [{_key: testbed.image._key}]},
+    ])
+    expect([...getNodes(snapshot, {from: [0], to: [2]})]).toEqual([
+      {node: first, path: [0]},
+      {node: second, path: [2]},
+    ])
+  })
+
+  test('numeric boundaries map keyed nodes after non-objects in nested arrays', () => {
+    const afterCodeLineKey = createTestKeyGenerator('after-code-line-')()
+    const codeBlock = {
+      ...testbed.codeBlock,
+      code: [
+        testbed.codeLine1,
+        null,
+        testbed.codeLine2,
+        {...testbed.codeLine1, _key: afterCodeLineKey},
+      ],
+    }
+    const cell1 = {
+      ...testbed.cell1,
+      content: [
+        testbed.cellBlock1,
+        null,
+        testbed.cellBlock2,
+        testbed.cellBlock3,
+      ],
+    }
+    const row1 = {...testbed.row1, cells: [cell1, testbed.cell2]}
+    const table = {...testbed.table, rows: [row1, testbed.row2]}
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [
+          testbed.textBlock1,
+          testbed.image,
+          testbed.textBlock2,
+          codeBlock,
+          table,
+        ] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    const containerPath = [{_key: testbed.codeBlock._key}, 'code', 2] as const
+    const cellPath = [
+      {_key: testbed.table._key},
+      'rows',
+      {_key: testbed.row1._key},
+      'cells',
+      {_key: testbed.cell1._key},
+      'content',
+      2,
+    ] as const
+
+    expect({
+      containerPrevious: getSibling(snapshot, [...containerPath], {
+        direction: 'previous',
+      }),
+      containerRange: [
+        ...getNodes(snapshot, {
+          at: [{_key: testbed.codeBlock._key}],
+          from: [...containerPath],
+          to: [...containerPath],
+        }),
+      ],
+      containerNext: getSibling(snapshot, [...containerPath], {
+        direction: 'next',
+      }),
+      cellPrevious: getSibling(snapshot, [...cellPath], {
+        direction: 'previous',
+      }),
+      cellNext: getSibling(snapshot, [...cellPath], {direction: 'next'}),
+      cellRange: [
+        ...getNodes(snapshot, {
+          at: [
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+          ],
+          from: [...cellPath],
+          to: [...cellPath],
+        }),
+      ],
+    }).toEqual({
+      containerPrevious: {
+        node: testbed.codeLine1,
+        path: [
+          {_key: testbed.codeBlock._key},
+          'code',
+          {_key: testbed.codeLine1._key},
+        ],
+      },
+      containerRange: [
+        {
+          node: testbed.codeLine2,
+          path: [
+            {_key: testbed.codeBlock._key},
+            'code',
+            {_key: testbed.codeLine2._key},
+          ],
+        },
+      ],
+      containerNext: {
+        node: {...testbed.codeLine1, _key: afterCodeLineKey},
+        path: [
+          {_key: testbed.codeBlock._key},
+          'code',
+          {_key: afterCodeLineKey},
+        ],
+      },
+      cellPrevious: {
+        node: testbed.cellBlock1,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell1._key},
+          'content',
+          {_key: testbed.cellBlock1._key},
+        ],
+      },
+      cellNext: {
+        node: testbed.cellBlock3,
+        path: [
+          {_key: testbed.table._key},
+          'rows',
+          {_key: testbed.row1._key},
+          'cells',
+          {_key: testbed.cell1._key},
+          'content',
+          {_key: testbed.cellBlock3._key},
+        ],
+      },
+      cellRange: [
+        {
+          node: testbed.cellBlock2,
+          path: [
+            {_key: testbed.table._key},
+            'rows',
+            {_key: testbed.row1._key},
+            'cells',
+            {_key: testbed.cell1._key},
+            'content',
+            {_key: testbed.cellBlock2._key},
+          ],
+        },
+      ],
+    })
+  })
 
   test('all nodes from root', () => {
     const nodes = [...getNodes(testbed.snapshot)]
@@ -1242,5 +1486,25 @@ describe(`${getNodes.name} with a compact path to a text block inside a field wi
     })
 
     expect(Array.from(getNodes(snapshot, {at: [0, 0]}))).toEqual([])
+  })
+})
+
+test('numeric sibling positions preserve repeated object references', () => {
+  const testbed = createNodeTraversalTestbed()
+  const block = {...testbed.textBlock1, _key: undefined}
+  const snapshot = {
+    context: {
+      ...testbed.snapshot.context,
+      value: [block, block, testbed.textBlock2] as never,
+    },
+    blockIndexMap: new Map<string, number>(),
+  }
+  expect(getSibling(snapshot, [1], {direction: 'previous'})).toEqual({
+    node: block,
+    path: [0],
+  })
+  expect(getSibling(snapshot, [1], {direction: 'next'})).toEqual({
+    node: testbed.textBlock2,
+    path: [{_key: 'k6'}],
   })
 })

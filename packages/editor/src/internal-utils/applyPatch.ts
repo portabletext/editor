@@ -270,7 +270,7 @@ function insertPatch(
     } else {
       const previousItem = items[index - 1]! as Record<string, unknown>
       const previousKey =
-        typeof previousItem['_key'] === 'string'
+        typeof previousItem?.['_key'] === 'string'
           ? previousItem['_key']
           : undefined
 

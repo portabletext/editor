@@ -5,7 +5,11 @@ import {
   textBlockDepthsContainers,
   textBlockDepthsSchemaDefinition,
 } from '../../test-utils/text-block-depths'
+import {safeStringify} from '../internal-utils/safe-json'
+import {getAncestors} from './get-ancestors'
+import {getChildren} from './get-children'
 import {getNode} from './get-node'
+import {hasNode} from './has-node'
 import {
   createNodeTraversalTestbed,
   resolveTestbedContainers,
@@ -531,4 +535,55 @@ describe(`${getNode.name} with a compact path to a text block`, () => {
 
     expect(getNode(snapshot, [0, 'body', 0, 0])).toEqual(undefined)
   })
+})
+
+for (const value of [null, false, 0, '', 'str', 5, true, []]) {
+  test(`${safeStringify(value)} is missing from public node lookups`, () => {
+    const testbed = createNodeTraversalTestbed()
+    const snapshot = {
+      context: {
+        ...testbed.snapshot.context,
+        value: [testbed.textBlock1, value] as never,
+      },
+      blockIndexMap: new Map<string, number>(),
+    }
+    expect(getNode(snapshot, [1])).toEqual(undefined)
+    expect(hasNode(snapshot, [1])).toEqual(false)
+    expect(getNode(snapshot, [1, 'children', 0])).toEqual(undefined)
+    expect(hasNode(snapshot, [1, 'children', 0])).toEqual(false)
+    expect(getChildren(snapshot, [1])).toEqual([])
+    expect(getAncestors(snapshot, [1, 'children', 0])).toEqual([])
+  })
+}
+
+test('children skip non-objects and nested non-objects are missing', () => {
+  const testbed = createNodeTraversalTestbed()
+  const block = {
+    ...testbed.textBlock1,
+    children: [testbed.span1, null, false, 0, '', 'str', 5, true, []],
+  }
+  const snapshot = {
+    context: {
+      ...testbed.snapshot.context,
+      value: [block, null, 'str'] as never,
+    },
+    blockIndexMap: new Map<string, number>(),
+  }
+  expect(getChildren(snapshot, [])).toEqual([
+    {node: block, path: [{_key: 'k3'}]},
+  ])
+  expect(getChildren(snapshot, [0])).toEqual([
+    {node: testbed.span1, path: [{_key: 'k3'}, 'children', {_key: 'k0'}]},
+  ])
+  expect(getNode(snapshot, [0, 'children', 1])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 2])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 3])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 4])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 5])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 6])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 7])).toEqual(undefined)
+  expect(getNode(snapshot, [0, 'children', 8])).toEqual(undefined)
+  expect(hasNode(snapshot, [0, 'children', 1])).toEqual(false)
+  expect(getChildren(snapshot, [0, 'children', 1])).toEqual([])
+  expect(getAncestors(snapshot, [0, 'children', 1, 'children', 0])).toEqual([])
 })
