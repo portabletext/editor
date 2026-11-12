@@ -64,6 +64,7 @@ const CHROME = 'com.android.chrome'
 
 type Keys = Map<string, [number, number]>
 type PageState = {
+  state?: unknown
   text: string | null
   events: PageEvent[]
   [key: string]: unknown
@@ -94,6 +95,8 @@ export type TypeOnDeviceOptions = {
 
 /** What the page held after typing, and how Gboard composed it. */
 export type Typed = {
+  /** The optional page state after typing. */
+  state?: unknown
   /** The text after typing, from `window.__state()`. */
   text: string | null
   /** How each word was committed: its candidate or `space`. */
@@ -145,24 +148,20 @@ export async function typeInChrome(
     connect,
     result,
   )
-  const {picked, stepEnds, text, events, taps} = await runSteps(
-    device,
-    name,
-    result,
-    words,
-    {
-      // A word is read only when the loop reaches it, so a malformed word throws after the words before it are typed.
-      toStep: (word): Step => ({
-        type: 'compose',
-        letters: word.letters,
-        commit:
-          word.candidate === undefined ? 'space' : {candidate: word.candidate},
-      }),
-      boundaries: false,
-      onTaps,
-    },
-  )
+  const outcome = await runSteps(device, name, result, words, {
+    // A word is read only when the loop reaches it, so a malformed word throws after the words before it are typed.
+    toStep: (word): Step => ({
+      type: 'compose',
+      letters: word.letters,
+      commit:
+        word.candidate === undefined ? 'space' : {candidate: word.candidate},
+    }),
+    boundaries: false,
+    onTaps,
+  })
+  const {picked, stepEnds, text, events, taps} = outcome
   const typed: Typed = {
+    ...(Object.hasOwn(outcome, 'state') ? {state: outcome.state} : {}),
     text,
     picked: picked.map((commit) => commit ?? 'space'),
     compositionstart: events.filter(
@@ -220,21 +219,21 @@ export async function runInChrome(
       result,
       hooks?.previousChrome,
     )
-    const {text, selection, events} = await runSteps(
-      device,
-      name,
-      result,
-      steps,
-      {
-        toStep: (step) => step,
-        records,
-        boundaries: true,
-        keyboard,
-        hooks,
-        onTaps,
-      },
-    )
-    run = {steps: records, text, selection, events}
+    const outcome = await runSteps(device, name, result, steps, {
+      toStep: (step) => step,
+      records,
+      boundaries: true,
+      keyboard,
+      hooks,
+      onTaps,
+    })
+    run = {
+      steps: records,
+      text: outcome.text,
+      selection: outcome.selection,
+      events: outcome.events,
+      ...(Object.hasOwn(outcome, 'state') ? {state: outcome.state} : {}),
+    }
   } catch (error) {
     if (records.length > 0) {
       onStepFailure?.(error, records)
@@ -243,6 +242,9 @@ export async function runInChrome(
       if (hooks !== undefined && failed !== undefined) {
         hooks.readAfterFault = async () => {
           const {state, selection, focused} = await readBoundary()
+          if (Object.hasOwn(state, 'state')) {
+            failed.stateAfter = state.state
+          }
           failed.textAfter = state.text
           failed.selectionAfter = selection
           failed.focusedAfter = focused
@@ -488,6 +490,7 @@ async function runSteps<Input>(
     onTaps?: ((taps: StepTaps[]) => void) | undefined
   },
 ): Promise<{
+  state?: unknown
   /** How each `compose` step was committed: its candidate or `space`, `undefined` for any other step. */
   picked: Array<string | undefined>
   /** The page's event count after each step. */
@@ -575,6 +578,7 @@ async function runSteps<Input>(
       type: step.type,
       status: 'done',
       textAfter: after.text,
+      ...(Object.hasOwn(after, 'state') ? {stateAfter: after.state} : {}),
       selectionAfter: last?.selection ?? null,
       focusedAfter: last?.focused ?? null,
       events: entry.events,
@@ -588,6 +592,7 @@ async function runSteps<Input>(
       picked,
       stepEnds,
       text: last.state.text,
+      ...(Object.hasOwn(last.state, 'state') ? {state: last.state.state} : {}),
       selection: last.selection,
       events: last.state.events.slice(firstEnd),
       taps,
@@ -599,6 +604,7 @@ async function runSteps<Input>(
     picked,
     stepEnds,
     text: state.text,
+    ...(Object.hasOwn(state, 'state') ? {state: state.state} : {}),
     selection: null,
     events: state.events,
     taps,

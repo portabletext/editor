@@ -648,6 +648,37 @@ describe(typeInChrome.name, () => {
     ])
   })
 
+  test('returns the final page state after typing', async () => {
+    useGboardTextarea()
+    const opened = fake.opened!
+    fake.opened = (opens) => {
+      opened(opens)
+      const load = fake.pageModule!
+      fake.pageModule = () => {
+        load()
+        const field = document.querySelector('textarea')!
+        recordInput({
+          getText: () => field.value,
+          field,
+          getState: () => ({value: field.value}),
+        })
+      }
+    }
+    const typed = await typeInChrome(
+      'state',
+      {...options, words: [{letters: 'bar'}]},
+      connectGboard,
+    )
+    expect(typed).toEqual({
+      text: 'bar',
+      state: {value: 'bar'},
+      picked: ['space'],
+      compositionstart: 0,
+      nested: 0,
+      compositionstartPerWord: [0],
+    })
+  })
+
   test('the taps handed over list every key sent and the events the page recorded, when the page loses a letter', async () => {
     useGboardTextarea()
     let taps: unknown
@@ -887,6 +918,91 @@ describe(runInChrome.name, () => {
           },
         ],
         text: 'foo\n',
+        selection: {anchor: 4, focus: 4},
+        events: [
+          {
+            type: 'beforeinput',
+            inputType: 'insertLineBreak',
+            data: null,
+            text: 'foo',
+            selection: {anchor: 3, focus: 3},
+            isComposing: false,
+            cancelable: false,
+          },
+          {
+            type: 'input',
+            inputType: 'insertLineBreak',
+            data: null,
+            text: 'foo\n',
+            selection: {anchor: 4, focus: 4},
+            isComposing: false,
+            cancelable: false,
+          },
+        ],
+      },
+    })
+  })
+
+  test('reads page state at the same boundary as text and carries it to the run', async () => {
+    fake.opened = () => {
+      loadGboardTextareaPage('foo', 'en-keyboard.xml')
+      const load = fake.pageModule!
+      fake.pageModule = () => {
+        load()
+        const field = document.querySelector('textarea')!
+        recordInput({
+          getText: () => field.value,
+          field,
+          getState: () => ({value: field.value}),
+        })
+      }
+    }
+
+    const run = await runInChrome(
+      'enter',
+      {...runOptions, prefix: 'foo', steps: [{type: 'enter'}]},
+      connectGboard,
+    )
+
+    expect({
+      taps: fake.timeline.filter((entry) => entry.startsWith('tap')),
+      run,
+    }).toEqual({
+      taps: ['tap 110,60', 'tap 994,2196'],
+      run: {
+        steps: [
+          {
+            type: 'enter',
+            status: 'done',
+            textAfter: 'foo\n',
+            stateAfter: {value: 'foo\n'},
+            selectionAfter: {anchor: 4, focus: 4},
+            focusedAfter: true,
+            keys: ['Enter'],
+            events: [
+              {
+                type: 'beforeinput',
+                inputType: 'insertLineBreak',
+                data: null,
+                text: 'foo',
+                selection: {anchor: 3, focus: 3},
+                isComposing: false,
+                cancelable: false,
+              },
+              {
+                type: 'input',
+                inputType: 'insertLineBreak',
+                data: null,
+                text: 'foo\n',
+                selection: {anchor: 4, focus: 4},
+                isComposing: false,
+                cancelable: false,
+              },
+            ],
+          },
+        ],
+        text: 'foo\n',
+        state: {value: 'foo\n'},
         selection: {anchor: 4, focus: 4},
         events: [
           {

@@ -69,10 +69,13 @@ const EVENT_TYPES = [
  */
 export function recordInput({
   getText,
+  getState,
   field,
 }: {
   /** The text `window.__state()` reports, read when the driver calls it. */
   getText: () => string | null
+  /** Optional JSON state read alongside the text; exceptions propagate to the driver. */
+  getState?: () => unknown
   /** The field to type into and record on, for a page with no editor model of its own. */
   field?: HTMLElement | HTMLTextAreaElement | HTMLInputElement
 }): void {
@@ -149,13 +152,18 @@ export function recordInput({
       : null
   }
   window.__state = field
-    ? () => ({text: getText(), events})
+    ? () => ({
+        text: getText(),
+        events,
+        ...(getState ? {state: getState()} : {}),
+      })
     : () => {
         const fallback = window.__field()
         return {
           text: getText(),
           dom: fallback ? fieldText(fallback) : undefined,
           events,
+          ...(getState ? {state: getState()} : {}),
         }
       }
 }

@@ -7,6 +7,48 @@ afterEach(() => {
 })
 
 describe(recordInput.name, () => {
+  test('reads the optional state on each call', () => {
+    document.body.innerHTML = '<textarea>foo</textarea>'
+    const field = document.querySelector('textarea')!
+    let value = 'foo'
+    recordInput({getText: () => field.value, field, getState: () => ({value})})
+    expect(window.__state()).toEqual({
+      text: 'foo',
+      events: [],
+      state: {value: 'foo'},
+    })
+    value = 'bar'
+    expect(window.__state()).toEqual({
+      text: 'foo',
+      events: [],
+      state: {value: 'bar'},
+    })
+  })
+
+  test('propagates an exception from the state hook', () => {
+    document.body.innerHTML = '<textarea>foo</textarea>'
+    const field = document.querySelector('textarea')!
+    recordInput({
+      getText: () => field.value,
+      field,
+      getState: () => {
+        throw new Error('getState failed')
+      },
+    })
+    expect(() => window.__state()).toThrow(new Error('getState failed'))
+  })
+
+  test('includes null state in document mode', () => {
+    document.body.innerHTML = '<div contenteditable="true">foo</div>'
+    recordInput({getText: () => 'foo', getState: () => null})
+    expect(window.__state()).toEqual({
+      text: 'foo',
+      dom: 'foo',
+      events: [],
+      state: null,
+    })
+  })
+
   test('reports backward textarea selection through `__selection` in document mode', () => {
     document.body.innerHTML = '<textarea>foo😀bar</textarea>'
     const field = document.querySelector('textarea')!

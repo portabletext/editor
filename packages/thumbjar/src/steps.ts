@@ -61,6 +61,8 @@ export type StepStatus = 'done' | 'failed' | 'skipped'
  * record, and every other event is in exactly one.
  */
 export type StepRecord = {
+  /** The optional page state at this boundary; absent when no state could be read. */
+  stateAfter?: unknown
   type: Step['type']
   status: StepStatus
   /** Why the step is not `done`. */
@@ -101,6 +103,8 @@ export type RunOnDeviceOptions = {
 
 /** One record per step and the page's state at the boundary after the last one. */
 export type Run = {
+  /** The optional page state at the last boundary. */
+  state?: unknown
   steps: StepRecord[]
   /** The text at the last boundary. */
   text: string | null
