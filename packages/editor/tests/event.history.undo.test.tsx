@@ -51,21 +51,15 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: y*|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: y*|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: x|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: x|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Undoing one-action action sets', async () => {
@@ -94,9 +88,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: b|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: b|')
   })
 
   test('Scenario: Undoing `insert.text` after `delete`', async () => {
@@ -154,15 +146,11 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: abc|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: abc|')
   })
 
   test('Scenario: Undoing raised action sets', async () => {
@@ -202,9 +190,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: y|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: y|')
   })
 
   test('Scenario: Undoing recursive raises', async () => {
@@ -243,9 +229,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: A lonely `forward` action does not squash the recursive undo stack', async () => {
@@ -281,9 +265,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: A|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: A|')
   })
 
   describe('Scenario Outline: Custom events', () => {
@@ -321,15 +303,11 @@ describe('event.history.undo', () => {
       editor.send({type: 'custom.insert block', text: 'foo'})
       editor.send({type: 'custom.insert block', text: 'bar'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
 
       editor.send({type: 'history.undo'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     test('Scenario: forward', async () => {
@@ -366,15 +344,11 @@ describe('event.history.undo', () => {
       editor.send({type: 'custom.insert block', text: 'foo'})
       editor.send({type: 'custom.insert block', text: 'bar'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
 
       editor.send({type: 'history.undo'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     test('Scenario: raise', async () => {
@@ -411,15 +385,11 @@ describe('event.history.undo', () => {
       editor.send({type: 'custom.insert block', text: 'foo'})
       editor.send({type: 'custom.insert block', text: 'bar'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
 
       editor.send({type: 'history.undo'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
   })
 
@@ -480,31 +450,27 @@ describe('event.history.undo', () => {
     editor.send({type: 'custom.set h1'})
     editor.send({type: 'custom.set h2'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'h2',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'h2',
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'h1',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'h1',
+      },
+    ])
   })
 
   test('Scenario: `forward` in one step, `raise` in another', async () => {
@@ -536,9 +502,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
   })
 
   test('Scenario: `forward` twice in same step', async () => {
@@ -564,9 +528,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: `forward` twice in separate steps', async () => {
@@ -595,9 +557,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
   })
 
   test('Scenario: two `forward`s in separate steps does not squash the undo stack', async () => {
@@ -636,27 +596,19 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ABA|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ABA|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: AB|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: AB|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: A|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: A|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Undo after moving cursor after ended Behavior', async () => {
@@ -688,17 +640,13 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: a|')
 
     await userEvent.keyboard('{ArrowLeft}')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Forwarding `insert.text` preserves undo batching', async () => {
@@ -732,9 +680,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Forwarding `insert.text` with side effect preserves undo batching', async () => {
@@ -778,9 +724,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Forwarding `insert.text` with `raise` preserves undo batching', async () => {
@@ -822,17 +766,13 @@ describe('event.history.undo', () => {
     // First undo reverts the second raise ('!' after 'i')
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: h!i|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: h!i|')
 
     // Second undo reverts the forwarded 'i' and the first raise ('!' after 'h')
     // These merge because the raise's insert.text is adjacent to the forward's
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: h|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: h|')
   })
 
   test('Scenario: Undo after sending `select` after ended Behavior', async () => {
@@ -1113,9 +1053,7 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Remote-fallout normalization is not undoable', async () => {
@@ -1172,8 +1110,6 @@ describe('event.history.undo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(repairedValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(repairedValue)
   })
 })
