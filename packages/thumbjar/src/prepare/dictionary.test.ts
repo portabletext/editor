@@ -1,17 +1,22 @@
-import {copyFileSync, mkdirSync, mkdtempSync, rmSync} from 'node:fs'
+import {spawnSync} from 'node:child_process'
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {describe, expect, test, vi} from 'vitest'
-import * as device from '../device/adb.ts'
+import {describe, expect, test} from 'vitest'
 
-vi.mock(import('../device/adb.ts'), async (importOriginal) => ({
-  ...(await importOriginal()),
-}))
+const cli = fileURLToPath(new URL('dictionary.ts', import.meta.url))
 
 describe('dictionary.ts', () => {
-  test('answers a call without its arguments with a `DICTIONARY FAILED:` line naming its usage, the line `prepare.sh` quotes', async () => {
-    const result = await dictionary([])
+  test('answers a call without its arguments with a `DICTIONARY FAILED:` line naming its usage, the line `prepare.sh` quotes', () => {
+    const result = spawnSync(process.execPath, [cli], {encoding: 'utf8'})
 
     expect({status: result.status, stderr: result.stderr}).toEqual({
       status: 1,
@@ -22,11 +27,9 @@ describe('dictionary.ts', () => {
 })
 
 describe('dictionary.ts wait', () => {
-  test('exits 3 for the recorded boot whose Gboard never loaded the dictionary, with the reason `prepare.sh` quotes', async () => {
+  test('exits 3 for the recorded boot whose Gboard never loaded the dictionary, with the reason `prepare.sh` quotes', () => {
     expect(
-      await waitOnDevice({
-        deviceBootId: '62cd1ade-9b02-4723-ba9e-2749dda3d074',
-      }),
+      waitOnDevice({deviceBootId: '62cd1ade-9b02-4723-ba9e-2749dda3d074'}),
     ).toEqual({
       status: 3,
       reason:
@@ -34,11 +37,9 @@ describe('dictionary.ts wait', () => {
     })
   })
 
-  test('exits 1 for a capture that cannot show the load, a capture of another boot', async () => {
+  test('exits 1 for a capture that cannot show the load, a capture of another boot', () => {
     expect(
-      await waitOnDevice({
-        deviceBootId: 'a0d6c1b9-0000-4000-8000-000000000000',
-      }),
+      waitOnDevice({deviceBootId: 'a0d6c1b9-0000-4000-8000-000000000000'}),
     ).toEqual({
       status: 1,
       reason:
@@ -47,10 +48,17 @@ describe('dictionary.ts wait', () => {
   })
 })
 
-async function waitOnDevice({deviceBootId}: {deviceBootId: string}) {
+/**
+ * Runs `dictionary.ts wait` on the capture of a real CI boot whose Gboard never loaded the dictionary, long
+ * past its deadline, against a fake `adb` that answers with `deviceBootId`, the capture's last device time
+ * and the boot's Gboard version. Returns the exit status and the first line on stderr.
+ */
+function waitOnDevice({deviceBootId}: {deviceBootId: string}) {
   const directory = mkdtempSync(join(tmpdir(), 'thumbjar-dictionary-'))
   try {
+    const bin = join(directory, 'bin')
     const out = join(directory, 'out')
+    mkdirSync(bin)
     mkdirSync(out)
     copyFileSync(
       fileURLToPath(
@@ -58,46 +66,28 @@ async function waitOnDevice({deviceBootId}: {deviceBootId: string}) {
       ),
       join(out, 'boot-logcat.txt'),
     )
-    const result = await dictionary(['wait', out, '1000000000'], deviceBootId)
+    writeFileSync(
+      join(bin, 'adb'),
+      `#!/usr/bin/env bash
+case "$*" in
+  "shell cat /proc/sys/kernel/random/boot_id") echo ${deviceBootId} ;;
+  "shell date +%s") echo 1793515368 ;;
+  "shell dumpsys package com.google.android.inputmethod.latin") echo '    versionName=15.1.08.726012951-preload-x86_64' ;;
+  *) exit 1 ;;
+esac
+`,
+    )
+    chmodSync(join(bin, 'adb'), 0o755)
+    const result = spawnSync(
+      process.execPath,
+      [cli, 'wait', out, '1000000000'],
+      {
+        encoding: 'utf8',
+        env: {...process.env, PATH: `${bin}:${process.env.PATH}`},
+      },
+    )
     return {status: result.status, reason: result.stderr.split('\n')[0]}
   } finally {
     rmSync(directory, {recursive: true, force: true})
-  }
-}
-
-async function dictionary(args: string[], deviceBootId = '') {
-  const argv = process.argv
-  const exitCode = process.exitCode
-  const environment = {...process.env}
-  let stderr = ''
-  const exited = Promise.withResolvers<number>()
-  try {
-    process.argv = [process.execPath, 'dictionary.ts', ...args]
-    vi.spyOn(device, 'adb').mockImplementation((args) => {
-      if (args.join(' ') === 'shell cat /proc/sys/kernel/random/boot_id') {
-        return Promise.resolve(deviceBootId)
-      }
-      expect(args).toEqual(['shell', 'date', '+%s'])
-      return Promise.resolve('1793515368')
-    })
-    vi.spyOn(device, 'adbOutput').mockResolvedValue(
-      '    versionName=15.1.08.726012951-preload-x86_64',
-    )
-    vi.spyOn(process.stdout, 'write').mockReturnValue(true)
-    vi.spyOn(console, 'error').mockImplementation((line) => {
-      stderr += `${line}\n`
-    })
-    vi.spyOn(process, 'exit').mockImplementation((code) => {
-      exited.resolve(Number(code))
-      return undefined!
-    })
-    vi.resetModules()
-    await import('./dictionary.ts')
-    return {status: await exited.promise, stderr}
-  } finally {
-    process.argv = argv
-    process.exitCode = exitCode
-    process.env = environment
-    vi.restoreAllMocks()
   }
 }
