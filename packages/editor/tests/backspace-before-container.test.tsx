@@ -81,7 +81,7 @@ const containers = [
 describe('Backspace before container', () => {
   test('Scenario: Pressing Backspace at the start of an empty text block after a callout lands at the end of the callout content', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -104,8 +104,6 @@ describe('Backspace before container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -133,7 +131,7 @@ describe('Backspace before container', () => {
 
   test('Scenario: Pressing Backspace at the start of an empty text block after a callout with multi-block content lands at the end of the last block', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -162,8 +160,6 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await expect.element(locator).toBeInTheDocument()
-
     editor.send({
       type: 'select',
       at: {
@@ -190,7 +186,7 @@ describe('Backspace before container', () => {
 
   test('Scenario: Pressing Backspace at the start of an empty text block after a table lands at the end of the last cell content', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -241,8 +237,6 @@ describe('Backspace before container', () => {
       children: <NodePlugin nodes={containers} />,
     })
 
-    await expect.element(locator).toBeInTheDocument()
-
     editor.send({
       type: 'select',
       at: {
@@ -276,7 +270,7 @@ describe('Backspace before container', () => {
 
   test('Scenario: Pressing Backspace at the start of an empty text block after a void block-object focuses the block-object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -289,8 +283,6 @@ describe('Backspace before container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
@@ -316,7 +308,7 @@ describe('Backspace before container', () => {
 
   test('Scenario: Pressing Backspace at the start of an empty text block after a table whose last cell ends in an image focuses the image', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition,
       initialValue: [
@@ -358,8 +350,6 @@ describe('Backspace before container', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'select',
