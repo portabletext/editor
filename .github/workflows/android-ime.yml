@@ -48,7 +48,7 @@ jobs:
     # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
     # step's cap, so a hang in every step still leaves time for `Result` and the artifact upload, and
     # `budget.test.ts` keeps it so.
-    timeout-minutes: 255
+    timeout-minutes: 260
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -62,6 +62,7 @@ jobs:
           - {lang: en, file: tests/diag.en.test.ts}
           - {lang: en, file: tests/matrix.en.test.ts}
           - {lang: en, file: tests/matrix.en.2.test.ts}
+          - {lang: en, file: tests/testime.en.test.ts}
         api: [36]
 
     steps:
@@ -213,6 +214,21 @@ jobs:
         with:
           key: ${{ steps.sdk-key.outputs.key }}
           path: ${{ steps.sdk-key.outputs.paths }}
+
+      - name: Build the test IME
+        if: matrix.suite.file == 'tests/testime.en.test.ts'
+        timeout-minutes: 5
+        run: |
+          command -v java
+          command -v javac
+          command -v keytool
+          javac -version
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$ANDROID_HOME/build-tools/36.0.0/aapt2" ] || [ ! -x "$ANDROID_HOME/build-tools/36.0.0/d8" ] || [ ! -x "$ANDROID_HOME/build-tools/36.0.0/apksigner" ] || [ ! -x "$ANDROID_HOME/build-tools/36.0.0/zipalign" ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'build-tools;36.0.0'
+          fi
+          TEST_IME_BUILD_TOOLS=36.0.0 bash packages/thumbjar/src/test-ime/build.sh "$RUNNER_TEMP/test-ime"
+          echo "THUMBJAR_TEST_IME_APK=$RUNNER_TEMP/test-ime/slate-test-ime.apk" >> "$GITHUB_ENV"
 
       - name: Record start
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'

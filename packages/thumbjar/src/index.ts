@@ -15,3 +15,9 @@ export type {
   Typed,
   Word,
 } from './driver.ts'
+export {
+  openTestImePage,
+  ime,
+  addImeOutsideSibling,
+  readImeSnapshot,
+} from './test-ime.ts'
