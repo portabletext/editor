@@ -92,6 +92,12 @@ describe(ensureJar.name, () => {
     mkdirSync(cwd)
     vi.spyOn(process, 'cwd').mockReturnValue(cwd)
     vi.stubEnv('CACHE_DIR', '')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => {
+        throw new Error('no download expected')
+      }),
+    )
 
     await expect(ensureJar()).rejects.toThrowError(
       `Cannot find a cache directory from cwd ${cwd}; run inside a package or set CACHE_DIR`,
