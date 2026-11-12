@@ -11,6 +11,7 @@
   import {recordInput} from 'thumbjar/page'
 
   const field = document.getElementById('ed')
+  field.textContent = new URLSearchParams(location.search).get('prefix') ?? ''
   recordInput({getText: () => field.textContent, field})
   field.focus()
 </script>
