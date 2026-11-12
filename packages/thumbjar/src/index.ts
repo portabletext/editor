@@ -17,3 +17,5 @@ export type {
   Typed,
   Word,
 } from './driver.ts'
+
+export {openOnDevice} from './session.ts'

@@ -49,7 +49,12 @@ export type Json =
 /** Call a handler registered by the page, then read the usual step boundary. */
 export type PageStep = {type: 'page'; action: string; args?: Json}
 
-export type Step = ComposeStep | EnterStep | BackspaceStep | PageStep
+export type Step =
+  | ComposeStep
+  | EnterStep
+  | BackspaceStep
+  | PageStep
+  | {type: 'read'}
 
 /**
  * `done` when the step ran, `failed` when it threw, which ends the attempt, and `skipped` for a step that

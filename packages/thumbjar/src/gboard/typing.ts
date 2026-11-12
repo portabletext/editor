@@ -1,7 +1,6 @@
+import {writeFileSync} from 'node:fs'
 // One attempt on the device: open the page in Chrome, raise Gboard, drive each step on its keys, and read
 // the page's text, selection and events back over CDP.
-
-import {writeFileSync} from 'node:fs'
 import {
   adb,
   adbExit,
@@ -43,6 +42,11 @@ import {
   throwIfAborted,
   UNPRINTABLE_ERROR,
 } from '../device/util.ts'
+import {
+  nextSessionInput,
+  publishSessionBoundary,
+  sessionChannels,
+} from '../session-channel.ts'
 import type {
   Commit,
   GraphemeSelection,
@@ -262,7 +266,10 @@ export async function runInChrome(
   phase(
     `ran ${pyRepr(run.text)} steps=${records.map((record) => `${record.type}:${record.status}`).join('/')}`,
   )
-  if (!steps.some((step) => step.type === 'page')) {
+  if (
+    !sessionChannels.has(steps) &&
+    !steps.some((step) => step.type === 'page')
+  ) {
     throwOnUnexpectedDigit(
       run.text,
       prefix +
@@ -274,7 +281,16 @@ export async function runInChrome(
     )
   }
   for (const record of records) {
-    throwOnSymbolMistap(record, keyboard)
+    try {
+      throwOnSymbolMistap(record, keyboard)
+    } catch (error) {
+      if (sessionChannels.has(steps)) {
+        throw new Error('Session mistap after observed boundaries', {
+          cause: error,
+        })
+      }
+      throw error
+    }
   }
   return run
 }
@@ -508,7 +524,11 @@ async function runSteps<Input>(
   let last = boundaries ? await readBoundary() : undefined
   const firstEnd = last?.state.events.length ?? 0
   let eventsBefore = firstEnd
-  for (const [index, input] of inputs.entries()) {
+  for (let index = 0; ; index++) {
+    const input = await nextSessionInput(inputs, index)
+    if (input === undefined) {
+      break
+    }
     const step = toStep(input)
     const position = index + 1
     const entry: StepTaps = {keys: [], events: []}
@@ -586,6 +606,9 @@ async function runSteps<Input>(
       events: entry.events,
       keys: [...entry.keys],
     })
+    if (records?.at(-1)) {
+      publishSessionBoundary(inputs, index, records.at(-1)!)
+    }
     eventsBefore = after.events.length
   }
   if (last) {
@@ -656,6 +679,8 @@ async function runStep(
     return device.click(...center)
   }
   switch (step.type) {
+    case 'read':
+      return undefined
     case 'page':
       await cdpEval(
         `window.__action(${JSON.stringify(step.action)}, ${JSON.stringify(step.args ?? null)})`,
