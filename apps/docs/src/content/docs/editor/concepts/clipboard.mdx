@@ -96,4 +96,6 @@ A behavior can also decline to end the event: `forward` passes it to the behavio
 
 `onPaste` is the forgiving one: return nothing, or a result without blocks to insert, and the paste continues into `clipboard.paste` and the normal deserialization pipeline.
 
+All three callbacks are deprecated in favor of `clipboard.copy`, `clipboard.cut`, and `clipboard.paste` Behaviors. Copy and cut Behaviors can write to `event.originEvent.dataTransfer` from an `effect`; a paste Behavior can raise `insert.blocks`, use an async `effect` to send it later, or combine `effect` with `forward(event)` to observe the paste and let it continue.
+
 Anything that can be a behavior should be one. Behaviors compose; callbacks replace.

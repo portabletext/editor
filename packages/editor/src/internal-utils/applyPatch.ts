@@ -24,6 +24,7 @@ import type {Path} from '../types/paths'
 import {applyDeselect} from './apply-selection'
 import {isEqualValues} from './equality'
 import {getValue} from './get-value'
+import {parseRangeSegment, resolveRange} from './range-segment'
 import {isEqualToEmptyEditor} from './values'
 
 /**
@@ -336,6 +337,28 @@ function setPatch(
 function unsetPatch(editor: PortableTextEditorEngine, patch: UnsetPatch) {
   if (patch.path.length === 0) {
     applyDeselect(editor)
+  }
+
+  // A range such as `marks[1:]` removes every item it covers from the array,
+  // the way Content Lake does.
+  const range =
+    patch.path.length > 0 ? parseRangeSegment(patch.path.at(-1)) : undefined
+
+  if (range) {
+    const arrayPath = patch.path.slice(0, -1)
+    const arrayValue = getValue(editor.snapshot.context.value, arrayPath)
+
+    if (Array.isArray(arrayValue)) {
+      let changed = false
+
+      // Highest index first, so the remaining indices stay valid.
+      for (const index of resolveRange(range, arrayValue.length).reverse()) {
+        changed =
+          editor.apply({type: 'unset', path: [...arrayPath, index]}) || changed
+      }
+
+      return changed
+    }
   }
 
   return editor.apply({type: 'unset', path: patch.path})

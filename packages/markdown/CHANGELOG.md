@@ -1,5 +1,17 @@
 # @portabletext/markdown
 
+## 2.9.3
+
+### Patch Changes
+
+- [#3636](https://github.com/portabletext/editor/pull/3636) [`bb046f7`](https://github.com/portabletext/editor/commit/bb046f75df5534aa9fd6997c7df392df9149a1e7) Thanks [@christianhg](https://github.com/christianhg)! - fix: escape a callout marker that starts a block on Markdown export
+  
+  A block whose first line is only a GFM alert marker (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]`, in any case) now exports with the `[` escaped. A quote that starts with the marker reads back as a quote with its text instead of a callout. A plain paragraph that is only the marker also gets the backslash and reads back the same.
+
+- [#3612](https://github.com/portabletext/editor/pull/3612) [`60328b6`](https://github.com/portabletext/editor/commit/60328b657699e2fa814700d7c15e09f36b588713) Thanks [@christianhg](https://github.com/christianhg)! - fix: describe which objects `undeclaredObjects` checks
+  
+  The `undeclaredObjects` documentation on `ReconciliationReport` said that undeclared objects inside a table cell or another declared container are listed. They are not. Only top-level block objects and the inline objects of top-level text blocks are checked, and the fields of a declared object are left to whatever validates that object, as the README already says.
+
 ## 2.9.2
 
 ### Patch Changes

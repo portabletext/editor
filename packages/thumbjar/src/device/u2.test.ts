@@ -1,6 +1,6 @@
 import {describe, expect, test, vi} from 'vitest'
-import {AdbError} from './adb.ts'
-import {Device} from './u2.ts'
+import {AdbError, DeviceLost, runStrict} from './adb.ts'
+import {Device, HTTPError} from './u2.ts'
 import {GUARDED_INSPECTION, runAbortable, runInspecting} from './util.ts'
 
 const device = vi.hoisted(() => {
@@ -16,6 +16,8 @@ const device = vi.hoisted(() => {
     releaseShell: () => releaseShell(),
     shellEntered: () => shellEntered(),
     services: [] as string[],
+    /** The services asked for while `serviceError` refused them. */
+    refused: [] as string[],
     closed: [] as string[],
     pings: 0,
     serviceError: undefined as unknown,
@@ -50,6 +52,7 @@ vi.mock(import('./adb.ts'), async (importOriginal) => ({
   AdbConnection: {
     service: (service: string) => {
       if (device.serviceError !== undefined) {
+        device.refused.push(service)
         return Promise.reject(device.serviceError)
       }
       device.services.push(service)
@@ -107,5 +110,38 @@ describe(Device.connect.name, () => {
     device.serviceError = undefined
 
     expect(error).toBe(unreadable)
+  })
+
+  test("under `runOnDevice`, the adb server's `FAIL` for a lost device on the ping ends the start with it, launching no server", async () => {
+    device.releaseShell()
+    const answer = new AdbError('device offline')
+    answer.serverFailed = true
+    device.serviceError = answer
+    device.refused = []
+    const error = await runStrict(() =>
+      runInspecting(GUARDED_INSPECTION, () => Device.connect()),
+    ).catch((error: unknown) => error)
+    device.serviceError = undefined
+
+    const cause = (error as Error).cause
+
+    expect({
+      error,
+      cause,
+      answer: (cause as Error).cause,
+      services: device.refused,
+    }).toEqual({
+      error: new DeviceLost(
+        'the adb server answered FAIL: device offline',
+        new HTTPError(
+          'Unable to connect to uiautomator2 server: device offline',
+        ),
+      ),
+      cause: new HTTPError(
+        'Unable to connect to uiautomator2 server: device offline',
+      ),
+      answer,
+      services: ['tcp:9008'],
+    })
   })
 })

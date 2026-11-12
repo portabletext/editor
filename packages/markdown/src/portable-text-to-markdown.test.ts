@@ -3313,6 +3313,249 @@ describe(portableTextToMarkdown.name, () => {
           ).toBe('q:foo\nq:\nq:bar')
         })
       })
+
+      describe('callout marker', () => {
+        test('a marker on a later line is not escaped', () => {
+          const keyGenerator = createTestKeyGenerator()
+          const markdown = '> foo  \n> [!NOTE]  \n> bar'
+
+          expect(
+            portableTextToMarkdown([
+              {
+                _type: 'block',
+                _key: keyGenerator(),
+                style: 'blockquote',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: keyGenerator(),
+                    text: 'foo\n[!NOTE]\nbar',
+                    marks: [],
+                  },
+                ],
+              },
+            ]),
+          ).toBe(markdown)
+
+          expect(
+            markdownToPortableText(markdown, {
+              keyGenerator: createTestKeyGenerator(),
+            }),
+          ).toEqual([
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'blockquote',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k1',
+                  text: 'foo\n[!NOTE]\nbar',
+                  marks: [],
+                },
+              ],
+            },
+          ])
+        })
+
+        describe('first line', () => {
+          test('a marker that starts a quote is escaped', () => {
+            const keyGenerator = createTestKeyGenerator()
+            const markdown = '> \\[!NOTE]\n>\n> foo'
+
+            expect(
+              portableTextToMarkdown([
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: '[!NOTE]',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ]),
+            ).toBe(markdown)
+
+            expect(
+              markdownToPortableText(markdown, {
+                keyGenerator: createTestKeyGenerator(),
+              }),
+            ).toEqual([
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'blockquote',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k1', text: '[!NOTE]', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k2',
+                style: 'blockquote',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+            ])
+          })
+
+          test('a marker split over two spans is escaped', () => {
+            const keyGenerator = createTestKeyGenerator()
+            const markdown = '> \\[!NOTE]\n>\n> foo'
+
+            expect(
+              portableTextToMarkdown([
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: '[!NO',
+                      marks: ['unrenderedAnnotation'],
+                    },
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'TE]',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ]),
+            ).toBe(markdown)
+
+            expect(
+              markdownToPortableText(markdown, {
+                keyGenerator: createTestKeyGenerator(),
+              }),
+            ).toEqual([
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'blockquote',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k1', text: '[!NOTE]', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k2',
+                style: 'blockquote',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+            ])
+          })
+
+          test('a bold marker is escaped inside the bold', () => {
+            const keyGenerator = createTestKeyGenerator()
+            const markdown = '> **\\[!NOTE]**\n>\n> foo'
+
+            expect(
+              portableTextToMarkdown([
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: '[!NOTE]',
+                      marks: ['strong'],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'blockquote',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ]),
+            ).toBe(markdown)
+
+            expect(
+              markdownToPortableText(markdown, {
+                keyGenerator: createTestKeyGenerator(),
+              }),
+            ).toEqual([
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'blockquote',
+                markDefs: [],
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k1',
+                    text: '[!NOTE]',
+                    marks: ['strong'],
+                  },
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k2',
+                style: 'blockquote',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+            ])
+          })
+        })
+      })
     })
 
     describe('h1', () => {
@@ -3928,6 +4171,185 @@ describe(portableTextToMarkdown.name, () => {
         inOpts(keyGenerator),
       )
       expect(portableTextToMarkdown(portableText, outOpts)).toBe(markdown)
+    })
+
+    test('a marker that starts the first block is escaped', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = '> \\[!NOTE]\n>\n> foo\n>\n> baz'
+      const value = [
+        {
+          _type: 'blockquote',
+          _key: keyGenerator(),
+          content: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keyGenerator(),
+                  text: '[!NOTE]',
+                  marks: [],
+                },
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ]
+
+      expect(portableTextToMarkdown(value, outOpts)).toBe(markdown)
+      expect(
+        markdownToPortableText(markdown, inOpts(createTestKeyGenerator())),
+      ).toEqual([
+        {
+          _type: 'blockquote',
+          _key: 'k6',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: 'k1', text: '[!NOTE]', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+
+    test('a marker that starts the first block of a nested blockquote is escaped', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const markdown = '> bar\n>\n> > \\[!NOTE]\n> >\n> > foo'
+      const value = [
+        {
+          _type: 'blockquote',
+          _key: keyGenerator(),
+          content: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+              ],
+            },
+            {
+              _type: 'blockquote',
+              _key: keyGenerator(),
+              content: [
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: '[!NOTE]',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]
+
+      expect(portableTextToMarkdown(value, outOpts)).toBe(markdown)
+      expect(
+        markdownToPortableText(markdown, inOpts(createTestKeyGenerator())),
+      ).toEqual([
+        {
+          _type: 'blockquote',
+          _key: 'k7',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+            },
+            {
+              _type: 'blockquote',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: '[!NOTE]', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k4',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k5', text: 'foo', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
     })
 
     test('nested blockquote', () => {

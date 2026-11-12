@@ -45,8 +45,6 @@ const knownDifferences = new Set<PatchPathRule['id']>([
   'primitive-[]-deep-inc',
   'primitive-[]-deep-dec',
   'null-0-setIfMissing',
-  'null-0-key-set',
-  'null-0-key-unset',
   'null-1-setIfMissing',
 ])
 

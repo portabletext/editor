@@ -1,8 +1,44 @@
-import {afterAll} from 'vitest'
+import {appendFileSync} from 'node:fs'
+import {afterAll, inject, type RunnerTask, type RunnerTestCase} from 'vitest'
 import {unstoppedProcesses} from '../device/adb.ts'
-import {driverRuns} from '../driver.ts'
+import {driverRuns, lastDriverRun} from '../driver.ts'
+import {summaryLines, tapsBlock, testOutcome} from './summary.ts'
 
-afterAll(() => {
+// oxlint-disable-next-line no-empty-pattern -- Vitest reads a hook's first argument as the fixtures it uses and takes only an object pattern, and this hook uses none
+afterAll(({}, file) => {
+  // Once the file's tests ended, so a test's final state is known and an expected failure prints nothing.
+  for (const test of leafTests(file.tasks)) {
+    const taps = lastDriverRun(test)?.taps
+    if (test.result?.state === 'fail' && taps !== undefined) {
+      console.error(tapsBlock(test.name, taps))
+    }
+  }
+  const summaryFile = inject('thumbjarSummaryFile')
+  if (summaryFile) {
+    appendFileSync(
+      summaryFile,
+      summaryLines(
+        file.name,
+        leafTests(file.tasks).map((test) => ({
+          name: test.name,
+          ...(test.result?.state === 'fail' &&
+          lastDriverRun(test)?.taps !== undefined
+            ? {taps: lastDriverRun(test)?.taps}
+            : {}),
+          // A skipped or todo test, or one skipped as it ran, ends neither passed nor failed.
+          outcome:
+            test.result?.state === 'pass' || test.result?.state === 'fail'
+              ? testOutcome({
+                  passed: test.result.state === 'pass',
+                  fails: Boolean(test.fails),
+                  run: lastDriverRun(test),
+                })
+              : undefined,
+        })),
+        driverRuns,
+      ),
+    )
+  }
   const unstopped = unstoppedProcesses()
   if (unstopped.length > 0) {
     throw new Error(
@@ -17,6 +53,17 @@ afterAll(() => {
       `The page threw while the driver typed, which can be an editor failure, so it is not retried: ${pageExceptions.map((run) => `"${run.test}": ${run.pageException}`).join(', ')}.`,
     )
   }
+  const unresolved = driverRuns
+    .filter(
+      (run) =>
+        run.fails &&
+        (run.state === 'inconclusive' || run.state === 'device-offline'),
+    )
+    .map((run) =>
+      run.state === 'inconclusive'
+        ? `In "${run.test}" the driver ended inconclusive: ${run.reason}.`
+        : `In "${run.test}" ${run.reason}.`,
+    )
   const faulted = driverRuns
     .filter((run) => run.fails && run.state === 'faulted')
     .map((run) => `"${run.test}"`)
@@ -26,7 +73,16 @@ afterAll(() => {
         run.fails && (run.state === 'driving' || run.state === 'aborted'),
     )
     .map((run) => `"${run.test}"`)
+  const withoutDriverCall = leafTests(file.tasks)
+    .filter(
+      (test) =>
+        test.fails &&
+        (test.result?.state === 'pass' || test.result?.state === 'fail') &&
+        lastDriverRun(test) === undefined,
+    )
+    .map((test) => `"${test.name}"`)
   const problems = [
+    ...unresolved,
     ...(faulted.length > 0
       ? [`The driver ended on a driver fault in ${faulted.join(', ')}.`]
       : []),
@@ -35,6 +91,9 @@ afterAll(() => {
           `The driver never returned a result and cleaned up in ${incomplete.join(', ')}, the test timed out or its cleanup failed.`,
         ]
       : []),
+    ...(withoutDriverCall.length > 0
+      ? [`No driver call was recorded for ${withoutDriverCall.join(', ')}.`]
+      : []),
   ]
   if (problems.length > 0) {
     throw new Error(
@@ -42,3 +101,13 @@ afterAll(() => {
     )
   }
 })
+
+function leafTests(tasks: readonly RunnerTask[]): RunnerTestCase[] {
+  return tasks.flatMap((task) =>
+    task.type === 'test'
+      ? [task]
+      : task.type === 'suite'
+        ? leafTests(task.tasks)
+        : [],
+  )
+}

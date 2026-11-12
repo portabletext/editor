@@ -18,8 +18,8 @@ description: How to write commit messages in the Portable Text Editor monorepo. 
 
 ## Type selection
 
-- A commit that ships a **changeset is `fix:` or `feat:`**, never `refactor:`/`chore:`. The changeset is the tell: releasable change ⇒ fix/feat.
-- The tell runs both ways for bare types: a bare `fix:`/`feat:` **must ship (or amend) a changeset**. No changeset means it is not a fix/feat; retype it (`refactor:` for code changes with no releasable behavior change, even ones that alter internal behavior, `chore:`/`test:`/`docs:` otherwise). The exemptions are scoped commits to unpublished targets (`fix(playground):`), Renovate's `fix(deps):` commits, where the changeset bot ships the release in a follow-up commit, and the commit that adds a new package, whose v1.0.0 is published by hand. The `check-commits` workflow enforces this per commit.
+- A commit that ships a **changeset is `fix:` or `feat:`**, never `refactor:`/`chore:`. The changeset is the tell: releasable change ⇒ fix/feat. The `checks / commits` check enforces this for added changesets (editing an existing changeset is fine under any type).
+- The tell runs both ways for bare types: a bare `fix:`/`feat:` **must ship (or amend) a changeset**. No changeset means it is not a fix/feat; retype it (`refactor:` for code changes with no releasable behavior change, even ones that alter internal behavior, `chore:`/`test:`/`docs:` otherwise). The exemptions are scoped commits to unpublished targets (`fix(playground):`), Renovate's `fix(deps):` commits, where the changeset bot ships the release in a follow-up commit, and the commit that adds a new package, whose v1.0.0 is published by hand. The `checks / commits` check enforces this per commit.
 - `chore(deps):` for dependency/config work with no published-code change (no changeset).
 - Renovate-adjacent nuance: `fix(deps)` cuts a patch release via the changeset bot; don't hand it to tooling-only bumps.
 
@@ -35,9 +35,9 @@ Trivial commits get **no body**. One logical change per commit: tests pinning a 
 
 Once a PR is **in review**, follow-ups are `fixup!` commits (`git commit --fixup <sha>`), squashed with `git rebase -i --autosquash` before merge. Before review, fold changes into the logical commit they belong to. Merge-time history is clean logical commits, never a trail of "address review feedback".
 
-The `check-commits` CI job also enforces the last step: it fails
+The `checks / commits` check also enforces the last step: it fails
 while any `fixup!`/`squash!`/`amend!` subject is on the PR, so fixup
-commits cannot reach `main` unsquashed. A red `check-commits` on a PR
+commits cannot reach `main` unsquashed. A red `checks / commits` on a PR
 mid-review for that reason is the expected state, not a problem to fix: do
 not reword fixups to appease it, and do not autosquash early (that folds
 review follow-ups before the reviewer has seen them). It goes green at the

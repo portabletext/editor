@@ -1,22 +1,20 @@
 import {spawn, spawnSync} from 'node:child_process'
 import {
   chmodSync,
-  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {describe, expect, test, vi} from 'vitest'
+import {deviceTestFileSeconds} from '../device/budget.ts'
 
-const android = fileURLToPath(new URL('..', import.meta.url))
-const packageRoot = fileURLToPath(new URL('../..', import.meta.url))
+const command = fileURLToPath(new URL('../bin.ts', import.meta.url))
 // The PREP FAILED line `thumbjar prepare` logs for a real CI boot whose Gboard never loaded the dictionary.
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
@@ -24,7 +22,7 @@ const realTee = spawnSync('bash', ['-c', 'command -v tee'], {
   encoding: 'utf8',
 }).stdout.trim()
 
-describe('run-on-device.sh', () => {
+describe('thumbjar run', () => {
   test('prepares the language it is given and runs only the file it is given, under that file’s cap', () => {
     expect([
       runOnDevice({
@@ -53,7 +51,7 @@ describe('run-on-device.sh', () => {
         ],
         phases: [
           'http server',
-          'tests start, tests/ja.test.ts under 1735 seconds',
+          `tests start, tests/ja.test.ts under ${deviceTestFileSeconds(3)} seconds`,
           'tests rc=0',
         ],
         timing: ['BOOTED', 'CHECKED skipped', 'DONE'],
@@ -69,7 +67,7 @@ describe('run-on-device.sh', () => {
         ],
         phases: [
           'http server',
-          'tests start, tests/en-textarea.test.ts under 645 seconds',
+          `tests start, tests/en-textarea.test.ts under ${deviceTestFileSeconds(1)} seconds`,
           'tests rc=0',
         ],
         timing: ['BOOTED', 'CHECKED skipped', 'DONE'],
@@ -98,7 +96,7 @@ describe('run-on-device.sh', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1735 seconds',
+        `tests start, tests/en.test.ts under ${deviceTestFileSeconds(3)} seconds`,
         'tests rc=1',
         'device check: device',
       ],
@@ -127,7 +125,7 @@ describe('run-on-device.sh', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1735 seconds',
+        `tests start, tests/en.test.ts under ${deviceTestFileSeconds(3)} seconds`,
         'tests rc=1',
         'device check: lost',
       ],
@@ -174,7 +172,45 @@ describe('run-on-device.sh', () => {
   })
 })
 
-describe('run-on-device.sh after a prep that named its failure', () => {
+describe('thumbjar run when the test stage cap cannot be read', () => {
+  test('skips the device check and runs no device work for an unreadable file or one with no tests', () => {
+    expect([
+      runOnDevice({
+        lang: 'en',
+        file: 'tests/missing.test.ts',
+        prep: 0,
+        tests: 0,
+        getState: 'device',
+      }),
+      runOnDevice({
+        lang: 'en',
+        file: 'tests/empty.test.ts',
+        prep: 0,
+        tests: 0,
+        getState: 'device',
+      }),
+    ]).toEqual([
+      {
+        status: 1,
+        calls: [],
+        phases: [
+          'PREP FAILED: read the test stage timeout for tests/missing.test.ts',
+        ],
+        timing: ['BOOTED', 'CHECKED skipped'],
+      },
+      {
+        status: 1,
+        calls: [],
+        phases: [
+          'PREP FAILED: read the test stage timeout for tests/empty.test.ts',
+        ],
+        timing: ['BOOTED', 'CHECKED skipped'],
+      },
+    ])
+  })
+})
+
+describe('thumbjar run after a prep that named its failure', () => {
   test("records the prep's reason for the job summary before the device check, and runs no tests", () => {
     expect(
       runOnDevice({
@@ -235,7 +271,7 @@ describe('run-on-device.sh after a prep that named its failure', () => {
   })
 })
 
-describe('run-on-device.sh on the retry after adb lost the device', () => {
+describe('thumbjar run on the retry after adb lost the device', () => {
   test("records no reason for a prep that named none, though `phases.log` holds the first boot's", () => {
     expect(
       runOnDevice({
@@ -268,7 +304,7 @@ describe('run-on-device.sh on the retry after adb lost the device', () => {
   })
 })
 
-describe('run-on-device.sh cut off by its run step', () => {
+describe('thumbjar run cut off by its run step', () => {
   test('leaves a run the step stopped during the tests, before its device check, without `CHECKED`', async () => {
     expect(
       await interruptOnDevice({
@@ -276,6 +312,24 @@ describe('run-on-device.sh cut off by its run step', () => {
         file: 'tests/en.test.ts',
         stopAt: 'tests',
         getState: 'device',
+      }),
+    ).toEqual({
+      calls: [
+        'pnpm exec thumbjar prepare --keyboard en --page-url http://localhost:8765/editor.html --out-dir android/out --booted BOOTED',
+        'pnpm exec vitest run --config vitest.android.config.ts --project device tests/en.test.ts',
+      ],
+      timing: ['BOOTED'],
+    })
+  })
+
+  test('stops the script with the `thumbjar` process when only that process is stopped, so no device check follows', async () => {
+    expect(
+      await interruptOnDevice({
+        lang: 'en',
+        file: 'tests/en.test.ts',
+        stopAt: 'tests',
+        getState: 'device',
+        kill: 'process',
       }),
     ).toEqual({
       calls: [
@@ -321,7 +375,7 @@ describe('run-on-device.sh cut off by its run step', () => {
   })
 })
 
-describe('run-on-device.sh with a device check that never completes', () => {
+describe('thumbjar run with a device check that never completes', () => {
   test('records no `CHECKED` when the check runs past its own timeout', () => {
     expect(
       runOnDevice({
@@ -343,7 +397,7 @@ describe('run-on-device.sh with a device check that never completes', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1735 seconds',
+        `tests start, tests/en.test.ts under ${deviceTestFileSeconds(3)} seconds`,
         'tests rc=1',
         'device check: unchecked',
       ],
@@ -372,7 +426,7 @@ describe('run-on-device.sh with a device check that never completes', () => {
       ],
       phases: [
         'http server',
-        'tests start, tests/en.test.ts under 1735 seconds',
+        `tests start, tests/en.test.ts under ${deviceTestFileSeconds(3)} seconds`,
         'tests rc=1',
         'device check: unchecked',
       ],
@@ -392,7 +446,7 @@ function runOnDevice(options: {
   tests: number
   getState: 'device' | 'none' | 'stalled' | 'hung'
 }) {
-  const directory = mkdtempSync(join(tmpdir(), 'run-on-device-'))
+  const directory = mkdtempSync(join(tmpdir(), 'thumbjar-run-'))
   try {
     const bin = join(directory, 'bin')
     const calls = join(directory, 'calls.log')
@@ -438,14 +492,28 @@ esac
     chmodSync(join(bin, 'adb'), 0o755)
 
     const result = spawnSync(
-      join(directory, 'android/run-on-device.sh'),
-      [options.file],
+      process.execPath,
+      [
+        command,
+        'run',
+        options.file,
+        '--keyboard',
+        options.lang,
+        '--page-dir',
+        'android/dist',
+        '--config',
+        'vitest.android.config.ts',
+        '--project',
+        'device',
+        '--out-dir',
+        'android/out',
+      ],
       {
+        cwd: directory,
         encoding: 'utf8',
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          IME_LANG: options.lang,
         },
       },
     )
@@ -455,10 +523,14 @@ esac
     )?.[1]
     return {
       status: result.status,
-      calls: readFileSync(calls, 'utf8')
-        .trimEnd()
-        .split('\n')
-        .map((call) => call.replace(` --booted ${booted}`, ' --booted BOOTED')),
+      calls: existsSync(calls)
+        ? readFileSync(calls, 'utf8')
+            .trimEnd()
+            .split('\n')
+            .map((call) =>
+              call.replace(` --booted ${booted}`, ' --booted BOOTED'),
+            )
+        : [],
       phases: readFileSync(join(out, 'phases.log'), 'utf8')
         .trimEnd()
         .split('\n')
@@ -478,8 +550,10 @@ async function interruptOnDevice(options: {
   file: string
   stopAt: 'tests' | 'device check log'
   getState: 'device' | 'none'
+  // The runner's step timeout stops the whole process group, a plain `kill` only the `thumbjar` process.
+  kill?: 'group' | 'process'
 }) {
-  const directory = mkdtempSync(join(tmpdir(), 'run-on-device-'))
+  const directory = mkdtempSync(join(tmpdir(), 'thumbjar-run-'))
   try {
     const bin = join(directory, 'bin')
     const calls = join(directory, 'calls.log')
@@ -491,7 +565,7 @@ async function interruptOnDevice(options: {
 case "$*" in
   "exec thumbjar serve"*) exit 0 ;;
   "exec thumbjar prepare"*) echo "pnpm $*" >> ${calls}; exit 0 ;;
-  "exec vitest"*) echo "pnpm $*" >> ${calls}; ${options.stopAt === 'tests' ? `touch ${stopped}; exec sleep 60` : 'exit 1'} ;;
+  "exec vitest"*) echo "pnpm $*" >> ${calls}; ${options.stopAt === 'tests' ? `touch ${stopped}; exec sleep ${options.kill === 'process' ? 2 : 60}` : 'exit 1'} ;;
 esac
 `,
     )
@@ -521,15 +595,29 @@ printf '%s\\n' "$line" | ${realTee} "$@"
     chmodSync(join(bin, 'tee'), 0o755)
 
     const script = spawn(
-      join(directory, 'android/run-on-device.sh'),
-      [options.file],
+      process.execPath,
+      [
+        command,
+        'run',
+        options.file,
+        '--keyboard',
+        options.lang,
+        '--page-dir',
+        'android/dist',
+        '--config',
+        'vitest.android.config.ts',
+        '--project',
+        'device',
+        '--out-dir',
+        'android/out',
+      ],
       {
+        cwd: directory,
         detached: true,
         stdio: 'ignore',
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          IME_LANG: options.lang,
         },
       },
     )
@@ -540,9 +628,16 @@ printf '%s\\n' "$line" | ${realTee} "$@"
       },
       {timeout: 10_000},
     )
-    // The emulator runner's step timeout kills the script's whole process group.
-    process.kill(-(script.pid ?? 0), 'SIGKILL')
-    await exited
+    if (options.kill === 'process') {
+      process.kill(script.pid ?? 0, 'SIGTERM')
+      await exited
+      // A script that outlived its `thumbjar` process would go on once the tests ended.
+      await new Promise((resolve) => setTimeout(resolve, 3_500))
+    } else {
+      // The emulator runner's step timeout kills the script's whole process group.
+      process.kill(-(script.pid ?? 0), 'SIGKILL')
+      await exited
+    }
 
     const booted = /^BOOTED at (\d+)$/m.exec(
       readFileSync(join(directory, 'android/out/timing.txt'), 'utf8'),
@@ -581,18 +676,13 @@ function getStateAnswer(state: 'device' | 'none' | 'stalled' | 'hung') {
 }
 
 function deviceTree(directory: string) {
-  const bin = join(directory, 'bin')
-  mkdirSync(bin)
-  mkdirSync(join(directory, 'android'))
-  copyFileSync(
-    join(android, 'run-on-device.sh'),
-    join(directory, 'android/run-on-device.sh'),
-  )
-  for (const name of ['scripts', 'tests']) {
-    symlinkSync(join(android, name), join(directory, 'android', name))
+  mkdirSync(join(directory, 'bin'))
+  mkdirSync(join(directory, 'android/tests'), {recursive: true})
+  writeFileSync(join(directory, 'android/tests/empty.test.ts'), '')
+  for (const file of ['ja', 'en', 'en-textarea']) {
+    writeFileSync(
+      join(directory, `android/tests/${file}.test.ts`),
+      "test('foo', () => {})\n".repeat(file === 'en-textarea' ? 1 : 3),
+    )
   }
-  symlinkSync(
-    join(packageRoot, 'node_modules'),
-    join(directory, 'node_modules'),
-  )
 }

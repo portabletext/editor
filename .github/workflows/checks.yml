@@ -1,0 +1,20 @@
+name: Checks
+
+on:
+  pull_request:
+    # `edited` covers base-branch retargets, which change the commit set
+    # without firing `synchronize`.
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: portabletext/.github/.github/workflows/checks.yml@main
+    with:
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    secrets:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

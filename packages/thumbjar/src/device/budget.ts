@@ -1,10 +1,16 @@
-// Time bounds of one `typeOnDevice` call, in seconds. Every stage of the call is cut off at its bound, so
-// the call ends within `TYPE_ON_DEVICE_WORST_SECONDS` however the device hangs, as long as its adb
-// processes exit on SIGKILL. After one that does not, no typing starts and no run completes, see
-// `assertNoUnstoppedProcess`.
+// Time bounds of one `typeOnDevice` or `runOnDevice` call, in seconds. Every stage of the call is cut off at
+// its bound, so the call ends within `TYPE_ON_DEVICE_WORST_SECONDS` or `RUN_ON_DEVICE_WORST_SECONDS` however
+// the device hangs, as long as its adb processes exit on SIGKILL. After one that does not, no typing starts
+// and no run completes, see `assertNoUnstoppedProcess`.
 
 /** One typing attempt, from launching Chrome to reading back the page. */
 export const ATTEMPT_SECONDS = 180
+
+/**
+ * Reading the page's text, selection and focus into the record of a `runOnDevice` step that failed, once
+ * the attempt's own deadline settled.
+ */
+export const FAULT_READ_SECONDS = 30
 
 /** The screen dump after a failed attempt. */
 export const FAILURE_DUMP_SECONDS = 30
@@ -12,17 +18,42 @@ export const FAILURE_DUMP_SECONDS = 30
 /** Stopping the uiautomator2 servers an attempt started. */
 export const SERVER_CLOSE_SECONDS = 10
 
+/** How long an adb process gets to exit after SIGTERM, and again after SIGKILL. */
+export const KILL_GRACE_SECONDS = 2
+
 /** Each adb call that stops Chrome. */
 export const CHROME_ADB_SECONDS = 15
 
-/** Stopping Chrome between the two attempts. */
+/** Stopping Chrome between the two attempts of a `typeOnDevice` call, which reads no pid. */
 export const RESTART_SECONDS = CHROME_ADB_SECONDS + 5
+
+/** Each `pidof` that reads Chrome's process ids, before and after the restart between the attempts. */
+export const CHROME_PID_SECONDS = 5
+
+/**
+ * Stopping Chrome between the two attempts of a `runOnDevice` call: reading its pid, the force-stop, and
+ * reading the pid again until the old process is gone, which starts no read later than `CHROME_ADB_SECONDS`
+ * after the force-stop, each of the three stages with an adb process's SIGTERM and SIGKILL graces.
+ */
+export const FRESH_RESTART_SECONDS =
+  CHROME_PID_SECONDS +
+  CHROME_ADB_SECONDS +
+  CHROME_ADB_SECONDS +
+  CHROME_PID_SECONDS +
+  3 * 2 * KILL_GRACE_SECONDS
+
+/**
+ * The one `adb get-state` of a `runOnDevice` call, after an adb call failed in a way that can mean adb lost
+ * the device. It decides whether a timeout counts as device offline.
+ */
+export const DEVICE_STATE_SECONDS = 5
+
+/** The driver's read of `adb get-state`: the adb process's cap and both its graces. */
+export const DEVICE_STATE_READ_SECONDS =
+  DEVICE_STATE_SECONDS + 2 * KILL_GRACE_SECONDS
 
 /** Stopping Chrome after the test. */
 export const CLEANUP_SECONDS = CHROME_ADB_SECONDS + 5
-
-/** How long an adb process gets to exit after SIGTERM, and again after SIGKILL. */
-export const KILL_GRACE_SECONDS = 2
 
 /**
  * How long a stage that ran out of time gets to stop its device calls before the next stage starts. It
@@ -47,11 +78,27 @@ export const TYPE_ON_DEVICE_WORST_SECONDS =
   JOIN_GRACE_SECONDS
 
 /**
- * The device test timeout. A test that timed out leaves its cleanup running, and the next test waits for
- * it before typing, so each test has room for one carried-over cleanup on top of its own worst case.
+ * The longest a `runOnDevice` call takes: two failed attempts, each with the read of the page after its
+ * failed step, the restart that proves Chrome fresh, the one `adb get-state` a call reads and the cleanup.
+ */
+export const RUN_ON_DEVICE_WORST_SECONDS =
+  2 * (ATTEMPT_WORST_SECONDS + FAULT_READ_SECONDS + JOIN_GRACE_SECONDS) +
+  FRESH_RESTART_SECONDS +
+  JOIN_GRACE_SECONDS +
+  DEVICE_STATE_READ_SECONDS +
+  JOIN_GRACE_SECONDS +
+  CLEANUP_SECONDS +
+  JOIN_GRACE_SECONDS
+
+/**
+ * The device test timeout, for the longer of the two calls. A test that timed out leaves its cleanup
+ * running, and the next test waits for it before typing, so each test has room for one carried-over cleanup
+ * on top of its own worst case.
  */
 export const DEVICE_TEST_TIMEOUT_SECONDS =
-  TYPE_ON_DEVICE_WORST_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
+  Math.max(TYPE_ON_DEVICE_WORST_SECONDS, RUN_ON_DEVICE_WORST_SECONDS) +
+  CLEANUP_SECONDS +
+  JOIN_GRACE_SECONDS
 
 /**
  * The global setup's `adb get-state`, which checks for a device. Stopping it after the timeout takes up to
@@ -141,4 +188,26 @@ export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
     DICTIONARY_CHECK_SECONDS +
     DICTIONARY_CHECK_KILL_SECONDS
   )
+}
+
+/** One download of the uiautomator2 server jar, its body included. The slowest seen on CI took 16. */
+export const U2_JAR_ATTEMPT_SECONDS = 45
+
+/** The downloads `thumbjar fetch-u2-jar` tries. */
+export const U2_JAR_ATTEMPTS = 3
+
+/** The wait before the next download. The host's 504s come several in a row, so a retry waits past them. */
+export const U2_JAR_RETRY_SECONDS = 15
+
+/** The longest `thumbjar fetch-u2-jar` runs: every download times out, with the waits between them. */
+export const FETCH_U2_JAR_WORST_SECONDS =
+  U2_JAR_ATTEMPTS * U2_JAR_ATTEMPT_SECONDS +
+  (U2_JAR_ATTEMPTS - 1) * U2_JAR_RETRY_SECONDS
+
+/**
+ * The number of tests in a device test file: its top-level `test(` and `test.fails(` calls. A unit test
+ * checks the count against the tests Vitest collects from each file.
+ */
+export function countDeviceTests(source: string): number {
+  return source.match(/^test(\.fails)?\(/gm)?.length ?? 0
 }

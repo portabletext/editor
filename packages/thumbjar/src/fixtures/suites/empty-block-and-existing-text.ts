@@ -1,8 +1,8 @@
 import {expect, test} from 'vitest'
 import {typeOnDevice} from '../../driver.ts'
 
-test.fails('Scenario: Typing kyou into an empty block', async () => {
-  const typed = await typeOnDevice({
+test.fails('Scenario: Typing kyou into an empty block', async (context) => {
+  const typed = await typeOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
@@ -12,8 +12,8 @@ test.fails('Scenario: Typing kyou into an empty block', async () => {
   expect(typed.text).toEqual('今日')
 })
 
-test('Scenario: Typing kyou after existing text', async () => {
-  const typed = await typeOnDevice({
+test('Scenario: Typing kyou after existing text', async (context) => {
+  const typed = await typeOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: 'x',

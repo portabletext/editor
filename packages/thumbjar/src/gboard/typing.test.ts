@@ -647,6 +647,47 @@ describe(typeInChrome.name, () => {
       'tap 593,2196',
     ])
   })
+
+  test('the taps handed over list every key sent and the events the page recorded, when the page loses a letter', async () => {
+    useGboardTextarea()
+    let taps: unknown
+
+    await typeInChrome(
+      'lost-letter',
+      {...options, words: [{letters: 'foo'}]},
+      connectGboard,
+      (handed) => {
+        taps = handed
+      },
+    )
+
+    expect(taps).toEqual([
+      {
+        keys: ['F', 'O', 'O', 'Space'],
+        events: [
+          {type: 'beforeinput', inputType: 'insertText', data: null, text: ''},
+          {type: 'input', inputType: 'insertText', data: null, text: 'f'},
+          {type: 'beforeinput', inputType: 'insertText', data: null, text: 'f'},
+          {type: 'input', inputType: 'insertText', data: null, text: 'fo'},
+        ],
+      },
+    ])
+  })
+
+  test('the run reads the page and taps the device as often as it did before it kept the taps', async () => {
+    useGboardTextarea()
+
+    await typeInChrome(
+      'tap-count',
+      {...options, words: [{letters: 'foo'}]},
+      connectGboard,
+    )
+
+    expect({
+      cdp: fake.timeline.filter((entry) => entry.startsWith('cdp ')).length,
+      taps: fake.timeline.filter((entry) => entry.startsWith('tap ')).length,
+    }).toEqual({cdp: 22, taps: 5})
+  })
 })
 
 describe(roleKey.name, () => {
@@ -789,6 +830,8 @@ describe(runInChrome.name, () => {
             status: 'done',
             textAfter: 'foo\n',
             selectionAfter: {anchor: 4, focus: 4},
+            focusedAfter: true,
+            keys: ['Enter'],
             events: [
               {
                 type: 'beforeinput',
@@ -851,6 +894,8 @@ describe(runInChrome.name, () => {
             status: 'done',
             textAfter: '👍🏽fo',
             selectionAfter: {anchor: 3, focus: 3},
+            focusedAfter: true,
+            keys: ['削除'],
             events: [
               {
                 type: 'beforeinput',
@@ -871,6 +916,8 @@ describe(runInChrome.name, () => {
             status: 'done',
             textAfter: '👍🏽',
             selectionAfter: {anchor: 1, focus: 1},
+            focusedAfter: true,
+            keys: ['削除', '削除'],
             events: [
               {
                 type: 'beforeinput',
@@ -1020,6 +1067,8 @@ describe(runInChrome.name, () => {
           status: 'done',
           textAfter: 'foo\n',
           selectionAfter: {anchor: 4, focus: 4},
+          focusedAfter: true,
+          keys: ['Enter'],
           events: [
             {
               type: 'beforeinput',
@@ -1082,6 +1131,8 @@ describe(runInChrome.name, () => {
           status: 'done',
           textAfter: 'fo',
           selectionAfter: {anchor: 2, focus: 2},
+          focusedAfter: true,
+          keys: ['Delete'],
           events: [
             {
               type: 'beforeinput',
@@ -1108,6 +1159,8 @@ describe(runInChrome.name, () => {
           status: 'done',
           textAfter: 'fo\n',
           selectionAfter: {anchor: 3, focus: 3},
+          focusedAfter: true,
+          keys: ['Enter'],
           events: [
             {
               type: 'beforeinput',
@@ -1201,6 +1254,8 @@ describe(runInChrome.name, () => {
         status: 'done',
         textAfter: 'fo',
         selectionAfter: {anchor: 2, focus: 2},
+        focusedAfter: true,
+        keys: ['Delete'],
         events: [
           {
             type: 'beforeinput',
@@ -1222,6 +1277,8 @@ describe(runInChrome.name, () => {
         reason: expect.stringMatching(/^Error: no Gboard enter key, labels: /),
         textAfter: null,
         selectionAfter: null,
+        focusedAfter: null,
+        keys: [],
         events: [],
       },
       {
@@ -1230,6 +1287,8 @@ describe(runInChrome.name, () => {
         reason: 'step 2 failed',
         textAfter: null,
         selectionAfter: null,
+        focusedAfter: null,
+        keys: [],
         events: [],
       },
     ])
@@ -1374,6 +1433,50 @@ function loadGboardTextareaPage(
       vi.stubGlobal(global, window[global])
     }
     recordInput({getText: () => field.value, field})
+  }
+}
+
+/** A page and Gboard where each letter key adds its letter to the field, except the second `o` of a word. */
+function useGboardTextarea(): void {
+  vi.stubEnv('THUMBJAR_OUT_DIR', mkdtempSync(join(tmpdir(), 'thumbjar-run-')))
+  const adbImplementation = vi.mocked(adb).getMockImplementation()!
+  vi.mocked(adb).mockImplementation((args) =>
+    args.includes('input_method')
+      ? Promise.resolve('mInputShown=true')
+      : adbImplementation(args),
+  )
+  onTestFinished(() => {
+    vi.mocked(adb).mockImplementation(adbImplementation)
+    vi.unstubAllEnvs()
+  })
+  fake.foreground = 'com.android.chrome'
+  fake.opened = () => {
+    loadGboardTextareaPage('', 'en-keyboard.xml')
+    const field = fake.window!.document.querySelector('textarea')!
+    const keys = packageNodes(
+      gboard.dump,
+      'com.google.android.inputmethod.latin',
+    )
+    let letters = ''
+    gboard.tap = (x, y) => {
+      const key = keys.find(
+        (node) => node.center[0] === x && node.center[1] === y,
+      )
+      if (key === undefined || key.label.length !== 1) {
+        return
+      }
+      letters += key.label.toLowerCase()
+      if (letters === 'foo') {
+        return
+      }
+      field.dispatchEvent(
+        new fake.window!.InputEvent('beforeinput', {inputType: 'insertText'}),
+      )
+      field.value += key.label.toLowerCase()
+      field.dispatchEvent(
+        new fake.window!.InputEvent('input', {inputType: 'insertText'}),
+      )
+    }
   }
 }
 

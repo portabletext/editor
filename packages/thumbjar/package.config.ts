@@ -6,6 +6,12 @@ export default defineConfig({
   // Private, so no release tags: nothing renders its API docs.
   tsdoc: false,
   bundles: [
+    {source: './src/run/cap.ts', import: './dist/run/cap.js', runtime: 'node'},
+    {
+      source: './src/run/check.ts',
+      import: './dist/run/check.js',
+      runtime: 'node',
+    },
     {source: './src/bin.ts', import: './dist/bin.js', runtime: 'node'},
     {
       source: './src/prepare/setup-ja.ts',
@@ -23,6 +29,8 @@ export default defineConfig({
       // `thumbjar prepare` runs `prepare.sh` next to `bin.js`, and it runs `diagnose.sh`, `setup-ja.js` and `dictionary.js` next to itself.
       name: 'thumbjar-prepare-scripts',
       writeBundle() {
+        mkdirSync('dist/run', {recursive: true})
+        copyFileSync('src/run/run.sh', 'dist/run/run.sh')
         mkdirSync('dist/prepare', {recursive: true})
         for (const script of ['prepare.sh', 'diagnose.sh']) {
           copyFileSync(`src/prepare/${script}`, `dist/prepare/${script}`)
