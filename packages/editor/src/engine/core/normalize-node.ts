@@ -67,7 +67,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   })
 
   if (structural) {
-    if (structural.patches.some((patch) => !isAncestorPath(path, patch.path))) {
+    if (
+      structural.patches.some(
+        (patch) => patch.type !== 'unset' && !isAncestorPath(path, patch.path),
+      )
+    ) {
       // A fix outside this node's subtree does not dirty this node, so
       // nothing would visit it again. Queue it below the fix's dirty paths so
       // the rest of the repairs still run for it. For a duplicate key fix
@@ -156,6 +160,13 @@ function applyStructuralCorrection(
   correction: StructuralCorrection,
 ): void {
   for (const patch of correction.patches) {
+    if (patch.type === 'unset') {
+      editor.apply({
+        type: 'unset',
+        path: patch.path,
+      })
+      continue
+    }
     if (patch.type !== 'set') {
       throw new Error(
         `Unsupported ${patch.type} patch in ${correction.type} correction`,
@@ -275,6 +286,8 @@ function structuralMessage(
   spanTypeName: string,
 ): string {
   switch (correction.type) {
+    case 'non-object':
+      return 'Removing an entry that is not an object'
     case 'missing-type':
       return correction.patches.some(
         (patch) => patch.type === 'set' && patch.value === spanTypeName,
