@@ -3,7 +3,10 @@
 // Each layout and label comes from a recorded dump in `src/fixtures/`, so the driver types no character a
 // dump does not show.
 
+import {writeFileSync} from 'node:fs'
+import {adb} from '../device/adb.ts'
 import type {Device} from '../device/u2.ts'
+import {outDir} from './typing.ts'
 import {phase, pyRepr, sleep} from '../device/util.ts'
 import type {RunOnDeviceOptions} from '../steps.ts'
 import {packageNodes, type PackageNode} from './hierarchy.ts'
@@ -85,6 +88,9 @@ export async function typeSymbols(
     await moveTo((name) => layouts[name]!.keys[character] !== undefined)
     const entry = layouts[layout]!.keys[character]!
     const key = await waitForKey(device, layouts, layout, entry.label)
+    if (character === '-') {
+      await probeLongPress(device, character, key.center)
+    }
     await tap(character, key.center)
     layout = entry.to ?? layout
     // Paces taps at a typist's speed, as `tapKey` does.
@@ -136,4 +142,26 @@ async function waitForKey(
   throw new Error(
     `no Gboard key labelled ${pyRepr(label)} on layout ${pyRepr(layout)} in ${LAYOUT_DUMPS} dumps, labels: ${pyRepr(nodes.map((node) => node.label).slice(0, 80))}`,
   )
+}
+
+/** Spike only: hold each symbol key once, dump the popup Gboard shows, then release. */
+const probed = new Set<string>()
+async function probeLongPress(
+  device: Device,
+  character: string,
+  center: [number, number],
+): Promise<void> {
+  if (probed.has(character)) {
+    return
+  }
+  probed.add(character)
+  const [x, y] = center.map((value) => String(Math.round(value)))
+  const base = `${outDir()}/probe-long-press-${character === ' ' ? 'space' : 'dash'}-${Date.now()}`
+  await adb(['shell', 'input', 'motionevent', 'DOWN', x!, y!])
+  await sleep(1.5)
+  writeFileSync(`${base}.xml`, await device.dumpHierarchy())
+  await device.screenshot(base)
+  await adb(['shell', 'input', 'motionevent', 'UP', x!, y!])
+  await sleep(0.6)
+  phase(`probe: held ${pyRepr(character)} at ${x},${y}, dump ${base}.xml`)
 }
