@@ -9,12 +9,17 @@ import {
   isTextBlock,
   isTextBlockNode,
 } from '@portabletext/schema'
-import React, {useCallback, useContext, type JSX} from 'react'
+import React, {useCallback, useContext, useRef, type JSX} from 'react'
 import {NewPipelineContext} from '../../../editor/new-pipeline-context'
 import {
   ParentContainerContext,
   useParentContainer,
 } from '../../../editor/parent-container-context'
+import {
+  buildChunks,
+  reconcileChildChunks,
+  type Chunk,
+} from '../../../internal-utils/chunks'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
 import {isObject} from '../../../traversal/is-object'
 import {isEditor} from '../../editor/is-editor'
@@ -76,6 +81,7 @@ const useChildren = (props: {
     renderText,
     renderLeaf,
   } = props
+  const renderAsChunks = isEditor(node)
   const editor = useEngineStatic()
   editor.isNodeMapDirty = false
 
@@ -91,6 +97,7 @@ const useChildren = (props: {
 
   let children: Array<Node> = []
   let arrayFieldName = 'children'
+  let isContainerNode = false
   // The container config to propagate down to node's children: it becomes
   // their parent's container config. Stays as parentContainer for text
   // blocks and the editor root; updates to node's own config when node
@@ -109,6 +116,7 @@ const useChildren = (props: {
     )
 
     if (containerConfig) {
+      isContainerNode = true
       const fieldValue = (node as Record<string, unknown>)[
         containerConfig.field.name
       ]
@@ -287,7 +295,7 @@ const useChildren = (props: {
     return false
   }
 
-  const elements = children.map((n: Node, i: number) => {
+  const renderChild = (n: Node, i: number) => {
     if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
       return wrapNewPipeline(
         renderElementComponent(n, i, false),
@@ -323,7 +331,64 @@ const useChildren = (props: {
       return null
     }
     throw new Error(`Unexpected node type`)
-  })
+  }
+
+  const chunksRef = useRef<Array<Chunk> | undefined>(undefined)
+  let renderChunks: Array<Chunk> | undefined
+  if (renderAsChunks || isContainerNode) {
+    renderChunks = chunksRef.current
+      ? reconcileChildChunks(chunksRef.current, children)
+      : buildChunks(children)
+    chunksRef.current = renderChunks
+  }
+  const chunkElementCacheRef = useRef<Map<string, ChunkElementCache> | null>(
+    null,
+  )
+  if (chunkElementCacheRef.current === null) {
+    chunkElementCacheRef.current = new Map()
+  }
+  const chunkElementCache = chunkElementCacheRef.current
+  let chunkStart = 0
+  const elements = renderChunks
+    ? renderChunks.flatMap((chunk) => {
+        const start = chunkStart
+        chunkStart += chunk.blocks.length
+        const hit = getFreshChunkElements(chunkElementCache, chunk, {
+          childContainer,
+          blockObjects: editor.blockObjects,
+          containers: editor.containers,
+          textBlocks: editor.textBlocks,
+          renderElement,
+          renderLeaf,
+        })
+        if (hit) {
+          return hit
+        }
+        const chunkElements = chunk.blocks.map((child, index) =>
+          renderChild(child, start + index),
+        )
+        chunkElementCache.set(chunk.id, {
+          blockObjects: editor.blockObjects,
+          childContainer,
+          chunk,
+          containers: editor.containers,
+          elements: chunkElements,
+          renderElement,
+          renderLeaf,
+          textBlocks: editor.textBlocks,
+        })
+        return chunkElements
+      })
+    : children.map(renderChild)
+
+  if (renderChunks) {
+    const renderedChunkIds = new Set(renderChunks.map((chunk) => chunk.id))
+    for (const chunkId of chunkElementCache.keys()) {
+      if (!renderedChunkIds.has(chunkId)) {
+        chunkElementCache.delete(chunkId)
+      }
+    }
+  }
 
   if (childContainer && childContainer !== parentContainer) {
     // `useChildren` is running for a node that is itself a registered
@@ -341,6 +406,49 @@ const useChildren = (props: {
   }
 
   return <>{elements}</>
+}
+
+type ChunkRenderInputs = Pick<
+  ChunkElementCache,
+  | 'blockObjects'
+  | 'childContainer'
+  | 'containers'
+  | 'textBlocks'
+  | 'renderElement'
+  | 'renderLeaf'
+>
+
+// The lookup lives outside the render callback so the callback's scope never
+// references a previous cache entry.
+function getFreshChunkElements(
+  cache: Map<string, ChunkElementCache>,
+  chunk: Chunk,
+  inputs: ChunkRenderInputs,
+): Array<React.ReactNode> | undefined {
+  const cached = cache.get(chunk.id)
+  if (
+    cached?.chunk === chunk &&
+    cached.blockObjects === inputs.blockObjects &&
+    cached.childContainer === inputs.childContainer &&
+    cached.containers === inputs.containers &&
+    cached.textBlocks === inputs.textBlocks &&
+    cached.renderElement === inputs.renderElement &&
+    cached.renderLeaf === inputs.renderLeaf
+  ) {
+    return cached.elements
+  }
+  return undefined
+}
+
+type ChunkElementCache = {
+  blockObjects: Editor['blockObjects']
+  childContainer: ContainerConfig | undefined
+  chunk: Chunk
+  containers: Editor['containers']
+  elements: Array<React.ReactNode>
+  renderElement: (props: RenderElementProps) => JSX.Element
+  renderLeaf?: (props: RenderLeafProps) => JSX.Element
+  textBlocks: Editor['textBlocks']
 }
 
 export default useChildren
