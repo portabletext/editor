@@ -235,19 +235,3 @@ For data-driven test files, declare `// thumbjar-test-count: 13` with the total
 number of rows collected by Vitest (skipped rows included). The runner uses it
 for its file budget instead of counting literal top-level `test(` calls. Keep
 a collection test comparing the declaration with Vitest's actual count.
-
-### Experimental stepwise session (probe B2)
-
-`openOnDevice(context, options)` holds one Chrome and one driver run open until
-`close()`. `type(text)`, `enter()`, `backspace(times)`, `page(name, args)` and
-`read()` return a `StepRecord` as each boundary arrives. Setup and transport
-faults before Gboard input can replay the logged commands in fresh Chrome.
-They cannot replay the author's JavaScript assertions: those already saw a
-boundary in the discarded attempt. After input, a transport fault rejects the
-pending command and `close()`, with one inconclusive summary entry. Before
-input, two transport faults end faulted. Page exceptions never retry. A close
-with a model mismatch is a completed driver run and a failed test assertion.
-Unlike a collected case, future unsupported input cannot be checked up front.
-Sessions disable final-text digit classification and convert symbol mistaps to
-ordinary post-input faults so they cannot replay already observed boundaries.
-Call `close()` in `finally`; an abandoned session is cancelled at test finish.

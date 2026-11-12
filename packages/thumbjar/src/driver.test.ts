@@ -1427,31 +1427,3 @@ test('page actions share whole-case retry and input boundaries', async () => {
     ],
   })
 })
-
-test('a stepwise session retains one attempt and its input retry boundary', async () => {
-  expect(
-    await runSuite({
-      root,
-      file: 'src/fixtures/suites/stepwise-session.ts',
-      setupFiles: ['src/fixtures/suites/gboard-device.ts'],
-      testTimeout: 15_000,
-    }),
-  ).toEqual({
-    file: 'passed',
-    errors: [],
-    tests: [
-      {
-        name: 'Scenario: Session setup before input retries in a fresh Chrome',
-        state: 'passed',
-      },
-      {
-        name: 'Scenario: A session fault in step five after input in step two does not replay',
-        state: 'passed',
-      },
-      {
-        name: 'Scenario: A session replays page commands before input but not author assertions',
-        state: 'passed',
-      },
-    ],
-  })
-}, 60_000)

@@ -29,7 +29,6 @@ export function unsupportedReason(
       return typeof step.action === 'string' && step.action.length > 0
         ? undefined
         : 'a `page` step needs a nonempty action name'
-    case 'read':
     case 'enter':
       return undefined
     case 'backspace':
