@@ -207,10 +207,7 @@ describe(resolveSelection.name, () => {
       },
     )
 
-    expect(range).toEqual({
-      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k2'}], offset: 0},
-      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k2'}], offset: 0},
-    })
+    expect(range).toEqual(null)
   })
 
   test("Scenario: Span offset that doesn't exist", () => {

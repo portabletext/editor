@@ -9,14 +9,12 @@ import {pointEquals} from '../engine/point/point-equals'
 import {isRange} from '../engine/range/is-range'
 import {getChildren} from '../traversal/get-children'
 import {getLeaf} from '../traversal/get-leaf'
-import {getNode} from '../traversal/get-node'
 import {isBlock} from '../traversal/is-block'
 import {walkedNode, walkPath} from '../traversal/walk-path'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
-import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
 
 type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
 
@@ -24,7 +22,7 @@ type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
  * Normalize a selection so that each point resolves to a valid leaf path.
  *
  * Handles block-level paths by descending to the appropriate child,
- * recovers from missing children by falling back to the first child, and
+ * resolves a point whose child has gone to nothing, and
  * clamps offsets to the text length for spans and to 0 for non-span nodes.
  *
  * Works at any depth, including inside containers.
@@ -170,25 +168,8 @@ function resolveSelectionPoint(
     return leaf ? {path: leaf.path, offset: 0} : {path: entry.path, offset: 0}
   }
 
-  // Path doesn't resolve (e.g. a child was removed).
-  // Fall back to the first leaf of the block.
-  const blockKey = getBlockKeyFromSelectionPoint(selectionPoint)
-
-  if (!blockKey) {
-    return undefined
-  }
-
-  const blockEntry = getNode(snapshot, [{_key: blockKey}])
-
-  if (!blockEntry) {
-    return undefined
-  }
-
-  const leaf = getLeaf(snapshot, blockEntry.path, {edge: 'start'})
-
-  return leaf
-    ? {path: leaf.path, offset: 0}
-    : {path: blockEntry.path, offset: 0}
+  // Path doesn't resolve: nothing to select.
+  return undefined
 }
 
 /**

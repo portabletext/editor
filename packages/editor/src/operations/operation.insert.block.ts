@@ -26,6 +26,7 @@ import {
   isEqualChildren,
   isEqualMarks,
 } from '../internal-utils/equality'
+import {namesGoneChildOfPresentParent} from '../internal-utils/names-gone-child-of-present-parent'
 import {toEngineBlock} from '../internal-utils/values'
 import {getDeclarationsInScope} from '../schema/declarations-in-scope'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
@@ -81,6 +82,14 @@ export const insertBlockOperationImplementation: OperationImplementation<
   const resolved = operation.at
     ? resolveSelection(editor, operation.at)
     : resolveSelection(editor, editor.snapshot.context.selection)
+  if (
+    operation.at &&
+    !resolved &&
+    namesGoneChildOfPresentParent(editor.snapshot, operation.at)
+  ) {
+    return
+  }
+
   const at =
     resolved && operation.at && operation.placement !== 'auto'
       ? operation.at

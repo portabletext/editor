@@ -16,6 +16,7 @@ import {rangeStart} from '../engine/range/range-start'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
+import {namesGoneChildOfPresentParent} from '../internal-utils/names-gone-child-of-present-parent'
 import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
@@ -31,6 +32,14 @@ export const removeAnnotationOperationImplementation: OperationImplementation<
   const at = operation.at
     ? resolveSelection(operation.editor, operation.at)
     : null
+
+  if (
+    operation.at &&
+    !at &&
+    namesGoneChildOfPresentParent(editor.snapshot, operation.at)
+  ) {
+    return
+  }
 
   const effectiveSelection = at ?? editor.snapshot.context.selection
 
