@@ -141,6 +141,8 @@ createRoot(document.getElementById('root')!).render(
     initialConfig={{schemaDefinition: gherkinSchemaDefinition, keyGenerator}}
   >
     <PortableTextEditable
+      // Gboard capitalises the first word of a block, and the desktop steps type exactly what the feature says.
+      autoCapitalize="off"
       style={{border: '1px solid #888', minHeight: '3em', fontSize: 20}}
     />
     <Probe />
