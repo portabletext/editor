@@ -19,6 +19,7 @@ export function validateValue(
   value: PortableTextBlock[] | undefined,
   types: EditorSchema,
   keyGenerator: () => string,
+  indexOffset = 0,
 ): Validation {
   let resolution: InvalidValueResolution | null = null
   let valid = true
@@ -53,7 +54,8 @@ export function validateValue(
     }
   }
   if (
-    value.some((blk: PortableTextBlock, index: number): boolean => {
+    value.some((blk: PortableTextBlock, blockIndex: number): boolean => {
+      const index = blockIndex + indexOffset
       // Is the block an object?
       if (typeof blk !== 'object' || blk === null) {
         resolution = {
