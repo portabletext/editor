@@ -59,12 +59,7 @@ describe('the workflow', () => {
   })
 
   test('runs each matrix file on a device prepared for its language', () => {
-    expect(rows).toEqual([
-      {lang: 'en', file: 'tests/matrix.en.test.ts'},
-      {lang: 'en', file: 'tests/matrix.en.2.test.ts'},
-      {lang: 'ja', file: 'tests/matrix.ja.test.ts'},
-      {lang: 'ja', file: 'tests/matrix.ja.2.test.ts'},
-    ])
+    expect(rows).toEqual([{lang: 'en', file: 'tests/diag.en.test.ts'}])
   })
 
   test('leaves the original suites available for hand runs', () => {
@@ -76,6 +71,10 @@ describe('the workflow', () => {
       'tests/en.test.ts',
       'tests/ja.enter.test.ts',
       'tests/ja.test.ts',
+      'tests/matrix.en.2.test.ts',
+      'tests/matrix.en.test.ts',
+      'tests/matrix.ja.2.test.ts',
+      'tests/matrix.ja.test.ts',
     ])
   })
 
