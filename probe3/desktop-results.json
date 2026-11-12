@@ -1,0 +1,97 @@
+{
+  "success": true,
+  "passed": 13,
+  "failed": 0,
+  "results": [
+    {
+      "file": "insert.break.test.ts",
+      "status": "passed",
+      "rows": [
+        {
+          "row": 1,
+          "name": "Insert Break Breaking text block",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 2,
+          "name": "Insert Break Breaking text block",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 3,
+          "name": "Insert Break Breaking text block",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 4,
+          "name": "Insert Break Breaking second text block",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 5,
+          "name": "Insert Break Breaking second text block",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 6,
+          "name": "Insert Break Breaking second text block",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 7,
+          "name": "Insert Break Breaking before inline object",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 8,
+          "name": "Insert Break Pressing Enter when selecting the entire content",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 9,
+          "name": "Insert Break Pressing Enter on a block object",
+          "status": "passed",
+          "failureMessages": []
+        }
+      ]
+    },
+    {
+      "file": "insert.text.test.ts",
+      "status": "passed",
+      "rows": [
+        {
+          "row": 1,
+          "name": "Insert text Inserting text on expanded selection",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 2,
+          "name": "Insert text Inserting text on expanded selection",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 3,
+          "name": "Insert text Inserting text on expanded selection",
+          "status": "passed",
+          "failureMessages": []
+        },
+        {
+          "row": 4,
+          "name": "Insert text Inserting text on expanded selection",
+          "status": "passed",
+          "failureMessages": []
+        }
+      ]
+    }
+  ]
+}
