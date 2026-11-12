@@ -25,7 +25,7 @@ Pick the serializer for the target. Pass the Portable Text value to it.
   browsers. See `/rendering/html.md`.
 - Vue: `@portabletext/vue`. See `/rendering/vue.md`.
 - Svelte: `@portabletext/svelte`. See `/rendering/svelte.md`.
-- Markdown: `@portabletext/markdown`. See `/rendering/markdown.md`.
+- Markdown: [`@portabletext/markdown`](https://github.com/portabletext/markdown). See `/rendering/markdown.md`.
 
 Unknown block types are skipped unless you provide a component for them, so
 custom types never crash a render.
@@ -47,7 +47,7 @@ Behavior API (`defineBehavior`). Start at `/editor/getting-started.md`.
 
 - HTML to Portable Text: `@portabletext/block-tools` (`htmlToBlocks`).
   See `/conversion/html-to-portable-text.md`.
-- Markdown to Portable Text: `@portabletext/markdown`.
+- Markdown to Portable Text: [`@portabletext/markdown`](https://github.com/portabletext/markdown).
   See `/conversion/markdown-to-portable-text.md`.
 
 ## When unsure

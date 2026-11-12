@@ -3,7 +3,7 @@ title: Markdown round-tripping
 description: What a Markdown → Portable Text → Markdown round trip preserves, normalizes, and degrades with @portabletext/markdown.
 ---
 
-{/* This page is the canonical source for round-trip behavior. packages/markdown/README.md and apps/docs/src/content/docs/conversion/markdown-to-portable-text.mdx (Round-trip behavior section) both carry condensed summaries; keep all three in sync, a claim corrected here is stale there. */}
+{/* This page is the canonical source for round-trip behavior. https://github.com/portabletext/markdown#readme and apps/docs/src/content/docs/conversion/markdown-to-portable-text.mdx (Round-trip behavior section) both carry condensed summaries; keep all three in sync, a claim corrected here is stale there. */}
 
 Converting Markdown to Portable Text and back with `markdownToPortableText` and `portableTextToMarkdown` isn't a lossless mirror. It's a contract with six guarantees and a short list of named exceptions. This page is for anyone evaluating a Markdown-based pipeline, an AI agent that reads or writes Markdown, an import/export tool, a migration from a Markdown-first CMS, who needs to know exactly what a round trip preserves, normalizes, or degrades.
 
@@ -282,4 +282,4 @@ markdownToPortableText('  hello world  ')
 
 - [Markdown to Portable Text](/conversion/markdown-to-portable-text/) for parsing Markdown into PT blocks
 - [Markdown rendering](/rendering/markdown/) for rendering PT blocks as Markdown
-- [`@portabletext/markdown` on GitHub](https://github.com/portabletext/editor/tree/main/packages/markdown) for full API documentation and changelog
+- [`@portabletext/markdown` on GitHub](https://github.com/portabletext/markdown) for full API documentation and changelog

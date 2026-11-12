@@ -8,7 +8,6 @@
     "build:editor": "turbo build --filter=@portabletext/editor...",
     "build:example-basic": "turbo build --filter=example-basic...",
     "build:keyboard-shortcuts": "turbo build --filter=@portabletext/keyboard-shortcuts...",
-    "build:markdown": "turbo build --filter=@portabletext/markdown...",
     "build:patches": "turbo build --filter=@portabletext/patches...",
     "build:playground": "turbo build --filter=playground...",
     "build:plugin-emoji-picker": "turbo build --filter=@portabletext/plugin-emoji-picker...",
