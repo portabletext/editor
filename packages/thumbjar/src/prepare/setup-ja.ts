@@ -8,6 +8,7 @@ import {writeFileSync} from 'node:fs'
 import {adbOutput, adbPassthrough} from '../device/adb.ts'
 import {Device, type UiObject} from '../device/u2.ts'
 import {pySorted, sleep} from '../device/util.ts'
+import {openJapaneseLayouts} from './open-japanese-layouts.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 const out = process.argv[2]!
@@ -87,8 +88,7 @@ async function main(): Promise<void> {
     await snap(device, 'missing-japanese-row')
     throw new Error('no Japanese row in the search results')
   }
-  await row.click()
-  await tile(device, TWELVE).wait(15)
+  await openJapaneseLayouts(device, (name) => snap(device, name))
   await snap(device, 'japanese')
 
   for (const [pattern, want] of [
