@@ -6,7 +6,7 @@ import {
   type PlaywrightWorkerArgs,
   type PlaywrightWorkerOptions,
 } from '@playwright/test'
-import {compileFeature} from '../compile-feature'
+import {compileFeature, type Scenario} from '../compile-feature'
 import type {Hook} from '../hooks'
 import type {StepDefinition} from '../step-definitions'
 
@@ -32,17 +32,17 @@ export function Feature<
   hooks,
   stepDefinitions,
   parameterTypes,
-  expectedFailures,
+  expectFail,
 }: {
   featureText: string
-  expectedFailures?: ReadonlyArray<string>
+  expectFail?: (scenario: Scenario) => boolean
   hooks?: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,
-    expectedFailures,
+    expectFail,
     hooks: hooks ?? [],
     stepDefinitions,
     parameterTypes: parameterTypes ?? [],
@@ -103,7 +103,7 @@ function withPlaywright(
   callback: (options: PlaywrightOptions) => Promise<void>,
 ) {
   // Playwright discovers fixtures from explicit destructuring in the callback.
-  return async ({
+  return ({
     browserName,
     defaultBrowserType,
     headless,

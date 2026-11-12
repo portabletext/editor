@@ -11,7 +11,8 @@ Scenario: marked
 Given "foo"
 Scenario: ordinary
 Given "bar"`,
-  expectedFailures: [mode === 'stale' ? 'deleted' : 'marked'],
+  expectFail: (scenario) =>
+    scenario.name === (mode === 'stale' ? 'deleted' : 'marked'),
   stepDefinitions: [
     Given('{string}', (context: {value: string}, value: string) => {
       context.value = value

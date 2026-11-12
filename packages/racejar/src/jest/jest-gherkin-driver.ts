@@ -1,6 +1,6 @@
 import type {ParameterType} from '@cucumber/cucumber-expressions'
 import {afterEach, beforeEach, describe, test} from '@jest/globals'
-import {compileFeature} from '../compile-feature'
+import {compileFeature, type Scenario} from '../compile-feature'
 import type {Hook} from '../hooks'
 import type {StepDefinition} from '../step-definitions'
 
@@ -12,17 +12,17 @@ export function Feature<TContext extends Record<string, any> = object>({
   hooks,
   stepDefinitions,
   parameterTypes,
-  expectedFailures,
+  expectFail,
 }: {
   featureText: string
-  expectedFailures?: ReadonlyArray<string>
+  expectFail?: (scenario: Scenario) => boolean
   hooks?: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,
-    expectedFailures,
+    expectFail,
     hooks: hooks ?? [],
     stepDefinitions,
     parameterTypes: parameterTypes ?? [],
@@ -37,12 +37,12 @@ export function Feature<TContext extends Record<string, any> = object>({
 
   describeFn(feature.name, () => {
     let expectedFailure = false
-    beforeEach(() => {
+    beforeEach(async () => {
       expectedFailure = false
+      for (const before of feature.beforeHooks) {
+        await before()
+      }
     })
-    for (const before of feature.beforeHooks) {
-      beforeEach(before)
-    }
 
     for (const after of feature.afterHooks) {
       afterEach(async () => {

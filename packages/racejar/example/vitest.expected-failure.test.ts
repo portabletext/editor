@@ -26,19 +26,40 @@ test('expected failures include After assertions and reject repairs and stale en
         name: scenario.name,
         state: scenario.result().state,
       }))
-      console.log(
-        JSON.stringify({
-          mode,
-          state: module!.state(),
-          results,
-          errors: module!.errors().map((error) => error.message),
-        }),
-      )
       expect(module!.state()).toEqual(
         mode === 'fixed' || mode === 'stale' || mode === 'ordinary-broken'
           ? 'failed'
           : 'passed',
       )
+      if (mode === 'stale') {
+        expect(module!.errors().map((error) => error.message)).toEqual([
+          'Expected failure predicate matched no scenario rows',
+        ])
+      }
+      if (mode === 'fixed') {
+        expect(results).toEqual([
+          {name: 'marked', state: 'failed'},
+          {name: 'ordinary', state: 'passed'},
+        ])
+      }
+      if (mode === 'ordinary-broken') {
+        expect(results).toEqual([
+          {name: 'marked', state: 'passed'},
+          {name: 'ordinary', state: 'failed'},
+        ])
+      }
+      if (mode === 'skip') {
+        expect(results).toEqual([
+          {name: 'marked', state: 'skipped'},
+          {name: 'ordinary', state: 'passed'},
+        ])
+      }
+      if (mode === 'only') {
+        expect(results).toEqual([
+          {name: 'marked', state: 'passed'},
+          {name: 'ordinary', state: 'skipped'},
+        ])
+      }
       if (mode === 'broken') {
         expect(results).toEqual([
           {name: 'marked', state: 'passed'},
@@ -48,7 +69,11 @@ test('expected failures include After assertions and reject repairs and stale en
     } finally {
       await runner.close()
       process.exitCode = exitCode
-      process.env['RACEJAR_PROBE'] = previousMode
+      if (previousMode === undefined) {
+        delete process.env['RACEJAR_PROBE']
+      } else {
+        process.env['RACEJAR_PROBE'] = previousMode
+      }
     }
   }
 }, 60_000)

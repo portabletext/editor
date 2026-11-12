@@ -138,6 +138,9 @@
       "entry": ["bundle-stats.config.ts", ".github/scripts/*.test.ts"],
       "ignoreDependencies": ["@playwright/test"],
       "project": ["**", ".github/scripts/**"]
+    },
+    "packages/racejar": {
+      "entry": ["src/index.ts!", "package.config.ts!", "example/*.fixture.ts"]
     }
   }
 }
