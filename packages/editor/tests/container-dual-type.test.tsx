@@ -136,19 +136,19 @@ describe('same _type in two different lexical positions', () => {
           _type: 'table',
           rows: [
             {
-              _key: 'k2',
+              _key: 'k5',
               _type: 'row',
               cells: [
                 {
-                  _key: 'k3',
+                  _key: 'k6',
                   _type: 'cell',
                   content: [
                     {
-                      _key: 'k4',
+                      _key: 'k7',
                       _type: 'block',
                       children: [
                         {
-                          _key: 'k5',
+                          _key: 'k8',
                           _type: 'span',
                           marks: [],
                           text: '',
@@ -168,15 +168,15 @@ describe('same _type in two different lexical positions', () => {
           _type: 'organism',
           parts: [
             {
-              _key: 'k6',
+              _key: 'k2',
               _type: 'cell',
               content: [
                 {
-                  _key: 'k7',
+                  _key: 'k3',
                   _type: 'block',
                   children: [
                     {
-                      _key: 'k8',
+                      _key: 'k4',
                       _type: 'span',
                       marks: [],
                       text: '',

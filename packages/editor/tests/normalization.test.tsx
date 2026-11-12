@@ -235,14 +235,28 @@ describe('normalization', () => {
         {
           _key: 'abc',
           _type: 'block',
-          children: [{_key: 'k2', _type: 'span', text: '', marks: []}],
+          children: [
+            {
+              _key: 'k3',
+              _type: 'span',
+              marks: [],
+              text: '',
+            },
+          ],
           markDefs: [],
           style: 'normal',
         },
         {
           _key: 'def',
           _type: 'block',
-          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+          children: [
+            {
+              _key: 'k2',
+              _type: 'span',
+              marks: [],
+              text: '',
+            },
+          ],
           markDefs: [],
           style: 'normal',
         },
@@ -377,7 +391,7 @@ describe('normalization', () => {
     })
   })
 
-  test('Scenario: an orphaned markDef with no referencing span is removed', async () => {
+  test('Scenario: an orphaned markDef with no referencing span is kept on entry', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const markDefKey = keyGenerator()
@@ -415,17 +429,23 @@ describe('normalization', () => {
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([
         {
-          _key: blockKey,
+          _key: 'k0',
           _type: 'block',
           children: [
             {
-              _key: spanKey,
+              _key: 'k2',
               _type: 'span',
-              text: 'Hello',
               marks: [],
+              text: 'Hello',
             },
           ],
-          markDefs: [],
+          markDefs: [
+            {
+              _key: 'k1',
+              _type: 'link',
+              href: 'https://sanity.io',
+            },
+          ],
           style: 'normal',
         },
       ])
@@ -504,10 +524,7 @@ describe('normalization', () => {
     })
 
     await vi.waitFor(() => {
-      expect(onEvent).toHaveBeenCalledWith({
-        type: 'value changed',
-        value: initialValue,
-      })
+      expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
     })
 
     await vi.waitFor(() => {
@@ -1130,105 +1147,6 @@ describe('normalization', () => {
       //     value: 'k4',
       //   },
       // ])
-    })
-  })
-
-  test('Scenario: selection is preserved when a remote marks change creates same-mark adjacency', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const blockKey = keyGenerator()
-    const spanFooKey = keyGenerator()
-    const spanBarKey = keyGenerator()
-
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      initialValue: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [
-            {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
-            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['em']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ],
-      schemaDefinition: defineSchema({
-        decorators: [{name: 'strong'}, {name: 'em'}],
-      }),
-    })
-
-    editor.send({
-      type: 'select',
-      at: {
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-          offset: 1,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-          offset: 1,
-        },
-      },
-    })
-
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-          offset: 1,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-          offset: 1,
-        },
-        backward: false,
-      })
-    })
-
-    editor.send({
-      type: 'update value',
-      value: [
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [
-            {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
-            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ],
-    })
-
-    // Adopted structure is kept as-is (no merge on adoption), so the
-    // caret's span survives untouched: no selection remapping needed.
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [
-            {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
-            {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-          offset: 1,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
-          offset: 1,
-        },
-        backward: false,
-      })
     })
   })
 

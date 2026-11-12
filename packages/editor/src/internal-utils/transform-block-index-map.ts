@@ -27,7 +27,7 @@ type PureTransformContext = Pick<EditorContext, 'schema' | 'containers'>
  * that produced `afterValue`, mutates the map so it equals one built
  * fresh from `afterValue`. The oracle invariant is exercised in
  * `transform-block-index-map.test.ts`. Called once per operation by the
- * update-value plugin, after the value tree has settled.
+ * update-value subscriber, after the value tree has settled.
  *
  * Text and selection ops have no structural effect. Insert/unset/set
  * shift, remove, and add entries scoped to the affected siblings and

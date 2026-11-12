@@ -116,7 +116,6 @@ describe('Feature: Read-Only Selection Sync', () => {
       })
     })
   })
-
   test('Scenario: Moving the DOM selection out of a read-only editor deselects through a `select` event', async () => {
     const selectEvents: Array<{type: 'select'; at: EditorSelection}> = []
     let engine: Editor | undefined
@@ -189,30 +188,9 @@ describe('Feature: Read-Only Selection Sync', () => {
     expect(emittedEvents).toEqual([
       {
         type: 'operation',
-        operation: {type: 'unset', path: [{_key: 'k0'}]},
+        operation: {type: 'set', path: [], value: initialValue},
         origin: 'remote',
       },
-      {
-        type: 'operation',
-        operation: {
-          type: 'insert',
-          path: [0],
-          position: 'before',
-          node: initialValue[0],
-        },
-        origin: 'remote',
-      },
-      {
-        type: 'operation',
-        operation: {
-          type: 'insert',
-          path: [1],
-          position: 'before',
-          node: initialValue[1],
-        },
-        origin: 'remote',
-      },
-      {type: 'value changed', value: initialValue},
       {type: 'ready'},
       {type: 'read only'},
       {type: 'selection', selection: firstSelection},

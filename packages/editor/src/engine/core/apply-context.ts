@@ -1,28 +1,19 @@
-import type {Patch} from '@portabletext/patches'
 import type {OperationOrigin} from './operation-channel'
 
 /**
  * A frame pushed onto `editor.applyContext` for the duration of an
  * attribution bracket (remote changes, undo, redo, normalization, the
- * empty-editor placeholder insert, a repair of received content). Brackets nest, so a normalization that
+ * empty-editor placeholder insert). Brackets nest, so a normalization that
  * fires while replaying a remote patch pushes a `normalization` frame on
  * top of the still-active `remote` one; both stay visible to `getOrigin`
  * below instead of only the innermost.
  */
 export type ApplyContextFrame =
-  | {kind: 'remote'; source: 'patches' | 'update-value' | 'initial-sync'}
+  | {kind: 'remote'; source: 'patches' | 'initial-sync'}
   | {kind: 'undo'}
   | {kind: 'redo'}
   | {kind: 'normalization'}
   | {kind: 'placeholder'}
-  /**
-   * A `validateValue` auto-resolution applied to content received through
-   * `update value`. `patches` are the resolution's own patches for the
-   * operation, the ones the host receives for it. `sentAfterChange`: the
-   * sync sends them as its own `patch` events, which go out after every
-   * patch the change's operations generate.
-   */
-  | {kind: 'repair'; patches: Array<Patch>; sentAfterChange: boolean}
 
 /**
  * Reduces the frame stack to an `OperationOrigin` by fixed precedence
@@ -56,8 +47,7 @@ export function getOrigin(
  * editor is applying content that arrived from outside (`apply`
  * or value sync), possibly nested inside a normalization fix.
  * `normalize-node`'s readers gate optional fix-ups on it to leave adopted
- * content alone; `apply-operation` skips inverse population; the sync
- * machine treats it as busy.
+ * content alone. `apply-operation` skips inverse population.
  */
 export function hasRemoteFrame(
   frames: ReadonlyArray<ApplyContextFrame>,
@@ -73,28 +63,6 @@ export function isInNormalization(
   frames: ReadonlyArray<ApplyContextFrame>,
 ): boolean {
   return frames.some((frame) => frame.kind === 'normalization')
-}
-
-/**
- * The resolution patches of the innermost `repair` frame, or none.
- */
-export function getRepairPatches(
-  frames: ReadonlyArray<ApplyContextFrame>,
-): Array<Patch> | undefined {
-  return frames.findLast((frame) => frame.kind === 'repair')?.patches
-}
-
-/**
- * Whether the innermost `repair` frame's patches are sent after the
- * change.
- */
-export function isRepairSentAfterChange(
-  frames: ReadonlyArray<ApplyContextFrame>,
-): boolean {
-  return (
-    frames.findLast((frame) => frame.kind === 'repair')?.sentAfterChange ??
-    false
-  )
 }
 
 /**

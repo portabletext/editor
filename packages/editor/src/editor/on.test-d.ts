@@ -61,3 +61,12 @@ describe('editor.on overloads', () => {
     })
   })
 })
+
+test('removed value events are rejected', () => {
+  // @ts-expect-error
+  editor.send({type: 'update value', value: []})
+  // @ts-expect-error
+  editor.on('invalid value', () => {})
+  // @ts-expect-error
+  editor.on('value changed', () => {})
+})

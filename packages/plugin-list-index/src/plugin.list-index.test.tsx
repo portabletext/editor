@@ -86,50 +86,6 @@ describe(ListIndexProvider.name, () => {
     })
   })
 
-  test('Scenario: A structural change shifts indices, and only changed paths re-render', async () => {
-    const renders: Array<string> = []
-    const {editor} = await createTestEditor({
-      schemaDefinition,
-      initialValue: [
-        paragraphBlock('b0', 'intro'),
-        numberBlock('b1', 'one'),
-        numberBlock('b2', 'two'),
-      ],
-      children: probes(['b0', 'b1', 'b2'], (blockKey) =>
-        renders.push(blockKey),
-      ),
-    })
-
-    await vi.waitFor(() => {
-      expect(page.getByTestId('probe-b2').element().textContent).toBe('2')
-    })
-    renders.length = 0
-
-    editor.send({
-      type: 'update value',
-      value: [
-        paragraphBlock('b0', 'intro'),
-        numberBlock('b3', 'zero'),
-        numberBlock('b1', 'one'),
-        numberBlock('b2', 'two'),
-      ],
-    })
-
-    await vi.waitFor(() => {
-      expect(page.getByTestId('probe-b1').element().textContent).toBe('2')
-      expect(page.getByTestId('probe-b2').element().textContent).toBe('3')
-    })
-
-    // The paragraph's index is `undefined` before and after, so its bucket
-    // is never notified.
-    expect(renders).not.toContain('b0')
-
-    // Rebuilds coalesce per microtask, so the bulk update re-renders each
-    // changed probe once, not once per operation in the transaction.
-    expect(renders.filter((blockKey) => blockKey === 'b1')).toHaveLength(1)
-    expect(renders.filter((blockKey) => blockKey === 'b2')).toHaveLength(1)
-  })
-
   test('Scenario: Typing inside a list item does not move indices', async () => {
     const renders: Array<string> = []
     const {editor} = await createTestEditor({
@@ -154,24 +110,6 @@ describe(ListIndexProvider.name, () => {
     expect(page.getByTestId('probe-b1').element().textContent).toBe('1')
     expect(page.getByTestId('probe-b2').element().textContent).toBe('2')
     expect(renders).toEqual([])
-  })
-
-  test('Scenario: Emptying the value removes indices', async () => {
-    const {editor} = await createTestEditor({
-      schemaDefinition,
-      initialValue: [numberBlock('b1', 'one')],
-      children: probes(['b1'], () => {}),
-    })
-
-    await vi.waitFor(() => {
-      expect(page.getByTestId('probe-b1').element().textContent).toBe('1')
-    })
-
-    editor.send({type: 'update value', value: []})
-
-    await vi.waitFor(() => {
-      expect(page.getByTestId('probe-b1').element().textContent).toBe('none')
-    })
   })
 
   test('Scenario: Registering a container rebuilds indices after normalization repairs its list item', async () => {

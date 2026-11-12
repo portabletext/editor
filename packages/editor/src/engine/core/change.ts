@@ -1,10 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {Editor} from '../interfaces/editor'
-import {
-  getRepairPatches,
-  isInNormalization,
-  isPlaceholder,
-} from './apply-context'
+import {isInNormalization, isPlaceholder} from './apply-context'
 import type {OperationEvent} from './operation-channel'
 
 /**
@@ -14,7 +10,7 @@ export type ChangeEntry = {
   event: OperationEvent
   /**
    * The local patches for the operation, set by patch generation as the
-   * apply completes, or a repair's resolution patches.
+   * apply completes.
    */
   patches: Array<Patch>
 }
@@ -22,13 +18,13 @@ export type ChangeEntry = {
 /**
  * Why a change was opened. Only the editor's entry points open a change,
  * and each names its cause: a Behavior event (a user action), remote
- * patches, a value sync (the first load or an updated value), or a
- * registration that reshapes existing content.
+ * patches, the first value sync, or a registration that reshapes existing
+ * content.
  */
 export type ChangeCause =
   | {type: 'behavior event'}
   | {type: 'remote patches'}
-  | {type: 'value sync'; initial: boolean}
+  | {type: 'value sync'}
   | {type: 'registration'}
 
 /**
@@ -63,11 +59,9 @@ export function getChangeEntryKind(
     case 'remote patches':
     case 'value sync':
       // Remote content is applied without patching; what the editor then
-      // applies while patching, as a repair of what it received, or as the
-      // placeholder for a field it emptied, is its own fix of that content.
-      return entry.event.isPatching ||
-        getRepairPatches(entry.event.context) !== undefined ||
-        isPlaceholder(entry.event.context)
+      // applies while patching or as the placeholder for a field it emptied
+      // is its own fix of that content.
+      return entry.event.isPatching || isPlaceholder(entry.event.context)
         ? 'correction'
         : 'remote'
     case 'registration':
@@ -116,10 +110,8 @@ export function createChange(cause: ChangeCause): Change {
 }
 
 /**
- * Runs `fn` inside `change`, which may span several ticks: a value sync
- * that streams its blocks resumes its change once per tick and commits it
- * when the sync is done. A change open when `fn` starts is set aside until
- * `fn` returns.
+ * Runs `fn` inside `change`. A change open when `fn` starts is set aside
+ * until `fn` returns.
  */
 export function resumeChange<Result>(
   editor: Editor,
@@ -243,7 +235,7 @@ export function recordApply(
 
   const entry: ChangeEntry = {
     event,
-    patches: getRepairPatches(event.context) ?? [],
+    patches: [],
   }
   change.entries.splice(position, 0, entry)
   change.entryByEvent.set(event, entry)

@@ -16,11 +16,11 @@ import {
   EditorProvider,
   PortableTextEditable,
   useEditor,
+  type Decoration,
   type Editor,
   type MutationEvent,
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
-  type Decoration,
 } from '../src'
 import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
 import {EventListenerPlugin, NodePlugin} from '../src/plugins'
@@ -459,10 +459,7 @@ describe('RangeDecorations', () => {
 
     await vi.waitFor(() => {
       if (editorRef.current) {
-        expect(onChange).toHaveBeenCalledWith({
-          type: 'value changed',
-          value,
-        })
+        expect(onChange).toHaveBeenCalledWith({type: 'ready'})
         expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       }
     })

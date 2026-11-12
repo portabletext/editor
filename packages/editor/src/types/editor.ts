@@ -1,4 +1,3 @@
-import type {Patch} from '@portabletext/patches'
 import type {
   PortableTextBlock,
   PortableTextChild,
@@ -109,30 +108,6 @@ export type EditorSelection = {
   focus: EditorSelectionPoint
   backward?: boolean
 } | null
-
-/**
- * The editor has invalid data in the value that can be resolved by the user
- * @public */
-export type InvalidValueResolution = {
-  autoResolve?: boolean
-  patches: Patch[]
-  description: string
-  action: string
-  item: PortableTextBlock[] | PortableTextBlock | PortableTextChild | undefined
-
-  /**
-   * i18n keys for the description and action
-   *
-   * These are in addition to the description and action properties, to decouple the editor from
-   * the i18n system, and allow usage without it. The i18n keys take precedence over the
-   * description and action properties, if i18n framework is available.
-   */
-  i18n: {
-    description: `inputs.portable-text.invalid-value.${Lowercase<string>}.description`
-    action: `inputs.portable-text.invalid-value.${Lowercase<string>}.action`
-    values?: Record<string, string | number | string[]>
-  }
-}
 
 /** @beta */
 export type OnPasteResult =

@@ -1,7 +1,7 @@
 import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
-import type {EditorSelection, InvalidValueResolution} from '../types/editor'
+import type {EditorSelection} from '../types/editor'
 import type {Operation} from '../types/operation'
 
 /**
@@ -19,11 +19,6 @@ export type EditorEmittedEvent =
   | {
       type: 'focused'
       event: FocusEvent<HTMLDivElement, Element>
-    }
-  | {
-      type: 'invalid value'
-      resolution: InvalidValueResolution | null
-      value: Array<PortableTextBlock> | undefined
     }
   | MutationEvent
   | {
@@ -51,8 +46,8 @@ export type EditorEmittedEvent =
       /**
        * Where the change that produced this operation came from:
        * `'local'` for changes made in this editor (edits, undo/redo),
-       * `'remote'` for changes applied from the outside (`apply`,
-       * `update value`, and the initial value sync). A normalization fix
+       * `'remote'` for changes applied from the outside (`apply`
+       * and the initial value sync). A normalization fix
        * (a repaired key, a merged span) reports the origin of the change
        * that triggered it.
        */
@@ -68,10 +63,6 @@ export type EditorEmittedEvent =
   | {
       type: 'selection'
       selection: EditorSelection
-    }
-  | {
-      type: 'value changed'
-      value: Array<PortableTextBlock> | undefined
     }
 
 /**
@@ -89,20 +80,15 @@ export type EditorEmittedEvent =
  *   the content (normalization, such as merging adjacent spans with the
  *   same marks or replacing a duplicate `_key`), emitted right after the
  *   change that caused them, with their own operations and patches. A fix
- *   to content the editor received (remote patches or `update value`) is
+ *   to content the editor received (remote patches or the initial value) is
  *   a correction too. A host that persists patches saves corrections like
  *   any other local change. A repair of a received value (a missing
- *   child `_key`, an empty `children` array, an unused mark definition)
- *   is a correction too, and the remote change holds the value as
- *   received. Corrections are not held back: one to the initial value,
- *   or to a value received while the editor is read-only, carries
- *   `patches` that no `patch` or `mutation` event emits.
- * - `origin: 'remote'`: one event per applied `apply` event and per
- *   `update value` that changed the content. When an `operation` listener
- *   sends a Behavior event or registers a node while an `update value` is
- *   applied, that change is emitted in between, so the `update value`
- *   arrives as a remote event before it and another after it. Remote
- *   changes carry no `patches`: there is nothing to save.
+ *   child `_key`, an empty `children` array) is a correction too, and the
+ *   remote change holds the value as received. Corrections are not held
+ *   back: one to the initial value, or to a value received while the editor
+ *   is read-only, carries `patches` that no `patch` or `mutation` event emits.
+ * - `origin: 'remote'`: one event per applied `apply` event that changes
+ *   the content. Remote changes carry no `patches`.
  *
  * Every `change` of one unit of work is delivered before any `change`
  * a listener sets off while receiving them.
