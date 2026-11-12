@@ -206,3 +206,42 @@ When "{ArrowRight}" is pressed`,
   )
   expect(run.mock.calls).toEqual([])
 })
+
+test('the real English suite expects the full-selection Enter failure and rejects a device fix', async () => {
+  const {startVitest} = await import('vitest/node')
+  for (const mode of ['broken', 'fixed']) {
+    const exitCode = process.exitCode
+    const previousMode = process.env['RACEJAR_DEVICE_PROBE']
+    process.env['RACEJAR_DEVICE_PROBE'] = mode
+    const runner = await startVitest('test', [], {
+      root: new URL('..', import.meta.url).pathname,
+      config: false,
+      watch: false,
+      include: ['scripts/fixtures/suites/gherkin-expected-failure.ts'],
+      testNamePattern: 'Pressing Enter when selecting the entire content',
+      reporters: [],
+    })
+    try {
+      const [module] = runner.state.getTestModules()
+      const scenario = [...module!.children.allTests()].find(
+        (scenario) =>
+          scenario.name === 'Pressing Enter when selecting the entire content',
+      )!
+      expect(module!.state()).toEqual(mode === 'broken' ? 'passed' : 'failed')
+      expect(scenario.result().state).toEqual(
+        mode === 'broken' ? 'passed' : 'failed',
+      )
+      expect(scenario.result().errors?.map((error) => error.message)).toEqual(
+        mode === 'broken' ? undefined : ['Expect test to fail'],
+      )
+    } finally {
+      await runner.close()
+      process.exitCode = exitCode
+      if (previousMode === undefined) {
+        delete process.env['RACEJAR_DEVICE_PROBE']
+      } else {
+        process.env['RACEJAR_DEVICE_PROBE'] = previousMode
+      }
+    }
+  }
+}, 30_000)
