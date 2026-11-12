@@ -58,7 +58,7 @@ Before retrying installation, the job clears only new `PackageOperation` directo
 
 ### Time budget
 
-thumbjar bounds each `typeOnDevice` and `runOnDevice` call and the device prep. `thumbjar run` runs each stage under a Node deadline with SIGTERM followed by SIGKILL, with the test stage's cap read from `deviceTestFileSeconds` for the file's test count, and logs why when it stops one. The workflow's `timeout-minutes` are flat backstops, including for a hang inside the emulator runner action. A run a step's cap stops after boot, before its device check completes, is not retried and its result says so, see the retry above.
+thumbjar bounds each `typeOnDevice` and `runOnDevice` call and the device prep. `thumbjar run` gives the cap read and device check 10 seconds with 5 to stop, the test stage `deviceTestFileSeconds` for the file's test count with 10 to stop, and the final diagnostics 60 seconds with 5 to stop. Node guards enforce the child deadlines with SIGTERM followed by SIGKILL even if the run process is killed. Prep enforces its own per-language deadline, and the server stops when its connection to the run process closes. The workflow's `timeout-minutes` are flat backstops, including for a hang inside the emulator runner action. A run a step's cap stops after boot, before its device check completes, is not retried and its result says so, see the retry above.
 
 ## Running it
 
