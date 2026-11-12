@@ -1,3 +1,5 @@
+import {applyAll} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
@@ -5,6 +7,7 @@ import {describe, expect, test, vi} from 'vitest'
 import type {EditorEmittedEvent} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
+import type {InvalidValueResolution} from '../src/types/editor'
 
 describe('Value validation', () => {
   test('Initial value with `null` child results in a validation error', async () => {
@@ -784,4 +787,580 @@ describe('Value validation', () => {
       },
     ])
   })
+})
+
+test('Scenario: initialValue resolves string in the middle at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+
+  const value = [foo, 'oops', bar] as unknown as Array<PortableTextBlock>
+  await createTestEditor({
+    keyGenerator,
+    initialValue: value,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [{type: 'unset', path: [1]}],
+        description: 'Block must be an object, got oops',
+        action: 'Unset invalid item',
+        item: 'oops',
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.not-an-object.description',
+          action: 'inputs.portable-text.invalid-value.not-an-object.action',
+          values: {index: 1},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: initialValue resolves keyless block in the middle at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+  const keyless = {
+    _type: 'block',
+    children: [{_type: 'span', _key: keyGenerator(), text: 'baz', marks: []}],
+  }
+
+  const value = [foo, keyless, bar] as unknown as Array<PortableTextBlock>
+  await createTestEditor({
+    keyGenerator,
+    initialValue: value,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [
+          {
+            type: 'set',
+            path: [1],
+            value: {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+            },
+          },
+        ],
+        description: `Block at index 1 is missing required _key.`,
+        action: 'Set the block with a random _key value',
+        item: {
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-key.description',
+          action: 'inputs.portable-text.invalid-value.missing-key.action',
+          values: {index: 1},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k7',
+      children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: initialValue resolves keyless block last at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+  const keyless = {
+    _type: 'block',
+    children: [{_type: 'span', _key: keyGenerator(), text: 'baz', marks: []}],
+  }
+
+  const value = [foo, bar, keyless] as unknown as Array<PortableTextBlock>
+  await createTestEditor({
+    keyGenerator,
+    initialValue: value,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [
+          {
+            type: 'set',
+            path: [2],
+            value: {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+            },
+          },
+        ],
+        description: `Block at index 2 is missing required _key.`,
+        action: 'Set the block with a random _key value',
+        item: {
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-key.description',
+          action: 'inputs.portable-text.invalid-value.missing-key.action',
+          values: {index: 2},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k7',
+      children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: initialValue resolves string first control at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+
+  const value = ['oops', foo, bar] as unknown as Array<PortableTextBlock>
+  await createTestEditor({
+    keyGenerator,
+    initialValue: value,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [{type: 'unset', path: [0]}],
+        description: 'Block must be an object, got oops',
+        action: 'Unset invalid item',
+        item: 'oops',
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.not-an-object.description',
+          action: 'inputs.portable-text.invalid-value.not-an-object.action',
+          values: {index: 0},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: update value resolves string in the middle at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+
+  const value = [foo, 'oops', bar] as unknown as Array<PortableTextBlock>
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [bar, foo],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+  })
+  editor.send({type: 'update value', value})
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [{type: 'unset', path: [1]}],
+        description: 'Block must be an object, got oops',
+        action: 'Unset invalid item',
+        item: 'oops',
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.not-an-object.description',
+          action: 'inputs.portable-text.invalid-value.not-an-object.action',
+          values: {index: 1},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: update value resolves keyless block in the middle at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+  const keyless = {
+    _type: 'block',
+    children: [{_type: 'span', _key: keyGenerator(), text: 'baz', marks: []}],
+  }
+
+  const value = [foo, keyless, bar] as unknown as Array<PortableTextBlock>
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [bar, foo],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+  })
+  editor.send({type: 'update value', value})
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [
+          {
+            type: 'set',
+            path: [1],
+            value: {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+            },
+          },
+        ],
+        description: `Block at index 1 is missing required _key.`,
+        action: 'Set the block with a random _key value',
+        item: {
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-key.description',
+          action: 'inputs.portable-text.invalid-value.missing-key.action',
+          values: {index: 1},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k7',
+      children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: update value resolves keyless block last at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+  const keyless = {
+    _type: 'block',
+    children: [{_type: 'span', _key: keyGenerator(), text: 'baz', marks: []}],
+  }
+
+  const value = [foo, bar, keyless] as unknown as Array<PortableTextBlock>
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [bar, foo],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+  })
+  editor.send({type: 'update value', value})
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [
+          {
+            type: 'set',
+            path: [2],
+            value: {
+              _type: 'block',
+              _key: 'k7',
+              children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+            },
+          },
+        ],
+        description: `Block at index 2 is missing required _key.`,
+        action: 'Set the block with a random _key value',
+        item: {
+          _type: 'block',
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-key.description',
+          action: 'inputs.portable-text.invalid-value.missing-key.action',
+          values: {index: 2},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k7',
+      children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: update value resolves string first control at its value index', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const resolutions: Array<InvalidValueResolution | null> = []
+
+  const foo = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+  }
+  const bar = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+  }
+
+  const value = ['oops', foo, bar] as unknown as Array<PortableTextBlock>
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [bar, foo],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'invalid value') {
+            resolutions.push(event.resolution)
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([bar, foo])
+  })
+  editor.send({type: 'update value', value})
+  await vi.waitFor(() => {
+    expect(resolutions).toEqual([
+      {
+        patches: [{type: 'unset', path: [0]}],
+        description: 'Block must be an object, got oops',
+        action: 'Unset invalid item',
+        item: 'oops',
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.not-an-object.description',
+          action: 'inputs.portable-text.invalid-value.not-an-object.action',
+          values: {index: 0},
+        },
+      },
+    ])
+  })
+  expect(applyAll(value, resolutions[0]!.patches)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
 })
