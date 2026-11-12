@@ -7,6 +7,104 @@ afterEach(() => {
 })
 
 describe(recordInput.name, () => {
+  test('reports backward textarea selection through `__selection` in document mode', () => {
+    document.body.innerHTML = '<textarea>foo😀bar</textarea>'
+    const field = document.querySelector('textarea')!
+    recordInput({getText: () => null})
+    field.setSelectionRange(1, 5, 'backward')
+
+    expect(window.__selection()).toEqual({
+      text: 'foo😀bar',
+      anchor: 5,
+      focus: 1,
+    })
+  })
+
+  test('reports contenteditable selection across children through `__selection` in document mode', () => {
+    document.body.innerHTML =
+      '<div contenteditable="true"><span>foo😀</span><span>bar</span></div>'
+    const field = document.querySelector('div')!
+    recordInput({getText: () => null})
+    window
+      .getSelection()!
+      .setBaseAndExtent(
+        field.lastChild!.firstChild!,
+        2,
+        field.firstChild!.firstChild!,
+        1,
+      )
+
+    expect(window.__selection()).toEqual({
+      text: 'foo😀bar',
+      anchor: 7,
+      focus: 1,
+    })
+  })
+
+  test('reports null through `__selection` for selection outside the field in document mode', () => {
+    document.body.innerHTML = '<div contenteditable="true">foo</div><p>bar</p>'
+    const outside = document.querySelector('p')!
+    recordInput({getText: () => null})
+    window
+      .getSelection()!
+      .setBaseAndExtent(outside.firstChild!, 0, outside.firstChild!, 3)
+
+    expect(window.__selection()).toEqual(null)
+  })
+
+  test('reports backward textarea selection through `__selection` in field mode', () => {
+    document.body.innerHTML = '<textarea>foo😀bar</textarea>'
+    const field = document.querySelector('textarea')!
+    recordInput({getText: () => null, field})
+    field.setSelectionRange(1, 5, 'backward')
+
+    expect(window.__selection()).toEqual({
+      text: 'foo😀bar',
+      anchor: 5,
+      focus: 1,
+    })
+  })
+
+  test('reports contenteditable selection across children through `__selection` in field mode', () => {
+    document.body.innerHTML =
+      '<div contenteditable="true"><span>foo😀</span><span>bar</span></div>'
+    const field = document.querySelector('div')!
+    recordInput({getText: () => null, field})
+    window
+      .getSelection()!
+      .setBaseAndExtent(
+        field.lastChild!.firstChild!,
+        2,
+        field.firstChild!.firstChild!,
+        1,
+      )
+
+    expect(window.__selection()).toEqual({
+      text: 'foo😀bar',
+      anchor: 7,
+      focus: 1,
+    })
+  })
+
+  test('reports null through `__selection` for selection outside the field in field mode', () => {
+    document.body.innerHTML = '<div contenteditable="true">foo</div><p>bar</p>'
+    const field = document.querySelector('div')!
+    const outside = document.querySelector('p')!
+    recordInput({getText: () => null, field})
+    window
+      .getSelection()!
+      .setBaseAndExtent(outside.firstChild!, 0, outside.firstChild!, 3)
+
+    expect(window.__selection()).toEqual(null)
+  })
+
+  test('reports null through `__selection` without a field', () => {
+    document.body.innerHTML = ''
+    recordInput({getText: () => null})
+
+    expect(window.__selection()).toEqual(null)
+  })
+
   test('records the value of a textarea the page names', () => {
     document.body.innerHTML =
       '<div contenteditable="true"></div><textarea></textarea>'
