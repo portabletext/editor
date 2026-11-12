@@ -58,7 +58,7 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-    "find-cache-dir": "^6.0.0"
+    "find-cache-directory": "^6.0.0"
   },
   "devDependencies": {
     "@sanity/pkg-utils": "catalog:tooling",

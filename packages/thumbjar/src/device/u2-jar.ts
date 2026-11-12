@@ -5,7 +5,7 @@
 import {createHash} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
-import findCacheDirectory from 'find-cache-dir'
+import findCacheDirectory from 'find-cache-directory'
 import {U2_JAR_ATTEMPT_SECONDS} from './budget.ts'
 import jar from './u2-jar.json' with {type: 'json'}
 
