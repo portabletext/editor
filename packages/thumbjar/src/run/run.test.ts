@@ -1,4 +1,3 @@
-import {ChildProcess, spawn, spawnSync} from 'node:child_process'
 import * as childProcesses from 'node:child_process'
 import {
   appendFileSync,
@@ -14,7 +13,7 @@ import {Module} from 'node:module'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {
   deviceTestFileSeconds,
   RUN_TEST_KILL_SECONDS,
@@ -22,6 +21,7 @@ import {
   COMMAND_KILL_SECONDS,
   DIAGNOSTICS_SECONDS,
 } from '../device/budget.ts'
+import {processAlive} from '../process.test-support.ts'
 import * as processes from '../process.ts'
 import {run} from './run.ts'
 
@@ -100,22 +100,26 @@ if(process.argv.slice(2).join(' ')==='logcat -v time') {fs.appendFileSync(${JSON
         `process.argv=[process.argv[0],${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))},'run','foo','--keyboard','en','--page-dir','.','--config','foo','--project','foo','--out-dir','out'];await import(${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))})
 `,
       )
-      const child = spawn(process.execPath, ['--import', loader, bootstrap], {
-        cwd: directory,
-        detached: true,
-        stdio: 'ignore',
-        env: {
-          ...process.env,
-          PATH: `${bin}:${process.env.PATH}`,
-          NODE_PATH: '',
-          THUMBJAR_KEYBOARD: undefined,
-          THUMBJAR_OUT_DIR: undefined,
-          THUMBJAR_PAGE_URL: undefined,
-          THUMBJAR_PAGE_PORT: undefined,
-          THUMBJAR_BOOTED: undefined,
-          NODE_OPTIONS: `--import=${loader}`,
+      const child = childProcesses.spawn(
+        process.execPath,
+        ['--import', loader, bootstrap],
+        {
+          cwd: directory,
+          detached: true,
+          stdio: 'ignore',
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            NODE_PATH: '',
+            THUMBJAR_KEYBOARD: undefined,
+            THUMBJAR_OUT_DIR: undefined,
+            THUMBJAR_PAGE_URL: undefined,
+            THUMBJAR_PAGE_PORT: undefined,
+            THUMBJAR_BOOTED: undefined,
+            NODE_OPTIONS: `--import=${loader}`,
+          },
         },
-      })
+      )
       await vi.waitFor(
         () => {
           const started = readFileSync(pids, 'utf8')
@@ -486,7 +490,6 @@ describe('thumbjar run cut off by its run step', () => {
         file: 'tests/en.test.ts',
         stopAt: 'tests',
         getState: 'device',
-        kill: 'process',
       }),
     ).toEqual({
       calls: [
@@ -627,8 +630,8 @@ test('returns 1 when run is stopped by SIGTERM', async () => {
     file: 'tests/en.test.ts',
     stopAt: 'tests',
     getState: 'device',
-    kill: 'process',
     signal: 'SIGTERM',
+    tests: 0,
   })
   expect(lastRunExit).toEqual(1)
 }, 15_000)
@@ -639,8 +642,8 @@ test('returns 1 when run is stopped by SIGINT', async () => {
     file: 'tests/en.test.ts',
     stopAt: 'tests',
     getState: 'device',
-    kill: 'process',
     signal: 'SIGINT',
+    tests: 0,
   })
   expect(lastRunExit).toEqual(1)
 }, 15_000)
@@ -702,7 +705,7 @@ esac
     chmodSync(join(bin, 'commands.sh'), 0o755)
     chmodSync(join(bin, 'adb'), 0o755)
 
-    const result = spawnSync(
+    const result = childProcesses.spawnSync(
       process.execPath,
       [
         runBootstrap(directory, options),
@@ -776,16 +779,36 @@ async function interruptOnDevice(options: {
   file: string
   stopAt: 'tests' | 'device check log'
   getState: 'device' | 'none'
-  kill?: 'group' | 'process'
   signal?: 'SIGTERM' | 'SIGINT'
+  tests?: number
 }) {
-  const handlers = process.listeners(options.signal ?? 'SIGTERM')
-  const result = await controlledRun({...options, prep: 0, tests: 1}, options)
-  expect(
-    process
-      .listeners(options.signal ?? 'SIGTERM')
-      .every((handler) => handlers.includes(handler)),
-  ).toEqual(true)
+  const signals = (['SIGTERM', 'SIGINT', 'SIGHUP'] as const).map((signal) => ({
+    signal,
+    handlers: process.listeners(signal),
+  }))
+  onTestFinished(() => {
+    try {
+      for (const {signal, handlers} of signals) {
+        expect(
+          process
+            .listeners(signal)
+            .every((handler) => handlers.includes(handler)),
+        ).toEqual(true)
+      }
+    } finally {
+      for (const {signal, handlers} of signals) {
+        for (const handler of process.listeners(signal)) {
+          if (!handlers.includes(handler)) {
+            process.off(signal, handler)
+          }
+        }
+      }
+    }
+  })
+  const result = await controlledRun(
+    {...options, prep: 0, tests: options.tests ?? 1},
+    options,
+  )
   lastRunExit = result.status
   return {calls: result.calls, timing: result.timing}
 }
@@ -795,7 +818,6 @@ function runBootstrap(
   options: {
     lang: string
     file: string
-    stopAt?: string
     missingVitest?: boolean
   },
 ) {
@@ -854,19 +876,9 @@ process.exit(result.status ?? 1)
   writeFileSync(
     hooks,
     `import {registerHooks} from 'node:module'
-import {appendFileSync} from 'node:fs'
-${options.stopAt ? `appendFileSync(${JSON.stringify(join(directory, 'writers'))}, process.pid+'\\n')` : ''}
 registerHooks({load(url,context,next){
   if(url===${JSON.stringify(new URL('../bin.ts', import.meta.url).href)} && ['serve','prepare'].includes(process.argv[2])) return {format:'module',shortCircuit:true,source:${JSON.stringify(`await import(${JSON.stringify(dispatch)})`)}}
-  const result=next(url,context)
-  if(${JSON.stringify(options.stopAt === 'device check log')} && url.endsWith('/run/check.ts')) return {...result,source:result.source+${JSON.stringify(`
-import {createServer as hold} from 'node:net'
-import {writeFileSync as mark} from 'node:fs'
-hold().listen(0,'127.0.0.1')
-mark(${JSON.stringify(join(directory, 'stopped'))},'')
-await new Promise(()=>{})
-`)}}
-  return result
+  return next(url,context)
 }})
 `,
   )
@@ -903,14 +915,6 @@ function deviceTree(directory: string) {
   }
 }
 
-function processAlive(pid: number) {
-  try {
-    return !/^\d+ \(.*\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8'))
-  } catch {
-    return false
-  }
-}
-
 async function controlledRun(
   options: Parameters<typeof runOnDevice>[0],
   interruption?: {
@@ -919,7 +923,11 @@ async function controlledRun(
   },
 ) {
   const reached = Promise.withResolvers<void>()
-  const release = Promise.withResolvers<void>()
+  const failure = Promise.withResolvers<never>()
+  let heldStageAborted = false
+  let holdingStage = false
+  let removeHeldAbort = () => {}
+  let running: ReturnType<typeof run> | undefined
   const signal = interruption?.signal ?? 'SIGTERM'
   const earlierHandlers = new Set(process.listeners(signal))
   const directory = mkdtempSync(join(tmpdir(), 'thumbjar-run-'))
@@ -951,7 +959,9 @@ async function controlledRun(
     vi.stubEnv('NODE_PATH', '')
     Reflect.get(Module, '_initPaths')()
     vi.spyOn(process, 'cwd').mockReturnValue(directory)
-    vi.spyOn(childProcesses, 'spawn').mockReturnValue(new ChildProcess())
+    vi.spyOn(childProcesses, 'spawn').mockReturnValue(
+      new childProcesses.ChildProcess(),
+    )
     vi.spyOn(childProcesses, 'spawnSync').mockImplementation(
       (command, args = []) => {
         expect([command, ...args]).toEqual(['adb', 'get-state'])
@@ -1047,6 +1057,14 @@ async function controlledRun(
         } else {
           calls.push(`pnpm exec vitest ${args.slice(1).join(' ')}`)
           status = options.tests
+          if (interruption !== undefined && settings.signal === undefined) {
+            const error = new Error(
+              'test stage execute did not receive the run abort signal',
+            )
+            error.name = 'MissingTestStageAbortSignal'
+            failure.reject(error)
+            throw error
+          }
         }
         if (
           interruption !== undefined &&
@@ -1057,14 +1075,33 @@ async function controlledRun(
               args[1] !== 'serve' &&
               args[1] !== 'prepare')
         ) {
-          reached.resolve()
-          await release.promise
-          settings.signal?.throwIfAborted()
+          const stageSignal = settings.signal
+          if (stageSignal === undefined) {
+            const error = new Error(
+              'held execute did not receive the run abort signal',
+            )
+            error.name = 'MissingHeldStageAbortSignal'
+            failure.reject(error)
+            throw error
+          }
+          stageSignal.throwIfAborted()
+          holdingStage = true
+          await new Promise<never>((_resolve, reject) => {
+            const abort = () => {
+              heldStageAborted = true
+              holdingStage = false
+              reject(stageSignal.reason)
+            }
+            stageSignal.addEventListener('abort', abort, {once: true})
+            removeHeldAbort = () =>
+              stageSignal.removeEventListener('abort', abort)
+            reached.resolve()
+          })
         }
         return {status, stdout, stderr: ''}
       },
     )
-    const running = run({
+    running = run({
       file: options.file,
       keyboard: options.lang,
       pageDir: join(directory, 'android/dist'),
@@ -1074,13 +1111,19 @@ async function controlledRun(
       out,
     })
     if (interruption !== undefined) {
-      await reached.promise
+      await Promise.race([
+        reached.promise,
+        failure.promise,
+        running.then(() => {
+          throw new Error('run finished before reaching the held stage')
+        }),
+      ])
       const handlers = process
         .listeners(signal)
         .filter((handler) => !earlierHandlers.has(handler))
       expect(handlers.length).toEqual(1)
       handlers[0]!.call(process, signal)
-      release.resolve()
+      expect(heldStageAborted).toEqual(true)
     }
     const status = await running
     return {
@@ -1104,6 +1147,16 @@ async function controlledRun(
         .map((line) => line.replace(/ at \d+$/, '')),
     }
   } finally {
+    const handlers = process
+      .listeners(signal)
+      .filter((handler) => !earlierHandlers.has(handler))
+    for (const handler of handlers) {
+      handler.call(process, signal)
+    }
+    removeHeldAbort()
+    if (!holdingStage) {
+      await running?.catch(() => {})
+    }
     process.argv = argv
     process.exitCode = exitCode
     vi.restoreAllMocks()

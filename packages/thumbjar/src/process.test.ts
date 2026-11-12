@@ -11,7 +11,8 @@ import {
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {expect, test, vi} from 'vitest'
+import {expect, onTestFinished, test, vi} from 'vitest'
+import {processAlive} from './process.test-support.ts'
 import {entry, execute} from './process.ts'
 
 const workers = [
@@ -110,36 +111,11 @@ test('ends the stage before execute resolves when only its guard is SIGKILLed', 
   }
 }, 10_000)
 
-test('requires thumbjar to start a guard with IPC', async () => {
-  const send = process.send
-  let status = 0
-  let stderr = ''
-  const exited = new Error('process exited')
-  try {
-    delete process.send
-    vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-      stderr += chunk.toString()
-      return true
-    })
-    vi.spyOn(process, 'exit').mockImplementation((code) => {
-      status = Number(code)
-      throw exited
-    })
-    vi.resetModules()
-    try {
-      await import('./guard.ts')
-    } catch (error) {
-      if (error !== exited) {
-        throw error
-      }
-    }
-  } finally {
-    if (send !== undefined) {
-      process.send = send
-    }
-    vi.restoreAllMocks()
-  }
-  expect({status, stderr}).toEqual({
+test('requires thumbjar to start a guard with IPC', () => {
+  const result = spawnSync(process.execPath, [entry('guard')], {
+    encoding: 'utf8',
+  })
+  expect({status: result.status, stderr: result.stderr}).toEqual({
     status: 2,
     stderr: 'thumbjar guard must be started by thumbjar\n',
   })
@@ -190,11 +166,63 @@ test('leaves no recorded writer after the guard shuts down on disconnect', async
   })
 })
 
+test('ends the stage and descendants when only the run process is SIGKILLed', async () => {
+  expect(await stopGuardedStage('SIGKILL', false)).toEqual({
+    status: null,
+    ready: ['stage', 'descendant'],
+    alive: [],
+    terminated: ['descendant', 'stage'],
+  })
+})
+
 async function stopGuardedStage(
   signal: 'SIGTERM' | 'SIGINT' | 'SIGKILL' | 'disconnect',
   group: boolean,
 ) {
   const directory = mkdtempSync(join(tmpdir(), 'thumbjar-guard-contract-'))
+  const resources: {
+    watcher?: ReturnType<typeof watch>
+    exited?: Promise<number | null>
+  } = {}
+  onTestFinished(async () => {
+    resources.watcher?.close()
+    const records = join(directory, 'writers')
+    const runnerRecord = join(directory, 'runner-pid')
+    const lines = existsSync(records)
+      ? readFileSync(records, 'utf8')
+          .trim()
+          .split('\n')
+          .map((line) => line.split(' '))
+      : []
+    const runnerPid = existsSync(runnerRecord)
+      ? Number(readFileSync(runnerRecord, 'utf8'))
+      : undefined
+    const pids = [
+      runnerPid,
+      ...lines.flatMap((line) => line.slice(1).map(Number)),
+    ].filter((pid): pid is number => pid !== undefined)
+    const groups = [
+      runnerPid,
+      ...lines
+        .filter((line) => line[0] === 'stage')
+        .map((line) => Number(line[2])),
+    ].filter((pid): pid is number => pid !== undefined)
+    for (const pid of groups) {
+      try {
+        process.kill(-pid, 'SIGKILL')
+      } catch {}
+    }
+    for (const pid of pids) {
+      if (processAlive(pid)) {
+        try {
+          process.kill(pid, 'SIGKILL')
+        } catch {}
+      }
+    }
+    await resources.exited
+    await vi.waitFor(() => expect(pids.filter(processAlive)).toEqual([]))
+    rmSync(directory, {recursive: true, force: true})
+  })
   const records = join(directory, 'writers')
   const stage = join(directory, 'stage.sh')
   const runner = join(directory, 'runner.mjs')
@@ -233,7 +261,7 @@ process.exitCode=stop.status()
         )
       : spawn(process.execPath, [runner], {detached: true, stdio: 'ignore'})
   writeFileSync(join(directory, 'runner-pid'), String(child.pid))
-  const exited = new Promise<number | null>((resolve) =>
+  resources.exited = new Promise<number | null>((resolve) =>
     child.once('exit', resolve),
   )
   let pids: number[] = []
@@ -251,59 +279,32 @@ process.exitCode=stop.status()
       ready.resolve()
     }
   }
-  const watcher = watch(directory, recordWriters)
-  try {
-    recordWriters()
-    await ready.promise
-    expect(
-      readFileSync(records, 'utf8')
-        .trim()
-        .split('\n')
-        .map((line) => line.split(' ')[0]),
-    ).toEqual(['stage', 'descendant'])
-    if (signal === 'disconnect') {
-      child.disconnect()
-    } else {
-      process.kill(group ? -child.pid! : child.pid!, signal)
-    }
-    const status = await exited
-    await vi.waitFor(() => expect(pids.filter(writerAlive)).toEqual([]))
-    return {
-      status,
-      ready: readFileSync(records, 'utf8')
-        .trim()
-        .split('\n')
-        .map((line) => line.split(' ')[0]),
-      alive: pids.filter(writerAlive),
-      terminated: readFileSync(join(directory, 'terminated'), 'utf8')
-        .trim()
-        .split('\n')
-        .sort(),
-    }
-  } finally {
-    watcher.close()
-    if (existsSync(records)) {
-      pids = readFileSync(records, 'utf8')
-        .trim()
-        .split('\n')
-        .flatMap((line) => line.split(' ').slice(1).map(Number))
-    }
-    for (const pid of [child.pid, ...pids]) {
-      if (pid !== undefined && writerAlive(pid)) {
-        try {
-          process.kill(pid, 'SIGKILL')
-        } catch {}
-      }
-    }
-    await exited
-    rmSync(directory, {recursive: true, force: true})
+  resources.watcher = watch(directory, recordWriters)
+  recordWriters()
+  await ready.promise
+  expect(
+    readFileSync(records, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => line.split(' ')[0]),
+  ).toEqual(['stage', 'descendant'])
+  if (signal === 'disconnect') {
+    child.disconnect()
+  } else {
+    process.kill(group ? -child.pid! : child.pid!, signal)
   }
-}
-
-function writerAlive(pid: number) {
-  try {
-    return !/^\d+ \(.*\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8'))
-  } catch {
-    return false
+  const status = await resources.exited
+  await vi.waitFor(() => expect(pids.filter(processAlive)).toEqual([]))
+  return {
+    status,
+    ready: readFileSync(records, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => line.split(' ')[0]),
+    alive: pids.filter(processAlive),
+    terminated: readFileSync(join(directory, 'terminated'), 'utf8')
+      .trim()
+      .split('\n')
+      .sort(),
   }
 }
