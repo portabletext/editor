@@ -134,7 +134,10 @@ export type InvalidValueResolution = {
   }
 }
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `onPaste` prop is deprecated. Register a `clipboard.paste` Behavior instead.
+ */
 export type OnPasteResult =
   | {
       /**
@@ -148,10 +151,14 @@ export type OnPasteResult =
 
 /**
  * @beta
+ * @deprecated The `onPaste` prop is deprecated. Register a `clipboard.paste` Behavior instead.
  */
 export type OnPasteResultOrPromise = OnPasteResult | Promise<OnPasteResult>
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `onPaste` prop is deprecated. Register a `clipboard.paste` Behavior instead.
+ */
 export interface PasteData {
   event: ClipboardEvent
   path: Path
@@ -164,10 +171,14 @@ export interface PasteData {
  * It is encouraged not to return `Promise<undefined>` from the `OnPasteFn` as
  * a mechanism to fall back to the native paste behaviour. This doesn't work in
  * all cases. Always return plain `undefined` if possible.
+ * @deprecated The `onPaste` prop is deprecated. Register a `clipboard.paste` Behavior instead.
  **/
 export type OnPasteFn = (data: PasteData) => OnPasteResultOrPromise
 
-/** @beta */
+/**
+ * @beta
+ * @deprecated The `onCopy` prop is deprecated. Register a `clipboard.copy` Behavior instead.
+ */
 export type OnCopyFn = (
   event: ClipboardEvent<HTMLDivElement | HTMLSpanElement>,
 ) => undefined | unknown

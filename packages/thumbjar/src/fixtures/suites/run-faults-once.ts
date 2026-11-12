@@ -19,7 +19,9 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
             status: 'done',
             textAfter: 'foo\n',
             selectionAfter: {anchor: 4, focus: 4},
+            focusedAfter: true,
             events: [],
+            keys: [],
           },
         ],
         text: 'foo\n',
@@ -28,6 +30,10 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
       })
     },
     dumpFailure: async () => {},
+    stopChromeForRetry: () => {
+      calls.push('close chrome')
+      return Promise.resolve(['1'])
+    },
     closeChrome: () => {
       calls.push('close chrome')
       return Promise.resolve()

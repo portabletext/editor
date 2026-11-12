@@ -14,6 +14,7 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import type {Operation} from '../src/types/operation'
+import {isRecord} from '../src/utils/asserters'
 import {isKeyedSegment} from '../src/utils/util.is-keyed-segment'
 
 const knownDifferences = new Set<PatchPathRule['id']>([
@@ -36,7 +37,6 @@ const knownDifferences = new Set<PatchPathRule['id']>([
   'insert-replace-3',
   'present-null-setIfMissing',
   'primitive-null-deep-setIfMissing',
-  'primitive-[]-deep-unset',
   'path-number-explicit-unset',
   'path-object-explicit-unset',
   'nested-array-set',
@@ -57,7 +57,7 @@ const knownConsoleErrors: Partial<
 const editorRows = patchPathRules
   // Sanity rejects these mutations, so they never reach the editor as remote patches.
   .filter((row) => !('rejected' in row.sanity))
-  // The editor throws on a `null` item, re-keys a duplicate key and turns an empty array into a placeholder block on load, so the row would not test a path rule.
+  // The editor cannot load an item that is not an object, re-keys a duplicate key and turns an empty array into a placeholder block on load, so the row would not test a path rule.
   .filter((row) => !isStartTheEditorCannotHold(row.start))
 
 describe.each([
@@ -1275,14 +1275,12 @@ function inNote(keyGenerator: () => string): ReturnType<Wrap> {
 
 function isStartTheEditorCannotHold(start: PatchPathRule['start']) {
   const keys = start.flatMap((item) =>
-    item !== null && typeof item === 'object' && '_key' in item
-      ? [item['_key']]
-      : [],
+    isRecord(item) && '_key' in item ? [item['_key']] : [],
   )
 
   return (
     start.length === 0 ||
-    start.includes(null) ||
+    start.some((item) => !isRecord(item)) ||
     new Set(keys).size !== keys.length
   )
 }

@@ -1,0 +1,27 @@
+{
+  // The scripts and their tests run on Node 24's type stripping, so only
+  // erasable syntax compiles. The workflow scripts are plain `.mjs`, typed with
+  // JSDoc, so they run on every Node the editor supports.
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["esnext"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["*.ts", "*.mjs"]
+}

@@ -1,10 +1,13 @@
-import {spawnSync} from 'node:child_process'
 import {
   appendFileSync,
+  closeSync,
   existsSync,
+  fstatSync,
   lstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
+  readSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -21,49 +24,13 @@ import {fileURLToPath} from 'node:url'
 // is up. A failed prep adds its `PREP FAILED: <reason>` line, which the job's result quotes, and, when
 // Gboard's Japanese dictionary never loaded, a `PREP DICTIONARY_NOT_LOADED` line, which `thumbjar prepare`'s
 // exit status decides, never the reason. Once its last stage has ended, it adds one `CHECKED <verdict>`
-// line in a single write: `skipped` when no check was needed, or the verdict of the device check after a
-// failed stage, `device` or `lost`, which the check writes itself before it does anything else. A booted
+// line in a single write: `skipped` when no check was needed, or the verdict of `thumbjar run`’s device check
+// after a failed stage, `device` or `lost`, which the check writes itself before it does anything else. A booted
 // run without that line ended before a check reached a verdict, by its run step's timeout, the check's own,
 // or an `adb get-state` that proved nothing, and nothing proves what happened to its device: the action
 // shuts the emulator down before any later step could look.
 
-/** The `adb get-state` read after a failed stage. Its process gets the rest of the script's cap to stop. */
-const DEVICE_STATE_MILLISECONDS = 5_000
-
 /** @typedef {'never booted' | 'unchecked' | 'lost' | 'dictionary not loaded' | 'reachable'} RunState */
-
-/**
- * What one `adb get-state` proves about the device, or `undefined` when it proves nothing. Only `device` on
- * stdout is reachable. Only an offline device, as `offline` on stdout or adb's `device offline` error, the
- * answer of a dead emulator, or adb finding no such device is lost. Its stderr also carries daemon start-up
- * lines. A device that is `unauthorized`, in `bootloader` or `recovery`, or in any other state is still
- * there, and an adb that never answered may only be slow, so neither is lost: a retry on a reachable device
- * could turn a real test failure into a passing retry.
- *
- * @param {{stdout: string, stderr: string, timedOut: boolean}} adb
- * @returns {'device' | 'lost' | undefined}
- */
-export function deviceVerdict(adb) {
-  if (adb.timedOut) {
-    return undefined
-  }
-  const state = adb.stdout.trim()
-  if (state === 'device') {
-    return 'device'
-  }
-  if (state === 'offline') {
-    return 'lost'
-  }
-  if (
-    state === '' &&
-    /^error: (device offline|no devices\/emulators found|device '[^']*' not found)$/m.test(
-      adb.stderr,
-    )
-  ) {
-    return 'lost'
-  }
-  return undefined
-}
 
 /**
  * Whether to run once more after a failed first run: only when its emulator never booted, adb lost the
@@ -161,6 +128,58 @@ export function bootSeconds(timing) {
         ? 'never booted'
         : `${Number(booted) - Number(start)}`
     return `BOOT_SECONDS run ${index + 1}: ${seconds}`
+  })
+}
+
+/**
+ * What the host sampler and the kernel log say about the emulator process exiting, one line for each exit
+ * the sampler saw. An exit within 120 seconds after a `DONE` line in `timing.txt` is the teardown's own kill.
+ *
+ * @param {string} hostLog
+ * @param {string} dmesg
+ * @param {string} timing
+ * @returns {string[]}
+ */
+export function hostEvidence(hostLog, dmesg, timing) {
+  if (hostLog.trim() === '') {
+    return ['host evidence: no host sampler log']
+  }
+  const exits = [...hostLog.matchAll(/^QEMU_GONE pid=(\d+) at (\d+)$/gm)]
+  if (exits.length === 0) {
+    return ['host evidence: the host sampler saw no emulator process exit']
+  }
+  const runs = splitRuns(timing).map((run) => ({
+    start: Number(/^EMULATOR_START at (\d+)$/m.exec(run)?.[1] ?? Number.NaN),
+    done: [...run.matchAll(/^DONE at (\d+)$/gm)].map((match) =>
+      Number(match[1]),
+    ),
+  }))
+  return exits.map(([, pid, epoch]) => {
+    const exitedAt = Number(epoch)
+    // A run's own DONE is the only one its emulator's exit can follow. Only a log with no start lines counts every
+    // DONE, and when start lines exist but none is at or before the exit, no run had started and the exit is mid-run.
+    const started = runs.filter((run) => run.start <= exitedAt)
+    const candidates = runs.every((run) => Number.isNaN(run.start))
+      ? runs
+      : started.slice(-1)
+    const doneEpochs = candidates.flatMap((run) => run.done)
+    const clock = new Date(exitedAt * 1000).toISOString().slice(11, 19)
+    const where = doneEpochs.some(
+      (done) => exitedAt - done >= 0 && exitedAt - done <= 120,
+    )
+      ? 'at teardown'
+      : 'mid-run'
+    let verdict = ''
+    if (dmesg.includes(`Out of memory: Killed process ${pid} (qemu-system`)) {
+      verdict = ', host OOM'
+    } else if (
+      new RegExp(
+        `qemu-system[^\\n]*\\[${pid}\\][^\\n]*(segfault|trap)|traps: qemu-system[^\\n]*\\[${pid}\\]`,
+      ).test(dmesg)
+    ) {
+      verdict = ', emulator crashed'
+    }
+    return `host evidence: emulator process ${pid} exited at ${clock} UTC, ${where}${verdict}`
   })
 }
 
@@ -286,6 +305,84 @@ export function installResult(
     : result
 }
 
+/**
+ * The last lines of a `sdkmanager --install` log, for a job log that would otherwise say nothing about the
+ * package a failed or timed-out install was working on. A progress bar redraws its line with carriage
+ * returns, so each line keeps only its last state. Only the last characters of the string are used and a
+ * long line is cut, so the output stays small however much `sdkmanager` printed. The caller reads just the
+ * end of the file.
+ *
+ * @param {string | undefined} log The install attempt's log, `undefined` when no file exists
+ * @param {number} [maxLines]
+ * @returns {string[]}
+ */
+export function installLogTail(log, maxLines = INSTALL_LOG_TAIL_LINES) {
+  const lines = (log ?? '')
+    .slice(-INSTALL_LOG_READ_CHARACTERS)
+    .split('\n')
+    .map((line) => {
+      const redraws = line.split('\r').filter((state) => state.trim() !== '')
+      return (redraws.at(-1) ?? '').trimEnd()
+    })
+    .filter((line) => line !== '')
+    .map((line) =>
+      line.length > INSTALL_LOG_LINE_CHARACTERS
+        ? `${line.slice(0, INSTALL_LOG_LINE_CHARACTERS)}...`
+        : line,
+    )
+  return lines.slice(-maxLines)
+}
+
+/**
+ * The lines the Result step prints for each install attempt that failed, with the tail of its log. A log
+ * that cannot be read gets a line naming the error code, so it never costs the other attempt's lines.
+ *
+ * @param {string | undefined} first The first install step's outcome
+ * @param {string | undefined} second The install retry step's outcome
+ * @param {(attempt: 1 | 2) => string | undefined} readLog The attempt's log, `undefined` when it has none.
+ *   It throws when the log exists but cannot be read
+ * @returns {string[]}
+ */
+export function installFailureLines(first, second, readLog) {
+  /** @type {string[]} */
+  const lines = []
+  for (const [attempt, attemptOutcome] of /** @type {const} */ ([
+    [1, first],
+    [2, second],
+  ])) {
+    if (attemptOutcome !== 'failure') {
+      continue
+    }
+    const logFile = `android/out/sdk-install-${attempt}.log`
+    /** @type {string | undefined} */
+    let log
+    try {
+      log = readLog(attempt)
+    } catch (error) {
+      const code =
+        error instanceof Error && 'code' in error ? String(error.code) : 'error'
+      lines.push(
+        `install attempt ${attempt}: ${logFile} could not be read (${code})`,
+      )
+      continue
+    }
+    const tail = installLogTail(log)
+    lines.push(
+      tail.length === 0
+        ? `install attempt ${attempt}: no install output was recorded in android/out/sdk-install-${attempt}.log`
+        : `install attempt ${attempt}: last ${tail.length} lines of android/out/sdk-install-${attempt}.log`,
+      ...tail.map((line) => `  ${line}`),
+    )
+  }
+  return lines
+}
+
+const INSTALL_LOG_TAIL_LINES = 30
+const INSTALL_LOG_READ_CHARACTERS = 65_536
+// A tail of this many bytes decodes to at most this many characters, so installLogTail never cuts a file's tail further
+const INSTALL_LOG_READ_BYTES = INSTALL_LOG_READ_CHARACTERS
+const INSTALL_LOG_LINE_CHARACTERS = 300
+
 const [command, file, outcome, manifestFile, key] = process.argv.slice(2)
 
 if (!isMain()) {
@@ -305,6 +402,7 @@ if (!isMain()) {
   file !== undefined &&
   outcome !== undefined
 ) {
+  mkdirSync('android/out', {recursive: true})
   if (existsSync('android/out/install-paths.txt')) {
     const before = readFileSync('android/out/install-paths.txt', 'utf8').split(
       '\n',
@@ -440,26 +538,6 @@ if (!isMain()) {
       writeFileSync('android/out/cache-restored.txt', kept.join('\n'))
     }
   }
-} else if (command === 'device-state' && file !== undefined) {
-  const adb = spawnSync('adb', ['get-state'], {
-    encoding: 'utf8',
-    timeout: DEVICE_STATE_MILLISECONDS,
-    killSignal: 'SIGKILL',
-  })
-  const verdict = deviceVerdict({
-    stdout: adb.stdout ?? '',
-    stderr: adb.stderr ?? '',
-    timedOut: adb.error !== undefined,
-  })
-  if (verdict === undefined) {
-    process.exitCode = 1
-  } else {
-    appendFileSync(
-      file,
-      `CHECKED ${verdict} at ${Math.floor(Date.now() / 1000)}\n`,
-    )
-    process.stdout.write(`${verdict}\n`)
-  }
 } else if (command === 'retry' && file !== undefined) {
   const decision = retryAfter(readFileSync(file, 'utf8'))
   appendFileSync(
@@ -491,14 +569,33 @@ if (!isMain()) {
     process.env.INSTALL2_OUTCOME,
     process.env.JOB_STATUS,
   )
+  for (const line of installFailureLines(
+    process.env.INSTALL1_OUTCOME,
+    process.env.INSTALL2_OUTCOME,
+    (attempt) => readTail(`android/out/sdk-install-${attempt}.log`),
+  )) {
+    log(line)
+  }
   if (result.installLine !== undefined) {
     report(result.installLine)
   }
   report(result.line)
   process.exitCode = result.passed ? 0 : 1
+} else if (command === 'host-evidence' && file !== undefined) {
+  try {
+    for (const line of hostEvidence(
+      readOrEmpty(join(file, 'host.log')),
+      readOrEmpty(join(file, 'host-dmesg.txt')),
+      readOrEmpty(join(file, 'timing.txt')),
+    )) {
+      report(line)
+    }
+  } catch {
+    // Evidence never fails the job.
+  }
 } else {
   console.error(
-    'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
+    'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
   )
   process.exitCode = 2
 }
@@ -684,6 +781,54 @@ function infrastructureFailure(last, first) {
  */
 function log(line) {
   process.stdout.write(`${line}\n`)
+}
+
+/**
+ * The last `INSTALL_LOG_READ_BYTES` bytes of a file as UTF-8, without reading the rest. A sequence cut at
+ * the start decodes to a replacement character.
+ *
+ * @param {string} path
+ * @returns {string | undefined} `undefined` when the file does not exist
+ */
+function readTail(path) {
+  if (!existsSync(path)) {
+    return undefined
+  }
+  const descriptor = openSync(path, 'r')
+  try {
+    const size = fstatSync(descriptor).size
+    const buffer = Buffer.alloc(Math.min(size, INSTALL_LOG_READ_BYTES))
+    const start = size - buffer.length
+    let read = 0
+    while (read < buffer.length) {
+      const count = readSync(
+        descriptor,
+        buffer,
+        read,
+        buffer.length - read,
+        start + read,
+      )
+      if (count === 0) {
+        break
+      }
+      read += count
+    }
+    return buffer.toString('utf8', 0, read)
+  } finally {
+    closeSync(descriptor)
+  }
+}
+
+/**
+ * @param {string} path
+ * @returns {string}
+ */
+function readOrEmpty(path) {
+  try {
+    return readFileSync(path, 'utf8')
+  } catch {
+    return ''
+  }
 }
 
 /** @param {string} line */

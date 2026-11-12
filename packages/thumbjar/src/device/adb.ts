@@ -1,20 +1,27 @@
 // adb through the CLI for the driver's own calls, and through the adb server's socket protocol for the
 // uiautomator2 connections (device shell and device TCP ports).
 
+import {AsyncLocalStorage} from 'node:async_hooks'
 import {spawn} from 'node:child_process'
 import net from 'node:net'
 import {KILL_GRACE_SECONDS} from './budget.ts'
 import {
   currentInspection,
   currentSignal,
+  isInstance,
   throwIfAborted,
   tracked,
   UNPRINTABLE_ERROR,
   type Inspection,
 } from './util.ts'
 
+const DEVICE_OFFLINE = 'device offline'
+const NO_DEVICES = 'no devices/emulators found'
+
 export class CommandError extends Error {
   override name = 'CommandError'
+  /** Whether the command ran past its timeout, which a device adb lost and a slow one both cause. */
+  timedOut = false
 }
 
 /**
@@ -50,6 +57,16 @@ export function adb(args: string[], timeout = 30): Promise<string> {
 export function adbOutput(args: string[], timeout = 60): Promise<string> {
   return tracked(`adb ${args.join(' ')}`, () =>
     run('adb', args, timeout, false),
+  )
+}
+
+/** Run adb and return its exit code, stdout and stderr apart. Still rejects on a timeout. */
+export function adbExit(
+  args: string[],
+  timeout: number,
+): Promise<{code: number | null; stdout: string; stderr: string}> {
+  return tracked(`adb ${args.join(' ')}`, () =>
+    runChild('adb', args, timeout, 'pipe'),
   )
 }
 
@@ -135,15 +152,13 @@ function runChild(
       signal?.removeEventListener('abort', onAbort)
     }
     timers.push(
-      setTimeout(
-        () =>
-          stop(
-            new CommandError(
-              `${file} ${args.join(' ')} timed out after ${timeout}s`,
-            ),
-          ),
-        timeout * 1000,
-      ),
+      setTimeout(() => {
+        const error = new CommandError(
+          `${file} ${args.join(' ')} timed out after ${timeout}s`,
+        )
+        error.timedOut = true
+        stop(error)
+      }, timeout * 1000),
     )
     signal?.addEventListener('abort', onAbort, {once: true})
     child.on('error', (error) => {
@@ -167,6 +182,8 @@ function runChild(
 
 export class AdbError extends Error {
   override name = 'AdbError'
+  /** Whether the adb server answered the request with `FAIL`, so the message is the server's own. */
+  serverFailed = false
 }
 
 /** The peer reset or dropped the connection. */
@@ -326,7 +343,9 @@ export class AdbConnection {
     }
     if (status === 'FAIL') {
       const length = parseInt((await this.readExact(4)).toString(), 16)
-      throw new AdbError((await this.readExact(length)).toString())
+      const error = new AdbError((await this.readExact(length)).toString())
+      error.serverFailed = true
+      throw error
     }
     throw new AdbError(`unknown data: ${JSON.stringify(status)}`)
   }
@@ -401,4 +420,148 @@ export function shellQuote(args: string[]): string {
         : `'${argument.replaceAll("'", `'"'"'`)}'`,
     )
     .join(' ')
+}
+
+// Whether the current code belongs to a `runOnDevice` call, set by `runStrict`.
+const strictCall = new AsyncLocalStorage<true>()
+
+/** Run `run` as part of a `runOnDevice` call, whose device helpers never swallow adb's own lost-device error. */
+export function runStrict<T>(run: () => T): T {
+  return strictCall.run(true, run)
+}
+
+/**
+ * Run `run` outside any `runOnDevice` call's strict scope, as a driver call does when it starts: strict
+ * scope belongs to the call that enters it, not to whatever code queued the next call.
+ */
+export function runNotStrict<T>(run: () => T): T {
+  return strictCall.exit(run)
+}
+
+/**
+ * adb's own error for a lost device, as a `runOnDevice` call recognised it: `adbError` quotes it, read once
+ * when it was recognised, and `cause` is the value that was thrown. Every decision after that reads
+ * `adbError` and never the thrown value again. `runOnDevice` rejects with `cause`, never with this.
+ */
+export class DeviceLost extends Error {
+  override name = 'DeviceLost'
+  readonly adbError: string
+  constructor(adbError: string, cause: unknown) {
+    super(adbError, {cause})
+    this.adbError = adbError
+  }
+}
+
+/**
+ * In a `runOnDevice` call, throw `DeviceLost` when `error` is adb's own error for a lost device, and pass
+ * on a `DeviceLost` as it is, never classified again. A helper that logs a failure and goes on calls it
+ * first, so a `runOnDevice` call ends `device-offline` on that error instead of on whatever the helper
+ * tries next. `typeOnDevice` keeps going, and never sees a `DeviceLost`.
+ */
+export function throwIfStrictLoss(error: unknown): void {
+  if (strictCall.getStore() === undefined) {
+    return
+  }
+  if (isInstance(error, DeviceLost)) {
+    throw error
+  }
+  const lost = adbLostDevice(error)
+  if (lost !== undefined && lost !== 'timeout') {
+    throw new DeviceLost(lost.adbError, error)
+  }
+}
+
+/**
+ * The value a `runOnDevice` call threw before it recognised `error` as `DeviceLost`, or `error` itself. It
+ * never throws, since it also runs once the call's own inspection ended, on any value a step threw.
+ */
+export function thrownValue(error: unknown): unknown {
+  try {
+    return error instanceof DeviceLost ? error.cause : error
+  } catch {
+    return error
+  }
+}
+
+/**
+ * How an adb call failed when adb may have lost the device: on adb's own error for a device that went
+ * offline, a connection it lost or no device at all, `adbError` quoting it, or on a timeout, which a device
+ * that still answers can cause too.
+ */
+export type AdbLoss = {adbError: string} | 'timeout'
+
+/**
+ * How `error` failed when adb may have lost the device, `undefined` for any other failure. adb's own error
+ * comes from either of its transports: the CLI prints it on stderr, which `CommandError` carries in its
+ * message and never mixes with stdout, and the adb server answers a socket request with `FAIL` and the
+ * message, an `AdbError` the uiautomator2 client can wrap as its error's `cause`. A socket that closed or a
+ * request that timed out says nothing of the device, so neither counts.
+ */
+export function adbLostDevice(error: unknown): AdbLoss | undefined {
+  const {guard} = currentInspection()
+  if (isInstance(error, CommandError)) {
+    if (guard(() => error.timedOut === true, false)) {
+      return 'timeout'
+    }
+    // Read once, so the message quoted is the one classified.
+    const message = guard(() => String(error.message), undefined)
+    return message !== undefined && lostDeviceMessage(message)
+      ? {adbError: message}
+      : undefined
+  }
+  const answered = [
+    error,
+    guard(() => (error instanceof Error ? error.cause : undefined), undefined),
+  ].find((candidate) => isInstance(candidate, AdbError))
+  if (
+    !isInstance(answered, AdbError) ||
+    !guard(() => answered.serverFailed === true, false)
+  ) {
+    return undefined
+  }
+  const message = guard(() => String(answered.message), undefined)
+  return message !== undefined && lostDeviceMessage(message)
+    ? {adbError: `the adb server answered FAIL: ${message}`}
+    : undefined
+}
+
+/**
+ * What one `adb get-state` proves about the device, or `undefined` when it proves nothing. Only `device` on
+ * stdout is reachable. Only an offline device, as `offline` on stdout or adb's `device offline` error, the
+ * answer of a dead emulator, or adb finding no such device is lost. Its stderr also carries daemon start-up
+ * lines. A device that is `unauthorized`, in `bootloader` or `recovery`, or in any other state is still
+ * there, and an adb that never answered may only be slow, so neither is lost: a retry on a reachable device
+ * could turn a real test failure into a passing retry.
+ */
+export function deviceVerdict(adb: {
+  stdout: string
+  stderr: string
+  timedOut: boolean
+}): 'device' | 'lost' | undefined {
+  if (adb.timedOut) {
+    return undefined
+  }
+  const state = adb.stdout.trim()
+  if (state === 'device') {
+    return 'device'
+  }
+  if (state === 'offline') {
+    return 'lost'
+  }
+  if (
+    state === '' &&
+    new RegExp(
+      `^error: (${DEVICE_OFFLINE}|${NO_DEVICES}|device '[^']*' not found)$`,
+      'm',
+    ).test(adb.stderr)
+  ) {
+    return 'lost'
+  }
+  return undefined
+}
+
+function lostDeviceMessage(message: string): boolean {
+  return new RegExp(`${DEVICE_OFFLINE}|error: closed|${NO_DEVICES}`).test(
+    message,
+  )
 }

@@ -1,9 +1,29 @@
 import {expect, test, vi} from 'vitest'
-import {typeOnDevice} from '../../driver.ts'
+import {driverRuns, typeOnDevice} from '../../driver.ts'
 
-test('Scenario: Typing kyou after a driver fault', async () => {
+test('Scenario: A call with its options first throws before the device', async () => {
+  const options = {
+    keyboard: 'ja',
+    url: 'http://localhost:8765/editor.html',
+    prefix: '',
+    words: [{letters: 'kyou', candidate: '今日'}],
+  }
+  const call = typeOnDevice as unknown as (
+    options: unknown,
+  ) => ReturnType<typeof typeOnDevice>
+
+  await expect(call(options)).rejects.toThrow(
+    '`typeOnDevice` takes the context Vitest passes to the test first: `typeOnDevice(context, options)`',
+  )
+  expect({runs: driverRuns, calls: globalThis.deviceCalls}).toEqual({
+    runs: [],
+    calls: [],
+  })
+})
+
+test('Scenario: Typing kyou after a driver fault', async (context) => {
   vi.useFakeTimers()
-  const typing = typeOnDevice({
+  const typing = typeOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',

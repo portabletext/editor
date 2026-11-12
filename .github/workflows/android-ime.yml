@@ -22,6 +22,7 @@ on:
       - packages/editor/src/editor/Editable.tsx
       - packages/editor/package.json
       - packages/editor/android/**
+      - .github/scripts/**
       - packages/editor/vitest.android.config.ts
       - packages/thumbjar/**
       - .github/workflows/android-ime.yml
@@ -39,12 +40,15 @@ permissions:
 jobs:
   emulator:
     name: Android IME (${{ matrix.suite.file }})
+    # Version Packages pull requests, from `changeset-release/main` and `changeset-release/next`, only bump
+    # versions and changelogs. Other pull requests that touch `packages/editor/package.json` still run.
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
     runs-on: ubuntu-latest
-    # The row's job cap: the sum of the step caps below on the retry path and
-    # a minute for the runner between steps, see the budget in
-    # `packages/editor/android/README.md`. `android/scripts/budget.test.ts`
-    # checks it.
-    timeout-minutes: ${{ matrix.suite.job_minutes }}
+    # Backstops only: `thumbjar run` bounds its own work and logs the reason when it stops the work, see
+    # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
+    # step's cap, so a hang in every step still leaves time for `Result` and the artifact upload, and
+    # `budget.test.ts` keeps it so.
+    timeout-minutes: 255
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -53,22 +57,12 @@ jobs:
       fail-fast: false
       matrix:
         # One row per device test file CI runs, on a device prepared for its
-        # language, with its run steps' and its job's caps, which the
-        # language's prep sets. `tests/en-textarea.test.ts` is a control run
-        # by hand.
+        # language. `tests/en-textarea.test.ts` is a control run by hand.
         suite:
-          - {
-              lang: ja,
-              file: tests/ja.test.ts,
-              run_minutes: 56,
-              job_minutes: 183,
-            }
-          - {
-              lang: en,
-              file: tests/en.test.ts,
-              run_minutes: 52,
-              job_minutes: 175,
-            }
+          - {lang: ja, file: tests/ja.test.ts}
+          - {lang: en, file: tests/en.test.ts}
+          - {lang: ja, file: tests/ja.enter.test.ts}
+          - {lang: en, file: tests/en.enter.test.ts}
         api: [36]
 
     steps:
@@ -111,9 +105,33 @@ jobs:
           pnpm --filter @portabletext/editor build:android
           node -e "console.log('EDITOR_VERSION', require('./packages/editor/package.json').version)"
 
+      # The jar comes from the actions cache when an earlier run saved it, under a key that changes with its
+      # URL and hash, see the jar cache in `packages/editor/android/README.md`. A failed restore or save is a
+      # miss, which downloads as before.
+      - name: Restore the uiautomator2 server jar
+        id: u2-jar-restore
+        continue-on-error: true
+        timeout-minutes: 1
+        uses: actions/cache/restore@v6
+        with:
+          key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
+          path: packages/thumbjar/.cache/u2.jar
+
+      # A restored jar whose hash differs is downloaded again.
       - name: Fetch the uiautomator2 server jar
-        timeout-minutes: 2
+        id: u2-jar-fetch
+        timeout-minutes: 3
         run: pnpm --filter @portabletext/editor exec thumbjar fetch-u2-jar
+
+      # Saves from any ref: a pull request's entry is read only by that pull request's runs, and main's by every branch.
+      - name: Save the uiautomator2 server jar
+        if: steps.u2-jar-fetch.outcome == 'success' && steps.u2-jar-restore.outputs.cache-hit != 'true'
+        continue-on-error: true
+        timeout-minutes: 1
+        uses: actions/cache/save@v6
+        with:
+          key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
+          path: packages/thumbjar/.cache/u2.jar
 
       # The emulator and its system image come from the actions cache when it holds the versions a fresh
       # install picks today, see the SDK cache in `packages/editor/android/README.md`. A failed lookup,
@@ -124,7 +142,7 @@ jobs:
         timeout-minutes: 1
         working-directory: packages/editor
         run: |
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node android/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node ../../.github/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"
 
       - name: Restore the SDK cache
         id: sdk-restore
@@ -146,7 +164,7 @@ jobs:
         working-directory: packages/editor
         env:
           SDK_CACHE_KEY: ${{ steps.sdk-key.outputs.key }}
-        run: node android/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"
+        run: node ../../.github/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"
 
       # A restore the check could not vouch for never reaches the install, so this step may fail the job.
       - name: Clear an unchecked SDK cache
@@ -161,9 +179,9 @@ jobs:
         timeout-minutes: 8
         working-directory: packages/editor
         run: |
-          node android/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"
+          node ../../.github/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-1.log 2> >(tee -a android/out/sdk-install-1.log >&2)
 
       - name: Install the emulator and its system image (retry)
         id: install2
@@ -172,9 +190,9 @@ jobs:
         timeout-minutes: 8
         working-directory: packages/editor
         run: |
-          node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"
+          node ../../.github/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-2.log 2> >(tee -a android/out/sdk-install-2.log >&2)
 
       # Only runs on main save, the nightly schedule and a manual dispatch on main, so pull requests read
       # its entry and add none.
@@ -186,7 +204,7 @@ jobs:
         working-directory: packages/editor
         env:
           SDK_CACHE_KEY: ${{ steps.sdk-key.outputs.key }}
-        run: node android/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"
+        run: node ../../.github/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"
 
       - name: Save the SDK cache
         if: steps.sdk-manifest.outcome == 'success'
@@ -203,14 +221,23 @@ jobs:
         working-directory: packages/editor
         run: mkdir -p android/out && echo "EMULATOR_START at $(date +%s)" | tee android/out/timing.txt
 
+      # The emulator process sometimes vanishes at a Chrome force-stop with nothing on the record. This samples
+      # host memory and the emulator's process until the capture step, so the next loss says when and why.
+      - name: Start the host sampler
+        if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
+        timeout-minutes: 1
+        working-directory: packages/editor
+        run: |
+          setsid nohup bash ../../.github/scripts/host-sampler.sh android/out/host.log > /dev/null 2>&1 < /dev/null &
+          sleep 1
+          echo started
+
       # Boot, device prep and the tests, see the budget in `packages/editor/android/README.md`.
       - name: Run on emulator
         id: run1
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
         continue-on-error: true
-        timeout-minutes: ${{ matrix.suite.run_minutes }}
-        env:
-          IME_LANG: ${{ matrix.suite.lang }}
+        timeout-minutes: 90
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -224,7 +251,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
-          script: android/run-on-device.sh ${{ matrix.suite.file }}
+          script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       # The emulator sometimes never comes online, adb loses it after boot, or
       # Gboard's Japanese dictionary never loads on that boot. Retry once on a
@@ -235,15 +262,13 @@ jobs:
         if: steps.run1.outcome == 'failure'
         timeout-minutes: 1
         working-directory: packages/editor
-        run: node android/scripts/emulator-runs.mjs retry android/out/timing.txt
+        run: node ../../.github/scripts/emulator-runs.mjs retry android/out/timing.txt
 
       - name: Run on emulator (retry)
         id: run2
         if: steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'
         continue-on-error: true
-        timeout-minutes: ${{ matrix.suite.run_minutes }}
-        env:
-          IME_LANG: ${{ matrix.suite.lang }}
+        timeout-minutes: 90
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -257,15 +282,25 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
-          script: android/run-on-device.sh ${{ matrix.suite.file }}
+          script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       - name: Boot time
         if: always()
         timeout-minutes: 1
         working-directory: packages/editor
         run: |
-          node android/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt
+          node ../../.github/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt
           cat android/out/phases.log || true
+
+      # Stops the sampler and reads the kernel log, disk, memory and the emulator's crash data while the host
+      # still holds them, then names each emulator exit the sampler saw in the job summary.
+      - name: Capture host evidence
+        if: always()
+        timeout-minutes: 1
+        working-directory: packages/editor
+        run: |
+          bash ../../.github/scripts/host-capture.sh android/out
+          node ../../.github/scripts/emulator-runs.mjs host-evidence android/out || true
 
       # The run steps continue on error so the retry can follow. This step
       # turns the job red when the last run failed, and names a failure of the
@@ -278,7 +313,7 @@ jobs:
         if: always()
         timeout-minutes: 1
         working-directory: packages/editor
-        run: node android/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != 'skipped' && steps.run2.outcome || steps.run1.outcome }}"
+        run: node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != 'skipped' && steps.run2.outcome || steps.run1.outcome }}"
 
       - uses: actions/upload-artifact@v7
         if: always()

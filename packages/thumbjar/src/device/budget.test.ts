@@ -1,18 +1,31 @@
 import {readFileSync} from 'node:fs'
 import {describe, expect, test} from 'vitest'
 import {
+  countDeviceTests,
   CAPTURE_SEED_SECONDS,
+  DEVICE_STATE_READ_SECONDS,
+  DEVICE_TEST_TIMEOUT_SECONDS,
+  FAULT_READ_SECONDS,
+  FRESH_RESTART_SECONDS,
+  JOIN_GRACE_SECONDS,
+  RESTART_SECONDS,
+  RUN_ON_DEVICE_WORST_SECONDS,
+  TYPE_ON_DEVICE_WORST_SECONDS,
   DICTIONARY_CHECK_KILL_SECONDS,
   DICTIONARY_CHECK_SECONDS,
   DICTIONARY_LOAD_SECONDS,
   DICTIONARY_WAIT_KILL_SECONDS,
   DICTIONARY_WAIT_TAIL_SECONDS,
   deviceTestFileSeconds,
+  FETCH_U2_JAR_WORST_SECONDS,
   KILL_GRACE_SECONDS,
   PREP_KILL_SECONDS,
   PREP_STAGES_SECONDS,
   prepWorstSeconds,
   SELF_UPDATE_BLOCK_SECONDS,
+  U2_JAR_ATTEMPT_SECONDS,
+  U2_JAR_ATTEMPTS,
+  U2_JAR_RETRY_SECONDS,
 } from './budget.ts'
 
 const prepare = readFileSync(
@@ -23,8 +36,28 @@ const prepare = readFileSync(
 describe(deviceTestFileSeconds.name, () => {
   test("gives each test its timeout on top of the global setup and Vitest's start and exit", () => {
     expect([1, 2, 3, 4].map(deviceTestFileSeconds)).toEqual([
-      645, 1190, 1735, 2280,
+      761, 1422, 2083, 2744,
     ])
+  })
+})
+
+describe('the worst case of a call', () => {
+  test('leaves a `typeOnDevice` call at 520 seconds and gives a `runOnDevice` call 636 for its reads after a fault, its fresh Chrome and its device state, and the test timeout covers the longer', () => {
+    expect({
+      typeOnDevice: TYPE_ON_DEVICE_WORST_SECONDS,
+      runOnDevice: RUN_ON_DEVICE_WORST_SECONDS,
+      parts: {
+        faultReads: 2 * (FAULT_READ_SECONDS + JOIN_GRACE_SECONDS),
+        restartGrowth: FRESH_RESTART_SECONDS - RESTART_SECONDS,
+        deviceState: DEVICE_STATE_READ_SECONDS + JOIN_GRACE_SECONDS,
+      },
+      testTimeout: DEVICE_TEST_TIMEOUT_SECONDS,
+    }).toEqual({
+      typeOnDevice: 520,
+      runOnDevice: 636,
+      parts: {faultReads: 70, restartGrowth: 32, deviceState: 14},
+      testTimeout: 661,
+    })
   })
 })
 
@@ -118,5 +151,26 @@ describe(prepWorstSeconds.name, () => {
         DICTIONARY_CHECK_SECONDS,
       ],
     })
+  })
+})
+
+describe('`thumbjar fetch-u2-jar`', () => {
+  test('is bounded at three downloads of 45 seconds, 15 apart, 165 seconds', () => {
+    expect({
+      attempts: U2_JAR_ATTEMPTS,
+      attempt: U2_JAR_ATTEMPT_SECONDS,
+      retry: U2_JAR_RETRY_SECONDS,
+      worst: FETCH_U2_JAR_WORST_SECONDS,
+    }).toEqual({attempts: 3, attempt: 45, retry: 15, worst: 165})
+  })
+})
+
+describe(countDeviceTests.name, () => {
+  test('counts top-level tests, failing ones included, and nothing nested or in comments', () => {
+    expect(
+      countDeviceTests(
+        "test('a', () => {})\n// test('b')\ntest.fails('c', () => {\n  test('d')\n})\n",
+      ),
+    ).toEqual(2)
   })
 })

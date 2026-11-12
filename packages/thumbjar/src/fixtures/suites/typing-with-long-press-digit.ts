@@ -1,10 +1,10 @@
 import {expect, test, vi} from 'vitest'
 import {typeOnDevice} from '../../driver.ts'
 
-test('Scenario: A long press types a digit on the first attempt', async () => {
+test('Scenario: A long press types a digit on the first attempt', async (context) => {
   vi.useFakeTimers()
   globalThis.pageTexts = ['K7ou ', 'Kyou ']
-  const typing = typeOnDevice({
+  const typing = typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/plain.html',
     prefix: '',
@@ -15,10 +15,10 @@ test('Scenario: A long press types a digit on the first attempt', async () => {
   expect((await typing).text).toEqual('Kyou ')
 })
 
-test('Scenario: A digit the prefix already holds is an editor result', async () => {
+test('Scenario: A digit the prefix already holds is an editor result', async (context) => {
   vi.useFakeTimers()
   globalThis.pageTexts = ['x7kyou ', 'x7kyou ']
-  const typing = typeOnDevice({
+  const typing = typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/editor.html',
     prefix: 'x7',
@@ -29,10 +29,10 @@ test('Scenario: A digit the prefix already holds is an editor result', async () 
   expect((await typing).text).toEqual('x7kyou ')
 })
 
-test('Scenario: A digit on both attempts fails the test as a driver fault', async () => {
+test('Scenario: A digit on both attempts fails the test as a driver fault', async (context) => {
   vi.useFakeTimers()
   globalThis.pageTexts = ['K7ou ', 'K7ou ']
-  const typing = typeOnDevice({
+  const typing = typeOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/plain.html',
     prefix: '',

@@ -157,11 +157,11 @@ it.
   - Decorator, annotation, style, and list toggles apply per member cell.
     If any member is missing the mark, the toggle adds it everywhere it's
     missing. Only when all members have it does it remove.
-  - Copy and cut serialize the rectangle, sliced out of the table, in four
+  - Copy and cut serialize the rectangle, sliced out of the table, in three
     clipboard formats: `application/x-portable-text` and
-    `application/json` (the sliced fragment), `text/markdown`, and
-    `text/plain` as tab-separated values. The last one pastes directly
-    into spreadsheet applications.
+    `application/json` (the sliced fragment), and `text/plain` as
+    tab-separated values. The last one pastes directly into spreadsheet
+    applications.
 - Pasting a copied table fragment into a table distributes it cell by cell
   from the anchor cell, growing rows and columns if the source overflows
   the target. Non-table content is pasted into the anchor cell.

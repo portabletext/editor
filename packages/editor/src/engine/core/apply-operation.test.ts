@@ -521,7 +521,7 @@ describe(applyOperation.name, () => {
       ])
     })
 
-    test('an array intermediate is spread into an object with index keys', () => {
+    test('an array intermediate is left unchanged', () => {
       const keyGenerator = createTestKeyGenerator()
       const imageKey = keyGenerator()
       const editor = createBareEditor([
@@ -538,7 +538,7 @@ describe(applyOperation.name, () => {
       )
 
       expect(editor.snapshot.context.value).toEqual([
-        {_key: imageKey, _type: 'image', meta: {tags: {0: 'foo', 1: 'bar'}}},
+        {_key: imageKey, _type: 'image', meta: {tags: ['foo', 'bar']}},
       ])
     })
   })

@@ -2,8 +2,22 @@
 // the page's text, selection and events back over CDP.
 
 import {writeFileSync} from 'node:fs'
-import {adb, ProcessNotStoppedError, shellQuote} from '../device/adb.ts'
-import {CHROME_ADB_SECONDS} from '../device/budget.ts'
+import {
+  adb,
+  adbExit,
+  adbLostDevice,
+  ProcessNotStoppedError,
+  shellQuote,
+  thrownValue,
+  throwIfStrictLoss,
+  unstoppedProcesses,
+  type AdbLoss,
+} from '../device/adb.ts'
+import {
+  CHROME_ADB_SECONDS,
+  CHROME_PID_SECONDS,
+  DEVICE_STATE_SECONDS,
+} from '../device/budget.ts'
 import {
   cdpEval,
   CDP_PORT,
@@ -15,6 +29,7 @@ import {localhostPort, prefixedPageUrl} from '../device/page-url.ts'
 import type {Device} from '../device/u2.ts'
 import {
   currentInspection,
+  currentSignal,
   describeError,
   guardedErrorMessage,
   guardedErrorRepr,
@@ -40,6 +55,9 @@ import type {
 import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './field.ts'
 import {packageKeys, packageNodes, type PackageNode} from './hierarchy.ts'
 import {LETTERS} from './support.ts'
+import {LAYOUTS, TEXT_SYMBOLS, typeSymbols} from './symbols.ts'
+
+export {adbLostDevice, type AdbLoss} from '../device/adb.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
 const CHROME = 'com.android.chrome'
@@ -87,11 +105,38 @@ export type Typed = {
   compositionstartPerWord: number[]
 }
 
+/** A classified digit long press or recorded symbol popup eligible for one retry. */
+export class MistapError extends Error {}
+
+/** The keys the driver tapped in one step and the events the page recorded during it. */
+export type StepTaps = {keys: string[]; events: PageEvent[]}
+
+/**
+ * What one `runOnDevice` attempt shares with the call around it. `typeOnDevice` passes none, so its
+ * attempts keep their Space fallback and read nothing after a fault.
+ */
+export type AttemptHooks = {
+  /**
+   * Set immediately before the attempt's first tap on a key that types is issued, a letter, a symbol, a
+   * candidate, Space, Enter or Delete, so a tap whose reply failed or never came counts as sent. The taps
+   * that focus the field and switch Gboard's layout type nothing and leave it unset.
+   */
+  inputSent: boolean
+  /** The pids of the Chrome the restart before this attempt stopped, so the attempt types only in a new one. */
+  previousChrome?: string[]
+  /**
+   * Read the page into the record of the step that failed, set once the attempt's page loaded. The call
+   * runs it after the attempt's deadline settled, under a bound of its own.
+   */
+  readAfterFault?: () => Promise<void>
+}
+
 /** Open the page in Chrome, type `words` on Gboard and read back what the page holds. */
 export async function typeInChrome(
   name: string,
   {url: pageUrl, keyboard, prefix, words}: TypeOnDeviceOptions,
   connect: () => Promise<Device>,
+  onTaps?: (taps: StepTaps[]) => void,
 ): Promise<Typed> {
   const result: Record<string, unknown> = {url: pageUrl, prefix, words}
   const device = await openKeyboard(
@@ -100,7 +145,7 @@ export async function typeInChrome(
     connect,
     result,
   )
-  const {picked, stepEnds, text, events} = await runSteps(
+  const {picked, stepEnds, text, events, taps} = await runSteps(
     device,
     name,
     result,
@@ -114,6 +159,7 @@ export async function typeInChrome(
           word.candidate === undefined ? 'space' : {candidate: word.candidate},
       }),
       boundaries: false,
+      onTaps,
     },
   )
   const typed: Typed = {
@@ -127,6 +173,7 @@ export async function typeInChrome(
     compositionstartPerWord: compositionstartPerWord(events, stepEnds),
   }
   result.typed = typed
+  result.taps = taps
   writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
   phase(`typed ${pyRepr(text)} picked=${typed.picked.join('/')}`)
   throwOnUnexpectedDigit(
@@ -140,15 +187,30 @@ export async function typeInChrome(
  * Open the page in Chrome, drive `steps` on Gboard and read back a record of each. A step that throws is
  * recorded as `failed`, the steps after it as `skipped`, and the attempt throws its error as a driver
  * fault, after passing it with the records to `onStepFailure` and writing the records to `<name>.json`.
+ * With `hooks`, a candidate Gboard does not offer fails its step, the attempt marks its input sent, checks
+ * Chrome is new after a restart, and leaves the read of the page after a failed step to `hooks`, which
+ * writes the records again once it filled them.
  */
 export async function runInChrome(
   name: string,
   {url: pageUrl, keyboard, prefix, steps}: RunOnDeviceOptions,
   connect: () => Promise<Device>,
   onStepFailure?: (error: unknown, records: StepRecord[]) => void,
+  hooks?: AttemptHooks,
+  onTaps?: (taps: StepTaps[]) => void,
 ): Promise<Run> {
   const result: Record<string, unknown> = {url: pageUrl, prefix, steps}
   const records: StepRecord[] = []
+  const writeRecords = () => {
+    result.records = records
+    // Serializing runs the steps' getters and `toJSON`, so a failure to write the artifact never replaces
+    // the step's error or decides whether it is retried.
+    try {
+      writeFileSync(`${outDir()}/${name}.json`, JSON.stringify(result, null, 2))
+    } catch (artifactError) {
+      phase(`failure artifact not written: ${describeError(artifactError)}`)
+    }
+  }
   let run: Run
   try {
     const device = await openKeyboard(
@@ -156,28 +218,39 @@ export async function runInChrome(
       {url: pageUrl, keyboard, prefix},
       connect,
       result,
+      hooks?.previousChrome,
     )
     const {text, selection, events} = await runSteps(
       device,
       name,
       result,
       steps,
-      {toStep: (step) => step, records, boundaries: true},
+      {
+        toStep: (step) => step,
+        records,
+        boundaries: true,
+        keyboard,
+        hooks,
+        onTaps,
+      },
     )
     run = {steps: records, text, selection, events}
   } catch (error) {
     if (records.length > 0) {
       onStepFailure?.(error, records)
-      result.records = records
-      // Serializing runs the steps' getters and `toJSON`, so a failure to write the artifact never replaces
-      // the step's error or decides whether it is retried.
-      try {
-        writeFileSync(
-          `${outDir()}/${name}.json`,
-          JSON.stringify(result, null, 2),
-        )
-      } catch (artifactError) {
-        phase(`failure artifact not written: ${describeError(artifactError)}`)
+      writeRecords()
+      const failed = records.find((record) => record.status === 'failed')
+      if (hooks !== undefined && failed !== undefined) {
+        hooks.readAfterFault = async () => {
+          const {state, selection, focused} = await readBoundary()
+          failed.textAfter = state.text
+          failed.selectionAfter = selection
+          failed.focusedAfter = focused
+          phase(
+            `page after the fault: text ${pyRepr(state.text)}, focused ${pyRepr(focused)}`,
+          )
+          writeRecords()
+        }
       }
     }
     throw error
@@ -196,6 +269,9 @@ export async function runInChrome(
         )
         .join(''),
   )
+  for (const record of records) {
+    throwOnSymbolMistap(record, keyboard)
+  }
   return run
 }
 
@@ -207,7 +283,7 @@ export async function runInChrome(
 export function withStepRecords(error: unknown, records: StepRecord[]): Error {
   const lines = records.map(
     (record, index) =>
-      `  ${index + 1}. ${field(() => String(record.type))}: ${field(() => String(record.status))}${field(() => (record.reason === undefined ? '' : ` (${String(record.reason)})`), ` (${UNPRINTABLE_ERROR})`)}, textAfter ${field(() => pyRepr(record.textAfter))}`,
+      `  ${index + 1}. ${field(() => String(record.type))}: ${field(() => String(record.status))}${field(() => (record.reason === undefined ? '' : ` (${String(record.reason)})`), ` (${UNPRINTABLE_ERROR})`)}, textAfter ${field(() => pyRepr(record.textAfter))}${field(() => (record.keys === undefined ? '' : `, keys ${record.keys.length > 0 ? record.keys.join(' ') : 'none'}`))}`,
   )
   return new Error(
     `${guardedErrorMessage(error)}\nSteps:\n${lines.join('\n')}`,
@@ -235,6 +311,7 @@ export async function openKeyboard(
   }: Pick<RunOnDeviceOptions, 'url' | 'keyboard' | 'prefix'>,
   connect: () => Promise<Device>,
   result: Record<string, unknown>,
+  previousChrome?: string[],
 ): Promise<Device> {
   const port = localhostPort(pageUrl)
   if (port !== undefined) {
@@ -257,6 +334,7 @@ export async function openKeyboard(
       break
     } catch (error) {
       throwIfAborted()
+      throwIfStrictLoss(error)
       phase(`uiautomator2 not ready (${attempt + 1}): ${describeError(error)}`)
       await sleep(2)
       device = await connect()
@@ -276,6 +354,9 @@ export async function openKeyboard(
   await sleep(4)
   await dismissChromeScreens(device)
   phase(`foreground: ${pyRepr(await device.appCurrent())}`)
+  if (previousChrome !== undefined) {
+    await checkFreshChrome(previousChrome)
+  }
 
   await waitForPage()
   phase(`page loaded: ${pyStr(await cdpEval('location.href'))}`)
@@ -394,10 +475,17 @@ async function runSteps<Input>(
     toStep,
     records,
     boundaries,
+    keyboard,
+    hooks,
+    onTaps,
   }: {
     toStep: (input: Input) => Step
     records?: StepRecord[]
     boundaries: boolean
+    keyboard?: RunOnDeviceOptions['keyboard']
+    hooks?: AttemptHooks | undefined
+    /** Called with the list of steps once the first begins. Each step's keys are added as they are tapped and its events once it is read, so the list holds the steps so far when one throws. */
+    onTaps?: ((taps: StepTaps[]) => void) | undefined
   },
 ): Promise<{
   /** How each `compose` step was committed: its candidate or `space`, `undefined` for any other step. */
@@ -407,18 +495,36 @@ async function runSteps<Input>(
   text: string | null
   selection: GraphemeSelection | null
   events: PageEvent[]
+  taps: StepTaps[]
 }> {
   const picked: Array<string | undefined> = []
   const stepEnds: number[] = []
+  const taps: StepTaps[] = []
   let last = boundaries ? await readBoundary() : undefined
   const firstEnd = last?.state.events.length ?? 0
   let eventsBefore = firstEnd
   for (const [index, input] of inputs.entries()) {
     const step = toStep(input)
     const position = index + 1
+    const entry: StepTaps = {keys: [], events: []}
+    taps.push(entry)
+    if (taps.length === 1) {
+      onTaps?.(taps)
+    }
     let after: PageState
     try {
-      picked.push(await runStep(device, name, result, step, position))
+      picked.push(
+        await runStep(
+          device,
+          name,
+          result,
+          step,
+          position,
+          keyboard,
+          hooks,
+          entry.keys,
+        ),
+      )
       if (boundaries) {
         last = await readBoundary()
         after = last.state
@@ -437,10 +543,12 @@ async function runSteps<Input>(
               {
                 type: step.type,
                 status: 'failed',
-                reason: guardedErrorRepr(error),
+                reason: guardedErrorRepr(thrownValue(error)),
                 textAfter: null,
                 selectionAfter: null,
+                focusedAfter: null,
                 events: [],
+                keys: [...entry.keys],
               },
               ...Array.from(
                 inputs.slice(index + 1),
@@ -450,7 +558,9 @@ async function runSteps<Input>(
                   reason: `step ${position} failed`,
                   textAfter: null,
                   selectionAfter: null,
+                  focusedAfter: null,
                   events: [],
+                  keys: [],
                 }),
               ),
             ),
@@ -460,12 +570,15 @@ async function runSteps<Input>(
       throw error
     }
     stepEnds.push(after.events.length)
+    entry.events = after.events.slice(eventsBefore)
     records?.push({
       type: step.type,
       status: 'done',
       textAfter: after.text,
       selectionAfter: last?.selection ?? null,
-      events: after.events.slice(eventsBefore),
+      focusedAfter: last?.focused ?? null,
+      events: entry.events,
+      keys: [...entry.keys],
     })
     eventsBefore = after.events.length
   }
@@ -477,6 +590,7 @@ async function runSteps<Input>(
       text: last.state.text,
       selection: last.selection,
       events: last.state.events.slice(firstEnd),
+      taps,
     }
   }
   const state = (await cdpEval('window.__state()')) as PageState
@@ -487,46 +601,70 @@ async function runSteps<Input>(
     text: state.text,
     selection: null,
     events: state.events,
+    taps,
   }
 }
 
-/** The page's state and the field's selection in grapheme clusters, from one `FIELD_BOUNDARY` evaluation. */
+/**
+ * The page's state, the field's selection in grapheme clusters and whether the field has focus, from one
+ * `FIELD_BOUNDARY` evaluation. Focus is `null` when the reply does not say.
+ */
 async function readBoundary(): Promise<{
   state: PageState
   selection: GraphemeSelection | null
+  focused: boolean | null
 }> {
-  const {state, selection} = (await cdpEval(FIELD_BOUNDARY)) as {
+  const {state, selection, focused} = (await cdpEval(FIELD_BOUNDARY)) as {
     state: PageState
     selection: unknown
+    focused: unknown
   }
-  return {state, selection: graphemeSelection(selection)}
+  return {
+    state,
+    selection: graphemeSelection(selection),
+    focused: typeof focused === 'boolean' ? focused : null,
+  }
 }
 
-/** Drive one step on Gboard. Returns what committed a `compose` step. */
+/**
+ * Drive one step on Gboard. Returns what committed a `compose` step. With `hooks`, the step marks the
+ * attempt's input sent before each tap that types, and a candidate Gboard does not offer fails it.
+ */
 async function runStep(
   device: Device,
   name: string,
   result: Record<string, unknown>,
   step: Step,
   position: number,
+  keyboard: RunOnDeviceOptions['keyboard'] | undefined,
+  hooks: AttemptHooks | undefined,
+  sent: string[],
 ): Promise<string | undefined> {
+  const tap = (label: string, center: [number, number]) => {
+    sent.push(label)
+    if (hooks !== undefined) {
+      hooks.inputSent = true
+    }
+    return device.click(...center)
+  }
   switch (step.type) {
     case 'compose':
-      return compose(
-        device,
-        name,
-        result,
-        step.letters ?? step.text,
-        step.commit ?? 'space',
+      return compose(device, name, result, {
+        letters: step.letters ?? step.text,
+        literal: step.text !== undefined && keyboard !== undefined,
+        keyboard,
+        commit: step.commit ?? 'space',
+        candidateRequired: hooks !== undefined,
         position,
-      )
+        tap,
+      })
     case 'enter':
-      await tapRole(device, 'enter')
+      await tapRole(device, 'enter', tap)
       await settle(device, name, position)
       return undefined
     case 'backspace':
-      for (let tap = 0; tap < (step.times ?? 1); tap++) {
-        await tapRole(device, 'delete')
+      for (let press = 0; press < (step.times ?? 1); press++) {
+        await tapRole(device, 'delete', tap)
       }
       await settle(device, name, position)
       return undefined
@@ -536,17 +674,70 @@ async function runStep(
 /**
  * Throw a driver fault for a digit in `text` that `inputs` does not hold.
  *
- * The one place the driver reads the page's text to classify a fault. A digit neither the prefix nor
- * the letters hold can only come from a tap that landed as a long press on a key's number hint. An
- * editor that produced one every time would fault twice and fail the test, so a retry can only hide an
- * editor that produces it intermittently.
+ * The one place the driver reads the page's text to classify a fault. The symbol check classifies from
+ * the tap's `beforeinput` instead. A digit neither the prefix nor the letters hold can only come from a
+ * tap that landed as a long press on a key's number hint. An editor that produced one every time would
+ * fault twice and fail the test, so a retry can only hide an editor that produces it intermittently.
  */
 function throwOnUnexpectedDigit(text: string | null, inputs: string): void {
   const digit = unexpectedDigit(text, inputs)
   if (digit !== undefined) {
-    throw new Error(
+    throw new MistapError(
       `mistap: digit ${digit} in typed text ${pyRepr(text)} that neither the prefix nor the letters hold`,
     )
+  }
+}
+
+/**
+ * Classify recorded popup characters only when every tap has one ordered `insertText` beforeinput
+ * matching its character or a recorded popup. Letter keys have no recorded popup, so a letter tap whose
+ * data differs from its key leaves the step unclassified.
+ */
+function throwOnSymbolMistap(
+  record: StepRecord,
+  keyboard: RunOnDeviceOptions['keyboard'],
+): void {
+  const keys = record.keys ?? []
+  const beforeinputs = record.events.filter(
+    (event) => event.type === 'beforeinput',
+  )
+  if (
+    keys.length !== beforeinputs.length ||
+    beforeinputs.some(
+      (event) =>
+        event.inputType !== 'insertText' ||
+        typeof event.data !== 'string' ||
+        [...event.data].length !== 1,
+    )
+  ) {
+    return
+  }
+  const pairs = keys.map((label, index) => {
+    const key = SPACE_KEYS.includes(label) ? ' ' : label
+    const entry = Object.values(LAYOUTS[keyboard])
+      .flatMap((layout) => Object.entries(layout.keys))
+      .find(([character]) => character === key)?.[1]
+    return {key, entry, data: beforeinputs[index]!.data}
+  })
+  if (
+    pairs.some(
+      ({key, entry, data}) =>
+        typeof data !== 'string' ||
+        (data !== key && !entry?.popup?.includes(data)),
+    )
+  ) {
+    return
+  }
+  for (const {key, entry, data} of pairs) {
+    if (
+      typeof data === 'string' &&
+      data !== key &&
+      entry?.popup?.includes(data)
+    ) {
+      throw new MistapError(
+        `mistap: key ${pyRepr(entry.label)} typed ${pyRepr(data)} instead of ${pyRepr(key)}`,
+      )
+    }
   }
 }
 
@@ -574,7 +765,10 @@ export async function dumpFailure(
   }
 }
 
-/** Force-stop Chrome. It throws when the attempt is cancelled or an adb process outlived SIGKILL, and logs any other failure. */
+/**
+ * Force-stop Chrome. It throws when the attempt is cancelled or an adb process outlived SIGKILL, and in a
+ * `runOnDevice` call on adb's own error for a lost device, and logs any other failure.
+ */
 export async function closeChrome(): Promise<void> {
   await adb(['shell', 'am', 'force-stop', CHROME], CHROME_ADB_SECONDS).catch(
     (error: unknown) => {
@@ -582,9 +776,164 @@ export async function closeChrome(): Promise<void> {
       if (isInstance(error, ProcessNotStoppedError)) {
         throw error
       }
+      throwIfStrictLoss(error)
       phase(`force-stop chrome failed: ${describeError(error)}`)
     },
   )
+}
+
+/**
+ * Stop Chrome for the retry of a `runOnDevice` call and wait for its old process to go: read its pid,
+ * force-stop it and read the pid again until the old one is gone, reading no later than
+ * `CHROME_ADB_SECONDS` after the force-stop. Returns the old pids, `[]` when no Chrome ran, for the retry's
+ * `checkFreshChrome`. A force-stop that fails is only logged, since the reads after it decide whether
+ * Chrome stopped, unless it failed on adb's own error for a lost device, which `closeChrome` throws in a
+ * `runOnDevice` call before any later pid read, so the call never retries on a device adb lost. Throws `ChromeNotRestarted` when the old
+ * process outlives the reads or a pid cannot be read.
+ */
+export async function stopChromeForRetry(): Promise<string[]> {
+  const old = await chromePids('before the restart', undefined)
+  await closeChrome()
+  const stopped = Date.now()
+  for (;;) {
+    const now = await chromePids('after the force-stop', old)
+    if (!now.some((pid) => old.includes(pid))) {
+      return old
+    }
+    if (
+      Date.now() - stopped + PID_POLL_SECONDS * 1000 >
+      CHROME_ADB_SECONDS * 1000
+    ) {
+      throw new ChromeNotRestarted(
+        `the old Chrome still ran ${CHROME_ADB_SECONDS}s after the force-stop`,
+        old,
+        now,
+      )
+    }
+    await sleep(PID_POLL_SECONDS)
+  }
+}
+
+const PID_POLL_SECONDS = 0.5
+
+/** Throw `ChromeNotRestarted` unless Chrome runs in a process that is not one of `old`. */
+async function checkFreshChrome(old: string[]): Promise<void> {
+  const now = await chromePids('after the relaunch', old)
+  if (now.length === 0) {
+    throw new ChromeNotRestarted(
+      'no Chrome process ran after the relaunch',
+      old,
+      now,
+    )
+  }
+  if (now.some((pid) => old.includes(pid))) {
+    throw new ChromeNotRestarted(
+      'the relaunched Chrome runs in the old process',
+      old,
+      now,
+    )
+  }
+  phase(
+    `fresh chrome for the retry: old pid ${pidList(old)}, new pid ${pidList(now)}`,
+  )
+}
+
+/**
+ * Chrome's main process ids, `[]` when none runs. `pidof` exits 1 when no process matches, so the device
+ * shell prints its exit status and exits 0, and only an adb that failed exits otherwise. A read without
+ * that status is no read.
+ */
+async function chromePids(
+  when: string,
+  old: string[] | undefined,
+): Promise<string[]> {
+  let output: string
+  try {
+    output = await adb(
+      ['shell', `pidof ${CHROME}; echo pidof exit $?`],
+      CHROME_PID_SECONDS,
+    )
+  } catch (error) {
+    throwIfAborted()
+    if (isInstance(error, ProcessNotStoppedError)) {
+      throw error
+    }
+    const lost = adbLostDevice(error)
+    throw new ChromeNotRestarted(
+      lost === 'timeout'
+        ? `adb timed out during the Chrome restart: adb shell pidof ${CHROME} ran past ${CHROME_PID_SECONDS}s ${when}`
+        : `adb shell pidof ${CHROME} failed ${when}: ${describeError(error)}`,
+      old,
+      undefined,
+      lost,
+    )
+  }
+  const read = /^([\d\s]*)pidof exit ([01])\s*$/.exec(output)
+  if (read === null) {
+    throw new ChromeNotRestarted(
+      `adb shell pidof ${CHROME} gave no pid ${when}: ${pyRepr(output)}`,
+      old,
+      undefined,
+    )
+  }
+  return read[1]!.trim().split(/\s+/).filter(Boolean)
+}
+
+function pidList(pids: string[] | undefined): string {
+  if (pids === undefined) {
+    return 'unread'
+  }
+  return pids.length === 0 ? 'none' : pids.join(' ')
+}
+
+/**
+ * The restart between the attempts did not show a fresh Chrome: the old process may still hold the first
+ * attempt's page, where input that attempt sent can still land, so the retry must not type.
+ */
+export class ChromeNotRestarted extends Error {
+  override name = 'ChromeNotRestarted'
+  /** How a pid read failed when adb may have lost the device, see `adbLostDevice`. */
+  readonly lost: AdbLoss | undefined
+  constructor(
+    reason: string,
+    old: string[] | undefined,
+    now: string[] | undefined,
+    lost?: AdbLoss,
+  ) {
+    super(`${reason}, old pid ${pidList(old)}, new pid ${pidList(now)}`)
+    this.lost = lost
+  }
+}
+
+/**
+ * The device's state from one `adb get-state`, under `DEVICE_STATE_SECONDS`: its stdout, `device` or
+ * `offline` for instance, when it exited 0, its stderr, which names adb's error, when it failed, and
+ * `undefined` when it was stopped or skipped. stdout alone names the state, since adb that starts its server
+ * says so on stderr. It is skipped after the test timed out or next to a process that outlived SIGKILL. A
+ * process of its own that outlives SIGKILL still throws.
+ */
+export async function readDeviceState(): Promise<string | undefined> {
+  if (currentSignal()?.aborted || unstoppedProcesses().length > 0) {
+    phase(
+      'adb get-state skipped after the test timed out or next to a process that outlived SIGKILL',
+    )
+    return undefined
+  }
+  try {
+    const {code, stdout, stderr} = await adbExit(
+      ['get-state'],
+      DEVICE_STATE_SECONDS,
+    )
+    const state = (code === 0 ? stdout : stderr || stdout).trim()
+    phase(`adb get-state: exit ${code}, ${pyRepr(state)}`)
+    return state
+  } catch (error) {
+    if (isInstance(error, ProcessNotStoppedError)) {
+      throw error
+    }
+    phase(`adb get-state stopped: ${describeError(error)}`)
+    return undefined
+  }
 }
 
 /** Count compositionstart events that arrive while an earlier composition is still open. */
@@ -712,6 +1061,7 @@ async function waitForPage(): Promise<void> {
       if (isInstance(error, PageExceptionError)) {
         throw error
       }
+      throwIfStrictLoss(error)
       lastError = error
       phase(`cdp not ready: ${describeError(error)}`)
       try {
@@ -725,6 +1075,7 @@ async function waitForPage(): Promise<void> {
         phase(`targets: ${described}`)
       } catch (targetsError) {
         throwIfAborted()
+        throwIfStrictLoss(targetsError)
         phase(`targets unavailable: ${describeError(targetsError)}`)
       }
     }
@@ -865,12 +1216,19 @@ async function waitForKeyboardState(
   }
 }
 
-async function tapKey(device: Device, label: string): Promise<void> {
+async function tapKey(
+  device: Device,
+  label: string,
+  tap: (label: string, center: [number, number]) => Promise<void> = (
+    _label,
+    center,
+  ) => device.click(...center),
+): Promise<void> {
   const keys = await gboardKeys(device)
   for (const candidate of [label, label.toUpperCase()]) {
     const center = keys.get(candidate)
     if (center) {
-      await device.click(...center)
+      await tap(candidate, center)
       // Paces taps at a typist's speed. Gboard gives no signal that it has handled a tap, and the page only
       // sees the taps that produce text.
       await sleep(0.4)
@@ -941,19 +1299,43 @@ export async function ensureJapanese(
 }
 
 /**
- * Tap `letters`, then commit them: tap the candidate when Gboard offers it, otherwise Space, or leave the
- * composition open. Returns the candidate or `space` that committed them, `undefined` for `none`.
+ * Tap `letters`, then commit them: tap the candidate when Gboard offers it, otherwise Space or, when the
+ * candidate is required, fail, or leave the composition open. A `literal` run of `TEXT_SYMBOLS` is typed
+ * off the letter layout. Each tap that types goes through `tap`. Returns the candidate or `space` that
+ * committed them, `undefined` for `none`.
  */
 async function compose(
   device: Device,
   name: string,
   result: Record<string, unknown>,
-  letters: string,
-  commit: Commit,
-  position: number,
+  {
+    letters,
+    literal,
+    keyboard,
+    commit,
+    candidateRequired,
+    position,
+    tap,
+  }: {
+    letters: string
+    literal: boolean
+    keyboard: RunOnDeviceOptions['keyboard'] | undefined
+    commit: Commit
+    candidateRequired: boolean
+    position: number
+    tap: (label: string, center: [number, number]) => Promise<void>
+  },
 ): Promise<string | undefined> {
-  for (const key of letters) {
-    await tapKey(device, key)
+  // A run of symbols is typed in one trip off the letter layout, so Space between them is the symbol
+  // layout's.
+  for (const run of literal ? symbolRuns(letters) : [letters]) {
+    if (literal && TEXT_SYMBOLS.includes(run[0]!)) {
+      await typeSymbols(device, keyboard!, run, tap)
+      continue
+    }
+    for (const key of run) {
+      await tapKey(device, key, tap)
+    }
   }
   phase(`typed ${letters} (${position})`)
   await device.screenshot(`${outDir()}/${name}-composing${position}`)
@@ -981,12 +1363,16 @@ async function compose(
   let picked: string
   const candidate = wanted === undefined ? undefined : keys.get(wanted)
   if (candidate) {
-    await device.click(...candidate)
+    await tap(wanted!, candidate)
     picked = wanted!
+  } else if (wanted !== undefined && candidateRequired) {
+    throw new Error(
+      `Gboard did not offer the candidate ${pyRepr(wanted)} in step ${position}, candidates ${pyRepr(result[`candidates${position}`])}`,
+    )
   } else {
     keys = await gboardKeys(device)
     // The Japanese layout labels its space key スペース.
-    await tapKey(device, keys.has('スペース') ? 'スペース' : 'Space')
+    await tapKey(device, keys.has('スペース') ? 'スペース' : 'Space', tap)
     picked = 'space'
   }
   result[`picked${position}`] = picked
@@ -1031,7 +1417,11 @@ export function roleKey(
   )
 }
 
-async function tapRole(device: Device, role: KeyRole): Promise<void> {
+async function tapRole(
+  device: Device,
+  role: KeyRole,
+  tap: (label: string, center: [number, number]) => Promise<void>,
+): Promise<void> {
   // Waits for a whole layout first, so a dump taken mid-redraw does not read as a missing key.
   await gboardKeys(device)
   const nodes = packageNodes(await device.dumpHierarchy(), GBOARD)
@@ -1043,7 +1433,7 @@ async function tapRole(device: Device, role: KeyRole): Promise<void> {
       )}`,
     )
   }
-  await device.click(...key.center)
+  await tap(key.label, key.center)
   // Paces taps at a typist's speed, as `tapKey` does.
   await sleep(0.4)
 }
@@ -1052,9 +1442,9 @@ async function tapRole(device: Device, role: KeyRole): Promise<void> {
 // it is outside the field.
 const FIELD_SELECTION = `(() => { const field = typeof window.__field === 'function' ? window.__field() : null; if (!field) return null; if (field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement) { const backward = field.selectionDirection === 'backward'; return {text: field.value, anchor: backward ? field.selectionEnd : field.selectionStart, focus: backward ? field.selectionStart : field.selectionEnd}; } const selection = getSelection(); if (!selection || !selection.rangeCount || !field.contains(selection.anchorNode) || !field.contains(selection.focusNode)) return null; const offset = (node, nodeOffset) => { const range = document.createRange(); range.setStart(field, 0); range.setEnd(node, nodeOffset); return range.toString().length; }; return {text: field.textContent, anchor: offset(selection.anchorNode, selection.anchorOffset), focus: offset(selection.focusNode, selection.focusOffset)}; })()`
 
-// The page's `window.__state()` and the field's selection from one evaluation, so no event can land
-// between them.
-const FIELD_BOUNDARY = `({state: window.__state(), selection: ${FIELD_SELECTION}})`
+// The page's `window.__state()`, the field's selection and whether it has focus from one evaluation, so no
+// event can land between them.
+const FIELD_BOUNDARY = `({state: window.__state(), selection: ${FIELD_SELECTION}, focused: ${FIELD_FOCUSED}})`
 
 /** A `FIELD_SELECTION` reply in grapheme clusters. */
 export function graphemeSelection(reply: unknown): GraphemeSelection | null {
@@ -1084,6 +1474,23 @@ export function graphemeOffset(text: string, offset: number): number {
     clusters += 1
   }
   return clusters
+}
+
+/** `text` split into runs of `TEXT_SYMBOLS` and runs of other characters, in order. */
+function symbolRuns(text: string): string[] {
+  const runs: string[] = []
+  for (const character of text) {
+    const last = runs.at(-1)
+    if (
+      last !== undefined &&
+      TEXT_SYMBOLS.includes(last[0]!) === TEXT_SYMBOLS.includes(character)
+    ) {
+      runs[runs.length - 1] = last + character
+    } else {
+      runs.push(character)
+    }
+  }
+  return runs
 }
 
 function isAscii(value: string): boolean {

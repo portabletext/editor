@@ -268,11 +268,12 @@ export type ReconciliationReport =
       /**
        * One entry per object in the returned value whose type the
        * `schema` does not declare and that the stored value did not
-       * already hold, in document order. Declared objects' array fields
-       * are searched too, so an undeclared object inside a table cell
-       * or another declared container is listed, while an object-typed
-       * field, and an array field with no `of` to check its items
-       * against, are not searched. An object counts as already held when
+       * already hold, in document order. Only top-level block objects
+       * and the inline objects of top-level text blocks are checked. The
+       * fields of a declared object, such as a table's cells or a
+       * container's own array, are not searched: what a `json:object`
+       * payload holds inside its fields is validated like any other
+       * write of that object. An object counts as already held when
        * the stored value has one with the same `_type` and `_key`, at
        * the same position (`block` or `inline`), in the same array: for
        * an inline object that is the Portable Text array holding its
@@ -392,11 +393,12 @@ export type ReconciliationReport =
       /**
        * One entry per object in the returned value whose type the
        * `schema` does not declare and that the stored value did not
-       * already hold, in document order. Declared objects' array fields
-       * are searched too, so an undeclared object inside a table cell
-       * or another declared container is listed, while an object-typed
-       * field, and an array field with no `of` to check its items
-       * against, are not searched. An object counts as already held when
+       * already hold, in document order. Only top-level block objects
+       * and the inline objects of top-level text blocks are checked. The
+       * fields of a declared object, such as a table's cells or a
+       * container's own array, are not searched: what a `json:object`
+       * payload holds inside its fields is validated like any other
+       * write of that object. An object counts as already held when
        * the stored value has one with the same `_type` and `_key`, at
        * the same position (`block` or `inline`), in the same array: for
        * an inline object that is the Portable Text array holding its
@@ -461,11 +463,12 @@ export type ReconciliationReport =
       /**
        * One entry per object in the returned value whose type the
        * `schema` does not declare and that the stored value did not
-       * already hold, in document order. Declared objects' array fields
-       * are searched too, so an undeclared object inside a table cell
-       * or another declared container is listed, while an object-typed
-       * field, and an array field with no `of` to check its items
-       * against, are not searched. An object counts as already held when
+       * already hold, in document order. Only top-level block objects
+       * and the inline objects of top-level text blocks are checked. The
+       * fields of a declared object, such as a table's cells or a
+       * container's own array, are not searched: what a `json:object`
+       * payload holds inside its fields is validated like any other
+       * write of that object. An object counts as already held when
        * the stored value has one with the same `_type` and `_key`, at
        * the same position (`block` or `inline`), in the same array: for
        * an inline object that is the Portable Text array holding its
@@ -479,10 +482,10 @@ export type ReconciliationReport =
 /**
  * An object of a type the `schema` does not declare, in a
  * `ReconciliationReport`'s `undeclaredObjects`. `position` is `inline`
- * for a text block's child and `block` otherwise, including inside a
- * declared container's array field. `path` addresses the returned
- * value, like every `ReconciliationKeyPath` in the report: `[{_key}]`
- * for a top-level block object, `[{_key: <block key>}, 'children',
+ * for a top-level text block's child and `block` for a top-level block
+ * object. `path` addresses the returned value, like every
+ * `ReconciliationKeyPath` in the report: `[{_key}]` for a top-level
+ * block object, `[{_key: <block key>}, 'children',
  * {_key: <child key>}]` for an inline object. `_key` is absent when the
  * object has none. `message` is the same text as the
  * `object-type-undeclared` degradation for the object, for display: it

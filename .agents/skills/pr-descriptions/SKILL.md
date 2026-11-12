@@ -1,6 +1,6 @@
 ---
 name: pr-descriptions
-description: How to write pull request descriptions for the Portable Text Editor monorepo. Use whenever opening or editing a PR here. Covers the changeset-led body (the changeset's prose opens the description), the narrative shape for what follows, honesty about behavioral changes, and length that scales with the diff's blast radius, with real merged exemplars.
+description: How to write pull request descriptions for the Portable Text Editor monorepo. Use whenever opening or editing a PR here. Covers the prose shape (no fixed sections, code examples when they carry the point), honesty about behavioral changes, and length that scales with the diff's blast radius, with real merged exemplars.
 ---
 
 # Writing PTE PR descriptions
@@ -39,24 +39,23 @@ description: How to write pull request descriptions for the Portable Text Editor
 
 ## Shape
 
-- **User-facing PRs open with the changeset's prose, verbatim.** The
-  changeset is the calibrated consumer sentence (see the `changesets`
-  skill), and it is what the reviewer actually reads; a body that buries it
-  under paragraphs gets skipped whole. After it, the body adds only what
-  changesets ban: a concrete example of the failure, one sentence naming
-  the fix mechanism, any behavioral change or honest caveat. When the
-  changeset alone carries the change, it is the whole body. This mirrors
-  the changeset's _prose_; body sentences _about_ the changeset ("a
-  changeset rides along") remain banned.
-- **Fix/refactor PRs: heading-free narrative prose.** After the changeset
-  opening: diagnosis in code terms → fix → what was verified, compressed
-  into the paragraph the budget below allows. Larger feature PRs may use
-  `## What` / `## Design notes`.
-- **Lead with motivation** (internal-only PRs, which have no changeset to
-  open with): the pain that makes the change necessary, before the
-  mechanism. The description stands on its own;
-  explain the problem in terms of the code, not the PR graph, and reference
-  another PR only when the reader cannot follow the description without it.
+- **Prose, no fixed sections.** The body is a few plain paragraphs: what
+  the user or caller saw, why it happened in code terms, what the change
+  does, and any behavioral change or caveat. No headings, no template. A
+  small fix is often two or three short paragraphs; a feature earns more
+  paragraphs, not sections.
+- **Open with the observable pain**, before the mechanism: the failure a
+  user or caller hits, or for internal-only PRs the problem that makes the
+  change necessary. The description stands on its own; explain the problem
+  in terms of the code, not the PR graph, and reference another PR only
+  when the reader cannot follow the description without it.
+- **Don't paste the changeset.** The changeset is the consumer sentence for
+  the changelog; the body says the same thing in its own words, with the
+  example and mechanism a changeset leaves out. Sentences _about_ the
+  changeset ("a changeset rides along") are banned.
+- **Code examples when they carry the point**: a new or changed API, a
+  patch or value shape, a before and after a reviewer would otherwise have
+  to reconstruct from the tests.
 - **Prose over bullets.** Each design decision gets a paragraph carrying its
   own reasoning; bullets flatten the why out. A short bullet list is
   acceptable only for genuinely parallel items (e.g. "things I was careful
@@ -67,7 +66,6 @@ description: How to write pull request descriptions for the Portable Text Editor
   by a test expressing...").
 - **Justify each non-obvious decision inline**, paired with the test that
   pins it.
-- Fenced code examples when introducing API.
 - Stacked or extracted PRs state why they are separate and what depends on
   them, referencing the other PR only when the reader needs it (#2777: "Extracted
   from #2772 because it changes behavior for all existing `editor.on`
@@ -89,11 +87,10 @@ description: How to write pull request descriptions for the Portable Text Editor
 ## Length: the budget
 
 - **The body scales with the diff's blast radius, not the investigation's
-  length.** Default for a fix PR: the changeset's prose plus at most one
-  short paragraph (~100 words): the concrete example, the mechanism, one
-  honest caveat. The 3-4 paragraph, ~200-word shape (failure, design,
-  blast radius with its pin, caveat) is earned only by PRs with a
-  genuinely large blast radius; it is not the template.
+  length.** Default for a fix PR: two or three short paragraphs: the
+  concrete example, the mechanism, one honest caveat. More paragraphs are
+  earned only by PRs with a genuinely large blast radius; they are not the
+  template.
 - **A trivial diff earns two sentences**: a verdict, and a rider naming
   anything else the diff also does. Zero citations, zero mechanics.
 - **Everything cut must already live somewhere**: mechanism in the commit
@@ -111,9 +108,9 @@ description: How to write pull request descriptions for the Portable Text Editor
 
 ## Exemplar: fix PR, heading-free narrative (#2774, merged)
 
-This is the earned-length exception (a factorial blow-up in a public
-conversion path), not the default fix-PR shape; the default is the
-changeset-led body above.
+This is the earned-length case (a factorial blow-up in a public
+conversion path), not the default fix-PR length; the default is #558
+below.
 
 > **fix(sanity-bridge): avoid combinatorial blow-up converting mutually-embedding types**
 >
@@ -142,25 +139,22 @@ growth mechanism, states the fix as an insight about the platform
 decision with the test guarding it, numbers have before/after + methodology,
 and it **volunteers a behavioral change nobody would have caught in review**.
 
-## Exemplar: feature PR with headings (#2772, merged)
+## Exemplar: short fix PR, two paragraphs (#558, merged)
 
-Structure to copy (see https://github.com/portabletext/editor/pull/2772 for
-the full text):
+> **fix(perf): stream the initial value into the editor**
+>
+> If the initial value is thousands of blocks long, it will block the main thread
+> while syncing. Therefore, we now stream the initial value, making the process
+> interruptable.
+>
+> One caveat: We only stream the **initial** value, not incoming subsequent
+> values. It's simply too complicated right now to stream subsequent values since
+> we can't be sure that user actions don't interfere with the process. The reason
+> we can safely stream the initial value is that we can make the editor read-only
+> while that happens.
 
-- `## What` opens with the concrete driver (Studio's render-pipeline work
-  needs `listIndex`), generalizes to the class of consumers (derived state),
-  then shows the API with a fenced example and the exact test pinning the
-  motivating use case end-to-end.
-- API-surface discipline gets its own paragraph: the closed five-variant
-  union, the type-level tripwire that fails compilation when the engine
-  vocabulary grows, the runtime allowlist, "exposing a future operation is a
-  decision made twice, never an accident".
-- `## Design notes` gives each contested decision a paragraph with its
-  reasoning and its pinning test: why the stream is ungated (with the test
-  pinning the contrast), delivery order under normalization (both real
-  orders, which test pins which), error isolation, wildcard listeners.
-- Performance measured and stated with methodology: "chromium, medians of 3
-  runs, inserting 1000 blocks: 260ms vs 259ms [...] Parity within noise."
+Why it's canonical: the pain, the fix and the honest caveat with its reason,
+and nothing else.
 
 ## Anti-patterns
 

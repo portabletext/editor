@@ -1,7 +1,6 @@
 import {spawnSync} from 'node:child_process'
 import {
   appendFileSync,
-  chmodSync,
   copyFileSync,
   existsSync,
   mkdirSync,
@@ -9,41 +8,30 @@ import {
   readFileSync,
   rmSync,
   symlinkSync,
+  truncateSync,
   writeFileSync,
 } from 'node:fs'
 import {tmpdir} from 'node:os'
 import {basename, dirname, join} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test} from 'vitest'
 import {
   bootSeconds,
   cacheRevisions,
-  deviceVerdict,
   installCleanupPaths,
+  installFailureLines,
+  installLogTail,
   installResult,
   packageMismatch,
   retryAfter,
   runResult,
 } from './emulator-runs.mjs'
 
-const packageRoot = fileURLToPath(new URL('../..', import.meta.url))
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url))
 const workflow = readFileSync(
-  new URL('../../../../.github/workflows/android-ime.yml', import.meta.url),
+  new URL('../workflows/android-ime.yml', import.meta.url),
   'utf8',
 )
-
-// What `adb get-state` answered on emulators in real runs of these tests.
-const recordedDead = {
-  stdout: '',
-  stderr: 'error: device offline\n',
-  status: 1,
-}
-const recordedGone = {
-  stdout: '',
-  stderr: "error: device 'emulator-5554' not found\n",
-  status: 1,
-}
-const recordedReachable = {stdout: 'device\n', stderr: '', status: 0}
 
 // What `sdkmanager --list` from cmdline-tools 12.0 printed on Nov 5 for an SDK with only `platform-tools`,
 // cut to the rows around the packages the cache holds and without the padding after each row.
@@ -82,13 +70,13 @@ const lostThenStalled =
   'EMULATOR_START at 100\nBOOTED at 160\nCHECKED lost at 700\n'
 const reachableThenStalled =
   'EMULATOR_START at 100\nBOOTED at 160\nCHECKED device at 700\n'
-// The prep failure `run-on-device.sh` records for a real CI boot whose Gboard never loaded the dictionary.
+// The prep failure `thumbjar run` records for a real CI boot whose Gboard never loaded the dictionary.
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
 const dictionaryNeverLoaded = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED device at 700\n`
 const dictionaryNeverLoadedLost = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED lost at 700\n`
 const dictionaryNeverLoadedUnchecked = `EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\n`
-// The prep failure `run-on-device.sh` records when the dictionary loaded but Gboard did not convert with it.
+// The prep failure `thumbjar run` records when the dictionary loaded but Gboard did not convert with it.
 const dictionaryCheckFailed =
   'EMULATOR_START at 100\nBOOTED at 160\nPREP FAILED: japanese dictionary check, see ja-dictionary.log\nCHECKED device at 700\n'
 const retryDictionaryNeverLoaded = `RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\nPREP FAILED: ${NEVER_LOADED}\nPREP DICTIONARY_NOT_LOADED\nCHECKED device at 1600\n`
@@ -106,71 +94,6 @@ const retryInterrupted = 'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\n'
 // The key `cache-revisions` writes for `recordedList` on Linux.
 const cacheKey =
   'android-sdk-Linux-api36-google_apis_playstore-x86_64-image7-emulator37.2.13'
-
-describe(deviceVerdict.name, () => {
-  test('reads a device as reachable only when `adb get-state` prints `device`, whatever it prints on stderr', () => {
-    expect(
-      deviceVerdict({
-        stdout: 'device\n',
-        stderr: '* daemon not running; starting now at tcp:5037\n',
-        timedOut: false,
-      }),
-    ).toEqual('device')
-  })
-
-  test('reads the answers a real emulator gave, dead, gone and reachable', () => {
-    expect([
-      deviceVerdict({...recordedDead, timedOut: false}),
-      deviceVerdict({...recordedGone, timedOut: false}),
-      deviceVerdict({...recordedReachable, timedOut: false}),
-    ]).toEqual(['lost', 'lost', 'device'])
-  })
-
-  test('reads a device as lost when adb reports it offline or has no such device', () => {
-    expect([
-      deviceVerdict({stdout: 'offline\n', stderr: '', timedOut: false}),
-      deviceVerdict({
-        stdout: '',
-        stderr: 'error: device offline\n',
-        timedOut: false,
-      }),
-      deviceVerdict({
-        stdout: '',
-        stderr: 'error: no devices/emulators found\n',
-        timedOut: false,
-      }),
-      deviceVerdict({
-        stdout: '',
-        stderr: "error: device 'emulator-5554' not found\n",
-        timedOut: false,
-      }),
-    ]).toEqual(['lost', 'lost', 'lost', 'lost'])
-  })
-
-  test('gives no verdict for a device adb sees in another state, for any other error, or for an `adb get-state` that never answered', () => {
-    expect([
-      deviceVerdict({stdout: 'unauthorized\n', stderr: '', timedOut: false}),
-      deviceVerdict({stdout: 'bootloader\n', stderr: '', timedOut: false}),
-      deviceVerdict({stdout: 'recovery\n', stderr: '', timedOut: false}),
-      deviceVerdict({stdout: 'unknown\n', stderr: '', timedOut: false}),
-      deviceVerdict({
-        stdout: '',
-        stderr: 'error: cannot connect to daemon\n',
-        timedOut: false,
-      }),
-      deviceVerdict({stdout: '', stderr: '', timedOut: true}),
-      deviceVerdict({stdout: 'offline\n', stderr: '', timedOut: true}),
-    ]).toEqual([
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ])
-  })
-})
 
 describe(retryAfter.name, () => {
   test('retries a first run that never booted', () => {
@@ -739,7 +662,7 @@ describe('emulator-runs.mjs install-retry', () => {
       const start = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-start',
           sdk,
           '36',
@@ -766,7 +689,7 @@ describe('emulator-runs.mjs install-retry', () => {
       const retry = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-retry',
           sdk,
           '36',
@@ -819,7 +742,7 @@ describe('emulator-runs.mjs install-retry', () => {
       const retry = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-retry',
           sdk,
           '36',
@@ -1403,7 +1326,7 @@ describe('emulator-runs.mjs install-start', () => {
       const empty = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'install-start',
           emptySdk,
           '36',
@@ -1430,7 +1353,7 @@ describe('emulator-runs.mjs boot-seconds', () => {
       const boot = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'boot-seconds',
           'missing.txt',
         ],
@@ -1462,6 +1385,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
     ).toEqual({
       status: 1,
       stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
         'install outcome: retried once after a failed install\nrun outcome: cancelled, on the retry after adb lost the device\n',
       output: '',
       summary:
@@ -1476,7 +1400,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       const result = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'result',
           'missing.txt',
           'skipped',
@@ -1515,7 +1439,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       const result = spawnSync(
         'node',
         [
-          join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+          join(repoRoot, '.github/scripts/emulator-runs.mjs'),
           'result',
           'missing.txt',
           'skipped',
@@ -1539,6 +1463,8 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       }).toEqual({
         status: 1,
         stdout:
+          'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+          'install attempt 2: no install output was recorded in android/out/sdk-install-2.log\n' +
           'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
         stderr: '',
         summary:
@@ -1559,6 +1485,7 @@ describe('emulator-runs.mjs result after the emulator install', () => {
     ).toEqual({
       status: 0,
       stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
         'install outcome: retried once after a failed install\nrun outcome: success, on the retry after adb lost the device\n',
       output: '',
       summary:
@@ -1590,7 +1517,9 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       }),
     ).toEqual({
       status: 1,
-      stdout: 'run outcome: cancelled\n',
+      stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+        'run outcome: cancelled\n',
       output: '',
       summary: 'run outcome: cancelled\n',
       timing: '',
@@ -1622,7 +1551,9 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       }),
     ).toEqual({
       status: 1,
-      stdout: 'run outcome: cancelled\n',
+      stdout:
+        'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+        'run outcome: cancelled\n',
       output: '',
       summary: 'run outcome: cancelled\n',
       timing: '',
@@ -1645,88 +1576,97 @@ describe('emulator-runs.mjs result after the emulator install', () => {
       timing: '',
     })
   })
-})
 
-describe('emulator-runs.mjs device-state', () => {
-  test('reads a device that prints `device` as reachable, whatever adb prints on stderr', () => {
-    expect(
-      deviceState({
-        stdout: 'device\n',
-        stderr:
-          '* daemon not running; starting now at tcp:5037\n* daemon started successfully\n',
-        status: 0,
-      }),
-    ).toEqual({timing: 'BOOTED at 160\nCHECKED device\n', status: 0})
-  })
+  describe('with an install log', () => {
+    const resultWithLog = (
+      log: string,
+      workflowOutcomes: {INSTALL2_OUTCOME: string},
+    ) => {
+      const directory = mkdtempSync(join(tmpdir(), 'install-result-'))
+      try {
+        mkdirSync(join(directory, 'android/out'), {recursive: true})
+        writeFileSync(join(directory, 'android/out/sdk-install-1.log'), log)
+        const result = spawnSync(
+          'node',
+          [
+            join(repoRoot, '.github/scripts/emulator-runs.mjs'),
+            'result',
+            'missing.txt',
+            'skipped',
+          ],
+          {
+            cwd: directory,
+            encoding: 'utf8',
+            env: {
+              ...process.env,
+              INSTALL1_OUTCOME: 'failure',
+              ...workflowOutcomes,
+              GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+            },
+          },
+        )
+        return {
+          status: result.status,
+          stdout: result.stdout,
+          summary: readFileSync(join(directory, 'summary'), 'utf8'),
+        }
+      } finally {
+        rmSync(directory, {recursive: true, force: true})
+      }
+    }
 
-  test('marks the device lost when adb finds none', () => {
-    expect(
-      deviceState({
-        stdout: '',
-        stderr: 'error: no devices/emulators found\n',
+    test('prints the tail of a ZipFile failure before the run outcome and leaves the summary unchanged', () => {
+      const log =
+        '[=======================================] 100% Unzipping... emulator/emulator\n' +
+        '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+        '[=====================                  ] 54% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+        '[=======================================] 100% Unzipping... system-images/android-36/google_apis_playstore/x86_64/system.img\r\n' +
+        'yes: standard output: Broken pipe\n' +
+        'Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.\n'
+      expect(resultWithLog(log, {INSTALL2_OUTCOME: 'success'})).toEqual({
         status: 1,
-      }),
-    ).toEqual({timing: 'BOOTED at 160\nCHECKED lost\n', status: 0})
-  })
-
-  test('marks the device lost when adb reads it as offline', () => {
-    expect(deviceState({stdout: 'offline\n', stderr: '', status: 0})).toEqual({
-      timing: 'BOOTED at 160\nCHECKED lost\n',
-      status: 0,
+        stdout:
+          'install attempt 1: last 4 lines of android/out/sdk-install-1.log\n' +
+          '  [=======================================] 100% Unzipping... emulator/emulator\n' +
+          '  [=======================================] 100% Unzipping... system-images/android-36/google_apis_playstore/x86_64/system.img\n' +
+          '  yes: standard output: Broken pipe\n' +
+          '  Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: the emulator never booted, infrastructure failure, not a test result\n',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: the emulator never booted, infrastructure failure, not a test result\n',
+      })
     })
-  })
 
-  test('marks the device lost when adb names the device it cannot find', () => {
-    expect(deviceState(recordedGone)).toEqual({
-      timing: 'BOOTED at 160\nCHECKED lost\n',
-      status: 0,
-    })
-  })
-
-  test('marks the device lost when adb fails with the device offline, as a dead emulator answered in a real run', () => {
-    expect(deviceState(recordedDead)).toEqual({
-      timing: 'BOOTED at 160\nCHECKED lost\n',
-      status: 0,
-    })
-  })
-
-  test('marks a reachable device as reachable, as it answered in a real run after a failed prep', () => {
-    expect(deviceState(recordedReachable)).toEqual({
-      timing: 'BOOTED at 160\nCHECKED device\n',
-      status: 0,
-    })
-  })
-
-  test('records no verdict, and fails, for an unauthorized device or any other adb error', () => {
-    expect([
-      deviceState({stdout: 'unauthorized\n', stderr: '', status: 0}),
-      deviceState({
-        stdout: '',
-        stderr: 'error: cannot connect to daemon\n',
+    test('prints the package a timed out install was downloading, which has no error line', () => {
+      const log =
+        'yes: standard output: Broken pipe\n' +
+        '[=======================================] 100% Unzipping... emulator/emulator\n' +
+        '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+        '[================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...        \r'
+      expect(resultWithLog(log, {INSTALL2_OUTCOME: 'failure'})).toEqual({
         status: 1,
-      }),
-    ]).toEqual([
-      {timing: 'BOOTED at 160\n', status: 1},
-      {timing: 'BOOTED at 160\n', status: 1},
-    ])
+        stdout:
+          'install attempt 1: last 3 lines of android/out/sdk-install-1.log\n' +
+          '  yes: standard output: Broken pipe\n' +
+          '  [=======================================] 100% Unzipping... emulator/emulator\n' +
+          '  [================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\n' +
+          'install attempt 2: no install output was recorded in android/out/sdk-install-2.log\n' +
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
+    })
   })
-
-  test('records no verdict, and fails, when `adb get-state` does not answer within its timeout', () => {
-    expect(
-      deviceState({stdout: '', stderr: '', status: 0, hang: true}),
-    ).toEqual({timing: 'BOOTED at 160\n', status: 1})
-  }, 15_000)
 })
 
 describe('emulator-runs.mjs imported from an entry `node` cannot resolve', () => {
   test('imports without running its command, from stdin and from an entry path that does not exist', () => {
     expect([
+      importFromEntry(join(repoRoot, '.github/scripts/emulator-runs.mjs'), '-'),
       importFromEntry(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
-        '-',
-      ),
-      importFromEntry(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         'missing',
       ),
     ]).toEqual([
@@ -1740,12 +1680,12 @@ describe('emulator-runs.mjs run as `node`’s entry whose file is removed once l
   test('still runs its command, with `import.meta.main` and with the fallback for Node without it', () => {
     expect([
       runRemovedAfterLoad(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         [],
         'native',
       ),
       runRemovedAfterLoad(
-        join(packageRoot, 'android/scripts/emulator-runs.mjs'),
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
         [],
         'removed',
       ),
@@ -1754,14 +1694,14 @@ describe('emulator-runs.mjs run as `node`’s entry whose file is removed once l
         status: 2,
         stdout: '',
         stderr:
-          'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
         removed: true,
       },
       {
         status: 2,
         stdout: '',
         stderr:
-          'usage: node android/scripts/emulator-runs.mjs device-state|retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
         removed: true,
       },
     ])
@@ -1865,14 +1805,14 @@ describe('the workflow', () => {
       id: /^ {8}id: (.*)$/m.exec(install)?.[1],
       continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(install)?.[1],
       command:
-        /^ {10}(node android\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
+        /^ {10}(node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
           install,
         )?.[1],
     }).toEqual({
       id: 'install1',
       continueOnError: 'true',
       command:
-        'node android/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"',
+        'node ../../.github/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"',
     })
   })
 
@@ -1888,7 +1828,7 @@ describe('the workflow', () => {
       continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(install)?.[1],
       condition: /^ {8}if: (.*)$/m.exec(install)?.[1],
       command:
-        /^ {10}(node android\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
+        /^ {10}(node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs install-.*)$/m.exec(
           install,
         )?.[1],
     }).toEqual({
@@ -1896,7 +1836,7 @@ describe('the workflow', () => {
       continueOnError: 'true',
       condition: "steps.install1.outcome == 'failure'",
       command:
-        'node android/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"',
+        'node ../../.github/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"',
     })
   })
 
@@ -1960,7 +1900,7 @@ describe('the workflow', () => {
       lookup: {
         continueOnError: 'true',
         command:
-          '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node android/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"',
+          '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list 2> /dev/null | node ../../.github/scripts/emulator-runs.mjs cache-revisions "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv"',
       },
       restore: {
         condition: "steps.sdk-key.outputs.key != ''",
@@ -1973,7 +1913,7 @@ describe('the workflow', () => {
         condition: "steps.sdk-key.outputs.key != ''",
         continueOnError: 'true',
         command:
-          'node android/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
+          'node ../../.github/scripts/emulator-runs.mjs cache-check "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
         key: '${{ steps.sdk-key.outputs.key }}',
       },
       clear: {
@@ -1982,6 +1922,133 @@ describe('the workflow', () => {
         command:
           'rm -rf "$ANDROID_HOME/emulator" "$ANDROID_HOME/system-images/android-${{ matrix.api }}/google_apis_playstore/x86_64"',
       },
+    })
+  })
+
+  test('skips Version Packages pull requests, whose head branch is `changeset-release/`, and nothing else', () => {
+    expect({
+      jobIf: /^ {4}if: (.*)$/m.exec(workflow)?.[1],
+      editorPackageInPaths: /^ {6}- packages\/editor\/package\.json$/m.test(
+        workflow,
+      ),
+      triggers: [
+        ...(workflow.split('\non:\n')[1]?.split('\n\n')[0] ?? '').matchAll(
+          /^ {2}(\w+):/gm,
+        ),
+      ].map((match) => match[1]),
+    }).toEqual({
+      jobIf: "${{ !startsWith(github.head_ref, 'changeset-release/') }}",
+      editorPackageInPaths: true,
+      triggers: ['pull_request', 'schedule', 'workflow_dispatch'],
+    })
+  })
+
+  test('restores the uiautomator2 server jar before its fetch and saves it after a fetch on a miss, from any ref, none of which can fail the job', () => {
+    const names = [...workflow.matchAll(/^ {6}- (?:name|uses): (.*)$/gm)].map(
+      (match) => match[1],
+    )
+    const step = (name: string) =>
+      workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0] ?? ''
+    const key =
+      "u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}"
+    const path = 'packages/thumbjar/.cache/u2.jar'
+    expect({
+      order: names.slice(
+        names.indexOf('Restore the uiautomator2 server jar'),
+        names.indexOf('Look up the SDK cache key') + 1,
+      ),
+      restore: {
+        id: /^ {8}id: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        uses: /^ {8}uses: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        key: /^ {10}key: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+        path: /^ {10}path: (.*)$/m.exec(
+          step('Restore the uiautomator2 server jar'),
+        )?.[1],
+      },
+      fetch: {
+        id: /^ {8}id: (.*)$/m.exec(
+          step('Fetch the uiautomator2 server jar'),
+        )?.[1],
+        continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(
+          step('Fetch the uiautomator2 server jar'),
+        )?.[1],
+        command: /^ {8}run: (.*)$/m.exec(
+          step('Fetch the uiautomator2 server jar'),
+        )?.[1],
+      },
+      save: {
+        condition: /^ {8}if: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        continueOnError: /^ {8}continue-on-error: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        uses: /^ {8}uses: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        key: /^ {10}key: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+        path: /^ {10}path: (.*)$/m.exec(
+          step('Save the uiautomator2 server jar'),
+        )?.[1],
+      },
+      keyedFile: {
+        exists: existsSync(
+          new URL(
+            '../../packages/thumbjar/src/device/u2-jar.json',
+            import.meta.url,
+          ),
+        ),
+        importedByJarModule:
+          /^import jar from '\.\/u2-jar\.json' with \{type: 'json'\}$/m.test(
+            readFileSync(
+              new URL(
+                '../../packages/thumbjar/src/device/u2-jar.ts',
+                import.meta.url,
+              ),
+              'utf8',
+            ),
+          ),
+      },
+    }).toEqual({
+      order: [
+        'Restore the uiautomator2 server jar',
+        'Fetch the uiautomator2 server jar',
+        'Save the uiautomator2 server jar',
+        'Look up the SDK cache key',
+      ],
+      restore: {
+        id: 'u2-jar-restore',
+        continueOnError: 'true',
+        uses: 'actions/cache/restore@v6',
+        key,
+        path,
+      },
+      fetch: {
+        id: 'u2-jar-fetch',
+        continueOnError: undefined,
+        command:
+          'pnpm --filter @portabletext/editor exec thumbjar fetch-u2-jar',
+      },
+      save: {
+        condition:
+          "steps.u2-jar-fetch.outcome == 'success' && steps.u2-jar-restore.outputs.cache-hit != 'true'",
+        continueOnError: 'true',
+        uses: 'actions/cache/save@v6',
+        key,
+        path,
+      },
+      keyedFile: {exists: true, importedByJarModule: true},
     })
   })
 
@@ -2041,7 +2108,7 @@ describe('the workflow', () => {
           "github.ref == 'refs/heads/main' && steps.sdk-key.outputs.key != '' && steps.sdk-restore.outputs.cache-hit != 'true' && (steps.install1.outcome == 'success' || steps.install2.outcome == 'success')",
         continueOnError: 'true',
         command:
-          'node android/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
+          'node ../../.github/scripts/emulator-runs.mjs cache-manifest "$ANDROID_HOME" "${{ matrix.api }}" "$RUNNER_TEMP/android-sdk-cache.tsv" "$SDK_CACHE_KEY"',
         key: '${{ steps.sdk-key.outputs.key }}',
       },
       save: {
@@ -2051,7 +2118,12 @@ describe('the workflow', () => {
         key: '${{ steps.sdk-key.outputs.key }}',
         path: '${{ steps.sdk-key.outputs.paths }}',
       },
-      cacheActions: ['actions/cache/restore@v6', 'actions/cache/save@v6'],
+      cacheActions: [
+        'actions/cache/restore@v6',
+        'actions/cache/save@v6',
+        'actions/cache/restore@v6',
+        'actions/cache/save@v6',
+      ],
       avd: false,
     })
   })
@@ -2093,27 +2165,27 @@ describe('the workflow', () => {
   test('decides the retry and the result with `emulator-runs.mjs`', () => {
     expect({
       retry:
-        /^ {8}run: (node android\/scripts\/emulator-runs\.mjs retry .*)$/m.exec(
+        /^ {8}run: (node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs retry .*)$/m.exec(
           workflow,
         )?.[1],
       retryIf: /^ {8}id: run2\n {8}if: (.*)$/m.exec(workflow)?.[1],
       result:
-        /^ {8}run: (node android\/scripts\/emulator-runs\.mjs result .*)$/m.exec(
+        /^ {8}run: (node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs result .*)$/m.exec(
           workflow,
         )?.[1],
       bootTime:
-        /^ {10}(node android\/scripts\/emulator-runs\.mjs boot-seconds .*)$/m.exec(
+        /^ {10}(node \.\.\/\.\.\/\.github\/scripts\/emulator-runs\.mjs boot-seconds .*)$/m.exec(
           workflow,
         )?.[1],
     }).toEqual({
       bootTime:
-        'node android/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt',
+        'node ../../.github/scripts/emulator-runs.mjs boot-seconds android/out/timing.txt',
       retry:
-        'node android/scripts/emulator-runs.mjs retry android/out/timing.txt',
+        'node ../../.github/scripts/emulator-runs.mjs retry android/out/timing.txt',
       retryIf:
         "steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'",
       result:
-        'node android/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != \'skipped\' && steps.run2.outcome || steps.run1.outcome }}"',
+        'node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != \'skipped\' && steps.run2.outcome || steps.run1.outcome }}"',
     })
   })
 })
@@ -2144,10 +2216,7 @@ function runRemovedAfterLoad(
   try {
     const entry = join(directory, basename(script))
     copyFileSync(script, entry)
-    symlinkSync(
-      join(packageRoot, 'node_modules'),
-      join(directory, 'node_modules'),
-    )
+    symlinkSync(join(repoRoot, 'node_modules'), join(directory, 'node_modules'))
     // Removes the entry once Node has read it, and with `removed` takes away `import.meta.main`, so Node
     // 24 runs the fallback Node 22 has.
     writeFileSync(
@@ -2223,7 +2292,7 @@ function workflowCommand(
     writeFileSync(join(directory, 'summary'), '')
     const result = spawnSync(
       'node',
-      [join(packageRoot, 'android/scripts/emulator-runs.mjs'), ...args],
+      [join(repoRoot, '.github/scripts/emulator-runs.mjs'), ...args],
       {
         cwd: directory,
         encoding: 'utf8',
@@ -2249,56 +2318,10 @@ function workflowCommand(
   }
 }
 
-function deviceState(adb: {
-  stdout: string
-  stderr: string
-  status: number
-  hang?: boolean
-}) {
-  const directory = mkdtempSync(join(tmpdir(), 'emulator-runs-'))
-  try {
-    writeFileSync(
-      join(directory, 'adb'),
-      adb.hang
-        ? '#!/usr/bin/env bash\nexec sleep 60\n'
-        : `#!/usr/bin/env bash\nprintf %s "$ADB_STDOUT"\nprintf %s "$ADB_STDERR" >&2\nexit ${adb.status}\n`,
-    )
-    chmodSync(join(directory, 'adb'), 0o755)
-    writeFileSync(join(directory, 'timing.txt'), 'BOOTED at 160\n')
-    const result = spawnSync(
-      'node',
-      [
-        'android/scripts/emulator-runs.mjs',
-        'device-state',
-        join(directory, 'timing.txt'),
-      ],
-      {
-        cwd: packageRoot,
-        encoding: 'utf8',
-        env: {
-          ...process.env,
-          PATH: `${directory}:${process.env.PATH}`,
-          ADB_STDOUT: adb.stdout,
-          ADB_STDERR: adb.stderr,
-        },
-      },
-    )
-    return {
-      timing: readFileSync(join(directory, 'timing.txt'), 'utf8').replace(
-        /^(CHECKED \w+) at \d+$/m,
-        '$1',
-      ),
-      status: result.status,
-    }
-  } finally {
-    rmSync(directory, {recursive: true, force: true})
-  }
-}
-
 function sdkCommand(directory: string, args: string[], input?: string) {
   const result = spawnSync(
     'node',
-    [join(packageRoot, 'android/scripts/emulator-runs.mjs'), ...args],
+    [join(repoRoot, '.github/scripts/emulator-runs.mjs'), ...args],
     {
       cwd: directory,
       encoding: 'utf8',
@@ -2374,3 +2397,289 @@ function restoredCheck(prepare: (sdk: string, manifest: string) => void) {
     rmSync(directory, {recursive: true, force: true})
   }
 }
+
+describe(installLogTail.name, () => {
+  const downloading = [
+    '[=======================================] 100% Unzipping... platform-tools/adb',
+    '[=======================================] 100% Unzipping... emulator/emulator',
+    '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...',
+  ]
+
+  test('names the package an install killed by its timeout was downloading, from the last state of each redraw', () => {
+    const log =
+      `${downloading.slice(0, 2).join('\n')}\n` +
+      '[                                       ] 0% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+      '[==========                             ] 25% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...\r' +
+      '[================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...        \r'
+    expect(installLogTail(log)).toEqual([
+      '[=======================================] 100% Unzipping... platform-tools/adb',
+      '[=======================================] 100% Unzipping... emulator/emulator',
+      '[================                       ] 40% Downloading system-images/android-36/google_apis_playstore/x86_64/x86_64-36_r07.zip...',
+    ])
+  })
+
+  test('names the package of a ZipFile error', () => {
+    const log =
+      '[=======================================] 100% Unzipping... emulator/emulator\n' +
+      'Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.\n' +
+      'Warning: Failed to download package!\n'
+    expect(installLogTail(log)).toEqual([
+      '[=======================================] 100% Unzipping... emulator/emulator',
+      'Warning: An error occurred while preparing SDK package Google Play Intel x86_64 Atom System Image: Error on ZipFile unknown archive.',
+      'Warning: Failed to download package!',
+    ])
+  })
+
+  test('keeps the package line within the last 30 lines of a long log', () => {
+    const progress = Array.from(
+      {length: 200},
+      (_, index) =>
+        `[${'='.repeat(index % 40)}] ${index % 100}% Downloading x86_64-36_r07.zip...`,
+    ).join('\r')
+    const tail = installLogTail(
+      `[ ] 0% Downloading x86_64-36_r07.zip...\r${progress}\n`,
+    )
+    expect(tail).toEqual([
+      `[${'='.repeat(39)}] 99% Downloading x86_64-36_r07.zip...`,
+    ])
+  })
+
+  test('returns the last 30 lines of many lines', () => {
+    const lines = Array.from({length: 100}, (_, index) => `line ${index}`)
+    expect(installLogTail(lines.join('\n'))).toEqual(lines.slice(-30))
+  })
+
+  test('returns nothing for an empty, blank or missing log', () => {
+    expect(installLogTail('')).toEqual([])
+    expect(installLogTail('\n\r\n  \r\n')).toEqual([])
+    expect(installLogTail(undefined)).toEqual([])
+  })
+
+  test('bounds a huge log and a huge line', () => {
+    const huge = `first\n${'x'.repeat(10_000_000)}\nlast\n`
+    expect(installLogTail(huge)).toEqual([`${'x'.repeat(300)}...`, 'last'])
+  })
+})
+
+describe(installFailureLines.name, () => {
+  const logs: Record<number, string> = {
+    1: '[===      ] 40% Downloading x86_64-36_r07.zip...\r',
+    2: 'Warning: Failed to download package!\n',
+  }
+  const readLog = (attempt: 1 | 2) => logs[attempt]
+
+  test('prints nothing when both installs succeed or only the first one runs', () => {
+    expect(installFailureLines('success', 'skipped', readLog)).toEqual([])
+    expect(installFailureLines('skipped', 'skipped', readLog)).toEqual([])
+    expect(installFailureLines('cancelled', 'skipped', readLog)).toEqual([])
+  })
+
+  test('prints the first attempt when its retry succeeded', () => {
+    expect(installFailureLines('failure', 'success', readLog)).toEqual([
+      'install attempt 1: last 1 lines of android/out/sdk-install-1.log',
+      '  [===      ] 40% Downloading x86_64-36_r07.zip...',
+    ])
+  })
+
+  test('prints both attempts when both failed', () => {
+    expect(installFailureLines('failure', 'failure', readLog)).toEqual([
+      'install attempt 1: last 1 lines of android/out/sdk-install-1.log',
+      '  [===      ] 40% Downloading x86_64-36_r07.zip...',
+      'install attempt 2: last 1 lines of android/out/sdk-install-2.log',
+      '  Warning: Failed to download package!',
+    ])
+  })
+
+  test('says so when an attempt left no output', () => {
+    expect(installFailureLines('failure', 'failure', () => undefined)).toEqual([
+      'install attempt 1: no install output was recorded in android/out/sdk-install-1.log',
+      'install attempt 2: no install output was recorded in android/out/sdk-install-2.log',
+    ])
+  })
+})
+
+describe('emulator-runs.mjs result with install logs', () => {
+  const runResultCommand = (
+    directory: string,
+    installs: {first: string; second: string},
+  ) => {
+    const result = spawnSync(
+      'node',
+      [
+        join(repoRoot, '.github/scripts/emulator-runs.mjs'),
+        'result',
+        'android/out/timing.txt',
+        'success',
+      ],
+      {
+        cwd: directory,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          INSTALL1_OUTCOME: installs.first,
+          INSTALL2_OUTCOME: installs.second,
+          JOB_STATUS: 'success',
+          GITHUB_STEP_SUMMARY: join(directory, 'summary'),
+        },
+      },
+    )
+    return {
+      status: result.status,
+      stdout: result.stdout,
+      summary: existsSync(join(directory, 'summary'))
+        ? readFileSync(join(directory, 'summary'), 'utf8')
+        : '',
+    }
+  }
+
+  const setup = () => {
+    const directory = mkdtempSync(join(tmpdir(), 'install-result-logs-'))
+    mkdirSync(join(directory, 'android/out'), {recursive: true})
+    writeFileSync(join(directory, 'android/out/timing.txt'), booted)
+    writeFileSync(
+      join(directory, 'android/out/sdk-install-1.log'),
+      '[====      ] 40% Downloading x86_64-36_r07.zip...\r',
+    )
+    return directory
+  }
+
+  test('prints the same lines as before when both installs succeed or the first one does', () => {
+    const directory = setup()
+    try {
+      expect(
+        runResultCommand(directory, {first: 'success', second: 'skipped'}),
+      ).toEqual({
+        status: 0,
+        stdout: 'run outcome: success\n',
+        summary: 'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('prints the first attempt tail before the retry line when the retry succeeded', () => {
+    const directory = setup()
+    try {
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'success'}),
+      ).toEqual({
+        status: 0,
+        stdout:
+          'install attempt 1: last 1 lines of android/out/sdk-install-1.log\n' +
+          '  [====      ] 40% Downloading x86_64-36_r07.zip...\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('keeps the infrastructure failure line last when both installs failed', () => {
+    const directory = setup()
+    try {
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'failure'}),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: last 1 lines of android/out/sdk-install-1.log\n' +
+          '  [====      ] 40% Downloading x86_64-36_r07.zip...\n' +
+          'install attempt 2: no install output was recorded in android/out/sdk-install-2.log\n' +
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('says a log that is a directory could not be read and keeps the success outcome', () => {
+    const directory = setup()
+    try {
+      rmSync(join(directory, 'android/out/sdk-install-1.log'))
+      mkdirSync(join(directory, 'android/out/sdk-install-1.log'))
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'success'}),
+      ).toEqual({
+        status: 0,
+        stdout:
+          'install attempt 1: android/out/sdk-install-1.log could not be read (EISDIR)\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('still prints the second attempt tail when the first attempt log could not be read', () => {
+    const directory = setup()
+    try {
+      rmSync(join(directory, 'android/out/sdk-install-1.log'))
+      mkdirSync(join(directory, 'android/out/sdk-install-1.log'))
+      writeFileSync(
+        join(directory, 'android/out/sdk-install-2.log'),
+        'Warning: Failed to download package!\n',
+      )
+      expect(
+        runResultCommand(directory, {first: 'failure', second: 'failure'}),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: android/out/sdk-install-1.log could not be read (EISDIR)\n' +
+          'install attempt 2: last 1 lines of android/out/sdk-install-2.log\n' +
+          '  Warning: Failed to download package!\n' +
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+        summary:
+          'run outcome: the emulator install failed twice, infrastructure failure, not a test result\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  describe('with a log larger than the longest string Node can hold', () => {
+    let sparseLog: string | undefined
+
+    afterEach(() => {
+      if (sparseLog !== undefined) {
+        rmSync(sparseLog, {force: true})
+        sparseLog = undefined
+      }
+    })
+
+    test('reads only the end of the log', () => {
+      const directory = setup()
+      try {
+        sparseLog = join(directory, 'android/out/sdk-install-1.log')
+        const lastLine = 'Warning: Failed to download package!\n'
+        truncateSync(sparseLog, 0x1fffffe8 + 1)
+        appendFileSync(sparseLog, `${'\n'.repeat(65_536)}${lastLine}`)
+        expect(
+          runResultCommand(directory, {first: 'failure', second: 'success'}),
+        ).toEqual({
+          status: 0,
+          stdout:
+            'install attempt 1: last 1 lines of android/out/sdk-install-1.log\n' +
+            '  Warning: Failed to download package!\n' +
+            'install outcome: retried once after a failed install\n' +
+            'run outcome: success\n',
+          summary:
+            'install outcome: retried once after a failed install\n' +
+            'run outcome: success\n',
+        })
+      } finally {
+        rmSync(directory, {recursive: true, force: true})
+      }
+    })
+  })
+})

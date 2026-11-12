@@ -11,16 +11,17 @@ export type PageEvent = {type: string; [key: string]: unknown}
 export type GraphemeSelection = {anchor: number; focus: number}
 
 /**
- * How a `compose` step ends: tap the conversion `candidate`, or Space when Gboard does not offer it, tap
- * Space, or leave the composition open for the next step.
+ * How a `compose` step ends: tap the conversion `candidate`, which fails the step when Gboard does not
+ * offer it, tap Space, or leave the composition open for the next step.
  */
 export type Commit = {candidate: string} | 'space' | 'none'
 
 /**
  * Tap keys on the keyboard and commit what they composed. `letters` names the keys to tap, one character
  * each, for example the romaji `kyou` on Japanese QWERTY. `text` names the text to compose, which a
- * backend maps to its keys: Gboard's English layout drives lowercase a to z, and Japanese QWERTY none,
- * since it composes kana from romaji. `commit` defaults to `'space'`.
+ * backend maps to its keys: Gboard's English layout drives lowercase a to z, and on both layouts `-` and
+ * ` ` are typed on Gboard's symbol layouts, the English symbols or Japanese's `記号キーボード`. Japanese
+ * QWERTY drives no letter of `text`, since it composes kana from romaji. `commit` defaults to `'space'`.
  *
  * `letters` names keys, not the text they type. Gboard names a letter key by its lowercase letter a to z
  * on both layouts, and a case with any other character is unsupported, a capital included: whether a
@@ -48,6 +49,10 @@ export type StepStatus = 'done' | 'failed' | 'skipped'
 /**
  * What one step did. Every step type has this shape.
  *
+ * A step that failed has its `textAfter`, `selectionAfter` and `focusedAfter` from one read of the page
+ * after the attempt stopped, so they show the page after the failure, not a boundary. A value that read
+ * could not get stays `null`.
+ *
  * A step that ran is bounded by two boundaries, each one page evaluation that returns the page's text,
  * the selection and its event count together. The first boundary is read after the field is focused,
  * right before the first step, and one more after every step, which is the next step's boundary before
@@ -67,8 +72,16 @@ export type StepRecord = {
    * step did not run.
    */
   selectionAfter: GraphemeSelection | null
+  /**
+   * Whether the field the case types into has focus at the boundary after the step, read in the same page
+   * evaluation as `textAfter` and `selectionAfter`. `null` when it could not be read or the step did not
+   * run.
+   */
+  focusedAfter: boolean | null
   /** The events the page recorded between the boundary before the step and the boundary after it. */
   events: PageEvent[]
+  /** The keys the driver tapped in the step, in order, the ones sent before it failed for a `failed` step. */
+  keys: string[]
 }
 
 /** What `runOnDevice` opens and drives. */
