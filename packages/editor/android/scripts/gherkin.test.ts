@@ -157,7 +157,12 @@ test('an expectation in racejar After fails the owning Vitest scenario with its 
   })
   try {
     const [module] = vitest.state.getTestModules()
-    const [scenario] = [...module!.children.allTests()]
+    const [scenario, unsupported] = [...module!.children.allTests()]
+    expect(unsupported!.result()).toEqual({
+      state: 'skipped',
+      note: 'Not drivable: "{ArrowRight}" is pressed',
+      errors: undefined,
+    })
     expect(module!.state()).toEqual('failed')
     expect(scenario!.result().state).toEqual('failed')
     expect(scenario!.result().errors?.map((error) => error.message)).toEqual([

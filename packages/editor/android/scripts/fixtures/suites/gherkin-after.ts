@@ -9,7 +9,10 @@ Given one editor
 And the editor state is "B: foo"
 Then the editor state is "B: foo|"
 When "bar" is inserted
-Then the editor state is "B: bar|"`,
+Then the editor state is "B: bar|"
+Scenario: unsupported hardware
+Given one editor
+When "{ArrowRight}" is pressed`,
   ...deviceDefinitions((context) => {
     expect(context.signal.aborted).toEqual(false)
     expect(context.task.name).toEqual('wrong intermediate state')
@@ -22,8 +25,8 @@ Then the editor state is "B: bar|"`,
         {
           type: 'page',
           status: 'done',
-          stateAfter: 'B: wrong|',
-          textAfter: 'wrong',
+          stateAfter: 'B: baz|',
+          textAfter: 'baz',
           selectionAfter: null,
           focusedAfter: true,
           events: [],
