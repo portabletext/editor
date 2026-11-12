@@ -19,6 +19,7 @@ export type ChildOptions = {
   killAfter: number
   killWait: number
   signal?: AbortSignal
+  env?: NodeJS.ProcessEnv
   ipc?: boolean
   detached?: boolean
   groupPid?: number
@@ -42,6 +43,7 @@ export function runChildProcess(
     const output = options.output ?? 'pipe'
     const child = spawn(command, args, {
       detached: options.detached ?? false,
+      ...(options.env === undefined ? {} : {env: options.env}),
       stdio: options.ipc
         ? ['ignore', output, output, 'ipc']
         : ['ignore', output, output],

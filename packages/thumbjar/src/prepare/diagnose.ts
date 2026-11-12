@@ -3,7 +3,11 @@ import {join} from 'node:path'
 import {DIAGNOSTICS_SECONDS, COMMAND_KILL_SECONDS} from '../device/budget.ts'
 import {execute} from '../process.ts'
 
-export async function diagnose(out: string, signal: AbortSignal) {
+export async function diagnose(
+  out: string,
+  signal: AbortSignal,
+  env?: NodeJS.ProcessEnv,
+) {
   const file = join(out, 'diagnose.txt')
   writeFileSync(file, '')
   const print = (text: string) => {
@@ -19,6 +23,7 @@ export async function diagnose(out: string, signal: AbortSignal) {
       seconds: DIAGNOSTICS_SECONDS,
       killAfter: COMMAND_KILL_SECONDS,
       signal,
+      ...(env === undefined ? {} : {env}),
       merge,
       ...(filter ? {} : {stdout: (chunk) => print(chunk.toString())}),
       stderr: (chunk) => {

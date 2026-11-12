@@ -2,6 +2,7 @@
 // The `thumbjar` command. The library never boots the emulator: run these against one that is booted,
 // apart from `fetch-u2-jar`, which needs no device.
 
+import {resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 import {localhostPort} from './device/page-url.ts'
 
@@ -64,11 +65,11 @@ if (command === 'fetch-u2-jar') {
   process.exitCode = await run({
     file: positionals[0]!,
     keyboard: values.keyboard,
-    pageDir: values['page-dir'],
+    pageDir: resolve(values['page-dir']),
     config: values.config,
     project: values.project,
     port: values.port,
-    out: values['out-dir'],
+    out: resolve(values['out-dir']),
   })
 } else if (command === 'prepare') {
   const {values} = parseArgs({
@@ -92,7 +93,7 @@ if (command === 'fetch-u2-jar') {
     keyboard: values.keyboard,
     pageUrl: values['page-url'],
     port: localhostPort(values['page-url']) ?? '',
-    out: values['out-dir'],
+    out: resolve(values['out-dir']),
     booted: Number(values.booted ?? Math.floor(Date.now() / 1000)),
   })
 } else {

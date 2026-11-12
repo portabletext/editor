@@ -10,7 +10,13 @@ import {
   DIAGNOSTICS_SECONDS,
   RUN_SERVER_KILL_SECONDS,
 } from '../device/budget.ts'
-import {Deadline, entry, execute, termination, within} from '../process.ts'
+import {
+  Deadline,
+  entry,
+  execute as executeChild,
+  termination,
+  within,
+} from '../process.ts'
 
 export async function run(options: {
   file: string
@@ -22,6 +28,13 @@ export async function run(options: {
   out: string
 }): Promise<number> {
   const {file, keyboard, pageDir, config, project, port, out} = options
+  const env = {
+    ...process.env,
+    THUMBJAR_RUN_CAP: entry('run/cap'),
+    THUMBJAR_RUN_CHECK: entry('run/check'),
+  }
+  const execute: typeof executeChild = (command, args, options) =>
+    executeChild(command, args, {...options, env})
   mkdirSync(out, {recursive: true})
   const stop = termination()
   const serverStop = new AbortController()
@@ -146,7 +159,7 @@ export async function run(options: {
         ),
         join(out, 'logcat.txt'),
       ],
-      {detached: true, stdio: 'ignore'},
+      {detached: true, stdio: 'ignore', env},
     )
     capture.unref()
     await log(`tests start, ${file} under ${seconds} seconds`)
