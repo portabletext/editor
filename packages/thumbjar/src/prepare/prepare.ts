@@ -253,7 +253,7 @@ export async function prepare(
       try {
         reader = spawn(process.execPath, [entry('prepare/capture')], {
           detached: true,
-          stdio: ['ignore', descriptor, descriptor],
+          stdio: ['ignore', descriptor, descriptor, 'ipc'],
         })
       } finally {
         closeSync(descriptor)

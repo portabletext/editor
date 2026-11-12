@@ -12,12 +12,142 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {describe, expect, test, vi} from 'vitest'
-import {deviceTestFileSeconds} from '../device/budget.ts'
+import {
+  deviceTestFileSeconds,
+  RUN_TEST_KILL_SECONDS,
+  COMMAND_READ_SECONDS,
+  COMMAND_KILL_SECONDS,
+  DIAGNOSTICS_SECONDS,
+} from '../device/budget.ts'
 
-const command = fileURLToPath(new URL('run.ts', import.meta.url))
+let lastRunExit: number | null = null
 // The PREP FAILED line `thumbjar prepare` logs for a real CI boot whose Gboard never loaded the dictionary.
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
+
+test('bounds every stage after the run process group is killed', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'thumbjar-orphan-'))
+  const pids = join(directory, 'pids')
+  const cap = 1
+  const logcatSeconds =
+    cap +
+    RUN_TEST_KILL_SECONDS +
+    COMMAND_READ_SECONDS +
+    COMMAND_KILL_SECONDS +
+    DIAGNOSTICS_SECONDS +
+    COMMAND_KILL_SECONDS
+  const logcatBound = logcatSeconds + COMMAND_KILL_SECONDS
+  try {
+    const bin = join(directory, 'bin')
+    mkdirSync(bin)
+    const stage = `import {appendFileSync} from 'node:fs'
+import {spawn} from 'node:child_process'
+import {createServer} from 'node:net'
+const kind=process.argv[2]
+appendFileSync(${JSON.stringify(pids)},kind+' '+process.pid+'\\n')
+if(kind==='prepare') process.exit(0)
+if(kind==='vitest') spawn(process.execPath,[${JSON.stringify(join(directory, 'stage.mjs'))},'descendant'],{stdio:'ignore'})
+if(kind==='serve')createServer().listen(0,'127.0.0.1')
+if(kind!=='serve') process.on('SIGTERM',()=>{})
+setInterval(()=>{},1000)
+`
+    const stageFile = join(directory, 'stage.mjs')
+    writeFileSync(stageFile, stage)
+    const loader = join(directory, 'loader.mjs')
+    writeFileSync(
+      loader,
+      `import {registerHooks} from 'node:module'
+registerHooks({load(url,context,next){if(url.endsWith('/bin.ts') && ['serve','prepare'].includes(process.argv[2]))return {format:'module',shortCircuit:true,source:${JSON.stringify(`await import(${JSON.stringify(stageFile)})`)}};if(url.endsWith('/run/cap.ts'))return {format:'module',shortCircuit:true,source:'process.stdout.write("${cap}")'};return next(url,context)}})
+`,
+    )
+    const vitest = join(directory, 'node_modules/vitest')
+    mkdirSync(vitest, {recursive: true})
+    writeFileSync(
+      join(vitest, 'package.json'),
+      JSON.stringify({bin: './vitest.mjs'}),
+    )
+    writeFileSync(
+      join(vitest, 'vitest.mjs'),
+      `process.argv[2]='vitest';await import(${JSON.stringify(stageFile)})`,
+    )
+    writeFileSync(
+      join(bin, 'adb'),
+      `#!${process.execPath}
+const fs=require('node:fs')
+if(process.argv.slice(2).join(' ')==='logcat -v time') {fs.appendFileSync(${JSON.stringify(pids)},'logcat '+process.pid+' '+process.ppid+'\\n');setInterval(()=>{},1000)}
+`,
+    )
+    chmodSync(join(bin, 'adb'), 0o755)
+    const bootstrap = join(directory, 'run.mjs')
+    writeFileSync(
+      bootstrap,
+      `process.argv=[process.argv[0],${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))},'run','foo','--keyboard','en','--page-dir','.','--config','foo','--project','foo','--out-dir','out'];await import(${JSON.stringify(fileURLToPath(new URL('../bin.ts', import.meta.url)))})
+`,
+    )
+    const child = spawn(process.execPath, ['--import', loader, bootstrap], {
+      cwd: directory,
+      detached: true,
+      stdio: 'ignore',
+      env: {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        NODE_PATH: '',
+        NODE_OPTIONS: `--import=${loader}`,
+      },
+    })
+    await vi.waitFor(
+      () =>
+        expect(readFileSync(pids, 'utf8').includes('descendant ')).toEqual(
+          true,
+        ),
+      {timeout: 5000},
+    )
+    const killedAt = Date.now()
+    const remaining = (seconds: number) =>
+      Math.max(1, killedAt + seconds * 1000 + 1000 - Date.now())
+    process.kill(-child.pid!, 'SIGKILL')
+    const started = readFileSync(pids, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => line.split(' '))
+    const serve = started.find(([name]) => name === 'serve')!
+    await vi.waitFor(
+      () => expect(processAlive(Number(serve[1]))).toEqual(false),
+      {timeout: remaining(RUN_TEST_KILL_SECONDS)},
+    )
+    const stagePids = started
+      .filter(
+        ([name]) =>
+          name === 'vitest' || name === 'descendant' || name === 'serve',
+      )
+      .map(([, pid]) => Number(pid))
+    await vi.waitFor(
+      () => expect(stagePids.filter((pid) => processAlive(pid))).toEqual([]),
+      {timeout: remaining(cap + RUN_TEST_KILL_SECONDS)},
+    )
+    const recorder = started.find(([name]) => name === 'logcat')!
+    expect(processAlive(Number(recorder[2]))).toEqual(true)
+    expect(
+      readFileSync(`/proc/${recorder[2]}/cmdline`, 'utf8').includes(
+        '/run/logcat.ts',
+      ),
+    ).toEqual(true)
+    await vi.waitFor(
+      () => expect(processAlive(Number(recorder[1]))).toEqual(false),
+      {timeout: remaining(logcatBound)},
+    )
+  } finally {
+    if (existsSync(pids)) {
+      for (const line of readFileSync(pids, 'utf8').trim().split('\n')) {
+        const pid = Number(line.split(' ')[1])
+        try {
+          process.kill(pid, 'SIGKILL')
+        } catch {}
+      }
+    }
+    rmSync(directory, {recursive: true, force: true})
+  }
+}, 110_000)
 
 describe('thumbjar run', () => {
   test('prepares the language it is given and runs only the file it is given, under that file’s cap', () => {
@@ -432,12 +562,66 @@ describe('thumbjar run with a device check that never completes', () => {
   }, 30_000)
 })
 
+test('logs a missing consumer Vitest and completes the failed-stage diagnostics', () => {
+  const result = runOnDevice({
+    lang: 'en',
+    file: 'tests/en.test.ts',
+    prep: 0,
+    tests: 0,
+    getState: 'device',
+    missingVitest: true,
+  })
+  expect({
+    status: result.status,
+    phases: result.phases,
+    timing: result.timing,
+    reason: result.vitestReason,
+    diagnostics: result.diagnostics,
+  }).toEqual({
+    status: 1,
+    phases: [
+      'http server',
+      `tests start, tests/en.test.ts under ${deviceTestFileSeconds(3)} seconds`,
+      'tests rc=1',
+      'device check: device',
+    ],
+    timing: ['BOOTED', 'CHECKED device', 'DONE'],
+    reason: "Unable to start Vitest: Cannot find module 'vitest/package.json'",
+    diagnostics: true,
+  })
+})
+
+test('returns 1 when run is stopped by SIGTERM', async () => {
+  await interruptOnDevice({
+    lang: 'en',
+    file: 'tests/en.test.ts',
+    stopAt: 'tests',
+    getState: 'device',
+    kill: 'process',
+    signal: 'SIGTERM',
+  })
+  expect(lastRunExit).toEqual(1)
+}, 15_000)
+
+test('returns 1 when run is stopped by SIGINT', async () => {
+  await interruptOnDevice({
+    lang: 'en',
+    file: 'tests/en.test.ts',
+    stopAt: 'tests',
+    getState: 'device',
+    kill: 'process',
+    signal: 'SIGINT',
+  })
+  expect(lastRunExit).toEqual(1)
+}, 15_000)
+
 function runOnDevice(options: {
   lang: string
   file: string
   /** The lines an earlier boot's run left in `phases.log`, as the retry finds them. */
   earlierPhases?: string[]
   prep: number
+  missingVitest?: boolean
   /** The PREP FAILED line's reason the fake prep logs to `phases.log`, as `thumbjar prepare` does. */
   prepFailure?: string
   tests: number
@@ -511,6 +695,8 @@ esac
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
+          NODE_PATH: '',
+          NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${join(directory, 'hooks.mjs')}`,
         },
       },
     )
@@ -520,6 +706,14 @@ esac
     )?.[1]
     return {
       status: result.status,
+      ...(options.missingVitest
+        ? {
+            vitestReason: readFileSync(join(out, 'vitest.log'), 'utf8').split(
+              '\n',
+            )[0],
+            diagnostics: existsSync(join(out, 'final.png')),
+          }
+        : {}),
       calls: existsSync(calls)
         ? readFileSync(calls, 'utf8')
             .trimEnd()
@@ -549,6 +743,7 @@ async function interruptOnDevice(options: {
   getState: 'device' | 'none'
   // The runner's step timeout stops the whole process group, a plain `kill` only the `thumbjar` process.
   kill?: 'group' | 'process'
+  signal?: 'SIGTERM' | 'SIGINT'
 }) {
   const directory = mkdtempSync(join(tmpdir(), 'thumbjar-run-'))
   try {
@@ -603,10 +798,14 @@ esac
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
+          NODE_PATH: '',
+          NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${join(directory, 'hooks.mjs')}`,
         },
       },
     )
-    const exited = new Promise((resolve) => script.once('exit', resolve))
+    const exited = new Promise<number | null>((resolve) =>
+      script.once('exit', (code) => resolve(code)),
+    )
     await vi.waitFor(
       () => {
         expect(existsSync(stopped)).toEqual(true)
@@ -614,14 +813,14 @@ esac
       {timeout: 10_000},
     )
     if (options.kill === 'process') {
-      process.kill(script.pid ?? 0, 'SIGTERM')
-      await exited
+      process.kill(script.pid ?? 0, options.signal ?? 'SIGTERM')
+      lastRunExit = await exited
       // A script that outlived its `thumbjar` process would go on once the tests ended.
       await new Promise((resolve) => setTimeout(resolve, 3_500))
     } else {
       // The emulator runner's step timeout kills the script's whole process group.
       process.kill(-(script.pid ?? 0), 'SIGKILL')
-      await exited
+      lastRunExit = await exited
     }
 
     const booted = /^BOOTED at (\d+)$/m.exec(
@@ -644,7 +843,12 @@ esac
 
 function runBootstrap(
   directory: string,
-  options: {lang: string; file: string; stopAt?: string},
+  options: {
+    lang: string
+    file: string
+    stopAt?: string
+    missingVitest?: boolean
+  },
 ) {
   const dispatch = join(directory, 'dispatch.mjs')
   const fixture = join(directory, 'bin/commands.sh')
@@ -668,28 +872,29 @@ const result = spawnSync('/bin/bash', [${JSON.stringify(fixture)}, 'exec', 'vite
 process.exit(result.status ?? 1)
 `,
   )
-  const bootstrap = join(directory, 'run.mjs')
+  if (options.missingVitest) {
+    rmSync(vitest, {recursive: true, force: true})
+  }
+  const main = fileURLToPath(new URL('../bin.ts', import.meta.url))
+  const hooks = join(directory, 'hooks.mjs')
   writeFileSync(
-    bootstrap,
-    `import {run} from ${JSON.stringify(command)}
-import {writeFileSync} from 'node:fs'
-import {createServer} from 'node:net'
-process.exitCode = await run(${JSON.stringify({file: options.file, keyboard: options.lang, pageDir: 'android/dist', config: 'vitest.android.config.ts', project: 'device', port: '8765', out: 'android/out'})}, {
-  command: ${JSON.stringify(dispatch)},
-  phase: async (message, write, signal) => {
-    if (${JSON.stringify(options.stopAt === 'device check log')} && message.startsWith('device check:')) {
-      const hold = createServer().listen(0, '127.0.0.1')
-      writeFileSync(${JSON.stringify(join(directory, 'stopped'))}, '')
-      try {
-        await new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), {once: true}))
-      } finally {hold.close()}
-    }
-    write()
-  },
-})
+    hooks,
+    `import {registerHooks} from 'node:module'
+registerHooks({load(url,context,next){
+  if(url===${JSON.stringify(new URL('../bin.ts', import.meta.url).href)} && ['serve','prepare'].includes(process.argv[2])) return {format:'module',shortCircuit:true,source:${JSON.stringify(`await import(${JSON.stringify(dispatch)})`)}}
+  const result=next(url,context)
+  if(${JSON.stringify(options.stopAt === 'device check log')} && url.endsWith('/run/check.ts')) return {...result,source:result.source+${JSON.stringify(`
+import {createServer as hold} from 'node:net'
+import {writeFileSync as mark} from 'node:fs'
+hold().listen(0,'127.0.0.1')
+mark(${JSON.stringify(join(directory, 'stopped'))},'')
+await new Promise(()=>{})
+`)}}
+  return result
+}})
 `,
   )
-  return bootstrap
+  return main
 }
 
 function shellString(text: string) {
@@ -719,5 +924,13 @@ function deviceTree(directory: string) {
       join(directory, `android/tests/${file}.test.ts`),
       "test('foo', () => {})\n".repeat(file === 'en-textarea' ? 1 : 3),
     )
+  }
+}
+
+function processAlive(pid: number) {
+  try {
+    return !/^\d+ \(.*\) Z /.test(readFileSync(`/proc/${pid}/stat`, 'utf8'))
+  } catch {
+    return false
   }
 }

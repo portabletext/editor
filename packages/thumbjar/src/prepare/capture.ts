@@ -7,6 +7,11 @@ import {
 import {execute, termination} from '../process.ts'
 
 const stop = termination()
+const disconnected = () => process.kill(process.pid, 'SIGTERM')
+process.once('disconnect', disconnected)
+if (!process.connected) {
+  disconnected()
+}
 try {
   while (true) {
     stop.signal.throwIfAborted()
@@ -38,5 +43,9 @@ try {
   }
   process.exitCode = stop.status()
 } finally {
+  if (process.connected) {
+    process.disconnect()
+  }
+  process.off('disconnect', disconnected)
   stop.dispose()
 }
