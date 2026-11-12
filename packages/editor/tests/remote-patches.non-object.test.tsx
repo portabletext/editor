@@ -47,7 +47,7 @@ test.each([
     name: 'a remote insert at the root',
     initialValue: [block],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -66,7 +66,7 @@ test.each([
     name: "a remote insert in a root text block's children",
     initialValue: [block],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -89,7 +89,7 @@ test.each([
       {_type: 'container', _key: containerKey, content: [nestedBlock]},
     ],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -118,7 +118,7 @@ test.each([
       {_type: 'container', _key: containerKey, content: [nestedBlock]},
     ],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -188,7 +188,7 @@ test.each([
     name: 'two primitives in one remote insert',
     initialValue: [block],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -218,7 +218,7 @@ test.each([
       },
     ],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -247,7 +247,7 @@ test.each([
     name: '`true` in a remote insert',
     initialValue: [block],
     event: {
-      type: 'patches',
+      type: 'apply',
       patches: [
         {
           type: 'insert',
@@ -344,7 +344,7 @@ test('Scenario: undo after a remote removal reverts only the local edit', async 
     ]),
   )
   editor.send({
-    type: 'patches',
+    type: 'apply',
     patches: [
       {
         type: 'insert',

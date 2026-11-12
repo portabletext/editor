@@ -4,6 +4,7 @@ import {expect, test} from 'vitest'
 import {createBareEditor} from '../../../test-utils/create-bare-editor.test-util'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {EngineOperation} from '../interfaces/operation'
+import {inTestChange} from './change.test-utils'
 import {normalizeNode} from './normalize-node'
 
 test('a non-object root entry emits only an unset', () => {
@@ -27,10 +28,10 @@ test('a non-object root entry emits only an unset', () => {
   const apply = editor.apply
   editor.apply = (operation) => {
     operations.push(structuredClone(operation))
-    apply(operation)
+    return apply(operation)
   }
 
-  normalizeNode(editor, ['oops' as never, [1]])
+  inTestChange(editor, () => normalizeNode(editor, ['oops' as never, [1]]))
 
   expect(operations).toEqual([
     {
@@ -69,10 +70,12 @@ test('a non-object child emits only an unset', () => {
   const apply = editor.apply
   editor.apply = (operation) => {
     operations.push(structuredClone(operation))
-    apply(operation)
+    return apply(operation)
   }
 
-  normalizeNode(editor, [42 as never, [{_key: blockKey}, 'children', 0]])
+  inTestChange(editor, () =>
+    normalizeNode(editor, [42 as never, [{_key: blockKey}, 'children', 0]]),
+  )
 
   expect(operations).toEqual([
     {
@@ -121,7 +124,7 @@ test('a removed path is not re-queued', () => {
   editor.snapshot.context.value.splice(1, 0, 'oops' as never)
 
   withoutNormalizing(editor, () => {
-    normalizeNode(editor, ['oops' as never, [1]])
+    inTestChange(editor, () => normalizeNode(editor, ['oops' as never, [1]]))
 
     expect(editor.dirtyPaths).toEqual([[]])
   })
