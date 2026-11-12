@@ -2,6 +2,12 @@ declare global {
   interface Window {
     __state: () => unknown
     __field: () => HTMLElement | null
+    /** The field's text and direction-aware selection in UTF-16 offsets, or `null` outside the field. */
+    __selection: () => {
+      text: string | null
+      anchor: number | null
+      focus: number | null
+    } | null
   }
 }
 
@@ -135,6 +141,13 @@ export function recordInput({
   }
   window.__field = () =>
     field ?? document.querySelector<HTMLElement>(TEXT_FIELD_SELECTOR)
+  window.__selection = () => {
+    const currentField = window.__field()
+    const selection = fieldSelection(currentField)
+    return currentField && selection
+      ? {text: fieldText(currentField), ...selection}
+      : null
+  }
   window.__state = field
     ? () => ({text: getText(), events})
     : () => {

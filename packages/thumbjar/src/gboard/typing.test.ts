@@ -1200,7 +1200,7 @@ describe(runInChrome.name, () => {
     fake.opened = () => loadGboardTextareaPage('foo', 'en-keyboard.xml')
     let reads = 0
     fake.evaluating = (expression) => {
-      if (expression.includes('selectionDirection')) {
+      if (expression.includes('window.__selection')) {
         reads += 1
         gboard.inputFromPage(`read ${reads}`)
       }

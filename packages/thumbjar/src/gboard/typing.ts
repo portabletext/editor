@@ -1438,9 +1438,8 @@ async function tapRole(
   await sleep(0.4)
 }
 
-// The selection in the field the driver types into, in UTF-16 offsets of the field's text. `null` when
-// it is outside the field.
-const FIELD_SELECTION = `(() => { const field = typeof window.__field === 'function' ? window.__field() : null; if (!field) return null; if (field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement) { const backward = field.selectionDirection === 'backward'; return {text: field.value, anchor: backward ? field.selectionEnd : field.selectionStart, focus: backward ? field.selectionStart : field.selectionEnd}; } const selection = getSelection(); if (!selection || !selection.rangeCount || !field.contains(selection.anchorNode) || !field.contains(selection.focusNode)) return null; const offset = (node, nodeOffset) => { const range = document.createRange(); range.setStart(field, 0); range.setEnd(node, nodeOffset); return range.toString().length; }; return {text: field.textContent, anchor: offset(selection.anchorNode, selection.anchorOffset), focus: offset(selection.focusNode, selection.focusOffset)}; })()`
+// `recordInput` supplies the field's text and selection in UTF-16 offsets, or `null` outside the field.
+const FIELD_SELECTION = `(typeof window.__selection === 'function' ? window.__selection() : null)`
 
 // The page's `window.__state()`, the field's selection and whether it has focus from one evaluation, so no
 // event can land between them.
