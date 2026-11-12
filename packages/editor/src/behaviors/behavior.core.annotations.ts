@@ -2,6 +2,7 @@ import {isSpan} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {isBackwardRange} from '../engine/range/is-backward-range'
 import {resolveSelection} from '../internal-utils/apply-selection'
+import {namesMissingTarget} from '../internal-utils/names-missing-target'
 import {getActiveDecorators} from '../selectors/selector.get-active-decorators'
 import {getCaretWordSelection} from '../selectors/selector.get-caret-word-selection'
 import {getNextSpan} from '../selectors/selector.get-next-span'
@@ -224,9 +225,13 @@ function resolveEffectiveSelection(
 
   const resolvedAt = resolveSelection({snapshot}, at)
 
+  if (!resolvedAt && namesMissingTarget(snapshot, at)) {
+    return null
+  }
+
   if (!resolvedAt) {
     // Mirrors `annotation.remove` falling back to the editor selection when
-    // `at` cannot be resolved
+    // `at` cannot be resolved and does not name text that has gone.
     return snapshot.context.selection
   }
 

@@ -2,6 +2,7 @@ import {isTextBlockNode} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {Path} from '../engine/interfaces/path'
 import {siblingPath} from '../engine/path/sibling-path'
+import {resolveSelection} from '../internal-utils/apply-selection'
 import {serializePath} from '../paths/serialize-path'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -15,6 +16,7 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
+import {raiseResolved} from './behavior.internal.raise-resolved'
 import {raise, type BehaviorAction} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 import type {SyntheticBehaviorEvent} from './behavior.types.event'
@@ -146,7 +148,10 @@ export const abstractInsertBehaviors = [
         return false
       }
 
-      const at = event.at ?? snapshot.context.selection
+      const referenceSelection = event.at ?? snapshot.context.selection
+      const at = referenceSelection
+        ? resolveSelection({snapshot}, referenceSelection)
+        : null
 
       if (!at) {
         return false
@@ -215,6 +220,7 @@ export const abstractInsertBehaviors = [
         const referenceBlockPath = focusTextBlock.path
         let previousBlockPath: Path | undefined
         let firstBlockPath: Path | undefined
+        const precedingPaths: Array<Path> = []
         const actions: Array<BehaviorAction> = []
 
         let index = -1
@@ -259,6 +265,7 @@ export const abstractInsertBehaviors = [
               }),
             )
 
+            precedingPaths.push(previousBlockPath)
             continue
           }
 
@@ -266,38 +273,44 @@ export const abstractInsertBehaviors = [
             const lastKey = getUniqueBlockKey(snapshot, block._key)
 
             actions.push(
-              raise({
-                type: 'insert.block',
-                block:
-                  lastKey !== block._key ? {...block, _key: lastKey} : block,
-                placement: 'after',
-                select: 'end',
-                at: previousBlockPath
-                  ? selectionAt(previousBlockPath)
-                  : undefined,
-              }),
+              resolveSequentialInsert(
+                {
+                  type: 'insert.block',
+                  block:
+                    lastKey !== block._key ? {...block, _key: lastKey} : block,
+                  placement: 'after',
+                  select: 'end',
+                  at: event.at,
+                },
+                [...precedingPaths],
+                event,
+              ),
             )
 
             previousBlockPath = newBlockPath(referenceBlockPath, lastKey)
 
+            precedingPaths.push(previousBlockPath)
             continue
           }
 
           const key = getUniqueBlockKey(snapshot, block._key)
 
           actions.push(
-            raise({
-              type: 'insert.block',
-              block: key !== block._key ? {...block, _key: key} : block,
-              placement: 'after',
-              select: previousBlockPath ? 'none' : 'end',
-              at: previousBlockPath
-                ? selectionAt(previousBlockPath)
-                : undefined,
-            }),
+            resolveSequentialInsert(
+              {
+                type: 'insert.block',
+                block: key !== block._key ? {...block, _key: key} : block,
+                placement: 'after',
+                select: previousBlockPath ? 'none' : 'end',
+                at: event.at,
+              },
+              [...precedingPaths],
+              event,
+            ),
           )
 
           previousBlockPath = newBlockPath(referenceBlockPath, key)
+          precedingPaths.push(previousBlockPath)
         }
 
         if (!isEmptyTextBlock(snapshot.context, focusTextBlockAfter)) {
@@ -648,7 +661,7 @@ function raiseSequentialInserts(
 } {
   let firstBlockPath: Path | undefined
   let lastBlockPath: Path | undefined
-  let previousBlockPath: Path | undefined
+  const plannedBlockPaths: Array<Path> = []
   const actions: Array<BehaviorAction> = []
 
   let index = -1
@@ -665,22 +678,36 @@ function raiseSequentialInserts(
       lastBlockPath = blockPath
     }
 
+    const precedingBlockPaths = [...plannedBlockPaths]
+    const insertEvent = {
+      type: 'insert.block' as const,
+      block: key !== block._key ? {...block, _key: key} : block,
+      placement: event.placement,
+      select: 'none' as const,
+      ...(event.at ? {at: event.at} : {}),
+    }
     actions.push(
-      raise({
-        type: 'insert.block',
-        block: key !== block._key ? {...block, _key: key} : block,
-        placement: index === 0 ? event.placement : 'after',
-        select: 'none',
-        ...(previousBlockPath
-          ? {at: selectionAt(previousBlockPath)}
-          : event.at
-            ? {at: event.at}
-            : {}),
-      }),
+      resolveSequentialInsert(insertEvent, precedingBlockPaths, event),
     )
-
-    previousBlockPath = blockPath
+    plannedBlockPaths.push(blockPath)
   }
 
   return {actions, firstBlockPath, lastBlockPath}
+}
+
+function resolveSequentialInsert(
+  insertEvent: PickFromUnion<SyntheticBehaviorEvent, 'type', 'insert.block'>,
+  precedingPaths: Array<Path>,
+  originalEvent: PickFromUnion<SyntheticBehaviorEvent, 'type', 'insert.blocks'>,
+): BehaviorAction {
+  return raiseResolved(insertEvent, (snapshot) => {
+    const previousPath = precedingPaths.findLast((path) =>
+      snapshot.blockIndexMap.has(serializePath(path)),
+    )
+    return {
+      ...insertEvent,
+      placement: previousPath ? 'after' : originalEvent.placement,
+      at: previousPath ? selectionAt(previousPath) : originalEvent.at,
+    }
+  })
 }

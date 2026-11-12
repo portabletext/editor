@@ -10,6 +10,7 @@ import {performOperation} from '../operations/operation.perform'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {defaultKeyGenerator} from '../utils/key-generator'
 import {abstractBehaviors} from './behavior.abstract'
+import {getRaisedEvent} from './behavior.internal.raise-resolved'
 import type {BehaviorAction} from './behavior.types.action'
 import type {Behavior} from './behavior.types.behavior'
 import {
@@ -352,7 +353,17 @@ export function performEvent({
                 behaviors,
                 remainingEventBehaviors:
                   mode === 'execute' ? remainingEventBehaviors : behaviors,
-                event: action.event,
+                // Earlier raised events may insert or cancel a block, so resolve
+                // against a fresh snapshot at dispatch rather than a captured map.
+                event: getRaisedEvent(action, () =>
+                  createEditorSnapshot({
+                    converters,
+                    editor,
+                    keyGenerator,
+                    readOnly,
+                    schema,
+                  }),
+                ),
                 editor,
                 converters,
                 keyGenerator,
