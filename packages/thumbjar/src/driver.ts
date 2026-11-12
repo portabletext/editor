@@ -1,9 +1,9 @@
 // Type through Gboard's own keys into a page in Android Chrome and read the result back over CDP.
 //
-// A device test calls `typeOnDevice` or `runOnDevice` and asserts on what it returns. Both go
-// through `drive`, which retries only driver faults, and `runOnDevice` only the way `strictRetry`
-// allows. A classified mistap is a digit absent from the inputs in the typed text or a symbol popup
-// character recorded in the tapped key's own `beforeinput` event.
+// A device test calls `typeOnDevice` or `runOnDevice` and asserts on what it returns. Both go through
+// `drive`, which retries only driver faults, and `runOnDevice` only the way `strictRetry` allows. A
+// classified mistap is a digit absent from the inputs in the typed text or a symbol popup character
+// recorded in the tapped key's own `beforeinput` event.
 
 import {mkdirSync} from 'node:fs'
 import type {TestContext} from 'vitest'
@@ -88,33 +88,26 @@ export type DriverRun = {
   /** Classified mistaps for which this call began its one retry. */
   mistapRetries?: number
   /**
-   * `driving` until the driver returned a result and cleaned up, `faulted` when it ended on a
-   * driver fault, after one attempt or two. A second attempt's timeout before any input stays
-   * `faulted` whatever `adb get-state` answers, unless the read completed with an answer other than
-   * `device`, and carries neither marker below. One after input ends `inconclusive` instead, and is
-   * marked `deviceUnconfirmed` when the first attempt already used the call's one state read.
-   *
+   * `driving` until the driver returned a result and cleaned up, `faulted` when it ended on a driver fault,
+   * after one attempt or two. A second attempt's timeout before any input stays `faulted` whatever `adb get-state`
+   * answers, unless the read completed with an answer other than `device`, and carries neither marker below.
+   * One after input ends `inconclusive` instead, and is marked `deviceUnconfirmed` when the first attempt
+   * already used the call's one state read.
    * `aborted` when the test timed out or was cancelled first, and no later cleanup changes it. For
-   * `runOnDevice`, a timeout while the driver still decides whether to retry a first attempt's
-   * fault before any input ends on what that fault would end the call on if it were final instead:
-   * `inconclusive` for a timeout and `faulted` for any other fault.
-   *
-   * `page-exception` when an expression threw in the page, which can be an editor result and is
-   * never retried. It takes precedence over every other state here, including when the read of the
-   * page after a failed step raised it.
-   *
-   * `inconclusive`, for `runOnDevice` only, when a driver fault came after the attempt sent input,
-   * which may still reach a page a retry would type into, when the restart before the retry could
-   * not show a fresh Chrome, or when the test timed out while the driver decided whether to retry a
-   * first attempt's timeout before any input, or after a classified mistap on the second attempt. A
-   * first classified mistap is retried once. A timeout before the second attempt begins, including
-   * during the restart, also ends `inconclusive` with the mistap message. An inconclusive call says
-   * nothing about the page.
-   *
-   * `device-offline`, for `runOnDevice` only, when an adb call of any step failed on adb's own
-   * error for a lost device, the restart's force-stop included, which its `reason` quotes, or timed
-   * out and the `adb get-state` read for that timeout completed with an answer other than `device`.
-   * It is never retried on that device.
+   * `runOnDevice`, a timeout while the driver still decides whether to retry a first attempt's fault before
+   * any input ends on what that fault would end the call on if it were final instead: `inconclusive` for a
+   * timeout and `faulted` for any other fault.
+   * `page-exception` when an expression threw in the page, which can be an editor result and is never
+   * retried. It takes precedence over every other state here, including when the read of the page after
+   * a failed step raised it.
+   * `inconclusive`, for `runOnDevice` only, when a driver fault came after the attempt sent input, which
+   * may still reach a page a retry would type into, when the restart before the retry could not show
+   * a fresh Chrome, or when the test timed out while the driver decided whether to retry a first attempt's
+   * timeout before any input, or after a classified mistap on the second attempt. A first classified mistap is retried once. A timeout before the second
+   * attempt begins, including during the restart, also ends `inconclusive` with the mistap message. An inconclusive call says nothing about the page.
+   * `device-offline`, for `runOnDevice` only, when an adb call of any step failed on adb's own error for a
+   * lost device, the restart's force-stop included, which its `reason` quotes, or timed out and the `adb get-state` read for that timeout completed with an
+   * answer other than `device`. It is never retried on that device.
    */
   state:
     | 'driving'
@@ -224,42 +217,50 @@ export async function typeOnDevice(
 }
 
 /**
- * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its
- * exact URL. Drive `steps` on Gboard and return a record of each and what the page holds after the
- * last.
+ * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
+ * URL. Drive `steps` on Gboard and return a record of each and what the page holds after the last.
  *
- * `context` is the context Vitest passes to the test that calls it. The skip, the timeout, the
- * artifact names and the `driverRuns` record all belong to that test, also in a concurrent test.
- * Only the context's shape is checked, so the context of another test makes that test the owner of
- * the call. `test.each` passes no context, `test.for` does. Calls still drive the device one at a
- * time, in the order they were made, and a call's wait for the calls before it counts against its
- * own test's timeout.
+ * `context` is the context Vitest passes to the test that calls it. The skip, the timeout, the artifact
+ * names and the `driverRuns` record all belong to that test, also in a concurrent test. Only the context's
+ * shape is checked, so the context of another test makes that test the owner of the call. `test.each`
+ * passes no context, `test.for` does. Calls still drive the device one at a time, in the order they were
+ * made, and a call's wait for the calls before it counts against its own test's timeout.
  *
- * Before it touches the device it checks that Gboard can drive every step on `keyboard`. When it
- * cannot, it skips the test with a note that names each step it cannot drive, its position, its
- * type and why, so a case never runs halfway. A call made after its test timed out or was cancelled
- * is recorded `aborted` against that test and rejects with the signal's reason, before it checks
- * the steps or touches the device.
+ * Before it touches the device it checks that Gboard can drive every step on `keyboard`. When it cannot,
+ * it skips the test with a note that names each step it cannot drive, its position, its type and why, so
+ * a case never runs halfway. A call made after its test timed out or was cancelled is recorded `aborted`
+ * against that test and rejects with the signal's reason, before it checks the steps or touches the
+ * device.
  *
- * A step that throws is a driver fault. After it, the page's text, selection and focus are read
- * into the step's record, on a clock of their own once the attempt stopped. A fault that came
- * before the attempt sent any input is retried once, only after the old Chrome stopped and only
- * into a Chrome whose pid is new. A classified digit or symbol mistap is also retried once through
- * that restart path, and a second mistap ends `inconclusive` with its message. Any other fault
- * after input, a restart that cannot show a fresh Chrome, and an adb call that means adb lost the
- * device are never retried, and the call's `driverRuns` record says `inconclusive` or
- * `device-offline` and why. When a step of the last attempt threw, the call rejects with a new
- * `Error` whose message is the step's error message followed by a line per step of that attempt:
- * its position, type, status, reason and `textAfter`. Its `cause` is the value the step threw. Any
- * other failure rejects with its error unchanged. Artifacts go to `<outDir>/<keyboard>-<test
- * name>*`.
+ * A step that throws is a driver fault. After it, the page's text, selection and focus are read into the
+ * step's record, on a clock of their own once the attempt stopped. A fault that came before the attempt
+ * sent any input is retried once, only after the old Chrome stopped and only into a Chrome whose pid is
+ * new. A classified digit or symbol mistap is also retried once through that restart path, and a second
+ * mistap ends `inconclusive` with its message. Any other fault after input, a restart that cannot show a
+ * fresh Chrome, and an adb call that means adb lost
+ * the device are never retried, and the call's `driverRuns` record says `inconclusive` or
+ * `device-offline` and why. When a step of the last attempt threw, the call rejects with a new `Error`
+ * whose message is the step's error message followed by a line per step of that attempt: its position,
+ * type, status, reason and `textAfter`. Its `cause` is the value the step threw. Any other failure
+ * rejects with its error unchanged. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
  *
- * @example ```ts import {runOnDevice} from 'thumbjar' import {test} from 'vitest'
+ * @example
+ * ```ts
+ * import {runOnDevice} from 'thumbjar'
+ * import {test} from 'vitest'
  *
- * test('Scenario: Pressing Enter while kyou is composing', async (context) => {   const run = await
- * runOnDevice(context, {     url: 'http://localhost:8765/editor.html',     keyboard: 'en',
- * prefix: '',     steps: [       {type: 'compose', letters: 'kyou', commit: 'none'},       {type:
- * 'enter'},     ],   }) }) ```
+ * test('Scenario: Pressing Enter while kyou is composing', async (context) => {
+ *   const run = await runOnDevice(context, {
+ *     url: 'http://localhost:8765/editor.html',
+ *     keyboard: 'en',
+ *     prefix: '',
+ *     steps: [
+ *       {type: 'compose', letters: 'kyou', commit: 'none'},
+ *       {type: 'enter'},
+ *     ],
+ *   })
+ * })
+ * ```
  */
 export async function runOnDevice(
   context: TestContext,
@@ -417,8 +418,8 @@ async function driveAfterPrevious<T>(
   }
   let recorded = false
   // The outcome a strict call ends on when the test times out while it still decides whether to retry a
-  // failed attempt, from that attempt's fault. A mistap keeps it through the restart. Other work
-  // for the retry itself ends `aborted`.
+  // failed attempt, from that attempt's fault. A mistap keeps it through the restart. Other work for
+  // the retry itself ends `aborted`.
   let pending: TerminalOutcome | undefined
   // A strict call's outcome, recorded once the moment the attempt that ends the call failed, before any
   // diagnostic. A diagnostic can then only add to it: a completed state read may turn `inconclusive` or
@@ -591,27 +592,23 @@ type TerminalOutcome = {
 }
 
 /**
- * `runOnDevice`'s retry. A classified mistap is retried once even after input, and a second ends
- * `inconclusive` with its message. Any other fault after the attempt sent input is `inconclusive`,
- * and a failed adb call that means adb lost the device is `device-offline`, and neither is retried.
- * Any other fault is retried once, only after the old Chrome stopped and only into a Chrome whose
- * pid is new, and a restart or a check that cannot show that ends the call `inconclusive`, or
- * `device-offline` when adb lost the device.
+ * `runOnDevice`'s retry. A classified mistap is retried once even after input, and a second ends `inconclusive` with its message. Any other fault after the attempt sent
+ * input is `inconclusive`, and a failed adb call that
+ * means adb lost the device is `device-offline`, and neither is retried. Any other fault is retried once,
+ * only after the old Chrome stopped and only into a Chrome whose pid is new, and a restart or a check that
+ * cannot show that ends the call `inconclusive`, or `device-offline` when adb lost the device.
  *
- * The moment an attempt fails, before its failure dump, `classify` runs `terminalOutcome`, which
- * reads the fault once and decides from it alone whether the call ends there, and if so passes the
- * outcome to `record`. A `DeviceLost` a helper threw was already read when the helper recognised
- * it, so it is never read again. An exception escaping that classification ends the call,
- * `inconclusive` after input and `faulted` before it. A fault whose guarded read cannot convert it
- * counts as unreadable, and before input keeps the retry policy above. Only then do the diagnostics
- * run: the failure dump, the call's one `adb get-state` and the read of the page into the failed
- * step's record, each under a bound of its own. A state read can only add to the recorded outcome.
- * A first attempt's fault before input that the call may retry records nothing, but until the
- * retry's restart begins `pend` holds the outcome a test timeout ends it on, the one it would end
- * on if that fault were final: `inconclusive` and unconfirmed for a timeout, whose retry also waits
- * for the state read, and `faulted` for any other fault. A first classified mistap pends
- * `inconclusive` with its message until the second attempt begins. The call always rejects with the
- * attempt's own fault.
+ * The moment an attempt fails, before its failure dump, `classify` runs `terminalOutcome`, which reads the
+ * fault once and decides from it alone whether the call ends there, and if so passes the outcome to
+ * `record`. A `DeviceLost` a helper threw was already read when the helper recognised it, so it is never
+ * read again. An exception escaping that classification ends the call, `inconclusive` after input and
+ * `faulted` before it. A fault whose guarded read cannot convert it counts as unreadable, and before input
+ * keeps the retry policy above. Only then do the diagnostics run: the failure dump, the call's one `adb get-state` and the read of the page into the failed step's record,
+ * each under a bound of its own. A state read can only add to the recorded outcome. A first attempt's fault
+ * before input that the call may retry records nothing, but until the retry's restart begins `pend` holds
+ * the outcome a test timeout ends it on, the one it would end on if that fault were final: `inconclusive`
+ * and unconfirmed for a timeout, whose retry also waits for the state read, and `faulted` for any other
+ * fault. A first classified mistap pends `inconclusive` with its message until the second attempt begins. The call always rejects with the attempt's own fault.
  */
 async function strictRetry<T>(
   name: string,
@@ -775,11 +772,11 @@ async function strictRetry<T>(
 }
 
 /**
- * The outcome an attempt that failed with `fault` ends the call on, decided from the fault alone,
- * with no device call, or no `ended` when the call may still retry it: a classified mistap or a
- * fault before input on the first attempt, which a timeout leaves to the state read. adb's own
- * error for a lost device is `device-offline` here, since adb itself said so. `lost` is how adb may
- * have lost the device, read once for the whole failure.
+ * The outcome an attempt that failed with `fault` ends the call on, decided from the fault alone, with no
+ * device call, or no `ended` when the call may still retry it: a classified mistap or a fault before
+ * input on the first attempt,
+ * which a timeout leaves to the state read. adb's own error for a lost device is `device-offline` here,
+ * since adb itself said so. `lost` is how adb may have lost the device, read once for the whole failure.
  */
 function terminalOutcome(
   fault: unknown,

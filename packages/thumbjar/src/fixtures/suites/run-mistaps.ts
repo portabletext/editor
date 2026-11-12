@@ -264,3 +264,67 @@ test('Scenario: a timeout during a mistap restart keeps its reason', async (cont
     mistapRetries: 1,
   })
 })
+
+test('Scenario: a Dash mistap restart with an offline force-stop ends device offline', async (context) => {
+  vi.useFakeTimers()
+  gboardDevice.reset()
+  gboardDevice.recordEvents = true
+  gboardDevice.typedOverrides = ['_']
+  gboardDevice.adbAnswers = [
+    {
+      match: /force-stop/,
+      answer: {stdout: '', stderr: 'error: device offline\n', code: 1},
+    },
+  ]
+  const running = runOnDevice(context, {
+    keyboard: 'en',
+    url: 'http://localhost:8765/editor.html',
+    prefix: '',
+    steps: [{type: 'compose', text: '-', commit: 'none'}],
+  }).catch((error: unknown) => error)
+  await vi.runAllTimersAsync()
+  await running
+
+  expect({
+    state: driverRuns.at(-1)?.state,
+    reason: driverRuns.at(-1)?.reason,
+    mistapRetries: driverRuns.at(-1)?.mistapRetries,
+    attempt: gboardDevice.attempt,
+  }).toEqual({
+    state: 'device-offline',
+    reason:
+      'adb lost the device, so it was not retried: adb shell am force-stop com.android.chrome exited with 1: error: device offline',
+    mistapRetries: 1,
+    attempt: 1,
+  })
+})
+
+test('Scenario: a Dash mistap restart whose old Chrome never stops ends inconclusive', async (context) => {
+  vi.useFakeTimers()
+  gboardDevice.reset()
+  gboardDevice.recordEvents = true
+  gboardDevice.typedOverrides = ['_']
+  gboardDevice.forceStopStops = false
+  const running = runOnDevice(context, {
+    keyboard: 'en',
+    url: 'http://localhost:8765/editor.html',
+    prefix: '',
+    steps: [{type: 'compose', text: '-', commit: 'none'}],
+  }).catch((error: unknown) => error)
+  await vi.runAllTimersAsync()
+  await running
+
+  expect({
+    state: driverRuns.at(-1)?.state,
+    reason: driverRuns.at(-1)?.reason,
+    mistapRetries: driverRuns.at(-1)?.mistapRetries,
+    attempt: gboardDevice.attempt,
+  }).toEqual({
+    state: 'inconclusive',
+    reason: expect.stringMatching(
+      /^the restart before the retry did not show a fresh Chrome: the old Chrome still ran \d+s after the force-stop, old pid 100, new pid 100$/,
+    ),
+    mistapRetries: 1,
+    attempt: 1,
+  })
+})
