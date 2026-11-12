@@ -1,20 +1,21 @@
 import {spawn, spawnSync} from 'node:child_process'
 import {
   chmodSync,
-  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
   writeFileSync,
+  symlinkSync,
+  readdirSync,
 } from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {describe, expect, test, vi} from 'vitest'
 
-const prepareScript = fileURLToPath(new URL('prepare.sh', import.meta.url))
+const prepareScript = fileURLToPath(new URL('prepare.ts', import.meta.url))
 const realSleep = spawnSync('bash', ['-c', 'command -v sleep'], {
   encoding: 'utf8',
 }).stdout.trim()
@@ -58,6 +59,31 @@ const SERVE = [
   'adb reverse tcp:8765 tcp:8765',
   'adb reverse --list',
 ]
+
+test('prepares with no timeout, setsid or pnpm on PATH', async () => {
+  const server = spawn(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `
+    import http from 'node:http'
+    http.createServer((request, response) => response.end('foo')).listen(8765, () => console.log('ready'))
+  `,
+    ],
+    {stdio: ['ignore', 'pipe', 'inherit']},
+  )
+  try {
+    await new Promise<void>((resolve) =>
+      server.stdout.once('data', () => resolve()),
+    )
+    expect(
+      prepare({keyboard: 'en', playStore: 'disabled', portable: true}).status,
+    ).toEqual(0)
+  } finally {
+    server.kill()
+  }
+}, 60_000)
 
 describe('prepare.sh', () => {
   test('disables Play Store before the settle and logs one line saying the disable succeeded and Play Store is listed as disabled', () => {
@@ -479,7 +505,6 @@ describe('prepare.sh on the retry, in the out dir of a prep whose dictionary nev
 })
 
 describe('prepare.sh on the retry, in an out dir whose `ja-dictionary.log` ends in a line cut off before its newline', () => {
-  // What a first prep's `tee` left when a write limit stopped it mid-line.
   const cutOff = `DICTIONARY FAILED: ${NEVER_LOADED.slice(0, 120)}`
 
   test('quotes only the reason its own wait printed, and exits 1 for a capture fault', () => {
@@ -546,16 +571,6 @@ describe('prepare.sh with a boot capture reader that ignores SIGTERM', () => {
   }, 30_000)
 })
 
-/**
- * Runs `prepare.sh` with fake `adb`, `node`, `curl` and `sleep` that record their calls in order, all but
- * the background reader of the boot capture, which runs alongside the prep in no fixed order to its calls.
- * `playStore` is how `pm disable-user` answers: it disables Play Store, the device refuses, or it never
- * answers. With `dictionary: 'never'` the dictionary wait fails as it did on a real boot, exiting 3 as
- * `dictionary.js wait` does for a dictionary that never loaded. With `capture fault` it fails on a capture of
- * another boot, with `exits 3 without reason` it exits 3 printing no `DICTIONARY FAILED:` line, with
- * `check fails` the check after the load fails, with `setup: 'exits 3'` the Japanese setup exits 3, and with
- * `reverseList: 'exits 3'` the prep's last command, `adb reverse --list`, exits 3.
- */
 function prepare(options: PrepareOptions) {
   const directory = mkdtempSync(join(tmpdir(), 'thumbjar-prepare-'))
   try {
@@ -577,6 +592,7 @@ function prepareTwice(first: PrepareOptions, second: PrepareOptions) {
 
 type PrepareOptions = {
   keyboard: 'en' | 'ja'
+  portable?: boolean
   playStore: 'disabled' | 'refused' | 'hung'
   dictionary?:
     | 'loaded'
@@ -645,26 +661,52 @@ esac
 exit 0
 `,
   )
-  writeFileSync(join(bin, 'curl'), '#!/usr/bin/env bash\nexit 0\n')
-  writeFileSync(join(bin, 'sleep'), '#!/usr/bin/env bash\nexit 0\n')
-  for (const name of ['adb', 'node', 'curl', 'sleep']) {
+  for (const name of ['adb', 'node']) {
     chmodSync(join(bin, name), 0o755)
   }
 
-  const result = spawnSync(prepareScript, {
-    cwd: directory,
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      PATH: `${bin}:${process.env.PATH}`,
-      THUMBJAR_KEYBOARD: options.keyboard,
-      THUMBJAR_OUT_DIR: 'out',
-      THUMBJAR_PAGE_URL: 'http://localhost:8765/editor.html',
-      THUMBJAR_PAGE_PORT: '8765',
-      THUMBJAR_BOOTED: '1793515010',
-      ...options.env,
+  if (options.portable) {
+    for (const name of readdirSync('/usr/bin')) {
+      if (
+        !['timeout', 'setsid', 'pnpm', 'adb', 'node', 'curl', 'sleep'].includes(
+          name,
+        )
+      ) {
+        symlinkSync(join('/usr/bin', name), join(bin, name))
+      }
+    }
+  }
+  const result = spawnSync(
+    process.execPath,
+    options.portable
+      ? [
+          fileURLToPath(new URL('../bin.ts', import.meta.url)),
+          'prepare',
+          '--keyboard',
+          options.keyboard,
+          '--page-url',
+          'http://localhost:8765/editor.html',
+          '--out-dir',
+          'out',
+          '--booted',
+          '1793515010',
+        ]
+      : [scriptFor('passes', directory)],
+    {
+      cwd: directory,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: options.portable ? bin : `${bin}:${process.env.PATH}`,
+        THUMBJAR_KEYBOARD: options.keyboard,
+        THUMBJAR_OUT_DIR: 'out',
+        THUMBJAR_PAGE_URL: 'http://localhost:8765/editor.html',
+        THUMBJAR_PAGE_PORT: '8765',
+        THUMBJAR_BOOTED: '1793515010',
+        ...options.env,
+      },
     },
-  })
+  )
   const capture = join(directory, 'out/boot-logcat.txt')
   return {
     status: result.status,
@@ -691,13 +733,6 @@ exit 0
   }
 }
 
-/**
- * Runs a Japanese `prepare.sh` whose boot capture reader, the background `adb logcat`, records its pid and
- * ignores SIGTERM. `path` picks how the prep ends: it passes, the dictionary wait fails, the dictionary wait
- * hangs past a 3-second deadline, or the prep gets SIGTERM while the wait hangs. Returns the prep's exit
- * status and the readers still alive once it ended. The deadline path runs a copy of `prepare.sh` whose
- * Japanese deadline is cut to 3 seconds, so the shipped prep reads no deadline of the test's.
- */
 async function prepareWithStubbornReader({
   path,
 }: {
@@ -744,17 +779,11 @@ esac
 exit 0
 `,
     )
-    writeFileSync(join(bin, 'curl'), '#!/usr/bin/env bash\nexit 0\n')
-    // Skips the settle's pauses but keeps the capture's own sub-second grace, which the cleanup waits on.
-    writeFileSync(
-      join(bin, 'sleep'),
-      `#!/usr/bin/env bash\ncase "$1" in 0.*) exec ${realSleep} "$1" ;; esac\nexit 0\n`,
-    )
-    for (const name of ['adb', 'node', 'curl', 'sleep']) {
+    for (const name of ['adb', 'node']) {
       chmodSync(join(bin, name), 0o755)
     }
 
-    const script = spawn(scriptFor(path, directory), {
+    const script = spawn(process.execPath, [scriptFor(path, directory)], {
       cwd: directory,
       detached: true,
       stdio: 'ignore',
@@ -797,30 +826,31 @@ exit 0
   }
 }
 
-/**
- * The prep script `path` runs: `prepare.sh` itself, or for `runs past` a copy beside a copy of
- * `diagnose.sh` with its Japanese deadline cut to 3 seconds.
- */
 function scriptFor(path: string, directory: string): string {
-  if (path !== 'runs past') {
-    return prepareScript
+  const source = `import {prepare} from ${JSON.stringify(prepareScript)}
+process.exitCode = await prepare({
+  keyboard: process.env.THUMBJAR_KEYBOARD,
+  out: process.env.THUMBJAR_OUT_DIR,
+  pageUrl: process.env.THUMBJAR_PAGE_URL,
+  port: process.env.THUMBJAR_PAGE_PORT,
+  booted: Number(process.env.THUMBJAR_BOOTED),
+}, {
+  node: ${JSON.stringify(join(directory, 'bin/node'))},
+  setup: 'setup-ja.js', dictionary: 'dictionary.js',
+  sleep: async () => {}, request: async () => true,
+  deadline: undefined,
+})
+`
+  const shortened =
+    path === 'runs past'
+      ? source.replace('deadline: undefined', 'deadline: 3')
+      : source
+  if (path === 'runs past') {
+    expect(shortened).not.toEqual(source)
   }
-  const copies = join(directory, 'prepare')
-  mkdirSync(copies)
-  const source = readFileSync(prepareScript, 'utf8')
-  const shortened = source.replace(
-    '  ja) deadline=862 ;;',
-    '  ja) deadline=3 ;;',
-  )
-  expect(shortened).not.toEqual(source)
-  writeFileSync(join(copies, 'prepare.sh'), shortened)
-  copyFileSync(
-    fileURLToPath(new URL('diagnose.sh', import.meta.url)),
-    join(copies, 'diagnose.sh'),
-  )
-  chmodSync(join(copies, 'prepare.sh'), 0o755)
-  chmodSync(join(copies, 'diagnose.sh'), 0o755)
-  return join(copies, 'prepare.sh')
+  const bootstrap = join(directory, 'prepare.mjs')
+  writeFileSync(bootstrap, shortened)
+  return bootstrap
 }
 
 /** Whether `pid` still runs. A process that died and waits to be reaped, a zombie, does not. */

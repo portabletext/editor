@@ -2,8 +2,6 @@
 // The `thumbjar` command. The library never boots the emulator: run these against one that is booted,
 // apart from `fetch-u2-jar`, which needs no device.
 
-import {spawn, spawnSync} from 'node:child_process'
-import {fileURLToPath} from 'node:url'
 import {parseArgs} from 'node:util'
 import {localhostPort} from './device/page-url.ts'
 
@@ -62,45 +60,15 @@ if (command === 'fetch-u2-jar') {
   ) {
     usage()
   }
-  const script = spawn(
-    'bash',
-    [
-      fileURLToPath(new URL('run/run.sh', import.meta.url)),
-      positionals[0]!,
-      values.keyboard,
-      values['page-dir'],
-      values.config,
-      values.project,
-      values.port,
-      values['out-dir'],
-    ],
-    {
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        THUMBJAR_RUN_CAP: fileURLToPath(
-          new URL(
-            import.meta.url.endsWith('.ts') ? 'run/cap.ts' : 'run/cap.js',
-            import.meta.url,
-          ),
-        ),
-        THUMBJAR_RUN_CHECK: fileURLToPath(
-          new URL(
-            import.meta.url.endsWith('.ts') ? 'run/check.ts' : 'run/check.js',
-            import.meta.url,
-          ),
-        ),
-      },
-    },
-  )
-  // A signal to this process stops the script too, as it would a script the step ran itself.
-  for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) {
-    process.on(signal, () => {
-      script.kill(signal)
-    })
-  }
-  script.on('exit', (status) => {
-    process.exit(status ?? 1)
+  const {run} = await import('./run/run.ts')
+  process.exitCode = await run({
+    file: positionals[0]!,
+    keyboard: values.keyboard,
+    pageDir: values['page-dir'],
+    config: values.config,
+    project: values.project,
+    port: values.port,
+    out: values['out-dir'],
   })
 } else if (command === 'prepare') {
   const {values} = parseArgs({
@@ -119,21 +87,14 @@ if (command === 'fetch-u2-jar') {
   ) {
     usage()
   }
-  const result = spawnSync(
-    fileURLToPath(new URL('prepare/prepare.sh', import.meta.url)),
-    {
-      stdio: 'inherit',
-      env: {
-        ...process.env,
-        THUMBJAR_KEYBOARD: values.keyboard,
-        THUMBJAR_PAGE_URL: values['page-url'],
-        THUMBJAR_PAGE_PORT: localhostPort(values['page-url']) ?? '',
-        THUMBJAR_OUT_DIR: values['out-dir'],
-        THUMBJAR_BOOTED: values.booted ?? String(Math.floor(Date.now() / 1000)),
-      },
-    },
-  )
-  process.exit(result.status ?? 1)
+  const {prepare} = await import('./prepare/prepare.ts')
+  process.exitCode = await prepare({
+    keyboard: values.keyboard,
+    pageUrl: values['page-url'],
+    port: localhostPort(values['page-url']) ?? '',
+    out: values['out-dir'],
+    booted: Number(values.booted ?? Math.floor(Date.now() / 1000)),
+  })
 } else {
   usage()
 }

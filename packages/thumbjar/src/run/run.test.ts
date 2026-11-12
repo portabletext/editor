@@ -14,13 +14,10 @@ import {fileURLToPath} from 'node:url'
 import {describe, expect, test, vi} from 'vitest'
 import {deviceTestFileSeconds} from '../device/budget.ts'
 
-const command = fileURLToPath(new URL('../bin.ts', import.meta.url))
+const command = fileURLToPath(new URL('run.ts', import.meta.url))
 // The PREP FAILED line `thumbjar prepare` logs for a real CI boot whose Gboard never loaded the dictionary.
 const NEVER_LOADED =
   "Gboard's Japanese dictionary never loaded on this boot: Gboard 15.1.08.726012951-preload-x86_64 logged no `data_loader.cc` `New data is loaded` line for a `mozcdata-<version>.data` file within 360s of boot. It logged `Fallback to minimal engine`, and 2 downloads of `__MOZCPACK_mozcmain_ja_JP` were cancelled. The capture may also lack the line: the main buffer had dropped 2865 of its 9812 lines by the capture's first dump, so the capture may lack lines from boot on, its oldest kept line is from 26.9s after boot, so a load before then would not show. See ja-dictionary.log for the dictionary lines it saw."
-const realTee = spawnSync('bash', ['-c', 'command -v tee'], {
-  encoding: 'utf8',
-}).stdout.trim()
 
 describe('thumbjar run', () => {
   test('prepares the language it is given and runs only the file it is given, under that file’s cap', () => {
@@ -461,7 +458,7 @@ function runOnDevice(options: {
       )
     }
     writeFileSync(
-      join(bin, 'pnpm'),
+      join(bin, 'commands.sh'),
       `#!/usr/bin/env bash
 case "$*" in
   "exec thumbjar serve"*) exit 0 ;;
@@ -488,13 +485,13 @@ case "$*" in
 esac
 `,
     )
-    chmodSync(join(bin, 'pnpm'), 0o755)
+    chmodSync(join(bin, 'commands.sh'), 0o755)
     chmodSync(join(bin, 'adb'), 0o755)
 
     const result = spawnSync(
       process.execPath,
       [
-        command,
+        runBootstrap(directory, options),
         'run',
         options.file,
         '--keyboard',
@@ -560,7 +557,7 @@ async function interruptOnDevice(options: {
     const stopped = join(directory, 'stopped')
     deviceTree(directory)
     writeFileSync(
-      join(bin, 'pnpm'),
+      join(bin, 'commands.sh'),
       `#!/usr/bin/env bash
 case "$*" in
   "exec thumbjar serve"*) exit 0 ;;
@@ -579,25 +576,13 @@ case "$*" in
 esac
 `,
     )
-    // Holds the `device check:` log line, the one write after the check, until the step stops the script.
-    writeFileSync(
-      join(bin, 'tee'),
-      `#!/usr/bin/env bash
-line=$(cat)
-case "$line" in
-  *"device check:"*) ${options.stopAt === 'device check log' ? `touch ${stopped}; exec sleep 60` : ''} ;;
-esac
-printf '%s\\n' "$line" | ${realTee} "$@"
-`,
-    )
-    chmodSync(join(bin, 'pnpm'), 0o755)
+    chmodSync(join(bin, 'commands.sh'), 0o755)
     chmodSync(join(bin, 'adb'), 0o755)
-    chmodSync(join(bin, 'tee'), 0o755)
 
     const script = spawn(
       process.execPath,
       [
-        command,
+        runBootstrap(directory, options),
         'run',
         options.file,
         '--keyboard',
@@ -655,6 +640,56 @@ printf '%s\\n' "$line" | ${realTee} "$@"
   } finally {
     rmSync(directory, {recursive: true, force: true})
   }
+}
+
+function runBootstrap(
+  directory: string,
+  options: {lang: string; file: string; stopAt?: string},
+) {
+  const dispatch = join(directory, 'dispatch.mjs')
+  const fixture = join(directory, 'bin/commands.sh')
+  writeFileSync(
+    dispatch,
+    `import {spawnSync} from 'node:child_process'
+const result = spawnSync('/bin/bash', [${JSON.stringify(fixture)}, 'exec', 'thumbjar', ...process.argv.slice(2)], {stdio: 'inherit'})
+process.exit(result.status ?? 1)
+`,
+  )
+  const vitest = join(directory, 'node_modules/vitest')
+  mkdirSync(vitest, {recursive: true})
+  writeFileSync(
+    join(vitest, 'package.json'),
+    JSON.stringify({name: 'vitest', bin: './vitest.mjs'}),
+  )
+  writeFileSync(
+    join(vitest, 'vitest.mjs'),
+    `import {spawnSync} from 'node:child_process'
+const result = spawnSync('/bin/bash', [${JSON.stringify(fixture)}, 'exec', 'vitest', ...process.argv.slice(2)], {stdio: 'inherit'})
+process.exit(result.status ?? 1)
+`,
+  )
+  const bootstrap = join(directory, 'run.mjs')
+  writeFileSync(
+    bootstrap,
+    `import {run} from ${JSON.stringify(command)}
+import {writeFileSync} from 'node:fs'
+import {createServer} from 'node:net'
+process.exitCode = await run(${JSON.stringify({file: options.file, keyboard: options.lang, pageDir: 'android/dist', config: 'vitest.android.config.ts', project: 'device', port: '8765', out: 'android/out'})}, {
+  command: ${JSON.stringify(dispatch)},
+  phase: async (message, write, signal) => {
+    if (${JSON.stringify(options.stopAt === 'device check log')} && message.startsWith('device check:')) {
+      const hold = createServer().listen(0, '127.0.0.1')
+      writeFileSync(${JSON.stringify(join(directory, 'stopped'))}, '')
+      try {
+        await new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), {once: true}))
+      } finally {hold.close()}
+    }
+    write()
+  },
+})
+`,
+  )
+  return bootstrap
 }
 
 function shellString(text: string) {

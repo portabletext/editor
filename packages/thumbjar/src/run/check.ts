@@ -1,10 +1,11 @@
 import {spawnSync} from 'node:child_process'
 import {appendFileSync} from 'node:fs'
 import {deviceVerdict} from '../device/adb.ts'
+import {DEVICE_STATE_SECONDS} from '../device/budget.ts'
 
 const adb = spawnSync('adb', ['get-state'], {
   encoding: 'utf8',
-  timeout: 5_000,
+  timeout: DEVICE_STATE_SECONDS * 1000,
   killSignal: 'SIGKILL',
 })
 const verdict = deviceVerdict({
