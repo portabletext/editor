@@ -23,14 +23,6 @@ export default defineConfig({
       },
     },
     'packages/keyboard-shortcuts',
-    {
-      root: 'packages/markdown',
-      scenarios: {
-        entries: {
-          portableTextToMarkdown: './bundle-tests/portable-text-to-markdown.ts',
-        },
-      },
-    },
     'packages/patches',
     'packages/repair',
     'packages/sanity-bridge',
