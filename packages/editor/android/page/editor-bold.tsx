@@ -18,6 +18,7 @@ const schemaDefinition = defineSchema({
 const params = new URLSearchParams(location.search)
 const prefix = params.get('prefix') ?? ''
 const bold = params.get('bold') ?? ''
+const suffix = params.get('suffix') ?? ''
 
 const keyGenerator = createTestKeyGenerator()
 
@@ -31,6 +32,9 @@ const initialValue = [
       {_type: 'span', _key: keyGenerator(), text: prefix, marks: []},
       ...(bold
         ? [{_type: 'span', _key: keyGenerator(), text: bold, marks: ['strong']}]
+        : []),
+      ...(suffix
+        ? [{_type: 'span', _key: keyGenerator(), text: suffix, marks: []}]
         : []),
     ],
   },
