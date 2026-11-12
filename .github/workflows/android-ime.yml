@@ -60,6 +60,8 @@ jobs:
         # language. `tests/en-textarea.test.ts` is a control run by hand.
         suite:
           - {lang: en, file: tests/diag.en.test.ts}
+          - {lang: en, file: tests/matrix.en.test.ts}
+          - {lang: en, file: tests/matrix.en.2.test.ts}
         api: [36]
 
     steps:
@@ -247,6 +249,12 @@ jobs:
           heap-size: 512M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
+          pre-emulator-launch-script: |
+            cfg="$HOME/.android/avd/test.avd/config.ini"
+            grep -n "hw.keyboard" "$cfg" || echo "no hw.keyboard line"
+            sed -i "/^hw.keyboard[ =]/d" "$cfg"
+            echo "hw.keyboard=no" >> "$cfg"
+            grep -n "hw.keyboard" "$cfg"
           working-directory: packages/editor
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
@@ -278,6 +286,12 @@ jobs:
           heap-size: 512M
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
+          pre-emulator-launch-script: |
+            cfg="$HOME/.android/avd/test.avd/config.ini"
+            grep -n "hw.keyboard" "$cfg" || echo "no hw.keyboard line"
+            sed -i "/^hw.keyboard[ =]/d" "$cfg"
+            echo "hw.keyboard=no" >> "$cfg"
+            grep -n "hw.keyboard" "$cfg"
           working-directory: packages/editor
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
