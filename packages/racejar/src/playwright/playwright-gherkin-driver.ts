@@ -32,14 +32,17 @@ export function Feature<
   hooks,
   stepDefinitions,
   parameterTypes,
+  expectedFailures,
 }: {
   featureText: string
+  expectedFailures?: ReadonlyArray<string>
   hooks?: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,
+    expectedFailures,
     hooks: hooks ?? [],
     stepDefinitions,
     parameterTypes: parameterTypes ?? [],
@@ -54,19 +57,23 @@ export function Feature<
 
   describeFn(feature.name, () => {
     for (const before of feature.beforeHooks) {
-      test.beforeEach(async (playwrightOptions) => {
-        await before({
-          playwright: playwrightOptions,
-        } as TContext)
-      })
+      test.beforeEach(
+        withPlaywright(async (playwrightOptions) => {
+          await before({
+            playwright: playwrightOptions,
+          } as TContext)
+        }),
+      )
     }
 
     for (const after of feature.afterHooks) {
-      test.afterEach(async (playwrightOptions) => {
-        await after({
-          playwright: playwrightOptions,
-        } as TContext)
-      })
+      test.afterEach(
+        withPlaywright(async (playwrightOptions) => {
+          await after({
+            playwright: playwrightOptions,
+          } as TContext)
+        }),
+      )
     }
 
     for (const scenario of feature.scenarios) {
@@ -77,13 +84,111 @@ export function Feature<
             ? test.skip
             : test
 
-      testFn(scenario.name, async (playwrightOptions) => {
-        for (const step of scenario.steps) {
-          await step({
-            playwright: playwrightOptions,
-          } as TContext)
-        }
-      })
+      testFn(
+        scenario.name,
+        withPlaywright(async (playwrightOptions) => {
+          test.fail(scenario.expectedFailure)
+          for (const step of scenario.steps) {
+            await step({
+              playwright: playwrightOptions,
+            } as TContext)
+          }
+        }),
+      )
     }
   })
+}
+
+function withPlaywright(
+  callback: (options: PlaywrightOptions) => Promise<void>,
+) {
+  // Playwright discovers fixtures from explicit destructuring in the callback.
+  return async ({
+    browserName,
+    defaultBrowserType,
+    headless,
+    channel,
+    launchOptions,
+    connectOptions,
+    reuseContext,
+    screenshot,
+    trace,
+    video,
+    acceptDownloads,
+    bypassCSP,
+    colorScheme,
+    clientCertificates,
+    deviceScaleFactor,
+    extraHTTPHeaders,
+    geolocation,
+    hasTouch,
+    httpCredentials,
+    ignoreHTTPSErrors,
+    isMobile,
+    javaScriptEnabled,
+    locale,
+    offline,
+    permissions,
+    proxy,
+    storageState,
+    timezoneId,
+    userAgent,
+    viewport,
+    baseURL,
+    contextOptions,
+    actionTimeout,
+    navigationTimeout,
+    serviceWorkers,
+    testIdAttribute,
+    playwright,
+    browser,
+    context,
+    page,
+    request,
+    mount,
+  }: PlaywrightOptions) =>
+    callback({
+      browserName,
+      defaultBrowserType,
+      headless,
+      channel,
+      launchOptions,
+      connectOptions,
+      reuseContext,
+      screenshot,
+      trace,
+      video,
+      acceptDownloads,
+      bypassCSP,
+      colorScheme,
+      clientCertificates,
+      deviceScaleFactor,
+      extraHTTPHeaders,
+      geolocation,
+      hasTouch,
+      httpCredentials,
+      ignoreHTTPSErrors,
+      isMobile,
+      javaScriptEnabled,
+      locale,
+      offline,
+      permissions,
+      proxy,
+      storageState,
+      timezoneId,
+      userAgent,
+      viewport,
+      baseURL,
+      contextOptions,
+      actionTimeout,
+      navigationTimeout,
+      serviceWorkers,
+      testIdAttribute,
+      playwright,
+      browser,
+      context,
+      page,
+      request,
+      mount,
+    })
 }

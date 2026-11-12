@@ -17,6 +17,7 @@ export type CompiledFeature<TStepContext extends Record<string, any> = object> =
     tag: 'only' | 'skip' | undefined
     scenarios: Array<{
       name: string
+      expectedFailure: boolean
       tag: 'only' | 'skip' | undefined
       steps: Array<(stepContext?: TStepContext) => Promise<void> | void>
     }>
@@ -35,8 +36,10 @@ export function compileFeature<
   hooks,
   stepDefinitions,
   parameterTypes,
+  expectedFailures,
 }: {
   featureText: string
+  expectedFailures?: ReadonlyArray<string>
   hooks?: Array<Hook<TStepContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
@@ -90,6 +93,12 @@ export function compileFeature<
   }
 
   let context = {} as TContext
+
+  for (const name of expectedFailures ?? []) {
+    if (!pickles.some((pickle) => pickle.name === name)) {
+      throw new Error(`Expected failure names no scenario: ${name}`)
+    }
+  }
 
   const scenarios = pickles.map((pickle) => {
     const skippedPickle = pickle.tags.some((tag) => tag.name === '@skip')
@@ -146,6 +155,7 @@ export function compileFeature<
 
     return {
       name: pickle.name,
+      expectedFailure: expectedFailures?.includes(pickle.name) ?? false,
       tag: skippedFeature
         ? ('skip' as const)
         : skippedPickle

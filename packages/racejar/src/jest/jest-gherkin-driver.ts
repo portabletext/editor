@@ -12,14 +12,17 @@ export function Feature<TContext extends Record<string, any> = object>({
   hooks,
   stepDefinitions,
   parameterTypes,
+  expectedFailures,
 }: {
   featureText: string
+  expectedFailures?: ReadonlyArray<string>
   hooks?: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,
+    expectedFailures,
     hooks: hooks ?? [],
     stepDefinitions,
     parameterTypes: parameterTypes ?? [],
@@ -33,12 +36,20 @@ export function Feature<TContext extends Record<string, any> = object>({
         : describe
 
   describeFn(feature.name, () => {
+    let expectedFailure = false
+    beforeEach(() => {
+      expectedFailure = false
+    })
     for (const before of feature.beforeHooks) {
       beforeEach(before)
     }
 
     for (const after of feature.afterHooks) {
-      afterEach(after)
+      afterEach(async () => {
+        if (!expectedFailure) {
+          await after()
+        }
+      })
     }
 
     for (const scenario of feature.scenarios) {
@@ -49,9 +60,21 @@ export function Feature<TContext extends Record<string, any> = object>({
             ? test.skip
             : test
 
-      testFn(scenario.name, async () => {
-        for (const step of scenario.steps) {
-          await step()
+      const scenarioTest = scenario.expectedFailure ? testFn.failing : testFn
+
+      scenarioTest(scenario.name, async () => {
+        expectedFailure = scenario.expectedFailure
+        try {
+          for (const step of scenario.steps) {
+            await step()
+          }
+        } finally {
+          if (expectedFailure) {
+            // Jest's `test.failing` only observes errors from the test body.
+            for (const after of feature.afterHooks) {
+              await after()
+            }
+          }
         }
       })
     }

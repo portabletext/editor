@@ -12,14 +12,17 @@ export function Feature<TContext extends Record<string, any> = object>({
   hooks,
   stepDefinitions,
   parameterTypes,
+  expectedFailures,
 }: {
   featureText: string
+  expectedFailures?: ReadonlyArray<string>
   hooks?: Array<Hook<TContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
 }) {
   const feature = compileFeature({
     featureText,
+    expectedFailures,
     hooks: hooks ?? [],
     stepDefinitions,
     parameterTypes: parameterTypes ?? [],
@@ -49,7 +52,9 @@ export function Feature<TContext extends Record<string, any> = object>({
             ? test.skip
             : test
 
-      testFn(scenario.name, async () => {
+      const scenarioTest = scenario.expectedFailure ? testFn.fails : testFn
+
+      scenarioTest(scenario.name, async () => {
         for (const step of scenario.steps) {
           await step()
         }
