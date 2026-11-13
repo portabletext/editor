@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {getTableSelection} from './get-table-selection'
 import {TablePlugin} from './plugin.table'
 
@@ -166,9 +166,7 @@ describe(getTableSelection.name, () => {
     const point = pointInSpan('t0', 'r0', 'r0c0')
     editor.send({type: 'select', at: {anchor: point, focus: point}})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
@@ -184,9 +182,7 @@ describe(getTableSelection.name, () => {
     const focus = pointInSpan('t0', 'r0', 'r0c0', 0)
     editor.send({type: 'select', at: {anchor, focus}})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
@@ -202,12 +198,10 @@ describe(getTableSelection.name, () => {
     const focus = pointInSpan('t0', 'r2', 'r2c2')
     editor.send({type: 'select', at: {anchor, focus}})
 
-    await vi.waitFor(() => {
-      expect(getTableSelection(editor.getSnapshot())).toEqual({
-        tablePath: [{_key: 't0'}],
-        rowRange: [0, 2],
-        colRange: [1, 2],
-      })
+    expect(getTableSelection(editor.getSnapshot())).toEqual({
+      tablePath: [{_key: 't0'}],
+      rowRange: [0, 2],
+      colRange: [1, 2],
     })
   })
 
@@ -223,12 +217,10 @@ describe(getTableSelection.name, () => {
     const focus = pointInSpan('t0', 'r0', 'r0c1')
     editor.send({type: 'select', at: {anchor, focus}})
 
-    await vi.waitFor(() => {
-      expect(getTableSelection(editor.getSnapshot())).toEqual({
-        tablePath: [{_key: 't0'}],
-        rowRange: [0, 2],
-        colRange: [1, 2],
-      })
+    expect(getTableSelection(editor.getSnapshot())).toEqual({
+      tablePath: [{_key: 't0'}],
+      rowRange: [0, 2],
+      colRange: [1, 2],
     })
   })
 
@@ -247,9 +239,7 @@ describe(getTableSelection.name, () => {
     const focus = pointInSpan('t0', 'r0', 'r0c0')
     editor.send({type: 'select', at: {anchor, focus}})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
@@ -265,9 +255,7 @@ describe(getTableSelection.name, () => {
     const focus = pointInSpan('t1', 't1r0', 't1r0c0')
     editor.send({type: 'select', at: {anchor, focus}})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
     expect(getTableSelection(editor.getSnapshot())).toBeUndefined()
   })
 
@@ -285,12 +273,10 @@ describe(getTableSelection.name, () => {
     const focus = pointInSpan('t0', 'r2', 'r2c0')
     editor.send({type: 'select', at: {anchor, focus}})
 
-    await vi.waitFor(() => {
-      expect(getTableSelection(editor.getSnapshot())).toEqual({
-        tablePath: [{_key: 't0'}],
-        rowRange: [0, 2],
-        colRange: [0, 1],
-      })
+    expect(getTableSelection(editor.getSnapshot())).toEqual({
+      tablePath: [{_key: 't0'}],
+      rowRange: [0, 2],
+      colRange: [0, 1],
     })
   })
 })

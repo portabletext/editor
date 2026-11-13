@@ -1,7 +1,7 @@
 import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -102,9 +102,7 @@ async function selectLeftColumn() {
   })
   editor.send({type: 'focus'})
   editor.send({type: 'select', at: leftColumnSelection})
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-  })
+  expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
   return editor
 }
 
@@ -119,11 +117,9 @@ describe('rectangular selection copy/cut', () => {
       position: {selection: leftColumnSelection},
     })
 
-    await vi.waitFor(() => {
-      // One column: rows joined by newlines, no tabs. A wider rectangle
-      // joins the cells of each row with tabs (the spreadsheet convention).
-      expect(dataTransfer.getData('text/plain')).toBe('A\nC')
-    })
+    // One column: rows joined by newlines, no tabs. A wider rectangle
+    // joins the cells of each row with tabs (the spreadsheet convention).
+    expect(dataTransfer.getData('text/plain')).toBe('A\nC')
   })
 
   test('Scenario: copying the whole table writes rows of tab-joined cells to `text/plain`', async () => {
@@ -139,9 +135,7 @@ describe('rectangular selection copy/cut', () => {
     })
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: wholeTableSelection})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
     const dataTransfer = new DataTransfer()
 
     editor.send({
@@ -150,9 +144,7 @@ describe('rectangular selection copy/cut', () => {
       position: {selection: wholeTableSelection},
     })
 
-    await vi.waitFor(() => {
-      expect(dataTransfer.getData('text/plain')).toBe('A\tB\nC\tD')
-    })
+    expect(dataTransfer.getData('text/plain')).toBe('A\tB\nC\tD')
   })
 
   test('Scenario: copying a column selection serializes only the column', async () => {
@@ -165,24 +157,22 @@ describe('rectangular selection copy/cut', () => {
       position: {selection: leftColumnSelection},
     })
 
-    await vi.waitFor(() => {
-      // The linear fragment would include c01 (`B`).
-      expect(
-        JSON.parse(dataTransfer.getData('application/x-portable-text')),
-      ).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {_type: 'row', _key: 'r0', cells: [cell('c00', 'A')]},
-            {_type: 'row', _key: 'r1', cells: [cell('c10', 'C')]},
-          ],
-        },
-      ])
-      // The editor ships no `text/markdown` converter, so the delegating
-      // lookup finds nothing and the entry is absent.
-      expect(dataTransfer.getData('text/markdown')).toBe('')
-    })
+    // The linear fragment would include c01 (`B`).
+    expect(
+      JSON.parse(dataTransfer.getData('application/x-portable-text')),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {_type: 'row', _key: 'r0', cells: [cell('c00', 'A')]},
+          {_type: 'row', _key: 'r1', cells: [cell('c10', 'C')]},
+        ],
+      },
+    ])
+    // The editor ships no `text/markdown` converter, so the delegating
+    // lookup finds nothing and the entry is absent.
+    expect(dataTransfer.getData('text/markdown')).toBe('')
   })
 
   test('Scenario: copying a slice of the table keeps header rows positional', async () => {
@@ -218,9 +208,7 @@ describe('rectangular selection copy/cut', () => {
       focus: {path: spanPath('c11'), offset: 1},
     }
     editor.send({type: 'select', at: rightColumnSelection})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     const columnTransfer = new DataTransfer()
     editor.send({
@@ -229,21 +217,19 @@ describe('rectangular selection copy/cut', () => {
       position: {selection: rightColumnSelection},
     })
 
-    await vi.waitFor(() => {
-      expect(
-        JSON.parse(columnTransfer.getData('application/x-portable-text')),
-      ).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          headerRows: 1,
-          rows: [
-            {_type: 'row', _key: 'r0', cells: [cell('c01', 'B')]},
-            {_type: 'row', _key: 'r1', cells: [cell('c11', 'D')]},
-          ],
-        },
-      ])
-    })
+    expect(
+      JSON.parse(columnTransfer.getData('application/x-portable-text')),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        headerRows: 1,
+        rows: [
+          {_type: 'row', _key: 'r0', cells: [cell('c01', 'B')]},
+          {_type: 'row', _key: 'r1', cells: [cell('c11', 'D')]},
+        ],
+      },
+    ])
 
     // Bottom row (c10 -> c11): the header row is excluded, so the copy
     // carries no header rows.
@@ -252,10 +238,8 @@ describe('rectangular selection copy/cut', () => {
       focus: {path: spanPath('c11'), offset: 1},
     }
     editor.send({type: 'select', at: bottomRowSelection})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.path.at(-1)).toEqual(
-        {_key: 's-c11'},
-      )
+    expect(editor.getSnapshot().context.selection?.focus.path.at(-1)).toEqual({
+      _key: 's-c11',
     })
 
     const rowTransfer = new DataTransfer()
@@ -265,24 +249,22 @@ describe('rectangular selection copy/cut', () => {
       position: {selection: bottomRowSelection},
     })
 
-    await vi.waitFor(() => {
-      expect(
-        JSON.parse(rowTransfer.getData('application/x-portable-text')),
-      ).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          headerRows: 0,
-          rows: [
-            {
-              _type: 'row',
-              _key: 'r1',
-              cells: [cell('c10', 'C'), cell('c11', 'D')],
-            },
-          ],
-        },
-      ])
-    })
+    expect(
+      JSON.parse(rowTransfer.getData('application/x-portable-text')),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        headerRows: 0,
+        rows: [
+          {
+            _type: 'row',
+            _key: 'r1',
+            cells: [cell('c10', 'C'), cell('c11', 'D')],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: cutting a column selection serializes the column and clears it', async () => {
@@ -295,39 +277,35 @@ describe('rectangular selection copy/cut', () => {
       position: {selection: leftColumnSelection},
     })
 
-    await vi.waitFor(() => {
-      expect(
-        JSON.parse(dataTransfer.getData('application/x-portable-text')),
-      ).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {_type: 'row', _key: 'r0', cells: [cell('c00', 'A')]},
-            {_type: 'row', _key: 'r1', cells: [cell('c10', 'C')]},
-          ],
-        },
-      ])
-      // The column cells cleared; the rest of the table is untouched.
-      const snapshot = editor.getSnapshot()
-      expect(
-        value(snapshot)[0]?.rows[0]?.cells[0]?.value[0]?.children[0]?.text,
-      ).toBe('')
-      expect(
-        value(snapshot)[0]?.rows[1]?.cells[0]?.value[0]?.children[0]?.text,
-      ).toBe('')
-      expect(
-        value(snapshot)[0]?.rows[0]?.cells[1]?.value[0]?.children[0]?.text,
-      ).toBe('B')
-      expect(
-        value(snapshot)[0]?.rows[1]?.cells[1]?.value[0]?.children[0]?.text,
-      ).toBe('D')
-    })
+    expect(
+      JSON.parse(dataTransfer.getData('application/x-portable-text')),
+    ).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {_type: 'row', _key: 'r0', cells: [cell('c00', 'A')]},
+          {_type: 'row', _key: 'r1', cells: [cell('c10', 'C')]},
+        ],
+      },
+    ])
+    // The column cells cleared; the rest of the table is untouched.
+    const snapshot = editor.getSnapshot()
+    expect(
+      value(snapshot)[0]?.rows[0]?.cells[0]?.value[0]?.children[0]?.text,
+    ).toBe('')
+    expect(
+      value(snapshot)[0]?.rows[1]?.cells[0]?.value[0]?.children[0]?.text,
+    ).toBe('')
+    expect(
+      value(snapshot)[0]?.rows[0]?.cells[1]?.value[0]?.children[0]?.text,
+    ).toBe('B')
+    expect(
+      value(snapshot)[0]?.rows[1]?.cells[1]?.value[0]?.children[0]?.text,
+    ).toBe('D')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })
