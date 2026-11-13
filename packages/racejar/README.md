@@ -72,6 +72,52 @@ module.exports = {
 }
 ```
 
+## Usage with Playwright
+
+Import `Feature` from `racejar/playwright`. Its optional `test` property accepts a
+Playwright test created with `test.extend`; it defaults to Playwright's `test`.
+`fixtures` names the fixtures passed to every scenario and Before/After hook and
+defaults to `['page', 'context']`. Use `fixtures: []` to request no fixtures, so a
+Feature that needs no browser can run without launching one.
+
+Fixture names must match `/^[A-Za-z_$][\w$]*$/` and cannot be JavaScript reserved
+words, including strict-mode reserved words. Invalid names throw a racejar error.
+
+```ts nocheck
+import {test as base} from '@playwright/test'
+import {Given} from 'racejar'
+import {
+  Feature,
+  type PlaywrightContext,
+  type PlaywrightFixtures,
+} from 'racejar/playwright'
+
+const test = base.extend<{greeting: string}>({
+  greeting: 'foo',
+})
+type Context = PlaywrightContext<
+  Pick<PlaywrightFixtures<typeof test>, 'page' | 'greeting'>
+>
+
+Feature({
+  test,
+  fixtures: ['page', 'greeting'],
+  featureText: `Feature: Greeting
+    Scenario: Display a greeting
+      Given a greeting`,
+  stepDefinitions: [
+    Given('a greeting', async (context: Context) => {
+      await context.playwright.page.setContent(context.playwright.greeting)
+    }),
+  ],
+})
+```
+
+Steps take an annotated context, as the other drivers already require.
+`PlaywrightContext` defaults to `page` and `context`; use its generic parameter
+with `PlaywrightFixtures<typeof test>` to select the named fixtures and intersect
+with your own fields when sharing state between hooks and steps.
+
 ## Usage with \<your favourite testing framework\>
 
 `Feature` exported from `racejar/vitest` and `racejar/jest` are convenient thin wrappers around the more generic `compileFeature`.

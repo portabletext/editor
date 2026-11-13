@@ -1,49 +1,84 @@
 import type {ParameterType} from '@cucumber/cucumber-expressions'
-import {
-  test,
-  type PlaywrightTestArgs,
-  type PlaywrightTestOptions,
-  type PlaywrightWorkerArgs,
-  type PlaywrightWorkerOptions,
-} from '@playwright/test'
+import {test as baseTest, type TestType} from '@playwright/test'
 import {compileFeature} from '../compile-feature'
 import type {Hook} from '../hooks'
 import type {StepDefinition} from '../step-definitions'
 
-type PlaywrightOptions = PlaywrightTestArgs &
-  PlaywrightTestOptions &
-  PlaywrightWorkerArgs &
-  PlaywrightWorkerOptions
+/** @public */
+export type PlaywrightFixtures<
+  TTest extends TestType<any, any> = typeof baseTest,
+> =
+  TTest extends TestType<infer TTestArgs, infer TWorkerArgs>
+    ? TTestArgs & TWorkerArgs
+    : never
 
-/**
- * @public
- */
-export type PlaywrightContext = Record<'string', any> & {
-  playwright: PlaywrightOptions
-}
+/** @public */
+export type PlaywrightContext<
+  TFixtures extends Record<string, any> = Pick<
+    PlaywrightFixtures,
+    'page' | 'context'
+  >,
+> = {playwright: TFixtures}
 
-/**
- * @public
- */
+type NamedFixtures<
+  TTest extends TestType<any, any>,
+  TNames extends ReadonlyArray<string>,
+> = Pick<
+  PlaywrightFixtures<TTest>,
+  TNames[number] & keyof PlaywrightFixtures<TTest>
+>
+
+type FeatureContext<TContext, TFixtures extends Record<string, any>> = Omit<
+  TContext,
+  'playwright'
+> &
+  PlaywrightContext<TFixtures>
+
+/** @public */
 export function Feature<
-  TContext extends PlaywrightContext = PlaywrightContext,
->({
-  featureText,
-  hooks,
-  stepDefinitions,
-  parameterTypes,
-}: {
+  TTest extends TestType<any, any> = typeof baseTest,
+  const TNames extends ReadonlyArray<string> = readonly ['page', 'context'],
+  TContext extends Record<string, any> = PlaywrightContext<
+    NamedFixtures<TTest, TNames>
+  >,
+>(options: {
+  test?: TTest
+  fixtures?: TNames &
+    ReadonlyArray<Extract<keyof PlaywrightFixtures<TTest>, string>>
   featureText: string
-  hooks?: Array<Hook<TContext>>
-  stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
+  hooks?: Array<
+    Hook<NoInfer<FeatureContext<TContext, NamedFixtures<TTest, TNames>>>>
+  >
+  stepDefinitions: Array<
+    StepDefinition<
+      NoInfer<FeatureContext<TContext, NamedFixtures<TTest, TNames>>>,
+      any,
+      any,
+      any
+    >
+  > &
+    Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
-}) {
-  const feature = compileFeature({
-    featureText,
-    hooks: hooks ?? [],
-    stepDefinitions,
-    parameterTypes: parameterTypes ?? [],
+}): void {
+  const test: TestType<any, any> = options.test ?? baseTest
+  const names = [...new Set(options.fixtures ?? ['page', 'context'])]
+  for (const name of names) {
+    if (!/^[A-Za-z_$][\w$]*$/.test(name) || reservedWords.has(name)) {
+      throw new Error(
+        `racejar: fixture name "${name}" is not a plain JavaScript identifier`,
+      )
+    }
+  }
+
+  type Context = FeatureContext<TContext, NamedFixtures<TTest, TNames>>
+  const feature = compileFeature<Context, Context>({
+    featureText: options.featureText,
+    hooks: options.hooks ?? [],
+    stepDefinitions: options.stepDefinitions,
+    parameterTypes: options.parameterTypes ?? [],
   })
+  const runWithFixtures = (run: (context: Context) => Promise<void> | void) =>
+    fixtureCallback(names, (fixtures) => run({playwright: fixtures} as Context))
 
   const describeFn =
     feature.tag === 'only'
@@ -54,21 +89,11 @@ export function Feature<
 
   describeFn(feature.name, () => {
     for (const before of feature.beforeHooks) {
-      test.beforeEach(async (playwrightOptions) => {
-        await before({
-          playwright: playwrightOptions,
-        } as TContext)
-      })
+      test.beforeEach(runWithFixtures(before))
     }
-
     for (const after of feature.afterHooks) {
-      test.afterEach(async (playwrightOptions) => {
-        await after({
-          playwright: playwrightOptions,
-        } as TContext)
-      })
+      test.afterEach(runWithFixtures(after))
     }
-
     for (const scenario of feature.scenarios) {
       const testFn =
         scenario.tag === 'only'
@@ -76,14 +101,81 @@ export function Feature<
           : scenario.tag === 'skip'
             ? test.skip
             : test
-
-      testFn(scenario.name, async (playwrightOptions) => {
-        for (const step of scenario.steps) {
-          await step({
-            playwright: playwrightOptions,
-          } as TContext)
-        }
-      })
+      testFn(
+        scenario.name,
+        runWithFixtures(async (context) => {
+          for (const step of scenario.steps) {
+            await step(context)
+          }
+        }),
+      )
     }
   })
 }
+
+function fixtureCallback(
+  names: ReadonlyArray<string>,
+  run: (fixtures: Record<string, any>) => Promise<void> | void,
+): (fixtures: Record<string, any>) => Promise<void> {
+  // Playwright reads the callback source to pick which fixtures to set up.
+  const list = names.join(', ')
+  // The callback parameter takes a name no fixture uses, so a fixture can be
+  // called `run`.
+  let callback = 'run'
+  while (names.includes(callback)) {
+    callback += '_'
+  }
+  return new Function(
+    callback,
+    `return async ({${list}}) => ${callback}({${list}})`,
+  )(run)
+}
+
+const reservedWords = new Set([
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'null',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+  'yield',
+])
