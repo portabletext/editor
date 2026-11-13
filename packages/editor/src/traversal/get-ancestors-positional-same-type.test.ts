@@ -11,19 +11,6 @@ import {resolveNestedContainer} from '../schema/resolve-containers-batch'
 import {getAncestors} from './get-ancestors'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
-/**
- * Regression: `getAncestors` must descend with positional awareness
- * so the same `_type` registered under two different parents with
- * different `arrayField` values resolves correctly at each position.
- *
- * Mirrors the schema used by `get-children-positional-same-type.test.ts`:
- * - `table.rows.of: [{cell, content}]`
- * - `diagram.shapes.of: [{cell, markers}]`
- *
- * If `getAncestors` lost positional awareness, it would try to descend
- * into the wrong field on the wrong-shape cell and return an empty
- * ancestor list at depths greater than 1.
- */
 describe('getAncestors with same _type under different parents', () => {
   const schema = compileSchema(
     defineSchema({

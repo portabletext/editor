@@ -9,25 +9,6 @@ import {
 } from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-/**
- * Architecture-level isolation: `ParentContainerContext` and
- * `ParentTextBlockContext` are SEPARATE contexts. Inline subscribers
- * (spans, inline-objects) read `ParentTextBlockContext` only. Block
- * subscribers (containers, text blocks, block-objects) read
- * `ParentContainerContext` only. The two contexts are independent
- * subscription surfaces.
- *
- * These tests pin the architectural property by asserting that:
- *  - The mention rendered inside the callout's text block uses the
- *    positional render (proves inline reads text-block context).
- *  - The callout container's render fires (proves block reads
- *    container context).
- *  - Both render simultaneously without one canceling the other.
- *
- * Exact re-render-count testing for two-context isolation is left to
- * the production environment (React profiler + production builds).
- */
-
 describe('Context isolation between block-level and inline-level dispatch', () => {
   test('Scenario: Inline dispatch reads ParentTextBlockContext, not ParentContainerContext', async () => {
     // Register the mention positionally inside the TEXT BLOCK and

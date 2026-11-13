@@ -39,11 +39,6 @@ async function setupSelectedBlocks() {
   return editor
 }
 
-// The coalescing, ordering, multi-burst, throw-containment, and
-// unsubscribe/stop semantics are pinned deterministically in
-// `src/editor/relay.test.ts`; these tests cover the end-to-end wiring through
-// `editor.on` (the overload and the `create-editor` bridge) against a real
-// operation burst, which the relay unit test cannot exercise.
 describe('editor.on batch option (end to end)', () => {
   test('Scenario: A batched listener receives a real operation burst coalesced, every event once and in order', async () => {
     const editor = await setupSelectedBlocks()

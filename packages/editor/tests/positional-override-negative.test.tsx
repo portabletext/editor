@@ -7,22 +7,6 @@ import {
   defineTextBlock,
 } from '../src/renderers/renderer.types'
 
-/**
- * Negative type-level pinning. Misplacement of a kind in the wrong
- * positional `of` is a type error.
- *
- *   - defineContainer.of accepts only Container | TextBlock |
- *     BlockObject. Span and InlineObject are inline-only and belong
- *     in defineTextBlock.of.
- *   - defineTextBlock.of accepts only Span | InlineObject. Container,
- *     TextBlock, and BlockObject are block-content kinds.
- *
- * These tests use `@ts-expect-error` to pin compile-time
- * forbidden combinations. The expectation is that compilation fails
- * at the marked line; if it passes (compiler accepts the
- * misplacement), `@ts-expect-error` itself errors.
- */
-
 test('14. defineContainer.of containing Span is a type error', () => {
   defineContainer({
     type: 'callout',
@@ -65,8 +49,6 @@ test('17. defineTextBlock.of containing BlockObject is a type error', () => {
   })
 })
 
-// Type assertions that the resolved `of` shapes are narrowed
-// correctly.
 test('Container.of resolves to a block-only array type', () => {
   const callout = defineContainer({
     type: 'callout',

@@ -10,9 +10,6 @@ import {createTestEditor} from '../src/test/vitest'
 import {getTextMarks} from '../test-utils/text-marks'
 import {getTextSelection} from '../test-utils/text-selection'
 
-/**
- * By default, annotations of the same type cannot overlap.
- */
 describe('overlapping annotations', () => {
   const schemaDefinition = defineSchema({
     annotations: [

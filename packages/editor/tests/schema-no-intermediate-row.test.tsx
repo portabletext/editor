@@ -5,24 +5,6 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-/**
- * Normalisation walks registered container chains from the editor's
- * value root down to a placeholder text block - so a freshly-inserted
- * empty container can hold a caret without the caller having to
- * synthesise the chain manually.
- *
- * Pinned here:
- * 1. A two-level chain (table > cell, schema has no row) walks to
- *    a placeholder text block when the cell's content is empty.
- * 2. A three-level chain (table > row > cell) walks the full depth
- *    when the cell's content is empty.
- * 3. A degenerate value (`table > cell` directly when schema
- *    declares table > row > cell) - the cell is not in a valid
- *    container chain at this position (table.of does not declare
- *    cell positionally and the top-level entry for cell is gated by
- *    parent chain validity), so normalisation does NOT walk into it
- *    and the cell renders as a non-editable block-object placeholder.
- */
 describe('normalisation walks registered container chains to completion', () => {
   test('Scenario: Empty cell.content gets a placeholder text block in a table > cell schema without a row', async () => {
     const keyGenerator = createTestKeyGenerator()

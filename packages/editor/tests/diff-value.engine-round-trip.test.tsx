@@ -5,14 +5,6 @@ import {createTestEditor} from '../src/test/vitest'
 import {diffValueToPatches} from '../test-utils/diff-value-patches'
 import {generateValuePair} from '../test-utils/generate-value-pairs'
 
-/**
- * Engine-side round-trip property for the revised patch pipeline: the same
- * diffed patches that round-trip through `applyAll` (see
- * `diff-value-round-trip.test.ts`, 500 seeds green) must round-trip through
- * the editor's own `patches` application. Seeds that fail here and not
- * there localize a hole in the engine's patch application, the concrete
- * work list for making application total.
- */
 describe('diffValue round-trip: engine patches application', () => {
   // Seeds 3, 6, 14, 18, 21, 33, and 38 generate a `fromValue` with
   // adjacent same-mark spans. They were pinned as expected failures while
