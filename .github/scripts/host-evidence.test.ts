@@ -1,8 +1,136 @@
-import {describe, expect, test} from 'vitest'
+import {spawnSync} from 'node:child_process'
+import {mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {hostEvidence} from './emulator-runs.mjs'
+
+let sudoDirectory: string
+let originalPath: string | undefined
+beforeEach(() => {
+  sudoDirectory = mkdtempSync(join(tmpdir(), 'host-evidence-sudo-'))
+  writeFileSync(join(sudoDirectory, 'sudo'), '#!/bin/sh\nexit 1\n', {
+    mode: 0o755,
+  })
+  originalPath = process.env.PATH
+  process.env.PATH = `${sudoDirectory}:${originalPath}`
+})
+afterEach(() => {
+  process.env.PATH = originalPath
+  rmSync(sudoDirectory, {recursive: true, force: true})
+})
 
 // 1762772400 is 11:00:00 UTC.
 describe(hostEvidence.name, () => {
+  test('Scenario: A core records a crash with no sampled exit after en.enter finishes', () => {
+    expect(
+      hostEvidence(
+        '1794569720 812000 0 1.50 qemu pid=3299 rss_kb=4100000 state=I\n',
+        '',
+        'EMULATOR_START at 1794569570\nBOOTED at 1794569623\nCHECKED skipped at 1794569707\nDONE at 1794569709\n',
+        'HOST_CORE pid=3299 signal=SIGSEGV\nexecutable=/usr/local/lib/android/sdk/emulator/qemu/linux-x86_64/qemu-system-x86_64-headless\n',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 3299 crashed (SIGSEGV), the host sampler logged no exit for it',
+    ])
+  })
+
+  test('Scenario: A core and its logged exit produce one line', () => {
+    expect(
+      hostEvidence(
+        'QEMU_GONE pid=4242 at 1762772400\n',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=SIGSEGV\n',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator crashed (SIGSEGV)',
+    ])
+  })
+
+  test('Scenario: A core and another process logged exit produce two lines', () => {
+    expect(
+      hostEvidence(
+        'QEMU_GONE pid=5151 at 1762772402\n',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=SIGSEGV\nexecutable=/usr/local/lib/android/sdk/emulator/qemu/linux-x86_64/qemu-system-x86_64-headless\n',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 5151 exited at 11:00:02 UTC, mid-run',
+      'host evidence: emulator process 4242 crashed (SIGSEGV), the host sampler logged no exit for it',
+    ])
+  })
+
+  test('Scenario: A core records a crash without a sampler log', () => {
+    expect(
+      hostEvidence(
+        '',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=SIGABRT\nexecutable=/usr/local/lib/android/sdk/emulator/qemu/linux-x86_64/qemu-system-x86_64-headless\n',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 crashed (SIGABRT), the host sampler logged no exit for it',
+    ])
+  })
+
+  test('Scenario: A core from another process is not named an emulator crash', () => {
+    expect(
+      hostEvidence(
+        'QEMU_GONE pid=4242 at 1762772400\n',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=SIGSEGV\nexecutable=/usr/local/lib/android/sdk/emulator/qemu/linux-x86_64/qemu-system-x86_64-headless\nHOST_CORE pid=5151 signal=SIGABRT\nexecutable=unavailable\nNo recorded emulator executable for pid 5151\n',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator crashed (SIGSEGV)',
+      'host evidence: non-emulator process 5151 crashed (SIGABRT)',
+    ])
+  })
+
+  test('Scenario: A core names the signal only for its own emulator exit', () => {
+    expect(
+      hostEvidence(
+        'QEMU_GONE pid=4242 at 1762772400\nQEMU_GONE pid=5151 at 1762772402',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=SIGSEGV\nProgram terminated with signal SIGSEGV, Segmentation fault.',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator crashed (SIGSEGV)',
+      'host evidence: emulator process 5151 exited at 11:00:02 UTC, mid-run',
+    ])
+  })
+
+  test('Scenario: Multiple cores preserve each exit signal', () => {
+    expect(
+      hostEvidence(
+        'QEMU_GONE pid=4242 at 1762772400\nQEMU_GONE pid=5151 at 1762772402',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=SIGSEGV\nHOST_CORE pid=5151 signal=SIGABRT',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator crashed (SIGSEGV)',
+      'host evidence: emulator process 5151 exited at 11:00:02 UTC, mid-run, emulator crashed (SIGABRT)',
+    ])
+  })
+
+  test('Scenario: An incomplete core record cannot name a signal', () => {
+    expect(
+      hostEvidence(
+        'QEMU_GONE pid=4242 at 1762772400',
+        '',
+        '',
+        'HOST_CORE pid=4242 signal=\nProgram terminated with signal SIGSEGV, Segmentation fault.',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run',
+    ])
+  })
+
   test('Scenario: A sustained freeze precedes exit', () => {
     expect(
       hostEvidence(
@@ -237,4 +365,43 @@ describe(hostEvidence.name, () => {
       ['host evidence: no host sampler log'],
     ])
   })
+})
+
+test('Scenario: The host evidence command reads the core artifact without writing a run outcome', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'host-core-summary-'))
+  const summary = join(directory, 'summary.md')
+  writeFileSync(
+    join(directory, 'host.log'),
+    'QEMU_GONE pid=4242 at 1762772400\n',
+  )
+  writeFileSync(
+    join(directory, 'host-core.txt'),
+    'HOST_CORE pid=4242 signal=SIGSEGV\n',
+  )
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [
+        fileURLToPath(new URL('emulator-runs.mjs', import.meta.url)),
+        'host-evidence',
+        directory,
+      ],
+      {encoding: 'utf8', env: {...process.env, GITHUB_STEP_SUMMARY: summary}},
+    )
+    expect({
+      status: result.status,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      summary: readFileSync(summary, 'utf8'),
+    }).toEqual({
+      status: 0,
+      stdout:
+        'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator crashed (SIGSEGV)\n',
+      stderr: '',
+      summary:
+        'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator crashed (SIGSEGV)\n',
+    })
+  } finally {
+    rmSync(directory, {recursive: true, force: true})
+  }
 })
