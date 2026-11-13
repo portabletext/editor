@@ -24,6 +24,16 @@ afterEach(() => {
 })
 
 describe(cdpEval.name, () => {
+  test('a page action transport fault is evaluated only once', async () => {
+    const targetLists = stubDroppedTargets()
+    setCurrentUrl(page)
+    await expect(
+      cdpEval('window.__action("select", null)', false),
+    ).rejects.toThrow('target list dropped')
+    expect(targetLists).toEqual(['/json'])
+    expect(forward.calls).toEqual(0)
+  })
+
   test('a reply whose expression threw in the page rejects with the exception, without a second evaluation', async () => {
     const evaluations = stubPage({
       result: {
@@ -43,6 +53,20 @@ describe(cdpEval.name, () => {
       'Uncaught in `window.__state()`: TypeError: Cannot read properties of undefined (reading "context")',
     )
     expect(evaluations).toEqual(['window.__state()'])
+  })
+
+  test('every evaluation waits for promises in the page', async () => {
+    const requests: unknown[] = []
+    stubPage({result: {result: {type: 'string', value: 'complete'}}}, requests)
+    setCurrentUrl(page)
+    await cdpEval('document.readyState')
+    expect(requests).toEqual([
+      {
+        expression: 'document.readyState',
+        returnByValue: true,
+        awaitPromise: true,
+      },
+    ])
   })
 
   test('a reply with a value resolves to the value', async () => {
@@ -118,7 +142,10 @@ function stubDroppedTargets(): string[] {
   return targetLists
 }
 
-function stubPage(reply: Record<string, unknown>): string[] {
+function stubPage(
+  reply: Record<string, unknown>,
+  requests: unknown[] = [],
+): string[] {
   const evaluations: string[] = []
   vi.stubGlobal('fetch', () =>
     Promise.resolve({
@@ -144,6 +171,7 @@ function stubPage(reply: Record<string, unknown>): string[] {
           id: number
           params: {expression: string}
         }
+        requests.push(request.params)
         evaluations.push(request.params.expression)
         queueMicrotask(() =>
           this.dispatchEvent(
