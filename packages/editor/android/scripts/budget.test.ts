@@ -1,6 +1,10 @@
 import {readdirSync, readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
-import {countDeviceTests, deviceTestFileSeconds} from 'thumbjar/vitest'
+import {
+  countDeviceTests,
+  EMULATOR_BOOT_SECONDS,
+  runStepWorstSeconds,
+} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
 
@@ -75,7 +79,7 @@ describe('the workflow', () => {
       {lang: 'en', file: 'tests/en.test.ts', runMinutes: 90},
       {lang: 'ja', file: 'tests/ja.enter.test.ts', runMinutes: 90},
       {lang: 'en', file: 'tests/en.enter.test.ts', runMinutes: 90},
-      {lang: 'en', file: 'tests/en.insert.break.test.ts', runMinutes: 101},
+      {lang: 'en', file: 'tests/en.insert.break.test.ts', runMinutes: 120},
       {lang: 'en', file: 'tests/en.insert.text.test.ts', runMinutes: 90},
     ])
   })
@@ -86,13 +90,21 @@ describe('the workflow', () => {
     ).toEqual(['tests/en-textarea.test.ts'])
   })
 
-  test('gives every row enough run minutes for its declared test count', () => {
+  test('gives every row enough run minutes for the whole run step at its declared test count', () => {
     for (const row of rows) {
       const count = countDeviceTests(readFileSync(`${root}${row.file}`, 'utf8'))
       expect(row.runMinutes, row.file).toBeGreaterThanOrEqual(
-        Math.ceil(deviceTestFileSeconds(count) / 60),
+        Math.ceil(runStepWorstSeconds(row.lang, count) / 60),
       )
     }
+  })
+
+  test('boots the emulator within the time the run step budget counts', () => {
+    expect(
+      [...workflow.matchAll(/^ {10}emulator-boot-timeout: (\d+)$/gm)].map(
+        (match) => Number(match[1]),
+      ),
+    ).toEqual([EMULATOR_BOOT_SECONDS, EMULATOR_BOOT_SECONDS])
   })
 
   test('gives both run steps the cap of the matrix row they run', () => {

@@ -123,7 +123,7 @@ Then:
 2. Run the workflow on your branch, or `test:android` against a local emulator, and check the new test's result.
 3. If it fails on `main` because of a known bug, make it `test.fails` and describe the bug by its behavior in a comment inside the test.
 
-Each test adds about a minute or two to its job and increases its file's test stage cap. A new test file needs its own row in the workflow's matrix, and the row's `runMinutes` is the cap of both run steps. It must cover the file's test stage, and `scripts/budget.test.ts` checks that for every row and that the job cap stays at or under 360 minutes. A page other than `plain.html`, `textarea.html` and `editor.html` needs its HTML in `page/`, an entry in `vite.config.ts` and a call to `recordInput` from `thumbjar/page`.
+Each test adds about a minute or two to its job and increases its file's test stage cap. A new test file needs its own row in the workflow's matrix, and the row's `runMinutes` is the cap of both run steps. It must cover the whole run step, which is the runner setup, the boot wait, the cap read, the prep, the file's test stage, the device check and the diagnostics, each at its bound with the kill graces of its commands (`runStepWorstSeconds` in thumbjar), and `scripts/budget.test.ts` checks that for every row and that the job cap stays at or under 360 minutes. A page other than `plain.html`, `textarea.html` and `editor.html` needs its HTML in `page/`, an entry in `vite.config.ts` and a call to `recordInput` from `thumbjar/page`.
 
 ## Files
 
