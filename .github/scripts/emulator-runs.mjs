@@ -154,7 +154,31 @@ export function hostEvidence(hostLog, dmesg, timing) {
       Number(match[1]),
     ),
   }))
-  return exits.map(([, pid, epoch]) => {
+  return exits.map((exit) => {
+    const [, pid, epoch] = exit
+    let freezeStart = ''
+    let freezeSamples = 0
+    const previousExit = hostLog.lastIndexOf('QEMU_GONE', exit.index - 1)
+    for (const line of hostLog
+      .slice(Math.max(0, previousExit), exit.index)
+      .split('\n')) {
+      const sample =
+        /^(\d+) \S+ \S+ \S+ qemu pid=(\d+) rss_kb=\d+ state=(\S+)$/.exec(line)
+      if (sample === null || sample[2] !== pid) {
+        continue
+      }
+      if (sample[3] === 'S' || sample[3] === 'R') {
+        freezeStart = ''
+        freezeSamples = 0
+      } else {
+        if (freezeSamples === 0) {
+          freezeStart = new Date(Number(sample[1]) * 1000)
+            .toISOString()
+            .slice(11, 19)
+        }
+        freezeSamples += 1
+      }
+    }
     const exitedAt = Number(epoch)
     // A run's own DONE is the only one its emulator's exit can follow. Only a log with no start lines counts every
     // DONE, and when start lines exist but none is at or before the exit, no run had started and the exit is mid-run.
@@ -179,7 +203,7 @@ export function hostEvidence(hostLog, dmesg, timing) {
     ) {
       verdict = ', emulator crashed'
     }
-    return `host evidence: emulator process ${pid} exited at ${clock} UTC, ${where}${verdict}`
+    return `host evidence: emulator process ${pid} exited at ${clock} UTC, ${where}${verdict}${freezeSamples >= 2 ? `, emulator froze at ${freezeStart} UTC` : ''}`
   })
 }
 
