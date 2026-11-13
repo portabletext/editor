@@ -13,7 +13,14 @@ Feature({
         Then the heading is "Installation"`,
   stepDefinitions: [
     Given('the homepage', async (context: Context) => {
-      await context.playwright.page.goto('https://playwright.dev/')
+      await context.playwright.context.clearCookies()
+      await context.playwright.page.setContent(`
+        <h1>Homepage</h1>
+        <a href="#installation" onclick="document.querySelector('#installation').hidden = false">Get started</a>
+        <h2 id="installation" hidden>Installation</h2>
+      `)
+      // @ts-expect-error N1: `request` is not a default fixture
+      context.playwright.request
     }),
     When(
       'clicking the {string} link',
