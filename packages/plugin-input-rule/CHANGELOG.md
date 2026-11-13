@@ -1,5 +1,12 @@
 # @portabletext/plugin-input-rule
 
+## 7.0.28-next.0
+
+### Patch Changes
+
+- Updated dependencies [[`216fb52`](https://github.com/portabletext/editor/commit/216fb5210eec66f79e6c070b218be1e23aa05f59), [`91d91a4`](https://github.com/portabletext/editor/commit/91d91a4af5e4a4c7f97eb340981a84afe43770c8), [`77b4cda`](https://github.com/portabletext/editor/commit/77b4cda5764d7b392d710c6578060d623b9e5507), [`be03281`](https://github.com/portabletext/editor/commit/be03281252910647eb369d18092bcfaa164cdea7), [`e4e4d1b`](https://github.com/portabletext/editor/commit/e4e4d1bc8cff842e5e4176979479a4bafc5061a8), [`0bab687`](https://github.com/portabletext/editor/commit/0bab6879efdd0443bb5d9295130927e64799190c), [`b3125b6`](https://github.com/portabletext/editor/commit/b3125b657a0b1d186b0a22f9224cea3db93c385c), [`b993cec`](https://github.com/portabletext/editor/commit/b993cec04e90ffaf0c44292a2671f6d6f026d5c9)]:
+  - @portabletext/editor@9.0.0-next.0
+
 ## 7.0.27
 
 ### Patch Changes
