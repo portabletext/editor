@@ -71,18 +71,21 @@ import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
 import {isExpandedRange} from '../../range/is-expanded-range'
 import {rangeEquals} from '../../range/range-equals'
-import type {AndroidInputManager} from '../hooks/android-input-manager/android-input-manager'
-import {useAndroidInputManager} from '../hooks/android-input-manager/use-android-input-manager'
 import useChildren from '../hooks/use-children'
 import {DecorateContext, useDecorateContext} from '../hooks/use-decorations'
 import {useEngine} from '../hooks/use-engine'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {ReadOnlyContext} from '../hooks/use-read-only'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
+import {
+  androidComposition,
+  operationEndsAndroidComposition,
+  redrawAndroidComposition,
+  trackAndroidCompositionSelection,
+} from '../utils/android-composition'
 import {attachRef} from '../utils/attach-ref'
 import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
-import {RestoreDOM} from './restore-dom/restore-dom'
 
 type DeferredOperation = () => void
 
@@ -185,7 +188,7 @@ export const Editable = forwardRef(
     const deferredOperations = useRef<DeferredOperation[]>([])
     const processing = useRef(false)
 
-    const {onUserInput, receivedUserInput} = useTrackUserInput()
+    const {onUserInput} = useTrackUserInput()
 
     const [, forceRender] = useReducer((s) => s + 1, 0)
     editor.forceRender = forceRender
@@ -207,6 +210,25 @@ export const Editable = forwardRef(
     useEffect(
       () =>
         subscribeToOperations(editor, (event) => {
+          const composition = androidComposition.get(editor)
+          const operation = event.operation
+          if (composition && !composition.applying) {
+            const snapshot = {
+              context: {...editor.snapshot.context, value: event.beforeValue},
+              blockIndexMap: new Map<string, number>(),
+            }
+            if (
+              operationEndsAndroidComposition(
+                operation,
+                composition.paths,
+                snapshot,
+              )
+            ) {
+              redrawAndroidComposition(editor)
+              editor.domElement?.blur()
+              editor.domElement?.focus()
+            }
+          }
           if (
             event.operation.type !== 'set.selection' &&
             (event.origin === 'local' ||
@@ -231,16 +253,6 @@ export const Editable = forwardRef(
         ref.current.focus()
       }
     }, [autoFocus])
-
-    /**
-     * The AndroidInputManager object has a cyclical dependency on onDOMSelectionChange
-     *
-     * It is defined as a reference to simplify hook dependencies and clarify that
-     * it needs to be initialized.
-     */
-    const androidInputManagerRef = useRef<
-      AndroidInputManager | null | undefined
-    >(undefined)
 
     // Listen on the native `selectionchange` event to be able to update any time
     // the selection changes. This is required because React's `onSelect` is leaky
@@ -278,11 +290,7 @@ export const Editable = forwardRef(
             return
           }
 
-          const androidInputManager = androidInputManagerRef.current
-          if (
-            (IS_ANDROID || !editor.composing) &&
-            (!state.isUpdatingSelection || androidInputManager?.isFlushing())
-          ) {
+          if (!editor.composing && !state.isUpdatingSelection) {
             const root = DOMEditor.findDocumentOrShadowRoot(editor)
             const {activeElement} = root
             const el = getDomNode(editor, [])
@@ -327,11 +335,7 @@ export const Editable = forwardRef(
               })
 
               if (range) {
-                if (
-                  !editor.composing &&
-                  !androidInputManager?.hasPendingChanges() &&
-                  !androidInputManager?.isFlushing()
-                ) {
+                if (!editor.composing) {
                   // Suppress browser selection normalization that would
                   // overwrite a block object selection.
                   editor.select(range)
@@ -362,8 +366,6 @@ export const Editable = forwardRef(
                       // another chance.
                     }
                   }
-                } else {
-                  androidInputManager?.handleUserSelect(range)
                 }
               }
             }
@@ -381,13 +383,6 @@ export const Editable = forwardRef(
       () => debounce(onDOMSelectionChange, 0),
       [onDOMSelectionChange],
     )
-
-    androidInputManagerRef.current = useAndroidInputManager({
-      editorActor,
-      node: ref as React.RefObject<HTMLElement>,
-      onDOMSelectionChange,
-      scheduleOnDOMSelectionChange,
-    })
 
     useIsomorphicLayoutEffect(() => {
       // Consumed at most once per effect run: whichever render runs next
@@ -411,7 +406,7 @@ export const Editable = forwardRef(
       if (
         !domSelection ||
         !editor.focused ||
-        androidInputManagerRef.current?.hasPendingAction()
+        (IS_ANDROID && editor.composing)
       ) {
         return
       }
@@ -530,7 +525,7 @@ export const Editable = forwardRef(
         }
 
         if (newDomRange) {
-          if (editor.composing && !IS_ANDROID) {
+          if (editor.composing) {
             if (domSelection.rangeCount > 0) {
               domSelection.collapseToEnd()
             }
@@ -562,57 +557,9 @@ export const Editable = forwardRef(
         setDomSelection()
       }
 
-      const ensureSelection =
-        androidInputManagerRef.current?.isFlushing() === 'action'
-
-      if (!IS_ANDROID || !ensureSelection) {
-        setTimeout(() => {
-          state.isUpdatingSelection = false
-        })
-        return
-      }
-
-      let timeoutId: ReturnType<typeof setTimeout> | null = null
-      const animationFrameId = requestAnimationFrame(() => {
-        if (ensureSelection) {
-          const ensureDomSelection = (forceChange?: boolean) => {
-            try {
-              const el = getDomNode(editor, [])
-
-              if (!el) {
-                return
-              }
-
-              el.focus()
-
-              setDomSelection(forceChange)
-            } catch (_e) {
-              // Ignore, dom and state might be out of sync
-            }
-          }
-
-          // Compat: Android IMEs try to force their selection by manually re-applying it even after we set it.
-          // This essentially would make setting the engine's selection during an update meaningless, so we force it
-          // again here. We can't only do it in the setTimeout after the animation frame since that would cause a
-          // visible flicker.
-          ensureDomSelection()
-
-          timeoutId = setTimeout(() => {
-            // COMPAT: While setting the selection in an animation frame visually correctly sets the selection,
-            // it doesn't update GBoards spellchecker state. We have to manually trigger a selection change after
-            // the animation frame to ensure it displays the correct state.
-            ensureDomSelection(true)
-            state.isUpdatingSelection = false
-          })
-        }
+      setTimeout(() => {
+        state.isUpdatingSelection = false
       })
-
-      return () => {
-        cancelAnimationFrame(animationFrameId)
-        if (timeoutId) {
-          clearTimeout(timeoutId)
-        }
-      }
     })
 
     // Listen on the native `beforeinput` event to get real "Level 2" events. This
@@ -662,32 +609,32 @@ export const Editable = forwardRef(
           DOMEditor.hasEditableTarget(editor, event.target) &&
           !isDOMEventHandled(event, propsOnDOMBeforeInput)
         ) {
-          // COMPAT: BeforeInput events aren't cancelable on android, so we have to handle them differently using the android input manager.
-          if (androidInputManagerRef.current) {
-            return androidInputManagerRef.current.handleDOMBeforeInput(event)
-          }
-
           // Some IMEs/Chrome extensions like e.g. Grammarly set the selection immediately before
           // triggering a `beforeinput` expecting the change to be applied to the immediately before
           // set selection.
           scheduleOnDOMSelectionChange.flush()
           onDOMSelectionChange.flush()
 
-          const {selection} = editor.snapshot.context
+          let {selection} = editor.snapshot.context
           const {inputType: type} = event
           const data = (event as any).dataTransfer || event.data || undefined
 
           const isCompositionChange =
             type === 'insertCompositionText' || type === 'deleteCompositionText'
 
+          if (IS_ANDROID && editor.isNodeMapDirty && !isCompositionChange) {
+            return
+          }
+
           // COMPAT: use composition change events as a hint to where we should
           // insert composition text if we aren't composing.
-          if (isCompositionChange && editor.composing) {
+          if (!IS_ANDROID && isCompositionChange && editor.composing) {
             return
           }
 
           let native = false
           if (
+            !IS_ANDROID &&
             type === 'insertText' &&
             selection &&
             isCollapsedRange(selection) &&
@@ -759,10 +706,15 @@ export const Editable = forwardRef(
           // COMPAT: For the deleting forward/backward input types we don't want
           // to change the selection because it is the range that will be deleted,
           // and those commands determine that for themselves.
-          // If the NODE_MAP is dirty, we can't trust the selection anchor (eg DOMEditor.toDOMPoint via DOMEditor.toEditorSelection)
           if (
-            (!type.startsWith('delete') || type.startsWith('deleteBy')) &&
-            !editor.isNodeMapDirty
+            (IS_ANDROID ||
+              !type.startsWith('delete') ||
+              type.startsWith('deleteBy')) &&
+            (!editor.isNodeMapDirty ||
+              (IS_ANDROID &&
+                isCompositionChange &&
+                event.getTargetRanges().length === 0 &&
+                (androidComposition.get(editor)?.elements.length ?? 0) > 0))
           ) {
             const [targetRange] = (event as any).getTargetRanges()
 
@@ -796,11 +748,15 @@ export const Editable = forwardRef(
                 native = false
 
                 const selectionRef =
+                  !IS_ANDROID &&
                   !isCompositionChange &&
                   editor.snapshot.context.selection &&
                   rangeRef(editor, editor.snapshot.context.selection)
 
                 editor.select(range)
+                if (IS_ANDROID) {
+                  selection = range
+                }
 
                 if (selectionRef) {
                   editor.userSelection = selectionRef
@@ -809,9 +765,55 @@ export const Editable = forwardRef(
             }
           }
 
-          // Composition change types occur while a user is composing text and can't be
-          // cancelled. Let them through and wait for the composition to end.
           if (isCompositionChange) {
+            if (!IS_ANDROID) {
+              return
+            }
+            const [targetRange] = event.getTargetRanges()
+            const composition = androidComposition.get(editor) ?? {
+              elements: [],
+              paths: [],
+              applying: false,
+            }
+            androidComposition.set(editor, composition)
+            editor.composing = true
+            if (targetRange) {
+              composition.elements.push(
+                ...[targetRange.startContainer, targetRange.endContainer]
+                  .map((node) =>
+                    node instanceof Element ? node : node.parentElement,
+                  )
+                  .map((element) =>
+                    element?.closest<HTMLElement>(
+                      '[data-pt-text], [data-pt-zero-width]',
+                    ),
+                  )
+                  .filter((element): element is HTMLElement =>
+                    Boolean(element),
+                  ),
+              )
+            }
+            trackAndroidCompositionSelection(editor)
+            composition.applying = true
+            try {
+              if (!event.data && selection && isExpandedRange(selection)) {
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent: {type: 'delete'},
+                  editor,
+                })
+              }
+              if (event.data) {
+                editorActor.send({
+                  type: 'behavior event',
+                  behaviorEvent: {type: 'insert.text', text: event.data},
+                  editor,
+                })
+              }
+            } finally {
+              trackAndroidCompositionSelection(editor)
+              composition.applying = false
+            }
             return
           }
 
@@ -945,6 +947,11 @@ export const Editable = forwardRef(
                 behaviorEvent: {type: 'insert.soft break'},
                 editor,
               })
+              if (IS_ANDROID && androidComposition.has(editor)) {
+                redrawAndroidComposition(editor)
+                editor.domElement?.blur()
+                editor.domElement?.focus()
+              }
               break
 
             case 'insertParagraph': {
@@ -953,6 +960,11 @@ export const Editable = forwardRef(
                 behaviorEvent: {type: 'insert.break'},
                 editor,
               })
+              if (IS_ANDROID && androidComposition.has(editor)) {
+                redrawAndroidComposition(editor)
+                editor.domElement?.blur()
+                editor.domElement?.focus()
+              }
               break
             }
 
@@ -1105,7 +1117,7 @@ export const Editable = forwardRef(
     return (
       <ReadOnlyContext.Provider value={readOnly}>
         <DecorateContext.Provider value={decorateContext}>
-          <RestoreDOM node={ref} receivedUserInput={receivedUserInput}>
+          <>
             {/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- role is conditionally set to textbox when editable */}
             <div
               role={readOnly ? undefined : 'textbox'}
@@ -1186,11 +1198,6 @@ export const Editable = forwardRef(
               onInput={useCallback(
                 (event: React.FormEvent<HTMLDivElement>) => {
                   if (isEventHandled(event as any, attributes.onInput)) {
-                    return
-                  }
-
-                  if (androidInputManagerRef.current) {
-                    androidInputManagerRef.current.handleInput()
                     return
                   }
 
@@ -1409,13 +1416,15 @@ export const Editable = forwardRef(
                     return
                   }
                   if (DOMEditor.hasSelectableTarget(editor, event.target)) {
-                    if (editor.composing) {
+                    if (editor.composing || IS_ANDROID) {
                       Promise.resolve().then(() => {
-                        editor.composing = false
+                        if (IS_ANDROID) {
+                          redrawAndroidComposition(editor)
+                        } else {
+                          editor.composing = false
+                        }
                       })
                     }
-
-                    androidInputManagerRef.current?.handleCompositionEnd(event)
 
                     if (
                       isEventHandled(event, attributes.onCompositionEnd) ||
@@ -1469,9 +1478,14 @@ export const Editable = forwardRef(
                     return
                   }
                   if (DOMEditor.hasSelectableTarget(editor, event.target)) {
-                    androidInputManagerRef.current?.handleCompositionStart(
-                      event,
-                    )
+                    if (IS_ANDROID) {
+                      androidComposition.set(editor, {
+                        elements: [],
+                        paths: [],
+                        applying: false,
+                      })
+                      editor.composing = true
+                    }
 
                     if (
                       isEventHandled(event, attributes.onCompositionStart) ||
@@ -1535,15 +1549,17 @@ export const Editable = forwardRef(
                     !readOnly &&
                     DOMEditor.hasEditableTarget(editor, event.target)
                   ) {
-                    androidInputManagerRef.current?.handleKeyDown(event)
-
                     const {nativeEvent} = event
 
                     // COMPAT: The composition end event isn't fired reliably in all browsers,
                     // so we sometimes might end up stuck in a composition state even though we
                     // aren't composing any more.
                     if (editor.composing && nativeEvent.isComposing === false) {
-                      editor.composing = false
+                      if (IS_ANDROID) {
+                        redrawAndroidComposition(editor)
+                      } else {
+                        editor.composing = false
+                      }
                     }
 
                     if (
@@ -1937,7 +1953,7 @@ export const Editable = forwardRef(
                 renderText={renderText}
               />
             </div>
-          </RestoreDOM>
+          </>
         </DecorateContext.Provider>
       </ReadOnlyContext.Provider>
     )

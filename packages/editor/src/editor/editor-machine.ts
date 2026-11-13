@@ -416,10 +416,6 @@ export const editorMachine = setup({
         if (currentSelection) {
           editorEngine.select(currentSelection)
 
-          // Tell the engine to use this selection for DOM sync
-          editorEngine.pendingSelection =
-            editorEngine.snapshot.context.selection
-
           // Trigger the DOM sync
           editorEngine.onChange()
         }
