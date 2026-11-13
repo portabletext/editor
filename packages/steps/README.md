@@ -1,0 +1,69 @@
+# `@portabletext/steps`
+
+> Map a position across a transaction
+
+A transaction reshapes a Portable Text document: text is typed, a block splits, a span is folded into another. This package turns that reshaping into a small vocabulary of primitive steps (`insert.text`, `remove.text`, `move.text`, `remove.node`, `move.node`, `set.text`, `set.children`, `set.key`), derived from a transaction's Sanity patches, then maps a caret or a selection through them, so a position captured before the transaction still points at the right place after it.
+
+## You might not need this
+
+This is a low-level building block for collaborative and offline scenarios:
+
+- **Editing** with the Portable Text Editor directly? The editor already tracks its own selection through every local change; you don't need to map anything yourself.
+- **Applying Sanity patches** to a value without caring where a position ends up? Use [`@portabletext/patches`](https://www.npmjs.com/package/@portabletext/patches) instead.
+
+Reach for this package when you hold a position, your own or a remote collaborator's, that has to survive a transaction it didn't originate from: a server relaying another client's edits, or an offline client rebasing its own selection onto a transaction it received while disconnected.
+
+## Installation
+
+```bash
+npm install @portabletext/steps
+```
+
+## Usage
+
+`interpretTransaction(base, patches)` derives the steps for a transaction's patches, read against the document value they applied to. `mapPoint(steps, point, options?)` and `mapRange(steps, range)` map a `Point` (`{path, offset}`) or a `Range` (`{anchor, focus}`) through them:
+
+```ts
+import type {Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
+import {interpretTransaction, mapPoint} from '@portabletext/steps'
+
+const value: Array<PortableTextBlock> = [
+  {
+    _key: 'b1',
+    _type: 'block',
+    children: [{_key: 's1', _type: 'span', marks: [], text: 'foo'}],
+    markDefs: [],
+  },
+]
+const patches: Array<Patch> = [
+  {
+    type: 'set',
+    path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+    value: 'foobar',
+  },
+]
+const steps = interpretTransaction(value, patches)
+
+const newPoint = mapPoint(steps, {
+  path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+  offset: 3,
+})
+```
+
+`mapPoint`'s `affinity` option (default `'forward'`) decides which side of an insertion a point sitting exactly on the boundary lands on: forward moves it with text inserted at that offset, backward leaves it behind. At a `move.text` boundary, the start follows with forward affinity and the end follows with backward affinity, attaching the point to the moved character on its side. `mapRange` maps the document-order start forward and end backward when both are on the same path, so text inserted exactly at a range's edge never gets swallowed into the range. Following the end of moved text with backward affinity differs from #3208's original design.
+
+## Step kinds
+
+| kind           | shape                                                |
+| -------------- | ---------------------------------------------------- |
+| `insert.text`  | `{path, offset, length}`                             |
+| `remove.text`  | `{path, offset, length}`                             |
+| `move.text`    | `{from: {path, offset, length}, to: {path, offset}}` |
+| `remove.node`  | `{path}`                                             |
+| `move.node`    | `{from, to}`                                         |
+| `set.text`     | `{path, length}`                                     |
+| `set.children` | `{path, field, oldChildren, newChildren}`            |
+| `set.key`      | `{path, newKey}`                                     |
+
+Array segments in step paths (`path`, `from`, and `to`) use a unique non-empty `_key` when available, otherwise the sibling's numeric index. Field names remain string segments, and paths can traverse arrays and object fields at any depth. A `remove.node` step can invalidate a whole subtree, including an object field or the entire value (`[]`).
