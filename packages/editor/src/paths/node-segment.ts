@@ -19,5 +19,5 @@ export function nodeSegment(
   node: {_key?: unknown},
   index: number,
 ): KeyedSegment | number {
-  return hasUsableKey(node._key) ? {_key: node._key} : index
+  return hasUsableKey(node?._key) ? {_key: node._key} : index
 }

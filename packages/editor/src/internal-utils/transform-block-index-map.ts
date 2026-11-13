@@ -424,7 +424,7 @@ function resolveIndexableNode(
     let child: Node | undefined
     if (isKeyedSegment(childSegment)) {
       child = childrenResult.children.find(
-        (candidate) => candidate._key === childSegment._key,
+        (candidate) => candidate?._key === childSegment._key,
       )
     } else if (typeof childSegment === 'number') {
       child = childrenResult.children.at(childSegment)
@@ -484,13 +484,13 @@ function toKeyedPath(value: ReadonlyArray<Node>, path: Path): Path | undefined {
     return undefined
   }
   const {nodes} = walk
-  if (nodes.some((node) => node.node._key === undefined)) {
+  if (nodes.some((node) => node.node?._key === undefined)) {
     return undefined
   }
   return nodes.flatMap((node, index) =>
     index === 0
-      ? [{_key: node.node._key}]
-      : [nodes[index - 1]!.children!.fieldName, {_key: node.node._key}],
+      ? [{_key: node.node?._key}]
+      : [nodes[index - 1]!.children!.fieldName, {_key: node.node?._key}],
   )
 }
 

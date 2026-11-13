@@ -2,18 +2,21 @@ import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import type {TraversalSnapshot} from './traversal-snapshot'
+import {walkPath} from './walk-path'
 
 /**
  * The index of the child addressed by `childPath`'s last segment within
  * `children` (entries as resolved by `getChildren`). Numeric last
- * segments are literal, bounds-checked indices. Keyed segments resolve
+ * segments address the raw value, whose non-object entries are absent
+ * from `children`. Keyed segments resolve
  * through `blockIndexMap` when the path is fully keyed (the map's id
  * space), verified against the entry at the mapped position, with a
  * linear scan fallback for misses, disagreements, and paths the map
  * cannot key, mirroring `getNode`/`getChildren`. Returns `-1` when the
  * child is not found.
  *
- * The map is taken explicitly rather than assumed current: some callers
+ * The snapshot carries the map explicitly: some callers
  * deliberately resolve against pre-operation map state. The engine
  * keeps raw-array siblings of this helper (`resolveChildIndex` in
  * `apply-operation.ts`, `childIndexFromMap` in
@@ -21,14 +24,24 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * arrays mid-mutation, where no entries exist.
  */
 export function resolveChildEntryIndex(
-  blockIndexMap: ReadonlyMap<string, number>,
+  snapshot: TraversalSnapshot,
   children: ReadonlyArray<{node: Node; path: Path}>,
   childPath: Path,
 ): number {
   const lastSegment = childPath[childPath.length - 1]
 
   if (typeof lastSegment === 'number') {
-    return lastSegment >= 0 && lastSegment < children.length ? lastSegment : -1
+    if (lastSegment < 0) {
+      return -1
+    }
+    const walk = walkPath(snapshot, childPath)
+    const node = walk.status === 'found' ? walk.nodes.at(-1) : undefined
+    if (!node) {
+      return -1
+    }
+    return children.length === node.siblings.length
+      ? node.index
+      : children.findIndex((entry) => entry.node === node.node)
   }
 
   if (!isKeyedSegment(lastSegment)) {
@@ -49,7 +62,7 @@ export function resolveChildEntryIndex(
   }
 
   if (fullyKeyed) {
-    const mappedIndex = blockIndexMap.get(serializePath(childPath))
+    const mappedIndex = snapshot.blockIndexMap.get(serializePath(childPath))
     if (
       mappedIndex !== undefined &&
       children[mappedIndex]?.node._key === lastSegment._key

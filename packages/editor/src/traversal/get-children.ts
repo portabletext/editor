@@ -6,6 +6,7 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {getContainerChildren} from './get-container-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 import {childEntries, walkedNode, walkPath} from './walk-path'
@@ -59,6 +60,10 @@ export function getNodeChildren(
       parent: RegisteredContainer | undefined
     }
   | undefined {
+  if (!isNonArrayObject(node)) {
+    return undefined
+  }
+
   // Text blocks store children in .children
   if (isTextBlock(context, node)) {
     return {

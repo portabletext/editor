@@ -11,6 +11,7 @@ import {
 } from '../internal-utils/transform-block-index-map'
 import {serializePath} from '../paths/serialize-path'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {EditorContext} from './editor-snapshot'
 
@@ -89,7 +90,11 @@ export function invalidateVerifiedGroups(
   if (operation.type === 'insert') {
     // The node joins the group containing the reference sibling.
     const groupPath = path.slice(0, -1)
-    if (drop(groupPath) && operation.node._key !== undefined) {
+    if (
+      drop(groupPath) &&
+      isNonArrayObject(operation.node) &&
+      operation.node._key !== undefined
+    ) {
       dropSubtreeGroups(operation.node, [
         ...groupPath,
         {_key: operation.node._key},

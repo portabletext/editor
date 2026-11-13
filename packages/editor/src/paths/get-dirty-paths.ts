@@ -10,10 +10,16 @@ import type {
   Containers,
   RegisteredContainer,
 } from '../schema/resolve-containers'
-import {namedArrayField, walkNodes} from '../traversal/walk-path'
+import {
+  namedArrayField,
+  walkedNode,
+  walkNodes,
+  walkPath,
+} from '../traversal/walk-path'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getChildFieldName} from './get-child-field-name'
-import {nodeSegment} from './node-segment'
+import {hasUsableKey, nodeSegment} from './node-segment'
 
 /**
  * Recursively collect descendant paths using numeric indices.
@@ -35,6 +41,10 @@ function collectDescendantPaths(
   paths: Array<Path>,
   parent?: RegisteredContainer,
 ): void {
+  if (!isNonArrayObject(node)) {
+    return
+  }
+
   // Text blocks always use 'children'
   if (isTextBlock(context, node)) {
     const children = node.children
@@ -129,8 +139,7 @@ export function getDirtyPaths(
       const nodePath = op.path.slice(0, -1)
       const propertyName = op.path[op.path.length - 1]
 
-      // Full node replacement: path ends at a keyed segment
-      if (isKeyedSegment(propertyName)) {
+      if (isKeyedSegment(propertyName) || typeof propertyName === 'number') {
         const levels = pathLevels(op.path)
         // Dirty descendants of the new value
         if (
@@ -239,7 +248,7 @@ export function getDirtyPaths(
 
           // Find the keyless node among siblings
           const index = currentChildren.findIndex(
-            (child) => child._key === undefined,
+            (child) => child != null && child._key === undefined,
           )
 
           if (index !== -1) {
@@ -248,7 +257,39 @@ export function getDirtyPaths(
         }
       }
 
-      return pathLevels(nodePath)
+      const levels = pathLevels(nodePath)
+      if (typeof lastSegment === 'number') {
+        const parent =
+          nodePath.length === 0
+            ? undefined
+            : walkedNode(
+                walkPath(
+                  {context, blockIndexMap: new Map()},
+                  parentPath(op.path),
+                ),
+              )
+        const children =
+          nodePath.length === 0
+            ? context.value
+            : parent?.children && parent.children.fieldName === nodePath.at(-1)
+              ? parent.children.children
+              : undefined
+        for (const [index, child] of (children ?? []).entries()) {
+          if (!isNonArrayObject(child) || hasUsableKey(child._key)) {
+            continue
+          }
+          const childPath = [...nodePath, index]
+          levels.push(childPath)
+          collectDescendantPaths(
+            context,
+            child,
+            childPath,
+            levels,
+            parent?.children?.parent,
+          )
+        }
+      }
+      return levels
     }
 
     case 'insert': {
@@ -258,6 +299,9 @@ export function getDirtyPaths(
       // inserts), not the inserted node's final location. Dirty the
       // ancestors of the reference path AND the inserted node's own path.
       const levels = pathLevels(path)
+      if (!isNonArrayObject(node)) {
+        return levels
+      }
 
       const nodePath = [...path]
       for (let i = nodePath.length - 1; i >= 0; i--) {

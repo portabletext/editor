@@ -1,5 +1,6 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import type {TraversalSnapshot} from './traversal-snapshot'
 import {hasNodeSegmentFrom, walkPath} from './walk-path'
 
@@ -67,7 +68,7 @@ export function resolveNode(
 
   const node = walk.nodes.at(-1)
 
-  if (!node) {
+  if (!node || !isNonArrayObject(node.node)) {
     return {status: 'missing'}
   }
 
