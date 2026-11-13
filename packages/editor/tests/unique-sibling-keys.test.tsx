@@ -5,12 +5,6 @@ import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextSelection} from '../test-utils/text-selection'
 
-/**
- * At all times, these `_key`s should be unique:
- * - block `_key`s
- * - span `_key`s in individual blocks
- * - markDef `_key`s in individual blocks
- */
 describe('unique sibling `_key`s', () => {
   test('Scenario: Splitting a span with a decorator leaves unique sibling keys', async () => {
     const keyGenerator = createTestKeyGenerator()

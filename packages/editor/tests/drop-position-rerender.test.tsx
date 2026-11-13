@@ -7,13 +7,6 @@ import {createTestEditor} from '../src/test/vitest'
 
 const schemaDefinition = defineSchema({})
 
-/**
- * A `dragover` tick must not re-render the block tree: no block's content
- * render runs. The engine draws no drop chrome and keeps no drop-position
- * render state; `@portabletext/plugin-dnd` tracks positions from the public
- * `drag.*` events in its own store. This pins that dragover stays out of
- * the render path entirely.
- */
 describe('drop position re-renders', () => {
   test('Scenario: A dragover re-renders no block', async () => {
     const renders: Array<string> = []
