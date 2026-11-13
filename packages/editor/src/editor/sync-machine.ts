@@ -781,6 +781,7 @@ function syncBlock({
     validationValue,
     context.schema,
     context.keyGenerator,
+    index,
   )
 
   if (!validation.valid && !validation.resolution?.autoResolve) {
