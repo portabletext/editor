@@ -12,9 +12,11 @@ test('Scenario: Typing kyou twice into a plain contenteditable', async (context)
     ],
   })
 
-  // Gboard sometimes commits a word as kana before its conversion candidates load, and the candidates
-  // can load between the two words, so each word is either 今日 or きょう in every test here.
-  expect(typed.text).toMatch(/^(今日|きょう){2}$/)
+  // A word thumbjar committed with Space may stay kana or be converted by it, but a word it committed by
+  // tapping the `今日` candidate must read `今日`.
+  const firstWord = typed.picked[0] === 'space' ? '(今日|きょう)' : '今日'
+  const secondWord = typed.picked[1] === 'space' ? '(今日|きょう)' : '今日'
+  expect(typed.text).toMatch(new RegExp(`^${firstWord}${secondWord}$`))
   expect({
     nested: typed.nested,
     compositionstartPerWord: typed.compositionstartPerWord,
@@ -32,7 +34,9 @@ test('Scenario: Typing kyou twice into an empty block', async (context) => {
     ],
   })
 
-  expect(typed.text).toMatch(/^(今日|きょう){2}$/)
+  const firstWord = typed.picked[0] === 'space' ? '(今日|きょう)' : '今日'
+  const secondWord = typed.picked[1] === 'space' ? '(今日|きょう)' : '今日'
+  expect(typed.text).toMatch(new RegExp(`^${firstWord}${secondWord}$`))
   expect({
     nested: typed.nested,
     compositionstartPerWord: typed.compositionstartPerWord,
@@ -50,7 +54,9 @@ test('Scenario: Typing kyou twice after existing text', async (context) => {
     ],
   })
 
-  expect(typed.text).toMatch(/^x(今日|きょう){2}$/)
+  const firstWord = typed.picked[0] === 'space' ? '(今日|きょう)' : '今日'
+  const secondWord = typed.picked[1] === 'space' ? '(今日|きょう)' : '今日'
+  expect(typed.text).toMatch(new RegExp(`^x${firstWord}${secondWord}$`))
   expect({
     nested: typed.nested,
     compositionstartPerWord: typed.compositionstartPerWord,

@@ -1,7 +1,9 @@
+import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import type {ReactElement} from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -40,6 +42,26 @@ const calloutContainer = defineContainer({
     </div>
   ),
 })
+
+const childrenFieldSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {name: 'title', type: 'string'},
+        {name: 'children', type: 'array', of: [{type: 'block'}]},
+      ],
+    },
+  ],
+})
+
+const childrenFieldNodes = [
+  defineContainer({
+    type: 'callout',
+    arrayField: 'children',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+]
 
 describe('container rendering', () => {
   test('Scenario: A callout renders with the correct DOM structure', async () => {
@@ -185,6 +207,101 @@ describe('container rendering', () => {
         _type: 'callout',
         _key: calloutKey,
       })
+    })
+  })
+
+  test('Scenario: Loading a children container preserves its content without patches', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const innerBlockKey = keyGenerator()
+    const innerSpanKey = keyGenerator()
+
+    const textPath1 = [{_key: fooKey}, 'children', {_key: fooSpanKey}]
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      callout(calloutKey, innerBlockKey, innerSpanKey, 'inside'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={childrenFieldNodes} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          title: 'T',
+          children: [
+            {
+              _type: 'block',
+              _key: innerBlockKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'inside', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(patches).toEqual([])
+    })
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooinsidebar')
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: textPath1, offset: 3},
+        focus: {path: textPath1, offset: 3},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'x'})
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          origin: 'local',
+          path: [{_key: fooKey}, 'children', {_key: fooSpanKey}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+        },
+      ])
     })
   })
 })
@@ -1180,3 +1297,22 @@ describe('self-referential containers', () => {
     })
   })
 })
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function callout(key: string, blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'callout',
+    _key: key,
+    title: 'T',
+    children: [textBlock(blockKey, spanKey, text)],
+  }
+}

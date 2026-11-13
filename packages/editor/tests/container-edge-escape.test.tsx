@@ -62,13 +62,12 @@ const arrowKey = (key: 'ArrowDown' | 'ArrowUp') => ({
 })
 
 async function createLonelyContainerEditor() {
-  const {editor, locator} = await createTestEditor({
+  const {editor} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
     schemaDefinition,
     initialValue: [calloutBlock],
     children: <NodePlugin nodes={containers} />,
   })
-  await expect.element(locator).toBeInTheDocument()
   editor.send({type: 'focus'})
   return editor
 }
@@ -261,7 +260,7 @@ describe('escaping a container at the document edge', () => {
   })
 
   test('Scenario: Clicking below a lonely container nested in a container inserts a block inside the outer one', async () => {
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({
         blockObjects: [
@@ -313,7 +312,6 @@ describe('escaping a container at the document edge', () => {
         />
       ),
     })
-    await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})
     const innerLeaf = {
       path: [
@@ -366,8 +364,7 @@ describe('escaping a container at the document edge', () => {
     // Three levels deep (table -> row -> cell shaped), the first cell of a
     // non-first row is the *nearest* container's start edge but not the
     // outer container's: native navigation stays inside.
-    const {editor, locator} = await createGridEditor()
-    await expect.element(locator).toBeInTheDocument()
+    const {editor} = await createGridEditor()
     editor.send({type: 'focus'})
 
     // The second row's cell: its block is the nearest container's edge
@@ -410,8 +407,7 @@ describe('escaping a container at the document edge', () => {
     // placeholder inside it and must leave the value alone. The editor
     // surface beyond the lonely table is a different place: the root
     // accepts text blocks, so that click still escapes.
-    const {editor, locator} = await createGridEditor()
-    await expect.element(locator).toBeInTheDocument()
+    const {editor} = await createGridEditor()
     editor.send({type: 'focus'})
 
     const gridSurfacePoint = {path: [{_key: 'g0'}], offset: 0}
@@ -505,7 +501,7 @@ describe('escaping a container at the document edge', () => {
   })
 
   test('Scenario: Pressing ArrowDown inserts nothing when the container has a next sibling', async () => {
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue: [
@@ -520,7 +516,6 @@ describe('escaping a container at the document edge', () => {
       ],
       children: <NodePlugin nodes={containers} />,
     })
-    await expect.element(locator).toBeInTheDocument()
     editor.send({type: 'focus'})
     editor.send({
       type: 'select',

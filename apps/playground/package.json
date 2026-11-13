@@ -16,7 +16,7 @@
     "@portabletext/editor": "workspace:*",
     "@portabletext/html": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
-    "@portabletext/markdown": "^2.9.3",
+    "@portabletext/markdown": "^2.9.4",
     "@portabletext/patches": "workspace:*",
     "@portabletext/plugin-decorations": "workspace:*",
     "@portabletext/plugin-dnd": "workspace:*",

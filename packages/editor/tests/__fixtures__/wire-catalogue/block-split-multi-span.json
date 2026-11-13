@@ -1,0 +1,114 @@
+{
+  "scenario": "block-split-multi-span",
+  "schema": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ]
+  },
+  "seed": "B: fo|o [strong:bar] baz",
+  "actions": [
+    "select {caret at offset 2 on the first span}",
+    "send {type: 'insert.break'}"
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,2 @@\n fo\n-o \n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +0,0 @@\n- baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "block",
+          "_key": "k6",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k1",
+              "text": "o ",
+              "marks": []
+            },
+            {
+              "_type": "span",
+              "_key": "k2",
+              "text": "bar",
+              "marks": [
+                "strong"
+              ]
+            },
+            {
+              "_type": "span",
+              "_key": "k3",
+              "text": " baz",
+              "marks": []
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "result": "B: fo\nB: |o [strong:bar] baz"
+}

@@ -16,7 +16,7 @@ beforeEach(() => {
 
 test('Scenario: Passed', async (context) => {
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   const run = await running
 
   expect(run.text).toEqual('foo\n')
@@ -24,7 +24,7 @@ test('Scenario: Passed', async (context) => {
 
 test('Scenario: Failed', async (context) => {
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   const run = await running
 
   expect(run.text).toEqual('foo')
@@ -32,7 +32,7 @@ test('Scenario: Failed', async (context) => {
 
 test.fails('Scenario: Expected failure', async (context) => {
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   const run = await running
 
   expect(run.text).toEqual('foo')
@@ -41,7 +41,7 @@ test.fails('Scenario: Expected failure', async (context) => {
 test('Scenario: Inconclusive after input', async (context) => {
   globalThis.gboardDevice.lostReads = [2, 2]
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   await running
 })
 
@@ -53,14 +53,14 @@ test('Scenario: Device offline', async (context) => {
   ]
   globalThis.gboardDevice.getState = offline
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   await running
 })
 
 test('Scenario: Driver fault', async (context) => {
   globalThis.gboardDevice.lostReads = [1, 1]
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   await running
 })
 
@@ -70,7 +70,7 @@ test('Scenario: Inconclusive while the device answered', async (context) => {
     {match: /pidof com\.android\.chrome/, answer: 'hangs'},
   ]
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   await running
 })
 
@@ -81,7 +81,7 @@ test('Scenario: Inconclusive while the device was not checked', async (context) 
   ]
   globalThis.gboardDevice.getState = 'hangs'
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   await running
 })
 
@@ -92,11 +92,11 @@ test('Scenario: Passed without a driver call', () => {
 test('Scenario: Passed on its last call after a driver fault', async (context) => {
   globalThis.gboardDevice.lostReads = [1, 1]
   const faulting = runOnDevice(context, enterAfterFoo).catch(() => undefined)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([faulting, vi.runAllTimersAsync()])
   await faulting
   globalThis.gboardDevice.reset()
   const running = runOnDevice(context, enterAfterFoo)
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   const run = await running
 
   expect(run.text).toEqual('foo\n')
@@ -105,7 +105,7 @@ test('Scenario: Passed on its last call after a driver fault', async (context) =
 describe('A group', () => {
   test('Scenario: Passed in a group', async (context) => {
     const running = runOnDevice(context, enterAfterFoo)
-    await vi.runAllTimersAsync()
+    await Promise.allSettled([running, vi.runAllTimersAsync()])
     const run = await running
 
     expect(run.text).toEqual('foo\n')
@@ -113,7 +113,7 @@ describe('A group', () => {
 
   test.fails('Scenario: Expected failure in a group', async (context) => {
     const running = runOnDevice(context, enterAfterFoo)
-    await vi.runAllTimersAsync()
+    await Promise.allSettled([running, vi.runAllTimersAsync()])
     const run = await running
 
     expect(run.text).toEqual('foo')
@@ -124,7 +124,7 @@ describe('Another group', () => {
   test('Scenario: Passed in a group', async (context) => {
     globalThis.gboardDevice.lostReads = [2, 2]
     const running = runOnDevice(context, enterAfterFoo)
-    await vi.runAllTimersAsync()
+    await Promise.allSettled([running, vi.runAllTimersAsync()])
     await running
   })
 })

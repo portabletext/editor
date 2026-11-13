@@ -1,15 +1,57 @@
 import {htmlToPortableText, type ObjectMatcher} from '@portabletext/html'
+import {applyAll, type Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {effect, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
-import {safeParse} from '../src/internal-utils/safe-json'
+import {safeParse, safeStringify} from '../src/internal-utils/safe-json'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+
+const childrenFieldSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'gallery',
+      fields: [
+        {name: 'title', type: 'string'},
+        {
+          name: 'children',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'item',
+              fields: [{name: 'label', type: 'string'}],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'section',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'gallery'}],
+        },
+      ],
+    },
+  ],
+})
+
+const childrenFieldNodes = [
+  defineContainer({
+    type: 'section',
+    arrayField: 'content',
+    render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+  }),
+]
 
 describe('event.clipboard.paste', () => {
   test('Scenario: Cut/paste block object', async () => {
@@ -873,4 +915,289 @@ describe('event.clipboard.paste', () => {
       ])
     })
   })
+
+  test('Scenario: Pasting a gallery copied at root keeps its children', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const galleryKey = keyGenerator()
+    const itemKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const textPath1 = [{_key: galleryKey}]
+    const textPath2 = [{_key: barKey}, 'children', {_key: barSpanKey}]
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      gallery(galleryKey, itemKey, 'a'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: textPath1, offset: 0},
+        focus: {path: textPath1, offset: 0},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: textPath1, offset: 0},
+        focus: {path: textPath1, offset: 0},
+        backward: false,
+      })
+    })
+    const dataTransfer = new DataTransfer()
+    editor.send({
+      type: 'clipboard.copy',
+      originEvent: {dataTransfer},
+      position: {
+        selection: {
+          anchor: {path: textPath1, offset: 0},
+          focus: {path: textPath1, offset: 0},
+        },
+      },
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: textPath2, offset: 3},
+        focus: {path: textPath2, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {selection: editor.getSnapshot().context.selection!},
+    })
+    await vi.waitFor(() => {
+      const pastedBlockKey = editor.getSnapshot().context.value[3]!._key
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: pastedBlockKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+      ])
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: pastedBlockKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Pasting a gallery inside a section keeps its children', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const galleryKey = keyGenerator()
+    const itemKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const sectionKey = keyGenerator()
+    const nestedPath = [
+      {_key: sectionKey},
+      'content',
+      {_key: barKey},
+      'children',
+      {_key: barSpanKey},
+    ]
+
+    const initialValue = [
+      section(sectionKey, [
+        textBlock(fooKey, fooSpanKey, 'foo'),
+        textBlock(barKey, barSpanKey, 'bar'),
+      ]),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={childrenFieldNodes} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    const dataTransfer = new DataTransfer()
+    dataTransfer.setData(
+      'application/x-portable-text',
+      safeStringify([gallery(galleryKey, itemKey, 'a')]),
+    )
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: nestedPath, offset: 3},
+        focus: {path: nestedPath, offset: 3},
+      },
+    })
+    editor.send({
+      type: 'clipboard.paste',
+      originEvent: {dataTransfer},
+      position: {selection: editor.getSnapshot().context.selection!},
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'block',
+              _key: fooKey,
+              children: [
+                {_type: 'span', _key: fooSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: barKey,
+              children: [
+                {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'gallery',
+              _key: galleryKey,
+              title: 'T',
+              children: [{_type: 'item', _key: itemKey, label: 'a'}],
+            },
+          ],
+        },
+      ])
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _type: 'section',
+          _key: sectionKey,
+          content: [
+            {
+              _type: 'block',
+              _key: fooKey,
+              children: [
+                {_type: 'span', _key: fooSpanKey, text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: barKey,
+              children: [
+                {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'gallery',
+              _key: galleryKey,
+              title: 'T',
+              children: [{_type: 'item', _key: itemKey, label: 'a'}],
+            },
+          ],
+        },
+      ])
+    })
+  })
 })
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+
+function gallery(key: string, itemKey: string, label: string) {
+  return {
+    _type: 'gallery',
+    _key: key,
+    title: 'T',
+    children: [{_type: 'item', _key: itemKey, label}],
+  }
+}
+
+function section(
+  key: string,
+  content: Array<ReturnType<typeof textBlock> | ReturnType<typeof gallery>>,
+) {
+  return {_type: 'section', _key: key, content}
+}

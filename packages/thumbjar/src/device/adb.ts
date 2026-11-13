@@ -2,8 +2,8 @@
 // uiautomator2 connections (device shell and device TCP ports).
 
 import {AsyncLocalStorage} from 'node:async_hooks'
-import {spawn} from 'node:child_process'
 import net from 'node:net'
+import {runChildProcess} from '../process-child.ts'
 import {KILL_GRACE_SECONDS} from './budget.ts'
 import {
   currentInspection,
@@ -104,80 +104,43 @@ export async function run(
  * `KILL_GRACE_SECONDS`, and rejects once the process has exited. A process still running another
  * `KILL_GRACE_SECONDS` after SIGKILL rejects with `ProcessNotStoppedError`.
  */
-function runChild(
+async function runChild(
   file: string,
   args: string[],
   timeout: number,
   output: 'pipe' | 'inherit',
 ): Promise<{code: number | null; stdout: string; stderr: string}> {
   const signal = currentSignal()
-  signal?.throwIfAborted()
-  return new Promise((resolve, reject) => {
-    const child = spawn(file, args, {stdio: ['ignore', output, output]})
-    const stdout: Buffer[] = []
-    const stderr: Buffer[] = []
-    child.stdout?.on('data', (chunk: Buffer) => stdout.push(chunk))
-    child.stderr?.on('data', (chunk: Buffer) => stderr.push(chunk))
-    let stopReason: unknown
-    const timers: NodeJS.Timeout[] = []
-    const stop = (reason: unknown) => {
-      if (stopReason !== undefined) {
-        return
-      }
-      stopReason = reason
-      child.kill('SIGTERM')
-      timers.push(
-        setTimeout(() => {
-          child.kill('SIGKILL')
-          timers.push(
-            setTimeout(() => {
-              finish()
-              unstopped.push(`${file} ${args.join(' ')} (pid ${child.pid})`)
-              reject(
-                new ProcessNotStoppedError(
-                  `${file} ${args.join(' ')} (pid ${child.pid}) still runs after SIGKILL`,
-                  {cause: reason},
-                ),
-              )
-            }, KILL_GRACE_SECONDS * 1000),
-          )
-        }, KILL_GRACE_SECONDS * 1000),
-      )
-    }
-    const onAbort = () => stop(signal!.reason)
-    const finish = () => {
-      for (const timer of timers) {
-        clearTimeout(timer)
-      }
-      signal?.removeEventListener('abort', onAbort)
-    }
-    timers.push(
-      setTimeout(() => {
-        const error = new CommandError(
-          `${file} ${args.join(' ')} timed out after ${timeout}s`,
+  const result = await runChildProcess(file, args, {
+    seconds: timeout,
+    killAfter: KILL_GRACE_SECONDS,
+    killWait: KILL_GRACE_SECONDS,
+    ...(signal === undefined ? {} : {signal}),
+    output,
+    reject: (result) => {
+      if (result.unstopped) {
+        unstopped.push(`${file} ${args.join(' ')} (pid ${result.pid})`)
+        return new ProcessNotStoppedError(
+          `${file} ${args.join(' ')} (pid ${result.pid}) still runs after SIGKILL`,
+          {cause: result.reason},
         )
-        error.timedOut = true
-        stop(error)
-      }, timeout * 1000),
-    )
-    signal?.addEventListener('abort', onAbort, {once: true})
-    child.on('error', (error) => {
-      finish()
-      reject(stopReason ?? error)
-    })
-    child.on('close', (code) => {
-      finish()
-      if (stopReason !== undefined) {
-        reject(stopReason)
-      } else {
-        resolve({
-          code,
-          stdout: Buffer.concat(stdout).toString('utf8'),
-          stderr: Buffer.concat(stderr).toString('utf8'),
-        })
       }
-    })
+      if (result.reason !== undefined) {
+        return result.reason
+      }
+      if (result.error) {
+        return result.error
+      }
+    },
+    timeoutReason: () => {
+      const error = new CommandError(
+        `${file} ${args.join(' ')} timed out after ${timeout}s`,
+      )
+      error.timedOut = true
+      return error
+    },
   })
+  return {code: result.code, stdout: result.stdout, stderr: result.stderr}
 }
 
 export class AdbError extends Error {

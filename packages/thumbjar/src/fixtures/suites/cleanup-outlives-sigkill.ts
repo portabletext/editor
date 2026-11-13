@@ -10,7 +10,7 @@ test.fails('Scenario: Stopping Chrome after typing leaves an adb process that ou
     prefix: '',
     words: [{letters: 'kyou', candidate: '今日'}],
   })
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([typing, vi.runAllTimersAsync()])
   const typed = await typing
 
   expect(typed.text).toEqual('今日')

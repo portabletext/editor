@@ -1,23 +1,20 @@
-// The uiautomator2 server jar's download into .cache and its hash check. `u2-jar.json` pins the URL and
-// the hash, and the Android IME workflow keys its cache of the jar on that file.
+// The uiautomator2 server jar's download into the calling package's cache and its hash check.
+// `u2-jar.json` pins the URL and the hash, and the Android IME workflow keys its cache of the jar on
+// that file.
 
 import {createHash} from 'node:crypto'
 import {existsSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs'
-import {dirname} from 'node:path'
-import {fileURLToPath} from 'node:url'
+import {dirname, join} from 'node:path'
+import findCacheDirectory from 'find-cache-directory'
 import {U2_JAR_ATTEMPT_SECONDS} from './budget.ts'
 import jar from './u2-jar.json' with {type: 'json'}
 
-const JAR_PATH = fileURLToPath(
-  new URL('.cache/u2.jar', import.meta.resolve('thumbjar/package.json')),
-)
-
 /**
- * Download u2.jar into .cache unless it is already there with its pinned hash, and check the hash of a
- * download. `downloaded` says which.
+ * Download u2.jar into the calling package's cache unless it is already there with its pinned hash,
+ * and check the hash of a download. `downloaded` says which.
  */
 export async function ensureJar({
-  path = JAR_PATH,
+  path = jarPath(),
   url = jar.url,
   sha256: expected = jar.sha256,
 }: {path?: string; url?: string; sha256?: string} = {}): Promise<{
@@ -43,6 +40,17 @@ export async function ensureJar({
   mkdirSync(dirname(path), {recursive: true})
   writeFileSync(path, data)
   return {path, downloaded: true}
+}
+
+function jarPath(): string {
+  const cwd = process.cwd()
+  const cacheDirectory = findCacheDirectory({name: 'thumbjar', cwd})
+  if (cacheDirectory === undefined) {
+    throw new Error(
+      `Cannot find a cache directory from cwd ${cwd}; run inside a package or set CACHE_DIR`,
+    )
+  }
+  return join(cacheDirectory, 'u2.jar')
 }
 
 function sha256(data: Buffer): string {

@@ -1,6 +1,8 @@
+import {applyAll, type Patch} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
+import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
 const keyGenerator = createTestKeyGenerator()
@@ -22,6 +24,28 @@ const bar = {
   markDefs: [],
   style: 'normal',
 }
+
+const childrenFieldSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'gallery',
+      fields: [
+        {name: 'title', type: 'string'},
+        {
+          name: 'children',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'item',
+              fields: [{name: 'label', type: 'string'}],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
 
 describe('event.move.block down', () => {
   test('Scenario: Moving block object down', async () => {
@@ -77,6 +101,85 @@ describe('event.move.block down', () => {
 
     await vi.waitFor(() => {
       expect(editor.getSnapshot().context.value).toEqual([bar, image, foo])
+    })
+  })
+
+  test('Scenario: Moving a gallery down keeps its children', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const galleryKey = keyGenerator()
+    const itemKey = keyGenerator()
+    const barKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+
+    const initialValue = [
+      textBlock(fooKey, fooSpanKey, 'foo'),
+      gallery(galleryKey, itemKey, 'a'),
+      textBlock(barKey, barSpanKey, 'bar'),
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: childrenFieldSchemaDefinition,
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'patch') {
+              patches.push(event.patch)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({type: 'move.block down', at: [{_key: galleryKey}]})
+    await vi.waitFor(() => {
+      expect(applyAll(initialValue, patches)).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: fooKey,
+          children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: barKey,
+          children: [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'gallery',
+          _key: galleryKey,
+          title: 'T',
+          children: [{_type: 'item', _key: itemKey, label: 'a'}],
+        },
+      ])
     })
   })
 })
@@ -354,5 +457,14 @@ function textBlock(blockKey: string, spanKey: string, text: string) {
     children: [{_key: spanKey, _type: 'span', text, marks: []}],
     markDefs: [],
     style: 'normal',
+  }
+}
+
+function gallery(key: string, itemKey: string, label: string) {
+  return {
+    _type: 'gallery',
+    _key: key,
+    title: 'T',
+    children: [{_type: 'item', _key: itemKey, label}],
   }
 }

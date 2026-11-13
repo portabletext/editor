@@ -105,9 +105,9 @@ jobs:
           pnpm --filter @portabletext/editor build:android
           node -e "console.log('EDITOR_VERSION', require('./packages/editor/package.json').version)"
 
-      # The jar comes from the actions cache when an earlier run saved it, under a key that changes with its
-      # URL and hash, see the jar cache in `packages/editor/android/README.md`. A failed restore or save is a
-      # miss, which downloads as before.
+      # The jar comes from the actions cache when an earlier run saved it, under the editor package's cache
+      # directory and a key that changes with its URL and hash, see the jar cache in
+      # `packages/editor/android/README.md`. A failed restore or save is a miss, which downloads as before.
       - name: Restore the uiautomator2 server jar
         id: u2-jar-restore
         continue-on-error: true
@@ -115,7 +115,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
-          path: packages/thumbjar/.cache/u2.jar
+          path: packages/editor/node_modules/.cache/thumbjar/u2.jar
 
       # A restored jar whose hash differs is downloaded again.
       - name: Fetch the uiautomator2 server jar
@@ -131,7 +131,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
-          path: packages/thumbjar/.cache/u2.jar
+          path: packages/editor/node_modules/.cache/thumbjar/u2.jar
 
       # The emulator and its system image come from the actions cache when it holds the versions a fresh
       # install picks today, see the SDK cache in `packages/editor/android/README.md`. A failed lookup,

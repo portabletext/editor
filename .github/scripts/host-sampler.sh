@@ -19,6 +19,35 @@ echo "$$" > "$out_dir/host-sampler.pid" || true
 
 self="$BASHPID"
 last_pid=""
+freeze_samples=0
+freeze_count=0
+freeze_at=0
+
+capture_threads() {
+  stack_available=false
+  if timeout --kill-after=1 1 sudo -n true 2> /dev/null; then
+    stack_available=true
+  fi
+  for task in /proc/"$last_pid"/task/*; do
+    [ -r "$task/stat" ] || continue
+    task_stat="$(cat "$task/stat" 2> /dev/null)"
+    task_rest="${task_stat##*) }"
+    task_state="${task_rest%% *}"
+    task_comm="$(cat "$task/comm" 2> /dev/null)"
+    task_wchan="$(cat "$task/wchan" 2> /dev/null)"
+    printf 'tid=%s comm=%s state=%s wchan=%s\n' "${task##*/}" "${task_comm:-unknown}" "${task_state:-unknown}" "${task_wchan:-unknown}"
+    if [ "$stack_available" = true ]; then
+      stack_status=0
+      task_stack="$(timeout --kill-after=1 1 sudo -n cat "$task/stack" 2> /dev/null)" || stack_status=$?
+      if [ "$stack_status" -eq 0 ]; then
+        printf '%s\n' "$task_stack"
+      elif [ "$stack_status" -eq 124 ] || [ "$stack_status" -eq 137 ]; then
+        # A read that timed out would cost every later thread the same wait, so the rest of the capture has no stacks.
+        stack_available=false
+      fi
+    fi
+  done
+}
 
 while true; do
   now="$(date +%s)"
@@ -63,6 +92,27 @@ while true; do
   fi
   if [ -z "$last_pid" ] && [ -n "$current_pid" ] && [ "$qemu" != "qemu=none" ]; then
     last_pid="$current_pid"
+    freeze_samples=0
+    freeze_count=0
+    freeze_at=0
+  fi
+
+  if [ -n "$last_pid" ] && [ "$current_pid" = "$last_pid" ] && [ "$qemu" != "qemu=none" ]; then
+    if [ "$state" = "S" ] || [ "$state" = "R" ]; then
+      freeze_samples=0
+      freeze_count=0
+    else
+      freeze_samples=$((freeze_samples + 1))
+      if { [ "$freeze_count" -eq 0 ] && [ "$freeze_samples" -ge 2 ]; } ||
+        { [ "$freeze_count" -eq 1 ] && [ "$((now - freeze_at))" -ge 30 ]; }; then
+        freeze_count=$((freeze_count + 1))
+        freeze_at="$now"
+        if [ "$freeze_count" -eq 1 ]; then
+          rm -f "$out_dir/host-freeze-$last_pid-2.txt" 2> /dev/null || true
+        fi
+        capture_threads > "$out_dir/host-freeze-$last_pid-$freeze_count.txt" 2> /dev/null || true
+      fi
+    fi
   fi
 
   sleep "$interval" || true
