@@ -328,6 +328,36 @@ Feature({
 })
 ```
 
+## Expected failures
+
+`Feature` and `compileFeature` accept an `expectFail` predicate. racejar calls it once for every scenario row. The predicate gets the row's `name`, its `tags` and its `examples`. `tags` holds every tag on the row's Feature, Rule, Scenario and Examples. `examples` holds a Scenario Outline row's values keyed by column name, and is `undefined` for a plain Scenario. A row the predicate returns `true` for is expected to fail.
+
+```ts nocheck
+Feature({
+  featureText: featureFile,
+  stepDefinitions,
+  expectFail: (scenario) =>
+    scenario.name === 'Inserting text on expanded selection' &&
+    scenario.examples?.['selection'] === '"B: ^foo;;B: bar|"',
+})
+```
+
+Rows of a Scenario Outline share its name unless the name contains a `<parameter>`. Use `examples` to pick one row.
+
+A marked row passes when it fails and fails when it passes. When the bug behind it is fixed, the test fails until you remove the expectation.
+
+A predicate that matches no row throws when the Feature is collected. The check covers the predicate as a whole, not each condition inside it.
+
+A marked row that fails in a `Before` hook, a step or an `After` hook counts as the expected failure.
+
+Each driver marks the row with its framework's own expected-failure test:
+
+- `racejar/vitest` uses `test.fails`.
+- `racejar/jest` uses `test.failing`. Jest fails a `test.failing` test when one of its hooks throws, so racejar runs a marked row's hooks inside the test.
+- `racejar/playwright` uses `test.fail`. It uses `test.fail.only` for a row tagged `@only`.
+
+With `compileFeature`, each compiled scenario has an `expectedFailure` boolean. Your runner decides how to mark the row.
+
 ## Tips
 
 If TypeScript errors out with `Cannot find module '.your.feature?raw' or its corresponding type declarations.` then you can declare `.*feature?raw` files as modules:
