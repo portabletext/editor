@@ -175,7 +175,10 @@ export function validateValue(
       if (blk._type === types.block.name) {
         const textBlock = blk as PortableTextTextBlock
         // Test that it has a valid children property (array)
-        if (textBlock.children && !Array.isArray(textBlock.children)) {
+        if (
+          textBlock.children === null ||
+          (textBlock.children && !Array.isArray(textBlock.children))
+        ) {
           resolution = {
             patches: [set({children: []}, [{_key: textBlock._key}])],
             description: `Text block with _key '${textBlock._key}' has a invalid required property 'children'.`,
