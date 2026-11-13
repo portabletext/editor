@@ -31,6 +31,107 @@ afterAll(async () => {
 })
 
 describe.skipIf(!isChromium)('Composition (IME) on Android', () => {
+  test('Scenario: Applying composition text before the browser mutates the DOM', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    await userEvent.click(locator)
+    const textNode = locator
+      .element()
+      .querySelector('[data-pt-text]')!.firstChild!
+    const event = new InputEvent('beforeinput', {
+      bubbles: true,
+      inputType: 'insertCompositionText',
+      data: 'bar',
+      isComposing: true,
+      targetRanges: [
+        new StaticRange({
+          startContainer: textNode,
+          startOffset: 0,
+          endContainer: textNode,
+          endOffset: 3,
+        }),
+      ],
+    })
+    locator
+      .element()
+      .dispatchEvent(new CompositionEvent('compositionstart', {bubbles: true}))
+    locator.element().dispatchEvent(event)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(event.defaultPrevented).toEqual(false)
+    expect(textNode.isConnected).toEqual(true)
+  })
+
+  test('Scenario: Deleting the full Android beforeinput target range', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    await userEvent.click(locator)
+    const textNode = locator
+      .element()
+      .querySelector('[data-pt-text]')!.firstChild!
+    const event = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'deleteContentBackward',
+      targetRanges: [
+        new StaticRange({
+          startContainer: textNode,
+          startOffset: 3,
+          endContainer: textNode,
+          endOffset: 7,
+        }),
+      ],
+    })
+    locator.element().dispatchEvent(event)
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(event.defaultPrevented).toEqual(true)
+  })
+
   test('Scenario: Composing into an empty block', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor, locator} = await createTestEditor({
