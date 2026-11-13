@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.0.3
+
+### Patch Changes
+
+- [#3690](https://github.com/portabletext/editor/pull/3690) [`75cc68d`](https://github.com/portabletext/editor/commit/75cc68d37e37101bcc161c4e031d2abc41e87ce6) Thanks [@christianhg](https://github.com/christianhg)! - fix: run `Before` and `After` hooks in `racejar/jest`
+  
+  A `Feature` from `racejar/jest` with a `Before` or `After` hook no longer times out waiting for `done()`. Jest reads a hook that declares a parameter as one that takes a `done` callback, and every hook took the scenario context as its parameter, so sync and async hooks both failed.
+
+- [#3685](https://github.com/portabletext/editor/pull/3685) [`452060a`](https://github.com/portabletext/editor/commit/452060a2740c070037e111277c37491a2c299e25) Thanks [@christianhg](https://github.com/christianhg)! - fix: pass only the fixtures a Playwright `Feature` names to its tests and hooks
+  
+  Playwright Features register and run again. The optional `test` property selects a Playwright test, including one with extended fixtures. The `fixtures` property names exactly the fixtures passed to scenarios and Before/After hooks. It defaults to `page` and `context` and accepts `[]` for Features that need no fixtures.
+  
+  `PlaywrightContext` now defaults to `page` and `context`, and `PlaywrightFixtures` is exported from `racejar/playwright`. A step or hook that uses other fixtures names them in its context, for example `PlaywrightContext<Pick<PlaywrightFixtures<typeof test>, 'page' | 'greeting'>>`, and the Feature lists them in `fixtures`.
+  
+  `Feature`'s first type parameter is now the type of `test`, so a call like `Feature<MyContext>({...})` no longer compiles. Annotate the step and hook contexts instead and let `Feature` infer its types.
+
 ## 4.0.2
 
 ### Patch Changes

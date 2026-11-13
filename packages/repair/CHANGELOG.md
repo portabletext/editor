@@ -1,5 +1,15 @@
 # @portabletext/repair
 
+## 2.0.0
+
+### Major Changes
+
+- [#3675](https://github.com/portabletext/editor/pull/3675) [`9b432f7`](https://github.com/portabletext/editor/commit/9b432f73f98c295d3946bc223ed383c02ecff785) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove non-object array entries
+  
+  A string, number, boolean, null or array entry in an array of objects is removed with one `unset` correction.
+  
+  A correction can now contain an `unset` patch. Code that applies corrections must handle `unset` as well as `set`. `StructuralRule` gains `'non-object'`, so an exhaustive switch over correction types needs a new case.
+
 ## 1.0.3
 
 ### Patch Changes
