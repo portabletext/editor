@@ -1,6 +1,8 @@
+import {isSpanNode} from '@portabletext/schema'
 import type {PortableTextObject} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {isEditableContainer} from '../schema/is-editable-container'
+import {isBlock} from './is-block'
 import {isObject} from './is-object'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
@@ -17,5 +19,9 @@ export function isLeafObject(
   node: unknown,
   path: Path,
 ): node is PortableTextObject {
-  return isObject(snapshot, node) && !isEditableContainer(snapshot, node, path)
+  return (
+    (isObject(snapshot, node) ||
+      (isSpanNode(snapshot.context, node) && isBlock(snapshot, path))) &&
+    !isEditableContainer(snapshot, node, path)
+  )
 }
