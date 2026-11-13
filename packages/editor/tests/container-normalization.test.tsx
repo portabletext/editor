@@ -2,6 +2,7 @@ import type {Patch} from '@portabletext/patches'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {page, userEvent} from 'vitest/browser'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -3979,4 +3980,575 @@ describe('container normalization', () => {
       ])
     })
   })
+})
+
+describe('corrections where repair checks position', () => {
+  test('Scenario: span text at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const insertedKey = keyGenerator()
+    const {editor, patches} = await createCompatibilityEditor([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [{_type: 'span', _key: insertedKey, text: 42, marks: []}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    const actual = structuredClone({
+      value: editor.getSnapshot().context.value,
+      patches,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [{type: 'unset', path: [{_key: insertedKey}], origin: 'remote'}],
+      snapshot: undefined,
+    })
+    expect(actual.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {_type: 'span', _key: 'k2', text: '', marks: []},
+    ])
+    expect(actual.patches).toEqual([
+      {type: 'set', path: [{_key: 'k2'}, 'text'], value: '', origin: 'local'},
+    ])
+  })
+
+  test('Scenario: span text at callout content depth 1', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const insertedKey = keyGenerator()
+    const containerKey = keyGenerator()
+    const {editor, patches} = await createCompatibilityEditor([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'callout',
+              _key: containerKey,
+              content: [
+                {_type: 'span', _key: insertedKey, text: 42, marks: []},
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    const actual = structuredClone({
+      value: editor.getSnapshot().context.value,
+      patches,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', path: [{_key: containerKey}], origin: 'remote'},
+      ],
+      snapshot: undefined,
+    })
+    expect(actual.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'callout',
+        _key: 'k3',
+        content: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+      },
+    ])
+    expect(actual.patches).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'k3'}, 'content', {_key: 'k2'}, 'text'],
+        value: '',
+        origin: 'local',
+      },
+    ])
+  })
+
+  test('Scenario: span text at callout content depth 2', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const insertedKey = keyGenerator()
+    const containerKey = keyGenerator()
+    const innerKey = keyGenerator()
+    const {editor, patches} = await createCompatibilityEditor([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'callout',
+              _key: containerKey,
+              content: [
+                {
+                  _type: 'callout',
+                  _key: innerKey,
+                  content: [
+                    {_type: 'span', _key: insertedKey, text: 42, marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    const actual = structuredClone({
+      value: editor.getSnapshot().context.value,
+      patches,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', path: [{_key: containerKey}], origin: 'remote'},
+      ],
+      snapshot: undefined,
+    })
+    expect(actual.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'callout',
+        _key: 'k3',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'k4',
+            content: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+    expect(actual.patches).toEqual([
+      {
+        type: 'set',
+        path: [
+          {_key: 'k3'},
+          'content',
+          {_key: 'k4'},
+          'content',
+          {_key: 'k2'},
+          'text',
+        ],
+        value: '',
+        origin: 'local',
+      },
+    ])
+  })
+
+  test('Scenario: span text at table cell content', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const insertedKey = keyGenerator()
+    const containerKey = keyGenerator()
+    const innerKey = keyGenerator()
+    const cellKey = keyGenerator()
+    const {editor, patches} = await createCompatibilityEditor([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}],
+          position: 'after',
+          items: [
+            {
+              _type: 'table',
+              _key: containerKey,
+              rows: [
+                {
+                  _type: 'row',
+                  _key: innerKey,
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: cellKey,
+                      content: [
+                        {_type: 'span', _key: insertedKey, text: 42, marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    const actual = structuredClone({
+      value: editor.getSnapshot().context.value,
+      patches,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [
+        {type: 'unset', path: [{_key: containerKey}], origin: 'remote'},
+      ],
+      snapshot: undefined,
+    })
+    expect(actual.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'table',
+        _key: 'k3',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k4',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k5',
+                content: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(actual.patches).toEqual([
+      {
+        type: 'set',
+        path: [
+          {_key: 'k3'},
+          'rows',
+          {_key: 'k4'},
+          'cells',
+          {_key: 'k5'},
+          'content',
+          {_key: 'k2'},
+          'text',
+        ],
+        value: '',
+        origin: 'local',
+      },
+    ])
+  })
+
+  test('Scenario: span key collision', async () => {
+    // prettier-ignore
+    const {editor, patches} = await createCompatibilityEditor([ { _type: 'block', _key: 'b0', style: 'normal', markDefs: [], children: [{_type: 'span', _key: 's0', text: 'bar', marks: []}]}])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+          position: 'after',
+          items: [{_type: 'block', _key: 's0', children: 'foo'}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    await vi.waitFor(() => {
+      // prettier-ignore
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          markDefs: [],
+          children: [ {_type: 'span', _key: 's0', text: 'bar', marks: []}, { _type: 'block', _key: 'pk2', children: [{_type: 'span', _key: 'pk3', text: '', marks: []}]}],
+        },
+      ])
+      // prettier-ignore
+      expect(patches).toEqual([
+        { type: 'set', path: [{_key: 'b0'}, 'children', 1, '_key'], value: 'pk2', origin: 'local'},
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'pk2'}, 'children'], value: [], origin: 'local'},
+        { type: 'setIfMissing', path: [{_key: 'b0'}, 'children', {_key: 'pk2'}, 'children'], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 'pk2'}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'pk3', text: '', marks: []}],
+          origin: 'local',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: nested missing children with typing', async () => {
+    // prettier-ignore
+    const {editor, patches} = await createCompatibilityEditor([ { _type: 'block', _key: 'b0', style: 'normal', markDefs: [], children: [{_type: 'span', _key: 's0', text: 'bar', marks: []}]}])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+          position: 'after',
+          items: [{_type: 'block', _key: 'b1'}],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    await vi.waitFor(() => {
+      // prettier-ignore
+      expect(editor.getSnapshot().context.value[0]?.children).toEqual([ {_type: 'span', _key: 's0', text: 'bar', marks: []}, { _type: 'block', _key: 'b1', children: [{_type: 'span', _key: 'pk2', text: '', marks: []}]}])
+    })
+    await userEvent.click(page.getByRole('textbox'))
+    await userEvent.keyboard('{End}x')
+    await vi.waitFor(() => {
+      // prettier-ignore
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 's0', text: 'bar', marks: []},
+            { _type: 'block', _key: 'b1', children: [{_type: 'span', _key: 'pk2', text: 'x', marks: []}], markDefs: [], style: 'normal'},
+          ],
+        },
+      ])
+      // prettier-ignore
+      expect(patches).toEqual([
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'children'], value: [], origin: 'local'},
+        { type: 'setIfMissing', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'children'], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'pk2', text: '', marks: []}],
+          origin: 'local',
+        },
+        { type: 'diffMatchPatch', path: [ {_key: 'b0'}, 'children', {_key: 'b1'}, 'children', {_key: 'pk2'}, 'text'], value: '@@ -0,0 +1 @@\n+x\n', origin: 'local'},
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'markDefs'], value: [], origin: 'local'},
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'style'], value: 'normal', origin: 'local'},
+      ])
+    })
+  })
+
+  test('Scenario: nested null children with typing', async () => {
+    // prettier-ignore
+    const {editor, patches} = await createCompatibilityEditor([ { _type: 'block', _key: 'b0', style: 'normal', markDefs: [], children: [{_type: 'span', _key: 's0', text: 'bar', marks: []}]}])
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+          position: 'after',
+          items: [{_type: 'block', _key: 'b1', children: null} as never],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    await vi.waitFor(() => {
+      // prettier-ignore
+      expect(editor.getSnapshot().context.value[0]?.children).toEqual([ {_type: 'span', _key: 's0', text: 'bar', marks: []}, { _type: 'block', _key: 'b1', children: [{_type: 'span', _key: 'pk2', text: '', marks: []}]}])
+    })
+    await userEvent.click(page.getByRole('textbox'))
+    await userEvent.keyboard('{End}x')
+    await vi.waitFor(() => {
+      // prettier-ignore
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'b0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 's0', text: 'bar', marks: []},
+            { _type: 'block', _key: 'b1', children: [{_type: 'span', _key: 'pk2', text: 'x', marks: []}], markDefs: [], style: 'normal'},
+          ],
+        },
+      ])
+      // prettier-ignore
+      expect(patches).toEqual([
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'children'], value: [], origin: 'local'},
+        { type: 'setIfMissing', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'children'], value: [], origin: 'local'},
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'children', 0],
+          position: 'before',
+          items: [{_type: 'span', _key: 'pk2', text: '', marks: []}],
+          origin: 'local',
+        },
+        { type: 'diffMatchPatch', path: [ {_key: 'b0'}, 'children', {_key: 'b1'}, 'children', {_key: 'pk2'}, 'text'], value: '@@ -0,0 +1 @@\n+x\n', origin: 'local'},
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'markDefs'], value: [], origin: 'local'},
+        { type: 'set', path: [{_key: 'b0'}, 'children', {_key: 'b1'}, 'style'], value: 'normal', origin: 'local'},
+      ])
+    })
+  })
+
+  const schemaDefinition = defineSchema({
+    annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+    blockObjects: [
+      {
+        name: 'callout',
+        fields: [
+          {
+            name: 'content',
+            type: 'array',
+            of: [{type: 'block'}, {type: 'callout'}],
+          },
+        ],
+      },
+      {
+        name: 'table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'object',
+                name: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  const containers = [
+    defineContainer({
+      type: 'callout',
+      arrayField: 'content',
+      render: ({children}) => <>{children}</>,
+    }),
+    defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: ({children}) => <>{children}</>,
+    }),
+    defineContainer({
+      type: 'row',
+      arrayField: 'cells',
+      render: ({children}) => <>{children}</>,
+    }),
+    defineContainer({
+      type: 'cell',
+      arrayField: 'content',
+      render: ({children}) => <>{children}</>,
+    }),
+  ]
+
+  async function createCompatibilityEditor(
+    initialValue: NonNullable<
+      Parameters<typeof createTestEditor>[0]
+    >['initialValue'],
+  ) {
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator('p'),
+      schemaDefinition,
+      initialValue,
+      children: (
+        <>
+          <NodePlugin nodes={containers} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    return {editor, patches}
+  }
 })
