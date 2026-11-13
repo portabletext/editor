@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {createRef} from 'react'
+import {createRef, useState} from 'react'
 import {afterAll, describe, expect, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {cdp, page, server, userEvent} from 'vitest/browser'
@@ -21,6 +21,12 @@ if (isChromium) {
 const {createTestEditor} = await import('../src/test/vitest')
 const {EditorProvider, PortableTextEditable} = await import('../src')
 const {EditorRefPlugin} = await import('../src/plugins/plugin.editor-ref')
+const {defineTextBlock} = await import('../src/renderers/renderer.types')
+const {NodePlugin} = await import('../src/plugins/plugin.node')
+const {BehaviorPlugin} = await import('../src/plugins/plugin.behavior')
+const {defineBehavior} =
+  await import('../src/behaviors/behavior.types.behavior')
+const {execute} = await import('../src/behaviors/behavior.types.action')
 
 afterAll(async () => {
   if (isChromium) {
@@ -848,5 +854,446 @@ describe.skipIf(!isChromium)('Composition (IME) on Android', () => {
     await expect
       .element(locator)
       .toHaveTextContent('か', {normalizeWhitespace: false})
+  })
+  test('Scenario: Preserving marks when composition replaces text across a mark boundary', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooKey = keyGenerator()
+    const barKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'foo', marks: []},
+            {_key: barKey, _type: 'span', text: 'bar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    await userEvent.click(locator)
+    const [fooText, barText] = Array.from(
+      locator.element().querySelectorAll('[data-pt-text]'),
+    ).map((element) => element.firstChild!)
+    locator
+      .element()
+      .dispatchEvent(new CompositionEvent('compositionstart', {bubbles: true}))
+    const event = new InputEvent('beforeinput', {
+      bubbles: true,
+      inputType: 'insertCompositionText',
+      data: 'fob',
+      isComposing: true,
+      targetRanges: [
+        new StaticRange({
+          startContainer: fooText!,
+          startOffset: 0,
+          endContainer: barText!,
+          endOffset: 1,
+        }),
+      ],
+    })
+    locator.element().dispatchEvent(event)
+    locator
+      .element()
+      .dispatchEvent(
+        new CompositionEvent('compositionend', {bubbles: true, data: 'fob'}),
+      )
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: fooKey, _type: 'span', text: 'fob', marks: []},
+            {_key: barKey, _type: 'span', text: 'ar', marks: ['strong']},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(locator.element().textContent).toEqual('fobar')
+    })
+  })
+
+  test('Scenario: Aborting composition when a remote edit changes the composing span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    await userEvent.click(locator)
+    const events: Array<string> = []
+    for (const type of ['blur', 'focus']) {
+      locator.element().addEventListener(type, () => events.push(type))
+    }
+    await cdp().send('Input.imeSetComposition', {
+      text: 'foo',
+      selectionStart: 3,
+      selectionEnd: 3,
+    })
+    await expect.element(locator).toHaveTextContent('foo')
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
+          value: 'bar',
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(events).toEqual(['blur', 'focus'])
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(locator.element().textContent).toEqual('bar')
+      expect(window.getSelection()?.focusOffset).toEqual(
+        editor.getSnapshot().context.selection?.focus.offset,
+      )
+    })
+  })
+  test('Scenario: Redrawing a rewritten composition and restoring the model caret', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <BehaviorPlugin
+          behaviors={[
+            defineBehavior({
+              on: 'insert.text',
+              guard: ({event}) => event.text !== event.text.toUpperCase(),
+              actions: [
+                ({event}) => [
+                  execute({
+                    type: 'insert.text',
+                    text: event.text.toUpperCase(),
+                  }),
+                ],
+              ],
+            }),
+          ]}
+        />
+      ),
+    })
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await cdp().send('Input.imeSetComposition', {
+      text: 'bar',
+      selectionStart: 3,
+      selectionEnd: 3,
+    })
+    await cdp().send('Input.insertText', {text: 'bar'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'fooBAR', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(locator.element().textContent).toEqual('fooBAR')
+      expect(window.getSelection()?.focusOffset).toEqual(6)
+      expect(window.getSelection()?.focusNode).toBe(
+        locator.element().querySelector('[data-pt-text]')?.firstChild,
+      )
+    })
+    await cdp().send('Input.insertText', {text: '!'})
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooBAR!')
+    })
+  })
+  test('Scenario: Cancelling an empty composition preserves custom block mounts', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const mounts: Array<string> = []
+    let nextMountId = 0
+    function Counter(props: {children: React.ReactNode}) {
+      const [id] = useState(() => {
+        const value = `m${nextMountId++}`
+        mounts.push(value)
+        return value
+      })
+      return <div data-mount={id}>{props.children}</div>
+    }
+    const blockRenderer = defineTextBlock({
+      type: 'block',
+      render: ({attributes, children}) => (
+        <div {...attributes}>
+          <Counter>{children}</Counter>
+        </div>
+      ),
+    })
+    const firstKey = keyGenerator()
+    const firstSpan = keyGenerator()
+    const secondKey = keyGenerator()
+    const secondSpan = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: firstKey,
+          _type: 'block',
+          children: [{_key: firstSpan, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _key: secondKey,
+          _type: 'block',
+          children: [{_key: secondSpan, _type: 'span', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={[blockRenderer]} />,
+    })
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: secondKey}, 'children', {_key: secondSpan}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: secondKey}, 'children', {_key: secondSpan}],
+          offset: 0,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusOffset).toEqual(0)
+      expect(
+        window
+          .getSelection()
+          ?.focusNode?.parentElement?.hasAttribute('data-pt-line-break'),
+      ).toEqual(true)
+    })
+    const session = cdp()
+    await session.send('Input.imeSetComposition', {
+      text: 'き',
+      selectionStart: 1,
+      selectionEnd: 1,
+    })
+    await session.send('Input.imeSetComposition', {
+      text: '',
+      selectionStart: 0,
+      selectionEnd: 0,
+    })
+    await session.send('Input.insertText', {text: ''})
+    await vi.waitFor(() => {
+      expect(
+        locator.element().querySelector('[data-pt-line-break]')?.innerHTML,
+      ).toEqual('<br>')
+      expect(mounts).toEqual(['m0', 'm1', 'm2'])
+      expect(window.getSelection()?.anchorNode?.isConnected).toEqual(true)
+    })
+  })
+  test('Scenario: Applying a composition update without target ranges without aborting', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    const events: Array<string> = []
+    for (const type of ['blur', 'focus']) {
+      locator.element().addEventListener(type, () => events.push(type))
+    }
+    const textNode = locator
+      .element()
+      .querySelector('[data-pt-text]')!.firstChild!
+    locator
+      .element()
+      .dispatchEvent(new CompositionEvent('compositionstart', {bubbles: true}))
+    locator.element().dispatchEvent(
+      new InputEvent('beforeinput', {
+        bubbles: true,
+        inputType: 'insertCompositionText',
+        data: 'b',
+        isComposing: true,
+        targetRanges: [
+          new StaticRange({
+            startContainer: textNode,
+            startOffset: 3,
+            endContainer: textNode,
+            endOffset: 3,
+          }),
+        ],
+      }),
+    )
+    locator.element().dispatchEvent(
+      new InputEvent('beforeinput', {
+        bubbles: true,
+        inputType: 'insertCompositionText',
+        data: 'a',
+        isComposing: true,
+      }),
+    )
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        children: [{_key: 'k1', _type: 'span', text: 'fooba', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    locator
+      .element()
+      .dispatchEvent(new CompositionEvent('compositionend', {bubbles: true}))
+    await vi.waitFor(() => {
+      expect(locator.element().textContent).toEqual('fooba')
+      expect(events).toEqual([])
+    })
+  })
+
+  test('Scenario: Ignoring a cancelable target range while the DOM node map is dirty', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: blockKey,
+          _type: 'block',
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo bar', marks: []},
+          ],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusOffset).toEqual(0)
+    })
+    const textNode = locator
+      .element()
+      .querySelector('[data-pt-text]')!.firstChild!
+    editor.send({type: 'insert.text', text: 'XX'})
+    const event = new InputEvent('beforeinput', {
+      bubbles: true,
+      cancelable: true,
+      inputType: 'deleteContentBackward',
+      targetRanges: [
+        new StaticRange({
+          startContainer: textNode,
+          startOffset: 6,
+          endContainer: textNode,
+          endOffset: 7,
+        }),
+      ],
+    })
+    locator.element().dispatchEvent(event)
+    expect(event.defaultPrevented).toEqual(false)
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          children: [{_key: 'k1', _type: 'span', text: 'XXfoo bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+      expect(locator.element().textContent).toEqual('XXfoo bar')
+    })
   })
 })
