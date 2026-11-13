@@ -27,5 +27,16 @@ export function getDomNodePath(domNode: DOMNode): Path | undefined {
     return []
   }
 
-  return deserializePath(dataPath)
+  const path = deserializePath(dataPath)
+  const lastSegment = path.at(-1)
+  if (
+    element.getAttribute('data-pt-block') === 'object' &&
+    typeof lastSegment === 'string' &&
+    /^\d+$/.test(lastSegment)
+  ) {
+    // A keyless span at a block position has a path ending in its array index,
+    // which `deserializePath` reads as a string.
+    path[path.length - 1] = Number(lastSegment)
+  }
+  return path
 }

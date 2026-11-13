@@ -1,3 +1,4 @@
+import {isTypedObject} from '@portabletext/schema'
 import type {
   PortableTextObject,
   PortableTextSpan,
@@ -15,6 +16,7 @@ import {
   ParentContainerContext,
   useParentContainer,
 } from '../../../editor/parent-container-context'
+import {nodeSegment} from '../../../paths/node-segment'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
 import {isObject} from '../../../traversal/is-object'
 import {isEditor} from '../../editor/is-editor'
@@ -217,10 +219,13 @@ const useChildren = (props: {
     node: PortableTextObject,
     index: number,
   ) => {
+    const segment = isSpanNode({schema: editor.snapshot.context.schema}, node)
+      ? nodeSegment(node, index)
+      : {_key: node._key}
     const nodePath: Path =
       parentPath.length === 0
-        ? [{_key: node._key}]
-        : [...parentPath, arrayFieldName, {_key: node._key}]
+        ? [segment]
+        : [...parentPath, arrayFieldName, segment]
 
     return (
       <ObjectNodeComponent
@@ -288,6 +293,13 @@ const useChildren = (props: {
   }
 
   const elements = children.map((n: Node, i: number) => {
+    if (
+      !textBlockParent &&
+      isTypedObject(n) &&
+      n._type === editor.snapshot.context.schema.span.name
+    ) {
+      return renderObjectNodeComponent(n, i)
+    }
     if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
       return wrapNewPipeline(
         renderElementComponent(n, i, false),
