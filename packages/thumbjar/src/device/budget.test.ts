@@ -22,6 +22,8 @@ import {
   PREP_KILL_SECONDS,
   PREP_STAGES_SECONDS,
   prepWorstSeconds,
+  runStepWorstSeconds,
+  RUNNER_SETUP_SECONDS,
   SELF_UPDATE_BLOCK_SECONDS,
   U2_JAR_ATTEMPT_SECONDS,
   U2_JAR_ATTEMPTS,
@@ -157,4 +159,26 @@ describe(countDeviceTests.name, () => {
       ),
     ).toEqual(2)
   })
+})
+
+test('accepts a declared count for data-driven device suites', () => {
+  expect(
+    countDeviceTests('// thumbjar-test-count: 13\nFeature({featureText})'),
+  ).toEqual(13)
+})
+
+describe(runStepWorstSeconds.name, () => {
+  test('adds the boot wait, the prep, the test file, the device check and the diagnostics, each with its time to stop', () => {
+    expect({
+      en9: runStepWorstSeconds('en', 9),
+      ja3: runStepWorstSeconds('ja', 3),
+      en1: runStepWorstSeconds('en', 1),
+    }).toEqual({en9: 7192, ja3: 3483, en1: 1904})
+  })
+})
+
+test('includes runner setup and the kill grace of all eight execute calls', () => {
+  expect(runStepWorstSeconds('en', 9) - 7146).toEqual(
+    RUNNER_SETUP_SECONDS + 8 * KILL_GRACE_SECONDS,
+  )
 })
