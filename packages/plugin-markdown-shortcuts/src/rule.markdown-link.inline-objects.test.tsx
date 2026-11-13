@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {expect, test, vi} from 'vitest'
+import {expect, test} from 'vitest'
 import {createMarkdownLinkRule} from './rule.markdown-link'
 
 const markdownLinkRule = createMarkdownLinkRule({
@@ -50,21 +50,19 @@ test('Scenario: linkifying a markdown link whose text spans an inline object', a
   editor.send({type: 'insert.text', text: ' bar](url'})
   editor.send({type: 'insert.text', text: ')'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'block',
-        _key: 'b0',
-        children: [
-          {_type: 'span', _key: 'k5', text: 'foo', marks: ['k3']},
-          {_type: 'stock-ticker', _key: 'ticker0'},
-          {_type: 'span', _key: 'k2', text: ' bar', marks: ['k3']},
-        ],
-        markDefs: [{_key: 'k3', _type: 'link', href: 'url'}],
-        style: 'normal',
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: 'b0',
+      children: [
+        {_type: 'span', _key: 'k5', text: 'foo', marks: ['k3']},
+        {_type: 'stock-ticker', _key: 'ticker0'},
+        {_type: 'span', _key: 'k2', text: ' bar', marks: ['k3']},
+      ],
+      markDefs: [{_key: 'k3', _type: 'link', href: 'url'}],
+      style: 'normal',
+    },
+  ])
 })
 
 test('Scenario: a markdown link with an inline object in the href stays literal', async () => {
@@ -85,23 +83,21 @@ test('Scenario: a markdown link with an inline object in the href stays literal'
   editor.send({type: 'insert.text', text: 'l'})
   editor.send({type: 'insert.text', text: ')'})
 
-  await vi.waitFor(() => {
-    // The concatenated text reads `[text](url)`, but the inline object sits
-    // inside the href, deleting the `](url)` region would destroy it, and
-    // the captured href text would silently omit it, so the rule must not
-    // fire.
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _type: 'block',
-        _key: 'b0',
-        children: [
-          {_type: 'span', _key: 's0', text: '[text](ur', marks: []},
-          {_type: 'stock-ticker', _key: 'ticker0'},
-          {_type: 'span', _key: 'k2', text: 'l)', marks: []},
-        ],
-        markDefs: [],
-        style: 'normal',
-      },
-    ])
-  })
+  // The concatenated text reads `[text](url)`, but the inline object sits
+  // inside the href, deleting the `](url)` region would destroy it, and
+  // the captured href text would silently omit it, so the rule must not
+  // fire.
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: 'b0',
+      children: [
+        {_type: 'span', _key: 's0', text: '[text](ur', marks: []},
+        {_type: 'stock-ticker', _key: 'ticker0'},
+        {_type: 'span', _key: 'k2', text: 'l)', marks: []},
+      ],
+      markDefs: [],
+      style: 'normal',
+    },
+  ])
 })

@@ -39,24 +39,20 @@ describe('Markdown shortcuts and the sub-schema at the focus', () => {
       offset: 7,
     }
     editor.send({type: 'select', at: {anchor: midPoint, focus: midPoint}})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(7)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(7)
     // The semantic event the behavior listens on, dispatched directly:
     // physical keystrokes after programmatic selection moves are flaky on
     // webkit, and input plumbing is not what this pin is about.
     editor.send({type: 'delete.backward', unit: 'character'})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'b1',
-          children: [{_type: 'span', _key: 's1', text: 'headin', marks: []}],
-          markDefs: [],
-          style: 'h1',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'headin', marks: []}],
+        markDefs: [],
+        style: 'h1',
+      },
+    ])
     expect(defaultStyle).not.toHaveBeenCalled()
 
     // At the block's start it is consulted, and the style clears.
@@ -65,21 +61,17 @@ describe('Markdown shortcuts and the sub-schema at the focus', () => {
       offset: 0,
     }
     editor.send({type: 'select', at: {anchor: startPoint, focus: startPoint}})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(0)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(0)
     editor.send({type: 'delete.backward', unit: 'character'})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'b1',
-          children: [{_type: 'span', _key: 's1', text: 'headin', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'headin', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
     expect(defaultStyle).toHaveBeenCalled()
   })
 
