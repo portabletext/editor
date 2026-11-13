@@ -51,11 +51,7 @@ describe('Feature: Inline Objects', () => {
       at: stockTickerSelection,
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(
-        stockTickerSelection,
-      )
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(stockTickerSelection)
 
     await userEvent.keyboard('{Backspace}')
 
@@ -114,11 +110,7 @@ describe('Feature: Inline Objects', () => {
       at: stockTickerSelection,
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(
-        stockTickerSelection,
-      )
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(stockTickerSelection)
 
     await userEvent.keyboard('{Delete}')
 
@@ -177,11 +169,7 @@ describe('Feature: Inline Objects', () => {
       at: stockTickerSelection,
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(
-        stockTickerSelection,
-      )
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(stockTickerSelection)
 
     await userEvent.keyboard('{Enter}')
 
@@ -245,19 +233,13 @@ describe('Feature: Inline Objects', () => {
       at: stockTickerSelection,
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(
-        stockTickerSelection,
-      )
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(stockTickerSelection)
 
     editor.send({type: 'insert.text', text: 'hello'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: foo{stock-ticker}hello|bar',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: foo{stock-ticker}hello|bar',
+    )
   })
 
   test('Scenario: Typing after ArrowRight past inline object inserted by behavior', async () => {

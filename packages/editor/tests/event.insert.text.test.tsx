@@ -27,35 +27,29 @@ describe('event.insert.text', () => {
 
     editor.send({type: 'insert.text', text: 'foo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
-        backward: false,
-      })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      backward: false,
     })
 
     editor.send({type: 'insert.text', text: 'bar'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
-        backward: false,
-      })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 6},
+      backward: false,
     })
 
     editor.send({type: 'delete.backward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
-        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
-        backward: false,
-      })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 5},
+      backward: false,
     })
   })
 
@@ -332,9 +326,7 @@ describe('event.insert.text', () => {
 
     editor.send({type: 'insert.text', text: 'foo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
   })
 
   test('Scenario: Inserting text on a block object is a no-op', async () => {
@@ -367,9 +359,7 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
 
     editor.send({type: 'insert.text', text: 'foo'})
 
@@ -434,27 +424,23 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: inlineKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: inlineKey}],
-          offset: 0,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: inlineKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: inlineKey}],
+        offset: 0,
+      },
+      backward: false,
     })
 
     editor.send({type: 'insert.text', text: 'hello'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: before{stock-ticker symbol="AAPL"}hello|after',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: before{stock-ticker symbol="AAPL"}hello|after',
+    )
   })
 
   test('Scenario: `insert.text` at an explicit position', async () => {
@@ -480,19 +466,15 @@ describe('event.insert.text', () => {
       text: ' world',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          children: [
-            {_key: 's0', _type: 'span', text: 'hello world', marks: []},
-          ],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 's0', _type: 'span', text: 'hello world', marks: []}],
+        markDefs: [],
+      },
+    ])
   })
 
   test('Scenario: `insert.text` at an explicit position leaves a caret on an inline object alone', async () => {
@@ -552,18 +534,16 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
-          offset: 0,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+        offset: 0,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -573,38 +553,36 @@ describe('event.insert.text', () => {
       text: 'qux',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockAKey,
-          children: [
-            {_type: 'span', _key: fooKey, text: 'foo', marks: []},
-            {_type: 'stock-ticker', _key: inlineKey, symbol: 'AAPL'},
-            {_type: 'span', _key: barKey, text: 'bar', marks: []},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: blockBKey,
-          children: [{_type: 'span', _key: bazKey, text: 'bazqux', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
-          offset: 0,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [
+          {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+          {_type: 'stock-ticker', _key: inlineKey, symbol: 'AAPL'},
+          {_type: 'span', _key: barKey, text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: bazKey, text: 'bazqux', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: inlineKey}],
+        offset: 0,
+      },
+      backward: false,
     })
   })
 
@@ -652,18 +630,16 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -673,34 +649,32 @@ describe('event.insert.text', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockAKey,
-          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: blockBKey,
-          children: [{_type: 'span', _key: barKey, text: 'bazbar', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: barKey, text: 'bazbar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
   })
 
@@ -748,18 +722,16 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -768,34 +740,32 @@ describe('event.insert.text', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockAKey,
-          children: [{_type: 'span', _key: fooKey, text: 'baz', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: blockBKey,
-          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: fooKey, text: 'baz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
   })
 
@@ -837,25 +807,23 @@ describe('event.insert.text', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockAKey,
-          children: [{_type: 'span', _key: fooKey, text: 'bazfoo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: blockBKey,
-          children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual(null)
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: fooKey, text: 'bazfoo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: barKey, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual(null)
   })
 
   test('Scenario: `insert.text` at an explicit position ignores a decorator toggled on at the caret', async () => {
@@ -905,25 +873,21 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
-    })
+    expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
 
     editor.send({
       type: 'insert.text',
@@ -932,36 +896,34 @@ describe('event.insert.text', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockAKey,
-          children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: blockBKey,
-          children: [{_type: 'span', _key: barKey, text: 'barbaz', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
-      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockAKey,
+        children: [{_type: 'span', _key: fooKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: blockBKey,
+        children: [{_type: 'span', _key: barKey, text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
+    expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
   })
 
   test('Scenario: `insert.text` at an explicit position maps a selection in the same span like any other edit', async () => {
@@ -1002,25 +964,21 @@ describe('event.insert.text', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: fooKey}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: fooKey}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
-    })
+    expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
 
     editor.send({
       type: 'insert.text',
@@ -1029,29 +987,27 @@ describe('event.insert.text', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: fooKey, text: 'foobaz', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: fooKey}],
-          offset: 6,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: fooKey}],
-          offset: 6,
-        },
-        backward: false,
-      })
-      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: fooKey, text: 'foobaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: fooKey}],
+        offset: 6,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: fooKey}],
+        offset: 6,
+      },
+      backward: false,
     })
+    expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
   })
 })
 
@@ -1106,39 +1062,37 @@ describe('event.insert.text with a compact path at the root', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -1222,44 +1176,26 @@ describe('event.insert.text with a compact path inside a callout', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -1272,9 +1208,25 @@ describe('event.insert.text with a compact path inside a callout', () => {
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -1382,48 +1334,28 @@ describe('event.insert.text with a compact path inside a callout inside a callou
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -1438,9 +1370,27 @@ describe('event.insert.text with a compact path inside a callout inside a callou
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -1538,44 +1488,26 @@ describe('event.insert.text with a compact path inside a field with its own sub-
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -1588,9 +1520,25 @@ describe('event.insert.text with a compact path inside a field with its own sub-
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',

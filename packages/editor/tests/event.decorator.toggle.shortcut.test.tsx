@@ -239,9 +239,7 @@ describe('decorator shortcut guard', () => {
       backward: false,
     }
     editor.send({type: 'select', at: selection})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(selection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(selection)
 
     await userEvent.keyboard(
       IS_MAC ? "{Meta>}'{/Meta}" : "{Control>}'{/Control}",

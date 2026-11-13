@@ -1,5 +1,5 @@
 import {toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../test/vitest'
 import {validateSelectionMachine} from './validate-selection-machine'
@@ -12,9 +12,7 @@ describe(validateSelectionMachine.id, () => {
 
     editor.send({type: 'insert.text', text: 'foo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
 
     // This event is being sent in before "foo" has been inserted in the DOM
     // This means that when the MutationObserver is finally triggered for the
@@ -24,14 +22,10 @@ describe(validateSelectionMachine.id, () => {
     // pending operations.
     editor.send({type: 'insert.text', text: 'bar'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
 
     editor.send({type: 'delete.backward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba|')
   })
 })

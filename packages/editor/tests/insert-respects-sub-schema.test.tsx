@@ -131,11 +131,9 @@ describe('insert respects sub-schema', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['CALLOUT:', '  B: hello|{mention text="@alice"}'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  B: hello|{mention text="@alice"}'].join('\n'),
+    )
   })
 
   test('Scenario: inserting an inline object whose type is NOT in the path sub-schema is rejected', async () => {
@@ -568,11 +566,9 @@ describe('insert respects sub-schema', () => {
     // `strong` is in callout's sub-schema.
     editor.send({type: 'decorator.add', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['CALLOUT:', '  B: [strong:^hello|]'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['CALLOUT:', '  B: [strong:^hello|]'].join('\n'),
+    )
   })
 
   test('Scenario: `decorator.add` of a disallowed decorator inside a container does not apply the mark', async () => {
@@ -721,32 +717,30 @@ describe('insert respects sub-schema', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'block',
-              _key: innerBlockKey,
-              children: [
-                {
-                  _type: 'span',
-                  _key: innerSpanKey,
-                  text: 'hello',
-                  marks: [linkKey],
-                },
-              ],
-              markDefs: [
-                {_key: linkKey, _type: 'link', href: 'https://example.com'},
-              ],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: innerBlockKey,
+            children: [
+              {
+                _type: 'span',
+                _key: innerSpanKey,
+                text: 'hello',
+                marks: [linkKey],
+              },
+            ],
+            markDefs: [
+              {_key: linkKey, _type: 'link', href: 'https://example.com'},
+            ],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `annotation.add` of a disallowed annotation inside a container does not apply the mark', async () => {
@@ -1033,36 +1027,34 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       placement: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'section',
-          _key: sectionKey,
-          content: [
-            {
-              _type: 'subsection',
-              _key: outerSubsectionKey,
-              title: 'foo',
-              content: [
-                textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                {
-                  _type: 'subsection',
-                  _key: insertedSubsectionKey,
-                  title: 'baz',
-                  content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
-                },
-                {
-                  _type: 'subsection',
-                  _key: innerSubsectionKey,
-                  title: 'bar',
-                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'section',
+        _key: sectionKey,
+        content: [
+          {
+            _type: 'subsection',
+            _key: outerSubsectionKey,
+            title: 'foo',
+            content: [
+              textBlock(fooBlockKey, fooSpanKey, 'foo'),
+              {
+                _type: 'subsection',
+                _key: insertedSubsectionKey,
+                title: 'baz',
+                content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+              },
+              {
+                _type: 'subsection',
+                _key: innerSubsectionKey,
+                title: 'bar',
+                content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `insert.blocks` of a recursive type declared inline keeps every field two levels deep', async () => {
@@ -1135,36 +1127,34 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       placement: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'section',
-          _key: sectionKey,
-          content: [
-            {
-              _type: 'subsection',
-              _key: outerSubsectionKey,
-              title: 'foo',
-              content: [
-                textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                {
-                  _type: 'subsection',
-                  _key: insertedSubsectionKey,
-                  title: 'baz',
-                  content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
-                },
-                {
-                  _type: 'subsection',
-                  _key: innerSubsectionKey,
-                  title: 'bar',
-                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'section',
+        _key: sectionKey,
+        content: [
+          {
+            _type: 'subsection',
+            _key: outerSubsectionKey,
+            title: 'foo',
+            content: [
+              textBlock(fooBlockKey, fooSpanKey, 'foo'),
+              {
+                _type: 'subsection',
+                _key: insertedSubsectionKey,
+                title: 'baz',
+                content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+              },
+              {
+                _type: 'subsection',
+                _key: innerSubsectionKey,
+                title: 'bar',
+                content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `block.set` on a recursive type declared inline changes its field two levels deep', async () => {
@@ -1217,30 +1207,28 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       props: {title: 'baz'},
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'section',
-          _key: sectionKey,
-          content: [
-            {
-              _type: 'subsection',
-              _key: outerSubsectionKey,
-              title: 'foo',
-              content: [
-                textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                {
-                  _type: 'subsection',
-                  _key: innerSubsectionKey,
-                  title: 'baz',
-                  content: [textBlock(barBlockKey, barSpanKey, 'bar')],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'section',
+        _key: sectionKey,
+        content: [
+          {
+            _type: 'subsection',
+            _key: outerSubsectionKey,
+            title: 'foo',
+            content: [
+              textBlock(fooBlockKey, fooSpanKey, 'foo'),
+              {
+                _type: 'subsection',
+                _key: innerSubsectionKey,
+                title: 'baz',
+                content: [textBlock(barBlockKey, barSpanKey, 'bar')],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `insert.block` of a recursive type declared inline keeps every field two levels deep inside another container', async () => {
@@ -1334,36 +1322,34 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       placement: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'section',
-              _key: sectionKey,
-              content: [
-                {
-                  _type: 'subsection',
-                  _key: outerSubsectionKey,
-                  title: 'foo',
-                  content: [
-                    textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                    {
-                      _type: 'subsection',
-                      _key: insertedSubsectionKey,
-                      title: 'baz',
-                      content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'section',
+            _key: sectionKey,
+            content: [
+              {
+                _type: 'subsection',
+                _key: outerSubsectionKey,
+                title: 'foo',
+                content: [
+                  textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                  {
+                    _type: 'subsection',
+                    _key: insertedSubsectionKey,
+                    title: 'baz',
+                    content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `insert.block` of a recursive type declared inline in the array field of a block object with other fields keeps every field two levels deep', async () => {
@@ -1467,31 +1453,29 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       placement: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'figure',
-          _key: figureKey,
-          src: 'foo',
-          caption: [
-            {
-              _type: 'aside',
-              _key: asideKey,
-              note: 'bar',
-              body: [
-                textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                {
-                  _type: 'aside',
-                  _key: insertedAsideKey,
-                  note: 'baz',
-                  body: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'figure',
+        _key: figureKey,
+        src: 'foo',
+        caption: [
+          {
+            _type: 'aside',
+            _key: asideKey,
+            note: 'bar',
+            body: [
+              textBlock(fooBlockKey, fooSpanKey, 'foo'),
+              {
+                _type: 'aside',
+                _key: insertedAsideKey,
+                note: 'baz',
+                body: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `insert.block` of a bare reference resolves against the nearest of two same-named enclosing declarations', async () => {
@@ -1656,43 +1640,41 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       placement: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'section',
-          _key: sectionKey,
-          content: [
-            {
-              _type: 'box',
-              _key: outerBoxKey,
-              title: 'foo',
-              content: [
-                {
-                  _type: 'panel',
-                  _key: panelKey,
-                  content: [
-                    {
-                      _type: 'box',
-                      _key: innerBoxKey,
-                      tone: 'bar',
-                      content: [
-                        textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                        {
-                          _type: 'box',
-                          _key: insertedBoxKey,
-                          tone: 'baz',
-                          content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'section',
+        _key: sectionKey,
+        content: [
+          {
+            _type: 'box',
+            _key: outerBoxKey,
+            title: 'foo',
+            content: [
+              {
+                _type: 'panel',
+                _key: panelKey,
+                content: [
+                  {
+                    _type: 'box',
+                    _key: innerBoxKey,
+                    tone: 'bar',
+                    content: [
+                      textBlock(fooBlockKey, fooSpanKey, 'foo'),
+                      {
+                        _type: 'box',
+                        _key: insertedBoxKey,
+                        tone: 'baz',
+                        content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: `insert.block` of a type whose field references an enclosing declaration keeps the fields of the nested reference', async () => {
@@ -1820,36 +1802,34 @@ describe('bare type references resolve to the nearest enclosing declaration', ()
       placement: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'section',
-          _key: sectionKey,
-          content: [
-            {
-              _type: 'box',
-              _key: boxKey,
-              title: 'foo',
-              content: [
-                textBlock(fooBlockKey, fooSpanKey, 'foo'),
-                {
-                  _type: 'panel',
-                  _key: insertedPanelKey,
-                  content: [
-                    {
-                      _type: 'box',
-                      _key: nestedBoxKey,
-                      title: 'baz',
-                      content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'section',
+        _key: sectionKey,
+        content: [
+          {
+            _type: 'box',
+            _key: boxKey,
+            title: 'foo',
+            content: [
+              textBlock(fooBlockKey, fooSpanKey, 'foo'),
+              {
+                _type: 'panel',
+                _key: insertedPanelKey,
+                content: [
+                  {
+                    _type: 'box',
+                    _key: nestedBoxKey,
+                    title: 'baz',
+                    content: [textBlock(bazBlockKey, bazSpanKey, 'baz')],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 })
 

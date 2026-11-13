@@ -92,10 +92,8 @@ describe('Serialize/Deserialize', () => {
       type: 'select',
       at: fooBarBazSelection,
     })
-    await vi.waitFor(() => {
-      const selection = editor.getSnapshot().context.selection
-      expect(selection).toEqual({...fooBarBazSelection, backward: false})
-    })
+    const selection = editor.getSnapshot().context.selection
+    expect(selection).toEqual({...fooBarBazSelection, backward: false})
 
     // And a cut is performed
     const dataTransfer = new DataTransfer()
@@ -482,10 +480,8 @@ describe('Serialize/Deserialize', () => {
       type: 'select',
       at: fooBarBazSelection,
     })
-    await vi.waitFor(() => {
-      const selection = editor.getSnapshot().context.selection
-      expect(selection).toEqual({...fooBarBazSelection, backward: false})
-    })
+    const selection = editor.getSnapshot().context.selection
+    expect(selection).toEqual({...fooBarBazSelection, backward: false})
 
     const dataTransfer = new DataTransfer()
     editor.send({
@@ -527,11 +523,9 @@ describe('Serialize/Deserialize', () => {
 
     await userEvent.click(locator)
     editor.send({type: 'select', at: imageSelection})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        ...imageSelection,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...imageSelection,
+      backward: false,
     })
 
     const dataTransfer = new DataTransfer()
@@ -638,10 +632,8 @@ describe('Serialize/Deserialize', () => {
       type: 'select',
       at: fooBarBazSelection,
     })
-    await vi.waitFor(() => {
-      const selection = editor.getSnapshot().context.selection
-      expect(selection).toEqual({...fooBarBazSelection, backward: false})
-    })
+    const selection = editor.getSnapshot().context.selection
+    expect(selection).toEqual({...fooBarBazSelection, backward: false})
 
     // Cutting clears the block, leaving an empty position to paste back into
     const dataTransfer = new DataTransfer()
@@ -740,11 +732,7 @@ describe('Serialize/Deserialize', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: foo bar baz|',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar baz|')
   })
 
   test('Scenario: Forwarding deserialize', async () => {
@@ -797,8 +785,6 @@ describe('Serialize/Deserialize', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fizz buzz|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fizz buzz|')
   })
 })

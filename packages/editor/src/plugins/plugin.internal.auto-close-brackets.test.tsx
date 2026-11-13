@@ -14,9 +14,7 @@ describe(AutoCloseBracketsPlugin.name, () => {
 
     editor.send({type: 'insert.text', text: '('})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (|)')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (|)')
 
     await userEvent.type(locator, 'foo')
 
@@ -26,15 +24,11 @@ describe(AutoCloseBracketsPlugin.name, () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (|)')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (|)')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (|')
   })
 
   test('Scenario: Inserting an opening bracket with text closes it and undo removes the typing, then the closing bracket', async () => {
@@ -46,9 +40,7 @@ describe(AutoCloseBracketsPlugin.name, () => {
 
     editor.send({type: 'insert.text', text: '(f'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (f|)')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (f|)')
 
     await userEvent.type(locator, 'oo')
 
@@ -58,14 +50,10 @@ describe(AutoCloseBracketsPlugin.name, () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (f|)')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (f|)')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (f|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: (f|')
   })
 })

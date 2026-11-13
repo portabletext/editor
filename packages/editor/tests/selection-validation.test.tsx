@@ -50,9 +50,7 @@ describe('selection validation', () => {
     })
     await userEvent.click(locator)
     editor.send({type: 'select', at: {anchor, focus}})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus).toEqual(focus)
-    })
+    expect(editor.getSnapshot().context.selection?.focus).toEqual(focus)
 
     const editorElement = locator.element()
     const textNode = findTextNode(editorElement, 'foo')
@@ -82,9 +80,7 @@ describe('selection validation', () => {
     })
     await userEvent.click(locator)
     editor.send({type: 'select', at: {anchor, focus}})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus).toEqual(focus)
-    })
+    expect(editor.getSnapshot().context.selection?.focus).toEqual(focus)
 
     const editorElement = locator.element()
     const textNode = findTextNode(editorElement, 'foo')
@@ -172,30 +168,26 @@ describe('selection validation', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.anchor.path).toEqual([
-        {_key: imageKey},
-      ])
-    })
+    expect(editor.getSnapshot().context.selection?.anchor.path).toEqual([
+      {_key: imageKey},
+    ])
 
     editor.send({type: 'custom.swap-image'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: blockKey,
-          _type: 'block',
-          children: [{_key: spanKey, _type: 'span', text: 'foo'}],
-        },
-        {
-          _key: newBlockKey,
-          _type: 'block',
-          children: [{_key: newSpanKey, _type: 'span', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: blockKey,
+        _type: 'block',
+        children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+      },
+      {
+        _key: newBlockKey,
+        _type: 'block',
+        children: [{_key: newSpanKey, _type: 'span', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
 
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {

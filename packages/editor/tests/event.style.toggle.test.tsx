@@ -1,5 +1,5 @@
 import {defineSchema} from '@portabletext/schema'
-import {expect, test, vi} from 'vitest'
+import {expect, test} from 'vitest'
 import {getActiveStyle} from '../src/selectors/selector.get-active-style'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -31,10 +31,8 @@ test('Scenario: toggling the default style on a block missing `style` is a no-op
   // no touch-fill runs. No write for a visual no-op.
   editor.send({type: 'style.toggle', style: 'normal'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([blockMissingStyle])
-    expect(getActiveStyle(editor.getSnapshot())).toBe('normal')
-  })
+  expect(editor.getSnapshot().context.value).toEqual([blockMissingStyle])
+  expect(getActiveStyle(editor.getSnapshot())).toBe('normal')
 })
 
 test('Scenario: toggling a non-default style on a block missing `style` sets it', async () => {
@@ -54,11 +52,9 @@ test('Scenario: toggling a non-default style on a block missing `style` sets it'
   })
   editor.send({type: 'style.toggle', style: 'h2'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {...blockMissingStyle, style: 'h2'},
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {...blockMissingStyle, style: 'h2'},
+  ])
 })
 
 test('Scenario: toggling a style across a selection spanning blocks with different explicit styles sets both', async () => {
@@ -89,20 +85,16 @@ test('Scenario: toggling a style across a selection spanning blocks with differe
   }
   editor.send({type: 'select', at: selection})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection).toEqual({
-      ...selection,
-      backward: false,
-    })
+  expect(editor.getSnapshot().context.selection).toEqual({
+    ...selection,
+    backward: false,
   })
   expect(getActiveStyle(editor.getSnapshot())).toBeUndefined()
 
   editor.send({type: 'style.toggle', style: 'normal'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {...blockH1, style: 'normal'},
-      {...blockH2, style: 'normal'},
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {...blockH1, style: 'normal'},
+    {...blockH2, style: 'normal'},
+  ])
 })

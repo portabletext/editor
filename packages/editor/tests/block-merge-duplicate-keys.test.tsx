@@ -113,19 +113,15 @@ async function mergeDuplicateKeyedBlocks() {
     },
   })
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection).toEqual({
-      anchor: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
-      focus: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
-      backward: false,
-    })
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
+    focus: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 0},
+    backward: false,
   })
 
   editor.send({type: 'delete.backward', unit: 'character'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value.length).toBe(1)
-  })
+  expect(editor.getSnapshot().context.value.length).toBe(1)
 
   return {editor, patches}
 }
@@ -234,19 +230,15 @@ describe('Feature: block merge renames colliding keys', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 4},
-        focus: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 4},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 4},
+      focus: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 4},
+      backward: false,
     })
 
     editor.send({type: 'delete.forward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value.length).toBe(1)
-    })
+    expect(editor.getSnapshot().context.value.length).toBe(1)
 
     const keySetPatches = patches.filter(
       (patch) => patch.type === 'set' && patch.path.at(-1) === '_key',
@@ -327,25 +319,19 @@ describe('Feature: block merge renames colliding keys', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        duplicateKeyedInitialValue(),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      duplicateKeyedInitialValue(),
+    )
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(mergedValue)
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        duplicateKeyedInitialValue(),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      duplicateKeyedInitialValue(),
+    )
   })
 
   test('Scenario: a colliding markDef is renamed and every mark referencing it is rewritten before the merge', async () => {
@@ -491,39 +477,35 @@ describe('Feature: block merge renames colliding keys', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
 
     editor.send({type: 'delete.backward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'kA',
-          children: [
-            {_type: 'span', _key: 's1', text: 'foo ', marks: []},
-            {
-              _type: 'span',
-              _key: 's2',
-              text: 'bar',
-              marks: ['strong', 'link1'],
-            },
-            {_type: 'span', _key: 's3', text: ' bazfoo ', marks: []},
-            {
-              _type: 'span',
-              _key: 'k3',
-              text: 'bar',
-              marks: ['strong', 'link1'],
-            },
-            {_type: 'span', _key: 'k4', text: ' baz', marks: []},
-          ],
-          markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'kA',
+        children: [
+          {_type: 'span', _key: 's1', text: 'foo ', marks: []},
+          {
+            _type: 'span',
+            _key: 's2',
+            text: 'bar',
+            marks: ['strong', 'link1'],
+          },
+          {_type: 'span', _key: 's3', text: ' bazfoo ', marks: []},
+          {
+            _type: 'span',
+            _key: 'k3',
+            text: 'bar',
+            marks: ['strong', 'link1'],
+          },
+          {_type: 'span', _key: 'k4', text: ' baz', marks: []},
+        ],
+        markDefs: [{_type: 'link', _key: 'link1', href: 'https://a.example'}],
+        style: 'normal',
+      },
+    ])
 
     expect(patches).toEqual([
       {
@@ -657,9 +639,7 @@ describe('Feature: block merge renames colliding keys', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).not.toBeNull()
-    })
+    expect(editor.getSnapshot().context.selection).not.toBeNull()
 
     editor.send({type: 'delete.backward', unit: 'character'})
 
@@ -793,25 +773,19 @@ describe('Feature: block merge renames colliding keys', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        duplicateKeyedInitialValueWithSameLink(),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      duplicateKeyedInitialValueWithSameLink(),
+    )
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(mergedValue)
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        duplicateKeyedInitialValueWithSameLink(),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      duplicateKeyedInitialValueWithSameLink(),
+    )
   })
 })
 
@@ -899,19 +873,15 @@ async function rangeDeleteMergeSharedKeyBlocks() {
     },
   })
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection).toEqual({
-      anchor: {path: [{_key: 'kA'}, 'children', {_key: 'e0-k2'}], offset: 0},
-      focus: {path: [{_key: 'kB'}, 'children', {_key: 'e0-k1'}], offset: 3},
-      backward: false,
-    })
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {path: [{_key: 'kA'}, 'children', {_key: 'e0-k2'}], offset: 0},
+    focus: {path: [{_key: 'kB'}, 'children', {_key: 'e0-k1'}], offset: 3},
+    backward: false,
   })
 
   editor.send({type: 'delete', direction: 'backward', unit: 'character'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value.length).toBe(1)
-  })
+  expect(editor.getSnapshot().context.value.length).toBe(1)
 
   return {editor, patches}
 }
@@ -954,19 +924,15 @@ async function rangeDeleteMergeMarkDefCollisionBlocks() {
     },
   })
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection).toEqual({
-      anchor: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 0},
-      focus: {path: [{_key: 'kB'}, 'children', {_key: 's2'}], offset: 0},
-      backward: false,
-    })
+  expect(editor.getSnapshot().context.selection).toEqual({
+    anchor: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 0},
+    focus: {path: [{_key: 'kB'}, 'children', {_key: 's2'}], offset: 0},
+    backward: false,
   })
 
   editor.send({type: 'delete', direction: 'backward', unit: 'character'})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value.length).toBe(1)
-  })
+  expect(editor.getSnapshot().context.value.length).toBe(1)
 
   return {editor, patches}
 }
@@ -989,19 +955,15 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'kA'}, 'children', {_key: 's1'}], offset: 2},
-        focus: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 2},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'kA'}, 'children', {_key: 's1'}], offset: 2},
+      focus: {path: [{_key: 'kB'}, 'children', {_key: 's1'}], offset: 2},
+      backward: false,
     })
 
     editor.send({type: 'delete', direction: 'backward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value.length).toBe(1)
-    })
+    expect(editor.getSnapshot().context.value.length).toBe(1)
 
     // The renamed span and `kA`'s own children all carry the same (empty)
     // marks, so normalization merges everything into a single span once
@@ -1098,25 +1060,19 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        duplicateKeyedInitialValueWithLink(),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      duplicateKeyedInitialValueWithLink(),
+    )
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(mergedValue)
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        duplicateKeyedInitialValueWithLink(),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      duplicateKeyedInitialValueWithLink(),
+    )
   })
 
   test('Scenario: a byte-identical colliding markDef is deduped instead of renamed', async () => {
@@ -1152,19 +1108,15 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 0},
-        focus: {path: [{_key: 'kB'}, 'children', {_key: 's2'}], offset: 0},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'kA'}, 'children', {_key: 's3'}], offset: 0},
+      focus: {path: [{_key: 'kB'}, 'children', {_key: 's2'}], offset: 0},
+      backward: false,
     })
 
     editor.send({type: 'delete', direction: 'backward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value.length).toBe(1)
-    })
+    expect(editor.getSnapshot().context.value.length).toBe(1)
 
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -1360,21 +1312,15 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(mergedValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(mergedValue)
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a range delete spanning two sibling blocks with a colliding inline-object key renames it and keeps its position', async () => {
@@ -1428,31 +1374,27 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'kA'}, 'children', {_key: 's1'}], offset: 2},
-        focus: {path: [{_key: 'kB'}, 'children', {_key: 'b1'}], offset: 2},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'kA'}, 'children', {_key: 's1'}], offset: 2},
+      focus: {path: [{_key: 'kB'}, 'children', {_key: 'b1'}], offset: 2},
+      backward: false,
     })
 
     editor.send({type: 'delete', direction: 'backward', unit: 'character'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'kA',
-          children: [
-            {_type: 'span', _key: 's1', text: 'foz ', marks: []},
-            {_type: 'stock-ticker', _key: 'k2'},
-            {_type: 'span', _key: 'b2', text: 'qux', marks: []},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'kA',
+        children: [
+          {_type: 'span', _key: 's1', text: 'foz ', marks: []},
+          {_type: 'stock-ticker', _key: 'k2'},
+          {_type: 'span', _key: 'b2', text: 'qux', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
 
     const keySetPatchIndex = patches.findIndex(
       (patch) =>

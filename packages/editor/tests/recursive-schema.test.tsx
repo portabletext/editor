@@ -242,13 +242,11 @@ describe('recursive schemas (lists in list-items in lists)', () => {
       ],
     })
 
-    await vi.waitFor(() => {
-      const updated = editor.getSnapshot().context.value[0] as PortableTextBlock
-      const i3 = deepestListItem(updated, 3)
-      const tb = field<Array<PortableTextBlock>>(i3, 'content')[0]!
-      const span = field<Array<{text: string}>>(tb, 'children')[0]!
-      expect(span.text).toBe('remote-edit')
-    })
+    const updated = editor.getSnapshot().context.value[0] as PortableTextBlock
+    const i3 = deepestListItem(updated, 3)
+    const tb = field<Array<PortableTextBlock>>(i3, 'content')[0]!
+    const span = field<Array<{text: string}>>(tb, 'children')[0]!
+    expect(span.text).toBe('remote-edit')
   })
 
   test('Scenario: typing at a deep span emits patches that round-trip through applyAll', async () => {
@@ -627,13 +625,11 @@ describe('recursive schemas (lists in list-items in lists)', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      const out = editor.getSnapshot().context.value[0] as PortableTextBlock
-      const item3 = deepestListItem(out, 3)
-      const tb = field<Array<PortableTextBlock>>(item3, 'content')[0]!
-      const span = field<Array<{marks: Array<string>}>>(tb, 'children')[0]!
-      expect(span.marks).toEqual(['strong'])
-    })
+    const out = editor.getSnapshot().context.value[0] as PortableTextBlock
+    const item3 = deepestListItem(out, 3)
+    const tb = field<Array<PortableTextBlock>>(item3, 'content')[0]!
+    const span = field<Array<{marks: Array<string>}>>(tb, 'children')[0]!
+    expect(span.marks).toEqual(['strong'])
   })
 
   test('Scenario: pressing Enter from the deepest list-item escapes one level per pair of presses, all the way to root', async () => {

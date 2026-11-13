@@ -18,15 +18,11 @@ describe('event.history.redo', () => {
 
     editor.send({type: 'insert.text', text: 'hello'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
 
     editor.send({
       type: 'apply',
@@ -40,15 +36,11 @@ describe('event.history.redo', () => {
       ],
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: world|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: world|')
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|world')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|world')
   })
 
   test('Scenario: Simple redo without remote patches', async () => {
@@ -63,21 +55,15 @@ describe('event.history.redo', () => {
 
     editor.send({type: 'insert.text', text: 'foo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
   })
 
   test('Scenario: Redoing a bold shortcut over part of a span restores the selection', async () => {
@@ -127,54 +113,48 @@ describe('event.history.redo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [
-            {_type: 'span', _key: spanKey, text: 'f', marks: []},
-            {_type: 'span', _key: 'k5', text: 'oob', marks: ['strong']},
-            {_type: 'span', _key: 'k4', text: 'ar', marks: []},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: 'k5'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: 'k5'}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanKey, text: 'f', marks: []},
+          {_type: 'span', _key: 'k5', text: 'oob', marks: ['strong']},
+          {_type: 'span', _key: 'k4', text: 'ar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: 'k5'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: 'k5'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({type: 'insert.text', text: 'baz'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: f[strong:baz|]ar',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: f[strong:baz|]ar',
+    )
   })
 
   test('Scenario: Redoing removing bold from part of a bold span restores the selection', async () => {
@@ -237,55 +217,49 @@ describe('event.history.redo', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [
-            {_type: 'span', _key: spanKey, text: 'foobar', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanKey, text: 'foobar', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
 
     editor.send({type: 'history.redo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: blockKey,
-          children: [
-            {_type: 'span', _key: spanKey, text: 'f', marks: ['strong']},
-            {_type: 'span', _key: 'k5', text: 'oob', marks: []},
-            {_type: 'span', _key: 'k4', text: 'ar', marks: ['strong']},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockKey}, 'children', {_key: 'k5'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: blockKey}, 'children', {_key: 'k4'}],
-          offset: 0,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanKey, text: 'f', marks: ['strong']},
+          {_type: 'span', _key: 'k5', text: 'oob', marks: []},
+          {_type: 'span', _key: 'k4', text: 'ar', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: 'k5'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: 'k4'}],
+        offset: 0,
+      },
+      backward: false,
     })
 
     editor.send({type: 'insert.text', text: 'baz'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: [strong:f]baz|[strong:ar]',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: [strong:f]baz|[strong:ar]',
+    )
   })
 })

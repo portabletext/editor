@@ -90,20 +90,16 @@ describe('Feature: Schema-Less Decorator Marks', () => {
     })
     editor.send({type: 'insert.text', text: '!'})
 
-    await vi.waitFor(() => {
-      expect(
-        editor
-          .getSnapshot()
-          .context.value?.find((block) => block._key === 'b1'),
-      ).toEqual({
-        _type: 'block',
-        _key: 'b1',
-        style: 'normal',
-        markDefs: [],
-        children: [
-          {_type: 'span', _key: 's3', text: 'plain paragraph!', marks: []},
-        ],
-      })
+    expect(
+      editor.getSnapshot().context.value?.find((block) => block._key === 'b1'),
+    ).toEqual({
+      _type: 'block',
+      _key: 'b1',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: 's3', text: 'plain paragraph!', marks: []},
+      ],
     })
 
     // The block with the unknown mark is unchanged and no patch touched

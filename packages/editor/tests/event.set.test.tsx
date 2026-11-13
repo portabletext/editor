@@ -33,17 +33,15 @@ describe('event.set', () => {
 
     editor.send({type: 'set', at: [{_key: 'b0'}, 'style'], value: 'h1'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'h1',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'h1',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
   })
 
   test('Scenario: undo a set on a block property', async () => {
@@ -66,23 +64,19 @@ describe('event.set', () => {
 
     editor.send({type: 'set', at: [{_key: 'b0'}, 'style'], value: 'h1'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'h1',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'h1',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo a set that creates a new block property', async () => {
@@ -105,24 +99,20 @@ describe('event.set', () => {
 
     editor.send({type: 'set', at: [{_key: 'b0'}, 'listItem'], value: 'bullet'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          listItem: 'bullet',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        listItem: 'bullet',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo a set on a markDef property', async () => {
@@ -149,23 +139,19 @@ describe('event.set', () => {
       value: 'https://b.com',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: ['m0']}],
-          markDefs: [{_key: 'm0', _type: 'link', href: 'https://b.com'}],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: ['m0']}],
+        markDefs: [{_key: 'm0', _type: 'link', href: 'https://b.com'}],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo a full-block replacement', async () => {
@@ -196,23 +182,19 @@ describe('event.set', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          children: [{_key: 's1', _type: 'span', text: 'NEW', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 's1', _type: 'span', text: 'NEW', marks: []}],
+        markDefs: [],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo a root-level value replacement', async () => {
@@ -242,15 +224,11 @@ describe('event.set', () => {
 
     editor.send({type: 'set', at: [], value: replacement})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(replacement)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(replacement)
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test("Scenario: undo a set of a container's children array to []", async () => {
@@ -332,21 +310,17 @@ describe('event.set', () => {
       value: [],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 't0',
-          _type: 'table',
-          rows: [{_key: 'r0', _type: 'row', cells: []}],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 't0',
+        _type: 'table',
+        rows: [{_key: 'r0', _type: 'row', cells: []}],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })
 
@@ -379,12 +353,10 @@ describe.each([
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: spanPath, offset: 6},
-        focus: {path: spanPath, offset: 6},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: spanPath, offset: 6},
+      focus: {path: spanPath, offset: 6},
+      backward: false,
     })
 
     editor.send({
@@ -393,11 +365,9 @@ describe.each([
       value: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(
-        wrapValue([block(blockKey, spanKey, 'foo')]),
-      )
-    })
+    expect(editor.getSnapshot().context.value).toEqual(
+      wrapValue([block(blockKey, spanKey, 'foo')]),
+    )
 
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {path: spanPath, offset: 3},
@@ -552,43 +522,41 @@ describe('event.set with a compact path at the root', () => {
       value: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+            value: 'baz',
+            inverse: {
               type: 'set',
               path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: 'baz',
-              inverse: {
-                type: 'set',
-                path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-                value: 'bar',
-              },
+              value: 'bar',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'set',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: 'baz',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'set',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: 'baz',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: 'baz',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -673,13 +641,23 @@ describe('event.set with a compact path inside a callout', () => {
       value: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'baz',
+            inverse: {
               type: 'set',
               path: [
                 {_key: 'c0'},
@@ -689,40 +667,12 @@ describe('event.set with a compact path inside a callout', () => {
                 {_key: 's1'},
                 'text',
               ],
-              value: 'baz',
-              inverse: {
-                type: 'set',
-                path: [
-                  {_key: 'c0'},
-                  'content',
-                  {_key: 'b1'},
-                  'children',
-                  {_key: 's1'},
-                  'text',
-                ],
-                value: 'bar',
-              },
+              value: 'bar',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'set',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: 'baz',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'set',
             path: [
@@ -735,9 +685,25 @@ describe('event.set with a compact path inside a callout', () => {
             ],
             value: 'baz',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'baz',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -844,13 +810,25 @@ describe('event.set with a compact path inside a callout inside a callout', () =
       value: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'baz',
+            inverse: {
               type: 'set',
               path: [
                 {_key: 'c0'},
@@ -862,44 +840,12 @@ describe('event.set with a compact path inside a callout inside a callout', () =
                 {_key: 's1'},
                 'text',
               ],
-              value: 'baz',
-              inverse: {
-                type: 'set',
-                path: [
-                  {_key: 'c0'},
-                  'content',
-                  {_key: 'c1'},
-                  'content',
-                  {_key: 'b1'},
-                  'children',
-                  {_key: 's1'},
-                  'text',
-                ],
-                value: 'bar',
-              },
+              value: 'bar',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'set',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: 'baz',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'set',
             path: [
@@ -914,9 +860,27 @@ describe('event.set with a compact path inside a callout inside a callout', () =
             ],
             value: 'baz',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'set',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'baz',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -1013,13 +977,23 @@ describe('event.set with a compact path inside a field with its own sub-schema',
       value: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+              'text',
+            ],
+            value: 'baz',
+            inverse: {
               type: 'set',
               path: [
                 {_key: 'n0'},
@@ -1029,40 +1003,12 @@ describe('event.set with a compact path inside a field with its own sub-schema',
                 {_key: 's1'},
                 'text',
               ],
-              value: 'baz',
-              inverse: {
-                type: 'set',
-                path: [
-                  {_key: 'n0'},
-                  'body',
-                  {_key: 'b1'},
-                  'children',
-                  {_key: 's1'},
-                  'text',
-                ],
-                value: 'bar',
-              },
+              value: 'bar',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'set',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: 'baz',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'set',
             path: [
@@ -1075,9 +1021,25 @@ describe('event.set with a compact path inside a field with its own sub-schema',
             ],
             value: 'baz',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'set',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: 'baz',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',
@@ -1164,39 +1126,37 @@ describe('event.set with a path into an array inside an array at the root', () =
       value: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'set',
-              path: [{_key: 'i0'}, 'data', 'caption'],
-              value: 'baz',
-              inverse: {type: 'unset', path: [{_key: 'i0'}, 'data', 'caption']},
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'set',
-              path: [{_key: 'i0'}, 'data', 'caption'],
-              value: 'baz',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'i0'}, 'data', 'caption'],
+            value: 'baz',
+            inverse: {type: 'unset', path: [{_key: 'i0'}, 'data', 'caption']},
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'set',
             path: [{_key: 'i0'}, 'data', 'caption'],
             value: 'baz',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: 'i0'}, 'data', 'caption'],
+          value: 'baz',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'image',
@@ -1267,48 +1227,40 @@ describe('event.set with a path into an array inside an array inside a callout',
       value: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'set',
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+            value: 'baz',
+            inverse: {
+              type: 'unset',
               path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
-              value: 'baz',
-              inverse: {
-                type: 'unset',
-                path: [
-                  {_key: 'c0'},
-                  'content',
-                  {_key: 'i0'},
-                  'data',
-                  'caption',
-                ],
-              },
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'set',
-              path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
-              value: 'baz',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'set',
             path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
             value: 'baz',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
+          value: 'baz',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',

@@ -52,9 +52,7 @@ describe('Behavior API', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Raising one custom event as the result of raising another', async () => {
@@ -95,9 +93,7 @@ describe('Behavior API', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: Sending custom events', async () => {
@@ -120,11 +116,9 @@ describe('Behavior API', () => {
 
     editor.send({type: 'custom.hello world'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: Hello, world!|',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: Hello, world!|',
+    )
   })
 
   test('Scenario: Raised events default to their default action', async () => {
@@ -149,11 +143,9 @@ describe('Behavior API', () => {
 
     editor.send({type: 'custom.hello world'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        'B: Hello, world!|',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: Hello, world!|',
+    )
   })
 
   test('Scenario: `forward`ing all events', async () => {
@@ -177,9 +169,7 @@ describe('Behavior API', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
   })
 
   test('Scenario: `forward`ing all events combined with an `effect`', async () => {
@@ -313,36 +303,34 @@ describe('Behavior API', () => {
     })
     editor.send({type: 'custom.clear formatting'})
 
-    await vi.waitFor(() => {
-      // The first set reads the guard-time world: both spans, `strong`
-      // intact.
-      expect(firstSetValue).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          markDefs: [],
-          children: [
-            {_key: 's0', _type: 'span', text: 'foo', marks: ['strong']},
-            {_key: 's1', _type: 'span', text: 'bar', marks: []},
-          ],
-        },
-      ])
-      // The second set's snapshot is created after the first set's
-      // operations and their normalization flushed: the spans arrive
-      // already merged.
-      expect(secondSetValue).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          markDefs: [],
-          children: [{_key: 's0', _type: 'span', text: 'foobar', marks: []}],
-        },
-      ])
-      // The editor itself agrees with what the second set saw.
-      expect(editor.getSnapshot().context.value).toEqual(secondSetValue)
-    })
+    // The first set reads the guard-time world: both spans, `strong`
+    // intact.
+    expect(firstSetValue).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: 's0', _type: 'span', text: 'foo', marks: ['strong']},
+          {_key: 's1', _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ])
+    // The second set's snapshot is created after the first set's
+    // operations and their normalization flushed: the spans arrive
+    // already merged.
+    expect(secondSetValue).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 's0', _type: 'span', text: 'foobar', marks: []}],
+      },
+    ])
+    // The editor itself agrees with what the second set saw.
+    expect(editor.getSnapshot().context.value).toEqual(secondSetValue)
   })
 
   test('Scenario: Empty action sets stop event propagation', async () => {
@@ -697,11 +685,9 @@ describe('Behavior API', () => {
 
     editor.send({type: 'insert.break'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', 'B: | bar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: | bar'].join('\n'),
+    )
   })
 
   test('Scenario: `forward` triggering `execute`', async () => {
@@ -742,11 +728,9 @@ describe('Behavior API', () => {
 
     editor.send({type: 'insert.break'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', 'B: | bar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: | bar'].join('\n'),
+    )
   })
 
   test('Scenario: Typing on expanded selection causes two `insert.text` event', async () => {
@@ -841,9 +825,7 @@ describe('Behavior API', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
     })
 
     test('Scenario: cross-type `forward` does not trigger user-defined Behaviors', async () => {
@@ -899,17 +881,15 @@ describe('Behavior API', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          {
-            _type: 'block',
-            _key: 'k0',
-            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
-            markDefs: [],
-            style: 'normal',
-          },
-        ])
-      })
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 
@@ -1013,11 +993,9 @@ describe('Behavior API', () => {
 
       editor.send({type: 'custom.slash-command'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual(
-          ['CALLOUT:', '  ^{IMAGE}|'].join('\n'),
-        )
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['CALLOUT:', '  ^{IMAGE}|'].join('\n'),
+      )
     })
 
     test('Scenario: Replacing the entire span text inside an editable container in one batch lands the replacement in the surviving block', async () => {
@@ -1107,11 +1085,9 @@ describe('Behavior API', () => {
 
       editor.send({type: 'custom.replace-with-emoji'})
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual(
-          ['CALLOUT:', '  B: 👣|'].join('\n'),
-        )
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        ['CALLOUT:', '  B: 👣|'].join('\n'),
+      )
     })
   })
 })
@@ -1195,24 +1171,22 @@ describe('Behavior API with a compact path at the root', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'b0',
-          children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-        {
-          _type: 'block',
-          _key: 'b1',
-          children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+      {
+        _type: 'block',
+        _key: 'b1',
+        children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
     expect(seenEvents).toEqual([
       {type: 'custom.edit'},
       {
@@ -1323,32 +1297,28 @@ describe('Behavior API with a compact path inside a callout', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: 'c0',
-          content: [
-            {
-              _type: 'block',
-              _key: 'b0',
-              children: [
-                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-            {
-              _type: 'block',
-              _key: 'b1',
-              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
     expect(seenEvents).toEqual([
       {type: 'custom.edit'},
       {
@@ -1477,40 +1447,36 @@ describe('Behavior API with a compact path inside a callout inside a callout', (
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: 'c0',
-          content: [
-            {
-              _type: 'callout',
-              _key: 'c1',
-              content: [
-                {
-                  _type: 'block',
-                  _key: 'b0',
-                  children: [
-                    {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-                {
-                  _type: 'block',
-                  _key: 'b1',
-                  children: [
-                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
     expect(seenEvents).toEqual([
       {type: 'custom.edit'},
       {
@@ -1629,32 +1595,28 @@ describe('Behavior API with a compact path inside a field with its own sub-schem
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'note',
-          _key: 'n0',
-          body: [
-            {
-              _type: 'block',
-              _key: 'b0',
-              children: [
-                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-            {
-              _type: 'block',
-              _key: 'b1',
-              children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
     expect(seenEvents).toEqual([
       {type: 'custom.edit'},
       {
@@ -1743,17 +1705,15 @@ describe('Behavior API with a compact path at the root', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: 'b0',
-          children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
-          markDefs: [],
-          style: 'normal',
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -1877,25 +1837,21 @@ describe('Behavior API with a compact path inside a callout', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: 'c0',
-          content: [
-            {
-              _type: 'block',
-              _key: 'b0',
-              children: [
-                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -2055,31 +2011,29 @@ describe('Behavior API with a compact path inside a callout inside a callout', (
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: 'c0',
-          content: [
-            {
-              _type: 'callout',
-              _key: 'c1',
-              content: [
-                {
-                  _type: 'block',
-                  _key: 'b0',
-                  children: [
-                    {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -2237,25 +2191,21 @@ describe('Behavior API with a compact path inside a field with its own sub-schem
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'note',
-          _key: 'n0',
-          body: [
-            {
-              _type: 'block',
-              _key: 'b0',
-              children: [
-                {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -2387,39 +2337,37 @@ describe('Behavior API with a compact address on a native or synthetic event at 
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -2526,44 +2474,26 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -2576,9 +2506,25 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -2709,48 +2655,28 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -2765,9 +2691,27 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -2896,44 +2840,26 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -2946,9 +2872,25 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -3062,39 +3004,37 @@ describe('Behavior API with a compact address on a native or synthetic event at 
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -3208,44 +3148,26 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -3258,9 +3180,25 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -3398,48 +3336,28 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -3454,9 +3372,27 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -3592,44 +3528,26 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -3642,9 +3560,25 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -3767,39 +3701,37 @@ describe('Behavior API with a compact address on a native or synthetic event at 
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -3940,44 +3872,26 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -3990,9 +3904,25 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -4161,48 +4091,28 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -4217,9 +4127,27 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -4382,44 +4310,26 @@ describe('Behavior API with a compact address on a native or synthetic event ins
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -4432,9 +4342,25 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'insert.text',
@@ -4529,12 +4455,10 @@ describe('Behavior API with a compact native origin at the root', () => {
         focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
       },
     })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
-        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 3},
+      backward: false,
     })
 
     editor.send({
@@ -4568,39 +4492,37 @@ describe('Behavior API with a compact native origin at the root', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'select',
@@ -4718,30 +4640,16 @@ describe('Behavior API with a compact native origin inside a callout', () => {
         },
       },
     })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 0,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -4775,44 +4683,26 @@ describe('Behavior API with a compact native origin inside a callout', () => {
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b0'},
-                'children',
-                {_key: 's0'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b0'},
-                'children',
-                {_key: 's0'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -4825,9 +4715,25 @@ describe('Behavior API with a compact native origin inside a callout', () => {
             ],
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'select',
@@ -4987,34 +4893,32 @@ describe('Behavior API with a compact native origin inside a callout inside a ca
         },
       },
     })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 0,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -5056,48 +4960,28 @@ describe('Behavior API with a compact native origin inside a callout inside a ca
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b0'},
-                'children',
-                {_key: 's0'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b0'},
-                'children',
-                {_key: 's0'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -5112,9 +4996,27 @@ describe('Behavior API with a compact native origin inside a callout inside a ca
             ],
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'select',
@@ -5286,18 +5188,16 @@ describe('Behavior API with a compact native origin inside a field with its own 
         },
       },
     })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -5331,44 +5231,26 @@ describe('Behavior API with a compact native origin inside a field with its own 
       text: 'baz',
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b0'},
-                'children',
-                {_key: 's0'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b0'},
-                'children',
-                {_key: 's0'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b0'},
+              'children',
+              {_key: 's0'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -5381,9 +5263,25 @@ describe('Behavior API with a compact native origin inside a field with its own 
             ],
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b0'},
+            'children',
+            {_key: 's0'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(seenEvents).toEqual([
       {
         type: 'select',
@@ -5511,39 +5409,37 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -5644,44 +5540,26 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -5694,9 +5572,25 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -5815,48 +5709,28 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -5871,9 +5745,27 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -5988,44 +5880,26 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -6038,9 +5912,25 @@ describe('Behavior API executing an edit at a compact path inside a field with i
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',
@@ -6131,39 +6021,37 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -6260,44 +6148,26 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -6310,9 +6180,25 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -6430,48 +6316,28 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -6486,9 +6352,27 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -6599,44 +6483,26 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -6649,9 +6515,25 @@ describe('Behavior API executing an edit at a compact path inside a field with i
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',
@@ -6752,39 +6634,37 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -6891,44 +6771,26 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -6941,9 +6803,25 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -7068,48 +6946,28 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -7124,9 +6982,27 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -7247,44 +7123,26 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -7297,9 +7155,25 @@ describe('Behavior API executing an edit at a compact path inside a field with i
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',
@@ -7395,39 +7269,37 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -7529,44 +7401,26 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -7579,9 +7433,25 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -7701,48 +7571,28 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -7757,9 +7607,27 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -7875,44 +7743,26 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -7925,9 +7775,25 @@ describe('Behavior API executing an edit at a compact path inside a field with i
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',
@@ -8023,39 +7889,37 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [{_key: 'b1'}, 'children', {_key: 's1'}],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -8157,44 +8021,26 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -8207,9 +8053,25 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -8329,48 +8191,28 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -8385,9 +8227,27 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -8503,44 +8363,26 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     editor.send({type: 'custom.edit'})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'insert.text',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-              text: 'baz',
-            },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'diffMatchPatch',
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-                'text',
-              ],
-              value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert.text',
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
+            text: 'baz',
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'diffMatchPatch',
             path: [
@@ -8553,9 +8395,25 @@ describe('Behavior API executing an edit at a compact path inside a field with i
             ],
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'diffMatchPatch',
+          path: [
+            {_key: 'n0'},
+            'body',
+            {_key: 'b1'},
+            'children',
+            {_key: 's1'},
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',

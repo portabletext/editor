@@ -43,11 +43,9 @@ describe('event.move.block regression', () => {
       at: [{_key: foo._key}],
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: bar', 'B: foo|', 'B: baz'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: bar', 'B: foo|', 'B: baz'].join('\n'),
+    )
   })
 
   test('Scenario: Moving a block up preserves selection on the moved block', async () => {
@@ -87,11 +85,9 @@ describe('event.move.block regression', () => {
       at: [{_key: baz._key}],
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', 'B: baz|', 'B: bar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: baz|', 'B: bar'].join('\n'),
+    )
   })
 
   test('Scenario: Undoing a move.block restores original order', async () => {
@@ -128,19 +124,15 @@ describe('event.move.block regression', () => {
       at: [{_key: foo._key}],
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: bar', 'B: foo', 'B: baz'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: bar', 'B: foo', 'B: baz'].join('\n'),
+    )
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', 'B: bar', 'B: baz'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: bar', 'B: baz'].join('\n'),
+    )
   })
 
   test('Scenario: Moving block down and typing continues in the moved block', async () => {
@@ -173,11 +165,9 @@ describe('event.move.block regression', () => {
       at: [{_key: foo._key}],
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: bar', 'B: foo|'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: bar', 'B: foo|'].join('\n'),
+    )
 
     await userEvent.type(locator, 'baz')
 
