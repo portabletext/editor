@@ -1,7 +1,7 @@
 import {defineSchema, type EditorSnapshot} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -173,10 +173,8 @@ async function selectLeftColumn(value = initialValue) {
       focus: {path: spanPath('c10'), offset: focusOffset},
     },
   })
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.selection?.focus.path.at(-1)).toEqual({
-      _key: 's-c10',
-    })
+  expect(editor.getSnapshot().context.selection?.focus.path.at(-1)).toEqual({
+    _key: 's-c10',
   })
   return editor
 }
@@ -187,14 +185,12 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
-      expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
-      // The linear range covers c01, but the rectangle does not.
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
+    expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
+    // The linear range covers c01, but the rectangle does not.
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 
   test('Scenario: `decorator.toggle` on a mixed column applies uniformly', async () => {
@@ -202,14 +198,12 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      // c00 was already strong; a per-cell toggle would checkerboard.
-      expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
-      expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    // c00 was already strong; a per-cell toggle would checkerboard.
+    expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
+    expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 
   test('Scenario: an empty cell in the column neither blocks nor breaks the toggle', async () => {
@@ -234,14 +228,12 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
-      // The empty cell has nothing to decorate and stays untouched.
-      expect(spanMarks(snapshot, 'c10')).toEqual([])
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
+    // The empty cell has nothing to decorate and stays untouched.
+    expect(spanMarks(snapshot, 'c10')).toEqual([])
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 
   test('Scenario: `decorator.add` on a column selection only affects the column', async () => {
@@ -249,13 +241,11 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'decorator.add', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
-      expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    expect(spanMarks(snapshot, 'c00')).toEqual(['strong'])
+    expect(spanMarks(snapshot, 'c10')).toEqual(['strong'])
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 
   test('Scenario: `decorator.remove` on a column selection only affects the column', async () => {
@@ -280,14 +270,12 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'decorator.remove', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(spanMarks(snapshot, 'c00')).toEqual([])
-      expect(spanMarks(snapshot, 'c10')).toEqual([])
-      // Outside the rectangle, the decorator stays.
-      expect(spanMarks(snapshot, 'c01')).toEqual(['strong'])
-      expect(spanMarks(snapshot, 'c11')).toEqual(['strong'])
-    })
+    const snapshot = editor.getSnapshot()
+    expect(spanMarks(snapshot, 'c00')).toEqual([])
+    expect(spanMarks(snapshot, 'c10')).toEqual([])
+    // Outside the rectangle, the decorator stays.
+    expect(spanMarks(snapshot, 'c01')).toEqual(['strong'])
+    expect(spanMarks(snapshot, 'c11')).toEqual(['strong'])
   })
 
   test('Scenario: `annotation.add` on a column selection only affects the column', async () => {
@@ -298,19 +286,17 @@ describe('rectangular selection formatting', () => {
       annotation: {name: 'link', value: {href: 'https://example.com'}},
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      // Each member cell gets its own markDef, referenced by its span.
-      for (const cellKey of ['c00', 'c10']) {
-        const markDefs = cellMarkDefs(snapshot, cellKey)
-        expect(markDefs.map((markDef) => markDef._type)).toEqual(['link'])
-        expect(spanMarks(snapshot, cellKey)).toEqual([markDefs[0]?._key])
-      }
-      expect(cellMarkDefs(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(cellMarkDefs(snapshot, 'c11')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    // Each member cell gets its own markDef, referenced by its span.
+    for (const cellKey of ['c00', 'c10']) {
+      const markDefs = cellMarkDefs(snapshot, cellKey)
+      expect(markDefs.map((markDef) => markDef._type)).toEqual(['link'])
+      expect(spanMarks(snapshot, cellKey)).toEqual([markDefs[0]?._key])
+    }
+    expect(cellMarkDefs(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(cellMarkDefs(snapshot, 'c11')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 
   test('Scenario: `annotation.remove` on a column selection only affects the column', async () => {
@@ -335,14 +321,12 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'annotation.remove', annotation: {name: 'link'}})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(spanMarks(snapshot, 'c00')).toEqual([])
-      expect(spanMarks(snapshot, 'c10')).toEqual([])
-      // Outside the rectangle, the annotation stays.
-      expect(spanMarks(snapshot, 'c01')).toEqual(['l-c01'])
-      expect(spanMarks(snapshot, 'c11')).toEqual(['l-c11'])
-    })
+    const snapshot = editor.getSnapshot()
+    expect(spanMarks(snapshot, 'c00')).toEqual([])
+    expect(spanMarks(snapshot, 'c10')).toEqual([])
+    // Outside the rectangle, the annotation stays.
+    expect(spanMarks(snapshot, 'c01')).toEqual(['l-c01'])
+    expect(spanMarks(snapshot, 'c11')).toEqual(['l-c11'])
   })
 
   test('Scenario: `annotation.toggle` on a mixed column applies uniformly', async () => {
@@ -370,15 +354,13 @@ describe('rectangular selection formatting', () => {
       annotation: {name: 'link', value: {href: 'https://example.com'}},
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      // c00 was already linked: a per-cell toggle would checkerboard, and a
-      // blind add would stack a second annotation. It keeps its original.
-      expect(spanMarks(snapshot, 'c00')).toEqual(['l-c00'])
-      expect(spanMarks(snapshot, 'c10')).toHaveLength(1)
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    // c00 was already linked: a per-cell toggle would checkerboard, and a
+    // blind add would stack a second annotation. It keeps its original.
+    expect(spanMarks(snapshot, 'c00')).toEqual(['l-c00'])
+    expect(spanMarks(snapshot, 'c10')).toHaveLength(1)
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 
   test('Scenario: `style.toggle` on a column selection only affects the column', async () => {
@@ -386,13 +368,11 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'style.toggle', style: 'h1'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(blockStyle(snapshot, 'c00')).toBe('h1')
-      expect(blockStyle(snapshot, 'c10')).toBe('h1')
-      expect(blockStyle(snapshot, 'c01')).toBe('normal')
-      expect(blockStyle(snapshot, 'c11')).toBe('normal')
-    })
+    const snapshot = editor.getSnapshot()
+    expect(blockStyle(snapshot, 'c00')).toBe('h1')
+    expect(blockStyle(snapshot, 'c10')).toBe('h1')
+    expect(blockStyle(snapshot, 'c01')).toBe('normal')
+    expect(blockStyle(snapshot, 'c11')).toBe('normal')
   })
 
   test('Scenario: `style.toggle` styles empty member cells too', async () => {
@@ -417,15 +397,13 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'style.toggle', style: 'h1'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(blockStyle(snapshot, 'c00')).toBe('h1')
-      // Unlike span-level formatting, block-level formatting includes empty
-      // cells: typing into c10 later should produce an h1.
-      expect(blockStyle(snapshot, 'c10')).toBe('h1')
-      expect(blockStyle(snapshot, 'c01')).toBe('normal')
-      expect(blockStyle(snapshot, 'c11')).toBe('normal')
-    })
+    const snapshot = editor.getSnapshot()
+    expect(blockStyle(snapshot, 'c00')).toBe('h1')
+    // Unlike span-level formatting, block-level formatting includes empty
+    // cells: typing into c10 later should produce an h1.
+    expect(blockStyle(snapshot, 'c10')).toBe('h1')
+    expect(blockStyle(snapshot, 'c01')).toBe('normal')
+    expect(blockStyle(snapshot, 'c11')).toBe('normal')
   })
 
   test('Scenario: `list item.toggle` on a column selection only affects the column', async () => {
@@ -433,31 +411,25 @@ describe('rectangular selection formatting', () => {
 
     editor.send({type: 'list item.toggle', listItem: 'bullet'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(blockListItem(snapshot, 'c00')).toBe('bullet')
-      expect(blockListItem(snapshot, 'c10')).toBe('bullet')
-      expect(blockListItem(snapshot, 'c01')).toBeUndefined()
-      expect(blockListItem(snapshot, 'c11')).toBeUndefined()
-    })
+    const snapshot = editor.getSnapshot()
+    expect(blockListItem(snapshot, 'c00')).toBe('bullet')
+    expect(blockListItem(snapshot, 'c10')).toBe('bullet')
+    expect(blockListItem(snapshot, 'c01')).toBeUndefined()
+    expect(blockListItem(snapshot, 'c11')).toBeUndefined()
   })
 
   test('Scenario: a single undo restores the whole column', async () => {
     const editor = await selectLeftColumn()
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
-    await vi.waitFor(() => {
-      expect(spanMarks(editor.getSnapshot(), 'c10')).toEqual(['strong'])
-    })
+    expect(spanMarks(editor.getSnapshot(), 'c10')).toEqual(['strong'])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(spanMarks(snapshot, 'c00')).toEqual([])
-      expect(spanMarks(snapshot, 'c10')).toEqual([])
-      expect(spanMarks(snapshot, 'c01')).toEqual([])
-      expect(spanMarks(snapshot, 'c11')).toEqual([])
-    })
+    const snapshot = editor.getSnapshot()
+    expect(spanMarks(snapshot, 'c00')).toEqual([])
+    expect(spanMarks(snapshot, 'c10')).toEqual([])
+    expect(spanMarks(snapshot, 'c01')).toEqual([])
+    expect(spanMarks(snapshot, 'c11')).toEqual([])
   })
 })
