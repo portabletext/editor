@@ -37,6 +37,82 @@ afterAll(async () => {
 })
 
 describe.skipIf(!isChromium)('Composition (IME) on Android', () => {
+  test.each(['insertText', 'setComposition'] as const)(
+    'Scenario: Redrawing a whole-composition replacement via %s',
+    async (variant) => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _key: blockKey,
+            _type: 'block',
+            children: [{_key: spanKey, _type: 'span', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      })
+      await userEvent.click(locator)
+      const session = cdp()
+      await session.send('Input.imeSetComposition', {
+        text: 'teh',
+        selectionStart: 3,
+        selectionEnd: 3,
+      })
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'teh', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(locator.element().textContent).toEqual('teh')
+      })
+      if (variant === 'setComposition') {
+        await session.send('Input.imeSetComposition', {
+          text: 'the ',
+          selectionStart: 4,
+          selectionEnd: 4,
+          replacementStart: 0,
+          replacementEnd: 3,
+        })
+      }
+      await session.send('Input.insertText', {text: 'the '})
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'the ', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(locator.element().textContent).toEqual('the ')
+      })
+      await userEvent.keyboard('X')
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _key: 'k0',
+            _type: 'block',
+            children: [{_key: 'k1', _type: 'span', text: 'the X', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+        expect(locator.element().textContent).toEqual('the X')
+      })
+    },
+  )
+
   test('Scenario: Applying composition text before the browser mutates the DOM', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
