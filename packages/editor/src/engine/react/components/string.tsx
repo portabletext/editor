@@ -16,6 +16,7 @@ import {parentPath as getParentPath} from '../../path/parent-path'
 import {pathEquals} from '../../path/path-equals'
 import {useEngineStatic} from '../hooks/use-engine-static'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
+import {androidComposition} from '../utils/android-composition'
 
 /**
  * Leaf content strings.
@@ -119,6 +120,7 @@ const TextString = (props: {
   // of which build (lib, tests, playground) sets the react-compiler boundary.
   'use no memo'
   const {text, isTrailing = false, isLineBreak = false} = props
+  const editor = useEngineStatic()
   const ref = useRef<HTMLSpanElement>(null)
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
@@ -140,6 +142,18 @@ const TextString = (props: {
     const textWithTrailing = getTextContent()
 
     if (IS_ANDROID && ref.current) {
+      if (
+        editor.composing &&
+        androidComposition.get(editor)?.elements.includes(ref.current)
+      ) {
+        // Chrome owns the composing text node until `compositionend`, even when the model renders first.
+        if (!isLineBreak) {
+          ref.current.removeAttribute('data-pt-zero-width')
+          ref.current.removeAttribute('data-pt-line-break')
+          ref.current.setAttribute('data-pt-text', 'true')
+        }
+        return
+      }
       reconcileAndroidString(ref.current, textWithTrailing, isLineBreak)
       return
     }

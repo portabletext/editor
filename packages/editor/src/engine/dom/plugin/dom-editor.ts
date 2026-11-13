@@ -64,7 +64,6 @@ export interface DOMEditor extends BaseEditor {
   composing: boolean
   userSelection: RangeRef | null
   onContextChange: ((options?: {operation?: EngineOperation}) => void) | null
-  scheduleFlush: (() => void) | null
   pendingDiffs: TextDiff[]
   pendingAction: Action | null
   pendingSelection: Range | null
