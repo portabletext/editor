@@ -1,12 +1,5 @@
 import {subscribeToOperations} from '../../core/operation-channel'
 import type {Editor} from '../../interfaces/editor'
-import {isPoint} from '../../point/is-point'
-import {
-  transformPendingPoint,
-  transformPendingRange,
-  transformTextDiff,
-  type TextDiff,
-} from '../utils/diff-text'
 import type {DOMEditor} from './dom-editor'
 
 /**
@@ -27,43 +20,12 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   e.composing = false
   e.userSelection = null
   e.onContextChange = null
-  e.scheduleFlush = null
-  e.pendingDiffs = []
-  e.pendingAction = null
-  e.pendingSelection = null
   e.forceRender = null
 
   subscribeToOperations(
     e,
     (event) => {
       const operation = event.operation
-
-      const pendingDiffs = e.pendingDiffs
-      if (pendingDiffs?.length) {
-        const transformed = pendingDiffs
-          .map((textDiff) => transformTextDiff(textDiff, operation))
-          .filter(Boolean) as TextDiff[]
-
-        e.pendingDiffs = transformed
-      }
-
-      const pendingSelection = e.pendingSelection
-      if (pendingSelection) {
-        e.pendingSelection = transformPendingRange(
-          e,
-          pendingSelection,
-          operation,
-        )
-      }
-
-      const pendingAction = e.pendingAction
-      if (pendingAction?.at) {
-        const at = isPoint(pendingAction?.at)
-          ? transformPendingPoint(e, pendingAction.at, operation)
-          : transformPendingRange(e, pendingAction.at, operation)
-
-        e.pendingAction = at ? {...pendingAction, at} : null
-      }
 
       if (operation.type === 'set.selection') {
         // Selection was manually set, don't restore the user selection after the change.
