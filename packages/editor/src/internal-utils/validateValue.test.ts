@@ -16,6 +16,524 @@ const schema = compileSchema(
 )
 
 describe(validateValue.name, () => {
+  test('a first root text block with children set to null received through the start value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: null,
+      },
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
+  test('a first root text block with children set to null received through an updated value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: null,
+      },
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
+  test('a middle root text block with children set to null received through the start value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: null,
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
+  test('a middle root text block with children set to null received through an updated value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: null,
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
+  test('a last root text block with children set to null received through the start value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: null,
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
+  test('a last root text block with children set to null received through an updated value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: null,
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: null,
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
+  test('a middle root text block with children set to "oops" received through an updated value offers to reset children', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const value = [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: 'oops',
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ] as unknown as Array<PortableTextBlock>
+    expect(validateValue(value, schema, keyGenerator)).toEqual({
+      valid: false,
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: 'oops',
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+      ],
+      resolution: {
+        patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+        description:
+          "Text block with _key 'k2' has a invalid required property 'children'.",
+        action: 'Reset the children property',
+        item: {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: 'oops',
+        },
+        i18n: {
+          description:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+          action:
+            'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+          values: {key: 'k2'},
+        },
+      },
+    })
+  })
+
   test('an undefined value is valid', () => {
     const keyGenerator = createTestKeyGenerator()
 

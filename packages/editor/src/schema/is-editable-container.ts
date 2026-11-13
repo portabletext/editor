@@ -1,5 +1,7 @@
+import {isSpanNode} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
+import {isBlock} from '../traversal/is-block'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {resolveContainerAt} from './resolve-container-at'
 
@@ -14,10 +16,14 @@ import {resolveContainerAt} from './resolve-container-at'
  */
 export function isEditableContainer(
   snapshot: TraversalSnapshot,
-  _node: Node,
+  node: Node,
   path: Path,
 ): boolean {
   if (snapshot.context.containers.size === 0) {
+    return false
+  }
+
+  if (isSpanNode(snapshot.context, node) && isBlock(snapshot, path)) {
     return false
   }
 
