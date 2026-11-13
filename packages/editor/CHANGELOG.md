@@ -1,5 +1,83 @@
 # Changelog
 
+## 9.0.0-next.0
+
+### Major Changes
+
+- [#3619](https://github.com/portabletext/editor/pull/3619) [`b993cec`](https://github.com/portabletext/editor/commit/b993cec04e90ffaf0c44292a2671f6d6f026d5c9) Thanks [@christianhg](https://github.com/christianhg)! - feat!: replace the `patches` event with `apply`
+  
+  `editor.send({type: 'apply', patches})` applies patches that came from someone else, such as a collaborator's change arriving from your backend. It replaces the `patches` event, which is removed along with the `PatchesEvent` type.
+  
+  The patches apply in order as another writer's change. They don't become steps in your undo history, and the caret stays put in text they don't touch. If they change the content, the editor emits one remote `change` event, followed by a `correction: true` change if it had to fix something. An `unset` of the whole value clears the undo history.
+  
+  Every patch counts as another writer's, so the patches need no `origin` and there is no `snapshot` to pass. If you relayed your own editor's patches back to it marked `origin: 'local'`, stop sending those, since `apply` would apply them a second time.
+  
+  ```ts
+  // Before
+  editor.send({type: 'patches', patches: incomingPatches, snapshot})
+  
+  // After
+  editor.send({type: 'apply', patches: incomingPatches})
+  ```
+  
+  The `ApplyEvent` type is exported.
+
+### Minor Changes
+
+- [#3413](https://github.com/portabletext/editor/pull/3413) [`77b4cda`](https://github.com/portabletext/editor/commit/77b4cda5764d7b392d710c6578060d623b9e5507) Thanks [@christianhg](https://github.com/christianhg)! - feat: emit `change` events for local and remote changes, with corrections marked
+  
+  The editor now emits a `change` event, synchronously, every time its content changes. Each event carries the `operations` the editor applied to its content (the public `Operation` type), never the input it received:
+  
+  ```ts
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      // `event.patches` is the change as Sanity patches.
+      save(event.patches)
+    }
+  })
+  ```
+  
+  - `origin: 'local'`: what a user action did, including everything the action's Behaviors raised. Undo and redo are one action each. Local changes arrive in application order, and one user action can produce several when the editor fixes something mid-action. `patches` holds the change as Sanity patches, the same patches the `patch` event emits for the action, available as soon as the action finishes instead of on the `mutation` event's debounced schedule.
+  - `origin: 'local'` with `correction: true`: the editor's own fixes to the content, such as merging adjacent spans that share marks after a paste, or replacing a duplicate `_key`. A correction follows the change that caused it, with its own operations and patches. Fixes to content the editor received through `apply` or `update value` are corrections too. Registering or unregistering a node with `editor.registerNode` after load can make the editor fix existing content, and those fixes are corrections. A host that saves every local change's `patches` saves corrections as well. A correction to received content arrives even when the editor drops it from `mutation` because a newer value or a conflicting remote patch arrived first. When the editor repairs a value it receives, by giving a child without a `_key` a new key, adding an empty span to a text block without children, or removing an unused mark definition, the repair is a correction too, and the remote `change` holds the value as received, without the repair. Every child without a `_key` gets its own key in that correction. Corrections are never held back: a correction to the initial value, or to a value received while the editor is read-only, carries `patches` even though the editor sends no `patch` or `mutation` events for it.
+  - `origin: 'remote'`: one event per `apply` event and per `update value` that changed the content. When an `operation` listener sends a Behavior event or registers a node while an `update value` is applied, that change is emitted in between, so the `update value` arrives as a remote event before it and another after it. Remote changes carry no `patches`.
+  
+  Every `change` of one action is delivered before any `change` that a listener sets off while receiving them. Loading the initial value emits no `change`, except a `correction` when the editor fixes the loaded value, and a `change` never has an empty `operations` array. The empty block the editor shows in an empty field is part of the snapshot and never reported, but when the editor puts one back later, because the last block was deleted or another writer unset the field, its insert is in the `operations` of the change that caused it. After a remote unset it arrives as a `correction` with no `patches`, since the field is already gone. A long initial value that the editor loads across several ticks counts as one load, so its fixes arrive as one `correction`. `ChangeEvent` is exported as a beta type. `EditorEmittedEvent` gains the `change` member, so exhaustive switches over `event.type` gain a case.
+  
+  An `operation` listener now sees a block the editor repairs on arrival as it was received, followed by each repair as its own `insert`. A received text block with three or more children without a `_key` now gets their key patches in index order. When the DOM selection leaves a read-only editor's content, the editor now deselects through the `select` event with `at: null`, so Behaviors listening to `select` see it.
+
+### Patch Changes
+
+- [#3655](https://github.com/portabletext/editor/pull/3655) [`216fb52`](https://github.com/portabletext/editor/commit/216fb5210eec66f79e6c070b218be1e23aa05f59) Thanks [@christianhg](https://github.com/christianhg)! - fix: render large block lists in chunks at every depth
+  
+  Typing in a large document no longer rebuilds an element for every block in the list being edited. At 20,000 root blocks, a keystroke improves from about 180ms to 81ms. Typing 20 keys in a 2,000-block callout improves from about 930ms to 660ms. Splitting a block with Enter at 8,000 root blocks improves from about 104ms to 51ms. Block lists at the editor root and inside registered containers render in chunks whose elements are reused unless their blocks or container scope changed. Blocks keep their DOM nodes when chunks split or merge, so the caret, selection and IME composition are unaffected and the rendered DOM is unchanged. A chunk an edit leaves with 50 blocks or fewer is merged into a neighbour when the two hold 200 blocks or fewer together.
+
+- [#3608](https://github.com/portabletext/editor/pull/3608) [`91d91a4`](https://github.com/portabletext/editor/commit/91d91a4af5e4a4c7f97eb340981a84afe43770c8) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve paths with one walk and drop operations that address nothing
+  
+  A path with two node segments and no field name between them, such as `[{_key: 'b1'}, {_key: 's1'}]` or `[0, 0]`, now addresses nothing at any depth: at the root, inside a container, inside a container inside a container, and inside a block object's own Portable Text field. A Behavior event, a remote patch, a `select` or a range decoration at such a path changes nothing, emits no `patch` and no `change`, and logs nothing. The other patches in the same `apply` event still apply. A `select` at such a path keeps the current selection, and a range decoration with such an endpoint is never listed, rendered or mapped.
+  
+  An edit at a well-formed path whose key is not in the document also changes nothing and emits nothing. Previously a `set`, `unset` or `insert` at a missing key still emitted a patch, and an `unset` or `insert` at a missing span key logged `Cannot apply an "unset" (node removal) operation at path ... because the node was not found`. The event still reaches Behaviors, and a `select` at a missing key behaves as before.
+  
+  ```ts
+  // Previously edited the first span's text, emitted a patch and a change
+  editor.send({type: 'set', at: [{_key: 'b1'}, {_key: 's1'}, 'text'], value: 'baz'})
+  // Previously logged console.error "... because the node was not found"
+  editor.send({type: 'apply', patches: [{type: 'unset', path: [{_key: 'b1'}, 'children', {_key: 'gone'}], origin: 'remote'}]})
+  ```
+
+- [#3602](https://github.com/portabletext/editor/pull/3602) [`be03281`](https://github.com/portabletext/editor/commit/be03281252910647eb369d18092bcfaa164cdea7) Thanks [@pepahlavacek](https://github.com/pepahlavacek)! - fix: keep the caret after pasted blocks inserted mid-block
+
+- [#3616](https://github.com/portabletext/editor/pull/3616) [`e4e4d1b`](https://github.com/portabletext/editor/commit/e4e4d1bc8cff842e5e4176979479a4bafc5061a8) Thanks [@christianhg](https://github.com/christianhg)! - fix: address the item counted from the end when its key is empty or shared with a sibling
+  
+  A remote patch at a negative index now changes the item counted from the end of the array, like Sanity, even when that item's key is empty or shared with a sibling. Before, such a patch could land on another item with the same key.
+
+- [#3607](https://github.com/portabletext/editor/pull/3607) [`0bab687`](https://github.com/portabletext/editor/commit/0bab6879efdd0443bb5d9295130927e64799190c) Thanks [@christianhg](https://github.com/christianhg)! - fix: resolve negative indexes in remote patch paths from the end of the array
+  
+  Remote `set`, `unset` and single-item `insert` patches with negative indexes now resolve from the end of the array at any depth, like Sanity. A negative index that falls before the start of the array changes nothing, except that an insert at `-1` into an empty array still inserts.
+
+- [#3634](https://github.com/portabletext/editor/pull/3634) [`b3125b6`](https://github.com/portabletext/editor/commit/b3125b657a0b1d186b0a22f9224cea3db93c385c) Thanks [@christianhg](https://github.com/christianhg)! - fix: remove a block or span when `set` gives it a non-object value
+  
+  A `set` of a block or span to a value that is not an object, such as `null` or a string, now removes it. Before, the block stayed on screen while the host received `set null`, so anything typed in it afterwards was lost.
+
 ## 8.2.13
 
 ### Patch Changes
