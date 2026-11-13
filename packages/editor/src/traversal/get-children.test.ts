@@ -203,8 +203,6 @@ describe(getChildren.name, () => {
     ).toEqual([])
   })
 
-  // The existing cases above run with a populated `blockIndexMap`, so they
-  // exercise the O(1) fast path. These pin the linear-scan fallback.
   test('resolves correctly when blockIndexMap is empty (fallback)', () => {
     const snapshot = {
       ...testbed.snapshot,

@@ -11,21 +11,6 @@ import {resolveNestedContainer} from '../schema/resolve-containers-batch'
 import {getChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
-/**
- * Regression: when the SAME `_type` is registered under two
- * different parents with DIFFERENT `arrayField` values, descent
- * helpers must resolve the position-specific entry. Flat lookup by
- * bare `_type` would silently pick the wrong field and return `[]`
- * for nodes at the loser position.
- *
- * Schema configuration:
- * - `table` registers `cell` in its `of` with `arrayField:
- *   'content'`.
- * - `diagram` registers `cell` in its `of` with `arrayField:
- *   'markers'`.
- *
- * Two cells, two different fields, no top-level `cell` registration.
- */
 describe('getChildren with same _type registered under different parents', () => {
   const schema = compileSchema(
     defineSchema({
