@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -106,21 +106,17 @@ describe('custom.insert.row', () => {
       position: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [existingRow, insertedRow],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [existingRow, insertedRow],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a row inserted before a row lands above it', async () => {
@@ -137,21 +133,17 @@ describe('custom.insert.row', () => {
       position: 'before',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [insertedRow, existingRow],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [insertedRow, existingRow],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a row inserted after a cell lands below the closest row', async () => {
@@ -168,21 +160,17 @@ describe('custom.insert.row', () => {
       position: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [existingRow, insertedRow],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [existingRow, insertedRow],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a row inserted before a cell lands above the closest row', async () => {
@@ -199,21 +187,17 @@ describe('custom.insert.row', () => {
       position: 'before',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [insertedRow, existingRow],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [insertedRow, existingRow],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a row inserted after the table lands at the end', async () => {
@@ -230,21 +214,17 @@ describe('custom.insert.row', () => {
       position: 'after',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [existingRow, insertedRow],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [existingRow, insertedRow],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a row inserted before the table lands at the start', async () => {
@@ -261,21 +241,17 @@ describe('custom.insert.row', () => {
       position: 'before',
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [insertedRow, existingRow],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [insertedRow, existingRow],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })
 
@@ -398,31 +374,27 @@ describe('custom.insert.column', () => {
       position: 'after',
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot().context.value
-      expect(snapshot).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [twoByTwoR0C0, insertedCellInR0, twoByTwoR0C1],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [twoByTwoR1C0, insertedCellInR1, twoByTwoR1C1],
-            },
-          ],
-        },
-      ])
-    })
+    const snapshot = editor.getSnapshot().context.value
+    expect(snapshot).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [twoByTwoR0C0, insertedCellInR0, twoByTwoR0C1],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [twoByTwoR1C0, insertedCellInR1, twoByTwoR1C1],
+          },
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: a column inserted before a cell lands to its left', async () => {
@@ -439,31 +411,27 @@ describe('custom.insert.column', () => {
       position: 'before',
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot().context.value
-      expect(snapshot).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [twoByTwoR0C0, insertedCellInR0, twoByTwoR0C1],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [twoByTwoR1C0, insertedCellInR1, twoByTwoR1C1],
-            },
-          ],
-        },
-      ])
-    })
+    const snapshot = editor.getSnapshot().context.value
+    expect(snapshot).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [twoByTwoR0C0, insertedCellInR0, twoByTwoR0C1],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [twoByTwoR1C0, insertedCellInR1, twoByTwoR1C1],
+          },
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: a column inserted after the table lands at the end', async () => {
@@ -480,31 +448,27 @@ describe('custom.insert.column', () => {
       position: 'after',
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot().context.value
-      expect(snapshot).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [twoByTwoR0C0, twoByTwoR0C1, insertedCellInR0],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [twoByTwoR1C0, twoByTwoR1C1, insertedCellInR1],
-            },
-          ],
-        },
-      ])
-    })
+    const snapshot = editor.getSnapshot().context.value
+    expect(snapshot).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [twoByTwoR0C0, twoByTwoR0C1, insertedCellInR0],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [twoByTwoR1C0, twoByTwoR1C1, insertedCellInR1],
+          },
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: a column inserted before the table lands at the start', async () => {
@@ -521,30 +485,26 @@ describe('custom.insert.column', () => {
       position: 'before',
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot().context.value
-      expect(snapshot).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {
-              ...twoByTwoR0,
-              cells: [insertedCellInR0, twoByTwoR0C0, twoByTwoR0C1],
-            },
-            {
-              ...twoByTwoR1,
-              cells: [insertedCellInR1, twoByTwoR1C0, twoByTwoR1C1],
-            },
-          ],
-        },
-      ])
-    })
+    const snapshot = editor.getSnapshot().context.value
+    expect(snapshot).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {
+            ...twoByTwoR0,
+            cells: [insertedCellInR0, twoByTwoR0C0, twoByTwoR0C1],
+          },
+          {
+            ...twoByTwoR1,
+            cells: [insertedCellInR1, twoByTwoR1C0, twoByTwoR1C1],
+          },
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 })
