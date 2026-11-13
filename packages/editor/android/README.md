@@ -11,6 +11,7 @@ The workflow `.github/workflows/android-ime.yml` runs one job per device test fi
 1. `tests/ja.test.ts`: Gboard's Japanese QWERTY (romaji) layout, where `kyou` composes きょう and the test commits it by tapping the 今日 candidate. This is where composition bugs show.
 2. `tests/en.test.ts`: plain English typing, where Gboard commits each letter as it goes.
 3. `tests/ja.enter.test.ts` and `tests/en.enter.test.ts`: Enter in the editor on each keyboard, see below.
+4. `tests/en.insert.break.test.ts` and `tests/en.insert.text.test.ts`: the existing `insert.break.feature` and `insert.text.feature` scenarios, one device test file per feature file, run through the page's actions with the editor's state read as textspec after each step. Known differences between the device and the feature are listed by scenario, boundary and the exact state the device produces in `en.insert.break.test.ts`, and any other state at those boundaries fails the file.
 
 `tests/ja.test.ts` and `tests/en.test.ts` have three tests each:
 
@@ -122,11 +123,11 @@ Then:
 2. Run the workflow on your branch, or `test:android` against a local emulator, and check the new test's result.
 3. If it fails on `main` because of a known bug, make it `test.fails` and describe the bug by its behavior in a comment inside the test.
 
-Each test adds about a minute or two to its job and increases its file's test stage cap. A new test file needs its own row in the workflow's matrix. A page other than `plain.html`, `textarea.html` and `editor.html` needs its HTML in `page/`, an entry in `vite.config.ts` and a call to `recordInput` from `thumbjar/page`.
+Each test adds about a minute or two to its job and increases its file's test stage cap. A new test file needs its own row in the workflow's matrix, and the row's `runMinutes` is the cap of both run steps. It must cover the whole run step, which is the runner setup, the boot wait, the cap read, the prep, the file's test stage, the device check and the diagnostics, each at its bound with the kill graces of its commands (`runStepWorstSeconds` in thumbjar), and `scripts/budget.test.ts` checks that for every row and that the job cap stays at or under 360 minutes. A page other than `plain.html`, `textarea.html` and `editor.html` needs its HTML in `page/`, an entry in `vite.config.ts` and a call to `recordInput` from `thumbjar/page`.
 
 ## Files
 
-1. `tests/ja.test.ts`, `tests/en.test.ts`, `tests/ja.enter.test.ts`, `tests/en.enter.test.ts`: the device tests CI runs. `tests/en-textarea.test.ts`: the `textarea` control, run by hand.
+1. `tests/ja.test.ts`, `tests/en.test.ts`, `tests/ja.enter.test.ts`, `tests/en.enter.test.ts`, `tests/en.insert.break.test.ts`, `tests/en.insert.text.test.ts`: the device tests CI runs. `tests/en-textarea.test.ts`: the `textarea` control, run by hand.
 2. `page/`: the test pages, built with Vite from the workspace editor by `pnpm build:android`.
 3. `thumbjar run`: runs inside the booted emulator. It serves the pages, runs `thumbjar prepare` for `--keyboard` and the test file it is given, checks for the device after a failed stage and records diagnostics after the tests.
 4. `scripts/device-suites.test.ts` and `scripts/fixtures/`: run `tests/ja.test.ts` against fake typing results.

@@ -5,8 +5,10 @@ import {DEVICE_TEST_TIMEOUT_SECONDS} from '../device/budget.ts'
 export {
   countDeviceTests,
   deviceTestFileSeconds,
+  EMULATOR_BOOT_SECONDS,
   FETCH_U2_JAR_WORST_SECONDS,
   prepWorstSeconds,
+  runStepWorstSeconds,
 } from '../device/budget.ts'
 
 declare module 'vitest' {
@@ -98,7 +100,7 @@ export function deviceProject({
       retry: 0,
       // A test takes 1 to 2 minutes. The timeout covers the driver's worst case, see `src/device/budget.ts`.
       testTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
-      hookTimeout: 2 * 60_000,
+      hookTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
     },
   }
 }

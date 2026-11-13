@@ -3,6 +3,9 @@
   "ignoreDependencies": ["@types/react", "@types/react-dom", "@types/react-is"],
   "ignore": ["oxlint-plugins/**", "packages/*/bundle-tests/**"],
   "workspaces": {
+    "packages/racejar": {
+      "entry": ["src/index.ts!", "package.config.ts!", "example/*.fixture.ts"]
+    },
     "packages/*": {
       "entry": ["src/index.ts!", "package.config.ts!"],
       "ignoreDependencies": [
@@ -27,6 +30,7 @@
         "vitest.android.config.ts",
         "android/vite.config.ts",
         "android/page/editor.tsx",
+        "android/page/gherkin.tsx",
         "android/scripts/fixtures/suites/*.ts"
       ],
       "ignoreDependencies": [

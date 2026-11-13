@@ -9,6 +9,16 @@ import type {Hook} from './hooks'
 import type {StepDefinition} from './step-definitions'
 
 /**
+ * A compiled scenario row, including inherited tags and its example values.
+ * @public
+ */
+export type Scenario = {
+  name: string
+  tags: ReadonlyArray<string>
+  examples: Readonly<Record<string, string>> | undefined
+}
+
+/**
  * @public
  */
 export type CompiledFeature<TStepContext extends Record<string, any> = object> =
@@ -17,6 +27,7 @@ export type CompiledFeature<TStepContext extends Record<string, any> = object> =
     tag: 'only' | 'skip' | undefined
     scenarios: Array<{
       name: string
+      expectedFailure: boolean
       tag: 'only' | 'skip' | undefined
       steps: Array<(stepContext?: TStepContext) => Promise<void> | void>
     }>
@@ -35,8 +46,10 @@ export function compileFeature<
   hooks,
   stepDefinitions,
   parameterTypes,
+  expectFail,
 }: {
   featureText: string
+  expectFail?: (scenario: Scenario) => boolean
   hooks?: Array<Hook<TStepContext>>
   stepDefinitions: Array<StepDefinition<TContext, any, any, any>>
   parameterTypes?: Array<ParameterType<unknown>>
@@ -90,6 +103,9 @@ export function compileFeature<
   }
 
   let context = {} as TContext
+
+  const exampleRows = new Map<string, Record<string, string>>()
+  collectExampleRows(gherkinDocument.feature.children, exampleRows)
 
   const scenarios = pickles.map((pickle) => {
     const skippedPickle = pickle.tags.some((tag) => tag.name === '@skip')
@@ -146,6 +162,15 @@ export function compileFeature<
 
     return {
       name: pickle.name,
+      expectedFailure:
+        expectFail?.({
+          name: pickle.name,
+          tags: pickle.tags.map((tag) => tag.name),
+          examples: pickle.astNodeIds.flatMap((nodeId) => {
+            const row = exampleRows.get(nodeId)
+            return row ? [row] : []
+          })[0],
+        }) ?? false,
       tag: skippedFeature
         ? ('skip' as const)
         : skippedPickle
@@ -156,6 +181,10 @@ export function compileFeature<
       steps,
     }
   })
+
+  if (expectFail && !scenarios.some((scenario) => scenario.expectedFailure)) {
+    throw new Error('Expected failure predicate matched no scenario rows')
+  }
 
   return {
     tag: skippedFeature ? 'skip' : onlyFeature ? 'only' : undefined,
@@ -178,5 +207,29 @@ export function compileFeature<
         (hook) => (stepContext: TStepContext | undefined) =>
           hook.callback(Object.assign(context, stepContext)),
       ),
+  }
+}
+
+function collectExampleRows(
+  children: ReadonlyArray<{scenario?: Messages.Scenario; rule?: Messages.Rule}>,
+  rows: Map<string, Record<string, string>>,
+): void {
+  for (const child of children) {
+    if (child.rule) {
+      collectExampleRows(child.rule.children, rows)
+    }
+    for (const examples of child.scenario?.examples ?? []) {
+      for (const row of examples.tableBody) {
+        rows.set(
+          row.id,
+          Object.fromEntries(
+            (examples.tableHeader?.cells ?? []).map((cell, index) => [
+              cell.value,
+              row.cells[index]?.value ?? '',
+            ]),
+          ),
+        )
+      }
+    }
   }
 }

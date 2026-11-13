@@ -80,7 +80,10 @@ export function setCurrentUrl(url: string): void {
 }
 
 /** Evaluate in the page. Chrome's DevTools socket sometimes drops a connection, so retry on a fresh one. */
-export async function cdpEval(expression: string): Promise<unknown> {
+export async function cdpEval(
+  expression: string,
+  retry = true,
+): Promise<unknown> {
   let last: unknown
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
@@ -91,6 +94,7 @@ export async function cdpEval(expression: string): Promise<unknown> {
       // Timeouts, dropped sockets and a target list that is not JSON are retried. A missing target, a
       // protocol error or an exception in the page fails at once.
       if (
+        !retry ||
         isInstance(error, NoTargetError) ||
         isInstance(error, ProtocolError) ||
         isInstance(error, PageExceptionError)
@@ -158,7 +162,7 @@ async function cdpEvalOnce(expression: string): Promise<unknown> {
         JSON.stringify({
           id: 1,
           method: 'Runtime.evaluate',
-          params: {expression, returnByValue: true},
+          params: {expression, returnByValue: true, awaitPromise: true},
         }),
       )
     })

@@ -1,11 +1,29 @@
-import {isSpan, isTextBlock, type PortableTextBlock} from '@portabletext/schema'
-import type {EditorContext} from '../src/editor/editor-snapshot'
-import type {Path, PathSegment} from '../src/engine/interfaces/path'
-import {safeStringify} from '../src/internal-utils/safe-json'
-import type {EditorSelection, EditorSelectionPoint} from '../src/types/editor'
-import {collapseSelection} from './collapse-selection'
-import {splitString} from './split-string'
-import {stringOverlap} from './string-overlap'
+import type {Path} from '@portabletext/patches'
+import {
+  isSpan,
+  isTextBlock,
+  type PortableTextBlock,
+  type Schema,
+} from '@portabletext/schema'
+import {safeStringify} from '../src/internal-utils/safe-json.ts'
+import {
+  collapseSelection,
+  type TextSelection,
+  type TextSelectionPoint,
+} from './collapse-selection.ts'
+import {splitString} from './split-string.ts'
+import {stringOverlap} from './string-overlap.ts'
+
+/**
+ * The part of an editor snapshot's context the helpers read. Typed from
+ * published packages only, so the Android harness can import these helpers
+ * without the editor's build.
+ */
+type TextContext = {
+  schema: Schema
+  value: ReadonlyArray<PortableTextBlock>
+  containers?: ReadonlyMap<string, {field: {name: string}}>
+}
 
 type TextBlockEntry = {
   block: PortableTextBlock
@@ -16,16 +34,14 @@ type TextBlockEntry = {
  * Recursively walk the value to collect every text block paired with its
  * full path, descending through registered editable containers.
  */
-function collectTextBlocks(
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
-): Array<TextBlockEntry> {
+function collectTextBlocks(context: TextContext): Array<TextBlockEntry> {
   const entries: Array<TextBlockEntry> = []
   walkBlocks(context, context.value, [], entries)
   return entries
 }
 
 function walkBlocks(
-  context: Pick<EditorContext, 'schema' | 'containers'>,
+  context: Pick<TextContext, 'schema' | 'containers'>,
   blocks: ReadonlyArray<unknown>,
   basePath: Path,
   entries: Array<TextBlockEntry>,
@@ -39,7 +55,7 @@ function walkBlocks(
       continue
     }
     const _key = (block as {_key: string})._key
-    const path: Path = [...basePath, {_key} as PathSegment]
+    const path: Path = [...basePath, {_key} as Path[number]]
 
     if (isTextBlock(context, block as PortableTextBlock)) {
       entries.push({block: block as PortableTextBlock, path})
@@ -71,11 +87,11 @@ function walkBlocks(
  * Only to be used in tests.
  */
 export function getTextSelection(
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
+  context: TextContext,
   text: string,
-): NonNullable<EditorSelection> {
-  let anchor: EditorSelectionPoint | undefined
-  let focus: EditorSelectionPoint | undefined
+): TextSelection {
+  let anchor: TextSelectionPoint | undefined
+  let focus: TextSelectionPoint | undefined
 
   for (const {block, path} of collectTextBlocks(context)) {
     if (!isTextBlock(context, block)) {
@@ -159,9 +175,9 @@ export function getTextSelection(
  * Only to be used in tests.
  */
 export function getSelectionBeforeText(
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
+  context: TextContext,
   text: string,
-): NonNullable<EditorSelection> {
+): TextSelection {
   return collapseSelection(getTextSelection(context, text), 'start')
 }
 
@@ -171,8 +187,8 @@ export function getSelectionBeforeText(
  * Only to be used in tests.
  */
 export function getSelectionAfterText(
-  context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
+  context: TextContext,
   text: string,
-): NonNullable<EditorSelection> {
+): TextSelection {
   return collapseSelection(getTextSelection(context, text), 'end')
 }
