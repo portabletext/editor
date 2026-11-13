@@ -1267,22 +1267,26 @@ function updateBlock({
     schemaTypes: context.schema,
   })
 
-  // Strip `children`: they're synced by dedicated child operations below.
-  const {children: _children, ...blockProps} = engineBlock as unknown as Record<
-    string,
-    unknown
-  >
+  const blockIsTextBlock = isTextBlock({schema: context.schema}, engineBlock)
+
+  // A text block's `children` are synced by the child operations below. Any
+  // other block's `children` is an ordinary field.
+  const {children: _children, ...propsWithoutChildren} =
+    engineBlock as unknown as Record<string, unknown>
+
+  const blockProps = blockIsTextBlock ? propsWithoutChildren : engineBlock
 
   applyNodeProperties(editorEngine, blockProps, [{_key: oldEngineBlock._key}])
 
   // Remove properties present on the old node but absent from the new block.
-  // Skip children/text (structural, managed by dedicated operations).
+  // Skip `text`, and a text block's `children`, which the child operations
+  // below sync.
   const oldRecord = oldEngineBlock as unknown as Record<string, unknown>
   const newRecord = engineBlock as unknown as Record<string, unknown>
   const removedProperties: Record<string, unknown> = {}
 
   for (const key of Object.keys(oldRecord)) {
-    if (key === 'children' || key === 'text') {
+    if (key === 'text' || (key === 'children' && blockIsTextBlock)) {
       continue
     }
 
@@ -1299,7 +1303,7 @@ function updateBlock({
 
   // Text block's need to have their children updated as well (setNode does not target a node's children)
   if (
-    isTextBlock({schema: editorEngine.snapshot.context.schema}, engineBlock) &&
+    blockIsTextBlock &&
     isTextBlock({schema: editorEngine.snapshot.context.schema}, oldEngineBlock)
   ) {
     // Detect cases where incremental remove/insert would break due to

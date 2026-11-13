@@ -12,3 +12,6 @@ export const FIELD_RECT = `(() => { const field = ${FIELD}; if (field === null) 
 export const FOCUS_FIELD = `(() => { const field = ${FIELD}; if (field === null) return null; field.focus(); if (field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement) { field.setSelectionRange(field.value.length, field.value.length); return; } const range = document.createRange(); range.selectNodeContents(field); range.collapse(false); const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range); })()`
 
 export const FIELD_FOCUSED = `(() => { const field = ${FIELD}; return field !== null && document.activeElement !== null && field.contains(document.activeElement); })()`
+
+/** True once the field accepts input: an enabled form control, or a `contenteditable` that is editable now (an editor stays read-only until its first value is in). */
+export const FIELD_EDITABLE = `(() => { const field = ${FIELD}; if (field === null) return false; if (field instanceof HTMLTextAreaElement || field instanceof HTMLInputElement) return !field.disabled && !field.readOnly; return field.isContentEditable; })()`

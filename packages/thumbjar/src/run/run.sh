@@ -36,6 +36,20 @@ if [ "$prep_status" -ne 0 ]; then
   exit 1
 fi
 
+if [ "$file" = 'tests/testime.en.test.ts' ]; then
+  gboard=$(adb shell settings get secure default_input_method | tr -d '\r')
+  cleanup_test_ime() {
+    adb shell ime set "$gboard"
+    kill "$server" 2>/dev/null
+  }
+  trap cleanup_test_ime EXIT
+  adb install -r "${THUMBJAR_TEST_IME_APK:?test IME APK missing}" || fail "install test IME"
+  # The package manager registers a fresh install a moment after `adb install` returns.
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do adb shell ime enable org.slatejs.testime/.TestIme && break; sleep 1; done
+  adb shell ime list -s | grep -q org.slatejs.testime || fail "enable test IME"
+  adb shell ime set org.slatejs.testime/.TestIme || fail "select test IME"
+fi
+
 # Records through the test stage, its kill-after, the device check and the diagnostics after it.
 (timeout -k 5 $((tests_seconds + 10 + 15 + 65)) adb logcat -v time > "$out/logcat.txt" 2>&1 &)
 
