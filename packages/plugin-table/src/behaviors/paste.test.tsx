@@ -150,9 +150,7 @@ describe('pasting a table fragment into a table', () => {
       focus: {path: spanPath('c11'), offset: 1},
     }
     editor.send({type: 'select', at: rightColumn})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     pasteFragment(editor, columnFragment, rightColumn)
 
@@ -211,9 +209,7 @@ describe('pasting a table fragment into a table', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a table fragment distributes from a caret in a cell', async () => {
@@ -223,9 +219,7 @@ describe('pasting a table fragment into a table', () => {
       focus: {path: spanPath('c00'), offset: 1},
     }
     editor.send({type: 'select', at: caret})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     pasteFragment(editor, columnFragment, caret)
 
@@ -258,9 +252,7 @@ describe('pasting a table fragment into a table', () => {
       focus: {path: spanPath('c10'), offset: 1},
     }
     editor.send({type: 'select', at: caret})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     pasteFragment(editor, columnFragment, caret)
 
@@ -288,9 +280,7 @@ describe('pasting a table fragment into a table', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: a fragment extending past the right edge grows columns', async () => {
@@ -300,9 +290,7 @@ describe('pasting a table fragment into a table', () => {
       focus: {path: spanPath('c01'), offset: 1},
     }
     editor.send({type: 'select', at: caret})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     const rowFragment = [
       {
@@ -336,9 +324,7 @@ describe('pasting a table fragment into a table', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: pasted cell content is validated against the schema', async () => {
@@ -348,9 +334,7 @@ describe('pasting a table fragment into a table', () => {
       focus: {path: spanPath('c00'), offset: 1},
     }
     editor.send({type: 'select', at: caret})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     const rogueFragment = [
       {
@@ -391,9 +375,7 @@ describe('pasting a table fragment into a table', () => {
       focus: {path: spanPath('c11'), offset: 1},
     }
     editor.send({type: 'select', at: wholeTable})
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
-    })
+    expect(editor.getSnapshot().context.selection?.focus.offset).toBe(1)
 
     const singleCellFragment = [
       {
