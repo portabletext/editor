@@ -3,6 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
+import {isSpanNode, isTextBlock, isTextBlockNode} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -59,12 +60,35 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
   const parent = getParent(editor.snapshot, path)
 
-  const structural = getStructuralCorrection(structuralContext, {
+  let structural = getStructuralCorrection(structuralContext, {
     node,
     path,
     parent,
     siblings: () => getSiblings(editor, path, parent),
   })
+
+  if (!structural) {
+    if (
+      isSpanNode(structuralContext, node) &&
+      (!parent || !isTextBlock(structuralContext, parent.node)) &&
+      typeof node.text !== 'string'
+    ) {
+      structural = {
+        type: 'span-text',
+        patches: [{type: 'set', path: [...path, 'text'], value: ''}],
+      }
+    } else if (
+      parent &&
+      isTextBlock(structuralContext, parent.node) &&
+      isTextBlockNode(structuralContext, node) &&
+      !Array.isArray(node.children)
+    ) {
+      structural = {
+        type: 'missing-children',
+        patches: [{type: 'set', path: [...path, 'children'], value: []}],
+      }
+    }
+  }
 
   if (structural) {
     if (
