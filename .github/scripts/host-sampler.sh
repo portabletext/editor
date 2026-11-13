@@ -32,7 +32,7 @@ capture_threads() {
     task_comm="$(cat "$task/comm" 2> /dev/null)"
     task_wchan="$(cat "$task/wchan" 2> /dev/null)"
     printf 'tid=%s comm=%s state=%s wchan=%s\n' "${task##*/}" "${task_comm:-unknown}" "${task_state:-unknown}" "${task_wchan:-unknown}"
-    if task_stack="$(timeout 1 sudo -n cat "$task/stack" 2> /dev/null)"; then
+    if task_stack="$(timeout --kill-after=1 1 sudo -n cat "$task/stack" 2> /dev/null)"; then
       printf '%s\n' "$task_stack"
     fi
   done
