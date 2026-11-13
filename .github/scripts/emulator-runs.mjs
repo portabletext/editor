@@ -132,21 +132,29 @@ export function bootSeconds(timing) {
 }
 
 /**
- * What the host sampler and the kernel log say about the emulator process exiting, one line for each exit
+ * What the host sampler, kernel log and core dump say about the emulator process exiting, one line for each exit
  * the sampler saw. An exit within 120 seconds after a `DONE` line in `timing.txt` is the teardown's own kill.
  *
  * @param {string} hostLog
  * @param {string} dmesg
  * @param {string} timing
+ * @param {string} core
  * @returns {string[]}
  */
-export function hostEvidence(hostLog, dmesg, timing) {
-  if (hostLog.trim() === '') {
-    return ['host evidence: no host sampler log']
-  }
+export function hostEvidence(hostLog, dmesg, timing, core = '') {
   const exits = [...hostLog.matchAll(/^QEMU_GONE pid=(\d+) at (\d+)$/gm)]
-  if (exits.length === 0) {
-    return ['host evidence: the host sampler saw no emulator process exit']
+  // `host-core.sh` writes `executable=unavailable` for a core whose pid the sampler never recorded as an emulator.
+  const unmatchedCores = [
+    ...core.matchAll(
+      /^HOST_CORE pid=(\d+) signal=(SIG[A-Z0-9]+)\n(?:core=.*\n)?(?:executable=(.*))?/gm,
+    ),
+  ].filter((record) => !exits.some((exit) => exit[1] === record[1]))
+  if (exits.length === 0 && unmatchedCores.length === 0) {
+    return [
+      hostLog.trim() === ''
+        ? 'host evidence: no host sampler log'
+        : 'host evidence: the host sampler saw no emulator process exit',
+    ]
   }
   const runs = splitRuns(timing).map((run) => ({
     start: Number(/^EMULATOR_START at (\d+)$/m.exec(run)?.[1] ?? Number.NaN),
@@ -154,7 +162,7 @@ export function hostEvidence(hostLog, dmesg, timing) {
       Number(match[1]),
     ),
   }))
-  return exits.map((exit) => {
+  const evidence = exits.map((exit) => {
     const [, pid, epoch] = exit
     let freezeStart = ''
     let freezeSamples = 0
@@ -193,8 +201,16 @@ export function hostEvidence(hostLog, dmesg, timing) {
     )
       ? 'at teardown'
       : 'mid-run'
+    const signal = new RegExp(
+      `^HOST_CORE pid=${pid} signal=(SIG[A-Z0-9]+)$`,
+      'm',
+    ).exec(core)?.[1]
     let verdict = ''
-    if (dmesg.includes(`Out of memory: Killed process ${pid} (qemu-system`)) {
+    if (signal !== undefined) {
+      verdict = `, emulator crashed (${signal})`
+    } else if (
+      dmesg.includes(`Out of memory: Killed process ${pid} (qemu-system`)
+    ) {
       verdict = ', host OOM'
     } else if (
       new RegExp(
@@ -205,6 +221,14 @@ export function hostEvidence(hostLog, dmesg, timing) {
     }
     return `host evidence: emulator process ${pid} exited at ${clock} UTC, ${where}${verdict}${freezeSamples >= 2 ? `, emulator froze at ${freezeStart} UTC` : ''}`
   })
+  for (const [, pid, signal, executable] of unmatchedCores) {
+    evidence.push(
+      executable === undefined || executable === 'unavailable'
+        ? `host evidence: non-emulator process ${pid} crashed (${signal})`
+        : `host evidence: emulator process ${pid} crashed (${signal}), the host sampler logged no exit for it`,
+    )
+  }
+  return evidence
 }
 
 /**
@@ -611,6 +635,7 @@ if (!isMain()) {
       readOrEmpty(join(file, 'host.log')),
       readOrEmpty(join(file, 'host-dmesg.txt')),
       readOrEmpty(join(file, 'timing.txt')),
+      readOrEmpty(join(file, 'host-core.txt')),
     )) {
       report(line)
     }

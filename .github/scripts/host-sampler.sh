@@ -92,6 +92,15 @@ while true; do
   fi
   if [ -z "$last_pid" ] && [ -n "$current_pid" ] && [ "$qemu" != "qemu=none" ]; then
     last_pid="$current_pid"
+    if [ -s "$out_dir/host-core-dir.txt" ]; then
+      readlink "/proc/$last_pid/exe" > "$out_dir/host-exe-$last_pid.txt" 2> /dev/null || true
+      {
+        timeout --kill-after=1 2 sudo -n prlimit --pid "$last_pid" --core=unlimited:unlimited || true
+        cat "/proc/$last_pid/limits" || true
+        printf 'coredump_filter='
+        cat "/proc/$last_pid/coredump_filter" || true
+      } > "$out_dir/host-core-limits-$last_pid.txt" 2>&1
+    fi
     freeze_samples=0
     freeze_count=0
     freeze_at=0
