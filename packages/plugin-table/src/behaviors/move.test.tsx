@@ -1,7 +1,7 @@
 import {defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {TablePlugin} from '../plugin.table'
 
 const schemaDefinition = defineSchema({
@@ -244,21 +244,17 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r2'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR2, threeRowR0],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR2, threeRowR0],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
   test('Scenario: moving the last row to the first position reorders the rows', async () => {
@@ -275,21 +271,17 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR2, threeRowR0, threeRowR1],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR2, threeRowR0, threeRowR1],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
   test('Scenario: moving the middle row down reorders the rows', async () => {
@@ -306,21 +298,17 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r2'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR0, threeRowR2, threeRowR1],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR0, threeRowR2, threeRowR1],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
   test('Scenario: moving the middle row up reorders the rows', async () => {
@@ -337,21 +325,17 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR0, threeRowR2],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR0, threeRowR2],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
   test('Scenario: moving a row onto itself leaves the value unchanged', async () => {
@@ -385,21 +369,17 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR0, threeRowR2],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR0, threeRowR2],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 
   test('Scenario: a `to` pointing to a cell moves the row to the closest row', async () => {
@@ -416,21 +396,17 @@ describe('custom.move.row', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r2'}, 'cells', {_key: 'r2c1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR2, threeRowR0],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR2, threeRowR0],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(threeRowValue)
   })
 })
 
@@ -449,24 +425,20 @@ describe('custom.move.column', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
-            {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
+          {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: moving the last column to the first position reorders the cells', async () => {
@@ -483,24 +455,20 @@ describe('custom.move.column', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c0'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
-            {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
+          {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: moving a column onto itself leaves the value unchanged', async () => {
@@ -534,24 +502,20 @@ describe('custom.move.column', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'r1c1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
-            {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
+          {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 
   test('Scenario: an `at` pointing inside a cell moves the closest column', async () => {
@@ -576,24 +540,20 @@ describe('custom.move.column', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
-            {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
+          {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(twoByTwoValue)
   })
 })
 
@@ -632,20 +592,18 @@ describe('custom.move.row — selection recovery', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r2'}],
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR2, threeRowR0],
-        },
-      ])
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    const snapshot = editor.getSnapshot()
+    expect(snapshot.context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR2, threeRowR0],
+      },
+    ])
+    expect(snapshot.context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 
@@ -666,20 +624,18 @@ describe('custom.move.row — selection recovery', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r1'}],
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [threeRowR1, threeRowR0, threeRowR2],
-        },
-      ])
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    const snapshot = editor.getSnapshot()
+    expect(snapshot.context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [threeRowR1, threeRowR0, threeRowR2],
+      },
+    ])
+    expect(snapshot.context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 })
@@ -702,23 +658,21 @@ describe('custom.move.column — selection recovery', () => {
       to: [{_key: 't0'}, 'rows', {_key: 'r0'}, 'cells', {_key: 'r0c1'}],
     })
 
-    await vi.waitFor(() => {
-      const snapshot = editor.getSnapshot()
-      expect(snapshot.context.value).toEqual([
-        {
-          _type: 'table',
-          _key: 't0',
-          rows: [
-            {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
-            {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
-          ],
-        },
-      ])
-      expect(snapshot.context.selection).toEqual({
-        anchor: cursor,
-        focus: cursor,
-        backward: false,
-      })
+    const snapshot = editor.getSnapshot()
+    expect(snapshot.context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 't0',
+        rows: [
+          {...twoByTwoR0, cells: [twoByTwoR0C1, twoByTwoR0C0]},
+          {...twoByTwoR1, cells: [twoByTwoR1C1, twoByTwoR1C0]},
+        ],
+      },
+    ])
+    expect(snapshot.context.selection).toEqual({
+      anchor: cursor,
+      focus: cursor,
+      backward: false,
     })
   })
 })
