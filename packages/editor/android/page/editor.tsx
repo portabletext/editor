@@ -31,6 +31,10 @@ function Probe() {
   const editor = useEditor()
   useEffect(() => {
     recordInput({
+      getState: () => {
+        const {context} = editor.getSnapshot()
+        return {value: context.value, selection: context.selection}
+      },
       getText: () => {
         const {context} = editor.getSnapshot()
         return (context.value ?? [])

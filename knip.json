@@ -30,6 +30,7 @@
         "vitest.android.config.ts",
         "android/vite.config.ts",
         "android/page/editor.tsx",
+        "android/page/gherkin.tsx",
         "android/scripts/fixtures/suites/*.ts"
       ],
       "ignoreDependencies": [

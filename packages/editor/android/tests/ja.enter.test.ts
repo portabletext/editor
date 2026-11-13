@@ -1,5 +1,6 @@
 import {runOnDevice} from 'thumbjar'
 import {expect, test} from 'vitest'
+import {toDeviceTextspec} from '../scripts/gherkin.ts'
 
 test('Scenario: Pressing Enter in a block that starts with a dash and space', async (context) => {
   const run = await runOnDevice(context, {
@@ -11,10 +12,12 @@ test('Scenario: Pressing Enter in a block that starts with a dash and space', as
 
   expect({
     text: run.text,
+    state: toDeviceTextspec(run.state),
     steps: run.steps.map((step) => ({
       type: step.type,
       status: step.status,
       textAfter: step.textAfter,
+      stateAfter: toDeviceTextspec(step.stateAfter),
       selectionAfter: step.selectionAfter,
       focusedAfter: step.focusedAfter,
       insertParagraphs: step.events.filter(
@@ -24,11 +27,13 @@ test('Scenario: Pressing Enter in a block that starts with a dash and space', as
     })),
   }).toEqual({
     text: '- \n',
+    state: 'B: - \nB: |',
     steps: [
       {
         type: 'enter',
         status: 'done',
         textAfter: '- \n',
+        stateAfter: 'B: - \nB: |',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
         insertParagraphs: 1,
@@ -47,10 +52,12 @@ test('Scenario: Pressing Enter after typing a dash and space on the symbol layou
 
   expect({
     text: run.text,
+    state: toDeviceTextspec(run.state),
     steps: run.steps.map((step) => ({
       type: step.type,
       status: step.status,
       textAfter: step.textAfter,
+      stateAfter: toDeviceTextspec(step.stateAfter),
       selectionAfter: step.selectionAfter,
       focusedAfter: step.focusedAfter,
       insertParagraphs: step.events.filter(
@@ -60,11 +67,13 @@ test('Scenario: Pressing Enter after typing a dash and space on the symbol layou
     })),
   }).toEqual({
     text: '- \n',
+    state: 'B: - \nB: |',
     steps: [
       {
         type: 'compose',
         status: 'done',
         textAfter: '- ',
+        stateAfter: 'B: - |',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
         insertParagraphs: 0,
@@ -73,6 +82,7 @@ test('Scenario: Pressing Enter after typing a dash and space on the symbol layou
         type: 'enter',
         status: 'done',
         textAfter: '- \n',
+        stateAfter: 'B: - \nB: |',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
         insertParagraphs: 1,
