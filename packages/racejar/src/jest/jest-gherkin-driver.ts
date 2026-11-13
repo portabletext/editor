@@ -34,11 +34,11 @@ export function Feature<TContext extends Record<string, any> = object>({
 
   describeFn(feature.name, () => {
     for (const before of feature.beforeHooks) {
-      beforeEach(before)
+      beforeEach(() => before())
     }
 
     for (const after of feature.afterHooks) {
-      afterEach(after)
+      afterEach(() => after())
     }
 
     for (const scenario of feature.scenarios) {

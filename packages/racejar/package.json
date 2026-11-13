@@ -63,6 +63,7 @@
     "prepublishOnly": "turbo run build",
     "test": "vitest --run",
     "test:playwright": "playwright test",
+    "test:unit": "vitest --run",
     "test:watch": "vitest"
   },
   "dependencies": {
