@@ -2,7 +2,7 @@ import {defineContainer} from '@portabletext/editor'
 import {NodePlugin} from '@portabletext/editor/plugins'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {InputRulePlugin} from './plugin.input-rule'
 import {createStockTickerRule} from './rule.stock-ticker'
 
@@ -103,27 +103,25 @@ describe('stock-ticker rule (container awareness)', () => {
 
     editor.send({type: 'insert.text', text: '{AAPL}'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'k0',
-          _type: 'callout',
-          content: [
-            {
-              _key: 'k1',
-              _type: 'block',
-              children: [
-                {_key: 'k2', _type: 'span', marks: [], text: ''},
-                {_key: 'k5', _type: 'stock-ticker'},
-                {_key: 'k6', _type: 'span', marks: [], text: ''},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'callout',
+        content: [
+          {
+            _key: 'k1',
+            _type: 'block',
+            children: [
+              {_key: 'k2', _type: 'span', marks: [], text: ''},
+              {_key: 'k5', _type: 'stock-ticker'},
+              {_key: 'k6', _type: 'span', marks: [], text: ''},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {
         offset: 0,

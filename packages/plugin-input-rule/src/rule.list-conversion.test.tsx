@@ -9,7 +9,7 @@ import {
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {expect, test, vi} from 'vitest'
+import {expect, test} from 'vitest'
 import {defineInputRule} from './input-rule'
 import {InputRulePlugin} from './plugin.input-rule'
 
@@ -179,30 +179,28 @@ test('Scenario: typing a bullet marker in an empty block converts it to a list',
   editor.send({type: 'insert.text', text: '-'})
   editor.send({type: 'insert.text', text: ' '})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _key: 'k3',
-        _type: 'list',
-        kind: 'bullet',
-        items: [
-          {
-            _key: 'k2',
-            _type: 'list-item',
-            content: [
-              {
-                _key: 'b0',
-                _type: 'block',
-                children: [{_key: 's0', _type: 'span', marks: [], text: ''}],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'k3',
+      _type: 'list',
+      kind: 'bullet',
+      items: [
+        {
+          _key: 'k2',
+          _type: 'list-item',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_key: 's0', _type: 'span', marks: [], text: ''}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    },
+  ])
 })
 
 test('Scenario: typing a bullet marker before existing text lifts the text into the list', async () => {
@@ -240,32 +238,28 @@ test('Scenario: typing a bullet marker before existing text lifts the text into 
   editor.send({type: 'insert.text', text: '-'})
   editor.send({type: 'insert.text', text: ' '})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _key: 'k3',
-        _type: 'list',
-        kind: 'bullet',
-        items: [
-          {
-            _key: 'k2',
-            _type: 'list-item',
-            content: [
-              {
-                _key: 'b0',
-                _type: 'block',
-                children: [
-                  {_key: 's0', _type: 'span', marks: [], text: 'hello'},
-                ],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'k3',
+      _type: 'list',
+      kind: 'bullet',
+      items: [
+        {
+          _key: 'k2',
+          _type: 'list-item',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_key: 's0', _type: 'span', marks: [], text: 'hello'}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    },
+  ])
   expect(editor.getSnapshot().context.selection).toEqual({
     anchor: {
       path: [
@@ -331,32 +325,28 @@ test('Scenario: a bullet marker arriving in a single event converts the block', 
   // scenarios rather than instead of them.
   editor.send({type: 'insert.text', text: '- '})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _key: 'k3',
-        _type: 'list',
-        kind: 'bullet',
-        items: [
-          {
-            _key: 'k2',
-            _type: 'list-item',
-            content: [
-              {
-                _key: 'b0',
-                _type: 'block',
-                children: [
-                  {_key: 's0', _type: 'span', marks: [], text: 'hello'},
-                ],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'k3',
+      _type: 'list',
+      kind: 'bullet',
+      items: [
+        {
+          _key: 'k2',
+          _type: 'list-item',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_key: 's0', _type: 'span', marks: [], text: 'hello'}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    },
+  ])
 })
 
 test('Scenario: a bold marker with bold toggled off before the trigger space still converts', async () => {
@@ -395,35 +385,33 @@ test('Scenario: a bold marker with bold toggled off before the trigger space sti
   editor.send({type: 'decorator.toggle', decorator: 'strong'})
   editor.send({type: 'insert.text', text: ' '})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _key: 'k4',
-        _type: 'list',
-        kind: 'bullet',
-        items: [
-          {
-            _key: 'k3',
-            _type: 'list-item',
-            content: [
-              {
-                _key: 'b0',
-                _type: 'block',
-                children: [
-                  // The range delete merges back into the first span of
-                  // the deleted range, so the emptied span keeps the bold
-                  // mark.
-                  {_key: 's0', _type: 'span', marks: ['strong'], text: ''},
-                ],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'k4',
+      _type: 'list',
+      kind: 'bullet',
+      items: [
+        {
+          _key: 'k3',
+          _type: 'list-item',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [
+                // The range delete merges back into the first span of
+                // the deleted range, so the emptied span keeps the bold
+                // mark.
+                {_key: 's0', _type: 'span', marks: ['strong'], text: ''},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    },
+  ])
 })
 
 test('Scenario: converting a block below prior content in a list item nests the list below it', async () => {
@@ -502,54 +490,50 @@ test('Scenario: converting a block below prior content in a list item nests the 
   editor.send({type: 'insert.text', text: '-'})
   editor.send({type: 'insert.text', text: ' '})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _key: 'l0',
-        _type: 'list',
-        kind: 'bullet',
-        items: [
-          {
-            _key: 'i0',
-            _type: 'list-item',
-            content: [
-              {
-                _key: 'b0',
-                _type: 'block',
-                children: [
-                  {_key: 's0', _type: 'span', marks: [], text: 'first'},
-                ],
-                markDefs: [],
-                style: 'normal',
-              },
-              {
-                _key: 'k3',
-                _type: 'list',
-                kind: 'bullet',
-                items: [
-                  {
-                    _key: 'k2',
-                    _type: 'list-item',
-                    content: [
-                      {
-                        _key: 'b1',
-                        _type: 'block',
-                        children: [
-                          {_key: 's1', _type: 'span', marks: [], text: ''},
-                        ],
-                        markDefs: [],
-                        style: 'normal',
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'l0',
+      _type: 'list',
+      kind: 'bullet',
+      items: [
+        {
+          _key: 'i0',
+          _type: 'list-item',
+          content: [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_key: 's0', _type: 'span', marks: [], text: 'first'}],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _key: 'k3',
+              _type: 'list',
+              kind: 'bullet',
+              items: [
+                {
+                  _key: 'k2',
+                  _type: 'list-item',
+                  content: [
+                    {
+                      _key: 'b1',
+                      _type: 'block',
+                      children: [
+                        {_key: 's1', _type: 'span', marks: [], text: ''},
+                      ],
+                      markDefs: [],
+                      style: 'normal',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
 })
 
 test('Scenario: converting a block below prior content at the root keeps the list below it', async () => {
@@ -591,35 +575,33 @@ test('Scenario: converting a block below prior content at the root keeps the lis
   editor.send({type: 'insert.text', text: '-'})
   editor.send({type: 'insert.text', text: ' '})
 
-  await vi.waitFor(() => {
-    expect(editor.getSnapshot().context.value).toEqual([
-      {
-        _key: 'b0',
-        _type: 'block',
-        children: [{_key: 's0', _type: 'span', marks: [], text: 'first'}],
-        markDefs: [],
-        style: 'normal',
-      },
-      {
-        _key: 'k3',
-        _type: 'list',
-        kind: 'bullet',
-        items: [
-          {
-            _key: 'k2',
-            _type: 'list-item',
-            content: [
-              {
-                _key: 'b1',
-                _type: 'block',
-                children: [{_key: 's1', _type: 'span', marks: [], text: ''}],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _key: 'b0',
+      _type: 'block',
+      children: [{_key: 's0', _type: 'span', marks: [], text: 'first'}],
+      markDefs: [],
+      style: 'normal',
+    },
+    {
+      _key: 'k3',
+      _type: 'list',
+      kind: 'bullet',
+      items: [
+        {
+          _key: 'k2',
+          _type: 'list-item',
+          content: [
+            {
+              _key: 'b1',
+              _type: 'block',
+              children: [{_key: 's1', _type: 'span', marks: [], text: ''}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+    },
+  ])
 })
