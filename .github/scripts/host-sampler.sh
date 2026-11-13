@@ -24,6 +24,10 @@ freeze_count=0
 freeze_at=0
 
 capture_threads() {
+  stack_available=false
+  if timeout --kill-after=1 1 sudo -n true 2> /dev/null; then
+    stack_available=true
+  fi
   for task in /proc/"$last_pid"/task/*; do
     [ -r "$task/stat" ] || continue
     task_stat="$(cat "$task/stat" 2> /dev/null)"
@@ -32,7 +36,7 @@ capture_threads() {
     task_comm="$(cat "$task/comm" 2> /dev/null)"
     task_wchan="$(cat "$task/wchan" 2> /dev/null)"
     printf 'tid=%s comm=%s state=%s wchan=%s\n' "${task##*/}" "${task_comm:-unknown}" "${task_state:-unknown}" "${task_wchan:-unknown}"
-    if task_stack="$(timeout --kill-after=1 1 sudo -n cat "$task/stack" 2> /dev/null)"; then
+    if [ "$stack_available" = true ] && task_stack="$(timeout --kill-after=1 1 sudo -n cat "$task/stack" 2> /dev/null)"; then
       printf '%s\n' "$task_stack"
     fi
   done
@@ -89,12 +93,16 @@ while true; do
   if [ -n "$last_pid" ] && [ "$current_pid" = "$last_pid" ] && [ "$qemu" != "qemu=none" ]; then
     if [ "$state" = "S" ] || [ "$state" = "R" ]; then
       freeze_samples=0
+      freeze_count=0
     else
       freeze_samples=$((freeze_samples + 1))
       if { [ "$freeze_count" -eq 0 ] && [ "$freeze_samples" -ge 2 ]; } ||
         { [ "$freeze_count" -eq 1 ] && [ "$((now - freeze_at))" -ge 30 ]; }; then
         freeze_count=$((freeze_count + 1))
         freeze_at="$now"
+        if [ "$freeze_count" -eq 1 ]; then
+          rm -f "$out_dir/host-freeze-$last_pid-2.txt" 2> /dev/null || true
+        fi
         capture_threads > "$out_dir/host-freeze-$last_pid-$freeze_count.txt" 2> /dev/null || true
       fi
     fi

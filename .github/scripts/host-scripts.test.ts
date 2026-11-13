@@ -178,6 +178,206 @@ describeOnLinux('host-sampler.sh and host-capture.sh', () => {
     }
   }, 40_000)
 
+  test('Scenario: A hanging sudo with several threads leaves no sample gap above four seconds', async () => {
+    const fixture = startFreezeSampler('hanging')
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.hostLog, 'utf8')).toContain(
+            `qemu pid=${fixture.fakeEmulator.pid} `,
+          )
+          expect(
+            readdirSync(`/proc/${fixture.fakeEmulator.pid}/task`).length >= 4,
+          ).toEqual(true)
+        },
+        {timeout: 10_000},
+      )
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(existsSync(fixture.firstCapture)).toEqual(true)
+        },
+        {timeout: 10_000},
+      )
+      const captureSample = readFileSync(fixture.hostLog, 'utf8')
+        .trim()
+        .split('\n')
+        .at(-1)!
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(fixture.hostLog, 'utf8').trim().split('\n').at(-1) ===
+              captureSample,
+          ).toEqual(false)
+        },
+        {timeout: 25_000},
+      )
+      const samples = readFileSync(fixture.hostLog, 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => Number(line.split(' ')[0]))
+      expect(
+        Math.max(
+          ...samples.slice(1).map((sample, index) => sample - samples[index]!),
+        ) <= 4,
+      ).toEqual(true)
+    } finally {
+      fixture.cleanup()
+    }
+  }, 40_000)
+
+  test('Scenario: A recovered freeze cannot use a later single stopped sample for capture two', async () => {
+    const fixture = startFreezeSampler('unavailable')
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.hostLog, 'utf8')).toContain(
+            `qemu pid=${fixture.fakeEmulator.pid} `,
+          )
+        },
+        {timeout: 10_000},
+      )
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.firstCapture, 'utf8')).toContain('tid=')
+        },
+        {timeout: 10_000},
+      )
+      const firstSample = Number(
+        readFileSync(fixture.hostLog, 'utf8')
+          .trim()
+          .split('\n')
+          .at(-1)!
+          .split(' ')[0],
+      )
+      fixture.fakeEmulator.kill('SIGCONT')
+      await vi.waitFor(
+        () => {
+          const lastSample = readFileSync(fixture.hostLog, 'utf8')
+            .trim()
+            .split('\n')
+            .at(-1)!
+          expect(lastSample).toEqual(expect.stringMatching(/state=[SR]$/))
+          expect(Number(lastSample.split(' ')[0]) - firstSample > 30).toEqual(
+            true,
+          )
+        },
+        {timeout: 40_000},
+      )
+      const beforeStop = readFileSync(fixture.hostLog, 'utf8')
+        .trim()
+        .split('\n').length
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(fixture.hostLog, 'utf8')
+              .trim()
+              .split('\n')
+              .slice(beforeStop)
+              .some((line) => line.endsWith('state=T')),
+          ).toEqual(true)
+        },
+        {timeout: 10_000, interval: 10},
+      )
+      fixture.fakeEmulator.kill('SIGCONT')
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(fixture.hostLog, 'utf8').trim().split('\n').at(-1),
+          ).toEqual(expect.stringMatching(/state=[SR]$/))
+        },
+        {timeout: 10_000},
+      )
+      expect(existsSync(fixture.secondCapture)).toEqual(false)
+    } finally {
+      fixture.cleanup()
+    }
+  }, 60_000)
+
+  test('Scenario: A new freeze rewrites capture one and removes the previous freeze capture two', async () => {
+    const fixture = startFreezeSampler('unavailable')
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.hostLog, 'utf8')).toContain(
+            `qemu pid=${fixture.fakeEmulator.pid} `,
+          )
+        },
+        {timeout: 10_000},
+      )
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.secondCapture, 'utf8')).toContain('tid=')
+        },
+        {timeout: 40_000},
+      )
+      fixture.fakeEmulator.kill('SIGCONT')
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(fixture.hostLog, 'utf8').trim().split('\n').at(-1),
+          ).toEqual(expect.stringMatching(/state=[SR]$/))
+        },
+        {timeout: 10_000},
+      )
+      writeFileSync(fixture.firstCapture, 'previous freeze\n')
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.firstCapture, 'utf8')).toContain('tid=')
+          expect(existsSync(fixture.secondCapture)).toEqual(false)
+        },
+        {timeout: 5_000},
+      )
+    } finally {
+      fixture.cleanup()
+    }
+  }, 60_000)
+
+  test('Scenario: Successful sudo writes each stack after its thread line', async () => {
+    const fixture = startFreezeSampler('available')
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.hostLog, 'utf8')).toContain(
+            `qemu pid=${fixture.fakeEmulator.pid} `,
+          )
+        },
+        {timeout: 10_000},
+      )
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          const threadIds = readdirSync(
+            `/proc/${fixture.fakeEmulator.pid}/task`,
+          ).sort()
+          const lines = readFileSync(fixture.firstCapture, 'utf8')
+            .trim()
+            .split('\n')
+          expect(lines.filter((_, index) => index % 2 === 0).sort()).toEqual(
+            threadIds.map((threadId) =>
+              expect.stringMatching(
+                new RegExp(`^tid=${threadId} comm=.+ state=T wchan=\\S+$`),
+              ),
+            ),
+          )
+          expect(lines.filter((_, index) => index % 2 === 1).sort()).toEqual(
+            threadIds.map(
+              (threadId) =>
+                `stack /proc/${fixture.fakeEmulator.pid}/task/${threadId}/stack`,
+            ),
+          )
+        },
+        {timeout: 10_000},
+      )
+    } finally {
+      fixture.cleanup()
+    }
+  }, 30_000)
+
   test('Scenario: The emulator process is killed and the capture stops the sampler', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
     const crashDirectory = join(directory, 'crash')
@@ -385,5 +585,49 @@ function isAlive(pid: number) {
     return true
   } catch {
     return false
+  }
+}
+
+function startFreezeSampler(sudo: 'hanging' | 'unavailable' | 'available') {
+  const directory = mkdtempSync(join(tmpdir(), 'host-freeze-regression-'))
+  const hostLog = join(directory, 'host.log')
+  writeFileSync(
+    join(directory, 'sudo'),
+    sudo === 'hanging'
+      ? "#!/bin/sh\ntrap '' TERM\nwhile true; do sleep 0.1; done\n"
+      : sudo === 'available'
+        ? '#!/bin/sh\nshift\nif [ "$1" = true ]; then exit 0; fi\nshift\nprintf "stack %s\\n" "$1"\n'
+        : '#!/bin/sh\nexit 1\n',
+    {mode: 0o755},
+  )
+  const emulatorScript = join(directory, 'emulator.cjs')
+  writeFileSync(emulatorScript, 'setInterval(() => {}, 1000)\n')
+  const fakeEmulator = spawn(process.execPath, [emulatorScript], {
+    stdio: 'ignore',
+    detached: true,
+  })
+  const samplerProcess = spawn(
+    'bash',
+    ['-e', '-o', 'pipefail', sampler, hostLog],
+    {
+      env: {
+        ...process.env,
+        PATH: `${directory}:${process.env.PATH}`,
+        HOST_SAMPLER_PATTERN: emulatorScript,
+        HOST_SAMPLER_INTERVAL: '0.2',
+      },
+      stdio: 'ignore',
+    },
+  )
+  return {
+    hostLog,
+    fakeEmulator,
+    firstCapture: join(directory, `host-freeze-${fakeEmulator.pid}-1.txt`),
+    secondCapture: join(directory, `host-freeze-${fakeEmulator.pid}-2.txt`),
+    cleanup() {
+      fakeEmulator.kill('SIGKILL')
+      samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    },
   }
 }
