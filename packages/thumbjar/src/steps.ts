@@ -38,7 +38,18 @@ export type EnterStep = {type: 'enter'}
 /** Tap Backspace `times` times, once by default. */
 export type BackspaceStep = {type: 'backspace'; times?: number}
 
-export type Step = ComposeStep | EnterStep | BackspaceStep
+export type Json =
+  | null
+  | boolean
+  | number
+  | string
+  | Json[]
+  | {[key: string]: Json}
+
+/** Call a handler registered by the page, then read the usual step boundary. */
+export type PageStep = {type: 'page'; action: string; args?: Json}
+
+export type Step = ComposeStep | EnterStep | BackspaceStep | PageStep
 
 /**
  * `done` when the step ran, `failed` when it threw, which ends the attempt, and `skipped` for a step that
@@ -61,6 +72,8 @@ export type StepStatus = 'done' | 'failed' | 'skipped'
  * record, and every other event is in exactly one.
  */
 export type StepRecord = {
+  /** The optional page state at this boundary, absent when no state could be read. */
+  stateAfter?: unknown
   type: Step['type']
   status: StepStatus
   /** Why the step is not `done`. */
@@ -101,6 +114,8 @@ export type RunOnDeviceOptions = {
 
 /** One record per step and the page's state at the boundary after the last one. */
 export type Run = {
+  /** The optional page state at the last boundary. */
+  state?: unknown
   steps: StepRecord[]
   /** The text at the last boundary. */
   text: string | null

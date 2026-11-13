@@ -235,9 +235,50 @@ export const FETCH_U2_JAR_WORST_SECONDS =
   (U2_JAR_ATTEMPTS - 1) * U2_JAR_RETRY_SECONDS
 
 /**
- * The number of tests in a device test file: its top-level `test(` and `test.fails(` calls. A unit test
- * checks the count against the tests Vitest collects from each file.
+ * The number of tests in a device test file, from its `thumbjar-test-count` declaration
+ * or its top-level `test(` and `test.fails(` calls. A unit test checks the count
+ * against the tests Vitest collects from each file.
  */
 export function countDeviceTests(source: string): number {
+  const declared = /^\/\/ thumbjar-test-count: ([1-9]\d*)$/m.exec(source)
+  if (declared) {
+    return Number(declared[1])
+  }
   return source.match(/^test(\.fails)?\(/gm)?.length ?? 0
+}
+
+/**
+ * How long the emulator runner action waits for the emulator to come online before it runs the script,
+ * the workflow's `emulator-boot-timeout`.
+ */
+export const EMULATOR_BOOT_SECONDS = 360
+
+/**
+ * Runner setup took 6 to 10 seconds before "Starting emulator." across 12 recent Android IME jobs.
+ * Thirty seconds leaves margin before the boot wait.
+ */
+export const RUNNER_SETUP_SECONDS = 30
+
+/**
+ * The longest one run step of the workflow takes when every stage of `thumbjar run` hangs to its bound:
+ * the runner setup, the boot wait, the cap read, the prep with its kill-after, the test file with its kill-after, the
+ * device check and the final diagnostics, each with the time it gets to stop, plus one kill grace for each of
+ * the eight `execute` calls, an upper bound because the diagnostics share one deadline. A step cap below this lets
+ * GitHub cut the step off before thumbjar can report why it ended.
+ */
+export function runStepWorstSeconds(
+  keyboard: 'ja' | 'en',
+  testCount: number,
+): number {
+  return (
+    RUNNER_SETUP_SECONDS +
+    EMULATOR_BOOT_SECONDS +
+    8 * KILL_GRACE_SECONDS +
+    (COMMAND_READ_SECONDS + COMMAND_KILL_SECONDS) +
+    prepWorstSeconds(keyboard) +
+    deviceTestFileSeconds(testCount) +
+    RUN_TEST_KILL_SECONDS +
+    (COMMAND_READ_SECONDS + COMMAND_KILL_SECONDS) +
+    (DIAGNOSTICS_SECONDS + COMMAND_KILL_SECONDS)
+  )
 }
