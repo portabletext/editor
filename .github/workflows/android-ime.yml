@@ -48,7 +48,7 @@ jobs:
     # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
     # step's cap, so a hang in every step still leaves time for `Result` and the artifact upload, and
     # `budget.test.ts` keeps it so.
-    timeout-minutes: 255
+    timeout-minutes: 263
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -225,9 +225,11 @@ jobs:
       # host memory and the emulator's process until the capture step, so the next loss says when and why.
       - name: Start the host sampler
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
-        timeout-minutes: 1
+        timeout-minutes: 3
+        continue-on-error: true
         working-directory: packages/editor
         run: |
+          timeout --kill-after=5 110 bash ../../.github/scripts/host-core.sh prepare android/out || true
           setsid nohup bash ../../.github/scripts/host-sampler.sh android/out/host.log > /dev/null 2>&1 < /dev/null &
           sleep 1
           echo started
@@ -296,7 +298,8 @@ jobs:
       # still holds them, then names each emulator exit the sampler saw in the job summary.
       - name: Capture host evidence
         if: always()
-        timeout-minutes: 1
+        timeout-minutes: 7
+        continue-on-error: true
         working-directory: packages/editor
         run: |
           bash ../../.github/scripts/host-capture.sh android/out
