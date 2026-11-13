@@ -1,5 +1,5 @@
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {defineSchema} from '../src'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
@@ -72,26 +72,24 @@ describe('event.move.block cross-container', () => {
       to: [{_key: calloutKey}, 'content', {_key: innerBlockKey}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            rootBlock,
-            {
-              _type: 'block',
-              _key: innerBlockKey,
-              children: [
-                {_type: 'span', _key: innerSpanKey, text: 'inner', marks: []},
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          rootBlock,
+          {
+            _type: 'block',
+            _key: innerBlockKey,
+            children: [
+              {_type: 'span', _key: innerSpanKey, text: 'inner', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: Moving a block out of a container to a root destination lands before the destination', async () => {
@@ -141,40 +139,38 @@ describe('event.move.block cross-container', () => {
       to: [{_key: rootBlock._key}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'block',
-          _key: innerBlockKey,
-          children: [
-            {_type: 'span', _key: innerSpanKey, text: 'inner', marks: []},
-          ],
-          markDefs: [],
-          style: 'normal',
-        },
-        rootBlock,
-        {
-          _type: 'callout',
-          _key: calloutKey,
-          content: [
-            {
-              _type: 'block',
-              _key: placeholderBlockKey,
-              style: 'normal',
-              markDefs: [],
-              children: [
-                {
-                  _type: 'span',
-                  _key: placeholderSpanKey,
-                  text: '',
-                  marks: [],
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: innerBlockKey,
+        children: [
+          {_type: 'span', _key: innerSpanKey, text: 'inner', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+      rootBlock,
+      {
+        _type: 'callout',
+        _key: calloutKey,
+        content: [
+          {
+            _type: 'block',
+            _key: placeholderBlockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: placeholderSpanKey,
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: Moving a block between two containers lands before the destination', async () => {
@@ -229,50 +225,48 @@ describe('event.move.block cross-container', () => {
       to: [{_key: callout2Key}, 'content', {_key: block2Key}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _type: 'callout',
-          _key: callout1Key,
-          content: [
-            {
-              _type: 'block',
-              _key: placeholderBlockKey,
-              style: 'normal',
-              markDefs: [],
-              children: [
-                {
-                  _type: 'span',
-                  _key: placeholderSpanKey,
-                  text: '',
-                  marks: [],
-                },
-              ],
-            },
-          ],
-        },
-        {
-          _type: 'callout',
-          _key: callout2Key,
-          content: [
-            {
-              _type: 'block',
-              _key: block1Key,
-              children: [{_type: 'span', _key: span1Key, text: 'a', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-            {
-              _type: 'block',
-              _key: block2Key,
-              children: [{_type: 'span', _key: span2Key, text: 'b', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: callout1Key,
+        content: [
+          {
+            _type: 'block',
+            _key: placeholderBlockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: placeholderSpanKey,
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        _type: 'callout',
+        _key: callout2Key,
+        content: [
+          {
+            _type: 'block',
+            _key: block1Key,
+            children: [{_type: 'span', _key: span1Key, text: 'a', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: block2Key,
+            children: [{_type: 'span', _key: span2Key, text: 'b', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ])
   })
 
   test('Scenario: Moving a selected root block into a container that holds a block with the same key leaves the caret on the nearest remaining span', async () => {
@@ -333,61 +327,59 @@ describe('event.move.block cross-container', () => {
 
     editor.send({type: 'insert.text', text: 'x'})
 
-    await vi.waitFor(() => {
-      expect({
-        value: editor.getSnapshot().context.value,
-        selection: editor.getSnapshot().context.selection,
-      }).toEqual({
-        value: [
-          {
-            _type: 'callout',
-            _key: calloutKey,
-            content: [
-              {
-                _key: 'k6',
-                _type: 'block',
-                children: [
-                  {_key: rootSpanKey, _type: 'span', text: 'foo', marks: []},
-                ],
-                markDefs: [],
-                style: 'normal',
-              },
-              {
-                _type: 'block',
-                _key: sharedKey,
-                children: [
-                  {_type: 'span', _key: innerSpanKey, text: 'xbar', marks: []},
-                ],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        ],
-        selection: {
-          anchor: {
-            path: [
-              {_key: calloutKey},
-              'content',
-              {_key: sharedKey},
-              'children',
-              {_key: innerSpanKey},
-            ],
-            offset: 1,
-          },
-          focus: {
-            path: [
-              {_key: calloutKey},
-              'content',
-              {_key: sharedKey},
-              'children',
-              {_key: innerSpanKey},
-            ],
-            offset: 1,
-          },
-          backward: false,
+    expect({
+      value: editor.getSnapshot().context.value,
+      selection: editor.getSnapshot().context.selection,
+    }).toEqual({
+      value: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _key: 'k6',
+              _type: 'block',
+              children: [
+                {_key: rootSpanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+            {
+              _type: 'block',
+              _key: sharedKey,
+              children: [
+                {_type: 'span', _key: innerSpanKey, text: 'xbar', marks: []},
+              ],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
         },
-      })
+      ],
+      selection: {
+        anchor: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: sharedKey},
+            'children',
+            {_key: innerSpanKey},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: sharedKey},
+            'children',
+            {_key: innerSpanKey},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      },
     })
   })
 })

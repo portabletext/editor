@@ -76,38 +76,36 @@ describe('event.delete.forward', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      const expectedValue = [
-        {
-          _type: 'block',
-          _key: 'k3',
-          children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
-          markDefs: [],
-          style: 'normal',
-          foo: 'bar',
-        },
-      ]
+    const expectedValue = [
+      {
+        _type: 'block',
+        _key: 'k3',
+        children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+        markDefs: [],
+        style: 'normal',
+        foo: 'bar',
+      },
+    ]
 
-      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
-      expect(foreignValue).toEqual(expectedValue)
-      expect(patches.slice(2)).toEqual([
-        setIfMissing([], []),
-        insert(
-          [
-            {
-              _type: 'block',
-              _key: 'k3',
-              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-          'before',
-          [0],
-        ),
-        set('bar', [{_key: 'k3'}, 'foo']),
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+    expect(foreignValue).toEqual(expectedValue)
+    expect(patches.slice(2)).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k3',
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+        'before',
+        [0],
+      ),
+      set('bar', [{_key: 'k3'}, 'foo']),
+    ])
   })
 
   test('Scenario: Merging two text blocks', async () => {
@@ -359,12 +357,10 @@ describe('event.delete.forward', () => {
       })
       editor.send({type: 'delete', direction: 'forward'})
 
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.value).toEqual([
-          block('b1', 'before'),
-          block('b2', 'after'),
-        ])
-      })
+      expect(editor.getSnapshot().context.value).toEqual([
+        block('b1', 'before'),
+        block('b2', 'after'),
+      ])
     })
 
     test('Scenario: the same gesture over non-empty lines deletes the range', async () => {
@@ -439,9 +435,7 @@ describe('event.delete.forward', () => {
         at: selection,
       })
 
-      await vi.waitFor(() => {
-        expect(editor.getSnapshot().context.selection).toEqual(selection)
-      })
+      expect(editor.getSnapshot().context.selection).toEqual(selection)
 
       editor.send({
         type: 'delete',
@@ -449,9 +443,7 @@ describe('event.delete.forward', () => {
         unit: 'line',
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar|')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar|')
     })
 
     test('Scenario: Deleting a line forward at `at` removes the text after it', async () => {
@@ -485,9 +477,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar')
     })
 
     test('Scenario: Deleting a line forward in a wrapped block removes the text up to the end of the visual line', async () => {
@@ -528,9 +518,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobaz')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobaz')
     })
 
     test('Scenario: Deleting a line forward at a soft wrap removes the text on the line after the wrap', async () => {
@@ -571,9 +559,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobz')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobz')
     })
 
     test('Scenario: Deleting a line forward over an expanded selection removes the selection', async () => {
@@ -607,9 +593,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo  baz')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo  baz')
     })
 
     test('Scenario: Deleting a line forward before an explicit newline removes the text up to the newline', async () => {
@@ -643,9 +627,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f\nbar')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f\nbar')
     })
 
     test('Scenario: Deleting a line forward directly before an explicit newline removes the newline', async () => {
@@ -679,9 +661,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
     })
 
     test('Scenario: Deleting a line forward at the end of a span before a soft wrap removes the next span up to the end of the visual line', async () => {
@@ -729,11 +709,9 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual(
-          'B: [strong:foob]z',
-        )
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: [strong:foob]z',
+      )
     })
 
     test('Scenario: Deleting a line forward at the start of a span after a soft wrap removes the span up to the end of the visual line', async () => {
@@ -781,11 +759,9 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual(
-          'B: [strong:foob]z',
-        )
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual(
+        'B: [strong:foob]z',
+      )
     })
 
     test('Scenario: Deleting a line forward across an inline object removes the text and the inline object up to the end of the line', async () => {
@@ -830,9 +806,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f')
     })
     // Known limitation in WebKit: two characters share a line only when
     // each one's vertical middle falls inside the other's rect, and WebKit
@@ -905,9 +879,7 @@ describe('event.delete.forward', () => {
           },
         })
 
-        await vi.waitFor(() => {
-          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fbar')
-        })
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fbar')
       },
     )
 
@@ -970,9 +942,7 @@ describe('event.delete.forward', () => {
         },
       })
 
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f')
-      })
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f')
     })
   })
 })

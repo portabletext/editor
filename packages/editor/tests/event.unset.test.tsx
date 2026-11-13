@@ -34,18 +34,16 @@ describe('event.unset', () => {
 
     editor.send({type: 'unset', at: [{_key: 'b0'}, 'level']})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          listItem: 'bullet',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        listItem: 'bullet',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
   })
 
   test('Scenario: unset removes a node from an array', async () => {
@@ -74,17 +72,15 @@ describe('event.unset', () => {
       at: [{_key: 'b0'}, 'children', {_key: 's1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
   })
 
   test('Scenario: undo an unset of a property on a block', async () => {
@@ -111,24 +107,20 @@ describe('event.unset', () => {
 
     editor.send({type: 'unset', at: [{_key: 'b0'}, 'level']})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          listItem: 'bullet',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        listItem: 'bullet',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo an unset that removes a node from an array', async () => {
@@ -158,23 +150,19 @@ describe('event.unset', () => {
       at: [{_key: 'b0'}, 'children', {_key: 's1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+        markDefs: [],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo an unset of a nested property', async () => {
@@ -208,23 +196,19 @@ describe('event.unset', () => {
       at: [{_key: 'b0'}, 'markDefs', {_key: 'm0'}, 'href'],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'b0',
-          _type: 'block',
-          style: 'normal',
-          children: [{_key: 's0', _type: 'span', text: 'foo', marks: ['m0']}],
-          markDefs: [{_key: 'm0', _type: 'link'}],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'b0',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 's0', _type: 'span', text: 'foo', marks: ['m0']}],
+        markDefs: [{_key: 'm0', _type: 'link'}],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test("Scenario: undo an unset of a container's children array clears + restores", async () => {
@@ -313,32 +297,28 @@ describe('event.unset', () => {
       ],
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 't0',
-          _type: 'table',
-          rows: [
-            {
-              _key: 'r0',
-              _type: 'row',
-              cells: [
-                {
-                  _key: 'c0',
-                  _type: 'cell',
-                },
-              ],
-            },
-          ],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 't0',
+        _type: 'table',
+        rows: [
+          {
+            _key: 'r0',
+            _type: 'row',
+            cells: [
+              {
+                _key: 'c0',
+                _type: 'cell',
+              },
+            ],
+          },
+        ],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test("Scenario: undo an unset of a container's children array works with containers registered", async () => {
@@ -482,9 +462,7 @@ describe('event.unset', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
   test('Scenario: undo an unset at the root level', async () => {
@@ -505,23 +483,19 @@ describe('event.unset', () => {
 
     editor.send({type: 'unset', at: []})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {
-          _key: 'k2',
-          _type: 'block',
-          style: 'normal',
-          children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
-          markDefs: [],
-        },
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k2',
+        _type: 'block',
+        style: 'normal',
+        children: [{_key: 'k3', _type: 'span', text: '', marks: []}],
+        markDefs: [],
+      },
+    ])
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 })
 
@@ -571,39 +545,35 @@ describe('event.unset with a compact path at the root', () => {
     editor.send({type: 'unset', at: [0, 0]})
     editor.send({type: 'unset', at: [{_key: 'b1'}]})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'unset',
-              path: [{_key: 'b1'}],
-              inverse: {
-                type: 'insert',
-                path: [{_key: 'b0'}],
-                node: {
-                  _type: 'block',
-                  _key: 'b1',
-                  children: [
-                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-                position: 'after',
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'unset',
+            path: [{_key: 'b1'}],
+            inverse: {
+              type: 'insert',
+              path: [{_key: 'b0'}],
+              node: {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
               },
+              position: 'after',
             },
-          ],
-          patches: [{origin: 'local', type: 'unset', path: [{_key: 'b1'}]}],
-        },
-        {
-          type: 'patch',
-          patch: {origin: 'local', type: 'unset', path: [{_key: 'b1'}]},
-        },
-      ])
-    })
+          },
+        ],
+        patches: [{origin: 'local', type: 'unset', path: [{_key: 'b1'}]}],
+      },
+      {
+        type: 'patch',
+        patch: {origin: 'local', type: 'unset', path: [{_key: 'b1'}]},
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'block',
@@ -670,49 +640,45 @@ describe('event.unset with a compact path inside a callout', () => {
     editor.send({type: 'unset', at: [0, 'content', 0, 0]})
     editor.send({type: 'unset', at: [{_key: 'c0'}, 'content', {_key: 'b1'}]})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'unset',
-              path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
-              inverse: {
-                type: 'insert',
-                path: [{_key: 'c0'}, 'content', {_key: 'b0'}],
-                node: {
-                  _type: 'block',
-                  _key: 'b1',
-                  children: [
-                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-                position: 'after',
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'unset',
+            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
+            inverse: {
+              type: 'insert',
+              path: [{_key: 'c0'}, 'content', {_key: 'b0'}],
+              node: {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
               },
+              position: 'after',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'unset',
-              path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'unset',
             path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -798,60 +764,42 @@ describe('event.unset with a compact path inside a callout inside a callout', ()
       at: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content', {_key: 'b1'}],
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'unset',
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'unset',
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+            ],
+            inverse: {
+              type: 'insert',
               path: [
                 {_key: 'c0'},
                 'content',
                 {_key: 'c1'},
                 'content',
-                {_key: 'b1'},
+                {_key: 'b0'},
               ],
-              inverse: {
-                type: 'insert',
-                path: [
-                  {_key: 'c0'},
-                  'content',
-                  {_key: 'c1'},
-                  'content',
-                  {_key: 'b0'},
-                ],
-                node: {
-                  _type: 'block',
-                  _key: 'b1',
-                  children: [
-                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-                position: 'after',
+              node: {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
               },
+              position: 'after',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'unset',
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-              ],
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'unset',
             path: [
@@ -862,9 +810,23 @@ describe('event.unset with a compact path inside a callout inside a callout', ()
               {_key: 'b1'},
             ],
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'unset',
+          path: [
+            {_key: 'c0'},
+            'content',
+            {_key: 'c1'},
+            'content',
+            {_key: 'b1'},
+          ],
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'callout',
@@ -943,49 +905,45 @@ describe('event.unset with a compact path inside a field with its own sub-schema
     editor.send({type: 'unset', at: [0, 'body', 0, 0]})
     editor.send({type: 'unset', at: [{_key: 'n0'}, 'body', {_key: 'b1'}]})
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'change',
-          origin: 'local',
-          operations: [
-            {
-              type: 'unset',
-              path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
-              inverse: {
-                type: 'insert',
-                path: [{_key: 'n0'}, 'body', {_key: 'b0'}],
-                node: {
-                  _type: 'block',
-                  _key: 'b1',
-                  children: [
-                    {_type: 'span', _key: 's1', text: 'bar', marks: []},
-                  ],
-                  markDefs: [],
-                  style: 'normal',
-                },
-                position: 'after',
+    expect(events).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'unset',
+            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
+            inverse: {
+              type: 'insert',
+              path: [{_key: 'n0'}, 'body', {_key: 'b0'}],
+              node: {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
               },
+              position: 'after',
             },
-          ],
-          patches: [
-            {
-              origin: 'local',
-              type: 'unset',
-              path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
-            },
-          ],
-        },
-        {
-          type: 'patch',
-          patch: {
+          },
+        ],
+        patches: [
+          {
             origin: 'local',
             type: 'unset',
             path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
           },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          origin: 'local',
+          type: 'unset',
+          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
         _type: 'note',

@@ -85,9 +85,7 @@ describe('merge blocks + undo emits well-formed patches', () => {
     patches.length = 0
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual(initialValue)
-    })
+    expect(editor.getSnapshot().context.value).toEqual(initialValue)
 
     // Replaying the emitted undo patches on the post-merge value must not
     // throw and must reproduce the pre-merge state.

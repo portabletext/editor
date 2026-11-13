@@ -96,9 +96,7 @@ describe('event.select', () => {
       type: 'select',
       at: beforeFooSelection,
     })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(beforeFooSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(beforeFooSelection)
 
     await userEvent.keyboard('{ArrowRight}')
 
@@ -273,9 +271,7 @@ describe('event.select', () => {
       type: 'select',
       at: midBarSelection,
     })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(midBarSelection)
 
     await userEvent.keyboard('{ArrowUp}')
 
@@ -870,30 +866,28 @@ describe('event.select', () => {
       text: 'foo',
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
 
-      expect(selectEvents).toEqual([
-        {
-          type: 'select',
-          at: {
-            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
-          },
+    expect(selectEvents).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
         },
-      ])
+      },
+    ])
 
-      expect(selectionEvents).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
-            focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
-            backward: false,
-          },
+    expect(selectionEvents).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+          focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+          backward: false,
         },
-      ])
-    })
+      },
+    ])
   })
 
   test('Scenario: Selecting backward across blocks reports `backward: true`', async () => {
@@ -951,18 +945,16 @@ describe('event.select', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
-          offset: 9,
-        },
-        focus: {
-          path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
-          offset: 7,
-        },
-        backward: true,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockBKey}, 'children', {_key: spanBKey}],
+        offset: 9,
+      },
+      focus: {
+        path: [{_key: blockAKey}, 'children', {_key: spanAKey}],
+        offset: 7,
+      },
+      backward: true,
     })
   })
 
@@ -1019,9 +1011,7 @@ describe('event.select', () => {
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: caretSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(caretSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(caretSelection)
 
     // Option+Shift+ArrowDown only reaches this `move` on Apple platforms, so
     // the test calls it the way the editable's keydown handler does.
@@ -1116,9 +1106,7 @@ describe('event.select', () => {
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: caretSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(caretSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(caretSelection)
 
     // Option+Shift+ArrowUp only reaches this `move` on Apple platforms, so
     // the test calls it the way the editable's keydown handler does.
@@ -1213,9 +1201,7 @@ describe('event.select', () => {
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: expandedSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
 
     move(editorEngineRef.current!, {unit: 'line'})
 
@@ -1316,9 +1302,7 @@ describe('event.select', () => {
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: expandedSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
 
     await userEvent.keyboard('{Control>}{ArrowRight}{/Control}')
 
@@ -1412,9 +1396,7 @@ describe('event.select', () => {
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: expandedSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(expandedSelection)
 
     move(editorEngineRef.current!, {unit: 'line', reverse: true})
 
@@ -1507,9 +1489,7 @@ describe('event.select', () => {
     editor.send({type: 'focus'})
     editor.send({type: 'select', at: endSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(endSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(endSelection)
 
     editorEngineRef.current!.setSelection({
       anchor: endSelection.anchor,
@@ -1536,9 +1516,7 @@ describe('event.select', () => {
 
     editor.send({type: 'select', at: startSelection})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual(startSelection)
-    })
+    expect(editor.getSnapshot().context.selection).toEqual(startSelection)
 
     expect(selectEvents).toEqual([
       {
@@ -1612,12 +1590,10 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+      backward: false,
     })
 
     editor.send({
@@ -1632,26 +1608,24 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-            backward: false,
-          },
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+          backward: false,
         },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-            backward: false,
-          },
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+          backward: false,
         },
-      ])
-    })
+      },
+    ])
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
       focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
@@ -1711,12 +1685,10 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      backward: false,
     })
 
     editor.send({
@@ -1734,26 +1706,24 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
-            backward: false,
-          },
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+          backward: false,
         },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-            backward: false,
-          },
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+          backward: false,
         },
-      ])
-    })
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -1808,12 +1778,10 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-        focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+      focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+      backward: false,
     })
 
     editor.send({
@@ -1831,26 +1799,24 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
-            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
-            backward: false,
-          },
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 0},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 3},
+          backward: false,
         },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
-            focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
-            backward: false,
-          },
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 1},
+          focus: {path: [{_key: 'b1'}, 'children', {_key: 's1'}], offset: 2},
+          backward: false,
         },
-      ])
-    })
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -1886,12 +1852,10 @@ describe('event.select with a compact path at the root', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
-        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+      focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 1},
+      backward: false,
     })
 
     const editorEngine = editorEngineRef.current!
@@ -1992,30 +1956,16 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 1,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 1,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 1,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -2051,62 +2001,60 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {
         path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
@@ -2196,30 +2144,16 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 0,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -2264,62 +2198,60 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 0,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 0,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -2398,30 +2330,16 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 0,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -2466,62 +2384,60 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 0,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 0,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -2581,30 +2497,16 @@ describe('event.select with a compact path inside a callout', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 1,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 1,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'c0'}, 'content', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      backward: false,
     })
 
     const editorEngine = editorEngineRef.current!
@@ -2725,34 +2627,32 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 1,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 1,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 1,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -2792,70 +2692,68 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {
         path: [
@@ -2975,34 +2873,32 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 0,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -3053,70 +2949,68 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 0,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 0,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -3209,34 +3103,32 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 0,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-          ],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b1'},
+          'children',
+          {_key: 's1'},
+        ],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -3287,70 +3179,68 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 0,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 0,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'c0'},
-                'content',
-                {_key: 'c1'},
-                'content',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'c0'},
+              'content',
+              {_key: 'c1'},
+              'content',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -3422,34 +3312,32 @@ describe('event.select with a compact path inside a callout inside a callout', (
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 1,
-        },
-        focus: {
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-          ],
-          offset: 1,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'c0'},
+          'content',
+          {_key: 'c1'},
+          'content',
+          {_key: 'b0'},
+          'children',
+          {_key: 's0'},
+        ],
+        offset: 1,
+      },
+      backward: false,
     })
 
     const editorEngine = editorEngineRef.current!
@@ -3560,18 +3448,16 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
-          offset: 1,
-        },
-        focus: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
-          offset: 1,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 1,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -3595,62 +3481,60 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            focus: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(editor.getSnapshot().context.selection).toEqual({
       anchor: {
         path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
@@ -3728,18 +3612,16 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -3766,62 +3648,60 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 0,
-            },
-            focus: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 0,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -3888,18 +3768,16 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
-          offset: 3,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 0,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b1'}, 'children', {_key: 's1'}],
+        offset: 3,
+      },
+      backward: false,
     })
 
     editor.send({
@@ -3926,62 +3804,60 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(events).toEqual([
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 0,
-            },
-            focus: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 3,
-            },
-            backward: false,
+    expect(events).toEqual([
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 0,
           },
-        },
-        {
-          type: 'selection',
-          selection: {
-            anchor: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 1,
-            },
-            focus: {
-              path: [
-                {_key: 'n0'},
-                'body',
-                {_key: 'b1'},
-                'children',
-                {_key: 's1'},
-              ],
-              offset: 2,
-            },
-            backward: false,
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 3,
           },
+          backward: false,
         },
-      ])
-    })
+      },
+      {
+        type: 'selection',
+        selection: {
+          anchor: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 1,
+          },
+          focus: {
+            path: [
+              {_key: 'n0'},
+              'body',
+              {_key: 'b1'},
+              'children',
+              {_key: 's1'},
+            ],
+            offset: 2,
+          },
+          backward: false,
+        },
+      },
+    ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
   })
@@ -4029,18 +3905,16 @@ describe('event.select with a compact path inside a field with its own sub-schem
       },
     })
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
-          offset: 1,
-        },
-        focus: {
-          path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
-          offset: 1,
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: 'n0'}, 'body', {_key: 'b0'}, 'children', {_key: 's0'}],
+        offset: 1,
+      },
+      backward: false,
     })
 
     const editorEngine = editorEngineRef.current!

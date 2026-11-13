@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 import {getSelectionText} from '../test-utils/selection-text'
@@ -158,18 +158,16 @@ describe('event.split', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          offset: 0,
-          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
-        },
-        focus: {
-          offset: 0,
-          path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        offset: 0,
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+      },
+      focus: {
+        offset: 0,
+        path: [{_key: blockKey}, 'children', {_key: stockTickerKey}],
+      },
+      backward: false,
     })
 
     editor.send({type: 'split'})
@@ -220,19 +218,13 @@ describe('event.split', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      return expect(getSelectionText(editor.getSnapshot().context)).toEqual([
-        '{image}',
-      ])
-    })
+    expect(getSelectionText(editor.getSnapshot().context)).toEqual(['{image}'])
 
     editor.send({type: 'split'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        '^{IMAGE}|\nB: bar',
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      '^{IMAGE}|\nB: bar',
+    )
   })
 
   test('Scenario: Splitting with an expanded selection starting on a block object', async () => {
@@ -280,27 +272,23 @@ describe('event.split', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          offset: 0,
-          path: [{_key: imageKey}],
-        },
-        focus: {
-          offset: 1,
-          path: [{_key: blockKey}, 'children', {_key: barKey}],
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        offset: 0,
+        path: [{_key: imageKey}],
+      },
+      focus: {
+        offset: 1,
+        path: [{_key: blockKey}, 'children', {_key: barKey}],
+      },
+      backward: false,
     })
 
     editor.send({type: 'split'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', 'B: |ar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: |ar'].join('\n'),
+    )
 
     await userEvent.type(locator, 'baz')
 
@@ -310,19 +298,15 @@ describe('event.split', () => {
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', 'B: |ar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', 'B: |ar'].join('\n'),
+    )
 
     editor.send({type: 'history.undo'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: foo', '^{IMAGE}', 'B: b|ar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: foo', '^{IMAGE}', 'B: b|ar'].join('\n'),
+    )
   })
 
   test('Scenario: Splitting with an expanded selection ending on a block object', async () => {
@@ -370,27 +354,23 @@ describe('event.split', () => {
       },
     })
 
-    await vi.waitFor(() => {
-      return expect(editor.getSnapshot().context.selection).toEqual({
-        anchor: {
-          offset: 1,
-          path: [{_key: blockKey}, 'children', {_key: fooKey}],
-        },
-        focus: {
-          offset: 0,
-          path: [{_key: imageKey}],
-        },
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        offset: 1,
+        path: [{_key: blockKey}, 'children', {_key: fooKey}],
+      },
+      focus: {
+        offset: 0,
+        path: [{_key: imageKey}],
+      },
+      backward: false,
     })
 
     editor.send({type: 'split'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: f|', 'B: bar'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: f|', 'B: bar'].join('\n'),
+    )
 
     await userEvent.type(locator, 'baz')
 
@@ -445,10 +425,8 @@ describe('event.split', () => {
 
     editor.send({type: 'split'})
 
-    await vi.waitFor(() => {
-      return expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: fo', 'B: [strong:|ar]'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: fo', 'B: [strong:|ar]'].join('\n'),
+    )
   })
 })

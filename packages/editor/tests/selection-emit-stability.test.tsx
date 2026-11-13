@@ -40,20 +40,16 @@ describe('selection emit stability', () => {
 
     editor.send({type: 'select', at: caretAt4})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        ...caretAt4,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...caretAt4,
+      backward: false,
     })
 
     onSelection.mockClear()
 
     editor.send({type: 'decorator.add', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
-    })
+    expect(getActiveDecorators(editor.getSnapshot())).toEqual(['strong'])
 
     expect(onSelection).toHaveBeenCalledTimes(1)
   })
@@ -92,22 +88,18 @@ describe('selection emit stability', () => {
 
     editor.send({type: 'select', at: wholeSpan})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        ...wholeSpan,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...wholeSpan,
+      backward: false,
     })
 
     onSelection.mockClear()
 
     editor.send({type: 'decorator.add', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {...block, children: [{...foo, marks: ['strong']}]},
-      ])
-    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {...block, children: [{...foo, marks: ['strong']}]},
+    ])
 
     expect(onSelection).toHaveBeenCalledTimes(1)
   })
@@ -146,11 +138,9 @@ describe('selection emit stability', () => {
 
     editor.send({type: 'select', at: caretAt3})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        ...caretAt3,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...caretAt3,
+      backward: false,
     })
 
     onSelection.mockClear()
@@ -176,11 +166,9 @@ describe('selection emit stability', () => {
 
     editor.send({type: 'select', at: caretAt5})
 
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection).toEqual({
-        ...caretAt5,
-        backward: false,
-      })
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...caretAt5,
+      backward: false,
     })
 
     expect(onSelection).toHaveBeenCalledTimes(1)

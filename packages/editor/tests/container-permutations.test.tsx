@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -264,15 +264,13 @@ describe('container archetype permutations', () => {
       annotation: {name: 'link', value: {href: 'https://example.com'}},
     })
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        [
-          'B: [@link href="https://example.com":^foo]',
-          'CODE-BLOCK:',
-          '  B: bar|',
-        ].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'B: [@link href="https://example.com":^foo]',
+        'CODE-BLOCK:',
+        '  B: bar|',
+      ].join('\n'),
+    )
   })
 
   // ============================================================
@@ -337,11 +335,9 @@ describe('container archetype permutations', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B: [strong:^foo]', 'FACT-BOX:', '  B: [strong:bar|]'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B: [strong:^foo]', 'FACT-BOX:', '  B: [strong:bar|]'].join('\n'),
+    )
   })
 
   test('Scenario: Toggling a numbered list across root and a fact-box applies to both', async () => {
@@ -402,15 +398,13 @@ describe('container archetype permutations', () => {
 
     editor.send({type: 'list item.toggle', listItem: 'number'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        [
-          'B listItem="number": ^foo',
-          'FACT-BOX:',
-          '  B listItem="number": bar|',
-        ].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'B listItem="number": ^foo',
+        'FACT-BOX:',
+        '  B listItem="number": bar|',
+      ].join('\n'),
+    )
   })
 
   // ============================================================
@@ -475,15 +469,13 @@ describe('container archetype permutations', () => {
 
     editor.send({type: 'list item.toggle', listItem: 'bullet'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        [
-          'B listItem="bullet": ^foo',
-          'CALLOUT:',
-          '  B listItem="bullet": bar|',
-        ].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'B listItem="bullet": ^foo',
+        'CALLOUT:',
+        '  B listItem="bullet": bar|',
+      ].join('\n'),
+    )
   })
 
   test('Scenario: Toggling a numbered list across root and a callout only applies at root because number is out of scope in the callout', async () => {
@@ -544,11 +536,9 @@ describe('container archetype permutations', () => {
 
     editor.send({type: 'list item.toggle', listItem: 'number'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        ['B listItem="number": ^foo', 'CALLOUT:', '  B: bar|'].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      ['B listItem="number": ^foo', 'CALLOUT:', '  B: bar|'].join('\n'),
+    )
   })
 
   // ============================================================
@@ -660,20 +650,18 @@ describe('container archetype permutations', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'strong'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        [
-          'B: [strong:^foo]',
-          'TABLE:',
-          '  ROW:',
-          '    CELL:',
-          '      B: [strong:cell]',
-          '      CALLOUT:',
-          '        B: [strong:callout]',
-          'B: [strong:tail|]',
-        ].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'B: [strong:^foo]',
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      B: [strong:cell]',
+        '      CALLOUT:',
+        '        B: [strong:callout]',
+        'B: [strong:tail|]',
+      ].join('\n'),
+    )
   })
 
   test('Scenario: Toggling em across root, a table cell and a nested callout applies to root and the cell but not the nested callout', async () => {
@@ -781,19 +769,17 @@ describe('container archetype permutations', () => {
 
     editor.send({type: 'decorator.toggle', decorator: 'em'})
 
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual(
-        [
-          'B: [em:^foo]',
-          'TABLE:',
-          '  ROW:',
-          '    CELL:',
-          '      B: [em:cell]',
-          '      CALLOUT:',
-          '        B: callout',
-          'B: [em:tail|]',
-        ].join('\n'),
-      )
-    })
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      [
+        'B: [em:^foo]',
+        'TABLE:',
+        '  ROW:',
+        '    CELL:',
+        '      B: [em:cell]',
+        '      CALLOUT:',
+        '        B: callout',
+        'B: [em:tail|]',
+      ].join('\n'),
+    )
   })
 })
