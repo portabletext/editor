@@ -115,6 +115,69 @@ describeOnLinux('host-sampler.sh and host-capture.sh', () => {
     }
   }, 60_000)
 
+  test('Scenario: A kernel stack read that ignores SIGTERM does not stop the sampler', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-freeze-'))
+    const hostLog = join(directory, 'host.log')
+    writeFileSync(
+      join(directory, 'sudo'),
+      "#!/bin/sh\ntrap '' TERM\nwhile true; do sleep 0.1; done\n",
+      {mode: 0o755},
+    )
+    const fakeEmulator = spawn('sleep', ['139'], {stdio: 'ignore'})
+    const samplerProcess = spawn(
+      'bash',
+      ['-e', '-o', 'pipefail', sampler, hostLog],
+      {
+        env: {
+          ...process.env,
+          PATH: `${directory}:${process.env.PATH}`,
+          HOST_SAMPLER_PATTERN: '^sleep 139$',
+          HOST_SAMPLER_INTERVAL: '0.2',
+        },
+        stdio: 'ignore',
+      },
+    )
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(hostLog, 'utf8')).toContain(
+            `qemu pid=${fakeEmulator.pid} `,
+          )
+        },
+        {timeout: 10_000},
+      )
+      const stoppedAt = Math.floor(Date.now() / 1000)
+      fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(
+            existsSync(
+              join(directory, `host-freeze-${fakeEmulator.pid}-1.txt`),
+            ),
+          ).toEqual(true)
+        },
+        {timeout: 10_000},
+      )
+      await vi.waitFor(
+        () => {
+          const lastSample = Number(
+            readFileSync(hostLog, 'utf8')
+              .trim()
+              .split('\n')
+              .at(-1)
+              ?.split(' ')[0],
+          )
+          expect(lastSample - stoppedAt >= 6).toEqual(true)
+        },
+        {timeout: 15_000},
+      )
+    } finally {
+      fakeEmulator.kill('SIGKILL')
+      samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    }
+  }, 40_000)
+
   test('Scenario: The emulator process is killed and the capture stops the sampler', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
     const crashDirectory = join(directory, 'crash')
