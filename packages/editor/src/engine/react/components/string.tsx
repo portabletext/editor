@@ -128,7 +128,12 @@ const TextString = (props: {
   const ref = useRef<HTMLSpanElement>(null)
   const [, redraw] = useReducer((version: number) => version + 1, 0)
   const ancestors = useRef<
-    Array<{node: HTMLElement; parent: HTMLElement; next: ChildNode | null}>
+    Array<{
+      node: HTMLElement
+      parent: HTMLElement
+      next: ChildNode | null
+      siblings: Array<ChildNode>
+    }>
   >([])
 
   useIsomorphicLayoutEffect(() => {
@@ -136,11 +141,19 @@ const TextString = (props: {
       return
     }
     return subscribeToAndroidLeafRedraw(editor, path, () => {
-      // Chrome can remove the entire span chain when cancelling an empty composition.
-      for (const {node, parent, next} of ancestors.current.toReversed()) {
+      // Chrome can replace the span chain with bare text or a `BR` during composition.
+      for (const {
+        node,
+        parent,
+        next,
+        siblings,
+      } of ancestors.current.toReversed()) {
         if (!node.isConnected && parent.isConnected) {
           for (const child of Array.from(parent.childNodes)) {
-            if (child.nodeName === 'BR') {
+            if (
+              !siblings.includes(child) &&
+              (child.nodeType === Node.TEXT_NODE || child.nodeName === 'BR')
+            ) {
               parent.removeChild(child)
             }
           }
@@ -174,7 +187,12 @@ const TextString = (props: {
       let node: HTMLElement | null = ref.current
       while (node?.parentElement && node !== editor.domElement) {
         const parent: HTMLElement = node.parentElement
-        chain.push({node, parent, next: node.nextSibling})
+        chain.push({
+          node,
+          parent,
+          next: node.nextSibling,
+          siblings: Array.from(parent.childNodes),
+        })
         if (parent.hasAttribute('contenteditable')) {
           break
         }
