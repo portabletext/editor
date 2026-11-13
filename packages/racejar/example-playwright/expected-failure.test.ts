@@ -1,0 +1,38 @@
+import {expect} from '@playwright/test'
+import {After, Before} from '../src/hooks'
+import {Feature} from '../src/playwright'
+import {Given} from '../src/step-definitions'
+
+const mode = process.env['RACEJAR_PROBE'] ?? 'broken'
+
+Feature({
+  fixtures: [],
+  featureText: `Feature: Expected failures
+${mode === 'skip' ? '@skip' : mode === 'only' || mode === 'only-before' ? '@only' : ''}
+Scenario: marked
+Given "foo"
+Scenario: ordinary
+Given "bar"`,
+  expectFail: (scenario) =>
+    scenario.name === (mode === 'stale' ? 'deleted' : 'marked'),
+  stepDefinitions: [
+    Given('{string}', (context: {value: string}, value: string) => {
+      context.value = value
+    }),
+  ],
+  hooks: [
+    Before<{value: string}>(() => {
+      if (mode === 'only-before') {
+        throw new Error('Before broke')
+      }
+    }),
+    After((context: {value: string}) => {
+      expect(context.value).toEqual(
+        (context.value === 'foo' && mode !== 'fixed') ||
+          mode === 'ordinary-broken'
+          ? 'baz'
+          : context.value,
+      )
+    }),
+  ],
+})
