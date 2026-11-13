@@ -58,19 +58,27 @@ describe('the workflow', () => {
     return {lang: row.lang as 'ja' | 'en', file: row.file as string}
   })
 
-  test('runs `ja.test.ts`, `en.test.ts`, `ja.enter.test.ts` and `en.enter.test.ts` in a job each, on a device prepared for the language the file is named after', () => {
+  test('runs each matrix file on a device prepared for its language', () => {
     expect(rows).toEqual([
-      {lang: 'ja', file: 'tests/ja.test.ts'},
-      {lang: 'en', file: 'tests/en.test.ts'},
-      {lang: 'ja', file: 'tests/ja.enter.test.ts'},
-      {lang: 'en', file: 'tests/en.enter.test.ts'},
+      {lang: 'en', file: 'tests/diag.en.test.ts'},
+      {lang: 'en', file: 'tests/matrix.en.test.ts'},
+      {lang: 'en', file: 'tests/matrix.en.2.test.ts'},
+      {lang: 'en', file: 'tests/testime.en.test.ts'},
     ])
   })
 
-  test('leaves out only the hand-run `textarea` control', () => {
+  test('leaves the original suites available for hand runs', () => {
     expect(
       deviceFiles.filter((file) => !rows.some((row) => row.file === file)),
-    ).toEqual(['tests/en-textarea.test.ts'])
+    ).toEqual([
+      'tests/en-textarea.test.ts',
+      'tests/en.enter.test.ts',
+      'tests/en.test.ts',
+      'tests/ja.enter.test.ts',
+      'tests/ja.test.ts',
+      'tests/matrix.ja.2.test.ts',
+      'tests/matrix.ja.test.ts',
+    ])
   })
 
   test('gives the job a cap no lower than every step cap added up, so a hang in every step still leaves the steps that report', () => {
