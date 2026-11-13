@@ -63,6 +63,12 @@ jobs:
           - {lang: en, file: tests/matrix.en.test.ts}
           - {lang: en, file: tests/matrix.en.2.test.ts}
           - {lang: en, file: tests/testime.en.test.ts}
+          - {lang: ja, file: tests/matrix.ja.test.ts}
+          - {lang: ja, file: tests/matrix.ja.2.test.ts}
+          - {lang: ja, file: tests/ja.test.ts}
+          - {lang: ja, file: tests/ja.enter.test.ts}
+          - {lang: en, file: tests/en.test.ts}
+          - {lang: en, file: tests/en.enter.test.ts}
         api: [36]
 
     steps:
