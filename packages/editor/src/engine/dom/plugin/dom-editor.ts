@@ -14,7 +14,6 @@ import type {Range} from '../../interfaces/range'
 import type {RangeRef} from '../../interfaces/range-ref'
 import {isBackwardRange} from '../../range/is-backward-range'
 import {isCollapsedRange} from '../../range/is-collapsed-range'
-import type {TextDiff} from '../utils/diff-text'
 import {
   closestShadowAware,
   containsShadowAware,
@@ -34,8 +33,6 @@ import {
   type DOMStaticRange,
 } from '../utils/dom'
 import {IS_ANDROID, IS_CHROME, IS_FIREFOX} from '../utils/environment'
-
-export type Action = {at?: Point | Range; run: () => void}
 
 /**
  * A DOM-specific version of the `Editor` interface.
@@ -64,9 +61,6 @@ export interface DOMEditor extends BaseEditor {
   composing: boolean
   userSelection: RangeRef | null
   onContextChange: ((options?: {operation?: EngineOperation}) => void) | null
-  pendingDiffs: TextDiff[]
-  pendingAction: Action | null
-  pendingSelection: Range | null
   forceRender: (() => void) | null
 }
 
