@@ -226,6 +226,54 @@ describeOnLinux('host-sampler.sh and host-capture.sh', () => {
     }
   }, 40_000)
 
+  test('Scenario: A stack read that hangs after sudo answers leaves no sample gap above four seconds', async () => {
+    const fixture = startFreezeSampler('hanging-stack')
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(fixture.hostLog, 'utf8')).toContain(
+            `qemu pid=${fixture.fakeEmulator.pid} `,
+          )
+          expect(
+            readdirSync(`/proc/${fixture.fakeEmulator.pid}/task`).length >= 4,
+          ).toEqual(true)
+        },
+        {timeout: 10_000},
+      )
+      fixture.fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(existsSync(fixture.firstCapture)).toEqual(true)
+        },
+        {timeout: 10_000},
+      )
+      const captureSample = readFileSync(fixture.hostLog, 'utf8')
+        .trim()
+        .split('\n')
+        .at(-1)!
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(fixture.hostLog, 'utf8').trim().split('\n').at(-1) ===
+              captureSample,
+          ).toEqual(false)
+        },
+        {timeout: 25_000},
+      )
+      const samples = readFileSync(fixture.hostLog, 'utf8')
+        .trim()
+        .split('\n')
+        .map((line) => Number(line.split(' ')[0]))
+      expect(
+        Math.max(
+          ...samples.slice(1).map((sample, index) => sample - samples[index]!),
+        ) <= 4,
+      ).toEqual(true)
+    } finally {
+      fixture.cleanup()
+    }
+  }, 40_000)
+
   test('Scenario: A recovered freeze cannot use a later single stopped sample for capture two', async () => {
     const fixture = startFreezeSampler('unavailable')
     try {
@@ -588,16 +636,20 @@ function isAlive(pid: number) {
   }
 }
 
-function startFreezeSampler(sudo: 'hanging' | 'unavailable' | 'available') {
+function startFreezeSampler(
+  sudo: 'hanging' | 'hanging-stack' | 'unavailable' | 'available',
+) {
   const directory = mkdtempSync(join(tmpdir(), 'host-freeze-regression-'))
   const hostLog = join(directory, 'host.log')
   writeFileSync(
     join(directory, 'sudo'),
     sudo === 'hanging'
       ? "#!/bin/sh\ntrap '' TERM\nwhile true; do sleep 0.1; done\n"
-      : sudo === 'available'
-        ? '#!/bin/sh\nshift\nif [ "$1" = true ]; then exit 0; fi\nshift\nprintf "stack %s\\n" "$1"\n'
-        : '#!/bin/sh\nexit 1\n',
+      : sudo === 'hanging-stack'
+        ? '#!/bin/sh\nif [ "$2" = true ]; then exit 0; fi\ntrap \'\' TERM\nwhile true; do sleep 0.1; done\n'
+        : sudo === 'available'
+          ? '#!/bin/sh\nshift\nif [ "$1" = true ]; then exit 0; fi\nshift\nprintf "stack %s\\n" "$1"\n'
+          : '#!/bin/sh\nexit 1\n',
     {mode: 0o755},
   )
   const emulatorScript = join(directory, 'emulator.cjs')

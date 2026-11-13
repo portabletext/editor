@@ -36,8 +36,15 @@ capture_threads() {
     task_comm="$(cat "$task/comm" 2> /dev/null)"
     task_wchan="$(cat "$task/wchan" 2> /dev/null)"
     printf 'tid=%s comm=%s state=%s wchan=%s\n' "${task##*/}" "${task_comm:-unknown}" "${task_state:-unknown}" "${task_wchan:-unknown}"
-    if [ "$stack_available" = true ] && task_stack="$(timeout --kill-after=1 1 sudo -n cat "$task/stack" 2> /dev/null)"; then
-      printf '%s\n' "$task_stack"
+    if [ "$stack_available" = true ]; then
+      stack_status=0
+      task_stack="$(timeout --kill-after=1 1 sudo -n cat "$task/stack" 2> /dev/null)" || stack_status=$?
+      if [ "$stack_status" -eq 0 ]; then
+        printf '%s\n' "$task_stack"
+      elif [ "$stack_status" -eq 124 ] || [ "$stack_status" -eq 137 ]; then
+        # A read that timed out would cost every later thread the same wait, so the rest of the capture has no stacks.
+        stack_available=false
+      fi
     fi
   done
 }
