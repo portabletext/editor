@@ -354,7 +354,6 @@ test('Scenario: undo after a remote removal reverts only the local edit', async 
         origin: 'remote',
       },
     ],
-    snapshot: undefined,
   })
   await vi.waitFor(() =>
     expect(editor.getSnapshot().context.value).toEqual([
