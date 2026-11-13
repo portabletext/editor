@@ -3,6 +3,115 @@ import {hostEvidence} from './emulator-runs.mjs'
 
 // 1762772400 is 11:00:00 UTC.
 describe(hostEvidence.name, () => {
+  test('Scenario: A sustained freeze precedes exit', () => {
+    expect(
+      hostEvidence(
+        [
+          '1762772397 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=S',
+          '1762772398 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772399 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772402 812000 0 1.50 qemu=none',
+          'QEMU_GONE pid=4242 at 1762772402',
+        ].join('\n'),
+        '',
+        '',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:02 UTC, mid-run, emulator froze at 10:59:58 UTC',
+    ])
+  })
+
+  test('Scenario: A stopped emulator precedes exit', () => {
+    expect(
+      hostEvidence(
+        [
+          '1762772397 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=T',
+          '1762772398 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=T',
+          '1762772402 812000 0 1.50 qemu=none',
+          'QEMU_GONE pid=4242 at 1762772402',
+        ].join('\n'),
+        '',
+        '',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:02 UTC, mid-run, emulator froze at 10:59:57 UTC',
+    ])
+  })
+
+  test('Scenario: One abnormal sample precedes exit', () => {
+    expect(
+      hostEvidence(
+        [
+          '1762772397 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=S',
+          '1762772398 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772402 812000 0 1.50 qemu=none',
+          'QEMU_GONE pid=4242 at 1762772402',
+        ].join('\n'),
+        '',
+        '',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:02 UTC, mid-run',
+    ])
+  })
+
+  test('Scenario: The emulator recovers before exit', () => {
+    expect(
+      hostEvidence(
+        [
+          '1762772397 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772398 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772399 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=R',
+          '1762772402 812000 0 1.50 qemu=none',
+          'QEMU_GONE pid=4242 at 1762772402',
+        ].join('\n'),
+        '',
+        '',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:02 UTC, mid-run',
+    ])
+  })
+
+  test('Scenario: A recovered freeze is followed by a new freeze', () => {
+    expect(
+      hostEvidence(
+        [
+          '1762772397 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772398 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772399 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=S',
+          '1762772400 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=T',
+          '1762772401 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=T',
+          '1762772402 812000 0 1.50 qemu=none',
+          'QEMU_GONE pid=4242 at 1762772402',
+        ].join('\n'),
+        '',
+        '',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:02 UTC, mid-run, emulator froze at 11:00:00 UTC',
+    ])
+  })
+
+  test('Scenario: A retry cannot inherit the previous emulator freeze', () => {
+    expect(
+      hostEvidence(
+        [
+          '1762772397 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          '1762772398 812000 0 1.50 qemu pid=4242 rss_kb=4100000 state=I',
+          'QEMU_GONE pid=4242 at 1762772400',
+          '1762772401 812000 0 1.50 qemu pid=5151 rss_kb=4100000 state=S',
+          'QEMU_GONE pid=5151 at 1762772402',
+        ].join('\n'),
+        '',
+        '',
+      ),
+    ).toEqual([
+      'host evidence: emulator process 4242 exited at 11:00:00 UTC, mid-run, emulator froze at 10:59:57 UTC',
+      'host evidence: emulator process 5151 exited at 11:00:02 UTC, mid-run',
+    ])
+  })
+
   test('Scenario: The emulator exits mid-run and the kernel log names an out of memory kill', () => {
     expect(
       hostEvidence(
