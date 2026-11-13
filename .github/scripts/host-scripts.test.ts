@@ -20,6 +20,101 @@ const capture = fileURLToPath(new URL('host-capture.sh', import.meta.url))
 const describeOnLinux = describe.runIf(process.platform === 'linux')
 
 describeOnLinux('host-sampler.sh and host-capture.sh', () => {
+  test('Scenario: A stopped emulator produces two per-thread captures at least 30 seconds apart', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-freeze-'))
+    const hostLog = join(directory, 'host.log')
+    writeFileSync(
+      join(directory, 'sudo'),
+      '#!/bin/sh\nprintf unavailable >&2\nexit 1\n',
+      {mode: 0o755},
+    )
+    const fakeEmulator = spawn('sleep', ['137'], {stdio: 'ignore'})
+    const samplerProcess = spawn(
+      'bash',
+      ['-e', '-o', 'pipefail', sampler, hostLog],
+      {
+        env: {
+          ...process.env,
+          PATH: `${directory}:${process.env.PATH}`,
+          HOST_SAMPLER_PATTERN: '^sleep 137$',
+          HOST_SAMPLER_INTERVAL: '0.2',
+        },
+        stdio: 'ignore',
+      },
+    )
+    try {
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(hostLog, 'utf8')).toContain(
+            `qemu pid=${fakeEmulator.pid} `,
+          )
+        },
+        {timeout: 10_000},
+      )
+      fakeEmulator.kill('SIGSTOP')
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(
+              join(directory, `host-freeze-${fakeEmulator.pid}-1.txt`),
+              'utf8',
+            ),
+          ).toEqual(
+            expect.stringMatching(
+              new RegExp(
+                `^tid=${fakeEmulator.pid} comm=sleep state=T wchan=\\S+\\n$`,
+              ),
+            ),
+          )
+        },
+        {timeout: 10_000},
+      )
+      const firstCapture = Number(
+        readFileSync(hostLog, 'utf8').trim().split('\n').at(-1)?.split(' ')[0],
+      )
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(
+              join(directory, `host-freeze-${fakeEmulator.pid}-2.txt`),
+              'utf8',
+            ),
+          ).toEqual(
+            expect.stringMatching(
+              new RegExp(
+                `^tid=${fakeEmulator.pid} comm=sleep state=T wchan=\\S+\\n$`,
+              ),
+            ),
+          )
+        },
+        {timeout: 40_000},
+      )
+      const secondCapture = Number(
+        readFileSync(hostLog, 'utf8').trim().split('\n').at(-1)?.split(' ')[0],
+      )
+      expect(secondCapture - firstCapture >= 30).toEqual(true)
+      fakeEmulator.kill('SIGKILL')
+      await vi.waitFor(
+        () => {
+          expect(readFileSync(hostLog, 'utf8')).toContain('QEMU_GONE')
+        },
+        {timeout: 10_000},
+      )
+      expect(
+        readdirSync(directory)
+          .filter((name) => name.startsWith('host-freeze-'))
+          .sort(),
+      ).toEqual([
+        `host-freeze-${fakeEmulator.pid}-1.txt`,
+        `host-freeze-${fakeEmulator.pid}-2.txt`,
+      ])
+    } finally {
+      fakeEmulator.kill('SIGKILL')
+      samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    }
+  }, 60_000)
+
   test('Scenario: The emulator process is killed and the capture stops the sampler', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'host-scripts-'))
     const crashDirectory = join(directory, 'crash')
