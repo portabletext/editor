@@ -78,7 +78,11 @@ import {useEngine} from '../hooks/use-engine'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
 import {ReadOnlyContext} from '../hooks/use-read-only'
 import {useTrackUserInput} from '../hooks/use-track-user-input'
-import {androidComposition} from '../utils/android-composition'
+import {
+  androidComposition,
+  redrawAndroidComposition,
+  trackAndroidCompositionSelection,
+} from '../utils/android-composition'
 import {attachRef} from '../utils/attach-ref'
 import {debounce, throttle} from '../utils/debounce'
 import getDirection from '../utils/direction'
@@ -188,10 +192,6 @@ export const Editable = forwardRef(
 
     const [, forceRender] = useReducer((s) => s + 1, 0)
     editor.forceRender = forceRender
-    const [contentGeneration, redrawContent] = useReducer(
-      (generation) => generation + 1,
-      0,
-    )
 
     // Update internal state on each render.
     editor.readOnly = readOnly
@@ -223,8 +223,7 @@ export const Editable = forwardRef(
                 isAncestorPath(operation.path, path),
             )
           ) {
-            androidComposition.delete(editor)
-            editor.composing = false
+            redrawAndroidComposition(editor)
             editor.domElement?.blur()
             editor.domElement?.focus()
           }
@@ -621,6 +620,10 @@ export const Editable = forwardRef(
           const isCompositionChange =
             type === 'insertCompositionText' || type === 'deleteCompositionText'
 
+          if (IS_ANDROID && editor.isNodeMapDirty && !isCompositionChange) {
+            return
+          }
+
           // COMPAT: use composition change events as a hint to where we should
           // insert composition text if we aren't composing.
           if (!IS_ANDROID && isCompositionChange && editor.composing) {
@@ -706,7 +709,7 @@ export const Editable = forwardRef(
             (IS_ANDROID ||
               !type.startsWith('delete') ||
               type.startsWith('deleteBy')) &&
-            (IS_ANDROID || !editor.isNodeMapDirty)
+            !editor.isNodeMapDirty
           ) {
             const [targetRange] = (event as any).getTargetRanges()
 
@@ -770,26 +773,25 @@ export const Editable = forwardRef(
             androidComposition.set(editor, composition)
             editor.composing = true
             if (targetRange) {
-              composition.paths = selection
-                ? [selection.anchor.path, selection.focus.path]
-                : []
-              composition.elements = [
-                targetRange.startContainer,
-                targetRange.endContainer,
-              ]
-                .map((node) =>
-                  node instanceof Element ? node : node.parentElement,
-                )
-                .map((element) =>
-                  element?.closest<HTMLElement>(
-                    '[data-pt-text], [data-pt-zero-width]',
+              composition.elements.push(
+                ...[targetRange.startContainer, targetRange.endContainer]
+                  .map((node) =>
+                    node instanceof Element ? node : node.parentElement,
+                  )
+                  .map((element) =>
+                    element?.closest<HTMLElement>(
+                      '[data-pt-text], [data-pt-zero-width]',
+                    ),
+                  )
+                  .filter((element): element is HTMLElement =>
+                    Boolean(element),
                   ),
-                )
-                .filter((element): element is HTMLElement => Boolean(element))
-              composition.applying = true
+              )
             }
+            trackAndroidCompositionSelection(editor)
+            composition.applying = true
             try {
-              if (selection && isExpandedRange(selection)) {
+              if (!event.data && selection && isExpandedRange(selection)) {
                 editorActor.send({
                   type: 'behavior event',
                   behaviorEvent: {type: 'delete'},
@@ -804,6 +806,7 @@ export const Editable = forwardRef(
                 })
               }
             } finally {
+              trackAndroidCompositionSelection(editor)
               composition.applying = false
             }
             return
@@ -1400,18 +1403,10 @@ export const Editable = forwardRef(
                   if (DOMEditor.hasSelectableTarget(editor, event.target)) {
                     if (editor.composing || IS_ANDROID) {
                       Promise.resolve().then(() => {
-                        editor.composing = false
-                        const composition = androidComposition.get(editor)
-                        androidComposition.delete(editor)
-                        if (
-                          composition?.elements.some(
-                            (element) => !element.isConnected,
-                          )
-                        ) {
-                          // Chrome can discard all span wrappers when cancelling an empty composition.
-                          redrawContent()
-                        } else if (IS_ANDROID) {
-                          editor.forceRender?.()
+                        if (IS_ANDROID) {
+                          redrawAndroidComposition(editor)
+                        } else {
+                          editor.composing = false
                         }
                       })
                     }
@@ -1545,8 +1540,11 @@ export const Editable = forwardRef(
                     // so we sometimes might end up stuck in a composition state even though we
                     // aren't composing any more.
                     if (editor.composing && nativeEvent.isComposing === false) {
-                      androidComposition.delete(editor)
-                      editor.composing = false
+                      if (IS_ANDROID) {
+                        redrawAndroidComposition(editor)
+                      } else {
+                        editor.composing = false
+                      }
                     }
 
                     if (
@@ -1932,7 +1930,6 @@ export const Editable = forwardRef(
               )}
             >
               <Children
-                key={contentGeneration}
                 decorations={decorations}
                 node={editor}
                 path={[]}

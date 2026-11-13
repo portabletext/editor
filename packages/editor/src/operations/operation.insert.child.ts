@@ -94,11 +94,6 @@ export const insertChildOperationImplementation: OperationImplementation<
       }
     }
 
-    // This makes sure the selection is set correctly when event handling is run
-    // through the engine's Android input handling
-    operation.editor.pendingSelection =
-      operation.editor.snapshot.context.selection
-
     return
   }
 

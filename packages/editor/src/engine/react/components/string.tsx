@@ -5,7 +5,7 @@ import {
   type PortableTextSpan,
   type PortableTextTextBlock,
 } from '@portabletext/schema'
-import {forwardRef, memo, useRef, useState} from 'react'
+import {forwardRef, memo, useReducer, useRef, useState} from 'react'
 import {getNodes} from '../../../traversal/get-nodes'
 import {IS_ANDROID} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
@@ -16,7 +16,10 @@ import {parentPath as getParentPath} from '../../path/parent-path'
 import {pathEquals} from '../../path/path-equals'
 import {useEngineStatic} from '../hooks/use-engine-static'
 import {useIsomorphicLayoutEffect} from '../hooks/use-isomorphic-layout-effect'
-import {androidComposition} from '../utils/android-composition'
+import {
+  androidComposition,
+  subscribeToAndroidLeafRedraw,
+} from '../utils/android-composition'
 
 /**
  * Leaf content strings.
@@ -83,7 +86,7 @@ const EngineString = (props: {
     // creates inside the empty line, and swapping the element on the first
     // flush takes that node away and restarts the composition.
     if (IS_ANDROID) {
-      return <TextString text="" isLineBreak />
+      return <TextString text="" isLineBreak path={path} />
     }
 
     return <ZeroWidthString isLineBreak />
@@ -99,16 +102,17 @@ const EngineString = (props: {
   // COMPAT: Browsers will collapse trailing new lines at the end of blocks,
   // so we need to add an extra trailing new lines to prevent that.
   if (isLast && leafText.slice(-1) === '\n') {
-    return <TextString isTrailing text={leafText} />
+    return <TextString isTrailing text={leafText} path={path} />
   }
 
-  return <TextString text={leafText} />
+  return <TextString text={leafText} path={path} />
 }
 
 /**
  * Leaf strings with text in them.
  */
 const TextString = (props: {
+  path: Path
   text: string
   isTrailing?: boolean
   isLineBreak?: boolean
@@ -119,9 +123,33 @@ const TextString = (props: {
   // text the browser wrote ahead of the model. Keep it uncompiled regardless
   // of which build (lib, tests, playground) sets the react-compiler boundary.
   'use no memo'
-  const {text, isTrailing = false, isLineBreak = false} = props
+  const {text, path, isTrailing = false, isLineBreak = false} = props
   const editor = useEngineStatic()
   const ref = useRef<HTMLSpanElement>(null)
+  const [, redraw] = useReducer((version: number) => version + 1, 0)
+  const ancestors = useRef<
+    Array<{node: HTMLElement; parent: HTMLElement; next: ChildNode | null}>
+  >([])
+
+  useIsomorphicLayoutEffect(() => {
+    if (!IS_ANDROID) {
+      return
+    }
+    return subscribeToAndroidLeafRedraw(editor, path, () => {
+      // Chrome can remove the entire span chain when cancelling an empty composition.
+      for (const {node, parent, next} of ancestors.current.toReversed()) {
+        if (!node.isConnected && parent.isConnected) {
+          for (const child of Array.from(parent.childNodes)) {
+            if (child.nodeName === 'BR') {
+              parent.removeChild(child)
+            }
+          }
+          parent.insertBefore(node, next?.parentNode === parent ? next : null)
+        }
+      }
+      redraw()
+    })
+  }, [editor, path])
   const getTextContent = () => {
     return `${text ?? ''}${isTrailing ? '\n' : ''}`
   }
@@ -140,6 +168,20 @@ const TextString = (props: {
   useIsomorphicLayoutEffect(() => {
     // null coalescing text to make sure we're not outputing "null" as a string in the extreme case it is nullish at runtime
     const textWithTrailing = getTextContent()
+
+    if (IS_ANDROID && ref.current?.isConnected) {
+      const chain = []
+      let node: HTMLElement | null = ref.current
+      while (node?.parentElement && node !== editor.domElement) {
+        const parent: HTMLElement = node.parentElement
+        chain.push({node, parent, next: node.nextSibling})
+        if (parent.hasAttribute('contenteditable')) {
+          break
+        }
+        node = parent
+      }
+      ancestors.current = chain
+    }
 
     if (IS_ANDROID && ref.current) {
       if (
