@@ -44,7 +44,9 @@ if [ "$file" = 'tests/testime.en.test.ts' ]; then
   }
   trap cleanup_test_ime EXIT
   adb install -r "${THUMBJAR_TEST_IME_APK:?test IME APK missing}" || fail "install test IME"
-  adb shell ime enable org.slatejs.testime/.TestIme || fail "enable test IME"
+  # The package manager registers a fresh install a moment after `adb install` returns.
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do adb shell ime enable org.slatejs.testime/.TestIme && break; sleep 1; done
+  adb shell ime list -s | grep -q org.slatejs.testime || fail "enable test IME"
   adb shell ime set org.slatejs.testime/.TestIme || fail "select test IME"
 fi
 
