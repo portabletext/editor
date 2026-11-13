@@ -6,12 +6,13 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 const sampler = fileURLToPath(new URL('host-sampler.sh', import.meta.url))
 const capture = fileURLToPath(new URL('host-capture.sh', import.meta.url))
@@ -19,7 +20,328 @@ const capture = fileURLToPath(new URL('host-capture.sh', import.meta.url))
 // The scripts run on the Linux CI runners and read /proc, which macOS and Windows don't have.
 const describeOnLinux = describe.runIf(process.platform === 'linux')
 
+let sudoDirectory: string
+let originalPath: string | undefined
+beforeEach(() => {
+  sudoDirectory = mkdtempSync(join(tmpdir(), 'host-sudo-'))
+  writeFileSync(join(sudoDirectory, 'sudo'), '#!/bin/sh\nexit 1\n', {
+    mode: 0o755,
+  })
+  originalPath = process.env.PATH
+  process.env.PATH = `${sudoDirectory}:${originalPath}`
+})
+afterEach(() => {
+  process.env.PATH = originalPath
+  rmSync(sudoDirectory, {recursive: true, force: true})
+})
+
 describeOnLinux('host-sampler.sh and host-capture.sh', () => {
+  test('Scenario: An outer timeout kills the debugger group and deletes every core', async () => {
+    const fixture = startCoreCapture(true)
+    try {
+      await vi.waitFor(() =>
+        expect(existsSync(join(fixture.directory, 'gdb.pid'))).toEqual(true),
+      )
+      const debuggerPid = Number(
+        readFileSync(join(fixture.directory, 'gdb.pid'), 'utf8'),
+      )
+      await vi.waitFor(
+        () => expect(fixture.captureProcess.exitCode).toEqual(124),
+        {timeout: 10_000},
+      )
+      expect({
+        cores: existsSync(fixture.coreDirectory)
+          ? readdirSync(fixture.coreDirectory)
+          : [],
+        debuggerAlive: isAlive(debuggerPid),
+        restored: readFileSync(join(fixture.directory, 'restored'), 'utf8'),
+      }).toEqual({cores: [], debuggerAlive: false, restored: 'foo\n'})
+      expect(
+        readFileSync(
+          join(fixture.directory, 'host-core-pattern-after.txt'),
+          'utf8',
+        ),
+      ).toEqual('foo\n')
+    } finally {
+      fixture.cleanup()
+    }
+  }, 15_000)
+
+  test('Scenario: TERM restores the pattern before a blocked debugger finishes', async () => {
+    const fixture = startCoreCapture(false)
+    try {
+      await vi.waitFor(() =>
+        expect(existsSync(join(fixture.directory, 'gdb.pid'))).toEqual(true),
+      )
+      fixture.captureProcess.kill('SIGTERM')
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(join(fixture.directory, 'restored'), 'utf8'),
+          ).toEqual('foo\n')
+          expect(
+            readFileSync(join(fixture.directory, 'cores-at-restore'), 'utf8'),
+          ).toEqual('')
+        },
+        {timeout: 3_000},
+      )
+    } finally {
+      fixture.cleanup()
+    }
+  }, 10_000)
+
+  test('Scenario: The sampler records the emulator executable and core limits', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-core-sampler-'))
+    const fakeEmulator = spawn('sleep', ['143'], {stdio: 'ignore'})
+    writeFileSync(join(directory, 'host-core-dir.txt'), directory)
+    writeFileSync(
+      join(directory, 'sudo'),
+      '#!/bin/bash\nprintf "%s\\n" "$*" > "$HOST_TEST_SUDO"\n',
+      {mode: 0o755},
+    )
+    const samplerProcess = spawn(
+      'bash',
+      [sampler, join(directory, 'host.log')],
+      {
+        env: {
+          ...process.env,
+          PATH: `${directory}:${process.env.PATH}`,
+          HOST_TEST_SUDO: join(directory, 'sudo-arguments'),
+          HOST_SAMPLER_PATTERN: '^sleep 143$',
+          HOST_SAMPLER_INTERVAL: '0.2',
+        },
+        stdio: 'ignore',
+      },
+    )
+    try {
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(
+              join(directory, `host-exe-${fakeEmulator.pid}.txt`),
+              'utf8',
+            ),
+          ).toEqual(
+            spawnSync('readlink', [`/proc/${fakeEmulator.pid}/exe`], {
+              encoding: 'utf8',
+            }).stdout,
+          )
+          expect(
+            readFileSync(
+              join(directory, `host-core-limits-${fakeEmulator.pid}.txt`),
+              'utf8',
+            ),
+          ).toEqual(
+            readFileSync(`/proc/${fakeEmulator.pid}/limits`, 'utf8') +
+              'coredump_filter=' +
+              readFileSync(`/proc/${fakeEmulator.pid}/coredump_filter`, 'utf8'),
+          )
+          expect(
+            readFileSync(join(directory, 'sudo-arguments'), 'utf8'),
+          ).toEqual(
+            `-n prlimit --pid ${fakeEmulator.pid} --core=unlimited:unlimited\n`,
+          )
+        },
+        {timeout: 5_000},
+      )
+    } finally {
+      fakeEmulator.kill('SIGKILL')
+      samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    }
+  }, 10_000)
+
+  test('Scenario: Core preparation chooses the disk with more room and preserves the original pattern', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-core-setup-'))
+    const coreDirectory = join(directory, 'cores')
+    const output = join(directory, 'out')
+    mkdirSync(join(directory, 'emulator'))
+    writeFileSync(
+      join(directory, 'emulator', 'source.properties'),
+      'Pkg.Revision = 37.2.13\n',
+    )
+    writeFileSync(
+      join(directory, 'emulator', 'emulator'),
+      '#!/bin/sh\nexit 42\n',
+      {mode: 0o755},
+    )
+    writeFileSync(
+      join(directory, 'cat'),
+      '#!/bin/bash\nif [ "$1" = /proc/sys/kernel/core_pattern ]; then printf "%s\\n" "|/usr/lib/systemd/systemd-coredump %P %s"; else /bin/cat "$@"; fi\n',
+      {mode: 0o755},
+    )
+    writeFileSync(
+      join(directory, 'df'),
+      '#!/bin/bash\necho "Filesystem 1024-blocks Used Available Capacity Mounted"\nif [ "$2" = /mnt ]; then echo "disk 1000 100 900 10% /mnt"; else echo "disk 1000 500 500 50% /"; fi\n',
+      {mode: 0o755},
+    )
+    writeFileSync(join(directory, 'gdb'), '#!/bin/bash\nexit 0\n', {
+      mode: 0o755,
+    })
+    writeFileSync(
+      join(directory, 'sudo'),
+      `#!/bin/bash
+[ "$1" = -n ] || exit 1
+shift
+case "$1" in
+  mktemp) printf '%s\\n' "$3" > "$HOST_TEST_SELECTED"; mkdir "$HOST_TEST_CORE"; echo "$HOST_TEST_CORE" ;;
+  chown) exit 0 ;;
+  tee) cat > "$HOST_TEST_PATTERN" ;;
+  *) exit 1 ;;
+esac
+`,
+      {mode: 0o755},
+    )
+    try {
+      const result = spawnSync(
+        'bash',
+        [
+          fileURLToPath(new URL('host-core.sh', import.meta.url)),
+          'prepare',
+          output,
+        ],
+        {
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: `${directory}:${process.env.PATH}`,
+            ANDROID_HOME: directory,
+            HOST_TEST_CORE: coreDirectory,
+            HOST_TEST_SELECTED: join(directory, 'selected'),
+            HOST_TEST_PATTERN: join(directory, 'pattern'),
+          },
+        },
+      )
+      expect(result.status).toEqual(0)
+      expect({
+        version: readFileSync(
+          join(output, 'host-emulator-version.txt'),
+          'utf8',
+        ),
+        selected: readFileSync(join(directory, 'selected'), 'utf8'),
+        pattern: readFileSync(join(directory, 'pattern'), 'utf8'),
+        original: readFileSync(join(output, 'host-core-pattern.txt'), 'utf8'),
+        directory: readFileSync(join(output, 'host-core-dir.txt'), 'utf8'),
+      }).toEqual({
+        version: 'Android emulator version 37.2.13\n',
+        selected: '/mnt/pte-core.XXXXXX\n',
+        pattern: `${coreDirectory}/core.%p.%s\n`,
+        original: '|/usr/lib/systemd/systemd-coredump %P %s\n',
+        directory: `${coreDirectory}\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('Scenario: A failed debugger install refreshes package lists once and reports missing stacks', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-core-install-'))
+    const output = join(directory, 'out')
+    for (const command of [
+      'bash',
+      'mkdir',
+      'df',
+      'awk',
+      'readlink',
+      'timeout',
+    ]) {
+      symlinkSync(`/usr/bin/${command}`, join(directory, command))
+    }
+    writeFileSync(
+      join(directory, 'cat'),
+      '#!/bin/bash\nif [ "$1" = /proc/sys/kernel/core_pattern ]; then printf "foo\\n"; else /bin/cat "$@"; fi\n',
+      {mode: 0o755},
+    )
+    writeFileSync(
+      join(directory, 'sudo'),
+      '#!/bin/bash\nif [ "$2" = env ] || [ "$2" = apt-get ]; then printf "%s\\n" "$*" >> "$HOST_TEST_INSTALL"; fi\nexit 1\n',
+      {mode: 0o755},
+    )
+    try {
+      const result = spawnSync(
+        'bash',
+        [
+          fileURLToPath(new URL('host-core.sh', import.meta.url)),
+          'prepare',
+          output,
+        ],
+        {
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: directory,
+            ANDROID_HOME: '',
+            HOST_TEST_INSTALL: join(directory, 'install'),
+          },
+        },
+      )
+      expect(result.status).toEqual(0)
+      expect(readFileSync(join(directory, 'install'), 'utf8')).toEqual(
+        '-n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gdb\n-n apt-get update\n-n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gdb\n',
+      )
+      expect(
+        readFileSync(join(output, 'host-core-setup.txt'), 'utf8'),
+      ).toContain('stacks unavailable: gdb could not be installed\n')
+      expect(existsSync(join(output, 'host-core.txt'))).toEqual(false)
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('Scenario: Core filenames supply the pid and signal and a debugger failure preserves the evidence', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-core-'))
+    const coreDirectory = join(directory, 'cores')
+    const binary = join(directory, 'qemu-system-x86_64')
+    mkdirSync(coreDirectory)
+    writeFileSync(join(directory, 'host-core-dir.txt'), coreDirectory)
+    writeFileSync(
+      join(directory, 'host-emulator-version.txt'),
+      'Android emulator version 37.2.13\n',
+    )
+    writeFileSync(join(directory, 'host-exe-4242.txt'), binary)
+    writeFileSync(join(coreDirectory, 'core.4242.11'), 'foo')
+    writeFileSync(join(coreDirectory, 'core.5151.6'), 'bar')
+    writeFileSync(join(coreDirectory, 'unrelated'), 'baz')
+    writeFileSync(
+      join(directory, 'du'),
+      '#!/bin/bash\nprintf "4096\\t%s\\n" "$2"\n',
+      {mode: 0o755},
+    )
+    writeFileSync(
+      join(directory, 'gdb'),
+      '#!/bin/bash\nprintf "%s\\n" "$@" > "$HOST_GDB_ARGUMENTS"\necho "warning: Can\'t open file /memfd:foo (deleted) during file-backed mapping note processing"\necho "warning: Can\'t open file anon_inode:kvm-vcpu during file-backed mapping note processing"\necho "warning: foo"\necho "#0  faulting_function ()"\nexit 42\n',
+      {mode: 0o755},
+    )
+    try {
+      const result = spawnSync(
+        'bash',
+        [
+          fileURLToPath(new URL('host-core.sh', import.meta.url)),
+          'capture',
+          directory,
+        ],
+        {
+          env: {
+            ...process.env,
+            PATH: `${directory}:${process.env.PATH}`,
+            HOST_GDB_ARGUMENTS: join(directory, 'arguments'),
+          },
+          encoding: 'utf8',
+        },
+      )
+      expect(result.status).toEqual(0)
+      expect(readFileSync(join(directory, 'host-core.txt'), 'utf8')).toEqual(
+        `HOST_CORE pid=4242 signal=SIGSEGV\ncore=${coreDirectory}/core.4242.11 size_bytes=3 disk_bytes=4096\nexecutable=${binary}\nAndroid emulator version 37.2.13\nwarning: foo\n#0  faulting_function ()\nHOST_CORE pid=5151 signal=SIGABRT\ncore=${coreDirectory}/core.5151.6 size_bytes=3 disk_bytes=4096\nexecutable=unavailable\nAndroid emulator version 37.2.13\nNo recorded emulator executable for pid 5151\n`,
+      )
+      expect(readFileSync(join(directory, 'arguments'), 'utf8')).toEqual(
+        `-nx\n--batch\n-ex\nset auto-load off\n-ex\nset debuginfod enabled off\n-ex\nset pagination off\n-ex\ninfo program\n-ex\ninfo threads\n-ex\nbt\n-ex\nthread apply all bt 5\n${binary}\n${coreDirectory}/core.4242.11\n`,
+      )
+      expect(readdirSync(coreDirectory).sort()).toEqual(['unrelated'])
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
   test('Scenario: A stopped emulator produces two per-thread captures at least 30 seconds apart', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'host-freeze-'))
     const hostLog = join(directory, 'host.log')
@@ -679,6 +1001,70 @@ function startFreezeSampler(
     cleanup() {
       fakeEmulator.kill('SIGKILL')
       samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    },
+  }
+}
+
+function startCoreCapture(outerTimeout: boolean) {
+  const directory = mkdtempSync(join(tmpdir(), 'host-core-term-'))
+  const coreDirectory = join(directory, 'cores')
+  mkdirSync(coreDirectory)
+  writeFileSync(join(directory, 'host-core-dir.txt'), coreDirectory)
+  writeFileSync(join(directory, 'host-core-pattern.txt'), 'foo\n')
+  writeFileSync(join(directory, 'host-exe-1234.txt'), '/bin/true')
+  writeFileSync(join(coreDirectory, 'core.1234.11'), 'bar')
+  writeFileSync(join(coreDirectory, 'core.other'), 'baz')
+  writeFileSync(
+    join(directory, 'cat'),
+    '#!/bin/bash\nif [ "$1" = /proc/sys/kernel/core_pattern ]; then /bin/cat "$HOST_TEST_RESTORED"; else /bin/cat "$@"; fi\n',
+    {mode: 0o755},
+  )
+  writeFileSync(
+    join(directory, 'sudo'),
+    '#!/bin/bash\n[ "$*" = "-n tee /proc/sys/kernel/core_pattern" ] || exit 1\nfind "$HOST_TEST_CORE_DIRECTORY" -name "core.*" -type f > "$HOST_TEST_CORES_AT_RESTORE.partial"\nmv "$HOST_TEST_CORES_AT_RESTORE.partial" "$HOST_TEST_CORES_AT_RESTORE"\ncat > "$HOST_TEST_RESTORED"\n',
+    {mode: 0o755},
+  )
+  writeFileSync(
+    join(directory, 'gdb'),
+    '#!/bin/bash\necho "$$" > "$HOST_TEST_GDB_PID"\nexec sleep 30\n',
+    {mode: 0o755},
+  )
+  const script = fileURLToPath(new URL('host-core.sh', import.meta.url))
+  const captureProcess = spawn(
+    outerTimeout ? 'timeout' : 'bash',
+    outerTimeout
+      ? ['--kill-after=5', '2', 'bash', script, 'capture', directory]
+      : [script, 'capture', directory],
+    {
+      env: {
+        ...process.env,
+        PATH: `${directory}:${process.env.PATH}`,
+        HOST_TEST_RESTORED: join(directory, 'restored'),
+        HOST_TEST_CORE_DIRECTORY: coreDirectory,
+        HOST_TEST_CORES_AT_RESTORE: join(directory, 'cores-at-restore'),
+        HOST_TEST_GDB_PID: join(directory, 'gdb.pid'),
+      },
+      stdio: 'ignore',
+      detached: true,
+    },
+  )
+  return {
+    directory,
+    coreDirectory,
+    captureProcess,
+    cleanup() {
+      if (existsSync(join(directory, 'gdb.pid'))) {
+        const debuggerPid = Number(
+          readFileSync(join(directory, 'gdb.pid'), 'utf8'),
+        )
+        try {
+          process.kill(debuggerPid, 'SIGKILL')
+        } catch {}
+      }
+      try {
+        process.kill(-captureProcess.pid!, 'SIGKILL')
+      } catch {}
       rmSync(directory, {recursive: true, force: true})
     },
   }
