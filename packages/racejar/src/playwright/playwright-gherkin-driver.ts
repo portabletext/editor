@@ -1,6 +1,6 @@
 import type {ParameterType} from '@cucumber/cucumber-expressions'
 import {test as baseTest, type TestType} from '@playwright/test'
-import {compileFeature} from '../compile-feature'
+import {compileFeature, type Scenario} from '../compile-feature'
 import type {Hook} from '../hooks'
 import type {StepDefinition} from '../step-definitions'
 
@@ -46,6 +46,7 @@ export function Feature<
   fixtures?: TNames &
     ReadonlyArray<Extract<keyof PlaywrightFixtures<TTest>, string>>
   featureText: string
+  expectFail?: (scenario: Scenario) => boolean
   hooks?: Array<
     Hook<NoInfer<FeatureContext<TContext, NamedFixtures<TTest, TNames>>>>
   >
@@ -73,6 +74,7 @@ export function Feature<
   type Context = FeatureContext<TContext, NamedFixtures<TTest, TNames>>
   const feature = compileFeature<Context, Context>({
     featureText: options.featureText,
+    expectFail: options.expectFail,
     hooks: options.hooks ?? [],
     stepDefinitions: options.stepDefinitions,
     parameterTypes: options.parameterTypes ?? [],
@@ -95,15 +97,23 @@ export function Feature<
       test.afterEach(runWithFixtures(after))
     }
     for (const scenario of feature.scenarios) {
+      // Playwright has no `test.only.fail`, so a focused marked row declares
+      // the expected failure from inside its body.
+      const focusedFailure = scenario.tag === 'only' && scenario.expectedFailure
       const testFn =
         scenario.tag === 'only'
           ? test.only
           : scenario.tag === 'skip'
             ? test.skip
-            : test
+            : scenario.expectedFailure
+              ? test.fail
+              : test
       testFn(
         scenario.name,
         runWithFixtures(async (context) => {
+          if (focusedFailure) {
+            test.fail()
+          }
           for (const step of scenario.steps) {
             await step(context)
           }
