@@ -81,7 +81,9 @@ test('resolves every default worker from the built package root', async () => {
   ])
 })
 
-test('ends the stage before execute resolves when only its guard is SIGKILLed', async () => {
+// Here execute resolves when the stage's pipes close. The kernel drops an exiting process's descriptors before its
+// pipes close. So the stage can still be finishing its exit, but it holds no descriptor.
+test('kills the stage and leaves it no descriptor before execute resolves when only its guard is SIGKILLed', async () => {
   let stagePid: number | undefined
   let guardPid: number | undefined
   const running = execute('bash', ['-c', 'echo "$$ $PPID"; exec sleep 301.5'], {
@@ -95,10 +97,10 @@ test('ends the stage before execute resolves when only its guard is SIGKILLed', 
     await vi.waitFor(() => expect(typeof guardPid).toEqual('number'))
     process.kill(guardPid!, 'SIGKILL')
     expect((await running).status).toEqual(137)
-    expect(
-      existsSync(`/proc/${stagePid}/stat`) &&
-        !/^\d+ \(.*\) Z /.test(readFileSync(`/proc/${stagePid}/stat`, 'utf8')),
-    ).toEqual(false)
+    expect(openDescriptors(stagePid!)).toEqual([])
+    await vi.waitFor(() => expect(processAlive(stagePid!)).toEqual(false), {
+      timeout: 5_000,
+    })
   } finally {
     for (const pid of [stagePid, guardPid]) {
       if (pid !== undefined) {
@@ -306,5 +308,13 @@ process.exitCode=stop.status()
       .trim()
       .split('\n')
       .sort(),
+  }
+}
+
+function openDescriptors(pid: number) {
+  try {
+    return readdirSync(`/proc/${pid}/fd`)
+  } catch {
+    return []
   }
 }
