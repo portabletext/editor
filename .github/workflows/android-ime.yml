@@ -258,6 +258,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
+          pre-emulator-launch-script: echo "### Attempt 1" >> "$GITHUB_STEP_SUMMARY"
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       # The emulator sometimes never comes online, adb loses it after boot, or
@@ -289,6 +290,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
+          pre-emulator-launch-script: echo "### Attempt 2" >> "$GITHUB_STEP_SUMMARY"
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       - name: Boot time
