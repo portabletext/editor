@@ -206,3 +206,25 @@ Feature: Undo/Redo
       B: foo
       B: |bar
       """
+
+  Scenario: Simple redo without remote patches
+    Given the editor state is
+      """
+      B:
+      """
+    When the editor is focused
+    And "foo" is inserted
+    Then the editor state is
+      """
+      B: foo|
+      """
+    When undo is performed
+    Then the editor state is
+      """
+      B: |
+      """
+    When redo is performed
+    Then the editor state is
+      """
+      B: foo|
+      """
