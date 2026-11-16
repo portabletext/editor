@@ -19,7 +19,7 @@ function block(keyGenerator: () => string, text?: string): TestBlock {
     ],
     markDefs: [],
     style: 'normal',
-  } as unknown as TestBlock
+  }
 }
 
 function makeValue(

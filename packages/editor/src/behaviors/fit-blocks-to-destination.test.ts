@@ -118,7 +118,7 @@ const image: PortableTextBlock = {
   _type: 'image',
   _key: 'img1',
   src: 'a.png',
-} as unknown as PortableTextBlock
+}
 
 const table: PortableTextBlock = {
   _type: 'table',
@@ -130,7 +130,7 @@ const table: PortableTextBlock = {
       cells: [{_type: 'cell', _key: 'c1', content: [textBlock1, textBlock2]}],
     },
   ],
-} as unknown as PortableTextBlock
+}
 
 describe(fitBlocksToDestination.name, () => {
   test('returns empty when input is empty', () => {
@@ -184,7 +184,7 @@ describe(fitBlocksToDestination.name, () => {
           cells: [{_type: 'cell', _key: 'c0', content: [textBlock1]}],
         },
       ],
-    } as unknown as PortableTextBlock
+    }
 
     const snapshot = createSnapshot({
       value: [existingTable],
@@ -219,7 +219,7 @@ describe(fitBlocksToDestination.name, () => {
           cells: [{_type: 'cell', _key: 'c0', content: [textBlock1]}],
         },
       ],
-    } as unknown as PortableTextBlock
+    }
 
     const snapshot = createSnapshot({
       value: [existingTable],
@@ -251,7 +251,7 @@ describe(fitBlocksToDestination.name, () => {
           cells: [{_type: 'cell', _key: 'c0', content: [textBlock1]}],
         },
       ],
-    } as unknown as PortableTextBlock
+    }
 
     const snapshot = createSnapshot({
       value: [existingTable],

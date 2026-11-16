@@ -50,7 +50,7 @@ function makeSnapshot(args: {
     context: {
       schema: args.schema,
       containers,
-      value: args.value as never,
+      value: Array.from(args.value),
     },
     blockIndexMap: buildBlockIndexMap(args.schema, args.containers, args.value),
   }
@@ -64,7 +64,7 @@ function makeRichInput(args: {
   return {
     schema: args.schema,
     containers: args.containers,
-    value: args.value as never,
+    value: Array.from(args.value),
   }
 }
 

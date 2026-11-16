@@ -8,6 +8,7 @@ import {EventListenerPlugin} from '../src/plugins'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {isTextBlock} from '../src/utils'
 
 /**
  * Tests for self-referential / recursive schemas.
@@ -677,8 +678,10 @@ describe('recursive schemas (lists in list-items in lists)', () => {
     const i3Content = (i3 as unknown as {content: Array<PortableTextBlock>})
       .content
     const t3 = i3Content[0] as PortableTextBlock
-    const t3Children = (t3 as unknown as {children: Array<{_key: string}>})
-      .children
+    if (!isTextBlock(editor.getSnapshot().context, t3)) {
+      throw new Error('Expected a text block')
+    }
+    const t3Children = t3.children
     const s3 = t3Children[0]!
 
     const deepSpanPath = [
