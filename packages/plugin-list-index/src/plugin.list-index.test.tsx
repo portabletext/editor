@@ -9,7 +9,7 @@ const schemaDefinition = defineSchema({
   lists: [{name: 'bullet'}, {name: 'number'}],
 })
 
-function numberBlock(key: string, text: string): PortableTextBlock {
+function numberBlock(key: string, text: string) {
   return {
     _type: 'block',
     _key: key,
@@ -157,4 +157,62 @@ describe(ListIndexProvider.name, () => {
       expect(page.getByTestId('path-probe').element().textContent).toBe('1')
     })
   })
+})
+
+test('Scenario: Emptying the value removes indices', async () => {
+  const {editor} = await createTestEditor({
+    schemaDefinition,
+    initialValue: [numberBlock('b1', 'one')],
+    children: probes(['b1'], () => {}),
+  })
+
+  await vi.waitFor(() => {
+    expect(page.getByTestId('probe-b1').element().textContent).toBe('1')
+  })
+
+  editor.send({type: 'apply', patches: [{type: 'unset', path: [{_key: 'b1'}]}]})
+
+  await vi.waitFor(() => {
+    expect(page.getByTestId('probe-b1').element().textContent).toBe('none')
+  })
+})
+
+test('Scenario: A structural change shifts indices, and only changed paths re-render', async () => {
+  const renders: Array<string> = []
+  const {editor} = await createTestEditor({
+    schemaDefinition,
+    initialValue: [
+      paragraphBlock('b0', 'intro'),
+      numberBlock('b1', 'one'),
+      numberBlock('b2', 'two'),
+    ],
+    children: probes(['b0', 'b1', 'b2'], (blockKey) => renders.push(blockKey)),
+  })
+
+  await vi.waitFor(() => {
+    expect(page.getByTestId('probe-b2').element().textContent).toBe('2')
+  })
+  renders.length = 0
+
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'insert',
+        items: [numberBlock('b3', 'zero')],
+        position: 'before',
+        path: [{_key: 'b1'}],
+      },
+    ],
+  })
+
+  await vi.waitFor(() => {
+    expect(page.getByTestId('probe-b1').element().textContent).toBe('2')
+    expect(page.getByTestId('probe-b2').element().textContent).toBe('3')
+  })
+
+  expect(renders).not.toContain('b0')
+
+  expect(renders.filter((blockKey) => blockKey === 'b1')).toHaveLength(1)
+  expect(renders.filter((blockKey) => blockKey === 'b2')).toHaveLength(1)
 })

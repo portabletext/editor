@@ -6,7 +6,7 @@ import {
   unset,
   type Patch,
 } from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
+import {type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, onTestFinished, test, vi} from 'vitest'
@@ -14367,4 +14367,197 @@ const propertyDataSchemaDefinition = defineSchema({
       ],
     },
   ],
+})
+
+test('Scenario: Patching while applying remote patches', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const onEvent = vi.fn<() => EditorEmittedEvent>()
+  const {editor} = await createTestEditor({
+    children: <EventListenerPlugin on={onEvent} />,
+    keyGenerator,
+    schemaDefinition: defineSchema({
+      lists: [{name: 'bullet'}],
+      styles: [{name: 'normal'}, {name: 'h1'}],
+    }),
+  })
+
+  const listBlock = {
+    _key: keyGenerator(),
+    _type: 'block',
+    children: [
+      {
+        _key: keyGenerator(),
+        _type: 'span',
+        text: 'foo',
+        marks: [],
+      },
+    ],
+    level: 1,
+    listItem: 'bullet',
+    markDefs: [],
+    style: 'normal',
+  }
+  const headingBlock = {
+    _type: 'block',
+    _key: keyGenerator(),
+    children: [
+      {
+        _type: 'span',
+        _key: keyGenerator(),
+        text: 'foo',
+        marks: [],
+      },
+    ],
+    markDefs: [],
+    style: 'h1',
+  }
+
+  editor.send({
+    type: 'apply',
+    patches: [insert([listBlock], 'before', [0])],
+  })
+
+  await vi.waitFor(() => {
+    expect(onEvent).toHaveBeenCalledWith({type: 'ready'})
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'setIfMissing',
+        path: [],
+        value: [],
+        origin: 'remote',
+      },
+      {
+        type: 'insert',
+        position: 'before',
+        path: [
+          {
+            _key: listBlock._key,
+          },
+        ],
+        items: [headingBlock],
+        origin: 'remote',
+      },
+    ],
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      headingBlock,
+      listBlock,
+    ])
+  })
+})
+
+test('Scenario: Retyping after clearing the field re-materializes it', async () => {
+  const patches: Array<Patch> = []
+  const {editor, locator} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    schemaDefinition: defineSchema({}),
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'patch') {
+            patches.push(event.patch)
+          }
+        }}
+      />
+    ),
+  })
+
+  const mutations: Array<Array<Patch>> = []
+  editor.on('mutation', (event) => {
+    mutations.push(event.patches)
+  })
+
+  await userEvent.click(locator)
+  await userEvent.type(locator, 'foo')
+
+  await vi.waitFor(() => {
+    expect(patches.at(-1)).toEqual({
+      type: 'diffMatchPatch',
+      path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+      value: stringifyPatches(makePatches(makeDiff('fo', 'foo'))),
+      origin: 'local',
+    })
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  await userEvent.keyboard('{Backspace}')
+
+  await vi.waitFor(() => {
+    expect(mutations.at(-1)?.at(-1)).toEqual({
+      type: 'unset',
+      path: [],
+      origin: 'local',
+    })
+  })
+  const patchCountAfterClear = patches.length
+
+  await userEvent.type(locator, 'bar')
+
+  await vi.waitFor(() => {
+    expect(patches.slice(patchCountAfterClear)).toEqual([
+      {
+        type: 'setIfMissing',
+        path: [],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        items: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          },
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('', 'b'))),
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('b', 'ba'))),
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: stringifyPatches(makePatches(makeDiff('ba', 'bar'))),
+        origin: 'local',
+      },
+    ])
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+      },
+    ])
+  })
 })

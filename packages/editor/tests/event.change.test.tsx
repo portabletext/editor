@@ -12,11 +12,11 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {useEffect} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {
-  ChangeEvent,
-  Editor,
-  EditorEmittedEvent,
-  MutationEvent,
+import {
+  type ChangeEvent,
+  type Editor,
+  type EditorEmittedEvent,
+  type MutationEvent,
 } from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -2738,3 +2738,1114 @@ function getTextAt(
 
   return (span as {text?: string} | undefined)?.text ?? ''
 }
+
+test('Scenario: A `change` listener that edits on a remote `change` gets the correction of the remote `change` before its own edit', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+    initialValue: [block(blockKey, spanKey, 'foo')],
+  })
+  const changes: Array<ChangeEvent> = []
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'remote') {
+      editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+    }
+  })
+  const fooSpan = {_type: 'span', _key: spanKey, text: 'foo', marks: []}
+  const barSpan = {
+    _type: 'span',
+    _key: spanKey,
+    text: 'bar',
+    marks: ['strong'],
+  }
+  const duplicateKeyPath = [{_key: blockKey}, 'children', 1, '_key']
+
+  editor.send({
+    type: 'apply',
+    patches: [
+      insert([barSpan], 'after', [
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+      ]),
+    ],
+  })
+
+  expect(changes).toEqual([
+    {
+      type: 'change',
+      origin: 'remote',
+      operations: [
+        {
+          type: 'insert',
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          position: 'after',
+          node: barSpan,
+        },
+      ],
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'set',
+          path: duplicateKeyPath,
+          value: 'k4',
+          inverse: {type: 'set', path: duplicateKeyPath, value: spanKey},
+        },
+      ],
+      patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
+      correction: true,
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'unset',
+          path: [{_key: blockKey}],
+          inverse: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            node: {
+              ...block(blockKey, spanKey, ''),
+              children: [fooSpan, {...barSpan, _key: 'k4'}],
+            },
+          },
+        },
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: block('k5', 'k6', ''),
+          inverse: {type: 'unset', path: [{_key: 'k5'}]},
+        },
+      ],
+      patches: [
+        {...unset([{_key: blockKey}]), origin: 'local'},
+        {...unset([]), origin: 'local'},
+      ],
+    },
+  ])
+})
+
+test('Scenario: A Behavior event sent by an `operation` listener during an `apply` emits its own local `change` after the remote `change` so far', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [block(blockKey, spanKey, 'foo')],
+  })
+  const changes = collectChanges(editor)
+  const mutations = collectMutations(editor)
+  const patches: Array<Patch> = []
+  editor.on('patch', (event) => {
+    patches.push(event.patch)
+  })
+  const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+  const bazBlock = {
+    _type: 'block',
+    _key: 'k4',
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+  }
+  editor.on('operation', (event) => {
+    if (event.origin === 'remote' && event.operation.type === 'insert.text') {
+      editor.send({
+        type: 'insert.block',
+        block: {_type: 'block', children: [{_type: 'span', text: 'baz'}]},
+        placement: 'after',
+        at: {
+          anchor: {path: spanPath, offset: 0},
+          focus: {path: spanPath, offset: 0},
+        },
+      })
+    }
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [diffMatchPatch('foo', 'bar', [...spanPath, 'text'])],
+  })
+
+  expect(editor.getSnapshot().context.value).toEqual([
+    block(blockKey, spanKey, 'bar'),
+    bazBlock,
+  ])
+
+  expect(changes).toEqual([
+    {
+      type: 'change',
+      origin: 'remote',
+      operations: [
+        {
+          type: 'remove.text',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+          ],
+          offset: 0,
+          text: 'foo',
+        },
+        {
+          type: 'insert.text',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+          ],
+          offset: 0,
+          text: 'bar',
+        },
+      ],
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: 'k0',
+            },
+          ],
+          node: {
+            _type: 'block',
+            _key: 'k4',
+            children: [
+              {
+                _type: 'span',
+                _key: 'k5',
+                text: 'baz',
+                marks: [],
+              },
+            ],
+          },
+          position: 'after',
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k4',
+              },
+            ],
+          },
+        },
+      ],
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: 'k0',
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k4',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k5',
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          origin: 'local',
+        },
+      ],
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k4',
+            },
+            'markDefs',
+          ],
+          value: [],
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k4',
+              },
+              'markDefs',
+            ],
+          },
+        },
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k4',
+            },
+            'style',
+          ],
+          value: 'normal',
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k4',
+              },
+              'style',
+            ],
+          },
+        },
+      ],
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k4',
+            },
+            'markDefs',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k4',
+            },
+            'style',
+          ],
+          value: 'normal',
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+
+  editor.send({
+    type: 'insert.text',
+    at: spanPath,
+    offset: 3,
+    text: '!',
+  })
+
+  await vi.waitFor(() => {
+    expect(mutations).toEqual([
+      {
+        type: 'mutation',
+        patches: [
+          {
+            type: 'insert',
+            path: [
+              {
+                _key: 'k0',
+              },
+            ],
+            position: 'after',
+            items: [
+              {
+                _type: 'block',
+                _key: 'k4',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k5',
+                    text: 'baz',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
+            origin: 'local',
+          },
+          {
+            type: 'set',
+            path: [
+              {
+                _key: 'k4',
+              },
+              'markDefs',
+            ],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'set',
+            path: [
+              {
+                _key: 'k4',
+              },
+              'style',
+            ],
+            value: 'normal',
+            origin: 'local',
+          },
+          {
+            type: 'diffMatchPatch',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              {
+                _key: 'k1',
+              },
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+            origin: 'local',
+          },
+        ],
+        value: [block(blockKey, spanKey, 'bar!'), bazBlock],
+      },
+    ])
+  })
+  expect(patches).toEqual([
+    {
+      type: 'insert',
+      path: [
+        {
+          _key: 'k0',
+        },
+      ],
+      position: 'after',
+      items: [
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k5',
+              text: 'baz',
+              marks: [],
+            },
+          ],
+        },
+      ],
+      origin: 'local',
+    },
+    {
+      type: 'set',
+      path: [
+        {
+          _key: 'k4',
+        },
+        'markDefs',
+      ],
+      value: [],
+      origin: 'local',
+    },
+    {
+      type: 'set',
+      path: [
+        {
+          _key: 'k4',
+        },
+        'style',
+      ],
+      value: 'normal',
+      origin: 'local',
+    },
+    {
+      type: 'diffMatchPatch',
+      path: [
+        {
+          _key: 'k0',
+        },
+        'children',
+        {
+          _key: 'k1',
+        },
+        'text',
+      ],
+      value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+      origin: 'local',
+    },
+  ])
+})
+
+test('Scenario: A container registered by an `operation` listener during an `apply` is registered and its empty field gets a `correction`', async () => {
+  const calloutSchemaDefinition = defineSchema({
+    decorators: [{name: 'strong'}],
+    blockObjects: [
+      {
+        name: 'callout',
+        fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+      },
+    ],
+  })
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const calloutKey = keyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: calloutSchemaDefinition,
+    initialValue: [
+      block(blockKey, spanKey, 'foo'),
+      {_type: 'callout', _key: calloutKey},
+    ],
+  })
+  const changes = collectChanges(editor)
+  const patches: Array<Patch> = []
+  editor.on('patch', (event) => {
+    patches.push(event.patch)
+  })
+  const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+  editor.on('operation', (event) => {
+    if (event.origin === 'remote' && event.operation.type === 'insert.text') {
+      editor.registerNode({
+        node: defineContainer({type: 'callout', arrayField: 'content'}),
+      })
+    }
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [diffMatchPatch('foo', 'bar', [...spanPath, 'text'])],
+  })
+
+  expect(editor.getSnapshot().context.containers.has('callout')).toEqual(true)
+  expect(editor.getSnapshot().context.value).toEqual([
+    block(blockKey, spanKey, 'bar'),
+    {_type: 'callout', _key: calloutKey, content: [block('k5', 'k6', '')]},
+  ])
+
+  expect(changes).toEqual([
+    {
+      type: 'change',
+      origin: 'remote',
+      operations: [
+        {
+          type: 'remove.text',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+          ],
+          offset: 0,
+          text: 'foo',
+        },
+        {
+          type: 'insert.text',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            {
+              _key: 'k1',
+            },
+          ],
+          offset: 0,
+          text: 'bar',
+        },
+      ],
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k2',
+            },
+            'content',
+          ],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k6',
+                  text: '',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k2',
+              },
+              'content',
+            ],
+          },
+        },
+      ],
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k2',
+            },
+            'content',
+          ],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k6',
+                  text: '',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+  await vi.waitFor(() =>
+    expect(patches).toEqual([
+      {
+        type: 'set',
+        path: [
+          {
+            _key: 'k2',
+          },
+          'content',
+        ],
+        value: [
+          {
+            _type: 'block',
+            _key: 'k5',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'k6',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+        ],
+        origin: 'local',
+      },
+    ]),
+  )
+})
+
+test('Scenario: A Behavior event sent by an `operation` listener during an `apply` of a container emits its own local `change` after the remote `change` so far', async () => {
+  const calloutSchemaDefinition = defineSchema({
+    decorators: [{name: 'strong'}],
+    blockObjects: [
+      {
+        name: 'callout',
+        fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+      },
+    ],
+  })
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: calloutSchemaDefinition,
+    initialValue: [callout(calloutKey, [block(blockKey, spanKey, 'foo')])],
+  })
+  editor.registerNode({
+    node: defineContainer({type: 'callout', arrayField: 'content'}),
+  })
+  const changes = collectChanges(editor)
+  const mutations = collectMutations(editor)
+  const patches: Array<Patch> = []
+  editor.on('patch', (event) => {
+    patches.push(event.patch)
+  })
+  const contentPath = [{_key: calloutKey}, 'content']
+  const spanPath = [
+    ...contentPath,
+    {_key: blockKey},
+    'children',
+    {_key: spanKey},
+  ]
+  const bazBlock = {
+    _type: 'block',
+    _key: 'k5',
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: 'k6', text: 'baz', marks: []}],
+  }
+  editor.on('operation', (event) => {
+    if (event.origin === 'remote' && event.operation.type === 'set') {
+      editor.send({
+        type: 'insert.block',
+        block: {_type: 'block', children: [{_type: 'span', text: 'baz'}]},
+        placement: 'after',
+        at: {
+          anchor: {path: spanPath, offset: 0},
+          focus: {path: spanPath, offset: 0},
+        },
+      })
+    }
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [set([block(blockKey, spanKey, 'bar')], contentPath)],
+  })
+
+  expect(editor.getSnapshot().context.value).toEqual([
+    callout(calloutKey, [block(blockKey, spanKey, 'bar'), bazBlock]),
+  ])
+
+  expect(changes).toEqual([
+    {
+      type: 'change',
+      origin: 'remote',
+      operations: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+          ],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k2',
+                  text: 'bar',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k1',
+            },
+          ],
+          node: {
+            _type: 'block',
+            _key: 'k5',
+            children: [
+              {
+                _type: 'span',
+                _key: 'k6',
+                text: 'baz',
+                marks: [],
+              },
+            ],
+          },
+          position: 'after',
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k5',
+              },
+            ],
+          },
+        },
+      ],
+      patches: [
+        {
+          type: 'setIfMissing',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k1',
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k6',
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          origin: 'local',
+        },
+      ],
+    },
+    {
+      type: 'change',
+      origin: 'local',
+      operations: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k5',
+            },
+            'markDefs',
+          ],
+          value: [],
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k5',
+              },
+              'markDefs',
+            ],
+          },
+        },
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k5',
+            },
+            'style',
+          ],
+          value: 'normal',
+          inverse: {
+            type: 'unset',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k5',
+              },
+              'style',
+            ],
+          },
+        },
+      ],
+      patches: [
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k5',
+            },
+            'markDefs',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k5',
+            },
+            'style',
+          ],
+          value: 'normal',
+          origin: 'local',
+        },
+      ],
+      correction: true,
+    },
+  ])
+
+  editor.send({
+    type: 'insert.text',
+    at: spanPath,
+    offset: 3,
+    text: '!',
+  })
+
+  await vi.waitFor(() => {
+    expect(mutations).toEqual([
+      {
+        type: 'mutation',
+        patches: [
+          {
+            type: 'setIfMissing',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+            ],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k1',
+              },
+            ],
+            position: 'after',
+            items: [
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [
+                  {
+                    _type: 'span',
+                    _key: 'k6',
+                    text: 'baz',
+                    marks: [],
+                  },
+                ],
+              },
+            ],
+            origin: 'local',
+          },
+          {
+            type: 'set',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k5',
+              },
+              'markDefs',
+            ],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'set',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k5',
+              },
+              'style',
+            ],
+            value: 'normal',
+            origin: 'local',
+          },
+          {
+            type: 'diffMatchPatch',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'content',
+              {
+                _key: 'k1',
+              },
+              'children',
+              {
+                _key: 'k2',
+              },
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+            origin: 'local',
+          },
+        ],
+        value: [
+          callout(calloutKey, [block(blockKey, spanKey, 'bar!'), bazBlock]),
+        ],
+      },
+    ])
+  })
+  expect(patches).toEqual([
+    {
+      type: 'setIfMissing',
+      path: [
+        {
+          _key: 'k0',
+        },
+        'content',
+      ],
+      value: [],
+      origin: 'local',
+    },
+    {
+      type: 'insert',
+      path: [
+        {
+          _key: 'k0',
+        },
+        'content',
+        {
+          _key: 'k1',
+        },
+      ],
+      position: 'after',
+      items: [
+        {
+          _type: 'block',
+          _key: 'k5',
+          children: [
+            {
+              _type: 'span',
+              _key: 'k6',
+              text: 'baz',
+              marks: [],
+            },
+          ],
+        },
+      ],
+      origin: 'local',
+    },
+    {
+      type: 'set',
+      path: [
+        {
+          _key: 'k0',
+        },
+        'content',
+        {
+          _key: 'k5',
+        },
+        'markDefs',
+      ],
+      value: [],
+      origin: 'local',
+    },
+    {
+      type: 'set',
+      path: [
+        {
+          _key: 'k0',
+        },
+        'content',
+        {
+          _key: 'k5',
+        },
+        'style',
+      ],
+      value: 'normal',
+      origin: 'local',
+    },
+    {
+      type: 'diffMatchPatch',
+      path: [
+        {
+          _key: 'k0',
+        },
+        'content',
+        {
+          _key: 'k1',
+        },
+        'children',
+        {
+          _key: 'k2',
+        },
+        'text',
+      ],
+      value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+      origin: 'local',
+    },
+  ])
+})
