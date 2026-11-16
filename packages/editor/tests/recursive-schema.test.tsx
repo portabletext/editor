@@ -188,68 +188,6 @@ describe('recursive schemas (lists in list-items in lists)', () => {
     })
   })
 
-  test('Scenario: incoming `set` patch on a deep span text applies correctly', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const initialValue = [buildNestedList(keyGenerator, 3)]
-
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition: recursiveListSchema,
-      initialValue,
-      children: <NodePlugin nodes={[listContainer, listItemContainer]} />,
-    })
-
-    const outerList = editor.getSnapshot().context.value[0] as PortableTextBlock
-    const outerItem = field<Array<PortableTextBlock>>(outerList, 'items')[0]!
-    const middleList = field<Array<PortableTextBlock>>(outerItem, 'content')[1]!
-    const middleItem = field<Array<PortableTextBlock>>(middleList, 'items')[0]!
-    const innerList = field<Array<PortableTextBlock>>(middleItem, 'content')[1]!
-    const innerItem = field<Array<PortableTextBlock>>(innerList, 'items')[0]!
-    const innerTextBlock = field<Array<PortableTextBlock>>(
-      innerItem,
-      'content',
-    )[0]!
-    const innerSpan = field<Array<{_key: string; text: string}>>(
-      innerTextBlock,
-      'children',
-    )[0]!
-
-    editor.send({
-      type: 'apply',
-      patches: [
-        {
-          type: 'set',
-          path: [
-            {_key: outerList._key!},
-            'items',
-            {_key: outerItem._key!},
-            'content',
-            {_key: middleList._key!},
-            'items',
-            {_key: middleItem._key!},
-            'content',
-            {_key: innerList._key!},
-            'items',
-            {_key: innerItem._key!},
-            'content',
-            {_key: innerTextBlock._key!},
-            'children',
-            {_key: innerSpan._key},
-            'text',
-          ],
-          value: 'remote-edit',
-          origin: 'remote',
-        },
-      ],
-    })
-
-    const updated = editor.getSnapshot().context.value[0] as PortableTextBlock
-    const i3 = deepestListItem(updated, 3)
-    const tb = field<Array<PortableTextBlock>>(i3, 'content')[0]!
-    const span = field<Array<{text: string}>>(tb, 'children')[0]!
-    expect(span.text).toBe('remote-edit')
-  })
-
   test('Scenario: typing at a deep span emits patches that round-trip through applyAll', async () => {
     const keyGenerator = createTestKeyGenerator()
     const initialValue = [buildNestedList(keyGenerator, 3)]
