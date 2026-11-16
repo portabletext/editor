@@ -16,3 +16,15 @@ Feature: Insert text
       | "B: foo;;B: bar" | "B: foo;;B: ^b\|ar" | "B: foo;;B: new\|ar" |
       | "B: foo;;B: bar" | "B: f^oo;;B: ba\|r" | "B: fnew\|r"         |
       | "B: foo;;B: bar" | "B: ^foo;;B: bar\|" | "B: new\|"           |
+
+  Scenario: Inserting text without a selection
+    Given the editor state is
+      """
+      B:
+      """
+    When the selection is cleared
+    And "foo" is inserted
+    Then the editor state is
+      """
+      B: foo|
+      """
