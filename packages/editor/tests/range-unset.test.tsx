@@ -7,6 +7,7 @@ import {getValue} from '../src/internal-utils/get-value'
 import {NodePlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 import type {Operation} from '../src/types/operation'
+import type {Path, PathSegment} from '../src/types/paths'
 
 const schemaDefinition = defineSchema({
   decorators: [{name: 'strong'}, {name: 'em'}],
@@ -100,7 +101,11 @@ function buildFixture(depth: Depth, shape: Shape, shrunk: boolean) {
     cell: keyGenerator(),
   }
   const blockKey = keyGenerator()
-  const spanKeys = [keyGenerator(), keyGenerator(), keyGenerator()]
+  const spanKeys: [string, string, string] = [
+    keyGenerator(),
+    keyGenerator(),
+    keyGenerator(),
+  ]
   const textBlockKey = keyGenerator()
   const textSpanKey = keyGenerator()
   const taggedKey = keyGenerator()
@@ -200,7 +205,7 @@ function buildFixture(depth: Depth, shape: Shape, shrunk: boolean) {
     },
   }[depth]
 
-  const unsetPath = (segment: unknown) =>
+  const unsetPath = (segment: PathSegment): Path =>
     shape === 'marks'
       ? [
           ...wrapped.prefix,
@@ -214,7 +219,7 @@ function buildFixture(depth: Depth, shape: Shape, shrunk: boolean) {
         ? [...wrapped.prefix, {_key: blockKey}, 'children', segment]
         : [...wrapped.prefix, {_key: taggedKey}, 'tags', segment]
 
-  const typedSpanPath =
+  const typedSpanPath: Path =
     shape === 'tags'
       ? [
           ...wrapped.prefix,
@@ -224,7 +229,7 @@ function buildFixture(depth: Depth, shape: Shape, shrunk: boolean) {
         ]
       : [...wrapped.prefix, {_key: blockKey}, 'children', {_key: spanKeys[0]}]
 
-  const arrayPath =
+  const arrayPath: Path =
     shape === 'marks'
       ? [...typedSpanPath, 'marks']
       : shape === 'children'
@@ -241,11 +246,11 @@ function buildFixture(depth: Depth, shape: Shape, shrunk: boolean) {
 
 function sendRemoteUnset(
   editor: Awaited<ReturnType<typeof createTestEditor>>['editor'],
-  path: Array<unknown>,
+  path: Path,
 ) {
   editor.send({
     type: 'apply',
-    patches: [{type: 'unset', origin: 'remote', path: path as never}],
+    patches: [{type: 'unset', origin: 'remote', path}],
   })
 }
 
@@ -261,7 +266,7 @@ function marker(key: string) {
 
 async function sendRemoteUnsetAndWaitForDelivery(
   editor: Awaited<ReturnType<typeof createTestEditor>>['editor'],
-  path: Array<unknown>,
+  path: Path,
 ) {
   const markerKey = createTestKeyGenerator('marker-')()
   const remoteOperations: Array<Operation> = []
@@ -275,7 +280,7 @@ async function sendRemoteUnsetAndWaitForDelivery(
   editor.send({
     type: 'apply',
     patches: [
-      {type: 'unset', origin: 'remote', path: path as never},
+      {type: 'unset', origin: 'remote', path},
       {
         type: 'insert',
         origin: 'remote',
@@ -322,10 +327,7 @@ describe('remote range unset', () => {
           })
           expect(
             Array.isArray(
-              getValue(
-                editor.getSnapshot().context.value,
-                fixture.arrayPath as never,
-              ),
+              getValue(editor.getSnapshot().context.value, fixture.arrayPath),
             ),
           ).toBe(true)
 
@@ -333,8 +335,8 @@ describe('remote range unset', () => {
           editor.send({
             type: 'select',
             at: {
-              anchor: {path: fixture.typedSpanPath as never, offset: 3},
-              focus: {path: fixture.typedSpanPath as never, offset: 3},
+              anchor: {path: fixture.typedSpanPath, offset: 3},
+              focus: {path: fixture.typedSpanPath, offset: 3},
             },
           })
           await userEvent.keyboard('x')
@@ -344,7 +346,7 @@ describe('remote range unset', () => {
               (
                 getValue(
                   editor.getSnapshot().context.value,
-                  fixture.typedSpanPath as never,
+                  fixture.typedSpanPath,
                 ) as {text: string}
               ).text,
             ).toBe('foox')
@@ -369,10 +371,7 @@ describe('remote range unset', () => {
       expect(editor.getSnapshot().context.value).toEqual(fixture.value)
       expect(
         Array.isArray(
-          getValue(
-            editor.getSnapshot().context.value,
-            fixture.arrayPath as never,
-          ),
+          getValue(editor.getSnapshot().context.value, fixture.arrayPath),
         ),
       ).toBe(true)
     })

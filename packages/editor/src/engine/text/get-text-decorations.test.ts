@@ -37,23 +37,23 @@ describe(getTextDecorations.name, () => {
       leaf.rangeDecorations = [...(leaf.rangeDecorations ?? []), decoration]
     }
 
-    const point: DecoratedRange = {
+    const point: DecoratedRange & {rangeDecoration: string} = {
       anchor: {path: [], offset: 1},
       focus: {path: [], offset: 1},
       merge,
       isRangeStart: true,
       isRangeEnd: true,
       rangeDecoration: 'point',
-    } as unknown as DecoratedRange
+    }
 
-    const range: DecoratedRange = {
+    const range: DecoratedRange & {rangeDecoration: string} = {
       anchor: {path: [], offset: 1},
       focus: {path: [], offset: 3},
       merge,
       isRangeStart: true,
       isRangeEnd: true,
       rangeDecoration: 'range',
-    } as unknown as DecoratedRange
+    }
 
     const leaves = getTextDecorations(span, [point, range])
 

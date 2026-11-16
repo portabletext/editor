@@ -3,6 +3,7 @@ import {
   defineSchema,
   type PortableTextSpan,
   type PortableTextTextBlock,
+  type PortableTextBlock,
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React, {StrictMode} from 'react'
@@ -319,7 +320,7 @@ describe('chunked drawing against real engine editing', () => {
       defineContainer({type: 'note', arrayField: 'content'}),
     ]
     const {locator, rerender} = await createTestEditor({
-      initialValue: initialValue as never,
+      initialValue,
       keyGenerator,
       schemaDefinition,
       children: (
@@ -335,7 +336,7 @@ describe('chunked drawing against real engine editing', () => {
       ).toEqual(0),
     )
     await rerender({
-      initialValue: initialValue as never,
+      initialValue,
       schemaDefinition,
       children: (
         <>
@@ -358,7 +359,7 @@ describe('chunked drawing against real engine editing', () => {
       <StrictMode>
         <EditorProvider
           initialConfig={{
-            initialValue: value as never,
+            initialValue: value,
             keyGenerator,
             schemaDefinition,
           }}
@@ -394,7 +395,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator} = await createTestEditor({
-      initialValue: blocks as never,
+      initialValue: blocks,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
     })
@@ -486,7 +487,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
     })
@@ -590,7 +591,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
     })
@@ -703,7 +704,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
     })
@@ -799,7 +800,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator, rerender} = await createTestEditor({
-      initialValue: blocks as never,
+      initialValue: blocks,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(0)]},
@@ -833,7 +834,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: blocks as never,
+      initialValue: blocks,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(1)]},
@@ -846,7 +847,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: blocks as never,
+      initialValue: blocks,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: []},
@@ -884,7 +885,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator, rerender} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(0)]},
@@ -918,7 +919,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(1)]},
@@ -931,7 +932,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: []},
@@ -981,7 +982,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator, rerender} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(0)]},
@@ -1015,7 +1016,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(1)]},
@@ -1028,7 +1029,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: []},
@@ -1087,7 +1088,7 @@ describe('chunked drawing against real engine editing', () => {
       },
     })
     const {editor, locator, rerender} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(0)]},
@@ -1121,7 +1122,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: [decoration(1)]},
@@ -1134,7 +1135,7 @@ describe('chunked drawing against real engine editing', () => {
     )
 
     await rerender({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
       editableProps: {rangeDecorations: []},
@@ -1150,14 +1151,16 @@ describe('chunked drawing against real engine editing', () => {
 
   test('Scenario: A remote container type change at a callout rebuilds cached children in the new container scope', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const blocks = Array.from({length: 150}, () => block(keyGenerator))
+    const blocks: Array<PortableTextBlock> = Array.from({length: 150}, () =>
+      block(keyGenerator),
+    )
     const noteKey = keyGenerator()
     const noteTextBlock = block(keyGenerator)
     blocks.splice(5, 0, {
       _type: 'note',
       _key: noteKey,
       content: [noteTextBlock],
-    } as never)
+    })
     const calloutKey = keyGenerator()
     const value = [{_type: 'callout', _key: calloutKey, content: blocks}]
     const prefix = [{_key: calloutKey}, 'content'] as Path
@@ -1170,7 +1173,7 @@ describe('chunked drawing against real engine editing', () => {
       {_key: noteTextBlock._key},
     ])
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
@@ -1210,14 +1213,16 @@ describe('chunked drawing against real engine editing', () => {
 
   test('Scenario: A remote container type change at a nested callout rebuilds cached children in the new container scope', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const blocks = Array.from({length: 150}, () => block(keyGenerator))
+    const blocks: Array<PortableTextBlock> = Array.from({length: 150}, () =>
+      block(keyGenerator),
+    )
     const noteKey = keyGenerator()
     const noteTextBlock = block(keyGenerator)
     blocks.splice(5, 0, {
       _type: 'note',
       _key: noteKey,
       content: [noteTextBlock],
-    } as never)
+    })
     const outerKey = keyGenerator()
     const innerKey = keyGenerator()
     const value = [
@@ -1242,7 +1247,7 @@ describe('chunked drawing against real engine editing', () => {
       {_key: noteTextBlock._key},
     ])
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
@@ -1282,14 +1287,16 @@ describe('chunked drawing against real engine editing', () => {
 
   test('Scenario: A remote container type change at a table cell rebuilds cached children in the new container scope', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const blocks = Array.from({length: 150}, () => block(keyGenerator))
+    const blocks: Array<PortableTextBlock> = Array.from({length: 150}, () =>
+      block(keyGenerator),
+    )
     const noteKey = keyGenerator()
     const noteTextBlock = block(keyGenerator)
     blocks.splice(5, 0, {
       _type: 'note',
       _key: noteKey,
       content: [noteTextBlock],
-    } as never)
+    })
     const tableKey = keyGenerator()
     const rowKey = keyGenerator()
     const cellKey = keyGenerator()
@@ -1323,7 +1330,7 @@ describe('chunked drawing against real engine editing', () => {
       {_key: noteTextBlock._key},
     ])
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
       children: <NodePlugin nodes={containers} />,
@@ -1369,7 +1376,7 @@ describe('chunked drawing against real engine editing', () => {
     const targetSpan = target.children[0]!
     const prefix = [] as Path
     const {editor, locator} = await createTestEditor({
-      initialValue: blocks as never,
+      initialValue: blocks,
       schemaDefinition,
       children: (
         <>
@@ -1470,7 +1477,7 @@ describe('chunked drawing against real engine editing', () => {
     const value = [{_type: 'callout', _key: calloutKey, content: blocks}]
     const prefix = [{_key: calloutKey}, 'content'] as Path
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: (
         <>
@@ -1583,7 +1590,7 @@ describe('chunked drawing against real engine editing', () => {
       'content',
     ] as Path
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: (
         <>
@@ -1705,7 +1712,7 @@ describe('chunked drawing against real engine editing', () => {
       'content',
     ] as Path
     const {editor, locator} = await createTestEditor({
-      initialValue: value as never,
+      initialValue: value,
       schemaDefinition,
       children: (
         <>
@@ -1952,7 +1959,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: roots as never,
+      initialValue: roots,
       keyGenerator,
       schemaDefinition,
     })
@@ -2026,7 +2033,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: roots as never,
+      initialValue: roots,
       keyGenerator,
       schemaDefinition,
     })
@@ -2115,7 +2122,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: roots as never,
+      initialValue: roots,
       keyGenerator,
       schemaDefinition,
     })
@@ -2245,7 +2252,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: blocks as never,
+      initialValue: blocks,
       keyGenerator,
       schemaDefinition,
     })
@@ -2300,7 +2307,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
     })
@@ -2367,7 +2374,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
     })
@@ -2443,7 +2450,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
     })
@@ -2547,7 +2554,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
     })
@@ -2683,7 +2690,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
     })
@@ -2828,7 +2835,7 @@ describe('chunked drawing against real engine editing', () => {
           <InternalEditorEngineRefPlugin ref={engineRef} />
         </>
       ),
-      initialValue: value as never,
+      initialValue: value,
       keyGenerator,
       schemaDefinition,
     })
