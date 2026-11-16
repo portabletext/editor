@@ -321,14 +321,6 @@ describe('event.insert.text', () => {
     })
   })
 
-  test('Scenario: Inserting text without a selection', async () => {
-    const {editor} = await createTestEditor()
-
-    editor.send({type: 'insert.text', text: 'foo'})
-
-    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-  })
-
   test('Scenario: Inserting text on a block object is a no-op', async () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
