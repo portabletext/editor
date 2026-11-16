@@ -54,11 +54,7 @@ function findNextSpan(
   while (currentPath.length > 0) {
     const parentPath = nodeParentPath(currentPath)
     const siblings = getChildren(snapshot, parentPath)
-    const index = resolveChildEntryIndex(
-      snapshot.blockIndexMap,
-      siblings,
-      currentPath,
-    )
+    const index = resolveChildEntryIndex(snapshot, siblings, currentPath)
 
     if (index !== -1) {
       for (
@@ -94,11 +90,7 @@ function findPreviousSpan(
   while (currentPath.length > 0) {
     const parentPath = nodeParentPath(currentPath)
     const siblings = getChildren(snapshot, parentPath)
-    const index = resolveChildEntryIndex(
-      snapshot.blockIndexMap,
-      siblings,
-      currentPath,
-    )
+    const index = resolveChildEntryIndex(snapshot, siblings, currentPath)
 
     if (index !== -1) {
       for (let siblingIndex = index - 1; siblingIndex >= 0; siblingIndex--) {

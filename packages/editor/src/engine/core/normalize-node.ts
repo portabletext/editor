@@ -3,6 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
+import {isTextBlock} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -17,13 +18,16 @@ import {
   resolvePlaceholderStyle,
 } from '../../internal-utils/create-placeholder-block'
 import {debug} from '../../internal-utils/debug'
+import {nodeSegment} from '../../paths/node-segment'
 import {serializePath} from '../../paths/serialize-path'
+import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
 import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
 import {isObject} from '../../traversal/is-object'
+import {isNonArrayObject} from '../../utils/is-non-array-object'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
 import type {Path} from '../interfaces/path'
@@ -38,6 +42,30 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   entry,
 ) => {
   const [node, path] = entry
+  const structuralContext: StructuralContext = {
+    schema: editor.snapshot.context.schema,
+    keyGenerator: editor.snapshot.context.keyGenerator,
+  }
+  let corrected = false
+  // Only non-object entries are corrected here. This pass gives repair no
+  // siblings, so a correction for an object entry could use the wrong
+  // generated keys. Objects are corrected on their own visit instead.
+  for (const child of getStructuralEntries(editor, node, path)) {
+    if (isNonArrayObject(child.node)) {
+      continue
+    }
+    const correction = getStructuralCorrection(structuralContext, {
+      ...child,
+      siblings: () => undefined,
+    })
+    if (correction?.type === 'non-object') {
+      applyStructuralCorrection(editor, correction)
+      corrected = true
+    }
+  }
+  if (corrected) {
+    return
+  }
 
   /**
    * Add a placeholder block when the editor is empty
@@ -58,10 +86,6 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  const structuralContext: StructuralContext = {
-    schema: editor.snapshot.context.schema,
-    keyGenerator: editor.snapshot.context.keyGenerator,
-  }
   const parent = getParent(editor.snapshot, path)
 
   const structural = getStructuralCorrection(structuralContext, {
@@ -160,6 +184,54 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 }
 
+function* getStructuralEntries(editor: Editor, node: unknown, path: Path) {
+  const arrays: Array<{
+    value: unknown[]
+    path: Path
+  }> = []
+  if (isEditor(node)) {
+    arrays.push({value: node.snapshot.context.value, path: []})
+  } else if (isTextBlock(editor.snapshot.context, node)) {
+    if (Array.isArray(node.children)) {
+      arrays.push({value: node.children, path: [...path, 'children']})
+    }
+    if (Array.isArray(node.markDefs)) {
+      arrays.push({
+        value: node.markDefs,
+        path: [...path, 'markDefs'],
+      })
+    }
+  } else if (isObject(editor.snapshot, node)) {
+    const container = resolveContainerAt(
+      editor.snapshot.context.containers,
+      editor.snapshot.context.value,
+      path,
+    )
+    if (container && 'field' in container) {
+      const value = node[container.field.name]
+      if (Array.isArray(value)) {
+        arrays.push({value, path: [...path, container.field.name]})
+      }
+    }
+  }
+  for (const array of arrays) {
+    if (array.value.every(isNonArrayObject)) {
+      // An array of only objects has nothing to remove. Each object is
+      // normalized on its own visit, and annotations only ever get a
+      // `non-object` correction.
+      continue
+    }
+    for (let index = array.value.length - 1; index >= 0; index--) {
+      const child = array.value[index]
+      yield {
+        node: child,
+        path: [...array.path, nodeSegment(child, index)],
+        parent: {node, path},
+      }
+    }
+  }
+}
+
 function applyStructuralCorrection(
   editor: Editor,
   correction: StructuralCorrection,
@@ -247,7 +319,7 @@ function getSiblings(
 
   const seenKeys = new Set<string>()
   for (const sibling of siblings) {
-    if (sibling._key === undefined) {
+    if (sibling == null || sibling._key === undefined) {
       continue
     }
     if (seenKeys.has(sibling._key)) {
