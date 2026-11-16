@@ -7,7 +7,7 @@ import {getContainerChildren} from '@portabletext/editor/traversal'
 import {isKeyedSegment, isTextBlock} from '@portabletext/editor/utils'
 
 /**
- * Serialize a keyed path to a string using Sanity's bracket notation,
+ * Serialize a path the way `toString` from `@sanity/util/paths` writes it.
  * e.g. `[{_key: 'k0'}]` becomes `[_key=="k0"]`.
  *
  * Duplicated from the editor's internal `serializePath` rather than
@@ -20,7 +20,18 @@ export function serializePath(path: Path): string {
     if (isKeyedSegment(segment)) {
       return `${result}[_key=="${segment._key}"]`
     }
-
+    if (typeof segment === 'number') {
+      return `${result}[${segment}]`
+    }
+    if (Array.isArray(segment)) {
+      return `${result}[${segment[0]}:${segment[1]}]`
+    }
+    if (
+      index > 0 &&
+      (segment === 'true' || segment === 'false' || segment === 'null')
+    ) {
+      return `${result}["${segment}"]`
+    }
     const separator = index === 0 ? '' : '.'
     return `${result}${separator}${segment}`
   }, '')
