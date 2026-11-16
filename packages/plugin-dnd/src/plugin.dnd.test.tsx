@@ -449,7 +449,7 @@ async function renderEditorWithContainerProbes() {
             style: 'normal',
           },
         ],
-      } as unknown as PortableTextBlock,
+      },
     ],
     children: (
       <>
