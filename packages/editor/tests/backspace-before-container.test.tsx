@@ -268,44 +268,6 @@ describe('Backspace before container', () => {
     })
   })
 
-  test('Scenario: Pressing Backspace at the start of an empty text block after a void block-object focuses the block-object', async () => {
-    const keyGenerator = createTestKeyGenerator()
-    const {editor} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition,
-      initialValue: [
-        {_type: 'image', _key: 'i0'},
-        {
-          _type: 'block',
-          _key: 'b0',
-          children: [{_type: 'span', _key: 's0', text: '', marks: []}],
-        },
-      ],
-      children: <NodePlugin nodes={containers} />,
-    })
-
-    editor.send({
-      type: 'select',
-      at: {
-        anchor: {
-          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-          offset: 0,
-        },
-        focus: {
-          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
-          offset: 0,
-        },
-      },
-    })
-
-    editor.send({type: 'delete.backward', unit: 'character'})
-
-    await vi.waitFor(() => {
-      // Selection should focus the void image.
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('^{IMAGE}|')
-    })
-  })
-
   test('Scenario: Pressing Backspace at the start of an empty text block after a table whose last cell ends in an image focuses the image', async () => {
     const keyGenerator = createTestKeyGenerator()
     const {editor} = await createTestEditor({

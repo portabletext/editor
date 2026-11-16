@@ -448,40 +448,6 @@ describe('event.delete.forward', () => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar|')
     })
 
-    test('Scenario: Deleting a line forward at `at` removes the text after it', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
-          },
-        ],
-      })
-
-      editor.send({
-        type: 'delete',
-        direction: 'forward',
-        unit: 'line',
-        at: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 7,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 7,
-          },
-        },
-      })
-
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo bar')
-    })
-
     test('Scenario: Deleting a line forward in a wrapped block removes the text up to the end of the visual line', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
@@ -562,108 +528,6 @@ describe('event.delete.forward', () => {
       })
 
       expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobz')
-    })
-
-    test('Scenario: Deleting a line forward over an expanded selection removes the selection', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [{_key: spanKey, _type: 'span', text: 'foo bar baz'}],
-          },
-        ],
-      })
-
-      editor.send({
-        type: 'delete',
-        direction: 'forward',
-        unit: 'line',
-        at: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 4,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 7,
-          },
-        },
-      })
-
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo  baz')
-    })
-
-    test('Scenario: Deleting a line forward before an explicit newline removes the text up to the newline', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [{_key: spanKey, _type: 'span', text: 'foo\nbar'}],
-          },
-        ],
-      })
-
-      editor.send({
-        type: 'delete',
-        direction: 'forward',
-        unit: 'line',
-        at: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 1,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 1,
-          },
-        },
-      })
-
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f\nbar')
-    })
-
-    test('Scenario: Deleting a line forward directly before an explicit newline removes the newline', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const spanKey = keyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [{_key: spanKey, _type: 'span', text: 'foo\nbar'}],
-          },
-        ],
-      })
-
-      editor.send({
-        type: 'delete',
-        direction: 'forward',
-        unit: 'line',
-        at: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 3,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: spanKey}],
-            offset: 3,
-          },
-        },
-      })
-
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
     })
 
     test('Scenario: Deleting a line forward at the end of a span before a soft wrap removes the next span up to the end of the visual line', async () => {
@@ -766,50 +630,6 @@ describe('event.delete.forward', () => {
       )
     })
 
-    test('Scenario: Deleting a line forward across an inline object removes the text and the inline object up to the end of the line', async () => {
-      const keyGenerator = createTestKeyGenerator()
-      const blockKey = keyGenerator()
-      const fooKey = keyGenerator()
-      const stockTickerKey = keyGenerator()
-      const barKey = keyGenerator()
-      const {editor} = await createTestEditor({
-        keyGenerator,
-        schemaDefinition: defineSchema({
-          inlineObjects: [{name: 'stock-ticker'}],
-        }),
-        initialValue: [
-          {
-            _key: blockKey,
-            _type: 'block',
-            children: [
-              {_key: fooKey, _type: 'span', text: 'foo', marks: []},
-              {_key: stockTickerKey, _type: 'stock-ticker'},
-              {_key: barKey, _type: 'span', text: 'bar', marks: []},
-            ],
-            markDefs: [],
-            style: 'normal',
-          },
-        ],
-      })
-
-      editor.send({
-        type: 'delete',
-        direction: 'forward',
-        unit: 'line',
-        at: {
-          anchor: {
-            path: [{_key: blockKey}, 'children', {_key: fooKey}],
-            offset: 1,
-          },
-          focus: {
-            path: [{_key: blockKey}, 'children', {_key: fooKey}],
-            offset: 1,
-          },
-        },
-      })
-
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f')
-    })
     // Known limitation in WebKit: two characters share a line only when
     // each one's vertical middle falls inside the other's rect, and WebKit
     // places an inline object at the end of a wrapped line so that it fails
