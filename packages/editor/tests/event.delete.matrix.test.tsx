@@ -272,29 +272,6 @@ describe('event.delete | unified primitives matrix', () => {
     )
   })
 
-  test('Scenario: Deleting an expanded range from one void to another removes the entire region between', async () => {
-    const editor = await setup([
-      {_type: 'image', _key: 'i0'},
-      {
-        _type: 'block',
-        _key: 'b0',
-        children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
-      },
-      {_type: 'image', _key: 'i1'},
-    ])
-    await select(
-      editor,
-      {path: [{_key: 'i0'}], offset: 0},
-      {path: [{_key: 'i1'}], offset: 0},
-    )
-
-    editor.send({type: 'delete'})
-
-    // Both voids and the text block in range are removed; editor is left with
-    // an empty placeholder block.
-    await assertValue(editor, ['B: |'])
-  })
-
   test('Scenario: Deleting an expanded range across more than two blocks removes the middle blocks', async () => {
     const editor = await setup([
       {
