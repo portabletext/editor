@@ -336,7 +336,7 @@ describe('Feature: Per-Instance Theming Tokens', () => {
       ],
     })
 
-    await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition,
       initialValue,
@@ -357,11 +357,26 @@ describe('Feature: Per-Instance Theming Tokens', () => {
     })
 
     // Selecting a row summons the trash chip, which portals outside the
-    // editor subtree and must carry its own copy of the values.
-    await focusElement(
-      '[data-pt-plugin-table-handle="row"][data-pt-plugin-table-handle-index="0"]',
-    )
-    await userEvent.keyboard(' ')
+    // editor subtree and must carry its own copy of the values. The row is
+    // selected through the editor so the chip does not depend on browser focus.
+    const rowZeroPoint = (cellKey: string) => ({
+      path: [
+        {_key: 't0'},
+        'rows',
+        {_key: 'r0'},
+        'cells',
+        {_key: cellKey},
+        'value',
+        {_key: `b-${cellKey}`},
+        'children',
+        {_key: `s-${cellKey}`},
+      ],
+      offset: 0,
+    })
+    editor.send({
+      type: 'select',
+      at: {anchor: rowZeroPoint('c00'), focus: rowZeroPoint('c01')},
+    })
 
     await vi.waitFor(() => {
       const trash = document.querySelector<HTMLButtonElement>(
