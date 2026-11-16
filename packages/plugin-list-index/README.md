@@ -112,4 +112,4 @@ List items inside a [container](https://www.portabletext.org/editor/concepts/con
 
 The index map is rebuilt at most once per burst of operations, however many components read it, and only when the burst contains an operation that can change list indices (text insertions and removals can't). Reads via `useListIndex` re-render only when the index at their own path changes.
 
-Because the plugin observes every change source (local edits, remote patches, value sync, normalization), indices are correct on first render and stay correct when collaborators change the document.
+Because the plugin observes every change source (local edits, remote patches, the initial load, normalization), indices are correct on first render and stay correct when collaborators change the document.
