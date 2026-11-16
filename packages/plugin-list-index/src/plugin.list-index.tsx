@@ -12,7 +12,7 @@ import {buildListIndexMap, serializePath} from './build-list-index-map'
 
 /**
  * One store per editor: `change` events maintain the list index map, `ready`
- * seeds it after initial value sync, and per-path subscriber buckets make
+ * seeds it after initial load, and per-path subscriber buckets make
  * notification O(changed paths) rather than O(subscribers).
  */
 type ListIndexStore = {
