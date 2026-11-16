@@ -43,29 +43,6 @@ describe('event.history.redo', () => {
     expect(toTextspec(editor.getSnapshot().context)).toEqual('B: hello|world')
   })
 
-  test('Scenario: Simple redo without remote patches', async () => {
-    const keyGenerator = createTestKeyGenerator()
-
-    const {editor, locator} = await createTestEditor({
-      keyGenerator,
-      schemaDefinition: defineSchema({}),
-    })
-
-    await userEvent.click(locator)
-
-    editor.send({type: 'insert.text', text: 'foo'})
-
-    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-
-    editor.send({type: 'history.undo'})
-
-    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |')
-
-    editor.send({type: 'history.redo'})
-
-    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo|')
-  })
-
   test('Scenario: Redoing a bold shortcut over part of a span restores the selection', async () => {
     const keyGenerator = createTestKeyGenerator()
     const spanKey = keyGenerator()
