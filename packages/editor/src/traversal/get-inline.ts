@@ -3,7 +3,7 @@ import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
 import {isInline} from './is-inline'
-import {isObject} from './is-object'
+import {isObjectAtPath} from './is-object-at-path'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -25,7 +25,7 @@ export function getInline(
 
   if (
     !isSpanNode({schema: snapshot.context.schema}, entry.node) &&
-    !isObject(snapshot, entry.node)
+    !isObjectAtPath(snapshot, entry.node, entry.path)
   ) {
     return undefined
   }

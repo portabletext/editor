@@ -2,7 +2,7 @@ import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {parentPath} from '../engine/path/parent-path'
 import {getChildren} from '../traversal/get-children'
-import {isObject} from '../traversal/is-object'
+import {isObjectAtPath} from '../traversal/is-object-at-path'
 import type {ChildPath} from '../types/paths'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getSelectionStartPoint} from './selector.get-selection-start-point'
@@ -40,7 +40,7 @@ export const getPreviousInlineObjects: EditorSelector<
       break
     }
 
-    if (isObject(snapshot, child.node)) {
+    if (isObjectAtPath(snapshot, child.node, child.path)) {
       inlineObjects.push({
         node: child.node,
         path: child.path,

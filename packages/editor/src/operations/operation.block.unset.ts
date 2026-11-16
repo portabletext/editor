@@ -2,6 +2,7 @@ import {isTextBlockNode} from '@portabletext/schema'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
 import {getNode} from '../traversal/get-node'
+import {isBlock} from '../traversal/is-block'
 import type {OperationImplementation} from './operation.types'
 
 export const blockUnsetOperationImplementation: OperationImplementation<
@@ -16,7 +17,10 @@ export const blockUnsetOperationImplementation: OperationImplementation<
 
   const engineBlock = blockEntry.node
 
-  if (isTextBlockNode(context, engineBlock)) {
+  if (
+    isTextBlockNode(context, engineBlock) &&
+    isBlock(operation.editor.snapshot, blockEntry.path)
+  ) {
     const propsToRemove = operation.props.filter(
       (prop) => prop !== '_type' && prop !== '_key',
     )

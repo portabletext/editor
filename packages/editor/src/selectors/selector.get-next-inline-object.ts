@@ -1,7 +1,7 @@
 import type {PortableTextObject} from '@portabletext/schema'
 import type {EditorSelector} from '../editor/editor-selector'
 import {getSibling} from '../traversal/get-sibling'
-import {isObject} from '../traversal/is-object'
+import {isObjectAtPath} from '../traversal/is-object-at-path'
 import type {ChildPath} from '../types/paths'
 import {getSelectionEndPoint} from './selector.get-selection-end-point'
 
@@ -22,7 +22,8 @@ export const getNextInlineObject: EditorSelector<
 
   const sibling = getSibling(snapshot, point.path, {
     direction: 'next',
-    match: (node): node is PortableTextObject => isObject(snapshot, node),
+    match: (node, path): node is PortableTextObject =>
+      isObjectAtPath(snapshot, node, path),
   })
 
   return sibling

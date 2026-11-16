@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
@@ -50,8 +51,9 @@ export function collectDescendantIndexes(
   nodePath: Path,
   parent: RegisteredContainer | undefined,
   blockIndexMap: Map<string, number>,
+  parentIsTextBlock = false,
 ): void {
-  const result = getNodeChildren(context, node, parent)
+  const result = getNodeChildren(context, node, parent, parentIsTextBlock)
   if (!result) {
     return
   }
@@ -75,6 +77,7 @@ export function collectDescendantIndexes(
       childPath,
       result.parent,
       blockIndexMap,
+      isTextBlock(context, node),
     )
   }
 }

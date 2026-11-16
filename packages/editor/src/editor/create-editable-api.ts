@@ -26,6 +26,7 @@ import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
 import {getTextBlock} from '../traversal/get-text-block'
 import {getBlock, isBlock} from '../traversal/is-block'
+import {isLeafObject} from '../traversal/is-leaf-object'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {
   EditableAPI,
@@ -210,7 +211,27 @@ export function createEditableAPI(
     },
     isVoid: (element: PortableTextBlock | PortableTextChild): boolean => {
       const schema = editor.snapshot.context.schema
-      return ![schema.block.name, schema.span.name].includes(element._type)
+      if (element._type === schema.block.name) {
+        let blockPositionMatch = false
+        let nestedTextBlockMatch = false
+        for (const entry of getNodes(editor.snapshot)) {
+          if (entry.node === element) {
+            return isLeafObject(editor.snapshot, entry.node, entry.path)
+          }
+          if (
+            entry.node._key === element._key &&
+            entry.node._type === element._type
+          ) {
+            if (isBlock(editor.snapshot, entry.path)) {
+              blockPositionMatch = true
+            } else if (isLeafObject(editor.snapshot, entry.node, entry.path)) {
+              nestedTextBlockMatch = true
+            }
+          }
+        }
+        return !blockPositionMatch && nestedTextBlockMatch
+      }
+      return element._type !== schema.span.name
     },
     findByPath: (
       path: Path,

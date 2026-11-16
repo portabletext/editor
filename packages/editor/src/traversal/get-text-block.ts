@@ -1,6 +1,7 @@
 import {isTextBlock, type PortableTextTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
+import {isBlock} from './is-block'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -18,7 +19,10 @@ export function getTextBlock(
     return undefined
   }
 
-  if (!isTextBlock({schema: snapshot.context.schema}, entry.node)) {
+  if (
+    !isTextBlock({schema: snapshot.context.schema}, entry.node) ||
+    !isBlock(snapshot, entry.path)
+  ) {
     return undefined
   }
 

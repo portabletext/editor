@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
@@ -25,6 +26,7 @@ export function getChildFieldName(
 ): string | undefined {
   let nodeChildren = getNodeChildren(context, {value: context.value})
   let currentParent: RegisteredContainer | undefined = nodeChildren?.parent
+  let parentIsTextBlock = false
 
   for (let i = 0; i < path.length; i++) {
     if (!nodeChildren) {
@@ -50,12 +52,23 @@ export function getChildFieldName(
     }
 
     if (i === path.length - 1) {
-      const targetInfo = getNodeChildren(context, node, currentParent)
+      const targetInfo = getNodeChildren(
+        context,
+        node,
+        currentParent,
+        parentIsTextBlock,
+      )
       return targetInfo?.fieldName
     }
 
-    nodeChildren = getNodeChildren(context, node, currentParent)
+    nodeChildren = getNodeChildren(
+      context,
+      node,
+      currentParent,
+      parentIsTextBlock,
+    )
     currentParent = nodeChildren?.parent
+    parentIsTextBlock = isTextBlock(context, node)
   }
 
   return undefined

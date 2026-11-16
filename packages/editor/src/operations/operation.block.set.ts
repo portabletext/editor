@@ -5,6 +5,7 @@ import {safeStringify} from '../internal-utils/safe-json'
 import {getBlockObjectSchema} from '../schema/get-block-object-schema'
 import {getNode} from '../traversal/get-node'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {isBlock} from '../traversal/is-block'
 import {parseMarkDefs} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
 
@@ -20,7 +21,10 @@ export const blockSetOperationImplementation: OperationImplementation<
 
   const engineBlock = blockEntry.node
 
-  if (isTextBlockNode(context, engineBlock)) {
+  if (
+    isTextBlockNode(context, engineBlock) &&
+    isBlock(operation.editor.snapshot, blockEntry.path)
+  ) {
     const subSchema = getPathSubSchema(snapshot, blockEntry.path)
     const filteredProps: Record<string, unknown> = {}
 

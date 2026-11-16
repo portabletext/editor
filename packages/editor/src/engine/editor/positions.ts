@@ -74,6 +74,11 @@ export function* positions(
     to: end.path,
     reverse,
   })) {
+    if (isLeafObject(editor.snapshot, node, nodePath)) {
+      yield {path: nodePath, offset: 0}
+      continue
+    }
+
     /*
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
@@ -121,11 +126,6 @@ export function* positions(
         }
         isNewBlock = true
       }
-    }
-
-    if (isLeafObject(editor.snapshot, node, nodePath)) {
-      yield {path: nodePath, offset: 0}
-      continue
     }
 
     if (

@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
@@ -278,6 +279,7 @@ function resolveSiblingContext(
     context,
     resolvedParent.node,
     resolvedParent.containerOfParent,
+    resolvedParent.parentIsTextBlock,
   )
   if (!childrenResult || childrenResult.fieldName !== fieldSegment) {
     return undefined
@@ -408,6 +410,7 @@ function addSubtree(
     keyedPath,
     resolved.containerOfParent,
     map,
+    resolved.parentIsTextBlock,
   )
 }
 
@@ -427,6 +430,7 @@ function resolveIndexableNode(
   | {
       node: Node
       containerOfParent: RegisteredContainer | undefined
+      parentIsTextBlock: boolean
     }
   | undefined {
   if (keyedPath.length === 0) {
@@ -434,9 +438,15 @@ function resolveIndexableNode(
   }
   let current: Node | {value: Array<Node>} = {value: value as Array<Node>}
   let containerOfParent: RegisteredContainer | undefined
+  let parentIsTextBlock = false
   let index = 0
   while (index < keyedPath.length) {
-    const childrenResult = getNodeChildren(context, current, containerOfParent)
+    const childrenResult = getNodeChildren(
+      context,
+      current,
+      containerOfParent,
+      parentIsTextBlock,
+    )
     if (!childrenResult) {
       return undefined
     }
@@ -462,11 +472,12 @@ function resolveIndexableNode(
     if (!child) {
       return undefined
     }
+    parentIsTextBlock = isTextBlock(context, current)
     current = child
     containerOfParent = childrenResult.parent
     index++
   }
-  return {node: current as Node, containerOfParent}
+  return {node: current as Node, containerOfParent, parentIsTextBlock}
 }
 
 /**

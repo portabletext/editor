@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {nodeSegment} from '../paths/node-segment'
@@ -70,6 +71,7 @@ export function resolveNode(
   let currentFieldName: string | undefined
   let node: Node | undefined
   let currentParent: RegisteredContainer | undefined
+  let parentIsTextBlock = false
   const resolvedPath: Path = []
 
   for (let i = 0; i < path.length; i++) {
@@ -144,7 +146,12 @@ export function resolveNode(
     }
 
     if (hasMoreSegments) {
-      const next = getNodeChildren(context, node, currentParent)
+      const next = getNodeChildren(
+        context,
+        node,
+        currentParent,
+        parentIsTextBlock,
+      )
 
       if (!next) {
         return {status: 'missing'}
@@ -153,6 +160,7 @@ export function resolveNode(
       currentChildren = next.children
       currentFieldName = next.fieldName
       currentParent = next.parent
+      parentIsTextBlock = isTextBlock(context, node)
     } else {
       currentFieldName = undefined
     }

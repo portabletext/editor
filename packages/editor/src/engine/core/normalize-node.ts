@@ -3,7 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
-import {isSpanNode} from '@portabletext/schema'
+import {isSpanNode, isTextBlockNode} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -25,6 +25,7 @@ import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
 import {isBlock} from '../../traversal/is-block'
+import {isInline} from '../../traversal/is-inline'
 import {isObject} from '../../traversal/is-object'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
@@ -64,6 +65,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   const straySpan =
     isSpanNode({schema: editor.snapshot.context.schema}, node) &&
     isBlock(editor.snapshot, path)
+  const nestedTextBlock =
+    isTextBlockNode(editor.snapshot.context, node) &&
+    isInline(editor.snapshot, path)
   const correction = getStructuralCorrection(structuralContext, {
     node,
     path,
@@ -71,7 +75,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     siblings: () => getSiblings(editor, path, parent),
   })
   const structural =
-    !straySpan || correction?.type === 'duplicate-key' ? correction : undefined
+    (straySpan && correction?.type !== 'duplicate-key') ||
+    (nestedTextBlock && correction?.type === 'missing-children')
+      ? undefined
+      : correction
 
   if (structural) {
     if (
@@ -93,7 +100,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  if (straySpan) {
+  if (straySpan || nestedTextBlock) {
     return
   }
 

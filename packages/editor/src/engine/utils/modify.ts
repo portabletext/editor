@@ -86,8 +86,15 @@ export const modifyDescendant = <N extends Node>(
     | import('../../schema/resolve-containers').RegisteredContainer
     | undefined
 
+  let parentIsTextBlock = false
+
   for (let i = 0; i < resolvedNodeSegments.length; i++) {
-    const result = getNodeChildren(context, currentNode, currentParent)
+    const result = getNodeChildren(
+      context,
+      currentNode,
+      currentParent,
+      parentIsTextBlock,
+    )
     if (!result) {
       return
     }
@@ -118,6 +125,7 @@ export const modifyDescendant = <N extends Node>(
       children: result.children,
       index,
     })
+    parentIsTextBlock = isTextBlock(context, currentNode)
     currentNode = child
     currentParent = result.parent
   }

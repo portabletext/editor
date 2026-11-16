@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
@@ -48,6 +49,7 @@ export function getAncestors(
   const {context, blockIndexMap} = snapshot
   let currentChildren: Array<Node> = context.value
   let currentParent: RegisteredContainer | undefined
+  let parentIsTextBlock = false
 
   const ancestorsByDepth: Array<{node: PortableTextBlock; path: Path}> = []
   const resolvedPath: Path = []
@@ -107,7 +109,12 @@ export function getAncestors(
     // back to the top-level `containers` map - so same-`_type`
     // registered under different parents with different `field`
     // resolves to the right entry at this position.
-    const next = getNodeChildren(context, node, currentParent)
+    const next = getNodeChildren(
+      context,
+      node,
+      currentParent,
+      parentIsTextBlock,
+    )
     if (!next) {
       return []
     }
@@ -121,6 +128,7 @@ export function getAncestors(
 
     currentChildren = next.children
     currentParent = next.parent
+    parentIsTextBlock = isTextBlock(context, node)
     segmentIndex++
   }
 

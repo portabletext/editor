@@ -2,7 +2,7 @@ import {isSpan} from '@portabletext/schema'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {safeStringify} from '../internal-utils/safe-json'
 import {getNode} from '../traversal/get-node'
-import {isObject} from '../traversal/is-object'
+import {isObjectAtPath} from '../traversal/is-object-at-path'
 import type {OperationImplementation} from './operation.types'
 
 export const childUnsetOperationImplementation: OperationImplementation<
@@ -40,7 +40,7 @@ export const childUnsetOperationImplementation: OperationImplementation<
     return
   }
 
-  if (isObject(operation.editor.snapshot, child)) {
+  if (isObjectAtPath(operation.editor.snapshot, child, childPath)) {
     const unsetProps: Record<string, unknown> = {}
     for (const prop of operation.props) {
       if (prop === '_type') {

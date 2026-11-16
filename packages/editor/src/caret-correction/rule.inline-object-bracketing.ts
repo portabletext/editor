@@ -23,7 +23,7 @@ export function getInlineObjectBracketingCorrection(
   for (let index = 0; index < children.length; index++) {
     const child = children[index]
 
-    if (!isObjectNode(context.schema, child)) {
+    if (!isObjectNode(context.schema, child, {inTextBlock: true})) {
       continue
     }
 

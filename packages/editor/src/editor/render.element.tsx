@@ -194,7 +194,10 @@ export function RenderElement(props: {
     )
   }
 
-  if (isTextBlock({schema}, props.element)) {
+  if (
+    isTextBlock({schema}, props.element) &&
+    !isInline(engineStatic.snapshot, props.path)
+  ) {
     let rendered: ReactElement | null
     if (renderableTextBlockConfig?.textBlock.render) {
       rendered = (
@@ -241,7 +244,7 @@ export function RenderElement(props: {
     return (
       <RenderInlineObject
         attributes={props.attributes}
-        element={props.element}
+        element={props.element as PortableTextObject}
         inlineObjectConfig={inlineObjectConfig}
         path={props.path}
         readOnly={props.readOnly}
@@ -255,7 +258,7 @@ export function RenderElement(props: {
   return (
     <RenderBlockObject
       attributes={props.attributes}
-      element={props.element}
+      element={props.element as PortableTextObject}
       blockObjectConfig={blockObjectConfig}
       path={props.path}
       readOnly={props.readOnly}

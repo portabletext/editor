@@ -26,6 +26,7 @@ export function getChildren(
   let currentPath: Path = []
   let isRoot = true
   let currentParent: RegisteredContainer | undefined
+  let parentIsTextBlock = false
 
   for (const segment of path) {
     if (typeof segment === 'string') {
@@ -59,7 +60,12 @@ export function getChildren(
       : [...currentPath, currentFieldName, nodeSegment(node, nodeIndex)]
     isRoot = false
 
-    const next = getNodeChildren(snapshot.context, node, currentParent)
+    const next = getNodeChildren(
+      snapshot.context,
+      node,
+      currentParent,
+      parentIsTextBlock,
+    )
 
     if (!next) {
       return []
@@ -68,6 +74,7 @@ export function getChildren(
     currentChildren = next.children
     currentFieldName = next.fieldName
     currentParent = next.parent
+    parentIsTextBlock = isTextBlock(snapshot.context, node)
   }
 
   return currentChildren.map((child, childIndex) => ({
@@ -101,6 +108,7 @@ export function getNodeChildren(
   },
   node: Node | {value: Array<Node>},
   parent?: RegisteredContainer,
+  parentIsTextBlock = false,
 ):
   | {
       children: Array<Node>
@@ -108,8 +116,11 @@ export function getNodeChildren(
       parent: RegisteredContainer | undefined
     }
   | undefined {
-  // Text blocks store children in .children
   if (isTextBlock(context, node)) {
+    if (parentIsTextBlock) {
+      return undefined
+    }
+
     return {
       children: node.children,
       fieldName: 'children',

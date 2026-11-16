@@ -294,9 +294,11 @@ const useChildren = (props: {
 
   const elements = children.map((n: Node, i: number) => {
     if (
-      !textBlockParent &&
-      isTypedObject(n) &&
-      n._type === editor.snapshot.context.schema.span.name
+      (textBlockParent &&
+        isTextBlockNode({schema: editor.snapshot.context.schema}, n)) ||
+      (!textBlockParent &&
+        isTypedObject(n) &&
+        n._type === editor.snapshot.context.schema.span.name)
     ) {
       return renderObjectNodeComponent(n, i)
     }

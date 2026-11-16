@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSchema} from '../editor/editor-schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
@@ -75,8 +76,9 @@ function* walkStandalone(
   path: Path,
   isRoot: boolean,
   parent?: RegisteredContainer,
+  parentIsTextBlock = false,
 ): Generator<{node: Node; path: Path}, void, undefined> {
-  const next = getNodeChildren(context, node, parent)
+  const next = getNodeChildren(context, node, parent, parentIsTextBlock)
   if (!next) {
     return
   }
@@ -87,7 +89,14 @@ function* walkStandalone(
       ? [nodeSegment(child, childIndex)]
       : [...path, next.fieldName, nodeSegment(child, childIndex)]
     yield {node: child, path: childPath}
-    yield* walkStandalone(context, child, childPath, false, next.parent)
+    yield* walkStandalone(
+      context,
+      child,
+      childPath,
+      false,
+      next.parent,
+      isTextBlock(context, node),
+    )
   }
 }
 
