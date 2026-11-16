@@ -234,3 +234,21 @@ Feature: Splitting Blocks
     And everything is selected
     And "{Enter}" is pressed
     Then the editor state is "B: |"
+
+  Scenario: Splitting with an expanded selection from one span to another
+    Given the editor state is
+      """
+      B: foo
+      B: [strong:bar]
+      """
+    When the selection is
+      """
+      B: fo^o
+      B: [strong:b|ar]
+      """
+    And the block is split at the selection
+    Then the editor state is
+      """
+      B: fo
+      B: [strong:|ar]
+      """
