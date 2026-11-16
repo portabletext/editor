@@ -6,6 +6,7 @@ import type {
 } from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
 import {builtinTypes} from '@sanity/schema/_internal'
+import {isSpanSchemaType} from '@sanity/types'
 import type {
   ArrayDefinition,
   ArraySchemaType,
@@ -463,11 +464,8 @@ function resolveBlockOfMember(
   const inlineObjectTypes = (
     Array.isArray(childrenOf) ? childrenOf : []
   ).filter((memberType) => memberType.name !== 'span') as ObjectSchemaType[]
-  const spanDecorators = (
-    spanType as unknown as {
-      decorators?: ReadonlyArray<BlockDecoratorDefinition>
-    }
-  )?.decorators
+  const spanDecorators =
+    spanType && isSpanSchemaType(spanType) ? spanType.decorators : undefined
   const spanAnnotations = (spanType as SpanSchemaType | undefined)?.annotations
 
   return {
@@ -677,7 +675,10 @@ function resolveEnabledStyles(blockType: ObjectSchemaType) {
 }
 
 function resolveEnabledDecorators(spanType: ObjectSchemaType) {
-  return (spanType as any).decorators
+  if (!isSpanSchemaType(spanType)) {
+    throw new Error('Expected a span schema type')
+  }
+  return spanType.decorators
 }
 
 function resolveEnabledListItems(blockType: ObjectSchemaType) {
