@@ -1,10 +1,14 @@
 import {compileSchema, type PortableTextBlock} from '@portabletext/schema'
-import {describe, expect, test} from 'vitest'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {describe, expect, test, vi} from 'vitest'
 import {
   textBlockDepthsContainers,
   textBlockDepthsSchemaDefinition,
 } from '../../test-utils/text-block-depths'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
+import {serializePath} from '../paths/serialize-path'
+import {defineContainer} from '../renderers/renderer.types'
+import {resolveContainers} from '../schema/resolve-containers'
 import {resolveTestbedContainers} from './node-traversal-testbed'
 import {walkPath} from './walk-path'
 
@@ -3536,4 +3540,60 @@ describe('walkPath inside a field with its own sub-schema', () => {
 
     expect(walk).toEqual({status: 'invalid'})
   })
+})
+
+test('cached keys equal serialized paths through null fields and indexes', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const containerKey = keyGenerator()
+  const blockKey = keyGenerator()
+  const schema = compileSchema({
+    blockObjects: [
+      {
+        name: 'callout',
+        fields: [{name: 'null', type: 'array', of: [{type: 'block'}]}],
+      },
+    ],
+  })
+  const containers = resolveContainers(schema, [
+    defineContainer({type: 'callout', arrayField: 'null'}),
+  ])
+  const value = [
+    {
+      _type: 'callout',
+      _key: containerKey,
+      null: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', text: 'foo'}],
+        },
+      ],
+    },
+  ]
+  const blockIndexMap = new Map<string, number>()
+  buildIndexMaps({schema, containers, value}, {blockIndexMap})
+  const mapGet = vi.spyOn(blockIndexMap, 'get')
+  const walk = walkPath({context: {schema, containers, value}, blockIndexMap}, [
+    {_key: containerKey},
+    'null',
+    {_key: blockKey},
+    'children',
+    0,
+  ])
+  expect(mapGet.mock.calls).toEqual([
+    ['[_key=="k0"]'],
+    ['[_key=="k0"]["null"][_key=="k1"]'],
+  ])
+  expect(walk.status).toEqual('found')
+  if (walk.status !== 'found') {
+    return
+  }
+  expect(walk.nodes.map((node) => Reflect.get(node, 'key'))).toEqual(
+    walk.nodes.map((node) => serializePath(node.path)),
+  )
+  expect(walk.nodes.map((node) => Reflect.get(node, 'key'))).toEqual([
+    '[_key=="k0"]',
+    '[_key=="k0"]["null"][_key=="k1"]',
+    '[_key=="k0"]["null"][_key=="k1"].children[0]',
+  ])
 })

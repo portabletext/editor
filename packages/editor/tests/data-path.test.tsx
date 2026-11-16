@@ -1,6 +1,9 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('data-pt-path attribute', () => {
@@ -353,6 +356,87 @@ describe('data-pt-path attribute', () => {
         .querySelector(`[data-pt-path='[_key=="${newImageKey}"]']`)
 
       expect(newImageLocator).not.toBeNull()
+    })
+  })
+
+  test('Scenario: Quoted null field paths support clicking and typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const containerKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'null', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: containerKey,
+          null: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'null',
+              render: ({attributes, children}) => (
+                <div {...attributes}>{children}</div>
+              ),
+            }),
+          ]}
+        />
+      ),
+    })
+    await vi.waitFor(() => {
+      expect(
+        locator
+          .element()
+          .querySelector('[data-pt-block="text"]')
+          ?.getAttribute('data-pt-path'),
+      ).toEqual('[_key=="k0"]["null"][_key=="k1"]')
+      expect(
+        locator
+          .element()
+          .querySelector('span[data-pt-path]')
+          ?.getAttribute('data-pt-path'),
+      ).toEqual('[_key=="k0"]["null"][_key=="k1"].children[_key=="k2"]')
+    })
+    await userEvent.click(locator.getByText('foo'))
+    await userEvent.keyboard('{End}a')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: 'k0',
+          null: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k2', text: 'fooa', marks: []}],
+            },
+          ],
+        },
+      ])
     })
   })
 })
