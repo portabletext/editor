@@ -10,7 +10,7 @@ import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {StrictMode, useEffect} from 'react'
 import {renderToString} from 'react-dom/server'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {server, userEvent} from 'vitest/browser'
 import {createDecorationLayer} from './create-decoration-layer'
@@ -778,6 +778,7 @@ describe('createDecorationLayer: events', () => {
 
   test("Scenario: a throwing `on` handler does not prevent delivery to another layer's handler", async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -830,7 +831,6 @@ describe('createDecorationLayer: events', () => {
     })
     expect(onThrows).toHaveBeenCalledTimes(1)
     expect(consoleError.mock.calls).toEqual([[new Error('listener boom')]])
-    consoleError.mockRestore()
   })
 
   test('Scenario: two registrations each deliver their own `moved` event to their own `on` handler', async () => {
