@@ -1951,7 +1951,7 @@ describe('the workflow', () => {
       workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0] ?? ''
     const key =
       "u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}"
-    const path = 'packages/thumbjar/.cache/u2.jar'
+    const path = 'packages/editor/node_modules/.cache/thumbjar/u2.jar'
     expect({
       order: names.slice(
         names.indexOf('Restore the uiautomator2 server jar'),

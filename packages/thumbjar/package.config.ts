@@ -1,4 +1,3 @@
-import {copyFileSync, mkdirSync} from 'node:fs'
 import {defineConfig} from '@sanity/pkg-utils'
 
 export default defineConfig({
@@ -6,6 +5,17 @@ export default defineConfig({
   // Private, so no release tags: nothing renders its API docs.
   tsdoc: false,
   bundles: [
+    {source: './src/guard.ts', import: './dist/guard.js', runtime: 'node'},
+    {
+      source: './src/prepare/capture.ts',
+      import: './dist/prepare/capture.js',
+      runtime: 'node',
+    },
+    {
+      source: './src/run/logcat.ts',
+      import: './dist/run/logcat.js',
+      runtime: 'node',
+    },
     {source: './src/run/cap.ts', import: './dist/run/cap.js', runtime: 'node'},
     {
       source: './src/run/check.ts',
@@ -22,20 +32,6 @@ export default defineConfig({
       source: './src/prepare/dictionary.ts',
       import: './dist/prepare/dictionary.js',
       runtime: 'node',
-    },
-  ],
-  plugins: [
-    {
-      // `thumbjar prepare` runs `prepare.sh` next to `bin.js`, and it runs `diagnose.sh`, `setup-ja.js` and `dictionary.js` next to itself.
-      name: 'thumbjar-prepare-scripts',
-      writeBundle() {
-        mkdirSync('dist/run', {recursive: true})
-        copyFileSync('src/run/run.sh', 'dist/run/run.sh')
-        mkdirSync('dist/prepare', {recursive: true})
-        for (const script of ['prepare.sh', 'diagnose.sh']) {
-          copyFileSync(`src/prepare/${script}`, `dist/prepare/${script}`)
-        }
-      },
     },
   ],
 })

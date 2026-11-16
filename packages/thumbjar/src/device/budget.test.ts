@@ -1,5 +1,5 @@
-import {readFileSync} from 'node:fs'
 import {describe, expect, test} from 'vitest'
+import {prepDeadlines} from '../prepare/prepare.ts'
 import {
   countDeviceTests,
   CAPTURE_SEED_SECONDS,
@@ -27,11 +27,6 @@ import {
   U2_JAR_ATTEMPTS,
   U2_JAR_RETRY_SECONDS,
 } from './budget.ts'
-
-const prepare = readFileSync(
-  new URL('../prepare/prepare.sh', import.meta.url),
-  'utf8',
-)
 
 describe(deviceTestFileSeconds.name, () => {
   test("gives each test its timeout on top of the global setup and Vitest's start and exit", () => {
@@ -106,36 +101,25 @@ describe(prepWorstSeconds.name, () => {
 
   test('runs Japanese prep for 862 seconds after its 17-second boot capture and English prep for 622, each with its kill-after, and each new stage under the caps the prep sums', () => {
     expect({
-      deadlines: /^ {2}ja\) deadline=(\d+) ;;\n {2}\*\) deadline=(\d+) ;;$/m
-        .exec(prepare)
-        ?.slice(1)
-        .map(Number),
-      prep: /^timeout -k (\d+) "\$deadline" bash -c prep &$/m
-        .exec(prepare)
-        ?.slice(1)
-        .map(Number),
-      bootCapture: /^\s+timeout -k (\d+) (\d+) bash -c capture_seed /m
-        .exec(prepare)
-        ?.slice(1)
-        .map(Number),
-      selfUpdateBlock: /^\s+timeout -k (\d+) (\d+) bash -c block_self_update /m
-        .exec(prepare)
-        ?.slice(1)
-        .map(Number),
-      dictionaryLoad: /^DICTIONARY_LOAD_SECONDS=(\d+)$/m
-        .exec(prepare)
-        ?.slice(1)
-        .map(Number),
-      dictionaryWait:
-        /^\s+timeout -k (\d+) \$\(\(wait_seconds \+ (\d+)\)\) node "\$here\/dictionary\.js" wait /m
-          .exec(prepare)
-          ?.slice(1)
-          .map(Number),
-      dictionaryCheck:
-        /^\s+timeout -k (\d+) (\d+) node "\$here\/dictionary\.js" check /m
-          .exec(prepare)
-          ?.slice(1)
-          .map(Number),
+      deadlines: [prepDeadlines.prep.ja, prepDeadlines.prep.en],
+      prep: [prepDeadlines.prep.killAfter],
+      bootCapture: [
+        prepDeadlines.bootCapture.killAfter,
+        prepDeadlines.bootCapture.seconds,
+      ],
+      selfUpdateBlock: [
+        prepDeadlines.selfUpdateBlock.killAfter,
+        prepDeadlines.selfUpdateBlock.seconds,
+      ],
+      dictionaryLoad: [prepDeadlines.dictionaryLoad],
+      dictionaryWait: [
+        prepDeadlines.dictionaryWait.killAfter,
+        prepDeadlines.dictionaryWait.seconds,
+      ],
+      dictionaryCheck: [
+        prepDeadlines.dictionaryCheck.killAfter,
+        prepDeadlines.dictionaryCheck.seconds,
+      ],
     }).toEqual({
       deadlines: [862, 622],
       prep: [PREP_KILL_SECONDS],

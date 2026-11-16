@@ -14,7 +14,7 @@ test.fails('Scenario: Backspace and Enter after foo', async (context) => {
     prefix: 'foo',
     steps: [{type: 'backspace'}, {type: 'enter'}],
   })
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   const run = await running
 
   expect(run.text).toEqual('fo\n')
@@ -34,7 +34,7 @@ test.fails('Scenario: Enter after foo', async (context) => {
     prefix: 'foo',
     steps: [{type: 'enter'}],
   })
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([running, vi.runAllTimersAsync()])
   const run = await running
 
   expect(run.text).toEqual('foo\n')

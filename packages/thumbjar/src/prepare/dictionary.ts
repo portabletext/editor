@@ -31,7 +31,7 @@ import {
 import {closeChrome} from '../gboard/typing.ts'
 
 const GBOARD = 'com.google.android.inputmethod.latin'
-// The status `wait` exits with when no load line came by its deadline. `prepare.sh` exits with it too, as
+// The status `wait` exits with when no load line came by its deadline. `prepare` exits with it too, as
 // its `DICTIONARY_NOT_LOADED_STATUS`, keep the two in sync.
 const NOT_LOADED_STATUS = 3
 // Each adb call of the wait, so its last read, the version query included, ends within `DICTIONARY_WAIT_TAIL_SECONDS`.
@@ -173,7 +173,7 @@ function log(line: string): void {
 main().then(
   () => process.exit(0),
   (error: unknown) => {
-    // The first line is the reason `prepare.sh` quotes in its PREP FAILED line.
+    // The first line is the reason `prepare` quotes in its PREP FAILED line.
     console.error(
       `DICTIONARY FAILED: ${error instanceof Error ? error.message : String(error)}`,
     )

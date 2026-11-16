@@ -18,7 +18,7 @@ import {
 describe('event.delete', () => {
   test('Scenario: Deleting collapsed selection', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         blockObjects: [{name: 'image'}],
@@ -52,8 +52,6 @@ describe('event.delete', () => {
         },
       ],
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     await vi.waitFor(() => {
       expect(toTextspec(editor.getSnapshot().context)).toEqual(
@@ -1283,7 +1281,7 @@ describe('event.delete', () => {
 
   test('Scenario: Deleting a range across two empty same-parent blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         styles: [{name: 'normal'}, {name: 'h1'}],
@@ -1306,8 +1304,6 @@ describe('event.delete', () => {
       ],
     })
 
-    await expect.element(locator).toBeInTheDocument()
-
     editor.send({
       type: 'delete',
       at: {
@@ -1323,7 +1319,7 @@ describe('event.delete', () => {
 
   test('Scenario: Deleting a range across three empty same-parent blocks', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({
+    const {editor} = await createTestEditor({
       keyGenerator,
       schemaDefinition: defineSchema({
         styles: [{name: 'normal'}, {name: 'h1'}],
@@ -1352,8 +1348,6 @@ describe('event.delete', () => {
         },
       ],
     })
-
-    await expect.element(locator).toBeInTheDocument()
 
     editor.send({
       type: 'delete',

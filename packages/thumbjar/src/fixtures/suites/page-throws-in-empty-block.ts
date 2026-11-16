@@ -9,7 +9,7 @@ test.fails('Scenario: The editor throws while kyou is typed into an empty block'
     prefix: '',
     words: [{letters: 'kyou'}],
   })
-  await vi.runAllTimersAsync()
+  await Promise.allSettled([typing, vi.runAllTimersAsync()])
 
   expect((await typing).text).toEqual('kyou ')
 })

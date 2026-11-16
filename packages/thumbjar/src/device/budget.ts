@@ -190,6 +190,36 @@ export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
   )
 }
 
+export function prepDeadlineSeconds(keyboard: 'ja' | 'en'): number {
+  return (
+    prepWorstSeconds(keyboard) -
+    PREP_KILL_SECONDS -
+    (keyboard === 'ja' ? CAPTURE_SEED_SECONDS + KILL_GRACE_SECONDS : 0)
+  )
+}
+
+export const COMMAND_READ_SECONDS = 10
+export const COMMAND_KILL_SECONDS = 5
+export const DIAGNOSTICS_SECONDS = 60
+export const PREP_ADB_SECONDS = 60
+export const PLAY_STORE_COMMAND_SECONDS = 8
+export const PLAY_STORE_COMMAND_KILL_SECONDS = 1
+export const SETTLE_SECONDS = 240
+export const SETTLE_EVENT_SECONDS = 20
+export const SETTLE_CLEAR_SECONDS = 10
+export const SETTLE_POLL_SECONDS = 5
+export const SETTLE_QUIET_SECONDS = 30
+export const JAPANESE_SETUP_SECONDS = 240
+export const JAPANESE_SETUP_KILL_SECONDS = 10
+export const CAPTURE_WAIT_SECONDS = 20
+export const CAPTURE_RETRY_SECONDS = 1
+export const CAPTURE_KILL_WAIT_SECONDS = 1
+export const HTTP_ATTEMPTS = 6
+export const HTTP_ATTEMPT_SECONDS = 5
+export const HTTP_RETRY_SECONDS = 1
+export const RUN_TEST_KILL_SECONDS = 10
+export const RUN_SERVER_KILL_SECONDS = 0
+
 /** One download of the uiautomator2 server jar, its body included. The slowest seen on CI took 16. */
 export const U2_JAR_ATTEMPT_SECONDS = 45
 
