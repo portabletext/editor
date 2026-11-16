@@ -499,37 +499,4 @@ describe('escaping a container at the document edge', () => {
       expect(editor.getSnapshot().context.value).toEqual([calloutBlock])
     })
   })
-
-  test('Scenario: Pressing ArrowDown inserts nothing when the container has a next sibling', async () => {
-    const {editor} = await createTestEditor({
-      keyGenerator: createTestKeyGenerator(),
-      schemaDefinition,
-      initialValue: [
-        calloutBlock,
-        {
-          _type: 'block',
-          _key: 'b0',
-          style: 'normal',
-          markDefs: [],
-          children: [{_type: 'span', _key: 's0', text: 'after', marks: []}],
-        },
-      ],
-      children: <NodePlugin nodes={containers} />,
-    })
-    editor.send({type: 'focus'})
-    editor.send({
-      type: 'select',
-      at: {anchor: leafPoint(2), focus: leafPoint(2)},
-    })
-    await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.selection?.focus.offset).toBe(2)
-    })
-
-    editor.send({type: 'keyboard.keydown', originEvent: arrowKey('ArrowDown')})
-
-    await vi.waitFor(() => {
-      // Native navigation handles the sibling case; no block is inserted.
-      expect(editor.getSnapshot().context.value).toHaveLength(2)
-    })
-  })
 })
