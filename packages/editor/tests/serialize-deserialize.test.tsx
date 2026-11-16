@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {execute, forward, raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -327,6 +327,7 @@ describe('Serialize/Deserialize', () => {
   test('Scenario: Unconfigured `text/markdown` paste falls forward to `text/plain`', async () => {
     const keyGenerator = createTestKeyGenerator()
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     const {editor, locator} = await createTestEditor({
       keyGenerator,
@@ -356,8 +357,6 @@ describe('Serialize/Deserialize', () => {
     // The fall-forward recovers, so it's not a terminal failure worth
     // warning about
     expect(warnSpy).not.toHaveBeenCalled()
-
-    warnSpy.mockRestore()
   })
 
   test('Scenario: Consumer `deserialize.data` Behavior receives `text/markdown`', async () => {
@@ -503,6 +502,7 @@ describe('Serialize/Deserialize', () => {
     const keyGenerator = createTestKeyGenerator()
     const imageKey = keyGenerator()
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     const {editor, locator} = await createTestEditor({
       initialValue: [
@@ -544,8 +544,6 @@ describe('Serialize/Deserialize', () => {
 
     // A fragment of only block objects has no HTML form, which is expected
     expect(warnSpy).not.toHaveBeenCalled()
-
-    warnSpy.mockRestore()
   })
 
   test('Scenario: Round-trip through consumer `text/markdown` Behaviors', async () => {

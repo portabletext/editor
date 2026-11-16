@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -196,7 +196,9 @@ describe('code-block resolution through normalisation', () => {
 
   test('Scenario: Registering `code-block` with a field the schema does not have warns at register time and the node renders as a non-editable placeholder', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
     const keyGenerator = createTestKeyGenerator()
 
     const initialValue = initialTableValue()
@@ -258,8 +260,5 @@ describe('code-block resolution through normalisation', () => {
     expect(cellContent.length).toBeGreaterThan(0)
     expect(cellContent.some((child) => child._type === 'code-block')).toBe(true)
     expect(consoleError.mock.calls).toEqual([])
-
-    warn.mockRestore()
-    consoleError.mockRestore()
   })
 })

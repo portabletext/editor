@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {expect, test, vi} from 'vitest'
+import {expect, onTestFinished, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer, defineTextBlock} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -96,6 +96,7 @@ test('Scenario: Without a TextBlockPlugin the engine default renders', async () 
 
 test('Scenario: Registering a text block then a container for the same type warns and skips the container', async () => {
   const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  onTestFinished(() => warnSpy.mockRestore())
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()
@@ -145,6 +146,4 @@ test('Scenario: Registering a text block then a container for the same type warn
       expect.stringContaining('already registered as a textBlock'),
     )
   })
-
-  warnSpy.mockRestore()
 })

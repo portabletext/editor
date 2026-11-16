@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -183,6 +183,7 @@ describe('Rule 1: registration is type-keyed, activation is position-gated', () 
 describe('Registration silent-skip behavior', () => {
   test('Scenario: A top-level registration of an unknown type silently skips and other registrations are unaffected', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
     const keyGenerator = createTestKeyGenerator()
 
     await createTestEditor({
@@ -246,11 +247,11 @@ describe('Registration silent-skip behavior', () => {
         )
       }),
     ).toBe(true)
-    warn.mockRestore()
   })
 
   test('Scenario: A nested registration of an unknown type silently skips with a chain-aware warning and the parent still registers', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
     const keyGenerator = createTestKeyGenerator()
 
     await createTestEditor({
@@ -318,11 +319,11 @@ describe('Registration silent-skip behavior', () => {
         )
       }),
     ).toBe(true)
-    warn.mockRestore()
   })
 
   test('Scenario: A registration with an arrayField that does not exist on the schema type silently skips', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warn.mockRestore())
     const keyGenerator = createTestKeyGenerator()
 
     await createTestEditor({
@@ -383,7 +384,6 @@ describe('Registration silent-skip behavior', () => {
         )
       }),
     ).toBe(true)
-    warn.mockRestore()
   })
 })
 

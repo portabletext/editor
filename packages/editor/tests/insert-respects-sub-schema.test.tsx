@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
@@ -294,6 +294,7 @@ describe('insert respects sub-schema', () => {
     // schema-mismatch diagnostic for it. Silence it; this test pins the
     // operation's own noop-without-throwing contract, not render output.
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => errorSpy.mockRestore())
 
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
@@ -372,8 +373,6 @@ describe('insert respects sub-schema', () => {
         },
       ])
     })
-
-    errorSpy.mockRestore()
   })
 
   test('Scenario: `child.set` on an inline object inside a container filters undeclared fields against the path sub-schema', async () => {
@@ -456,6 +455,7 @@ describe('insert respects sub-schema', () => {
 
   test('Scenario: `block.set` on a block object inside a container filters undeclared fields against the path sub-schema', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const embedKey = keyGenerator()
@@ -505,7 +505,6 @@ describe('insert respects sub-schema', () => {
       ])
     })
     expect(consoleError.mock.calls).toEqual([])
-    consoleError.mockRestore()
   })
 
   test('Scenario: `decorator.add` of an allowed decorator inside a container applies the mark', async () => {
@@ -745,6 +744,7 @@ describe('insert respects sub-schema', () => {
 
   test('Scenario: `annotation.add` of a disallowed annotation inside a container does not apply the mark', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
     const keyGenerator = createTestKeyGenerator()
     const calloutKey = keyGenerator()
     const innerBlockKey = keyGenerator()
@@ -837,7 +837,6 @@ describe('insert respects sub-schema', () => {
         ),
       ],
     ])
-    consoleError.mockRestore()
   })
 
   test('Scenario: `decorator.add` of a decorator not declared at root does not apply the mark', async () => {
@@ -892,6 +891,7 @@ describe('insert respects sub-schema', () => {
 
   test('Scenario: `annotation.add` of an annotation not declared at root does not apply the mark', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -954,7 +954,6 @@ describe('insert respects sub-schema', () => {
         ),
       ],
     ])
-    consoleError.mockRestore()
   })
 })
 

@@ -334,6 +334,7 @@ describe('event.insert.text', () => {
     const imageKey = keyGenerator()
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => errorSpy.mockRestore())
 
     const {editor} = await createTestEditor({
       keyGenerator,
@@ -371,8 +372,6 @@ describe('event.insert.text', () => {
         src: 'https://example.com/image.jpg',
       },
     ])
-
-    errorSpy.mockRestore()
   })
 
   test('Scenario: Inserting text at an inline object', async () => {
