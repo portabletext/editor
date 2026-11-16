@@ -1,4 +1,5 @@
-import type {PortableTextBlock} from '@portabletext/schema'
+import {unset, insert} from '@portabletext/patches'
+import {type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React, {Profiler} from 'react'
 import {describe, expect, test, vi} from 'vitest'
@@ -451,4 +452,131 @@ describe('Registered nodes: typing render counts', () => {
         `median commit: ${registered.medianCommitDuration.toFixed(3)}ms across ${registered.commitCount} commits`,
     )
   }, 120_000)
+})
+
+test('Scenario: Deleting 100 blocks in one event unmounts them without crashing', async () => {
+  const BLOCKS = 100
+
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  try {
+    const {editor, locator} = await createTestEditor({
+      schemaDefinition,
+    })
+
+    const initialValue: Array<PortableTextBlock> = []
+    for (let blockIndex = 0; blockIndex < BLOCKS; blockIndex++) {
+      initialValue.push({
+        _type: 'block',
+        _key: `b${blockIndex}`,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: `s${blockIndex}`,
+            text: `block ${blockIndex}`,
+            marks: [],
+          },
+        ],
+      })
+    }
+    editor.send({
+      type: 'apply',
+      patches: [insert(initialValue, 'before', [0])],
+    })
+
+    await vi.waitFor(
+      () => expect(locator.getByText('block 0')).toBeInTheDocument(),
+      {timeout: 10_000},
+    )
+    await vi.waitFor(
+      () =>
+        expect(locator.getByText(`block ${BLOCKS - 1}`)).toBeInTheDocument(),
+      {timeout: 10_000},
+    )
+
+    errorSpy.mockClear()
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'after',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 's-after', text: '', marks: []}],
+            },
+          ],
+          'before',
+          [0],
+        ),
+        ...initialValue.map((block) => unset([{_key: block._key}])),
+      ],
+    })
+
+    await vi.waitFor(
+      () => {
+        expect(
+          (document.body.textContent ?? '').includes(`block ${BLOCKS - 1}`),
+          'last old block should have unmounted',
+        ).toBe(false)
+      },
+      {timeout: 10_000},
+    )
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'after'}, 'children', {_key: 's-after'}],
+      offset: 0,
+      text: 'OK',
+    })
+
+    await vi.waitFor(() => expect(locator.getByText('OK')).toBeInTheDocument())
+
+    const subscriberErrors = errorSpy.mock.calls.filter((args) => {
+      const message = args.map((a) => String(a)).join(' ')
+      return /subscrib|unmount|cleanup|set state on|memory leak|external store/i.test(
+        message,
+      )
+    })
+
+    expect(
+      subscriberErrors,
+      `Expected no subscriber/unmount errors during mass delete, got:\n${subscriberErrors
+        .map((c) => c.map(String).join(' '))
+        .join('\n---\n')}`,
+    ).toHaveLength(0)
+  } finally {
+    errorSpy.mockRestore()
+  }
+}, 60_000)
+const schemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'list',
+      fields: [
+        {
+          name: 'items',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'list-item',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'list'}],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
 })

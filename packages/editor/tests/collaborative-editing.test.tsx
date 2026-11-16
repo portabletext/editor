@@ -1,13 +1,22 @@
-import {applyAll, diffMatchPatch, type Patch} from '@portabletext/patches'
+import {applyAll, diffMatchPatch, type Patch, set} from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, getTersePt} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {userEvent, type Locator} from 'vitest/browser'
-import {type Editor} from '../src'
+import {render} from 'vitest-browser-react'
+import {userEvent, type Locator, page} from 'vitest/browser'
+import {
+  type Editor,
+  EditorProvider,
+  PortableTextEditable,
+  type MutationEvent,
+} from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {EventListenerPlugin} from '../src/plugins'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
+import {EditorRefPlugin} from '../src/plugins/plugin.editor-ref'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
 import {getSelectionAfterText} from '../test-utils/text-selection'
 
@@ -1640,3 +1649,273 @@ describe('Collaborative editing', () => {
     })
   })
 })
+
+test('Scenario: Applying patches discards local held-back patches', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const emittedPatches: Array<Patch> = []
+
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: defineSchema({}),
+    initialValue: [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+      },
+    ],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'patch') {
+            const {origin: _, ...patch} = event.patch
+            emittedPatches.push(patch)
+          }
+        }}
+      />
+    ),
+  })
+
+  expect(emittedPatches).toEqual([])
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_key: spanKey, _type: 'span', text: 'foo'}],
+      },
+    ])
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [
+      diffMatchPatch('foo', 'bar', [
+        {_key: blockKey},
+        'children',
+        {_key: spanKey},
+        'text',
+      ]),
+      set('normal', [{_key: blockKey}, 'style']),
+    ],
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_key: spanKey, _type: 'span', text: 'bar'}],
+        style: 'normal',
+      },
+    ])
+  })
+
+  await whenTheCaretIsPutAfter({editor, locator}, 'bar')
+
+  await userEvent.type(locator, 'baz')
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_key: spanKey, _type: 'span', text: 'barbaz', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
+
+  expect(emittedPatches).toEqual([
+    diffMatchPatch('bar', 'barb', [
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+      'text',
+    ]),
+    {
+      type: 'set',
+      path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+      value: [],
+    },
+    {
+      type: 'set',
+      path: [{_key: blockKey}, 'markDefs'],
+      value: [],
+    },
+    diffMatchPatch('barb', 'barba', [
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+      'text',
+    ]),
+    diffMatchPatch('barba', 'barbaz', [
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+      'text',
+    ]),
+  ])
+
+  expect(editor.getSnapshot().context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      children: [{_key: spanKey, _type: 'span', text: 'barbaz', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    },
+  ])
+})
+
+// Clearing should leave both peers with the same keys, but each peer keeps its own placeholder keys.
+test.fails('Scenario: Each peer keeps its own placeholder keys after clearing', async () => {
+  const {editorA, editorB, locatorA, shared, nextMutation} =
+    await renderPatchRelayingEditors()
+
+  await userEvent.click(locatorA)
+  await userEvent.type(locatorA, 'foo')
+
+  await vi.waitFor(
+    () => {
+      expect(getTersePt(editorA.getSnapshot().context)).toEqual(['foo'])
+      expect(getTersePt(editorB.getSnapshot().context)).toEqual(['foo'])
+      expect(shared.value).toEqual([textBlock('foo')])
+    },
+    {timeout: 3_000},
+  )
+
+  await userEvent.keyboard(IS_MAC ? '{Meta>}a{/Meta}' : '{Control>}a{/Control}')
+  await userEvent.keyboard('{Backspace}')
+
+  await vi.waitFor(
+    () => {
+      expect(editorA.getSnapshot().context.value).toEqual([textBlock('')])
+      expect(editorB.getSnapshot().context.value).toEqual([textBlock('')])
+      expect(shared.value).toEqual([textBlock('')])
+    },
+    {timeout: 3_000},
+  )
+
+  const colonMutation = nextMutation('a')
+  await userEvent.keyboard(':')
+  await colonMutation
+
+  editorB.send({type: 'update readOnly', readOnly: true})
+
+  const eaMutation = nextMutation('a')
+  editorA.send({type: 'insert.text', text: 'ea'})
+  await eaMutation
+
+  const heldMutation = nextMutation('b')
+  editorB.send({type: 'update readOnly', readOnly: false})
+  await heldMutation
+
+  await vi.waitFor(
+    () => {
+      expect(editorA.getSnapshot().context.value).toEqual(shared.value)
+      expect(editorB.getSnapshot().context.value).toEqual(shared.value)
+    },
+    {timeout: 3_000},
+  )
+
+  expect({
+    editorA: editorA.getSnapshot().context.value[0],
+    editorB: editorB.getSnapshot().context.value[0],
+    shared: shared.value?.[0],
+  }).toEqual({
+    editorA: textBlock(':ea'),
+    editorB: textBlock(':ea'),
+    shared: textBlock(':ea'),
+  })
+})
+function textBlock(text: string): PortableTextBlock {
+  return {
+    _type: 'block',
+    _key: 'a-k0',
+    children: [{_type: 'span', _key: 'a-k1', text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}
+async function renderPatchRelayingEditors() {
+  const editorARef = React.createRef<Editor>()
+  const editorBRef = React.createRef<Editor>()
+  const keyGeneratorA = createTestKeyGenerator('a-')
+  const keyGeneratorB = createTestKeyGenerator('b-')
+  const shared: {value: Array<PortableTextBlock> | undefined} = {
+    value: undefined,
+  }
+  const mutationWaiters: Array<{editorId: 'a' | 'b'; resolve: () => void}> = []
+
+  function relayMutation(editorId: 'a' | 'b', event: MutationEvent) {
+    for (const [peerId, peerRef] of [
+      ['a', editorARef],
+      ['b', editorBRef],
+    ] as const) {
+      if (peerId === editorId) {
+        continue
+      }
+      peerRef.current?.send({type: 'apply', patches: event.patches})
+    }
+
+    shared.value = event.value
+
+    for (const waiter of mutationWaiters.splice(0)) {
+      if (waiter.editorId === editorId) {
+        waiter.resolve()
+      } else {
+        mutationWaiters.push(waiter)
+      }
+    }
+  }
+
+  function Host() {
+    return (
+      <>
+        {(
+          [
+            ['a', editorARef, keyGeneratorA],
+            ['b', editorBRef, keyGeneratorB],
+          ] as const
+        ).map(([editorId, editorRef, keyGenerator]) => (
+          <EditorProvider
+            key={editorId}
+            initialConfig={{keyGenerator, schemaDefinition: defineSchema({})}}
+          >
+            <EditorRefPlugin ref={editorRef} />
+            <PortableTextEditable data-testid={`editor-${editorId}`} />
+            <EventListenerPlugin
+              on={(event) => {
+                if (event.type === 'mutation') {
+                  relayMutation(editorId, event)
+                }
+              }}
+            />
+          </EditorProvider>
+        ))}
+      </>
+    )
+  }
+
+  render(<Host />)
+
+  const locatorA = page.getByTestId('editor-a')
+  await expect.element(locatorA).toBeInTheDocument()
+  await expect.element(page.getByTestId('editor-b')).toBeInTheDocument()
+
+  return {
+    editorA: editorARef.current!,
+    editorB: editorBRef.current!,
+    locatorA,
+    shared,
+    nextMutation: (editorId: 'a' | 'b') =>
+      new Promise<void>((resolve) => {
+        mutationWaiters.push({editorId, resolve})
+      }),
+  }
+}

@@ -194,7 +194,7 @@ async function expectListIndices(
   })
 }
 
-function paragraph(key: string): PortableTextBlock {
+function paragraph(key: string) {
   return {
     _type: 'block',
     _key: key,
@@ -204,7 +204,7 @@ function paragraph(key: string): PortableTextBlock {
   }
 }
 
-function numberListItem(key: string): PortableTextBlock {
+function numberListItem(key: string) {
   return {
     ...paragraph(key),
     listItem: 'number',
@@ -218,3 +218,75 @@ function callout(
 ): PortableTextBlock {
   return {_type: 'callout', _key: key, content} as unknown as PortableTextBlock
 }
+
+test('Scenario: A registered text-block render reproduces `data-list-index`', async () => {
+  const editor = await renderEditorWithListIndexRender([
+    paragraph('b0'),
+    numberListItem('b1'),
+    numberListItem('b2'),
+  ])
+
+  await vi.waitFor(() => {
+    expect(
+      document.querySelector('[data-testid="text-block-b0"]'),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[data-testid="text-block-b1"]'),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[data-testid="text-block-b2"]'),
+    ).not.toBeNull()
+    expect({
+      b0: document
+        .querySelector('[data-testid="text-block-b0"]')
+        ?.getAttribute('data-list-index'),
+      b1: document
+        .querySelector('[data-testid="text-block-b1"]')
+        ?.getAttribute('data-list-index'),
+      b2: document
+        .querySelector('[data-testid="text-block-b2"]')
+        ?.getAttribute('data-list-index'),
+    }).toEqual({b0: null, b1: '1', b2: '2'})
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'insert',
+        items: [numberListItem('b3')],
+        position: 'before',
+        path: [{_key: 'b1'}],
+      },
+    ],
+  })
+
+  await vi.waitFor(() => {
+    expect(
+      document.querySelector('[data-testid="text-block-b0"]'),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[data-testid="text-block-b3"]'),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[data-testid="text-block-b1"]'),
+    ).not.toBeNull()
+    expect(
+      document.querySelector('[data-testid="text-block-b2"]'),
+    ).not.toBeNull()
+    expect({
+      b0: document
+        .querySelector('[data-testid="text-block-b0"]')
+        ?.getAttribute('data-list-index'),
+      b3: document
+        .querySelector('[data-testid="text-block-b3"]')
+        ?.getAttribute('data-list-index'),
+      b1: document
+        .querySelector('[data-testid="text-block-b1"]')
+        ?.getAttribute('data-list-index'),
+      b2: document
+        .querySelector('[data-testid="text-block-b2"]')
+        ?.getAttribute('data-list-index'),
+    }).toEqual({b0: null, b3: '1', b1: '2', b2: '3'})
+  })
+})

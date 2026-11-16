@@ -1,12 +1,13 @@
-import type {
-  PortableTextBlock,
-  PortableTextSpan,
-  PortableTextTextBlock,
+import {insert} from '@portabletext/patches'
+import {
+  type PortableTextBlock,
+  type PortableTextSpan,
+  type PortableTextTextBlock,
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {Editor, Operation} from '../src'
+import {type Editor, type Operation} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -550,3 +551,48 @@ function firstSpanText(editor: Editor): string {
   const span = firstBlock?.children[0] as PortableTextSpan | undefined
   return span?.text ?? ''
 }
+
+test('Scenario: A key fix for an applied block is delivered after the placeholder removal', async () => {
+  const {editor} = await createTestEditor()
+  const operations = collectOperations(editor)
+
+  const dupBlock: PortableTextBlock = {
+    _type: 'block',
+    _key: 'b1',
+    style: 'normal',
+    markDefs: [],
+    children: [
+      {_type: 'span', _key: 'dup', text: 'one', marks: []},
+      {_type: 'span', _key: 'dup', text: 'two', marks: ['strong']},
+    ],
+  }
+  editor.send({
+    type: 'apply',
+    patches: [insert([dupBlock], 'before', [0])],
+  })
+
+  await vi.waitFor(() => {
+    expect(operations).toEqual([
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: dupBlock,
+      },
+      {
+        type: 'unset',
+        path: [{_key: 'k0'}],
+      },
+      {
+        type: 'set',
+        path: [{_key: 'b1'}, 'children', 1, '_key'],
+        value: 'k2',
+        inverse: {
+          type: 'set',
+          path: [{_key: 'b1'}, 'children', 1, '_key'],
+          value: 'dup',
+        },
+      },
+    ])
+  })
+})

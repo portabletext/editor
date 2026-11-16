@@ -1,4 +1,4 @@
-import type {Patch} from '@portabletext/patches'
+import {type Patch, set} from '@portabletext/patches'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
@@ -3454,6 +3454,97 @@ describe('normalization', () => {
           style: 'normal',
         },
       ])
+    })
+  })
+})
+
+test('Scenario: selection is preserved when a remote marks change creates same-mark adjacency', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanFooKey = keyGenerator()
+  const spanBarKey = keyGenerator()
+
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
+          {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['em']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ],
+    schemaDefinition: defineSchema({
+      decorators: [{name: 'strong'}, {name: 'em'}],
+    }),
+  })
+
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        offset: 1,
+      },
+    },
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        offset: 1,
+      },
+      backward: false,
+    })
+  })
+
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(
+        ['strong'],
+        [{_key: blockKey}, 'children', {_key: spanBarKey}, 'marks'],
+      ),
+    ],
+  })
+
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanFooKey, text: 'foo', marks: ['strong']},
+          {_type: 'span', _key: spanBarKey, text: 'bar', marks: ['strong']},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        offset: 1,
+      },
+      focus: {
+        path: [{_key: blockKey}, 'children', {_key: spanBarKey}],
+        offset: 1,
+      },
+      backward: false,
     })
   })
 })
