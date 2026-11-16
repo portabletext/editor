@@ -3397,6 +3397,388 @@ test('Scenario: a middle root text block with `children: null` in the start valu
   })
 })
 
+test('Scenario: a middle root text block with `children: false` in the start value reports invalid value without applying its resolution', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const keys = Array.from({length: 8}, () => keyGenerator())
+  const events: Array<EditorEmittedEvent> = []
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: false,
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'patch' || event.type === 'invalid value') {
+            events.push(event)
+          }
+        }}
+      />
+    ),
+  })
+  expect(keys).toEqual(['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7'])
+
+  await vi.waitFor(() => {
+    expect(events).toEqual([
+      {
+        type: 'invalid value',
+        resolution: {
+          patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+          description:
+            "Text block with _key 'k2' has a invalid required property 'children'.",
+          action: 'Reset the children property',
+          item: {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: false,
+          },
+          i18n: {
+            description:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+            action:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+            values: {key: 'k2'},
+          },
+        },
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: false,
+          },
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  locator.element().focus()
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  await vi.waitFor(() => {
+    expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+    expect(window.getSelection()?.focusOffset).toEqual(3)
+  })
+  await userEvent.type(locator, 'x', {skipClick: true})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
+    expect(events).toEqual([
+      {
+        type: 'invalid value',
+        resolution: {
+          patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+          description:
+            "Text block with _key 'k2' has a invalid required property 'children'.",
+          action: 'Reset the children property',
+          item: {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: false,
+          },
+          i18n: {
+            description:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+            action:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+            values: {key: 'k2'},
+          },
+        },
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: false,
+          },
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          type: 'diffMatchPatch',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
+        },
+      },
+    ])
+  })
+})
+
+test('Scenario: a middle root text block with `children: 0` in an updated value reports invalid value without applying its resolution', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const keys = Array.from({length: 8}, () => keyGenerator())
+  const events: Array<EditorEmittedEvent> = []
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+    ],
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'patch' || event.type === 'invalid value') {
+            events.push(event)
+          }
+        }}
+      />
+    ),
+  })
+  expect(keys).toEqual(['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7'])
+
+  await expect.element(locator).toBeVisible()
+  editor.send({
+    type: 'update value',
+    value: [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: keys[2]!,
+        style: 'normal',
+        markDefs: [],
+        children: 0,
+      },
+      {
+        _type: 'block',
+        _key: keys[3]!,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+      },
+    ],
+  })
+
+  await vi.waitFor(() => {
+    expect(events).toEqual([
+      {
+        type: 'invalid value',
+        resolution: {
+          patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+          description:
+            "Text block with _key 'k2' has a invalid required property 'children'.",
+          action: 'Reset the children property',
+          item: {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: 0,
+          },
+          i18n: {
+            description:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+            action:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+            values: {key: 'k2'},
+          },
+        },
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: 0,
+          },
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  locator.element().focus()
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  await vi.waitFor(() => {
+    expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+    expect(window.getSelection()?.focusOffset).toEqual(3)
+  })
+  await userEvent.type(locator, 'x', {skipClick: true})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
+    expect(events).toEqual([
+      {
+        type: 'invalid value',
+        resolution: {
+          patches: [{type: 'set', path: [{_key: 'k2'}], value: {children: []}}],
+          description:
+            "Text block with _key 'k2' has a invalid required property 'children'.",
+          action: 'Reset the children property',
+          item: {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: 0,
+          },
+          i18n: {
+            description:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.description',
+            action:
+              'inputs.portable-text.invalid-value.missing-or-invalid-children.action',
+            values: {key: 'k2'},
+          },
+        },
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: 0,
+          },
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'patch',
+        patch: {
+          type: 'diffMatchPatch',
+          path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
+        },
+      },
+    ])
+  })
+})
+
 test('Scenario: a keyless span without text or marks in a callout stays as received without patches', async () => {
   const keyGenerator = createTestKeyGenerator()
   const keys = Array.from({length: 8}, () => keyGenerator())
