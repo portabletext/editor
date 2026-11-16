@@ -1,6 +1,6 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {
   defineBlockObject,
@@ -41,6 +41,7 @@ const factBoxSchemaDefinition = defineSchema({
 describe('defineContainer / defineBlockObject conflict resolution', () => {
   test('Scenario: Registering the same scope twice as a container with different fields keeps the first registration', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -75,12 +76,11 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     expect(
       editor.getSnapshot().context.containers.get('card')?.field.name,
     ).toBe('content')
-
-    warnSpy.mockRestore()
   })
 
   test('Scenario: Registering the same scope twice as a container with the same field warns and keeps the first', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -111,12 +111,11 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('already registered'),
     )
-
-    warnSpy.mockRestore()
   })
 
   test('Scenario: Registering the same scope twice as a leaf warns and keeps the first', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -147,12 +146,11 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('already registered'),
     )
-
-    warnSpy.mockRestore()
   })
 
   test('Scenario: Registering a scope as a container then a leaf warns and rejects the leaf', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -185,12 +183,11 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     )
 
     expect(editor.getSnapshot().context.containers.has('fact-box')).toBe(true)
-
-    warnSpy.mockRestore()
   })
 
   test('Scenario: Registering a scope as a leaf then a container warns and rejects the container', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
@@ -223,7 +220,5 @@ describe('defineContainer / defineBlockObject conflict resolution', () => {
     )
 
     expect(editor.getSnapshot().context.containers.has('fact-box')).toBe(false)
-
-    warnSpy.mockRestore()
   })
 })

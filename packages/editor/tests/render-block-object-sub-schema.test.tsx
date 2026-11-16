@@ -1,12 +1,13 @@
 import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {expect, test, vi} from 'vitest'
+import {expect, onTestFinished, test, vi} from 'vitest'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 test('Scenario: A block object declared only inside a container renders without a schema error', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  onTestFinished(() => consoleError.mockRestore())
 
   await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
@@ -57,5 +58,4 @@ test('Scenario: A block object declared only inside a container renders without 
   })
 
   expect(consoleError.mock.calls).toEqual([])
-  consoleError.mockRestore()
 })

@@ -1,4 +1,4 @@
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import type {EditorSelection} from '../types/editor'
 import {createRelay, type EditorEmittedEvent} from './relay'
 
@@ -144,6 +144,7 @@ describe('relay', () => {
 
   test('a throwing listener does not prevent delivery to remaining listeners', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
     const relay = createRelay()
     relay.start()
     const deliveries: Array<string> = []
@@ -163,7 +164,6 @@ describe('relay', () => {
 
     expect(deliveries).toEqual(['second', 'star', 'second', 'star'])
     expect(consoleError).toHaveBeenCalledTimes(2)
-    consoleError.mockRestore()
   })
 
   test('unsubscribing during dispatch does not skip other listeners', () => {
@@ -306,6 +306,7 @@ describe('relay batch delivery (batch: true)', () => {
     const relay = createRelay()
     relay.start()
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => errorSpy.mockRestore())
     const coListenerBursts: Array<Array<string>> = []
 
     relay.on(
@@ -332,7 +333,5 @@ describe('relay batch delivery (batch: true)', () => {
     // the co-subscribed listener receives both bursts unaffected.
     expect(errorSpy).toHaveBeenCalledTimes(2)
     expect(coListenerBursts).toEqual([['ready'], ['ready']])
-
-    errorSpy.mockRestore()
   })
 })

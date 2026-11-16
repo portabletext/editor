@@ -1,4 +1,4 @@
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {forward} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -115,6 +115,7 @@ describe('claiming the native event', () => {
 
   test('Scenario: a throwing action set keeps the claim on the native event', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    onTestFinished(() => consoleError.mockRestore())
 
     const {locator} = await createTestEditor({
       children: (
@@ -150,7 +151,5 @@ describe('claiming the native event', () => {
         'Evaluating actions for "keyboard.keydown" failed due to: action set crashed',
       ),
     )
-
-    consoleError.mockRestore()
   })
 })
