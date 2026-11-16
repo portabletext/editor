@@ -13,6 +13,44 @@ export type Parameter = {
 }
 
 const parameterType = {
+  eventDeleteOptions: createParameterType<{
+    direction?: 'backward' | 'forward'
+    unit?: 'word' | 'line' | 'child' | 'block'
+  }>({
+    name: 'event-delete-options',
+    matcher: /(?: (backward|forward))?(?: by (word|line|child|block))?/,
+    transform: (direction, unit) => {
+      if (direction && direction !== 'backward' && direction !== 'forward') {
+        throw new Error('Invalid direction')
+      }
+      if (
+        unit &&
+        unit !== 'word' &&
+        unit !== 'line' &&
+        unit !== 'child' &&
+        unit !== 'block'
+      ) {
+        throw new Error('Invalid unit')
+      }
+      return {
+        ...(direction === 'backward' || direction === 'forward'
+          ? {direction}
+          : {}),
+        ...(unit === 'word' ||
+        unit === 'line' ||
+        unit === 'child' ||
+        unit === 'block'
+          ? {unit}
+          : {}),
+      }
+    },
+  }),
+  eventLocation: createParameterType<string>({
+    name: 'event-location',
+    matcher:
+      /(?: at (?:the following range|"(?:[^"\\]|\\.)*"|block \d+ offset \d+ through block \d+ offset \d+)(?: in backward order)?)?/,
+    transform: (location) => location.replace(/^ at /, ''),
+  }),
   annotation: createParameterType<'comment' | 'link'>({
     name: 'annotation',
     matcher: /"(comment|link)"/,
@@ -99,6 +137,9 @@ const parameterType = {
  * @internal
  */
 export const parameterTypes = [
+  parameterType.eventDeleteOptions,
+  parameterType.eventLocation,
+
   parameterType.annotation,
   parameterType.blockObject,
   parameterType.button,
