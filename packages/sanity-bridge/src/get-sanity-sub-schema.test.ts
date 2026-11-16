@@ -66,7 +66,7 @@ describe(getSanitySubSchema.name, () => {
         _type: 'code-block',
         _key: 'cb1',
         lines: [],
-      } as unknown as PortableTextBlock,
+      },
     ]
     expect(getSanitySubSchema(codeBlockRoot, value, [{_key: 'cb1'}])).toEqual(
       createPortableTextMemberSchemaTypesFromOf(
@@ -82,7 +82,7 @@ describe(getSanitySubSchema.name, () => {
         _type: 'code-block',
         _key: 'cb1',
         lines: [{_type: 'block', _key: 'line1', style: 'code', children: []}],
-      } as unknown as PortableTextBlock,
+      },
     ]
     const result = getSanitySubSchema(codeBlockRoot, value, [
       {_key: 'cb1'},
@@ -156,7 +156,7 @@ describe(getSanitySubSchema.name, () => {
             ],
           },
         ],
-      } as unknown as PortableTextBlock,
+      },
     ]
 
     const result = getSanitySubSchema(calloutNested, value, [
@@ -179,7 +179,7 @@ describe(getSanitySubSchema.name, () => {
         _type: 'code-block',
         _key: 'cb1',
         lines: [],
-      } as unknown as PortableTextBlock,
+      },
     ]
     const result = getSanitySubSchema(codeBlockRoot, value, [
       {_key: 'gone'},
@@ -201,7 +201,7 @@ describe(getSanitySubSchema.name, () => {
         _type: 'block',
         _key: 'b1',
         children: [{_type: 'span', _key: 's1', text: 'x'}],
-      } as unknown as PortableTextBlock,
+      },
     ]
     const result = getSanitySubSchema(codeBlockRoot, value, [
       {_key: 'b1'},
@@ -223,7 +223,7 @@ describe(getSanitySubSchema.name, () => {
         _type: 'unknown-block-object',
         _key: 'unknown1',
         children: [{_type: 'span', _key: 's1', text: 'x'}],
-      } as unknown as PortableTextBlock,
+      },
     ]
     const result = getSanitySubSchema(codeBlockRoot, value, [
       {_key: 'unknown1'},
