@@ -18,7 +18,6 @@ export type StructuralCorrection = {
  * @public
  */
 export type StructuralRule =
-  | 'non-object'
   | 'missing-type'
   | 'missing-key'
   | 'duplicate-key'
