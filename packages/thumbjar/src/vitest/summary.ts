@@ -1,6 +1,7 @@
 // A device test file's lines in the job summary, which the setup file `deviceProject` adds writes to
 // its `summaryFile` after the file's tests.
 
+import {stripVTControlCharacters} from 'node:util'
 import type {DriverRun} from '../driver.ts'
 
 const OUTCOMES = [
@@ -93,28 +94,60 @@ export function tapsBlock(
 }
 
 /**
- * How many tests of `file` ended in each outcome, and which, then the tests that did not run, skipped or
- * todo, on a line of their own when there are any, and each note whose condition one of `runs` meets. A
- * test that did not run has no `outcome`.
+ * How many tests of `file` ended in each outcome, a table row per test, then each note whose condition
+ * one of `runs` meets, the mistap retries among them, and the taps of each failed test.
+ * A test that did not run has no `outcome`.
  */
 export function summaryLines(
   file: string,
   tests: Array<{
     name: string
+    /** In milliseconds. */
+    duration?: number | undefined
+    /** The test's first error, preferred over `pageException` and `reason` in the Failure column. */
+    errorMessage?: string | undefined
+    /** The exception from the test's last driver call, preferred over `reason`. */
+    pageException?: string | undefined
+    /** Why the test's last driver call ended inconclusive, offline or faulted. */
+    reason?: string | undefined
     outcome: Outcome | undefined
-    /** The taps of a failed test, printed under the counts. */
+    /** The taps of a failed test, printed after the table and notes. */
     taps?: DriverRun['taps']
+    /** The name that heads the taps block, the test's own name without its suites. `name` when not given. */
+    tapsName?: string
   }>,
   runs: DriverRun[],
 ): string {
-  const counts = OUTCOMES.map((outcome) => {
-    const names = tests
-      .filter((test) => test.outcome === outcome)
-      .map((test) => `"${test.name}"`)
-    return names.length > 0
-      ? `${names.length} ${outcome} (${names.join(', ')})`
-      : `0 ${outcome}`
-  })
+  const counts = OUTCOMES.map(
+    (outcome) =>
+      `${tests.filter((test) => test.outcome === outcome).length} ${outcome}`,
+  )
+  const table = [
+    '| # | Test | Outcome | Duration | Failure |',
+    '| --- | --- | --- | --- | --- |',
+    ...tests.map((test, index) => {
+      const failure =
+        test.outcome === 'failed' ||
+        test.outcome === 'inconclusive' ||
+        test.outcome === 'device offline' ||
+        test.outcome === 'driver fault'
+          ? (stripVTControlCharacters(
+              test.errorMessage ?? test.pageException ?? test.reason ?? '',
+            ).split(/\r\n|[\n\r\u2028\u2029]/)[0] ?? '')
+          : ''
+      return `| ${[
+        String(index + 1),
+        test.name,
+        test.outcome ?? 'not run',
+        test.outcome !== undefined && test.duration !== undefined
+          ? `${(test.duration / 1000).toFixed(1)} s`
+          : '',
+        failure.length > 200 ? `${failure.slice(0, 199)}…` : failure,
+      ]
+        .map(tableCell)
+        .join(' | ')} |`
+    }),
+  ].join('\n')
   const mistaps = new Map<string, number>()
   for (const run of runs) {
     if (run.mistapRetries) {
@@ -136,19 +169,25 @@ export function summaryLines(
       ? [DEVICE_UNCONFIRMED_NOTE]
       : []),
   ]
-  const notRun = tests
-    .filter((test) => test.outcome === undefined)
-    .map((test) => `"${test.name}"`)
   return [
     `\`${file}\`: ${counts.join(', ')}`,
-    ...(notRun.length > 0
-      ? [`${notRun.length} not run, skipped or todo (${notRun.join(', ')})`]
-      : []),
+    table,
     ...notes,
     ...tests.flatMap((test) =>
-      test.taps === undefined ? [] : [tapsBlock(test.name, test.taps)],
+      test.taps === undefined
+        ? []
+        : [tapsBlock(test.tapsName ?? test.name, test.taps)],
     ),
   ]
     .map((line) => `${line}\n`)
+    .concat('')
     .join('\n')
+}
+
+function tableCell(value: string): string {
+  return value
+    .replaceAll('\\', '\\\\')
+    .replaceAll('|', '\\|')
+    .replace(/[\r\n\u2028\u2029]+/g, ' ')
+    .replaceAll('`', "'")
 }
