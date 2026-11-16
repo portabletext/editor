@@ -3,7 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
-import {isSpanNode} from '@portabletext/schema'
+import {isSpanNode, isTextBlock, isTextBlockNode} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -70,8 +70,23 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     parent,
     siblings: () => getSiblings(editor, path, parent),
   })
-  const structural =
+  let structural =
     !straySpan || correction?.type === 'duplicate-key' ? correction : undefined
+
+  if (
+    !structural &&
+    parent &&
+    isTextBlock(structuralContext, parent.node) &&
+    isTextBlockNode(structuralContext, node) &&
+    !Array.isArray(node.children)
+  ) {
+    // Repair leaves a text block inside another text block as it is. The
+    // editor still needs an array in its `children` to place a caret in it.
+    structural = {
+      type: 'missing-children',
+      patches: [{type: 'set', path: [...path, 'children'], value: []}],
+    }
+  }
 
   if (structural) {
     if (

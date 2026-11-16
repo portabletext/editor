@@ -3980,3 +3980,88 @@ describe('container normalization', () => {
     })
   })
 })
+
+describe('a text block inside a text block', () => {
+  test('Scenario: A remote text block with null children inside a text block in a callout gets an empty span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const nestedKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={calloutContainers} />,
+    })
+    editor.send({
+      type: 'patches',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: blockKey},
+            'children',
+            {_key: spanKey},
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: nestedKey,
+              style: 'normal',
+              markDefs: [],
+              children: null as never,
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+      snapshot: undefined,
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: calloutKey,
+          content: [
+            {
+              _type: 'block',
+              _key: blockKey,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+                {
+                  _type: 'block',
+                  _key: nestedKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+})

@@ -126,3 +126,49 @@ test('a removed path is not re-queued', () => {
     expect(editor.dirtyPaths).toEqual([[]])
   })
 })
+
+test('a text block without `children` inside a text block gets empty `children`', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const nestedKey = keyGenerator()
+  const nested = {_type: 'block', _key: nestedKey}
+  const editor = createBareEditor(
+    [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+          nested,
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ],
+    keyGenerator,
+  )
+  normalizeNode(editor, [
+    nested as never,
+    [{_key: blockKey}, 'children', {_key: nestedKey}],
+  ])
+
+  expect(editor.snapshot.context.value).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      children: [
+        {_type: 'span', _key: spanKey, text: 'foo', marks: []},
+        {
+          _type: 'block',
+          _key: nestedKey,
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      markDefs: [],
+      style: 'normal',
+    },
+  ])
+})
