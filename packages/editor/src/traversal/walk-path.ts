@@ -1,6 +1,7 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {nodeSegment} from '../paths/node-segment'
+import {serializePath, serializePathSegment} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
@@ -233,8 +234,8 @@ class WalkedNodeImpl<TParent> implements WalkedNode<TParent> {
   get key(): string {
     if (this.cachedKey === undefined) {
       this.cachedKey = this.previous
-        ? `${this.previous.key}.${this.previous.children!.fieldName}${serializeSegment(this.segment)}`
-        : serializeSegment(this.segment, true)
+        ? `${this.previous.key}${serializePathSegment(this.previous.children!.fieldName, false)}${serializePathSegment(this.segment, false)}`
+        : serializePath([this.segment])
     }
     return this.cachedKey
   }
@@ -250,15 +251,6 @@ class WalkedNodeImpl<TParent> implements WalkedNode<TParent> {
     }
     return this.cachedChildren
   }
-}
-
-function serializeSegment(
-  segment: number | {_key: string},
-  first = false,
-): string {
-  return typeof segment === 'number'
-    ? `${first ? '' : '.'}${segment}`
-    : `[_key=="${segment._key}"]`
 }
 
 function isNodeSegment(
@@ -296,10 +288,10 @@ function findChildIndex<TParent>(
     // inserted by a remote patch before normalize mints a key) or disagree
     // with the traversed value (snapshots that pair the live map with a
     // pre-apply value, e.g. `textPatch`), so fall back to a linear scan.
-    const key = serializeSegment(segment)
+    const key = serializePath([segment])
     const mappedIndex = blockIndexMap.get(
       parentNode
-        ? `${parentNode.key}.${parentNode.children!.fieldName}${key}`
+        ? `${parentNode.key}${serializePathSegment(parentNode.children!.fieldName, false)}${key}`
         : key,
     )
     if (

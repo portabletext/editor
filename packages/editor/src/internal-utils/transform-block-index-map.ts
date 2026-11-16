@@ -283,9 +283,8 @@ function reindexSiblings(
     if (!child || child._key === undefined) {
       continue
     }
-    // Mirrors `serializePath`'s keyed-segment format.
     map.set(
-      `${siblingContext.serializedPrefix}[_key=="${child._key}"]`,
+      `${siblingContext.serializedPrefix}${serializePath([{_key: child._key}])}`,
       childIndex,
     )
   }
