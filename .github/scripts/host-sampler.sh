@@ -3,7 +3,7 @@
 # in kB, the one-minute load and the emulator process, or `qemu=none`. The emulator is the first process
 # whose command line matches HOST_SAMPLER_PATTERN. When a process seen before is gone, one
 # `QEMU_GONE pid=<pid> at <epoch>` line follows. Nothing here fails the script, so a sample that cannot be
-# read is left out.
+# read is left out. Each adopted process also gets `host-exe-<pid>.txt` when its executable is readable.
 
 out_file="${1:-}"
 if [ -z "$out_file" ]; then
@@ -92,8 +92,13 @@ while true; do
   fi
   if [ -z "$last_pid" ] && [ -n "$current_pid" ] && [ "$qemu" != "qemu=none" ]; then
     last_pid="$current_pid"
+    # The pin gate needs executable evidence even when best-effort core preparation fails.
+    executable="$(readlink "/proc/$last_pid/exe" 2> /dev/null || true)"
+    if [ -n "$executable" ]; then
+      # A process can exit before `readlink`; an empty record would claim an executable was observed.
+      printf '%s\n' "$executable" > "$out_dir/host-exe-$last_pid.txt"
+    fi
     if [ -s "$out_dir/host-core-dir.txt" ]; then
-      readlink "/proc/$last_pid/exe" > "$out_dir/host-exe-$last_pid.txt" 2> /dev/null || true
       {
         timeout --kill-after=1 2 sudo -n prlimit --pid "$last_pid" --core=unlimited:unlimited || true
         cat "/proc/$last_pid/limits" || true

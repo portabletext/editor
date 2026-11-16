@@ -90,6 +90,91 @@ describeOnLinux('host-sampler.sh and host-capture.sh', () => {
     }
   }, 10_000)
 
+  test('Scenario: The sampler records the executable without core capture', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-executable-sampler-'))
+    const fakeEmulator = spawn('sleep', ['143'], {stdio: 'ignore'})
+    const samplerProcess = spawn(
+      'bash',
+      [sampler, join(directory, 'host.log')],
+      {
+        env: {
+          ...process.env,
+          PATH: `${directory}:${process.env.PATH}`,
+          HOST_SAMPLER_PATTERN: '^sleep 143$',
+          HOST_SAMPLER_INTERVAL: '0.2',
+        },
+        stdio: 'ignore',
+      },
+    )
+    try {
+      await vi.waitFor(
+        () => {
+          expect(
+            readFileSync(
+              join(directory, `host-exe-${fakeEmulator.pid}.txt`),
+              'utf8',
+            ),
+          ).toEqual(
+            spawnSync('readlink', [`/proc/${fakeEmulator.pid}/exe`], {
+              encoding: 'utf8',
+            }).stdout,
+          )
+          expect(
+            existsSync(
+              join(directory, `host-core-limits-${fakeEmulator.pid}.txt`),
+            ),
+          ).toEqual(false)
+        },
+        {timeout: 5_000},
+      )
+    } finally {
+      fakeEmulator.kill('SIGKILL')
+      samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    }
+  }, 10_000)
+
+  test('Scenario: The sampler does not write an empty executable when readlink fails', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'host-executable-sampler-'))
+    const fakeEmulator = spawn('sleep', ['143'], {stdio: 'ignore'})
+    writeFileSync(join(directory, 'host-core-dir.txt'), directory)
+    writeFileSync(join(directory, 'readlink'), '#!/bin/sh\nexit 1\n', {
+      mode: 0o755,
+    })
+    const samplerProcess = spawn(
+      'bash',
+      [sampler, join(directory, 'host.log')],
+      {
+        env: {
+          ...process.env,
+          PATH: `${directory}:${process.env.PATH}`,
+          HOST_SAMPLER_PATTERN: '^sleep 143$',
+          HOST_SAMPLER_INTERVAL: '0.2',
+        },
+        stdio: 'ignore',
+      },
+    )
+    try {
+      await vi.waitFor(
+        () => {
+          expect(
+            existsSync(
+              join(directory, `host-core-limits-${fakeEmulator.pid}.txt`),
+            ),
+          ).toEqual(true)
+          expect(
+            existsSync(join(directory, `host-exe-${fakeEmulator.pid}.txt`)),
+          ).toEqual(false)
+        },
+        {timeout: 5_000},
+      )
+    } finally {
+      fakeEmulator.kill('SIGKILL')
+      samplerProcess.kill('SIGKILL')
+      rmSync(directory, {recursive: true, force: true})
+    }
+  }, 10_000)
+
   test('Scenario: The sampler records the emulator executable and core limits', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'host-core-sampler-'))
     const fakeEmulator = spawn('sleep', ['143'], {stdio: 'ignore'})
