@@ -427,7 +427,7 @@ export function useDropPosition(
 }
 
 /**
- * Serialize a keyed path to a string using Sanity's bracket notation.
+ * Serialize a path the way `toString` from `@sanity/util/paths` writes it.
  * Duplicated from the editor's internal `serializePath`; see
  * `drag-selection.ts` for the duplication rationale. Keep in sync with
  * `packages/editor/src/paths/serialize-path.ts`.
@@ -437,7 +437,18 @@ function serializePath(path: Path): string {
     if (isKeyedSegment(segment)) {
       return `${result}[_key=="${segment._key}"]`
     }
-
+    if (typeof segment === 'number') {
+      return `${result}[${segment}]`
+    }
+    if (Array.isArray(segment)) {
+      return `${result}[${segment[0]}:${segment[1]}]`
+    }
+    if (
+      index > 0 &&
+      (segment === 'true' || segment === 'false' || segment === 'null')
+    ) {
+      return `${result}["${segment}"]`
+    }
     const separator = index === 0 ? '' : '.'
     return `${result}${separator}${segment}`
   }, '')
