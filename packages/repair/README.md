@@ -59,14 +59,16 @@ The entry describes the node and where it sits:
 
 The rules run in this order, and the first one that applies wins:
 
-| Rule               | Flaw                                                                             | Correction                                                             |
-| ------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `non-object`       | An array entry is `null`, `undefined`, a string, a number, a boolean or an array | Remove the entry                                                       |
-| `missing-type`     | A node has no `_type`                                                            | The span type inside a text block, the text block type everywhere else |
-| `missing-key`      | A node's `_key` is missing or empty                                              | A key from `keyGenerator`                                              |
-| `duplicate-key`    | A later sibling repeats the node's `_key`                                        | A new key for the later sibling, addressed by index                    |
-| `span-text`        | A span's `text` isn't a string                                                   | `''`                                                                   |
-| `missing-children` | A text block's `children` isn't an array                                         | `[]`                                                                   |
+| Rule               | Flaw                                                                                             | Correction                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `non-object`       | An array entry is `null`, `undefined`, a string, a number, a boolean or an array                 | Remove the entry                                                       |
+| `missing-type`     | A node has no `_type`                                                                            | The span type inside a text block, the text block type everywhere else |
+| `missing-key`      | A node's `_key` is missing or empty                                                              | A key from `keyGenerator`                                              |
+| `duplicate-key`    | A later sibling repeats the node's `_key`                                                        | A new key for the later sibling, addressed by index                    |
+| `span-text`        | A span inside a text block has `text` that is not a string                                       | `''`                                                                   |
+| `missing-children` | A text block whose `children` is not an array. A text block inside another text block is skipped | `[]`                                                                   |
+
+Two nodes are left alone: a span that is not inside a text block keeps its `text`, and a text block inside another text block keeps its `children`.
 
 Anything else, such as missing `markDefs`, adjacent spans with the same marks or an empty text block, is left to the caller.
 
