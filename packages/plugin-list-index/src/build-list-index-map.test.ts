@@ -4,7 +4,7 @@ import {
   type PortableTextBlock,
 } from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {buildListIndexMap} from './build-list-index-map'
+import {buildListIndexMap, serializePath} from './build-list-index-map'
 
 /**
  * These scenarios mirror the engine's `build-index-maps.test.ts`
@@ -389,6 +389,93 @@ describe(buildListIndexMap.name, () => {
         ['[_key=="k1"]', 1],
         ['[_key=="k3"]', 1],
       ]),
+    )
+  })
+})
+
+// Keep in sync with the writer cases in `packages/editor/src/paths/serialize-path.test.ts`.
+describe(serializePath.name, () => {
+  test('head true field', () => {
+    expect(serializePath(['true'])).toEqual('true')
+  })
+
+  test('head false field', () => {
+    expect(serializePath(['false'])).toEqual('false')
+  })
+
+  test('head null field', () => {
+    expect(serializePath(['null'])).toEqual('null')
+  })
+
+  test('ordinary head field', () => {
+    expect(serializePath(['body', 'content'])).toEqual('body.content')
+  })
+
+  test('empty path', () => {
+    expect(serializePath([])).toEqual('')
+  })
+
+  test('single key segment', () => {
+    expect(serializePath([{_key: 'k0'}])).toBe('[_key=="k0"]')
+  })
+
+  test('block and span', () => {
+    expect(serializePath([{_key: 'k0'}, 'children', {_key: 's0'}])).toBe(
+      '[_key=="k0"].children[_key=="s0"]',
+    )
+  })
+
+  test('container path', () => {
+    expect(
+      serializePath([
+        {_key: 'tableKey'},
+        'rows',
+        {_key: 'rowKey'},
+        'cells',
+        {_key: 'cellKey'},
+        'content',
+        {_key: 'blockKey'},
+        'children',
+        {_key: 'spanKey'},
+      ]),
+    ).toBe(
+      '[_key=="tableKey"].rows[_key=="rowKey"].cells[_key=="cellKey"].content[_key=="blockKey"].children[_key=="spanKey"]',
+    )
+  })
+
+  test('key with dot', () => {
+    expect(serializePath([{_key: 'my.key'}, 'children', {_key: 's0'}])).toBe(
+      '[_key=="my.key"].children[_key=="s0"]',
+    )
+  })
+  test('head index', () => {
+    expect(serializePath([2])).toEqual('[2]')
+  })
+  test('index after field', () => {
+    expect(serializePath(['body', 2])).toEqual('body[2]')
+  })
+  test('range', () => {
+    expect(serializePath([[1, 3]])).toEqual('[1:3]')
+  })
+  test('open start range', () => {
+    expect(serializePath([['', 3]])).toEqual('[:3]')
+  })
+  test('open end range', () => {
+    expect(serializePath([[1, '']])).toEqual('[1:]')
+  })
+  test('true field after key', () => {
+    expect(serializePath([{_key: 'k0'}, 'true'])).toEqual(
+      '[_key=="k0"]["true"]',
+    )
+  })
+  test('false field after key', () => {
+    expect(serializePath([{_key: 'k0'}, 'false'])).toEqual(
+      '[_key=="k0"]["false"]',
+    )
+  })
+  test('null field after key', () => {
+    expect(serializePath([{_key: 'k0'}, 'null'])).toEqual(
+      '[_key=="k0"]["null"]',
     )
   })
 })
