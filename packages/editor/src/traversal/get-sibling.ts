@@ -51,7 +51,14 @@ export function getSibling(
   }
 
   const children = childEntries(snapshot.context.value, walk.nodes.at(-2))
-  const currentIndex = node.index
+  const currentIndex =
+    children.length === node.siblings.length
+      ? node.index
+      : children.findIndex((entry) => entry.node === node.node)
+
+  if (currentIndex === -1) {
+    return undefined
+  }
 
   if (!match) {
     const siblingIndex =

@@ -3,6 +3,7 @@ import type {Path} from '../engine/interfaces/path'
 import {nodeSegment} from '../paths/node-segment'
 import {serializePath, serializePathSegment} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
@@ -116,9 +117,9 @@ export function walkNodes<TParent>(
     }
 
     const index = findChildIndex(blockIndexMap, siblings, previousNode, segment)
-    const node = index === -1 ? undefined : siblings[index]
+    const node = siblings[index]!
 
-    if (!node) {
+    if (index === -1) {
       return followsRule(path, segmentIndex)
         ? {status: 'missing', nodes, siblings, segmentIndex}
         : {status: 'invalid'}
@@ -280,7 +281,9 @@ function findChildIndex<TParent>(
   if (typeof segment === 'number') {
     // Negative indices count from the end, like `Array.prototype.at`.
     const index = segment < 0 ? siblings.length + segment : segment
-    return index >= 0 && index < siblings.length ? index : -1
+    return Number.isInteger(index) && index >= 0 && index < siblings.length
+      ? index
+      : -1
   }
 
   if (blockIndexMap.size > 0) {
@@ -302,7 +305,7 @@ function findChildIndex<TParent>(
     }
   }
 
-  return siblings.findIndex((child) => child._key === segment._key)
+  return siblings.findIndex((child) => child?._key === segment._key)
 }
 
 /**
@@ -390,7 +393,7 @@ export function namedArrayField(
   _parent: undefined,
   fieldName: string | undefined,
 ): NodeChildren<undefined> | undefined {
-  if (fieldName === undefined) {
+  if (fieldName === undefined || !isNonArrayObject(node)) {
     return undefined
   }
   const fieldValue = (node as Record<string, unknown>)[fieldName]
@@ -421,10 +424,11 @@ export function childEntries(
   parent: WalkedNode | undefined,
 ): Array<{node: Node; path: Path}> {
   if (!parent) {
-    return value.map((child, childIndex) => ({
-      node: child,
-      path: [nodeSegment(child, childIndex)],
-    }))
+    return value.flatMap((child, childIndex) =>
+      isNonArrayObject(child)
+        ? [{node: child, path: [nodeSegment(child, childIndex)]}]
+        : [],
+    )
   }
 
   if (!parent.children) {
@@ -433,8 +437,14 @@ export function childEntries(
 
   const {children, fieldName} = parent.children
 
-  return children.map((child, childIndex) => ({
-    node: child,
-    path: [...parent.path, fieldName, nodeSegment(child, childIndex)],
-  }))
+  return children.flatMap((child, childIndex) =>
+    isNonArrayObject(child)
+      ? [
+          {
+            node: child,
+            path: [...parent.path, fieldName, nodeSegment(child, childIndex)],
+          },
+        ]
+      : [],
+  )
 }

@@ -25,7 +25,7 @@ export function comparePaths(
     if (isKeyedSegment(segment) && isKeyedSegment(otherSegment)) {
       if (segment._key === otherSegment._key) {
         if (currentChildren) {
-          currentNode = currentChildren.find((c) => c._key === segment._key)
+          currentNode = currentChildren.find((c) => c?._key === segment._key)
           currentChildren = undefined
         }
         continue
@@ -33,10 +33,10 @@ export function comparePaths(
 
       if (currentChildren) {
         const segmentIndex = currentChildren.findIndex(
-          (c) => c._key === segment._key,
+          (c) => c?._key === segment._key,
         )
         const otherSegmentIndex = currentChildren.findIndex(
-          (c) => c._key === otherSegment._key,
+          (c) => c?._key === otherSegment._key,
         )
         if (segmentIndex !== -1 && otherSegmentIndex !== -1) {
           return segmentIndex < otherSegmentIndex ? -1 : 1

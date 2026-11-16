@@ -1,6 +1,7 @@
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {walkNodes} from '../traversal/walk-path'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {
   Containers,
@@ -88,6 +89,9 @@ function resolveNodeEntry(
   parent: RegisteredContainer | undefined,
   node: Node,
 ): RegisteredContainer | RegisteredPositional | undefined {
+  if (!isNonArrayObject(node)) {
+    return undefined
+  }
   if (parent?.of) {
     for (const entry of parent.of) {
       if (entry.type === node._type) {

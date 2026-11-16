@@ -10,6 +10,7 @@ import type {
   TextBlockConfig,
 } from '../renderers/renderer.types'
 import {walkNodes} from '../traversal/walk-path'
+import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import type {ChildArrayField, ResolvedContainers} from './container-types'
 import {
@@ -135,6 +136,9 @@ function resolveRichEntry(
   | InlineObjectConfig
   | TextBlockConfig
   | undefined {
+  if (!isNonArrayObject(node)) {
+    return undefined
+  }
   if (parent?.of) {
     for (const entry of parent.of) {
       if (entryType(entry) === node._type) {
