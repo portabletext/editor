@@ -1,3 +1,5 @@
+import {execFileSync} from 'node:child_process'
+import {createHash} from 'node:crypto'
 import {
   appendFileSync,
   closeSync,
@@ -13,11 +15,11 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs'
-import {join} from 'node:path'
+import {dirname, join, resolve, sep} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
 // `install-paths.txt` records the paths present before the first install, which cleanup never removes,
-// apart from the packages restored from the cache that `cache-restored.txt` lists.
+// apart from the pinned emulator and its download, and the packages `cache-restored.txt` lists.
 //
 // `timing.txt` holds one block of lines per emulator run, the retry's after a `RETRY` line. Each block
 // opens with `EMULATOR_START`, written just before its run step. A run prints `BOOTED` once its emulator
@@ -232,8 +234,8 @@ export function hostEvidence(hostLog, dmesg, timing, core = '') {
 }
 
 /**
- * Paths the install retry clears: those created by the first install attempt, and the packages restored
- * from the cache, which a failed attempt may have left broken or half replaced.
+ * Paths the install retry clears: the pin and its download, paths created by the first attempt, and
+ * restored packages, which a failed attempt may have left broken or half replaced.
  *
  * @param {string[]} before SDK paths present before the first install attempt
  * @param {string[]} after SDK paths present after the failed attempt
@@ -242,14 +244,17 @@ export function hostEvidence(hostLog, dmesg, timing, core = '') {
  */
 export function installCleanupPaths(before, after, restored = []) {
   return after.filter(
-    (path) => !before.includes(path) || restored.includes(path),
+    (path) =>
+      path === 'emulator' ||
+      path === '.temp/emulator-pin.zip' ||
+      !before.includes(path) ||
+      restored.includes(path),
   )
 }
 
 /**
- * The emulator version and the system image revision a fresh `sdkmanager --install` picks, read from the
- * `Available Packages` table of `sdkmanager --list`, or `undefined` when it lists either not. An installed
- * package is listed above that table with its own version, which is not what a fresh install picks.
+ * The pinned emulator build and the available system image revision from `sdkmanager --list`,
+ * or `undefined` when the image is absent. Installed image revisions do not select the cache key.
  *
  * @param {string} list The output of `sdkmanager --list`
  * @param {string} api The Android API level of the system image
@@ -262,16 +267,11 @@ export function cacheRevisions(list, api) {
       .split('\n')
       .map((line) => line.split('|').map((cell) => cell.trim()))
       .find((cells) => cells[0] === name)?.[1]
-  const emulator = version('emulator')
+  const emulator = emulatorPin().build
   const image = version(
     `system-images;android-${api};google_apis_playstore;x86_64`,
   )
-  return emulator === undefined ||
-    emulator === '' ||
-    image === undefined ||
-    image === ''
-    ? undefined
-    : {emulator, image}
+  return image === undefined || image === '' ? undefined : {emulator, image}
 }
 
 /**
@@ -425,16 +425,164 @@ export function installFailureLines(first, second, readLog) {
   return lines
 }
 
+/**
+ * Reject a run unless every recorded emulator executable belongs to the pinned SDK directory.
+ *
+ * @param {string} directory Sampler output directory
+ * @param {string} sdk Android SDK directory
+ * @param {boolean} [requireEvidence] Whether missing records fail the run
+ * @returns {string | undefined} A failing `run outcome` line, or nothing when all processes match
+ */
+export function launchedEmulatorFailure(
+  directory,
+  sdk,
+  requireEvidence = true,
+) {
+  const pin = emulatorPin()
+  let emulator = resolve(sdk, 'emulator')
+  try {
+    emulator = realpathSync(emulator)
+  } catch {
+    // A missing SDK still needs the resolved path in its failure line.
+  }
+  const records = existsSync(directory)
+    ? readdirSync(directory)
+        .filter((name) => /^host-exe-\d+\.txt$/.test(name))
+        .sort(
+          (first, second) =>
+            Number(first.slice(9, -4)) - Number(second.slice(9, -4)),
+        )
+    : []
+  if (records.length === 0 && requireEvidence) {
+    return 'run outcome: no emulator process was recorded; the launched emulator cannot be verified'
+  }
+  for (const record of records) {
+    let executable
+    try {
+      executable = readFileSync(join(directory, record), 'utf8').trim()
+    } catch {
+      return `run outcome: emulator executable record ${record} could not be read; the launched emulator cannot be verified`
+    }
+    const pid = /^host-exe-(\d+)\.txt$/.exec(record)?.[1]
+    const processLine = `run outcome: emulator process ${pid} ran ${executable}`
+    if (!executable.startsWith(`${emulator}${sep}`)) {
+      return `${processLine}, outside the pinned ${emulator} directory`
+    }
+    const properties = join(emulator, 'source.properties')
+    if (
+      !existsSync(properties) ||
+      !emulatorMatches(readFileSync(properties, 'utf8'), pin)
+    ) {
+      return `${processLine}, but ${properties} does not match emulator ${pin.version} build ${pin.build}`
+    }
+  }
+}
+
+/**
+ * Whether SDK properties name the pinned emulator version and build.
+ *
+ * @param {string} properties
+ * @param {{version: string, build: string}} [pin]
+ */
+export function emulatorMatches(properties, pin = emulatorPin()) {
+  return (
+    /^Pkg\.Revision\s*=\s*(.*)$/m.exec(properties)?.[1]?.trim() ===
+      pin.version &&
+    /^Pkg\.BuildId\s*=\s*(.*)$/m.exec(properties)?.[1]?.trim() === pin.build
+  )
+}
+
+/**
+ * Verify the release archive size and SHA-256 before extraction.
+ *
+ * @param {Uint8Array} archive
+ * @param {{size: number, sha256: string}} [pin]
+ */
+export function verifyEmulatorArchive(archive, pin = emulatorPin()) {
+  if (archive.length !== pin.size) {
+    throw new Error('emulator archive size mismatch')
+  }
+  if (createHash('sha256').update(archive).digest('hex') !== pin.sha256) {
+    throw new Error('emulator archive sha256 mismatch')
+  }
+}
+
+/**
+ * Reuse the pin or download, verify and extract its replacement into an empty emulator directory.
+ *
+ * @param {string} sdk
+ * @param {string} [archive]
+ * @param {ReturnType<typeof emulatorPin>} [pin]
+ */
+export function installEmulator(sdk, archive = undefined, pin = emulatorPin()) {
+  const directory = join(sdk, 'emulator')
+  if (installedEmulatorMatches(directory, pin)) {
+    return
+  }
+  rmSync(directory, {recursive: true, force: true})
+  const download = join(sdk, '.temp/emulator-pin.zip')
+  if (archive === undefined) {
+    mkdirSync(join(sdk, '.temp'), {recursive: true})
+    execFileSync(
+      'curl',
+      [
+        '--fail',
+        '--location',
+        '--silent',
+        '--show-error',
+        '--max-time',
+        '120',
+        '--retry',
+        '2',
+        '--retry-all-errors',
+        '--output',
+        download,
+        pin.url,
+      ],
+      {stdio: 'inherit'},
+    )
+  }
+  verifyEmulatorArchive(readFileSync(archive ?? download), pin)
+  execFileSync('unzip', ['-q', archive ?? download, '-d', sdk], {
+    stdio: 'inherit',
+  })
+  if (!installedEmulatorMatches(directory, pin)) {
+    throw new Error('unpacked emulator does not match the pin')
+  }
+  rmSync(download, {force: true})
+}
+
+/** @param {string} directory
+ * @param {{version: string, build: string}} [pin]
+ */
+function installedEmulatorMatches(directory, pin = emulatorPin()) {
+  const properties = join(directory, 'source.properties')
+  return (
+    !existsSync(join(directory, 'package.xml')) &&
+    existsSync(properties) &&
+    emulatorMatches(readFileSync(properties, 'utf8'), pin)
+  )
+}
+
+/** @returns {{version: string, build: string, url: string, size: number, sha256: string}} */
+function emulatorPin() {
+  return JSON.parse(
+    readFileSync(new URL('./emulator-pin.json', import.meta.url), 'utf8'),
+  )
+}
+
 const INSTALL_LOG_TAIL_LINES = 30
 const INSTALL_LOG_READ_CHARACTERS = 65_536
 // A tail of this many bytes decodes to at most this many characters, so installLogTail never cuts a file's tail further
 const INSTALL_LOG_READ_BYTES = INSTALL_LOG_READ_CHARACTERS
 const INSTALL_LOG_LINE_CHARACTERS = 300
 
-const [command, file, outcome, manifestFile, key] = process.argv.slice(2)
+const [command, file, outcome, third, key] = process.argv.slice(2)
 
 if (!isMain()) {
   // Imported by its unit test.
+} else if (command === 'install-emulator' && file !== undefined) {
+  installEmulator(file, outcome)
 } else if (
   command === 'install-start' &&
   file !== undefined &&
@@ -477,7 +625,7 @@ if (!isMain()) {
   command === 'cache-revisions' &&
   file !== undefined &&
   outcome !== undefined &&
-  manifestFile !== undefined
+  third !== undefined
 ) {
   const revisions = cacheRevisions(readFileSync(0, 'utf8'), outcome)
   const present = cachedPackages(outcome).filter((path) =>
@@ -485,7 +633,7 @@ if (!isMain()) {
   )
   if (revisions === undefined) {
     log(
-      `CACHE_REVISIONS: \`sdkmanager --list\` did not list ${cachedPackageNames(
+      `CACHE_REVISIONS: \`sdkmanager --list\` did not list ${availablePackageNames(
         outcome,
       )
         .map((name) => `\`${name}\``)
@@ -507,7 +655,7 @@ if (!isMain()) {
         `key=android-sdk-${process.env.RUNNER_OS}-api${outcome}-google_apis_playstore-x86_64-image${revisions.image}-emulator${revisions.emulator}`,
         'paths<<PATHS',
         ...cachedPackages(outcome).map((path) => join(file, path)),
-        manifestFile,
+        third,
         'PATHS',
         '',
       ].join('\n'),
@@ -517,7 +665,7 @@ if (!isMain()) {
   command === 'cache-manifest' &&
   file !== undefined &&
   outcome !== undefined &&
-  manifestFile !== undefined &&
+  third !== undefined &&
   key !== undefined
 ) {
   const missing = cachedPackages(outcome).find(
@@ -544,31 +692,30 @@ if (!isMain()) {
     )
     process.exitCode = 1
   } else {
-    writeFileSync(
-      manifestFile,
-      `${key}\n${lines.map(({line}) => line).join('')}`,
-    )
+    writeFileSync(third, `${key}\n${lines.map(({line}) => line).join('')}`)
   }
 } else if (
   command === 'cache-check' &&
   file !== undefined &&
   outcome !== undefined &&
-  manifestFile !== undefined &&
+  third !== undefined &&
   key !== undefined
 ) {
   const restored = cachedPackages(outcome).filter((path) =>
     existsSync(join(file, path)),
   )
   if (restored.length > 0) {
-    const manifest = readManifest(manifestFile)
+    const manifest = readManifest(third)
     const kept = []
     for (const path of restored) {
       const files = packageFiles(join(file, path))
       // A manifest saved for another key describes other packages, whatever their files match.
       const mismatch =
-        manifest !== undefined && manifest.key !== key
-          ? "the manifest does not name this cache's key"
-          : packageMismatch(manifest?.packages.get(path), files)
+        path === 'emulator' && !installedEmulatorMatches(join(file, path))
+          ? 'its source.properties does not name the pinned emulator'
+          : manifest !== undefined && manifest.key !== key
+            ? "the manifest does not name this cache's key"
+            : packageMismatch(manifest?.packages.get(path), files)
       if (mismatch === undefined) {
         kept.push(path)
         log(
@@ -627,8 +774,20 @@ if (!isMain()) {
   if (result.installLine !== undefined) {
     report(result.installLine)
   }
-  report(result.line)
-  process.exitCode = result.passed ? 0 : 1
+  // `skipped` cannot hold a process: the sampler and `run1` share one `if`.
+  const emulatorFailure =
+    third !== undefined &&
+    third !== '' &&
+    (outcome === 'success' || outcome === 'failure' || outcome === 'cancelled')
+      ? launchedEmulatorFailure(dirname(file), third, result.passed)
+      : undefined
+  if (!result.passed) {
+    report(result.line)
+  }
+  if (emulatorFailure !== undefined || result.passed) {
+    report(emulatorFailure ?? result.line)
+  }
+  process.exitCode = result.passed && emulatorFailure === undefined ? 0 : 1
 } else if (command === 'host-evidence' && file !== undefined) {
   try {
     for (const line of hostEvidence(
@@ -644,14 +803,14 @@ if (!isMain()) {
   }
 } else {
   console.error(
-    'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>',
+    'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | install-emulator <sdk> [archive] | result <timing.txt> <outcome> [sdk]',
   )
   process.exitCode = 2
 }
 
 /**
  * The install's possible download and package paths, relative to the SDK root. Comparing these with the
- * first attempt's snapshot limits cleanup to paths absent before that attempt.
+ * first attempt's snapshot preserves unrelated paths present before that attempt.
  *
  * @param {string} sdk The Android SDK root
  * @param {string} api The Android API level of the requested platform and system image
@@ -672,6 +831,9 @@ function installPaths(sdk, api) {
     : []
   return [
     ...downloads,
+    ...(existsSync(join(sdk, '.temp/emulator-pin.zip'))
+      ? ['.temp/emulator-pin.zip']
+      : []),
     ...packages.filter((path) => existsSync(join(sdk, path))),
   ]
 }
@@ -691,16 +853,13 @@ function cachedPackages(api) {
 }
 
 /**
- * The `sdkmanager` names of `cachedPackages`.
+ * The `sdkmanager` packages whose available revisions select the cache key.
  *
  * @param {string} api The Android API level of the system image
  * @returns {string[]}
  */
-function cachedPackageNames(api) {
-  return [
-    'emulator',
-    `system-images;android-${api};google_apis_playstore;x86_64`,
-  ]
+function availablePackageNames(api) {
+  return [`system-images;android-${api};google_apis_playstore;x86_64`]
 }
 
 /**
