@@ -2,7 +2,7 @@ import {defineContainer, defineSchema} from '@portabletext/editor'
 import {createTestEditor} from '@portabletext/editor/test/vitest'
 import {getUnionSchema} from '@portabletext/editor/traversal'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineTable} from './define-table'
 import {Table, TableCell, TableRow} from './ui/table-render'
@@ -647,6 +647,7 @@ describe('Feature: `defineTable` with renamed containers', () => {
 
   test('Scenario: an `of` on the table or row definition warns and is ignored', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    onTestFinished(() => warnSpy.mockRestore())
 
     defineTable({
       containers: {
@@ -663,7 +664,6 @@ describe('Feature: `defineTable` with renamed containers', () => {
         "[@portabletext/plugin-table] The table definition ('oftable') declares an `of`, which `defineTable` owns: the nesting is grafted as table.of → row.of → cell. The declared `of` is ignored. Cell-scoped node definitions belong on the cell definition's `of`.",
       ],
     ])
-    warnSpy.mockRestore()
   })
 })
 
