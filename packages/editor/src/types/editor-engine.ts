@@ -94,6 +94,15 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * as unpersisted rather than as proof the field survived.
    */
   valueUnsetEmitted: boolean
+  /**
+   * `lastSyncedValue` as `change` sees it: after load it holds the
+   * repaired value, since `change` carries the repairs.
+   */
+  changeLastSyncedValue: Array<PortableTextBlock> | undefined
+  /**
+   * `valueUnsetEmitted` for the patches `change` carries.
+   */
+  changeValueUnsetEmitted: boolean
   isPatching: boolean
   isPerformingBehaviorOperation: boolean
   withHistory: boolean

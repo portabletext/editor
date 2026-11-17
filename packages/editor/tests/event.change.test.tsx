@@ -3849,3 +3849,140 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
     },
   ])
 })
+
+describe('event.change: a lone block repaired on intake', () => {
+  test('Scenario: typing into a lone block corrected on load does not insert it again', async () => {
+    const changePatches: Array<Patch> = []
+    const initialValue = [
+      {
+        _key: 'b0',
+        _type: 'block',
+        children: [],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              changePatches.push(...event.patches)
+            }
+          }}
+        />
+      ),
+    })
+
+    await vi.waitFor(() => {
+      expect(changePatches).toEqual([
+        {...setIfMissing([], [{_key: 'b0'}, 'children']), origin: 'local'},
+        {
+          ...insert(
+            [{_key: 'k2', _type: 'span', text: '', marks: []}],
+            'before',
+            [{_key: 'b0'}, 'children', 0],
+          ),
+          origin: 'local',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'f'})
+
+    await vi.waitFor(() => {
+      expect(applyAll(initialValue, changePatches)).toEqual([
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_key: 'k2', _type: 'span', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a remote `set` of a span without `text` is corrected without clearing the field', async () => {
+    const changePatches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _key: 'b0',
+          _type: 'block',
+          children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              changePatches.push(...event.patches)
+            }
+          }}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'children', {_key: 's0'}],
+          value: {_type: 'span', _key: 's0', marks: []},
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(changePatches).toEqual([
+        {
+          ...set('', [{_key: 'b0'}, 'children', {_key: 's0'}, 'text']),
+          origin: 'local',
+        },
+      ])
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+        focus: {path: [{_key: 'b0'}, 'children', {_key: 's0'}], offset: 0},
+      },
+    })
+    editor.send({type: 'insert.text', text: 'f'})
+
+    await vi.waitFor(() => {
+      expect(
+        applyAll(
+          [
+            {
+              _key: 'b0',
+              _type: 'block',
+              children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          [...changePatches],
+        ),
+      ).toEqual(editor.getSnapshot().context.value)
+    })
+  })
+})

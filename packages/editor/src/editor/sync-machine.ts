@@ -41,6 +41,7 @@ export const syncMachine = setup({
       })
       editorEngine.onChange()
       editorEngine.lastSyncedValue = value
+      editorEngine.changeLastSyncedValue = editorEngine.snapshot.context.value
     },
   },
 }).createMachine({
