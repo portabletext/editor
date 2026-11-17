@@ -1,5 +1,15 @@
 # @portabletext/test
 
+## 2.1.4
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`5251365`](https://github.com/portabletext/editor/commit/525136572614b11c3ad6e7a0e42ea8e83deb976b) Thanks [@christianhg](https://github.com/christianhg)! - fix(test): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`4b15514`](https://github.com/portabletext/editor/commit/4b155140891f0b93ce56ae6b4f4eec0274d94dd7)]:
+  - @portabletext/schema@3.1.1
+
 ## 2.1.3
 
 ### Patch Changes
