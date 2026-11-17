@@ -45,7 +45,7 @@ vi.mock('../../gherkin.ts', async (importOriginal) => {
                           ? 'B: |'
                           : process.env['RACEJAR_DEVICE_PROBE'] === 'garbage'
                             ? 'B: zzz|'
-                            : 'B: \nB: |',
+                            : 'B:\nB: |',
                       )
                     : index === 4 &&
                         !['fixed', 'undo-fixed'].includes(

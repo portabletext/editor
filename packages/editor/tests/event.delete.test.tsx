@@ -153,7 +153,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B:')
     })
   })
 
@@ -370,7 +370,7 @@ describe('event.delete', () => {
 
         await vi.waitFor(() => {
           expect(toTextspec(editor.getSnapshot().context)).toEqual(
-            ['B: ', 'B: baz'].join('\n'),
+            ['B:', 'B: baz'].join('\n'),
           )
 
           expect(editor.getSnapshot().context.selection).toBeNull()
@@ -452,7 +452,7 @@ describe('event.delete', () => {
       })
 
       await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B:')
       })
     })
   })
@@ -933,7 +933,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B:')
         })
       })
 
@@ -962,7 +962,7 @@ describe('event.delete', () => {
         })
 
         await vi.waitFor(() => {
-          expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+          expect(toTextspec(editor.getSnapshot().context)).toEqual('B:')
         })
       })
 
@@ -1171,7 +1171,7 @@ describe('event.delete', () => {
 
       await vi.waitFor(() => {
         expect(toTextspec(editor.getSnapshot().context)).toEqual(
-          ['B: ', '{IMAGE}', 'B: '].join('\n'),
+          ['B:', '{IMAGE}', 'B:'].join('\n'),
         )
       })
     })
@@ -1313,7 +1313,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B:')
     })
   })
 
@@ -1358,7 +1358,7 @@ describe('event.delete', () => {
     })
 
     await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ')
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B:')
     })
   })
 })
