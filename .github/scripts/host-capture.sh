@@ -25,7 +25,7 @@ if [ "$runs_sampler" = true ]; then
   kill "$sampler_pid" 2> /dev/null || true
 fi
 
-timeout 10 bash -c "${HOST_DMESG_CMD:-sudo dmesg -T}" > "$out_dir/host-dmesg.txt" 2>&1 || true
+timeout 10 bash -c "${HOST_DMESG_CMD:-sudo -n dmesg -T}" > "$out_dir/host-dmesg.txt" 2>&1 || true
 timeout 10 df -h > "$out_dir/host-disk.txt" 2>&1 || true
 {
   timeout 10 free -m
@@ -39,5 +39,7 @@ for crash in ${HOST_CRASH_GLOB:-/tmp/android-*/emu-crash-*}; do
     timeout 10 cp -r "$crash" "$out_dir/emu-crash/" || true
   fi
 done
+
+timeout --kill-after=5 300 bash "$(dirname "$0")/host-core.sh" capture "$out_dir" || true
 
 exit 0

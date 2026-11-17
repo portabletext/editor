@@ -71,6 +71,8 @@ export type {
   ComposeStep,
   EnterStep,
   GraphemeSelection,
+  Json,
+  PageStep,
   PageEvent,
   Run,
   RunOnDeviceOptions,

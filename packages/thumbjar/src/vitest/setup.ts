@@ -20,10 +20,14 @@ afterAll(({}, file) => {
       summaryLines(
         file.name,
         leafTests(file.tasks).map((test) => ({
-          name: test.name,
+          name: test.fullTestName,
+          duration: test.result?.duration,
+          errorMessage: test.result?.errors?.[0]?.message,
+          pageException: lastDriverRun(test)?.pageException,
+          reason: lastDriverRun(test)?.reason,
           ...(test.result?.state === 'fail' &&
           lastDriverRun(test)?.taps !== undefined
-            ? {taps: lastDriverRun(test)?.taps}
+            ? {taps: lastDriverRun(test)?.taps, tapsName: test.name}
             : {}),
           // A skipped or todo test, or one skipped as it ran, ends neither passed nor failed.
           outcome:

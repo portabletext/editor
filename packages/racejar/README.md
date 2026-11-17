@@ -72,6 +72,52 @@ module.exports = {
 }
 ```
 
+## Usage with Playwright
+
+Import `Feature` from `racejar/playwright`. Its optional `test` property accepts a
+Playwright test created with `test.extend`; it defaults to Playwright's `test`.
+`fixtures` names the fixtures passed to every scenario and Before/After hook and
+defaults to `['page', 'context']`. Use `fixtures: []` to request no fixtures, so a
+Feature that needs no browser can run without launching one.
+
+Fixture names must match `/^[A-Za-z_$][\w$]*$/` and cannot be JavaScript reserved
+words, including strict-mode reserved words. Invalid names throw a racejar error.
+
+```ts nocheck
+import {test as base} from '@playwright/test'
+import {Given} from 'racejar'
+import {
+  Feature,
+  type PlaywrightContext,
+  type PlaywrightFixtures,
+} from 'racejar/playwright'
+
+const test = base.extend<{greeting: string}>({
+  greeting: 'foo',
+})
+type Context = PlaywrightContext<
+  Pick<PlaywrightFixtures<typeof test>, 'page' | 'greeting'>
+>
+
+Feature({
+  test,
+  fixtures: ['page', 'greeting'],
+  featureText: `Feature: Greeting
+    Scenario: Display a greeting
+      Given a greeting`,
+  stepDefinitions: [
+    Given('a greeting', async (context: Context) => {
+      await context.playwright.page.setContent(context.playwright.greeting)
+    }),
+  ],
+})
+```
+
+Steps take an annotated context, as the other drivers already require.
+`PlaywrightContext` defaults to `page` and `context`; use its generic parameter
+with `PlaywrightFixtures<typeof test>` to select the named fixtures and intersect
+with your own fields when sharing state between hooks and steps.
+
 ## Usage with \<your favourite testing framework\>
 
 `Feature` exported from `racejar/vitest` and `racejar/jest` are convenient thin wrappers around the more generic `compileFeature`.
@@ -281,6 +327,36 @@ Feature({
   parameterTypes,
 })
 ```
+
+## Expected failures
+
+`Feature` and `compileFeature` accept an `expectFail` predicate. racejar calls it once for every scenario row. The predicate gets the row's `name`, its `tags` and its `examples`. `tags` holds every tag on the row's Feature, Rule, Scenario and Examples. `examples` holds a Scenario Outline row's values keyed by column name, and is `undefined` for a plain Scenario. A row the predicate returns `true` for is expected to fail.
+
+```ts nocheck
+Feature({
+  featureText: featureFile,
+  stepDefinitions,
+  expectFail: (scenario) =>
+    scenario.name === 'Inserting text on expanded selection' &&
+    scenario.examples?.['selection'] === '"B: ^foo;;B: bar|"',
+})
+```
+
+Rows of a Scenario Outline share its name unless the name contains a `<parameter>`. Use `examples` to pick one row.
+
+A marked row passes when it fails and fails when it passes. When the bug behind it is fixed, the test fails until you remove the expectation.
+
+A predicate that matches no row throws when the Feature is collected. The check covers the predicate as a whole, not each condition inside it.
+
+A marked row that fails in a `Before` hook, a step or an `After` hook counts as the expected failure.
+
+Each driver marks the row with its framework's own expected-failure test:
+
+- `racejar/vitest` uses `test.fails`.
+- `racejar/jest` uses `test.failing`. Jest fails a `test.failing` test when one of its hooks throws, so racejar runs a marked row's hooks inside the test.
+- `racejar/playwright` uses `test.fail`. It uses `test.fail.only` for a row tagged `@only`.
+
+With `compileFeature`, each compiled scenario has an `expectedFailure` boolean. Your runner decides how to mark the row.
 
 ## Tips
 

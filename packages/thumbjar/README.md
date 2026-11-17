@@ -156,7 +156,7 @@ A tap the system accepted but Gboard never registered is not detected. Gboard's 
 
 `test.fails` counts any error as its expected failure, a driver fault or a test timeout included. Each call is recorded when it starts and marked complete once it returned a result and cleaned up. The setup file fails the test file for a `test.fails` test whose call ended `inconclusive`, `device-offline`, on a driver fault or never completed, and for one that ended with no driver call at all, a `beforeEach` that threw before the first `runOnDevice` for instance, naming the test. A driver fault can end a call after one attempt, when no retry is allowed.
 
-When `deviceProject` is given a `summaryFile`, such as `process.env.GITHUB_STEP_SUMMARY`, the setup file appends the file's line to it after the tests: how many of its tests passed, failed, failed as expected under `test.fails`, ended inconclusive, with the device offline or on a driver fault, with their names. Every test that ran counts, in `describe` blocks too, by its own final result and the last driver call it made. Skipped and todo tests, and tests skipped as they ran, an unsupported case for instance, count in none of the six and are listed on a line of their own when there are any. A test whose call was inconclusive with the device answering, or with the device never checked, adds a note that the device offline count can be too low.
+When `deviceProject` is given a `summaryFile`, such as `process.env.GITHUB_STEP_SUMMARY`, the setup file appends a block for the file to it after the tests: a line counting how many of its tests passed, failed, failed as expected under `test.fails`, ended inconclusive, with the device offline or on a driver fault, then a table with one row per test in file order: its position, its suite path and name, its outcome (`not run` for a skipped or todo test, or one skipped as it ran), its duration and the first line of its failure, cut at 200 characters. The failure is the test's error, else the page's exception, else the driver's reason. Every test that ran counts, in `describe` blocks too, by its own final result and the last driver call it made. Skipped and todo tests, and tests skipped as they ran, an unsupported case for instance, count in none of the six. A test whose call was inconclusive with the device answering, or with the device never checked, adds a note that the device offline count can be too low.
 
 ## Time budget
 
@@ -216,3 +216,24 @@ The commands require Node 24 and `adb` on PATH. They have been run on Linux. `ru
 `thumbjar run <file> --keyboard ja|en --page-dir <dir> --config <config> --project <name>` serves the page directory, prepares Chrome and Gboard, runs just that file under `deviceTestFileSeconds(countDeviceTests(source))`, and records diagnostics. `--port` defaults to `8765` and `--out-dir` to `out`. Paths are relative to the current working directory; the test source is read relative to the page directory's parent, matching the device project's test root.
 
 The output directory holds `timing.txt`, `phases.log`, `http.log`, `vitest.log`, logcat, Chrome exit information and a final screenshot. Failed prep or tests trigger a bounded `adb get-state` check, which records `CHECKED device` or `CHECKED lost` only when adb proves that verdict. A successful test stage records `CHECKED skipped`. Prep failure exits 1; otherwise the command exits with the test stage's status. The HTTP server stops when the command exits.
+
+### Page actions between keyboard steps
+
+Register editor-agnostic named handlers with `recordInput({getText, getState,
+actions: {select: async (args) => { /* update the page and await its render */ }}})`.
+A `{type: 'page', action: 'select', args: {offset: 2}}` step awaits that handler
+and gets the same `StepRecord` boundary as a keyboard step. `args` is JSON.
+Unknown handlers and rejected handlers are page exceptions, never retried.
+The action evaluation itself does not retry a dropped CDP socket. Only the
+whole case may retry in a proven fresh Chrome, before Gboard input.
+
+Collect page actions and keyboard input into one `runOnDevice` call. Assertions
+can inspect each `steps[index].stateAfter`, including intermediate states.
+Page steps may seed arbitrary text, so cases containing page steps do not use
+the final text's unexpected-digit heuristic. The event-based symbol mistap
+check still applies. Existing keyboard-only cases retain both checks.
+
+For data-driven test files, declare `// thumbjar-test-count: 13` with the total
+number of rows collected by Vitest (skipped rows included). The runner uses it
+for its file budget instead of counting literal top-level `test(` calls. Keep
+a collection test comparing the declaration with Vitest's actual count.

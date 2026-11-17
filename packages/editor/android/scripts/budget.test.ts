@@ -1,6 +1,10 @@
 import {readdirSync, readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
-import {countDeviceTests} from 'thumbjar/vitest'
+import {
+  countDeviceTests,
+  EMULATOR_BOOT_SECONDS,
+  runStepWorstSeconds,
+} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
 
@@ -19,7 +23,14 @@ describe(countDeviceTests.name, () => {
       reporters: [],
     })
     try {
-      const {testModules} = await vitest.collect()
+      const {testModules} = await vitest.collect(undefined, {
+        staticParse: false,
+      })
+      expect(
+        testModules.flatMap((module) =>
+          module.errors().map((error) => error.message),
+        ),
+      ).toEqual([])
 
       expect(
         Object.fromEntries(
@@ -55,15 +66,21 @@ describe('the workflow', () => {
         .map((pair) => pair.split(':').map((part) => part.trim()))
         .filter((pair) => pair[0] !== ''),
     )
-    return {lang: row.lang as 'ja' | 'en', file: row.file as string}
+    return {
+      lang: row.lang as 'ja' | 'en',
+      file: row.file as string,
+      runMinutes: Number(row.runMinutes),
+    }
   })
 
-  test('runs `ja.test.ts`, `en.test.ts`, `ja.enter.test.ts` and `en.enter.test.ts` in a job each, on a device prepared for the language the file is named after', () => {
+  test('runs each editor device suite in a job prepared for its language', () => {
     expect(rows).toEqual([
-      {lang: 'ja', file: 'tests/ja.test.ts'},
-      {lang: 'en', file: 'tests/en.test.ts'},
-      {lang: 'ja', file: 'tests/ja.enter.test.ts'},
-      {lang: 'en', file: 'tests/en.enter.test.ts'},
+      {lang: 'ja', file: 'tests/ja.test.ts', runMinutes: 90},
+      {lang: 'en', file: 'tests/en.test.ts', runMinutes: 90},
+      {lang: 'ja', file: 'tests/ja.enter.test.ts', runMinutes: 90},
+      {lang: 'en', file: 'tests/en.enter.test.ts', runMinutes: 90},
+      {lang: 'en', file: 'tests/en.insert.break.test.ts', runMinutes: 120},
+      {lang: 'en', file: 'tests/en.insert.text.test.ts', runMinutes: 90},
     ])
   })
 
@@ -73,21 +90,54 @@ describe('the workflow', () => {
     ).toEqual(['tests/en-textarea.test.ts'])
   })
 
-  test('gives the job a cap no lower than every step cap added up, so a hang in every step still leaves the steps that report', () => {
+  test('gives every row enough run minutes for the whole run step at its declared test count', () => {
+    for (const row of rows) {
+      const count = countDeviceTests(readFileSync(`${root}${row.file}`, 'utf8'))
+      expect(row.runMinutes, row.file).toBeGreaterThanOrEqual(
+        Math.ceil(runStepWorstSeconds(row.lang, count) / 60),
+      )
+    }
+  })
+
+  test('boots the emulator within the time the run step budget counts', () => {
+    expect(
+      [...workflow.matchAll(/^ {10}emulator-boot-timeout: (\d+)$/gm)].map(
+        (match) => Number(match[1]),
+      ),
+    ).toEqual([EMULATOR_BOOT_SECONDS, EMULATOR_BOOT_SECONDS])
+  })
+
+  test('gives both run steps the cap of the matrix row they run', () => {
+    const steps = workflow
+      .split(/^ {4}steps:$/m)[1]!
+      .split(/^ {6}- /m)
+      .slice(1)
+    const runSteps = steps.filter((step) => /^ {8}id: run[12]$/m.test(step))
+
+    expect(runSteps).toHaveLength(2)
+    for (const step of runSteps) {
+      expect(step).toMatch(
+        /^ {8}timeout-minutes: \$\{\{ matrix.suite.runMinutes \}\}$/m,
+      )
+    }
+  })
+
+  test('gives the job a cap equal to every step cap added up, so a hang in every step still leaves the steps that report', () => {
     const jobCap = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(workflow)?.[1])
     const steps = workflow
       .split(/^ {4}steps:$/m)[1]!
       .split(/^ {6}- /m)
       .slice(1)
     const stepCaps = steps.map((step) =>
-      Number(/^ {8}timeout-minutes: (\d+)$/m.exec(step)?.[1]),
+      /^ {8}timeout-minutes: \$\{\{ matrix.suite.runMinutes \}\}$/m.test(step)
+        ? Math.max(...rows.map((row) => row.runMinutes))
+        : Number(/^ {8}timeout-minutes: (\d+)$/m.exec(step)?.[1]),
     )
 
     // A step without a cap would run up to the job's cap, and the sum below would not hold it.
     expect(stepCaps.filter((cap) => !Number.isInteger(cap))).toEqual([])
-    expect(jobCap).toBeGreaterThanOrEqual(
-      stepCaps.reduce((sum, cap) => sum + cap, 0),
-    )
+    expect(jobCap).toBeLessThanOrEqual(360)
+    expect(jobCap).toEqual(stepCaps.reduce((sum, cap) => sum + cap, 0))
   })
 
   test('names each job and its artifact after its file, and runs the file it names', () => {
