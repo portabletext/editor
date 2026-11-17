@@ -27,13 +27,13 @@ test('Scenario: Pressing Enter in a block that starts with a dash and space', as
     })),
   }).toEqual({
     text: '- \n',
-    state: 'B: - \nB: |',
+    state: 'B: -\\s\nB: |',
     steps: [
       {
         type: 'enter',
         status: 'done',
         textAfter: '- \n',
-        stateAfter: 'B: - \nB: |',
+        stateAfter: 'B: -\\s\nB: |',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
         insertParagraphs: 1,
@@ -67,7 +67,7 @@ test('Scenario: Pressing Enter after typing a dash and space on the symbol layou
     })),
   }).toEqual({
     text: '- \n',
-    state: 'B: - \nB: |',
+    state: 'B: -\\s\nB: |',
     steps: [
       {
         type: 'compose',
@@ -82,7 +82,7 @@ test('Scenario: Pressing Enter after typing a dash and space on the symbol layou
         type: 'enter',
         status: 'done',
         textAfter: '- \n',
-        stateAfter: 'B: - \nB: |',
+        stateAfter: 'B: -\\s\nB: |',
         selectionAfter: {anchor: 2, focus: 2},
         focusedAfter: true,
         insertParagraphs: 1,

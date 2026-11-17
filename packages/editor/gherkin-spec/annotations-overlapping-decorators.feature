@@ -76,7 +76,7 @@ Feature: Annotations Overlapping Decorators
     When the editor is focused
     And the caret is put before "bar"
     And "{Enter}" is pressed
-    Then the editor state is "B: ;;B: [strong:[@link _key=\"l1\":bar]]"
+    Then the editor state is "B:;;B: [strong:[@link _key=\"l1\":bar]]"
 
   Scenario: Splitting block after a decorated annotation
     Given the editor state is "B: bar"

@@ -4,7 +4,7 @@ Feature: Selection
     Given one editor
 
   Scenario: Expanding collapsed selection backwards from empty line
-    Given the editor state is "B: foo;;B: "
+    Given the editor state is "B: foo;;B:"
     When the editor is focused
     And the caret is put before ""
     And "{Shift>}{ArrowLeft}{/Shift}" is pressed
@@ -44,7 +44,7 @@ Feature: Selection
     Then "foo" is selected
 
   Scenario: Reducing selection hanging onto empty line
-    Given the editor state is "B: foo;;B: "
+    Given the editor state is "B: foo;;B:"
     When the editor is focused
     And the caret is put before "foo"
     And "{Shift>}{ArrowRight}{/Shift}" is pressed

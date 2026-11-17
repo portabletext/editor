@@ -148,7 +148,7 @@ Feature: Delete
     Then the editor state is "B: foo bar| baz"
 
   Scenario: Deleting line backward in empty block
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "deleteLine.backward" is pressed
     Then the editor state is "B: |"

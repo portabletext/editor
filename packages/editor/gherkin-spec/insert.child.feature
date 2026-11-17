@@ -17,7 +17,7 @@ Feature: Insert Child
 
     Examples:
       | text     | position    | new text      |
-      | "B: "    | after ""    | "B: new\|"    |
+      | "B:"     | after ""    | "B: new\|"    |
       | "B: foo" | after "foo" | "B: foonew\|" |
 
   Scenario: Inserting inline object in span
