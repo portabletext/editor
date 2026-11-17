@@ -2,7 +2,7 @@
 
 # thumbjar
 
-thumbjar types on real Gboard in an Android emulator into a web page in Chrome. It reports what the page ended up with for Vitest tests. Real keyboard input lets you test how Gboard reacts when a page changes the DOM during a composition.
+thumbjar types with real Gboard on an Android emulator into a web page in Chrome. It returns what the page holds afterwards, so a Vitest test can assert on it. Real keyboard input lets you test how Gboard reacts when a page changes the DOM during a composition.
 
 ## Install
 
@@ -20,13 +20,13 @@ For CI, provision the SDK, image, Chrome and Gboard on your runner. Boot the emu
 
 ## First run
 
-Download the pinned uiautomator2 server jar before booting the emulator:
+Download the pinned uiautomator2 server jar before booting the emulator. Run this command from the package you run Vitest in, so the tests find the cached jar:
 
 ```sh
 npx thumbjar fetch-u2-jar
 ```
 
-The download checks the jar's hash and reuses a matching cached file. The default path is `node_modules/.cache/thumbjar/u2.jar` under the nearest package root above the working directory. Set `CACHE_DIR` to use `$CACHE_DIR/thumbjar/u2.jar`. Run inside a package with a writable cache directory. The command tries three downloads of up to 45 seconds each, with 15 seconds between retries.
+The download checks the jar's hash and reuses a matching cached file. The default path is `node_modules/.cache/thumbjar/u2.jar` in the nearest directory with a `package.json`, starting from the working directory. Set `CACHE_DIR` to a directory to use `$CACHE_DIR/thumbjar/u2.jar` instead. Run inside a package with a writable cache directory. The command tries three downloads of up to 45 seconds each, with 15 seconds between retries.
 
 Next, boot your emulator. Build your test page and serve its output directory in another terminal:
 
@@ -43,9 +43,9 @@ npx vitest run --project device
 
 `serve` defaults to port `8765`. `prepare` requires `--keyboard ja|en` and `--page-url`. Its `--out-dir` defaults to `out`. Optional `--booted` supplies the host's epoch seconds when the emulator came online. Without it, the dictionary wait uses the time preparation started.
 
-Preparation attempts to disable Play Store updates, waits out post-boot system error dialogs, sets up Chrome and the soft keyboard, and checks the page URL. For Japanese, it adds the QWERTY layout, waits for this boot's dictionary-load log, switches the layout away and back, and checks conversion candidates by typing `kyou` into the page. A Japanese dictionary that never loads exits with status `3`. Other preparation failures exit with status `1`. A dictionary wait allows up to 360 seconds from `--booted`.
+Preparation attempts to disable Play Store updates, waits out post-boot system error dialogs, sets up Chrome and the soft keyboard, and checks the page URL. For Japanese, it adds the QWERTY layout and waits for this boot's dictionary-load log. Then it switches Gboard to Japanese, first switching away if Japanese is already showing. It checks conversion candidates by typing `kyou` into the page. A Japanese dictionary that never loads exits with status `3`. Other preparation failures exit with status `1`. Bad flags exit with status `2`. If preparation receives `SIGINT`, `SIGHUP` or `SIGTERM`, it exits with status `130`, `129` or `143`, respectively. A dictionary wait allows up to 360 seconds from `--booted`.
 
-The driver forwards a host `localhost` page port to the device with `adb reverse`. It adds or replaces the URL's `prefix` search parameter. Your page must use that parameter to seed its field.
+The driver forwards a host `localhost` page port to the device with `adb reverse`. It adds or replaces the URL's `prefix` search parameter. Read that parameter in your page to put the prefix in its field.
 
 ## Set up the page
 
@@ -183,9 +183,9 @@ For a built page directory containing `editor.html`, you can combine serving, pr
 npx thumbjar run tests/ja.test.ts --keyboard ja --page-dir dist --config vitest.config.ts --project device
 ```
 
-Fetch the jar and boot the emulator first. `run` resolves Vitest from the working directory's package. It requires all the flags shown above. Optional `--port` defaults to `8765` and `--out-dir` to `out`. It reads the test source relative to the page directory's parent to calculate the file budget, so place `tests` alongside `dist` in this example.
+Fetch the jar and boot the emulator first. `run` resolves Vitest from the working directory's package. It requires all the flags shown above. Optional `--port` defaults to `8765` and `--out-dir` to `out`. It reads the test file relative to the page directory's parent to work out the file's time budget. Run it from that directory, with `tests` next to `dist` as in this example.
 
-The output includes `timing.txt`, `phases.log`, `http.log` and `vitest.log`. After the test stage it collects `logcat.txt`, `logcat-crash.txt`, `chrome-exit-info.txt` and `final.png`. Preparation also writes `diagnose.txt` and Japanese setup and dictionary logs when applicable. Failed preparation or tests trigger a bounded device check. Successful tests record `CHECKED skipped`. Preparation failure exits `1`. Otherwise the command returns the test stage's status and stops its HTTP server.
+The output includes `timing.txt`, `phases.log`, `http.log` and `vitest.log`. `logcat.txt` records the device log from the start of the test stage. After the test stage it collects `logcat-crash.txt`, `chrome-exit-info.txt` and `final.png`. Preparation also writes `diagnose.txt` and Japanese setup and dictionary logs when applicable. Failed preparation or tests trigger a bounded device check. Successful tests record `CHECKED skipped`. Preparation failure exits `1`. Otherwise the command returns the test stage's status and stops its HTTP server.
 
 ## Test helpers
 

@@ -114,8 +114,8 @@ export const VITEST_STARTUP_SECONDS = 60
 
 /**
  * The longest a run of one device test file of `testCount` tests takes, the timeout to run it under.
- * Cutting the run off earlier would stop Vitest before its last test times out and before `afterAll` in
- * `src/vitest/setup.ts` can name a driver fault.
+ * Cutting the run off earlier would stop Vitest before its last test times out and before thumbjar's setup
+ * file can name a driver fault.
  *
  * @public
  */
@@ -244,7 +244,7 @@ export const FETCH_U2_JAR_WORST_SECONDS =
 
 /**
  * The number of tests in a device test file, from its `thumbjar-test-count` declaration
- * or its top-level `test(` and `test.fails(` calls. A unit test checks the count
+ * or its top-level `test(` and `test.fails(` calls. Keep a test that checks the count
  * against the tests Vitest collects from each file.
  *
  * @public

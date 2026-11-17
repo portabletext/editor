@@ -15,7 +15,9 @@ declare global {
 }
 
 /**
- * Other `input` types either take no text or, like `email` and `number`, do not support `setSelectionRange`.
+ * The selector `recordInput` uses to find the field when no `field` is given:
+ * `textarea`, text `input` types and `[contenteditable]`. Other `input` types either take no text
+ * or, like `email` and `number`, do not support `setSelectionRange`.
  *
  * @public
  */
@@ -60,19 +62,21 @@ const EVENT_TYPES = [
  *
  * @example
  * ```ts
- * import type {Editor, EditorSnapshot} from '@portabletext/editor'
- * import {getTextBlockText, isTextBlock} from '@portabletext/editor/utils'
  * import {recordInput} from 'thumbjar/page'
  *
- * function editorText({context}: EditorSnapshot) {
- *   return (context.value ?? [])
- *     .map((block) => (isTextBlock(context, block) ? getTextBlockText(block) : ''))
- *     .join('\n')
- * }
+ * const field = document.querySelector('textarea')!
+ * field.value = new URL(location.href).searchParams.get('prefix') ?? ''
  *
- * function recordEditorInput(editor: Editor) {
- *   recordInput({getText: () => editorText(editor.getSnapshot())})
- * }
+ * recordInput({
+ *   field,
+ *   getText: () => field.value,
+ *   getState: () => ({length: field.value.length}),
+ *   actions: {
+ *     clear: () => {
+ *       field.value = ''
+ *     },
+ *   },
+ * })
  * ```
  *
  * @public

@@ -70,7 +70,7 @@ export type DeviceProjectOptions = {
  *       deviceProject({
  *         include: ['tests/*.test.ts'],
  *         pageUrl: 'http://localhost:8765/editor.html',
- *         pageHint: 'Build it with `pnpm build:page`.',
+ *         pageHint: 'Build and serve the test page first.',
  *       }),
  *     ],
  *   },

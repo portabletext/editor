@@ -113,6 +113,7 @@ export type Typed = {
   text: string | null
   /** How each word was committed: its candidate or `space`. */
   picked: string[]
+  /** The number of `compositionstart` events in the recorded event log. */
   compositionstart: number
   /** `compositionstart` events that arrived while an earlier composition was still open. */
   nested: number
