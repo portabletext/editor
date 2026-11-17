@@ -15,11 +15,11 @@ Feature: Ellipsis Input Rule
     Examples:
       | state               | inserted text  | before undo             | after undo                |
       | "B: .."             | "."            | "B: …\|"                | "B: ...\|"                |
-      | "B: "               | "..."          | "B: …\|"                | "B: ...\|"                |
+      | "B:"                | "..."          | "B: …\|"                | "B: ...\|"                |
       | "B: foo"            | "..."          | "B: foo…\|"             | "B: foo...\|"             |
-      | "B: "               | "foo..."       | "B: foo…\|"             | "B: foo...\|"             |
+      | "B:"                | "foo..."       | "B: foo…\|"             | "B: foo...\|"             |
       | "B: foo.."          | ".bar"         | "B: foo…bar\|"          | "B: foo...bar\|"          |
-      | "B: "               | "foo...bar..." | "B: foo…bar…\|"         | "B: foo...bar...\|"       |
+      | "B:"                | "foo...bar..." | "B: foo…bar…\|"         | "B: foo...bar...\|"       |
       | "B: foo...bar...\|" | "baz..."       | "B: foo...bar...baz…\|" | "B: foo...bar...baz...\|" |
 
   Scenario: Inserting ellipsis inside a decorator
@@ -81,7 +81,7 @@ Feature: Ellipsis Input Rule
 
     Examples:
       | state | inserted text | new text | final state |
-      | "B: " | "..."         | "n"      | "B: …\|"    |
+      | "B:"  | "..."         | "n"      | "B: …\|"    |
 
   Scenario Outline: Smart undo aborted after selection changes
     Given the editor state is <state>
