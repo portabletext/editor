@@ -50,6 +50,9 @@ catalogs:
 minimumReleaseAge: 4320
 
 minimumReleaseAgeExclude:
+  # scroll-into-view-if-needed's git dependency needs compute-scroll-into-view 4.0.0,
+  # published inside the 3 day minimum release age
+  - compute-scroll-into-view@4.0.0
   - "@portabletext/*"
   - "@sanity/*"
   - "@textspec/*"
