@@ -51,6 +51,10 @@ jobs:
           pnpm -v
           pnpm test:browser:${{ matrix.browser }} --concurrency=2 -- --browser.trace=retain-on-failure
 
+      - name: racejar Playwright example
+        if: matrix.browser == 'chromium'
+        run: pnpm --filter racejar test:playwright
+
       # Vitest writes each failed test's Playwright trace to a `__traces__`
       # folder next to its test file. Open one at https://trace.playwright.dev.
       - name: Upload Playwright traces

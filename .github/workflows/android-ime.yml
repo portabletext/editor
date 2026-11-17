@@ -48,7 +48,7 @@ jobs:
     # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
     # step's cap, so a hang in every step still leaves time for `Result` and the artifact upload, and
     # `budget.test.ts` keeps it so.
-    timeout-minutes: 255
+    timeout-minutes: 323
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -59,10 +59,12 @@ jobs:
         # One row per device test file CI runs, on a device prepared for its
         # language. `tests/en-textarea.test.ts` is a control run by hand.
         suite:
-          - {lang: ja, file: tests/ja.test.ts}
-          - {lang: en, file: tests/en.test.ts}
-          - {lang: ja, file: tests/ja.enter.test.ts}
-          - {lang: en, file: tests/en.enter.test.ts}
+          - {lang: ja, file: tests/ja.test.ts, runMinutes: 90}
+          - {lang: en, file: tests/en.test.ts, runMinutes: 90}
+          - {lang: ja, file: tests/ja.enter.test.ts, runMinutes: 90}
+          - {lang: en, file: tests/en.enter.test.ts, runMinutes: 90}
+          - {lang: en, file: tests/en.insert.break.test.ts, runMinutes: 120}
+          - {lang: en, file: tests/en.insert.text.test.ts, runMinutes: 90}
         api: [36]
 
     steps:
@@ -133,9 +135,9 @@ jobs:
           key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
           path: packages/editor/node_modules/.cache/thumbjar/u2.jar
 
-      # The emulator and its system image come from the actions cache when it holds the versions a fresh
-      # install picks today, see the SDK cache in `packages/editor/android/README.md`. A failed lookup,
-      # restore or save is a miss, which installs as before.
+      # The pinned emulator and the available system image come from the actions cache, see the SDK cache
+      # in `packages/editor/android/README.md`. A failed lookup or restore installs as on a miss;
+      # a failed save only skips the cache.
       - name: Look up the SDK cache key
         id: sdk-key
         continue-on-error: true
@@ -172,7 +174,8 @@ jobs:
         timeout-minutes: 1
         run: rm -rf "$ANDROID_HOME/emulator" "$ANDROID_HOME/system-images/android-${{ matrix.api }}/google_apis_playstore/x86_64"
 
-      # The emulator steps install the same packages again, which only checks them once they are here.
+      # `emulator/` holds the unregistered pin, so the emulators that `sdkmanager`
+      # and the runner action install land in the unused `emulator-2`.
       - name: Install the emulator and its system image
         id: install1
         continue-on-error: true
@@ -180,8 +183,9 @@ jobs:
         working-directory: packages/editor
         run: |
           node ../../.github/scripts/emulator-runs.mjs install-start "$ANDROID_HOME" "${{ matrix.api }}"
+          node ../../.github/scripts/emulator-runs.mjs install-emulator "$ANDROID_HOME" >> android/out/sdk-install-1.log 2> >(tee -a android/out/sdk-install-1.log >&2)
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-1.log 2> >(tee -a android/out/sdk-install-1.log >&2)
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-1.log 2> >(tee -a android/out/sdk-install-1.log >&2)
 
       - name: Install the emulator and its system image (retry)
         id: install2
@@ -191,8 +195,9 @@ jobs:
         working-directory: packages/editor
         run: |
           node ../../.github/scripts/emulator-runs.mjs install-retry "$ANDROID_HOME" "${{ matrix.api }}"
+          node ../../.github/scripts/emulator-runs.mjs install-emulator "$ANDROID_HOME" >> android/out/sdk-install-2.log 2> >(tee -a android/out/sdk-install-2.log >&2)
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools emulator 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-2.log 2> >(tee -a android/out/sdk-install-2.log >&2)
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install platform-tools 'platforms;android-${{ matrix.api }}' 'system-images;android-${{ matrix.api }};google_apis_playstore;x86_64' >> android/out/sdk-install-2.log 2> >(tee -a android/out/sdk-install-2.log >&2)
 
       # Only runs on main save, the nightly schedule and a manual dispatch on main, so pull requests read
       # its entry and add none.
@@ -225,9 +230,11 @@ jobs:
       # host memory and the emulator's process until the capture step, so the next loss says when and why.
       - name: Start the host sampler
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
-        timeout-minutes: 1
+        timeout-minutes: 3
+        continue-on-error: true
         working-directory: packages/editor
         run: |
+          timeout --kill-after=5 110 bash ../../.github/scripts/host-core.sh prepare android/out || true
           setsid nohup bash ../../.github/scripts/host-sampler.sh android/out/host.log > /dev/null 2>&1 < /dev/null &
           sleep 1
           echo started
@@ -237,7 +244,7 @@ jobs:
         id: run1
         if: steps.install1.outcome == 'success' || steps.install2.outcome == 'success'
         continue-on-error: true
-        timeout-minutes: 90
+        timeout-minutes: ${{ matrix.suite.runMinutes }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -251,6 +258,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
+          pre-emulator-launch-script: echo "### Attempt 1" >> "$GITHUB_STEP_SUMMARY"
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       # The emulator sometimes never comes online, adb loses it after boot, or
@@ -268,7 +276,7 @@ jobs:
         id: run2
         if: steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'
         continue-on-error: true
-        timeout-minutes: 90
+        timeout-minutes: ${{ matrix.suite.runMinutes }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
@@ -282,6 +290,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           emulator-boot-timeout: 360
           working-directory: packages/editor
+          pre-emulator-launch-script: echo "### Attempt 2" >> "$GITHUB_STEP_SUMMARY"
           script: pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
 
       - name: Boot time
@@ -296,7 +305,8 @@ jobs:
       # still holds them, then names each emulator exit the sampler saw in the job summary.
       - name: Capture host evidence
         if: always()
-        timeout-minutes: 1
+        timeout-minutes: 7
+        continue-on-error: true
         working-directory: packages/editor
         run: |
           bash ../../.github/scripts/host-capture.sh android/out
@@ -313,7 +323,7 @@ jobs:
         if: always()
         timeout-minutes: 1
         working-directory: packages/editor
-        run: node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != 'skipped' && steps.run2.outcome || steps.run1.outcome }}"
+        run: node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != 'skipped' && steps.run2.outcome || steps.run1.outcome }}" "$ANDROID_HOME"
 
       - uses: actions/upload-artifact@v7
         if: always()

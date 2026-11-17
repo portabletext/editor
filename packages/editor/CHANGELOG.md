@@ -1,5 +1,35 @@
 # Changelog
 
+## 8.2.14
+
+### Patch Changes
+
+- [#3631](https://github.com/portabletext/editor/pull/3631) [`7163a03`](https://github.com/portabletext/editor/commit/7163a034acb6ff4171f2c2b618ba463a3020c8e0) Thanks [@christianhg](https://github.com/christianhg)! - fix: emit patches for span `_key`s the editor adds when it takes in a value
+  
+  A block whose spans arrived without a `_key` (through `initialValue` or the first `update value`) got keys in the editor that were never emitted as patches, so patches for text typed into those spans had paths matching nothing in the document. The editor now sends each of those keys as a `set` patch on the span `_key` once it is editable, before any patch that depends on it.
+  
+  Three changes follow from this:
+  
+  - An editable editor whose first value comes from `update value` sends the repair at once.
+  - A read-only editor sends the repair when it becomes editable.
+  - Loading a value logs one `console.warn` per repaired root block, read-only included.
+
+- [#3680](https://github.com/portabletext/editor/pull/3680) [`f9c2ce2`](https://github.com/portabletext/editor/commit/f9c2ce2ac87480ee91e56dbba27aa0368b8dbfbc) Thanks [@christianhg](https://github.com/christianhg)! - fix: name the entry's real index in invalid-value resolutions
+  
+  Resolutions for non-object blocks and blocks missing a `_key` now target the entry's actual position in the value. Accepting a resolution for an entry after the first removes or repairs that entry without overwriting or deleting the first block.
+
+- [#3653](https://github.com/portabletext/editor/pull/3653) [`c9d9e33`](https://github.com/portabletext/editor/commit/c9d9e338c7febbbaabe55a21b7536c81de16cd7b) Thanks [@christianhg](https://github.com/christianhg)! - fix: keep the `children` field of block objects
+  
+  A block object with its own `children` field lost it when the editor took the block in. Moving the block, or deleting it and undoing, emitted patches without the field, and inserting or pasting such a block did the same. A container registered with `arrayField: 'children'` rendered empty, and its first edit emitted a patch that replaced its blocks with one empty block. Block objects now keep every field, and these containers render their blocks and follow `value` updates.
+
+- [#3695](https://github.com/portabletext/editor/pull/3695) [`57b3dc7`](https://github.com/portabletext/editor/commit/57b3dc7f28d2c6affe4c9606c2190b34d2c7e633) Thanks [@christianhg](https://github.com/christianhg)! - fix: report `children: null` on a text block as invalid value
+  
+  A text block with `children: null` no longer crashes validation. The editor emits an `invalid value` event that offers to reset `children` to an empty array. It does not apply the proposed patches.
+
+- [#3695](https://github.com/portabletext/editor/pull/3695) [`f36ee57`](https://github.com/portabletext/editor/commit/f36ee57ef8cd7bfb6a521cedb61e9251ae4828f7) Thanks [@christianhg](https://github.com/christianhg)! - fix: draw a span where a block belongs as a block object
+  
+  A span where a block belongs no longer crashes the editor. This covers a span inside an editable container and a span a collaborator inserts at the root. The editor draws the span as a block object. Its text is hidden. It emits no correction patches for the span except to rename a duplicate `_key`. Missing and empty `_key` values stay as received. Backspace deletes the selected span with one `unset` patch.
+
 ## 8.2.13
 
 ### Patch Changes

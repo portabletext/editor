@@ -98,7 +98,7 @@ describe('sub-schema agreement across the two type universes', () => {
           markDefs: [],
         },
       ],
-    } as unknown as PortableTextBlock,
+    },
   ]
 
   test('Scenario: The root position resolves the same members on both sides', () => {

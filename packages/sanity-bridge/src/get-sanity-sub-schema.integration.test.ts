@@ -91,7 +91,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
             markDefs: [],
           },
         ],
-      } as unknown as PortableTextBlock,
+      },
     ]
 
     test('inline-object registered only inside the container resolves at container depth', () => {
@@ -185,12 +185,12 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
     ])
 
     const value: ReadonlyArray<PortableTextBlock> = [
-      {_type: 'calloutCard', _key: 'rootCard'} as unknown as PortableTextBlock,
+      {_type: 'calloutCard', _key: 'rootCard'},
       {
         _type: 'callout',
         _key: 'callout1',
         content: [{_type: 'calloutCard', _key: 'nestedCard'}],
-      } as unknown as PortableTextBlock,
+      },
     ]
 
     test('block-object at root resolves against the root bucket containing both callout and calloutCard', () => {
@@ -261,7 +261,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
           _type: 'code-block',
           _key: 'cb1',
           lines: [],
-        } as unknown as PortableTextBlock,
+        },
       ]
 
       expect(
@@ -275,7 +275,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
           _type: 'block',
           _key: 'b1',
           children: [{_type: 'span', _key: 's1', text: 'x'}],
-        } as unknown as PortableTextBlock,
+        },
       ]
 
       expect(
@@ -293,7 +293,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
           _type: 'code-block',
           _key: 'cb1',
           lines: [],
-        } as unknown as PortableTextBlock,
+        },
       ]
 
       expect(
@@ -311,7 +311,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
           _type: 'unknown-type',
           _key: 'u1',
           children: [],
-        } as unknown as PortableTextBlock,
+        },
       ]
 
       expect(

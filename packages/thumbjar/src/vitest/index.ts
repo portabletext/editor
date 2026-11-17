@@ -5,8 +5,10 @@ import {DEVICE_TEST_TIMEOUT_SECONDS} from '../device/budget.ts'
 export {
   countDeviceTests,
   deviceTestFileSeconds,
+  EMULATOR_BOOT_SECONDS,
   FETCH_U2_JAR_WORST_SECONDS,
   prepWorstSeconds,
+  runStepWorstSeconds,
 } from '../device/budget.ts'
 
 declare module 'vitest' {
@@ -32,7 +34,7 @@ export type DeviceProjectOptions = {
   pageHint: string
   /** Where `typeOnDevice` writes its artifacts, relative to the working directory. `out` unless given. */
   outDir?: string
-  /** A file the setup file appends each test file's outcome counts to, such as GitHub's job summary. None is written unless given. */
+  /** A file the setup file appends each test file's outcome counts and a table of its tests to, such as GitHub's job summary. None is written unless given. */
   summaryFile?: string | undefined
   /** More setup files, run after thumbjar's own. */
   setupFiles?: string[]
@@ -46,7 +48,7 @@ export type DeviceProjectOptions = {
  * Global setup fails the run before any test when `adb` has no device or `pageUrl` does not answer.
  * A setup file fails a test file in which an adb process outlived SIGKILL or the page threw while the
  * driver typed, or whose `test.fails` test ended inconclusive, with the device offline, on a driver fault or
- * never completed. With `summaryFile` given, it appends the file's outcome counts to it.
+ * never completed. With `summaryFile` given, it appends each test file's outcome counts and a table of its tests to it.
  *
  * @example
  * ```ts
@@ -98,7 +100,7 @@ export function deviceProject({
       retry: 0,
       // A test takes 1 to 2 minutes. The timeout covers the driver's worst case, see `src/device/budget.ts`.
       testTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
-      hookTimeout: 2 * 60_000,
+      hookTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
     },
   }
 }

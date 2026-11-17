@@ -1,4 +1,5 @@
 import {spawnSync} from 'node:child_process'
+import {createHash} from 'node:crypto'
 import {
   appendFileSync,
   copyFileSync,
@@ -18,14 +19,19 @@ import {afterEach, describe, expect, test} from 'vitest'
 import {
   bootSeconds,
   cacheRevisions,
+  emulatorMatches,
   installCleanupPaths,
+  installEmulator,
   installFailureLines,
   installLogTail,
   installResult,
   packageMismatch,
   retryAfter,
   runResult,
+  verifyEmulatorArchive,
 } from './emulator-runs.mjs'
+
+const pinnedProperties = 'Pkg.Revision=37.2.12\nPkg.BuildId=16428233\n'
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url))
 const workflow = readFileSync(
@@ -93,7 +99,7 @@ const retryInterrupted = 'RETRY\nEMULATOR_START at 1000\nBOOTED at 1060\n'
 
 // The key `cache-revisions` writes for `recordedList` on Linux.
 const cacheKey =
-  'android-sdk-Linux-api36-google_apis_playstore-x86_64-image7-emulator37.2.13'
+  'android-sdk-Linux-api36-google_apis_playstore-x86_64-image7-emulator16428233'
 
 describe(retryAfter.name, () => {
   test('retries a first run that never booted', () => {
@@ -417,7 +423,7 @@ describe(runResult.name, () => {
 })
 
 describe(installCleanupPaths.name, () => {
-  test('removes only paths created by the install, preserving existing packages and downloads', () => {
+  test('removes new install paths and the pin, preserving other existing packages and downloads', () => {
     expect(
       installCleanupPaths(
         ['.temp/PackageOperation01', 'platform-tools'],
@@ -432,7 +438,9 @@ describe(installCleanupPaths.name, () => {
       '.temp/PackageOperation02',
       'system-images/android-36/google_apis_playstore/x86_64',
     ])
-    expect(installCleanupPaths(['emulator'], ['emulator'])).toEqual([])
+    expect(installCleanupPaths(['emulator'], ['emulator'])).toEqual([
+      'emulator',
+    ])
   })
 
   test('also removes the packages restored from the cache, which were present before the install', () => {
@@ -460,9 +468,18 @@ describe(installCleanupPaths.name, () => {
 })
 
 describe(cacheRevisions.name, () => {
-  test('reads the emulator version and the system image revision a fresh install picks from `sdkmanager --list`', () => {
+  test('uses the pinned build even when sdkmanager lists no emulator', () => {
+    expect(
+      cacheRevisions(
+        'Available Packages:\n system-images;android-36;google_apis_playstore;x86_64 | 7 | image',
+        '36',
+      ),
+    ).toEqual({emulator: '16428233', image: '7'})
+  })
+
+  test('reads the pinned emulator build and available system image revision', () => {
     expect(cacheRevisions(recordedList, '36')).toEqual({
-      emulator: '37.2.13',
+      emulator: '16428233',
       image: '7',
     })
   })
@@ -476,15 +493,15 @@ describe(cacheRevisions.name, () => {
         ),
         '36',
       ),
-    ).toEqual({emulator: '37.2.13', image: '7'})
+    ).toEqual({emulator: '16428233', image: '7'})
   })
 
-  test('reads nothing when the list lacks either package, as for another API level or a failed lookup', () => {
+  test('requires an available system image but no available emulator', () => {
     expect([
       cacheRevisions(recordedList, '35'),
       cacheRevisions(recordedList.replace(/^ {2}emulator .*$/m, ''), '36'),
       cacheRevisions('', '36'),
-    ]).toEqual([undefined, undefined, undefined])
+    ]).toEqual([undefined, {emulator: '16428233', image: '7'}, undefined])
   })
 })
 
@@ -651,6 +668,35 @@ describe(installResult.name, () => {
 })
 
 describe('emulator-runs.mjs install-retry', () => {
+  test('retry clears a partial pin download and emulator but preserves emulator-2', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'emulator-pin-retry-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      mkdirSync(join(sdk, 'emulator-2'), {recursive: true})
+      mkdirSync(join(sdk, '.temp'), {recursive: true})
+      writeFileSync(join(sdk, '.temp/emulator-pin.zip'), 'foo')
+      const script = new URL('./emulator-runs.mjs', import.meta.url).pathname
+      expect(
+        spawnSync('node', [script, 'install-start', sdk, '36'], {
+          cwd: directory,
+        }).status,
+      ).toEqual(0)
+      expect(
+        spawnSync('node', [script, 'install-retry', sdk, '36'], {
+          cwd: directory,
+        }).status,
+      ).toEqual(0)
+      expect([
+        existsSync(join(sdk, 'emulator')),
+        existsSync(join(sdk, '.temp/emulator-pin.zip')),
+        existsSync(join(sdk, 'emulator-2')),
+      ]).toEqual([false, false, true])
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
   test('clears new download and package paths, retaining preexisting and unrelated SDK files', () => {
     const directory = mkdtempSync(join(tmpdir(), 'install-paths-'))
     try {
@@ -846,7 +892,7 @@ describe('emulator-runs.mjs cache-revisions', () => {
         output: readFileSync(join(directory, 'output'), 'utf8'),
       }).toEqual({
         command: {status: 0, stdout: '', stderr: '', summary: ''},
-        output: `emulator=37.2.13\nimage=7\nkey=android-sdk-Linux-api36-google_apis_playstore-x86_64-image7-emulator37.2.13\npaths<<PATHS\n${sdk}/emulator\n${sdk}/system-images/android-36/google_apis_playstore/x86_64\n${directory}/android-sdk-cache.tsv\nPATHS\n`,
+        output: `emulator=16428233\nimage=7\nkey=android-sdk-Linux-api36-google_apis_playstore-x86_64-image7-emulator16428233\npaths<<PATHS\n${sdk}/emulator\n${sdk}/system-images/android-36/google_apis_playstore/x86_64\n${directory}/android-sdk-cache.tsv\nPATHS\n`,
       })
     } finally {
       rmSync(directory, {recursive: true, force: true})
@@ -874,7 +920,7 @@ describe('emulator-runs.mjs cache-revisions', () => {
         command: {
           status: 0,
           stdout:
-            'CACHE_REVISIONS: `sdkmanager --list` did not list `emulator` and `system-images;android-36;google_apis_playstore;x86_64`, skipping the cache\n',
+            'CACHE_REVISIONS: `sdkmanager --list` did not list `system-images;android-36;google_apis_playstore;x86_64`, skipping the cache\n',
           stderr: '',
           summary: '',
         },
@@ -941,7 +987,7 @@ describe('emulator-runs.mjs cache-manifest', () => {
         files: [
           '',
           'emulator\tlib64/libfoo.so\t6',
-          'emulator\tpackage.xml\t3',
+          'emulator\tsource.properties\t42',
           'system-images/android-36/google_apis_playstore/x86_64\tdata/bar.img\t3',
           'system-images/android-36/google_apis_playstore/x86_64\tpackage.xml\t3',
           'system-images/android-36/google_apis_playstore/x86_64\tsystem.img\t9',
@@ -1040,6 +1086,56 @@ describe('emulator-runs.mjs cache-manifest', () => {
 })
 
 describe('emulator-runs.mjs cache-check', () => {
+  test('deletes a wrong restored version even when its manifest matches', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'emulator-pin-cache-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      mkdirSync(
+        join(sdk, 'system-images/android-36/google_apis_playstore/x86_64'),
+        {recursive: true},
+      )
+      writeFileSync(
+        join(
+          sdk,
+          'system-images/android-36/google_apis_playstore/x86_64/system.img',
+        ),
+        'foo',
+      )
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        pinnedProperties.replace('37.2.12', '37.2.13'),
+      )
+      const script = new URL('./emulator-runs.mjs', import.meta.url).pathname
+      mkdirSync(join(sdk, 'emulator-2'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator-2/source.properties'), 'unused')
+      const manifest = join(directory, 'manifest')
+      expect(
+        spawnSync(
+          'node',
+          [script, 'cache-manifest', sdk, '36', manifest, 'key'],
+          {cwd: directory},
+        ).status,
+      ).toEqual(0)
+      expect(readFileSync(manifest, 'utf8')).toEqual(
+        'key\nemulator\tsource.properties\t42\nsystem-images/android-36/google_apis_playstore/x86_64\tsystem.img\t3\n',
+      )
+      expect(
+        spawnSync('node', [script, 'cache-check', sdk, '36', manifest, 'key'], {
+          cwd: directory,
+        }).status,
+      ).toEqual(0)
+      expect(existsSync(join(sdk, 'emulator'))).toEqual(false)
+      expect(
+        existsSync(
+          join(sdk, 'system-images/android-36/google_apis_playstore/x86_64'),
+        ),
+      ).toEqual(true)
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
   test('keeps restored packages that match the manifest and records them for the install retry', () => {
     const directory = mkdtempSync(join(tmpdir(), 'cache-check-'))
     try {
@@ -1188,7 +1284,7 @@ describe('emulator-runs.mjs cache-check', () => {
         writeManifest(
           sdk,
           manifest,
-          'android-sdk-Linux-api36-google_apis_playstore-x86_64-image6-emulator37.2.13',
+          'android-sdk-Linux-api36-google_apis_playstore-x86_64-image6-emulator16428233',
         )
       }),
       restoredCheck((sdk, manifest) => {
@@ -1202,14 +1298,14 @@ describe('emulator-runs.mjs cache-check', () => {
         writeManifest(
           sdk,
           manifest,
-          'android-sdk-Linux-api36-google_apis_playstore-x86_64-image6-emulator37.2.13',
+          'android-sdk-Linux-api36-google_apis_playstore-x86_64-image6-emulator16428233',
         )
       }),
       restoredCheck((_sdk, manifest) => {
         writeFileSync(
           manifest,
           [
-            'emulator\tpackage.xml\t3',
+            'emulator\tsource.properties\t42',
             'emulator\tlib64/libfoo.so\t6',
             'system-images/android-36/google_apis_playstore/x86_64\tpackage.xml\t3',
             'system-images/android-36/google_apis_playstore/x86_64\tsystem.img\t9',
@@ -1694,14 +1790,14 @@ describe('emulator-runs.mjs run as `node`’s entry whose file is removed once l
         status: 2,
         stdout: '',
         stderr:
-          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | install-emulator <sdk> [archive] | result <timing.txt> <outcome> [sdk]\n',
         removed: true,
       },
       {
         status: 2,
         stdout: '',
         stderr:
-          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | result <timing.txt> <outcome>\n',
+          'usage: node .github/scripts/emulator-runs.mjs retry|boot-seconds <timing.txt> | install-emulator <sdk> [archive] | result <timing.txt> <outcome> [sdk]\n',
         removed: true,
       },
     ])
@@ -1745,6 +1841,561 @@ describe('emulator-runs.mjs retry', () => {
 })
 
 describe('emulator-runs.mjs result', () => {
+  test('accepts a symlinked SDK holding the pin', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      symlinkSync(sdk, join(directory, 'linked'))
+      writeFileSync(
+        join(directory, 'host-exe-5.txt'),
+        join(sdk, 'emulator/qemu'),
+      )
+      expect(
+        sdkCommand(directory, [
+          'result',
+          'timing.txt',
+          'success',
+          join(directory, 'linked'),
+        ]),
+      ).toEqual({
+        status: 0,
+        stdout: 'run outcome: success\n',
+        stderr: '',
+        summary: 'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('treats an empty SDK argument as absent', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'success', '']),
+      ).toEqual({
+        status: 0,
+        stdout: 'run outcome: success\n',
+        stderr: '',
+        summary: 'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves success diagnosis with an unreadable record', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      mkdirSync(join(directory, 'host-exe-5.txt'))
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'success', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'run outcome: emulator executable record host-exe-5.txt could not be read; the launched emulator cannot be verified\n',
+        stderr: '',
+        summary:
+          'run outcome: emulator executable record host-exe-5.txt could not be read; the launched emulator cannot be verified\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves failure diagnosis with an unreadable record', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      mkdirSync(join(directory, 'host-exe-5.txt'))
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'failure', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'run outcome: failure\nrun outcome: emulator executable record host-exe-5.txt could not be read; the launched emulator cannot be verified\n',
+        stderr: '',
+        summary:
+          'run outcome: failure\nrun outcome: emulator executable record host-exe-5.txt could not be read; the launched emulator cannot be verified\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves cancelled diagnosis with an unreadable record', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      mkdirSync(join(directory, 'host-exe-5.txt'))
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'cancelled', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'run outcome: cancelled\nrun outcome: emulator executable record host-exe-5.txt could not be read; the launched emulator cannot be verified\n',
+        stderr: '',
+        summary:
+          'run outcome: cancelled\nrun outcome: emulator executable record host-exe-5.txt could not be read; the launched emulator cannot be verified\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('names the first mismatch by numeric pid', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-100.txt'),
+        join(sdk, 'emulator-2/qemu'),
+      )
+      writeFileSync(
+        join(directory, 'host-exe-99.txt'),
+        join(sdk, 'emulator-2/qemu'),
+      )
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'success', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: emulator process 99 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+        stderr: '',
+        summary: `run outcome: emulator process 99 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('boundary control: retried install accepts two pinned pids', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-5.txt'),
+        join(sdk, 'emulator/qemu'),
+      )
+      writeFileSync(
+        join(directory, 'host-exe-6.txt'),
+        join(sdk, 'emulator/qemu'),
+      )
+      expect(
+        sdkCommand(
+          directory,
+          ['result', 'timing.txt', 'success', sdk],
+          undefined,
+          {INSTALL1_OUTCOME: 'failure', INSTALL2_OUTCOME: 'success'},
+        ),
+      ).toEqual({
+        status: 0,
+        stdout:
+          'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+        stderr: '',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          'run outcome: success\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('boundary control: retried install rejects the second pid in emulator-2', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/source.properties'), pinnedProperties)
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-5.txt'),
+        join(sdk, 'emulator/qemu'),
+      )
+      writeFileSync(
+        join(directory, 'host-exe-6.txt'),
+        join(sdk, 'emulator-2/qemu'),
+      )
+      expect(
+        sdkCommand(
+          directory,
+          ['result', 'timing.txt', 'success', sdk],
+          undefined,
+          {INSTALL1_OUTCOME: 'failure', INSTALL2_OUTCOME: 'success'},
+        ),
+      ).toEqual({
+        status: 1,
+        stdout:
+          'install attempt 1: no install output was recorded in android/out/sdk-install-1.log\n' +
+          'install outcome: retried once after a failed install\n' +
+          `run outcome: emulator process 6 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+        stderr: '',
+        summary:
+          'install outcome: retried once after a failed install\n' +
+          `run outcome: emulator process 6 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves failure without process evidence', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'failure', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: failure\n`,
+        stderr: '',
+        summary: `run outcome: failure\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves never booted without process evidence', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), neverBooted)
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'failure', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: the emulator never booted, infrastructure failure, not a test result\n`,
+        stderr: '',
+        summary: `run outcome: the emulator never booted, infrastructure failure, not a test result\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves cancelled without process evidence', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), neverBooted)
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'cancelled', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: cancelled\n`,
+        stderr: '',
+        summary: `run outcome: cancelled\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves failure with alternate emulator', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator-2/qemu') + '\n',
+      )
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'failure', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: failure\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+        stderr: '',
+        summary: `run outcome: failure\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves cancelled with alternate emulator', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator-2/qemu') + '\n',
+      )
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'cancelled', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: cancelled\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+        stderr: '',
+        summary: `run outcome: cancelled\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves failure with replaced pin', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator/qemu') + '\n',
+      )
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'failure', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: failure\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator/qemu')}, but ${join(sdk, 'emulator/source.properties')} does not match emulator 37.2.12 build 16428233\n`,
+        stderr: '',
+        summary: `run outcome: failure\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator/qemu')}, but ${join(sdk, 'emulator/source.properties')} does not match emulator 37.2.12 build 16428233\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('preserves cancelled with replaced pin', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator/qemu') + '\n',
+      )
+      expect(
+        sdkCommand(directory, ['result', 'timing.txt', 'cancelled', sdk]),
+      ).toEqual({
+        status: 1,
+        stdout: `run outcome: cancelled\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator/qemu')}, but ${join(sdk, 'emulator/source.properties')} does not match emulator 37.2.12 build 16428233\n`,
+        stderr: '',
+        summary: `run outcome: cancelled\nrun outcome: emulator process 123 ran ${join(sdk, 'emulator/qemu')}, but ${join(sdk, 'emulator/source.properties')} does not match emulator 37.2.12 build 16428233\n`,
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('boundary control: never booted keeps its infrastructure outcome', () => {
+    expect(runResult(neverBooted, 'failure')).toEqual({
+      passed: false,
+      line: 'run outcome: the emulator never booted, infrastructure failure, not a test result',
+    })
+  })
+
+  test('boundary control: cancelled keeps its outcome', () => {
+    expect(runResult(neverBooted, 'cancelled')).toEqual({
+      passed: false,
+      line: 'run outcome: cancelled',
+    })
+  })
+
+  test('rejects a recorded emulator from emulator-2', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.12\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-100.txt'),
+        join(sdk, 'emulator/qemu') + '\n',
+      )
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator-2/qemu') + '\n',
+      )
+      const result = sdkCommand(directory, [
+        'result',
+        'timing.txt',
+        'success',
+        sdk,
+      ])
+      expect(result).toEqual({
+        status: 1,
+        stdout:
+          `run outcome: emulator process 123 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory` +
+          '\n',
+        stderr: '',
+        summary:
+          `run outcome: emulator process 123 ran ${join(sdk, 'emulator-2/qemu')}, outside the pinned ${join(sdk, 'emulator')} directory` +
+          '\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('rejects a pinned directory replaced with 37.2.13', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.13\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator/qemu') + '\n',
+      )
+      const result = sdkCommand(directory, [
+        'result',
+        'timing.txt',
+        'success',
+        sdk,
+      ])
+      expect(result).toEqual({
+        status: 1,
+        stdout:
+          `run outcome: emulator process 123 ran ${join(sdk, 'emulator/qemu')}, but ${join(sdk, 'emulator/source.properties')} does not match emulator 37.2.12 build 16428233` +
+          '\n',
+        stderr: '',
+        summary:
+          `run outcome: emulator process 123 ran ${join(sdk, 'emulator/qemu')}, but ${join(sdk, 'emulator/source.properties')} does not match emulator 37.2.12 build 16428233` +
+          '\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('rejects a run with no recorded emulator process', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.12\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      const result = sdkCommand(directory, [
+        'result',
+        'timing.txt',
+        'success',
+        sdk,
+      ])
+      expect(result).toEqual({
+        status: 1,
+        stdout:
+          'run outcome: no emulator process was recorded; the launched emulator cannot be verified' +
+          '\n',
+        stderr: '',
+        summary:
+          'run outcome: no emulator process was recorded; the launched emulator cannot be verified' +
+          '\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
+  test('boundary control: accepts every recorded process from the pinned directory', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'launched-emulator-'))
+    try {
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(
+        join(sdk, 'emulator/source.properties'),
+        'Pkg.Revision=37.2.12\nPkg.BuildId=16428233\n',
+      )
+      writeFileSync(join(directory, 'timing.txt'), booted)
+      writeFileSync(
+        join(directory, 'host-exe-123.txt'),
+        join(sdk, 'emulator/qemu') + '\n',
+      )
+      writeFileSync(
+        join(directory, 'host-exe-456.txt'),
+        join(sdk, 'emulator/other') + '\n',
+      )
+      const result = sdkCommand(directory, [
+        'result',
+        'timing.txt',
+        'success',
+        sdk,
+      ])
+      expect(result).toEqual({
+        status: 0,
+        stdout: 'run outcome: success' + '\n',
+        stderr: '',
+        summary: 'run outcome: success' + '\n',
+      })
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
+  })
+
   test('passes a job whose last run succeeded, and fails one whose last run lost its device twice, with its line in the log and the job summary', () => {
     expect([
       workflowCommand(
@@ -1796,6 +2447,23 @@ describe('emulator-runs.mjs result after a failed prep', () => {
 })
 
 describe('the workflow', () => {
+  test('installs the pin on both attempts without requesting an emulator from sdkmanager', () => {
+    const workflow = readFileSync(
+      new URL('../workflows/android-ime.yml', import.meta.url),
+      'utf8',
+    )
+    expect(
+      workflow.match(/emulator-runs.mjs install-emulator "\$ANDROID_HOME"/g),
+    ).toEqual([
+      'emulator-runs.mjs install-emulator "$ANDROID_HOME"',
+      'emulator-runs.mjs install-emulator "$ANDROID_HOME"',
+    ])
+    expect(workflow.includes('--install platform-tools emulator ')).toEqual(
+      false,
+    )
+    expect(workflow.includes('emulator-build:')).toEqual(false)
+  })
+
   test('wires the first install to its snapshot command and step outcome', () => {
     const install =
       workflow
@@ -2185,7 +2853,7 @@ describe('the workflow', () => {
       retryIf:
         "steps.run1.outcome == 'failure' && steps.retry.outputs.retry == 'yes'",
       result:
-        'node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != \'skipped\' && steps.run2.outcome || steps.run1.outcome }}"',
+        'node ../../.github/scripts/emulator-runs.mjs result android/out/timing.txt "${{ steps.run2.outcome != \'skipped\' && steps.run2.outcome || steps.run1.outcome }}" "$ANDROID_HOME"',
     })
   })
 })
@@ -2318,7 +2986,12 @@ function workflowCommand(
   }
 }
 
-function sdkCommand(directory: string, args: string[], input?: string) {
+function sdkCommand(
+  directory: string,
+  args: string[],
+  input?: string,
+  environment: Record<string, string> = {},
+) {
   const result = spawnSync(
     'node',
     [join(repoRoot, '.github/scripts/emulator-runs.mjs'), ...args],
@@ -2331,6 +3004,7 @@ function sdkCommand(directory: string, args: string[], input?: string) {
         GITHUB_OUTPUT: join(directory, 'output'),
         GITHUB_STEP_SUMMARY: join(directory, 'summary'),
         RUNNER_OS: 'Linux',
+        ...environment,
       },
     },
   )
@@ -2353,7 +3027,10 @@ function cachedSdk(directory: string) {
   mkdirSync(join(sdk, 'platform-tools'), {recursive: true})
   writeFileSync(join(sdk, 'platform-tools/adb'), 'adb')
   mkdirSync(join(sdk, 'emulator/lib64'), {recursive: true})
-  writeFileSync(join(sdk, 'emulator/package.xml'), 'xml')
+  writeFileSync(
+    join(sdk, 'emulator/source.properties'),
+    'Pkg.Revision=37.2.12\nPkg.BuildId=16428233\n',
+  )
   writeFileSync(join(sdk, 'emulator/lib64/libfoo.so'), 'libfoo')
   mkdirSync(join(image, 'data'), {recursive: true})
   writeFileSync(join(image, 'package.xml'), 'xml')
@@ -2681,5 +3358,82 @@ describe('emulator-runs.mjs result with install logs', () => {
         rmSync(directory, {recursive: true, force: true})
       }
     })
+  })
+})
+
+describe(emulatorMatches.name, () => {
+  test('checks both the restored emulator version and build', () => {
+    expect(emulatorMatches(pinnedProperties)).toEqual(true)
+    expect(
+      emulatorMatches(pinnedProperties.replace('37.2.12', '37.2.13')),
+    ).toEqual(false)
+    expect(
+      emulatorMatches(pinnedProperties.replace('16428233', '16740729')),
+    ).toEqual(false)
+    expect(emulatorMatches('')).toEqual(false)
+  })
+})
+
+describe(verifyEmulatorArchive.name, () => {
+  test('rejects archives of the wrong size or hash', () => {
+    const archive = Buffer.from('foo')
+    const pin = {
+      size: 3,
+      sha256: createHash('sha256').update(archive).digest('hex'),
+    }
+    expect(() => verifyEmulatorArchive(archive, {...pin, size: 4})).toThrow(
+      'size',
+    )
+    expect(() =>
+      verifyEmulatorArchive(archive, {...pin, sha256: 'wrong'}),
+    ).toThrow('sha256')
+    expect(verifyEmulatorArchive(archive, pin)).toEqual(undefined)
+  })
+})
+
+describe(installEmulator.name, () => {
+  test('unpacks a verified release into an empty emulator directory and reuses it', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'emulator-pin-'))
+    try {
+      const archive = join(directory, 'release.zip')
+      writeFileSync(
+        archive,
+        Buffer.from(
+          'UEsDBBQAAAAAAIVRcF2TOXEaKgAAACoAAAAaAAAAZW11bGF0b3Ivc291cmNlLnByb3BlcnRpZXNQa2cuUmV2aXNpb249MzcuMi4xMgpQa2cuQnVpbGRJZD0xNjQyODIzMwpQSwECFAMUAAAAAACFUXBdkzlxGioAAAAqAAAAGgAAAAAAAAAAAAAAgAEAAAAAZW11bGF0b3Ivc291cmNlLnByb3BlcnRpZXNQSwUGAAAAAAEAAQBIAAAAYgAAAAAA',
+          'base64',
+        ),
+      )
+      const bytes = readFileSync(archive)
+      const pin = {
+        size: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+        version: '37.2.12',
+        build: '16428233',
+        url: 'unused',
+      }
+      const sdk = join(directory, 'sdk')
+      mkdirSync(join(sdk, 'emulator'), {recursive: true})
+      writeFileSync(join(sdk, 'emulator/stale'), 'bar')
+      expect(() =>
+        installEmulator(sdk, archive, {...pin, size: bytes.length + 1}),
+      ).toThrow('size')
+      expect(() =>
+        installEmulator(sdk, archive, {...pin, sha256: 'wrong'}),
+      ).toThrow('sha256')
+      installEmulator(sdk, archive, pin)
+      expect(existsSync(join(sdk, 'emulator/stale'))).toEqual(false)
+      expect(
+        readFileSync(join(sdk, 'emulator/source.properties'), 'utf8'),
+      ).toEqual(pinnedProperties)
+      installEmulator(sdk, 'missing', pin)
+      writeFileSync(join(sdk, 'emulator/package.xml'), 'registered')
+      installEmulator(sdk, archive, pin)
+      expect(existsSync(join(sdk, 'emulator/package.xml'))).toEqual(false)
+      expect(() =>
+        installEmulator(sdk, archive, {...pin, version: 'wrong'}),
+      ).toThrow('unpacked emulator does not match the pin')
+    } finally {
+      rmSync(directory, {recursive: true, force: true})
+    }
   })
 })

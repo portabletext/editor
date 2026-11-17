@@ -4,7 +4,11 @@ import {
   type OfDefinition,
 } from '@portabletext/schema'
 import {Schema as SanitySchema} from '@sanity/schema'
-import type {ArraySchemaType} from '@sanity/types'
+import {
+  isArraySchemaType,
+  type ArraySchemaType,
+  type ObjectSchemaType,
+} from '@sanity/types'
 import {expect, test} from 'vitest'
 import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
 
@@ -54,13 +58,14 @@ test('a wide mutually recursive schema converts and compiles small', () => {
   })
 
   const sanitySchema = SanitySchema.compile({name: 'test', types})
-  const article = sanitySchema.get('article') as unknown as {
-    fields: Array<{name: string; type: unknown}>
-  }
+  const article: ObjectSchemaType = sanitySchema.get('article')
   const bodyType = article.fields.find((field) => field.name === 'body')!.type
 
-  const definition = sanitySchemaToPortableTextSchema(bodyType as never)
-  const compiled = compileSchema(definition as never)
+  if (!isArraySchemaType(bodyType)) {
+    throw new Error('Expected an array schema type')
+  }
+  const definition = sanitySchemaToPortableTextSchema(bodyType)
+  const compiled = compileSchema(definition)
 
   expect(definition.blockObjects).toHaveLength(containerCount)
   expect(compiled.blockObjects).toHaveLength(containerCount)
@@ -110,7 +115,7 @@ test('an inline declaration sharing a root type name keeps its own shape', () =>
   })
 
   const definition = sanitySchemaToPortableTextSchema(
-    sanitySchema.get('blockContent') as never,
+    sanitySchema.get('blockContent'),
   )
 
   const holder = definition.blockObjects.find(

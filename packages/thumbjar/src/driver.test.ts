@@ -1148,6 +1148,7 @@ describe('the job summary', () => {
       setupFiles: [
         'src/fixtures/suites/gboard-device.ts',
         'src/vitest/setup.ts',
+        'src/fixtures/suites/summary-durations.ts',
       ],
       testTimeout: 15_000,
       provide: {thumbjarSummaryFile: summaryFile},
@@ -1190,9 +1191,26 @@ describe('the job summary', () => {
         ],
       },
       summary: [
-        '`src/fixtures/suites/every-outcome.ts`: 4 passed ("Scenario: Passed", "Scenario: Passed without a driver call", "Scenario: Passed on its last call after a driver fault", "Scenario: Passed in a group"), 1 failed ("Scenario: Failed"), 2 expected failure ("Scenario: Expected failure", "Scenario: Expected failure in a group"), 4 inconclusive ("Scenario: Inconclusive after input", "Scenario: Inconclusive while the device answered", "Scenario: Inconclusive while the device was not checked", "Scenario: Passed in a group"), 1 device offline ("Scenario: Device offline"), 1 driver fault ("Scenario: Driver fault")',
+        '`src/fixtures/suites/every-outcome.ts`: 4 passed, 1 failed, 2 expected failure, 4 inconclusive, 1 device offline, 1 driver fault',
         '',
-        '3 not run, skipped or todo ("Scenario: Skipped", "Scenario: Todo", "Scenario: A case Gboard cannot drive")',
+        '| # | Test | Outcome | Duration | Failure |',
+        '| --- | --- | --- | --- | --- |',
+        '| 1 | Scenario: Passed | passed | 23.4 s |  |',
+        "| 2 | Scenario: Failed | failed | 23.4 s | expected 'foo\\\\n' to deeply equal 'foo' |",
+        '| 3 | Scenario: Expected failure | expected failure | 23.4 s |  |',
+        '| 4 | Scenario: Inconclusive after input | inconclusive | 23.4 s | read 2 of the page failed |',
+        '| 5 | Scenario: Device offline | device offline | 23.4 s | adb shell dumpsys input_method exited with 1: error: device offline |',
+        '| 6 | Scenario: Driver fault | driver fault | 23.4 s | read 1 of the page failed |',
+        '| 7 | Scenario: Inconclusive while the device answered | inconclusive | 23.4 s | read 1 of the page failed |',
+        '| 8 | Scenario: Inconclusive while the device was not checked | inconclusive | 23.4 s | read 1 of the page failed |',
+        '| 9 | Scenario: Passed without a driver call | passed | 23.4 s |  |',
+        '| 10 | Scenario: Passed on its last call after a driver fault | passed | 23.4 s |  |',
+        '| 11 | A group > Scenario: Passed in a group | passed | 23.4 s |  |',
+        '| 12 | A group > Scenario: Expected failure in a group | expected failure | 23.4 s |  |',
+        '| 13 | Another group > Scenario: Passed in a group | inconclusive | 23.4 s | read 2 of the page failed |',
+        '| 14 | A group that runs nothing > Scenario: Skipped | not run |  |  |',
+        '| 15 | A group that runs nothing > Scenario: Todo | not run |  |  |',
+        '| 16 | A group that runs nothing > Scenario: A case Gboard cannot drive | not run |  |  |',
         '',
         'Not counted as device offline: adb could still reach the device right after the failure. A device that dropped off and came back before that check is missed, so the device offline count can be too low.',
         '',
@@ -1204,11 +1222,12 @@ describe('the job summary', () => {
         '',
         'Taps sent and page events for "Scenario: Passed in a group":\n  step 1: sent Enter\n          page (none)',
         '',
+        '',
       ].join('\n'),
     })
   }, 60_000)
 
-  test('leaves skipped, todo and runtime-skipped tests out of the counts and lists them on their own line, and counts a retried and two same-named tests by their own results', async () => {
+  test('lists skipped, todo and runtime-skipped tests as not run, and counts a retried test and two same-named tests by their own results', async () => {
     const summaryFile = join(
       mkdtempSync(join(tmpdir(), 'thumbjar-summary-')),
       'summary.md',
@@ -1219,6 +1238,7 @@ describe('the job summary', () => {
       setupFiles: [
         'src/fixtures/suites/gboard-device.ts',
         'src/vitest/setup.ts',
+        'src/fixtures/suites/summary-durations.ts',
       ],
       testTimeout: 15_000,
       provide: {thumbjarSummaryFile: summaryFile},
@@ -1244,9 +1264,19 @@ describe('the job summary', () => {
         ],
       },
       summary: [
-        '`src/fixtures/suites/nested-outcomes.ts`: 3 passed ("Scenario: Passed", "Scenario: Passed on its retry", "Scenario: Same name"), 0 failed, 1 expected failure ("Scenario: Expected failure"), 1 inconclusive ("Scenario: Same name"), 0 device offline, 0 driver fault',
+        '`src/fixtures/suites/nested-outcomes.ts`: 3 passed, 0 failed, 1 expected failure, 1 inconclusive, 0 device offline, 0 driver fault',
         '',
-        '3 not run, skipped or todo ("Scenario: Skipped", "Scenario: Todo", "Scenario: Skipped as it runs")',
+        '| # | Test | Outcome | Duration | Failure |',
+        '| --- | --- | --- | --- | --- |',
+        '| 1 | outer > inner > Scenario: Passed | passed | 23.4 s |  |',
+        '| 2 | outer > inner > Scenario: Expected failure | expected failure | 23.4 s |  |',
+        '| 3 | outer > inner > Scenario: Skipped | not run |  |  |',
+        '| 4 | outer > inner > Scenario: Todo | not run |  |  |',
+        '| 5 | outer > inner > Scenario: Skipped as it runs | not run |  |  |',
+        '| 6 | Scenario: Passed on its retry | passed | 23.4 s |  |',
+        '| 7 | first > Scenario: Same name | inconclusive | 23.4 s | the driver faulted after it sent input, so it was not retried |',
+        '| 8 | second > Scenario: Same name | passed | 23.4 s |  |',
+        '',
         '',
       ].join('\n'),
     })
@@ -1403,3 +1433,31 @@ test('test.fails cannot hide repeated mistaps', async () => {
     "In \"Scenario: inconclusive _ cannot be an expected failure\" the driver ended inconclusive: mistap: key 'Dash' typed '_' instead of '-'. In \"Scenario: inconclusive 7 cannot be an expected failure\" the driver ended inconclusive: mistap: digit 7 in typed text '7' that neither the prefix nor the letters hold. These tests are marked `test.fails`, which counts any error as the expected failure, so they say nothing about the editor.",
   ])
 }, 30_000)
+
+test('page actions share whole-case retry and input boundaries', async () => {
+  expect(
+    await runSuite({
+      root,
+      file: 'src/fixtures/suites/page-actions.ts',
+      setupFiles: ['src/fixtures/suites/gboard-device.ts'],
+      testTimeout: 15_000,
+    }),
+  ).toEqual({
+    file: 'passed',
+    errors: [],
+    tests: [
+      {
+        name: 'Scenario: A page transport fault before input replays the whole case',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: A page transport fault in step five after input in step two is inconclusive',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: A page case may contain digits absent from keyboard inputs',
+        state: 'passed',
+      },
+    ],
+  })
+})
