@@ -8,7 +8,7 @@ const knownDifferences = [
   {
     scenario: 'Pressing Enter when selecting the entire content',
     boundary: 4,
-    actual: 'B: \nB: |',
+    actual: 'B:\nB: |',
   },
   {
     scenario: 'Pressing Enter when selecting the entire content',

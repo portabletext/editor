@@ -4,7 +4,7 @@ Feature: Lists
     Given one editor
 
   Scenario: Clearing list item on Enter
-    Given the editor state is "B listItem=\"number\": foo;;B listItem=\"number\": "
+    Given the editor state is "B listItem=\"number\": foo;;B listItem=\"number\":"
     When the editor is focused
     And the caret is put after ""
     And "{Enter}" is pressed
@@ -16,7 +16,7 @@ Feature: Lists
       """
 
   Scenario: Indenting list item on Tab
-    Given the editor state is "B listItem=\"number\": foo;;B listItem=\"number\": "
+    Given the editor state is "B listItem=\"number\": foo;;B listItem=\"number\":"
     When the editor is focused
     And the caret is put after ""
     And "{Tab}" is pressed
@@ -57,14 +57,14 @@ Feature: Lists
       """
 
   Scenario: Pressing Backspace in an empty list item
-    Given the editor state is "B listItem=\"number\": "
+    Given the editor state is "B listItem=\"number\":"
     When the editor is focused
     And the caret is put after ""
     And "{Backspace}" is pressed
     Then the editor state is "B: |"
 
   Scenario: Pressing Backspace in an empty list item after a block object
-    Given the editor state is "{IMAGE};;B listItem=\"number\": "
+    Given the editor state is "{IMAGE};;B listItem=\"number\":"
     When the editor is focused
     And the caret is put after ""
     And "{Backspace}" is pressed
@@ -82,12 +82,12 @@ Feature: Lists
     Then the editor state is <new text>
 
     Examples:
-      | text                                                                              | caret position | new text                                                                           |
-      | "B listItem=\"number\": ;;B style=\"h1\": foo"                                    | before "foo"   | "B listItem=\"number\" style=\"h1\": \|foo"                                        |
-      | "B listItem=\"number\": foo;;B listItem=\"number\": ;;B listItem=\"number\": bar" | after "bar"    | "B listItem=\"number\": foo;;B listItem=\"number\": ;;B listItem=\"number\": ba\|" |
+      | text                                                                             | caret position | new text                                                                          |
+      | "B listItem=\"number\":;;B style=\"h1\": foo"                                    | before "foo"   | "B listItem=\"number\" style=\"h1\": \|foo"                                       |
+      | "B listItem=\"number\": foo;;B listItem=\"number\":;;B listItem=\"number\": bar" | after "bar"    | "B listItem=\"number\": foo;;B listItem=\"number\":;;B listItem=\"number\": ba\|" |
 
   Scenario: Inserting indented numbered list in empty text block
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
     Then the editor state is
       """
@@ -104,15 +104,15 @@ Feature: Lists
 
     Examples:
       | text                         | position    | blocks                    | new text                                                                                          |
-      | "B listItem=\"number\": "    | after ""    | ">#:foo\|>#:bar\|>#:baz"  | "B listItem=\"number\": foo;;B listItem=\"number\": bar;;B listItem=\"number\": baz\|"            |
-      | "B listItem=\"number\": "    | after ""    | ">-:foo\|>-:bar\|>-:baz"  | "B listItem=\"bullet\": foo;;B listItem=\"bullet\": bar;;B listItem=\"bullet\": baz\|"            |
+      | "B listItem=\"number\":"     | after ""    | ">#:foo\|>#:bar\|>#:baz"  | "B listItem=\"number\": foo;;B listItem=\"number\": bar;;B listItem=\"number\": baz\|"            |
+      | "B listItem=\"number\":"     | after ""    | ">-:foo\|>-:bar\|>-:baz"  | "B listItem=\"bullet\": foo;;B listItem=\"bullet\": bar;;B listItem=\"bullet\": baz\|"            |
       | "B listItem=\"number\": foo" | after "foo" | ">#:foo\|>#:bar\|>#:baz"  | "B listItem=\"number\": foofoo;;B listItem=\"number\": bar;;B listItem=\"number\": baz\|"         |
       | "B listItem=\"number\": foo" | after "foo" | ">-:foo\|>-:bar\|>-:baz"  | "B listItem=\"number\": foofoo;;B listItem=\"number\": bar;;B listItem=\"number\": baz\|"         |
       | "B listItem=\"number\": foo" | after "foo" | ">-:foo\|>>#:bar\|>-:baz" | "B listItem=\"number\": foofoo;;B level=2 listItem=\"number\": bar;;B listItem=\"number\": baz\|" |
       | "B listItem=\"number\": foo" | after "foo" | ">-:foo\|>>-:bar\|>-:baz" | "B listItem=\"number\": foofoo;;B level=2 listItem=\"bullet\": bar;;B listItem=\"number\": baz\|" |
 
   Scenario Outline: Inserting lower-level list on list item
-    Given the editor state is "B level=2 listItem=\"number\": "
+    Given the editor state is "B level=2 listItem=\"number\":"
     When the caret is put after ""
     And ">#:foo|>#:bar|>#:baz" is inserted at "auto"
     Then the editor state is
@@ -123,7 +123,7 @@ Feature: Lists
       """
 
   Scenario: Inserting different lower-level list type on list item
-    Given the editor state is "B level=2 listItem=\"number\": "
+    Given the editor state is "B level=2 listItem=\"number\":"
     When the caret is put after ""
     And ">-:foo|>-:bar|>-:baz" is inserted at "auto"
     Then the editor state is
@@ -134,7 +134,7 @@ Feature: Lists
       """
 
   Scenario: Inserting inverse-indented list on list item
-    Given the editor state is "B level=2 listItem=\"number\": "
+    Given the editor state is "B level=2 listItem=\"number\":"
     When the caret is put after ""
     And ">>-:foo|>-:bar|>>-:baz" is inserted at "auto"
     Then the editor state is
@@ -145,7 +145,7 @@ Feature: Lists
       """
 
   Scenario: Inserting lower-level inverse-indented list on list item
-    Given the editor state is "B level=3 listItem=\"number\": "
+    Given the editor state is "B level=3 listItem=\"number\":"
     When the caret is put after ""
     And ">>-:foo|>-:bar|>>-:baz" is inserted at "auto"
     Then the editor state is
@@ -156,7 +156,7 @@ Feature: Lists
       """
 
   Scenario: Inserting lower-level, indented list on list item
-    Given the editor state is "B level=2 listItem=\"number\": "
+    Given the editor state is "B level=2 listItem=\"number\":"
     When the caret is put after ""
     And ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
     Then the editor state is
@@ -167,7 +167,7 @@ Feature: Lists
       """
 
   Scenario: Inserting list that will exceed the maximum level (10)
-    Given the editor state is "B level=9 listItem=\"number\": "
+    Given the editor state is "B level=9 listItem=\"number\":"
     When the caret is put after ""
     And ">#:foo|>>#:bar|>>>#:baz" is inserted at "auto"
     Then the editor state is
@@ -178,7 +178,7 @@ Feature: Lists
       """
 
   Scenario: Inserting list that exceeds the maximum level (10)
-    Given the editor state is "B level=9 listItem=\"number\": "
+    Given the editor state is "B level=9 listItem=\"number\":"
     When the caret is put after ""
     And ">>>>>>>>>>>#:foo|>>>>>>>>>>>>#:bar|>>>>>>>>>>>>>#:baz" is inserted at "auto"
     Then the editor state is
@@ -189,7 +189,7 @@ Feature: Lists
       """
 
   Scenario: Inserting mixed blocks starting with a list item
-    Given the editor state is "B level=2 listItem=\"bullet\": "
+    Given the editor state is "B level=2 listItem=\"bullet\":"
     When the caret is put after ""
     And ">#:foo|{image}|>>#:baz" is inserted at "auto"
     Then the editor state is
@@ -200,7 +200,7 @@ Feature: Lists
       """
 
   Scenario: Inserting mixed blocks not starting with a list item
-    Given the editor state is "B level=2 listItem=\"bullet\": "
+    Given the editor state is "B level=2 listItem=\"bullet\":"
     When the caret is put after ""
     And "foo|>#:bar|>>#:baz" is inserted at "auto"
     Then the editor state is
@@ -211,7 +211,7 @@ Feature: Lists
       """
 
   Scenario: Inserting mixed blocks not starting with list items
-    Given the editor state is "B level=2 listItem=\"bullet\": "
+    Given the editor state is "B level=2 listItem=\"bullet\":"
     When the caret is put after ""
     And "foo|bar|>#:baz" is inserted at "auto"
     Then the editor state is
@@ -228,14 +228,14 @@ Feature: Lists
     Then the editor state is <new text>
 
     Examples:
-      | text                              | blocks                                | new text                                                                                                                                             |
-      | "B level=2 listItem=\"bullet\": " | "foo\|>-:bar\|>>-:baz\|fizz\|>-:buzz" | "B level=2 listItem=\"bullet\": foo;;B level=2 listItem=\"bullet\": bar;;B level=3 listItem=\"bullet\": baz;;B: fizz;;B listItem=\"bullet\": buzz\|" |
-      | "B level=2 listItem=\"bullet\": " | "foo\|>#:bar\|>>#:baz\|fizz\|>#:buzz" | "B level=2 listItem=\"bullet\": foo;;B level=2 listItem=\"number\": bar;;B level=3 listItem=\"number\": baz;;B: fizz;;B listItem=\"number\": buzz\|" |
-      | "B level=2 listItem=\"number\": " | "foo\|>#:bar\|>>#:baz\|fizz\|>#:buzz" | "B level=2 listItem=\"number\": foo;;B level=2 listItem=\"number\": bar;;B level=3 listItem=\"number\": baz;;B: fizz;;B listItem=\"number\": buzz\|" |
-      | "B level=2 listItem=\"number\": " | "foo\|>-:bar\|>>-:baz\|fizz\|>-:buzz" | "B level=2 listItem=\"number\": foo;;B level=2 listItem=\"bullet\": bar;;B level=3 listItem=\"bullet\": baz;;B: fizz;;B listItem=\"bullet\": buzz\|" |
+      | text                             | blocks                                | new text                                                                                                                                             |
+      | "B level=2 listItem=\"bullet\":" | "foo\|>-:bar\|>>-:baz\|fizz\|>-:buzz" | "B level=2 listItem=\"bullet\": foo;;B level=2 listItem=\"bullet\": bar;;B level=3 listItem=\"bullet\": baz;;B: fizz;;B listItem=\"bullet\": buzz\|" |
+      | "B level=2 listItem=\"bullet\":" | "foo\|>#:bar\|>>#:baz\|fizz\|>#:buzz" | "B level=2 listItem=\"bullet\": foo;;B level=2 listItem=\"number\": bar;;B level=3 listItem=\"number\": baz;;B: fizz;;B listItem=\"number\": buzz\|" |
+      | "B level=2 listItem=\"number\":" | "foo\|>#:bar\|>>#:baz\|fizz\|>#:buzz" | "B level=2 listItem=\"number\": foo;;B level=2 listItem=\"number\": bar;;B level=3 listItem=\"number\": baz;;B: fizz;;B listItem=\"number\": buzz\|" |
+      | "B level=2 listItem=\"number\":" | "foo\|>-:bar\|>>-:baz\|fizz\|>-:buzz" | "B level=2 listItem=\"number\": foo;;B level=2 listItem=\"bullet\": bar;;B level=3 listItem=\"bullet\": baz;;B: fizz;;B listItem=\"bullet\": buzz\|" |
 
   Scenario: Inserting heading on empty list item
-    Given the editor state is "B listItem=\"bullet\": "
+    Given the editor state is "B listItem=\"bullet\":"
     When the caret is put after ""
     And "h1:foo" is inserted at "auto"
     Then the editor state is
@@ -256,7 +256,7 @@ Feature: Lists
       """
 
   Scenario: Inserting image on empty list item
-    Given the editor state is "B listItem=\"bullet\": "
+    Given the editor state is "B listItem=\"bullet\":"
     When the caret is put after ""
     And "{image}" is inserted at "auto"
     Then the editor state is "^{IMAGE}|"

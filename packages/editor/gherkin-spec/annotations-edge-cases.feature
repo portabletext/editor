@@ -33,7 +33,7 @@ Feature: Annotations Edge Cases
     Then the editor state is "B: foo baz"
 
   Scenario: Deleting across annotated blocks
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed

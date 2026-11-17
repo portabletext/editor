@@ -14,7 +14,7 @@ Feature: Insert Break
 
     Examples:
       | position     | text               | new position |
-      | before "foo" | "B: ;;B: bar\|foo" | before "foo" |
+      | before "foo" | "B:;;B: bar\|foo"  | before "foo" |
       | after "foo"  | "B: foo;;B: bar\|" | after "bar"  |
       | after "f"    | "B: f;;B: bar\|oo" | after "bar"  |
 
@@ -36,7 +36,7 @@ Feature: Insert Break
 
     Examples:
       | position     | text                       | new position | undone             |
-      | before "bar" | "B: foo;;B: ;;B: baz\|bar" | before "bar" | "B: foo;;B: \|bar" |
+      | before "bar" | "B: foo;;B:;;B: baz\|bar"  | before "bar" | "B: foo;;B: \|bar" |
       | after "bar"  | "B: foo;;B: bar;;B: baz\|" | after "baz"  | "B: foo;;B: bar\|" |
       | after "b"    | "B: foo;;B: b;;B: baz\|ar" | after "baz"  | "B: foo;;B: b\|ar" |
 

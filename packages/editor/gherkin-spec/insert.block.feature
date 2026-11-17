@@ -9,10 +9,10 @@ Feature: Insert Block
     And nothing is selected
 
     Examples:
-      | placement | text           |
-      | "before"  | "{IMAGE};;B: " |
-      | "after"   | "B: ;;{IMAGE}" |
-      | "auto"    | "{IMAGE}"      |
+      | placement | text          |
+      | "before"  | "{IMAGE};;B:" |
+      | "after"   | "B:;;{IMAGE}" |
+      | "auto"    | "{IMAGE}"     |
 
   Scenario Outline: Inserting block object on an empty editor and selecting it
     When the editor is focused
@@ -21,13 +21,13 @@ Feature: Insert Block
     Then the editor state is <text>
 
     Examples:
-      | placement | position | text              |
-      | "before"  | "start"  | "^{IMAGE}\|;;B: " |
-      | "after"   | "start"  | "B: ;;^{IMAGE}\|" |
-      | "auto"    | "start"  | "^{IMAGE}\|"      |
-      | "before"  | "end"    | "^{IMAGE}\|;;B: " |
-      | "after"   | "end"    | "B: ;;^{IMAGE}\|" |
-      | "auto"    | "end"    | "^{IMAGE}\|"      |
+      | placement | position | text             |
+      | "before"  | "start"  | "^{IMAGE}\|;;B:" |
+      | "after"   | "start"  | "B:;;^{IMAGE}\|" |
+      | "auto"    | "start"  | "^{IMAGE}\|"     |
+      | "before"  | "end"    | "^{IMAGE}\|;;B:" |
+      | "after"   | "end"    | "B:;;^{IMAGE}\|" |
+      | "auto"    | "end"    | "^{IMAGE}\|"     |
 
   Scenario Outline: Inserting block object on an empty text block
     Given the editor state is "B: f"
@@ -42,11 +42,11 @@ Feature: Insert Block
       | "before"  | "none"   | "{IMAGE};;B: bar\|" |
       | "after"   | "none"   | "B: bar\|;;{IMAGE}" |
       | "auto"    | "none"   | "^{IMAGE}\|"        |
-      | "before"  | "start"  | "^{IMAGE}\|;;B: "   |
-      | "after"   | "start"  | "B: ;;^{IMAGE}\|"   |
+      | "before"  | "start"  | "^{IMAGE}\|;;B:"    |
+      | "after"   | "start"  | "B:;;^{IMAGE}\|"    |
       | "auto"    | "start"  | "^{IMAGE}\|"        |
-      | "before"  | "end"    | "^{IMAGE}\|;;B: "   |
-      | "after"   | "end"    | "B: ;;^{IMAGE}\|"   |
+      | "before"  | "end"    | "^{IMAGE}\|;;B:"    |
+      | "after"   | "end"    | "B:;;^{IMAGE}\|"    |
       | "auto"    | "end"    | "^{IMAGE}\|"        |
 
   Scenario Outline: Inserting block object on empty heading
@@ -55,10 +55,10 @@ Feature: Insert Block
     Then the editor state is <text>
 
     Examples:
-      | placement | text                        |
-      | "auto"    | "{IMAGE}"                   |
-      | "before"  | "{IMAGE};;B style=\"h1\": " |
-      | "after"   | "B style=\"h1\": ;;{IMAGE}" |
+      | placement | text                       |
+      | "auto"    | "{IMAGE}"                  |
+      | "before"  | "{IMAGE};;B style=\"h1\":" |
+      | "after"   | "B style=\"h1\":;;{IMAGE}" |
 
   Scenario Outline: Inserting block object on empty list item
     When ">-:" is inserted at "auto" and selected at the "none"
@@ -66,10 +66,10 @@ Feature: Insert Block
     Then the editor state is <text>
 
     Examples:
-      | placement | text                               |
-      | "auto"    | "{IMAGE}"                          |
-      | "before"  | "{IMAGE};;B listItem=\"bullet\": " |
-      | "after"   | "B listItem=\"bullet\": ;;{IMAGE}" |
+      | placement | text                              |
+      | "auto"    | "{IMAGE}"                         |
+      | "before"  | "{IMAGE};;B listItem=\"bullet\":" |
+      | "after"   | "B listItem=\"bullet\":;;{IMAGE}" |
 
   Scenario Outline: Inserting and selecting block object on text selection
     Given the editor state is "B: foo"
@@ -165,10 +165,10 @@ Feature: Insert Block
     And nothing is selected
 
     Examples:
-      | placement | text          |
-      | "before"  | "B: foo;;B: " |
-      | "after"   | "B: ;;B: foo" |
-      | "auto"    | "B: foo"      |
+      | placement | text         |
+      | "before"  | "B: foo;;B:" |
+      | "after"   | "B:;;B: foo" |
+      | "auto"    | "B: foo"     |
 
   Scenario Outline: Inserting and selecting text block on an empty editor
     When the editor is focused
@@ -178,11 +178,11 @@ Feature: Insert Block
 
     Examples:
       | placement | position | text               |
-      | "before"  | "start"  | "B: bar\|foo;;B: " |
-      | "before"  | "end"    | "B: foobar\|;;B: " |
+      | "before"  | "start"  | "B: bar\|foo;;B:"  |
+      | "before"  | "end"    | "B: foobar\|;;B:"  |
       | "before"  | "none"   | "B: foo;;B: bar\|" |
-      | "after"   | "start"  | "B: ;;B: bar\|foo" |
-      | "after"   | "end"    | "B: ;;B: foobar\|" |
+      | "after"   | "start"  | "B:;;B: bar\|foo"  |
+      | "after"   | "end"    | "B:;;B: foobar\|"  |
       | "after"   | "none"   | "B: bar\|;;B: foo" |
       | "auto"    | "start"  | "B: bar\|foo"      |
       | "auto"    | "end"    | "B: foobar\|"      |
@@ -196,11 +196,11 @@ Feature: Insert Block
 
     Examples:
       | placement | position | text               |
-      | "before"  | "start"  | "B: bar\|foo;;B: " |
-      | "before"  | "end"    | "B: foobar\|;;B: " |
+      | "before"  | "start"  | "B: bar\|foo;;B:"  |
+      | "before"  | "end"    | "B: foobar\|;;B:"  |
       | "before"  | "none"   | "B: foo;;B: bar\|" |
-      | "after"   | "start"  | "B: ;;B: bar\|foo" |
-      | "after"   | "end"    | "B: ;;B: foobar\|" |
+      | "after"   | "start"  | "B:;;B: bar\|foo"  |
+      | "after"   | "end"    | "B:;;B: foobar\|"  |
       | "after"   | "none"   | "B: bar\|;;B: foo" |
       | "auto"    | "start"  | "B: bar\|foo"      |
       | "auto"    | "end"    | "B: foobar\|"      |
