@@ -1,5 +1,16 @@
 # Changelog
 
+## 9.0.29
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`9d96b2d`](https://github.com/portabletext/editor/commit/9d96b2d7ce6eb0c963a6533dc3195e72fc2de58a) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-markdown-shortcuts): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`39fa1b7`](https://github.com/portabletext/editor/commit/39fa1b7471750218df8f7722505df2e402556860), [`0e6eca4`](https://github.com/portabletext/editor/commit/0e6eca43211286a259587ef91d7690bc85881574)]:
+  - @portabletext/plugin-character-pair-decorator@9.0.29
+  - @portabletext/plugin-input-rule@7.0.29
+
 ## 9.0.28
 
 ### Patch Changes

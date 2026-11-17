@@ -1,5 +1,13 @@
 # @portabletext/plugin-dnd
 
+## 2.0.30
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`6e9e65d`](https://github.com/portabletext/editor/commit/6e9e65d6c432873127599c9522ea0e3833d8cae5) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-dnd): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 2.0.29
 
 ### Patch Changes
