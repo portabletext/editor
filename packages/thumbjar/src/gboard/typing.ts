@@ -70,7 +70,11 @@ type PageState = {
   [key: string]: unknown
 }
 
-/** One word to type on Gboard. */
+/**
+ * One word to type on Gboard.
+ *
+ * @public
+ */
 export type Word = {
   /** The keys to tap, one character each. */
   letters: string
@@ -78,7 +82,11 @@ export type Word = {
   candidate?: string
 }
 
-/** What `typeOnDevice` opens and types. */
+/**
+ * What `typeOnDevice` opens and types.
+ *
+ * @public
+ */
 export type TypeOnDeviceOptions = {
   /**
    * The page to type into, served on the host. A `localhost` port is reversed to the device with
@@ -93,7 +101,11 @@ export type TypeOnDeviceOptions = {
   words: Word[]
 }
 
-/** What the page held after typing, and how Gboard composed it. */
+/**
+ * What the page held after typing, and how Gboard composed it.
+ *
+ * @public
+ */
 export type Typed = {
   /** The optional page state after typing. */
   state?: unknown

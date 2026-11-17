@@ -2,74 +2,113 @@
 
 # thumbjar
 
-Types on real Gboard in an Android emulator into a web page in Chrome, and reports what the page ended up with, for Vitest tests. Private to this monorepo: consumers depend on it through `workspace:*` and import its build in `dist`, so build it before use, as `turbo` does for a consumer's `build` and tests.
+thumbjar types on real Gboard in an Android emulator into a web page in Chrome. It reports what the page ended up with for Vitest tests. Real keyboard input lets you test how Gboard reacts when a page changes the DOM during a composition.
 
-## Why a real keyboard
+## Install
 
-Android keyboards do not send key events. Gboard composes text through the input method, and Chrome turns that into `compositionstart`, `compositionupdate`, `beforeinput` and `input` events whose order and timing depend on the keyboard, its language and what the field already holds. Synthetic composition events in a desktop browser get the order right but not Gboard's reactions to the page: when a page rewrites the DOM under an open composition, Gboard can abort it and start a new one, and only a real keyboard shows that.
+```sh
+npm install --save-dev thumbjar vitest
+```
 
-Chrome is stopped and started again for each test. The test opens its page, which the driver picks by its exact URL, taps the field, waits for Gboard, taps the letters of each word and commits it, and reads the text and the event log over the Chrome DevTools protocol. Use an API 36 emulator with the Play Store image, so the Gboard is the one that ships on phones.
+Use Node 24 or later. Install the Android SDK with `adb` and `emulator` on your `PATH`. Create an API 36 Play Store emulator with Chrome and Gboard installed. The keyboard options are currently `ja` for Japanese QWERTY and `en` for English.
 
-## API
+## Host notes
 
-### `thumbjar`
+thumbjar runs on Linux and macOS without GNU coreutils. For Linux x86_64, use an x86_64 emulator image. For macOS on Apple Silicon, use an ARM64 image and start the emulator with `-gpu swiftshader_indirect`. Gboard's language download on macOS may need a proxy for QUIC. These are emulator and host setup notes.
 
-`typeOnDevice(context, options)` types on the device and returns what the page holds. `context` is the context Vitest passes to the test that calls it, which owns the call: its timeout, its artifact names and its record, also when tests run concurrently. A call without one, for example with its options first, throws before it touches the device. Its options:
+For CI, provision the SDK, image, Chrome and Gboard on your runner. Boot the emulator yourself and keep the built test page served while tests run. thumbjar prepares a booted device. It does not boot one.
 
-1. `url`: the page to type into, served on the host. The driver reverses a `localhost` port to the device with `adb reverse`, 80 or 443 when the URL names none, and sets `prefix` as its `prefix` search parameter, replacing any the URL already has, so the page can seed its field with it.
-2. `keyboard`: `ja` switches Gboard to Japanese QWERTY (romaji) first, `en` leaves it on English.
-3. `prefix`: text the field holds before typing, `''` for an empty field.
-4. `words`: each `Word`'s `letters`, tapped one key at a time, and optionally the `candidate` to tap to commit it. Without a candidate, or when Gboard does not offer it, the driver taps Space.
+## First run
 
-It returns a `Typed`:
+Download the pinned uiautomator2 server jar before booting the emulator:
 
-1. `text`: the text after typing, from the page's `getText`.
-2. `picked`: how each word was committed, its candidate or `space`.
-3. `compositionstart`: the number of `compositionstart` events.
-4. `nested`: `compositionstart` events that arrived while a composition was still open. Above 0 means the keyboard restarted a composition, which loses or doubles text.
-5. `compositionstartPerWord`: `compositionstart` events while each word was typed, for example whether Gboard composes the second word after the first was committed.
+```sh
+npx thumbjar fetch-u2-jar
+```
+
+The download checks the jar's hash and reuses a matching cached file. The default path is `node_modules/.cache/thumbjar/u2.jar` under the nearest package root above the working directory. Set `CACHE_DIR` to use `$CACHE_DIR/thumbjar/u2.jar`. Run inside a package with a writable cache directory. The command tries three downloads of up to 45 seconds each, with 15 seconds between retries.
+
+Next, boot your emulator. Build your test page and serve its output directory in another terminal:
+
+```sh
+npx thumbjar serve dist --port 8765
+```
+
+Prepare the device, then run the tests:
+
+```sh
+npx thumbjar prepare --keyboard ja --page-url http://localhost:8765/editor.html
+npx vitest run --project device
+```
+
+`serve` defaults to port `8765`. `prepare` requires `--keyboard ja|en` and `--page-url`. Its `--out-dir` defaults to `out`. Optional `--booted` supplies the host's epoch seconds when the emulator came online. Without it, the dictionary wait uses the time preparation started.
+
+Preparation attempts to disable Play Store updates, waits out post-boot system error dialogs, sets up Chrome and the soft keyboard, and checks the page URL. For Japanese, it adds the QWERTY layout, waits for this boot's dictionary-load log, switches the layout away and back, and checks conversion candidates by typing `kyou` into the page. A Japanese dictionary that never loads exits with status `3`. Other preparation failures exit with status `1`. A dictionary wait allows up to 360 seconds from `--booted`.
+
+The driver forwards a host `localhost` page port to the device with `adb reverse`. It adds or replaces the URL's `prefix` search parameter. Your page must use that parameter to seed its field.
+
+## Set up the page
+
+Call `recordInput({getText, getState?, actions?, field?})` from `thumbjar/page` once in the page the driver opens:
 
 ```ts
-import {typeOnDevice} from 'thumbjar'
-import {expect, test} from 'vitest'
+import {recordInput} from 'thumbjar/page'
 
-test('Scenario: Typing sakura after full-width text', async (context) => {
-  const typed = await typeOnDevice(context, {
-    url: 'http://localhost:8765/editor.html',
-    keyboard: 'ja',
-    prefix: 'あ',
-    words: [{letters: 'sakura', candidate: '桜'}],
-  })
+const field = document.querySelector('textarea')!
+field.value = new URL(location.href).searchParams.get('prefix') ?? ''
 
-  expect(typed.text).toMatch(/^あ(桜|さくら)$/)
-  expect({
-    nested: typed.nested,
-    compositionstartPerWord: typed.compositionstartPerWord,
-  }).toEqual({nested: 0, compositionstartPerWord: [1]})
+recordInput({
+  field,
+  getText: () => field.value,
+  getState: () => ({length: field.value.length}),
+  actions: {
+    clear: () => {
+      field.value = ''
+    },
+  },
 })
 ```
 
-When Gboard has not loaded a word's candidates yet, the driver commits it with Space as kana, so a Japanese test accepts the kana for each word as well as the candidate. It never retries an assertion to get the candidate.
+`getText` returns a string or `null`, such as text read from your editor model. Optional `getState` returns additional state. Keep it JSON-serializable so it can cross the Chrome DevTools connection. Exceptions from these callbacks reach the driver.
 
-`runOnDevice(context, options)` drives a case written as data: a list of steps on the keyboard. `context` is the context Vitest passes to the test that calls it, and `options` takes `url`, `keyboard` and `prefix` like `typeOnDevice`, and `steps`:
+`field` identifies the element to type into and record on. Without it, thumbjar records events on `document` in the capture phase and finds the first `textarea`, text `input` or `[contenteditable]`. Text input types include `text`, `search`, `tel`, `url` and `password`, plus inputs with no type or an empty type. The exported `TEXT_FIELD_SELECTOR` contains this selector. A field may render after `recordInput` runs when no explicit field is supplied.
 
-1. `{type: 'compose', letters, commit?}` taps `letters` one key at a time, lowercase a to z on either layout, or `{type: 'compose', text, commit?}` the keys of `text`: lowercase a to z on English, and `-` and ` ` on both layouts, which the driver types on Gboard's symbols, in any order, and then returns to the letters: the English symbol layout, or on Japanese a space on the numeric pad, reached through the alphabet layout, and a dash on the `記号キーボード` panel the pad opens again for each dash. `commit` is `{candidate}`, which taps the candidate and fails the step when Gboard does not offer it, `'space'`, the default, or `'none'`, which leaves the composition open for the next step. `letters` names keys, not the text they type: `'k'` taps the K key whether Gboard labels it `k` or `K`. Whether a key types a capital is Gboard's to decide, by auto-capitalisation or its Shift state, which `runOnDevice` does not drive yet, so a capital in `letters` or `text` is unsupported.
-2. `{type: 'enter'}` taps Gboard's action key.
-3. `{type: 'backspace', times?}` taps its delete key `times` times, once by default.
+`recordInput` installs `window.__state`, `window.__field`, `window.__selection` and `window.__action` for the driver. The state contains `text` and `events`, plus `state` when `getState` is supplied. Without an explicit field it also contains `dom`, the discovered field's text. Field text comes from `value` for inputs and textareas, or `textContent` otherwise.
 
-Before it touches the device it checks every step against what Gboard can drive on `keyboard`: every character of `letters` needs a key on Gboard's letter page, every character of `text` one of the keys above, a candidate needs `ja`, and Japanese QWERTY takes its romaji as `letters`, since its `text` drives only `-` and ` `. A step that is not an object, has no valid `type`, has a `text` or `letters` that is not a string, or has a `commit` that is none of the three is unsupported too. A case with a step it cannot drive skips the test that called `runOnDevice`, with a note that names each such step by its position, its type when it has a valid one, and why, for example `Gboard cannot drive step 1 (compose): committing with a candidate needs keyboard 'ja', Gboard's English layout shows no conversion candidates`. Vitest reports the test as skipped and its reporter prints the note, the case never touches the device, and nothing is written to `outDir`. `context` must be the context Vitest passed to the test that calls `runOnDevice`. It checks only the context's shape, a `signal`, a `skip` function and a `task` with a `name`, so a call without one, for example with its options first, throws before it checks the steps, but the context of another test passes and makes that test the owner of the call: its skip, its timeout and the record. `test.each` passes its test no context, so a test body that needs one is written with `test.for`, which passes the context after the case, or uses the context a `beforeEach` receives for the same test.
+The recorder captures `beforeinput`, `input`, `compositionstart`, `compositionupdate` and `compositionend`. Event records contain `type`, `inputType`, `data`, `text` and `selection`. Selection offsets are direction-aware `{anchor, focus}` in UTF-16 units, or `null` outside the field. `beforeinput` and `input` also capture `isComposing` and `cancelable`. When supported, `targetRanges` contains `{start, end}` UTF-16 offsets, `null` for a range outside the field, or `[]` for no ranges. Failed reads record `null`.
 
-Everything that belongs to the test comes from `context`: the skip, the signal that stops the call when the test times out, the artifact names and the test the run is recorded against. So `runOnDevice` works in concurrent tests, and a call that resumes after its test timed out never lands on the next test: it records an `aborted` run against its own test and rejects with the timeout, before it checks the steps or touches the device. Device calls still run one at a time, in the order they were made, whichever tests made them. A call waits for the calls made before it, and the wait counts against its own test's timeout.
+`defaultPrevented` is read after dispatch by a zero-delay timer. An absent value means unknown, never `false`. A `#log` element, if present, displays the event records and updates after the timer.
 
-It returns a `Run`: `steps`, one `StepRecord` per step, and the page's `text`, `selection` and `events` after the last step, or after the field is focused for a case with no steps. Every record has the same shape: the step's `type`, its `status`, `done`, `failed` or `skipped`, a `reason` when it is not `done`, `textAfter`, `selectionAfter`, `focusedAfter`, whether the field has focus, and `events`. Selections are `{anchor, focus}` in grapheme clusters of the field's text, `null` when the selection is outside the field.
+## Configure Vitest
 
-A step's record is bounded by two boundaries. A boundary is one page evaluation that returns the page's text, the selection, whether the field has focus and its event count together, so no event lands between the reads. The driver reads one after it has focused the field, right before the first step, and one after every step. A step's `textAfter` and `selectionAfter` come from its boundary after, and its `events` are the events between its boundary before and its boundary after. Events the page recorded before the first boundary, while it loaded or the field was focused, belong to no step. The run's `events` cover the same window, from the first boundary to the last, so every event in it is in exactly one step's record.
+```ts
+import {deviceProject} from 'thumbjar/vitest'
+import {defineConfig} from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    projects: [
+      deviceProject({
+        include: ['tests/*.test.ts'],
+        pageUrl: 'http://localhost:8765/editor.html',
+        pageHint: 'Build and serve the test page first.',
+      }),
+    ],
+  },
+})
+```
+
+`deviceProject` uses the Node environment, runs one file at a time, sets `retry: 0` and supplies timeouts from the driver's budget. Its name defaults to `device`. `outDir` defaults to `out`. `setupFiles` adds your setup files after thumbjar's. Optional `summaryFile` receives outcome counts and a per-test table after each file.
+
+Global setup checks `adb get-state` and requires an HTTP 200 response from `pageUrl` before tests start. `pageHint` appears when the page check fails. The `thumbjar/vitest/global-setup` entry exports this setup function as its default. Importing `thumbjar/vitest/setup` installs the file checks and summary hook. `deviceProject` wires both up for you.
+
+## Drive a case
 
 ```ts
 import {runOnDevice} from 'thumbjar'
 import {expect, test} from 'vitest'
 
-test('Scenario: Pressing Enter while kyou is composing', async (context) => {
+test('compose and clear', async (context) => {
   const run = await runOnDevice(context, {
     url: 'http://localhost:8765/editor.html',
     keyboard: 'ja',
@@ -77,163 +116,77 @@ test('Scenario: Pressing Enter while kyou is composing', async (context) => {
     steps: [
       {type: 'compose', letters: 'kyou', commit: 'none'},
       {type: 'enter'},
+      {type: 'page', action: 'clear'},
     ],
   })
 
-  expect(run.steps.map((step) => step.status)).toEqual(['done', 'done'])
+  expect(run.steps.map((step) => step.status)).toEqual(['done', 'done', 'done'])
+  expect(run.text).toEqual('')
 })
 ```
 
-A step that throws is a driver fault: the attempt records it `failed` and the steps after it `skipped` in its artifact. Once the attempt stopped, the driver reads the page's text, selection and focus into the failed step's record, under 30 seconds of its own, and a value that read cannot get stays `null`. The driver retries the whole case only under the rules in Retries. When a step of the last attempt threw, `runOnDevice` rejects with a new `Error`. Its message is the step's error message, or the thrown value as a string when it is not an `Error`, followed by the records of that attempt, so the report shows how far the case got. A Symbol shows as `Symbol(description)`, and a value or `message` that throws when it is read or converted to text, from its `toString` or a `message` getter, shows as `<thrown value that cannot be converted to text>`. Its `cause` is the value the step threw, which is left as it was:
+Pass the Vitest context of the test making the call. It owns the timeout, skip and artifacts. For parameterized tests use `test.for`, which passes a context after the case. Calls share one device queue. Waiting in that queue counts against the calling test's timeout.
 
-```
-Error: no Gboard enter key, labels: ['a', 'b', 'c', …]
-Steps:
-  1. backspace: done, textAfter 'fo'
-  2. enter: failed (Error: no Gboard enter key, labels: ['a', 'b', 'c', …]), textAfter None
-  3. backspace: skipped (step 2 failed), textAfter None
-```
+`runOnDevice(context, {url, keyboard, prefix, steps})` accepts these steps:
 
-Any other failure rejects with its error unchanged: an attempt that fails before the first step, because the page never loaded or Gboard never showed, has no records, even when an earlier attempt had some.
+- `{type: 'compose', letters, commit?}` taps lowercase letter keys `a` to `z` on either layout. These are key names. Gboard's capitalization state decides which text they produce.
+- `{type: 'compose', text, commit?}` types lowercase `a` to `z` on English, and `-` and space on either layout. Japanese kana composition uses romaji in `letters`.
+- `{type: 'enter'}` taps the action key.
+- `{type: 'backspace', times?}` taps Delete, once by default.
+- `{type: 'page', action, args?}` awaits a named handler registered in `actions`. `args` is a `Json` value. A page step passes `null` when `args` is omitted.
 
-### `thumbjar/page`
+A compose step's `commit` defaults to `'space'`. Use `'none'` to leave the composition open, or `{candidate: '今日'}` to require a Japanese candidate. A missing required candidate fails the step. Unsupported cases skip the calling test before touching the device or writing artifacts.
 
-`recordInput({getText, field})` runs in the page. It records `beforeinput`, `input` and composition events and installs the `window.__state()` the driver reads after each word. `getText` returns the text to report, for example from an editor's model. `field` names the field the driver types into, a `textarea`, a text `input` (`text`, `search`, `tel`, `url` or `password`) or a `[contenteditable]`. A field's text is its `value` for a `textarea` or an `input` and its `textContent` otherwise. Without `field`, events are recorded on `document` in the capture phase, so the field may render later, and `window.__state()` also reports the text of the first `textarea`, text `input` or `[contenteditable]` as `dom`. With `field`, events are recorded on that element along with its text at each event. Each event is also printed to a `#log` element when the page has one.
+A `Run` contains `steps`, `text`, `selection`, `events` and optional `state`. Each `StepRecord` contains `type`, `status` (`done`, `failed` or `skipped`), optional `reason`, `textAfter`, `selectionAfter`, `focusedAfter`, `events` and `keys`. Optional `stateAfter` contains the page's additional state at that step's boundary. Assertions can inspect intermediate `stateAfter` values as well as the final `state`.
 
-`recordInput` also installs `window.__selection()` for the driver to read the field’s text and direction-aware selection in UTF-16 offsets.
+Each boundary reads text, state, selection, focus and event count together. The first boundary follows field focus. Each subsequent boundary follows a step. Each step owns only the events between its boundaries. Events from page load or initial focus are excluded. Driver selections use grapheme clusters, unlike the recorder's UTF-16 event offsets.
 
-Each event records `type`, `inputType`, `data`, `text` and `selection`. `text` is the field's text when the listener runs, or `null` without a field. `selection` is `{anchor, focus}` in UTF-16 offsets, respecting selection direction, or `null` outside the field. In document mode, the field is resolved through `window.__field()` at each event.
+A failed step ends the attempt. Later steps are `skipped`. The driver attempts one bounded page read for the failed step's state, text, selection and focus. Values it cannot read remain absent or `null`. A final step error includes the step records and preserves the thrown value as its `cause`.
 
-`beforeinput` and `input` also record `isComposing`, `cancelable` and, when `getTargetRanges` is a function, `targetRanges`: an array of `{start, end}` UTF-16 offsets, with `null` for ranges outside the field and `[]` when there are none. Ranges are read during dispatch. `defaultPrevented` is absent initially and added to the same record by a zero-delay timer after the whole dispatch, including the page's handlers. A failed read records `null` for that field. The log updates when the timer completes.
+Unknown or rejected page actions are page exceptions and are never retried. Cases containing page steps disable the final text's unexpected-digit check because actions may seed arbitrary text. The event-based symbol mistap check still applies.
 
-A page seeds the field and then leaves it to the keyboard. A page that controls it, writing its `value` back from its own state on each input the way a React `value` prop does, restarts Gboard's composition: on a `textarea` that nested 7 of 8 Japanese compositions.
+### Type words
 
-The driver waits until `window.__state` exists and the field it types into is in the document, so a page that names no field may render it after `recordInput`. It looks the field up again when it reads its position and when it focuses it, and waits while it is missing, so a field that leaves the document in between and comes back does not fail the attempt. A field that never renders, within 20 checks a second apart for each wait and the attempt's deadline, fails with `page never rendered its field`, a driver fault. The driver then taps the field `recordInput` named, or without one the page's first `textarea`, text `input` or `[contenteditable]`, and focuses it with the caret after its text.
+`typeOnDevice(context, {url, keyboard, prefix, words})` accepts words shaped as `{letters, candidate?}`. It taps the letters, then the candidate if offered, otherwise Space. Japanese assertions may need to accept kana when conversion candidates have not loaded.
 
-### `thumbjar/vitest`
+The returned `Typed` contains `text`, optional `state`, `picked`, `compositionstart`, `nested` and `compositionstartPerWord`. `picked` records each chosen candidate or `space`. `compositionstart` counts those events in the recorded event log. `compositionstartPerWord` counts them between consecutive word boundaries.
 
-`deviceProject(options)` returns a Vitest project for the device tests: Node environment, one file at a time, `retry: 0`, and a test timeout taken from the time budget below. Pass it the test files in `include`, the `pageUrl` global setup checks and a `pageHint` printed when it does not answer. `outDir` sets where artifacts go, `out` by default, and `setupFiles` adds the consumer's own.
+`nested` counts `compositionstart` events that follow an earlier `compositionstart` without an intervening `compositionend`. The counter tracks one open composition flag. A start opens it and an end closes it.
 
-Its global setup fails the run before any test when `adb` has no device or `pageUrl` does not answer. It runs `adb get-state` through the driver's `adb`, so an adb that ignores SIGTERM is killed and one that outlives SIGKILL fails the setup instead of hanging it. Its setup file fails a test file as described under Retries.
+## Retries and failures
 
-`deviceTestFileSeconds(testCount)` is the longest a run of one device test file of `testCount` tests takes, to run the file under a timeout of the caller's own, see the time budget below.
+Assertions never retry. `typeOnDevice` retries a driver fault once after restarting Chrome. Each attempt has a 180-second deadline. Driver faults include missing keyboard layouts, unavailable device services and CDP connection failures.
 
-### `thumbjar/testing`
+`runOnDevice` retries a fault before keyboard input only after proving Chrome restarted with a fresh process. An ordinary fault after input is inconclusive because that input may still arrive. Explicit adb device-loss errors end the call as device offline. A timeout may trigger one bounded `adb get-state` check to distinguish device loss from an inconclusive result.
 
-`runSuite({root, file, setupFiles})` runs one test file in a Vitest of its own, without reporters, and returns the file's state, its errors and each test's state. Unit tests use it to run a device test file against a fake device or fake typing results set up in `setupFiles`. `file` and `setupFiles` are relative to `root`. `testTimeout` defaults to 5 seconds, and `provide` passes values to the inner run.
+Classified mistaps get one retry. These include an unexpected digit from a letter key's long-press number hint and a recorded symbol popup. A missing letter is not a retry signal. Page exceptions never retry. The driver does not retry a failed assertion to obtain a preferred conversion candidate.
 
-### `thumbjar` command
+The setup hook fails a file when a page exception occurred or an adb process outlived SIGKILL. It also fails a file when a `test.fails` test has no driver call or ends on a driver fault, offline, inconclusive or incomplete. This prevents an infrastructure error from counting as an expected page failure.
 
-```
-thumbjar fetch-u2-jar
-thumbjar serve <dir> [--port 8765]
-thumbjar prepare --keyboard ja|en --page-url <url> [--out-dir out] [--booted <epoch seconds>]
-```
+Known sources of flakes include slow emulator boots, dropped Chrome DevTools connections and partial Gboard accessibility dumps. Keep these distinct from assertions about the page's text and state.
 
-1. `fetch-u2-jar` downloads the uiautomator2 server jar into `node_modules/.cache/thumbjar/u2.jar` below the nearest package root above the current working directory and checks its hash, unless that path already holds it with that hash. Set `CACHE_DIR` to put it at `$CACHE_DIR/thumbjar/u2.jar` instead. With no package above the working directory, or a `node_modules` that cannot be written, `fetch-u2-jar` fails and says to run inside a package or set `CACHE_DIR`. It logs which: `u2.jar downloaded to <path>` or `u2.jar already at <path> with its pinned hash, not downloaded`. A failed download names the URL that answered, without its query. `src/device/u2-jar.json` pins the jar's URL and hash. It tries three downloads of at most 45 seconds each, 15 seconds apart, so it ends within 165 seconds. Run it before the emulator boots, so no test pays for it.
-2. `serve` serves a built page directory over HTTP, with one log line per request.
-3. `prepare` prepares a booted emulator. It disables Play Store, so Play Store updates no app mid-run, and logs one `self-update block:` line saying whether the disable succeeded and whether Play Store is listed as disabled, never failing the prep over it. It waits out the post-boot ANR storm, turns off system error dialogs, makes Chrome skip its first-run screens, shows the soft keyboard with a hardware keyboard attached, adds the Japanese QWERTY layout for `--keyboard ja` through Gboard's settings screens (the Play image has no root to change the locale), checks that `--page-url` answers and, when it is on `localhost`, reverses its port to the device the way the driver does. A step that breaks prints a `PREP FAILED: <step>` line and exits 1, apart from a Japanese dictionary that never loaded on this boot, which exits 3, so a caller can retry a fresh emulator for it without reading the reason. A capture that cannot show the load, a failed check after the load, the Japanese setup and the prep's deadline all exit 1. Logs and screen dumps go to `--out-dir`: `phases.log`, `diagnose.txt` with the device, Gboard and Chrome versions, and for Japanese `ja-setup.log` and `ja-setup-*` dumps, `boot-logcat.txt` and `ja-dictionary.log`.
+## Time budgets
 
-   For `--keyboard ja` it then waits until this boot's `main` log shows Gboard's Japanese (Mozc) dictionary loaded, at most 360 seconds after `--booted`, the host's epoch seconds when the emulator came online, or after the prep started without it. It reads the log from a capture it starts first, whose header names the boot, so a capture of an earlier boot or one without the header fails at once. After the load it switches Gboard away from Japanese and back, checks that Gboard logged `RELOADED` for the new session, types `kyou` in `--page-url`'s field, checks that the suggestion strip offers a kanji candidate, and deletes the composition. A dictionary that never loads fails the prep with exit status 3 and a PREP FAILED line that says so first, then names Gboard's version, its fallback engine and cancelled dictionary downloads when the boot logged them, and only then any gap in the capture.
+`thumbjar/vitest` exports `deviceTestFileSeconds(testCount)`, `prepWorstSeconds(keyboard)`, `FETCH_U2_JAR_WORST_SECONDS` and `countDeviceTests(source)` for callers budgeting device runs.
 
-thumbjar never boots the emulator. The caller boots it, for example with `reactivecircus/android-emulator-runner`.
+The current worst-case bounds are 520 seconds for `typeOnDevice`, 636 for `runOnDevice` and 661 for the Vitest test timeout. These bounds assume adb processes exit after SIGKILL. A process that survives it blocks subsequent typing. Queue time also consumes the test timeout. These are caps, not expected durations.
 
-## Retries
+`countDeviceTests` uses a `// thumbjar-test-count: 13` declaration when present. Otherwise it counts literal top-level `test(` and `test.fails(` calls. For data-driven files, declare the total collected rows, including skipped rows. Keep a collection test that checks your declaration against Vitest's count.
 
-Only driver faults are retried, never an assertion. `typeOnDevice` and `runOnDevice` share the retry and everything below. When `typeOnDevice` throws because of the device (the page never loaded over CDP, Gboard never showed, the switch to Japanese failed, uiautomator2 never answered, the system rejected an injected tap, or the attempt ran past 3 minutes) it stops the attempt's device calls, its adb processes and its screen dump, stops Chrome, opens the page again and types everything once more.
+## Artifacts and running one file
 
-The driver reads the typed text to classify a fault in one case only: a digit that neither the prefix nor the typed letters hold. Only a tap that lands as a long press on a key's number hint types one. A page that produced such a digit every time would fault twice and fail the test, so the retry could only hide one that produces it intermittently. Apart from this, the driver never compares the text with anything.
+The driver writes JSON results, screenshots and accessibility dumps under `out` by default. Set `deviceProject({outDir})` to change it. Artifact names use the keyboard and normalized test name. Retry artifacts add `-retry`. `PHASE` output timestamps driver stages.
 
-An expression that throws in the page, `window.__state()` or the page's `getText` for instance, is not a driver fault. It can be a failure of the page under test, so an attempt that reports one is never retried and the call ends there. When the exception comes from a step boundary, it is in the call's error. When the read of the page after a failed step raises it, the call rejects with the failed step's own error and the exception is in `DriverRun.pageException`. Either way the `deviceProject` setup file fails the test file with that exception, whether or not the test is marked `test.fails`, and a page exception takes precedence over every outcome below. The driver only evaluates expressions that can throw once `window.__state` exists, and the expressions that look up the field wait for it instead of throwing, so a page still loading when the attempt opens it never raises one. A document that replaces the page later is not waited for, whether it commits before or after the focus: reading `window.__state()` before the new document runs `recordInput` raises one, even when its field was already there to tap and focus.
-
-An adb process that outlives SIGTERM and SIGKILL may still be talking to the device. From then on the driver starts no attempt and no call, wherever the process was left, typing, the Chrome restart or the cleanup, and the setup file fails the test file whether or not its tests are marked `test.fails`. The retry prints a `PHASE ... RETRY <test>` line and a `Driver fault in <test>` line in the test's output. A second fault fails the test.
-
-Vitest's own `retry` is 0, so a failed assertion fails the test on its first run.
-
-A tap the system accepted but Gboard never registered is not detected. Gboard's accessibility tree has no pressed state for its keys and no composing text, the English layout shows no suggestion strip, and the Japanese candidate strip follows the composing text the page can corrupt, so judging taps by it could retry a page's bug away. Such a dropped letter fails the test as a wrong text.
-
-`runOnDevice` retries more strictly, and `typeOnDevice` keeps the retry above. A fault that comes once the attempt sent input, the first tap on a key that types, a letter, a symbol, a candidate, Space, Enter or Delete, is never retried, since that input may still reach the page the retry would type into, and the call is `inconclusive`. A tap counts as sent when the driver issues it, whether or not it answered. A fault before any input is retried once, and only into a fresh Chrome: the driver reads Chrome's pid, stops it, reads the pid until the old process is gone, and the retry reads it again after Chrome opens and types only when the pid is new. A restart that cannot show that ends the call `inconclusive` without a retry. An adb call that fails with adb's own error for a lost device, `device offline`, `error: closed` or `no devices/emulators found`, printed by the adb CLI or sent by the adb server as a `FAIL` answer on its socket, ends the call `device-offline` from that error alone, never retried on that device, whichever step's adb call it came from, the force-stop before the retry included, and a step that otherwise logs a failure and tries again, the wait for uiautomator2 or for the page over CDP for instance, stops at once on that error, with a `reason` that quotes the error and reads no `adb get-state`. A socket that closed or a request that timed out is no such error. An adb call that times out reads `adb get-state` once a call, for the first failure that needs it, from stdout only, since adb that starts its server writes to stderr. Its answer describes only that failure, so a later timeout in the same call is unconfirmed. Only a read that completed can change the outcome: an answer other than `device` is `device-offline`. Otherwise the outcome stays as recorded: an `inconclusive` call is marked as answered after `device` and as unconfirmed after a read that is stopped or skipped, never offline, and a second attempt's timeout before any input stays a driver fault with neither mark. One after input is `inconclusive`, and `deviceUnconfirmed` when the first attempt already used the call's state read. The outcome is recorded the moment the attempt that ends the call failed, before any diagnostic, the failure dump, the state read and the read of the page. A diagnostic can only add to it. A test that times out during a diagnostic keeps the outcome and stops the diagnostic. A first attempt's fault before any input records no outcome yet, since the call may still retry it, and a pre-input timeout there also waits for the state read, since a reachable device retries it. A test timeout after that fault and before the retry's restart begins, while the driver classifies the fault or during the failure dump, the state read or the read of the page, ends the call on the outcome that fault would have if it were final: `inconclusive` for a timeout, marked as answered when the state read had answered `device` and as unconfirmed otherwise, and a driver fault for any other fault. A test timeout during the restart or the retry ends the call aborted. In each case the call rejects with the attempt's own error, and its record in `driverRuns` carries the state and a `reason`.
-
-`test.fails` counts any error as its expected failure, a driver fault or a test timeout included. Each call is recorded when it starts and marked complete once it returned a result and cleaned up. The setup file fails the test file for a `test.fails` test whose call ended `inconclusive`, `device-offline`, on a driver fault or never completed, and for one that ended with no driver call at all, a `beforeEach` that threw before the first `runOnDevice` for instance, naming the test. A driver fault can end a call after one attempt, when no retry is allowed.
-
-When `deviceProject` is given a `summaryFile`, such as `process.env.GITHUB_STEP_SUMMARY`, the setup file appends a block for the file to it after the tests: a line counting how many of its tests passed, failed, failed as expected under `test.fails`, ended inconclusive, with the device offline or on a driver fault, then a table with one row per test in file order: its position, its suite path and name, its outcome (`not run` for a skipped or todo test, or one skipped as it ran), its duration and the first line of its failure, cut at 200 characters. The failure is the test's error, else the page's exception, else the driver's reason. Every test that ran counts, in `describe` blocks too, by its own final result and the last driver call it made. Skipped and todo tests, and tests skipped as they ran, an unsupported case for instance, count in none of the six. A test whose call was inconclusive with the device answering, or with the device never checked, adds a note that the device offline count can be too low.
-
-## Time budget
-
-The driver cuts every stage of its own off at a deadline, so a hang there ends as a logged failure:
-
-1. One `typeOnDevice` call takes at most 520 seconds: two attempts of 180 seconds, each with a 30-second failure dump and 10 seconds to stop its uiautomator2 servers, a 20-second Chrome restart between them and 20 seconds of cleanup after, each stage with 5 seconds to stop. An adb process gets 2 seconds after SIGTERM and 2 more after SIGKILL, inside those 5. One `runOnDevice` call takes at most 636 seconds: the same, with a 30-second read of the page after each failed attempt, a 52-second restart that reads Chrome's pid in 5 seconds before and after the force-stop and polls it for up to 15, and one 9-second `adb get-state`, each with 5 seconds to stop. `src/device/budget.ts` holds the bounds, and the device test timeout of 661 seconds that `deviceProject` sets is taken from the longer call: each test has room for one cleanup carried over from a test before it that timed out.
-2. `thumbjar prepare` ends within `prepWorstSeconds(keyboard)` from `thumbjar/vitest`: 632 seconds for English and 889 for Japanese. English runs its stages under a 622-second Node deadline with 10 seconds to stop. They have 600 seconds: the ANR settle starts no new check after 240 seconds and ends within about 285, and the Play Store block takes 20 of them with 2 to stop. Japanese captures the boot first, in 15 seconds with 2 to stop, then runs its stages under an 862-second Node deadline with 10 seconds to stop: the same 600 and the Play Store block, the Japanese setup within 250, the dictionary wait, which ends 360 seconds after the emulator came online, a window those 600 cover, and has 45 more for its last read and 5 to stop, and the check after the load in 180 and 10. The prep has 10 to stop. Before returning, including on its deadline, the prep ends the boot capture's reader and every reader it restarted, SIGKILL after 2 seconds for one that ignores SIGTERM. If the prep is killed before it can clean up, the reader detects its IPC connection closing and stops itself and its adb child.
-3. One device test file runs within `deviceTestFileSeconds(testCount)`: 661 seconds for each of its tests, 40 for the global setup, 30 for its device check, 5 to stop that adb and 5 for the page check, and 60 for Vitest's own start and exit, 2083 seconds for a file of three tests. A caller that cuts the run off at it lets a test that times out last still leave the setup file room to fail the file.
-4. `thumbjar fetch-u2-jar` ends within `FETCH_U2_JAR_WORST_SECONDS` from `thumbjar/vitest`, 165 seconds: three downloads of 45 seconds, the body included, and 15 seconds before each retry.
-
-These are enforced caps, not expected times. A test typically takes a minute or two. The bounds are per call and start once the call drives the device. A call made while another is driving or queued waits for those first, and spends its own test's timeout while it waits, so a call queued behind the calls of concurrent tests can time out before it starts.
-
-## Artifacts
-
-`typeOnDevice` and `runOnDevice` write to `outDir`:
-
-1. `<keyboard>-<test>.json`: the page's state after each word or step, the Gboard candidates and the keys the driver saw, and for `runOnDevice` the step records, also when a step failed. `<test>` is the test name in lowercase with dashes, without its `Scenario:` prefix, for example `ja-typing-kyou-twice-into-an-empty-block.json`. A retried test also has `-retry` files.
-2. Screenshots before and after typing each word, and Gboard accessibility dumps.
-
-The `PHASE` lines in the test's output time each driver step.
-
-## Files
-
-1. `src/driver.ts`: `typeOnDevice` and `runOnDevice`, their retry and the time bounds around each attempt. `src/steps.ts`: the steps and their records.
-2. `src/gboard/`: one attempt through the uiautomator2 server and CDP, `typing.ts`, the symbols `text` types off the letter layout, `symbols.ts`, which steps Gboard can drive, `support.ts`, and the accessibility dump parser, `hierarchy.ts`.
-3. `src/device/`: the adb, uiautomator2 and CDP clients, the time budget and the helpers the deadlines run on.
-4. `src/page.ts`: `recordInput`, and `src/testing.ts`: `runSuite`.
-5. `src/vitest/`: `deviceProject`, its global setup, its setup file and the job summary it writes, `summary.ts`.
-6. `src/bin.ts` and `src/prepare/`: the `thumbjar` command, the device prep, the Japanese setup, the page server, the jar download and `diagnose.ts`, which records device facts and never fails.
-7. `src/fixtures/`: accessibility dumps and event logs from CI runs, and fake-device suites, for the unit tests.
-
-Its only runtime dependency is Vitest, whose `afterAll` the setup file uses. adb runs through `child_process`, and CDP goes over the global `WebSocket` and `fetch` through `adb forward`.
-
-## Checking it without an emulator
-
-```
-pnpm --filter thumbjar check:types
-pnpm --filter thumbjar test:unit
-```
-
-The unit tests parse real Gboard accessibility dumps and event logs from CI runs, check the retry, its time bounds and the `test.fails` accounting against a fake device, and check that an aborted attempt opens no uiautomator2 connection. Root `pnpm test:unit` runs them too.
-
-## Known flakes
-
-The emulator is slow on hosted runners. Failures unrelated to the page come from the emulator never coming online, the CDP connection to Chrome dropping, or Gboard rendering only half its keys. Over 16 workflow runs, all 32 jobs were green and 5 of 96 tests needed their one driver retry.
-
-### Run one device test file
-
-From the package containing the Vitest config, with a freshly booted emulator and the page already built:
+For a built page directory containing `editor.html`, you can combine serving, preparation and one test file:
 
 ```sh
-pnpm exec thumbjar run tests/ja.test.ts --keyboard ja --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out
+npx thumbjar run tests/ja.test.ts --keyboard ja --page-dir dist --config vitest.config.ts --project device
 ```
 
-The commands require Node 24 and `adb` on PATH. They have been run on Linux. `run` resolves Vitest from the current working directory’s package and starts it with Node.
+Fetch the jar and boot the emulator first. `run` resolves Vitest from the working directory's package. It requires all the flags shown above. Optional `--port` defaults to `8765` and `--out-dir` to `out`. It reads the test source relative to the page directory's parent to calculate the file budget, so place `tests` alongside `dist` in this example.
 
-`thumbjar run <file> --keyboard ja|en --page-dir <dir> --config <config> --project <name>` serves the page directory, prepares Chrome and Gboard, runs just that file under `deviceTestFileSeconds(countDeviceTests(source))`, and records diagnostics. `--port` defaults to `8765` and `--out-dir` to `out`. Paths are relative to the current working directory; the test source is read relative to the page directory's parent, matching the device project's test root.
+The output includes `timing.txt`, `phases.log`, `http.log` and `vitest.log`. After the test stage it collects `logcat.txt`, `logcat-crash.txt`, `chrome-exit-info.txt` and `final.png`. Preparation also writes `diagnose.txt` and Japanese setup and dictionary logs when applicable. Failed preparation or tests trigger a bounded device check. Successful tests record `CHECKED skipped`. Preparation failure exits `1`. Otherwise the command returns the test stage's status and stops its HTTP server.
 
-The output directory holds `timing.txt`, `phases.log`, `http.log`, `vitest.log`, logcat, Chrome exit information and a final screenshot. Failed prep or tests trigger a bounded `adb get-state` check, which records `CHECKED device` or `CHECKED lost` only when adb proves that verdict. A successful test stage records `CHECKED skipped`. Prep failure exits 1; otherwise the command exits with the test stage's status. The HTTP server stops when the command exits.
+## Test helpers
 
-### Page actions between keyboard steps
-
-Register editor-agnostic named handlers with `recordInput({getText, getState,
-actions: {select: async (args) => { /* update the page and await its render */ }}})`.
-A `{type: 'page', action: 'select', args: {offset: 2}}` step awaits that handler
-and gets the same `StepRecord` boundary as a keyboard step. `args` is JSON.
-Unknown handlers and rejected handlers are page exceptions, never retried.
-The action evaluation itself does not retry a dropped CDP socket. Only the
-whole case may retry in a proven fresh Chrome, before Gboard input.
-
-Collect page actions and keyboard input into one `runOnDevice` call. Assertions
-can inspect each `steps[index].stateAfter`, including intermediate states.
-Page steps may seed arbitrary text, so cases containing page steps do not use
-the final text's unexpected-digit heuristic. The event-based symbol mistap
-check still applies. Existing keyboard-only cases retain both checks.
-
-For data-driven test files, declare `// thumbjar-test-count: 13` with the total
-number of rows collected by Vitest (skipped rows included). The runner uses it
-for its file budget instead of counting literal top-level `test(` calls. Keep
-a collection test comparing the declaration with Vitest's actual count.
+`runSuite({root, file, setupFiles, testTimeout?, provide?})` from `thumbjar/testing` runs one file in a separate Vitest instance without reporters. It returns a `SuiteResult` with the file state in `file`, error messages in `errors`, and each test's `name`, `state` and optional skip `note` in `tests`. Paths are relative to `root`. `testTimeout` defaults to 5000 milliseconds. `provide` supplies values to the inner run. Use this when testing your own Vitest integration with fake device behavior.
