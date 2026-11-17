@@ -17,9 +17,9 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state       |
-      | "B: " | "[!note]"     | "B: NOTE end\|" |
-      | "B: " | "[!NOTE]"     | "B: NOTE end\|" |
-      | "B: " | "[!Note]"     | "B: NOTE end\|" |
+      | "B:"  | "[!note]"     | "B: NOTE end\|" |
+      | "B:"  | "[!NOTE]"     | "B: NOTE end\|" |
+      | "B:"  | "[!Note]"     | "B: NOTE end\|" |
 
   # ---------------------------------------------------------------------------
   # Unicode (`u`) is preserved.
@@ -36,8 +36,8 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state      |
-      | "B: " | "hello!"      | "B: HIT end\|" |
-      | "B: " | "héllo!"      | "B: HIT end\|" |
+      | "B:"  | "hello!"      | "B: HIT end\|" |
+      | "B:"  | "héllo!"      | "B: HIT end\|" |
 
   # ---------------------------------------------------------------------------
   # User-set `g` is stripped, leaving the plugin's own `g` flag intact.
@@ -52,7 +52,7 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state        |
-      | "B: " | "(c)"         | "B: GMARK end\|" |
+      | "B:"  | "(c)"         | "B: GMARK end\|" |
 
   # ---------------------------------------------------------------------------
   # User-set `d` is stripped, leaving the plugin's own `d` flag intact.
@@ -67,7 +67,7 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state        |
-      | "B: " | "(d)"         | "B: DMARK end\|" |
+      | "B:"  | "(d)"         | "B: DMARK end\|" |
 
   # ---------------------------------------------------------------------------
   # User-set `y` (sticky) is stripped.
@@ -99,7 +99,7 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state        |
-      | "B: " | "[!plain]"    | "B: PLAIN end\|" |
+      | "B:"  | "[!plain]"    | "B: PLAIN end\|" |
 
   # ---------------------------------------------------------------------------
   # `i` flag flows through to capture groups.
@@ -118,9 +118,9 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state           |
-      | "B: " | "<<yes>>"     | "B: <<GHIT>> end\|" |
-      | "B: " | "<<YES>>"     | "B: <<GHIT>> end\|" |
-      | "B: " | "<<No>>"      | "B: <<GHIT>> end\|" |
+      | "B:"  | "<<yes>>"     | "B: <<GHIT>> end\|" |
+      | "B:"  | "<<YES>>"     | "B: <<GHIT>> end\|" |
+      | "B:"  | "<<No>>"      | "B: <<GHIT>> end\|" |
 
   # ---------------------------------------------------------------------------
   # `u` flag flows through to capture groups.
@@ -138,8 +138,8 @@ Feature: Flag Preservation
 
     Examples:
       | state | inserted text | new state        |
-      | "B: " | "@hello"      | "B: @UHIT end\|" |
-      | "B: " | "@héllo"      | "B: @UHIT end\|" |
+      | "B:"  | "@hello"      | "B: @UHIT end\|" |
+      | "B:"  | "@héllo"      | "B: @UHIT end\|" |
 
   # ---------------------------------------------------------------------------
   # `y` is stripped even when the pattern has a capture group.

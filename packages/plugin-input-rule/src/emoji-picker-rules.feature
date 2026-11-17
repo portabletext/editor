@@ -1,19 +1,19 @@
 Feature: Emoji Picker Rules
 
   Scenario: Trigger Rule
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And ":" is typed
     Then the keyword is ""
 
   Scenario: Partial Keyword Rule
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And ":jo" is typed
     Then the keyword is "jo"
 
   Scenario: Keyword Rule
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And ":joy:" is typed
     Then the keyword is "joy"
