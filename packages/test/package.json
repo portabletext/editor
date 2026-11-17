@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/test",
-  "version": "2.1.4",
+  "version": "3.0.0",
   "description": "Testing utilities for the Portable Text Editor",
   "keywords": [
     "editor",
