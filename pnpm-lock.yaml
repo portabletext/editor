@@ -1639,8 +1639,8 @@ importers:
         specifier: workspace:^
         version: link:../schema
       '@textspec/notation':
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@portabletext/patches':
         specifier: workspace:*
@@ -6239,8 +6239,8 @@ packages:
   '@tanstack/virtual-core@3.17.11':
     resolution: {integrity: sha512-+ILjvtHup6Y2hzQ6YzwMgX1Q+oQpxEGOXCEsCNaPoIP0VxMbizIBTmYTDtkerkIQS8/CbP1BRuyt8V/8BCsy1g==}
 
-  '@textspec/notation@1.0.2':
-    resolution: {integrity: sha512-xvqE3lJPRBqsqN1WvJ0FftSBOZTzjNz7+iHdy++/D+klf/MxpJTE7IPPzL467cTXK3iqvc7QO0C5bV3BfufgpQ==}
+  '@textspec/notation@2.0.0':
+    resolution: {integrity: sha512-hbFTSOV57gbKsdNsv0JYqCeWjWNDzigHgHWHbjh28SBhzgPA4h9XL67/j5zijkYzAQ0iDRegzz8e5rpe0FNgQw==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@ts-morph/common@0.28.1':
@@ -16562,7 +16562,7 @@ snapshots:
 
   '@tanstack/virtual-core@3.17.11': {}
 
-  '@textspec/notation@1.0.2': {}
+  '@textspec/notation@2.0.0': {}
 
   '@ts-morph/common@0.28.1':
     dependencies:
