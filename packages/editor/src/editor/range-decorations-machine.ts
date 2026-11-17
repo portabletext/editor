@@ -22,6 +22,7 @@ import {transformRange} from '../engine/range/transform-range'
 import {isDeepEqual} from '../internal-utils/equality'
 import {getChildren} from '../traversal/get-children'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
+import {isBlock} from '../traversal/is-block'
 import {rangeIntersects} from '../traversal/range-intersects'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import {walkPath} from '../traversal/walk-path'
@@ -979,6 +980,7 @@ function createDecorate(
 
     if (
       !isTextBlock({schema: editorEngine.snapshot.context.schema}, node) ||
+      !isBlock(editorEngine.snapshot, path) ||
       node.children.length === 0
     ) {
       return []

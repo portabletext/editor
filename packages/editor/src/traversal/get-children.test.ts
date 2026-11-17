@@ -1,4 +1,5 @@
 import {compileSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {
@@ -308,4 +309,33 @@ describe(`${getChildren.name} with a compact path to a text block`, () => {
 
     expect(getChildren(snapshot, [0, 0])).toEqual([])
   })
+})
+
+test('a text block in text block children has no editable children', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const snapshot = createTestSnapshot({
+    context: {
+      value: [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  })
+
+  expect(getChildren(snapshot, [0, 'children', 0])).toEqual([])
 })

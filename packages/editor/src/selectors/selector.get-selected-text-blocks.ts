@@ -3,6 +3,7 @@ import type {EditorSelector} from '../editor/editor-selector'
 import type {Path} from '../engine/interfaces/path'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {getNodes} from '../traversal/get-nodes'
+import {isBlock} from '../traversal/is-block'
 import {getSelectionEndPoint} from '../utils/util.get-selection-end-point'
 import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 
@@ -52,7 +53,8 @@ export const getSelectedTextBlocks: EditorSelector<
   for (const entry of getNodes(snapshot, {
     from: startPoint.path,
     to: endPoint.path,
-    match: (node) => isTextBlock(snapshot.context, node),
+    match: (node, path) =>
+      isTextBlock(snapshot.context, node) && isBlock(snapshot, path),
   })) {
     if (isTextBlock(snapshot.context, entry.node)) {
       result.push({node: entry.node, path: entry.path})

@@ -1,6 +1,8 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import type {
   ChildArrayField,
   RegisteredContainer,
@@ -18,6 +20,103 @@ function registeredContainerFor(
 describe(isLeafObject.name, () => {
   const testbed = createNodeTraversalTestbed()
 
+  test('annotations and plain array objects keep their shape answer', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const annotation = {_type: 'link', _key: keyGenerator()}
+    const item = {_type: 'item', _key: keyGenerator()}
+    const block = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [],
+      markDefs: [annotation],
+    }
+    const object = {_type: 'image', _key: keyGenerator(), items: [item]}
+    const snapshot = createTestSnapshot({context: {value: [block, object]}})
+
+    expect(
+      isLeafObject(snapshot, annotation, [
+        {_key: block._key},
+        'markDefs',
+        {_key: annotation._key},
+      ]),
+    ).toEqual(true)
+    expect(
+      isLeafObject(snapshot, item, [
+        {_key: object._key},
+        'items',
+        {_key: item._key},
+      ]),
+    ).toEqual(true)
+  })
+
+  test('annotations and plain array objects in a callout keep their shape answer', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const annotation = {_type: 'link', _key: keyGenerator()}
+    const item = {_type: 'item', _key: keyGenerator()}
+    const block = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [],
+      markDefs: [annotation],
+    }
+    const object = {_type: 'image', _key: keyGenerator(), items: [item]}
+    const callout = {
+      _type: 'callout',
+      _key: keyGenerator(),
+      content: [block, object],
+    }
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: compileSchema(
+          defineSchema({
+            blockObjects: [
+              {name: 'image'},
+              {
+                name: 'callout',
+                fields: [
+                  {
+                    name: 'content',
+                    type: 'array',
+                    of: [{type: 'block'}, {type: 'image'}],
+                  },
+                ],
+              },
+            ],
+          }),
+        ),
+        containers: new Map([
+          [
+            'callout',
+            registeredContainerFor('callout', {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}, {type: 'image'}],
+            }),
+          ],
+        ]),
+        value: [callout],
+      },
+    })
+    expect(
+      isLeafObject(snapshot, annotation, [
+        {_key: callout._key},
+        'content',
+        {_key: block._key},
+        'markDefs',
+        {_key: annotation._key},
+      ]),
+    ).toEqual(true)
+    expect(
+      isLeafObject(snapshot, item, [
+        {_key: callout._key},
+        'content',
+        {_key: object._key},
+        'items',
+        {_key: item._key},
+      ]),
+    ).toEqual(true)
+  })
+
   describe('root-level nodes', () => {
     test('text block is not void', () => {
       expect(
@@ -29,6 +128,9 @@ describe(isLeafObject.name, () => {
       expect(
         isLeafObject(testbed.snapshot, testbed.image, [{_key: 'k4'}]),
       ).toBe(true)
+      expect(
+        isLeafObject(testbed.snapshot, testbed.image, [{_key: 'k4'}, 'url']),
+      ).toEqual(true)
     })
 
     test('block object with container registration is not void', () => {
@@ -310,7 +412,7 @@ describe(isLeafObject.name, () => {
       const rootImage = {_key: 'ri1', _type: 'image'}
       const contextWithRootImage = {
         ...context,
-        value: [rootImage, gallery],
+        context: {...context.context, value: [rootImage, gallery]},
       }
 
       expect(

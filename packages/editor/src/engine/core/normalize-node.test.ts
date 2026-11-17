@@ -1,7 +1,14 @@
-import {type PortableTextBlock} from '@portabletext/schema'
+import {
+  compileSchema,
+  defineSchema,
+  type PortableTextBlock,
+} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {expect, test} from 'vitest'
 import {createBareEditor} from '../../../test-utils/create-bare-editor.test-util'
+import {defineContainer} from '../../renderers/renderer.types'
+import {resolveContainers} from '../../schema/resolve-containers'
+import {normalize} from '../editor/normalize'
 import {withoutNormalizing} from '../editor/without-normalizing'
 import type {EngineOperation} from '../interfaces/operation'
 import {inTestChange} from './change.test-utils'
@@ -128,4 +135,107 @@ test('a removed path is not re-queued', () => {
 
     expect(editor.dirtyPaths).toEqual([[]])
   })
+})
+
+test('a typeless child gets no bracketing span at root', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const childKey = keyGenerator()
+  const editor = createBareEditor(
+    [{_key: blockKey, children: [{_key: childKey, text: 'foo'}]}] as never,
+    keyGenerator,
+  )
+  const operations: Array<EngineOperation> = []
+  const apply = editor.apply
+  editor.apply = (operation) => {
+    operations.push(structuredClone(operation))
+    return apply(operation)
+  }
+  inTestChange(editor, () => normalize(editor, {force: true}))
+  expect(operations).toEqual([
+    {
+      type: 'set',
+      path: [{_key: 'k0'}, '_type'],
+      value: 'block',
+      inverse: {type: 'unset', path: [{_key: 'k0'}, '_type']},
+    },
+    {
+      type: 'set',
+      path: [{_key: 'k0'}, 'markDefs'],
+      value: [],
+      inverse: {type: 'unset', path: [{_key: 'k0'}, 'markDefs']},
+    },
+    {
+      type: 'set',
+      path: [{_key: 'k0'}, 'style'],
+      value: 'normal',
+      inverse: {type: 'unset', path: [{_key: 'k0'}, 'style']},
+    },
+  ])
+})
+
+test('a typeless child gets no bracketing span in a callout', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const childKey = keyGenerator()
+  const editor = createBareEditor(
+    [
+      {
+        _type: 'callout',
+        _key: keyGenerator(),
+        content: [{_key: blockKey, children: [{_key: childKey, text: 'foo'}]}],
+      },
+    ] as never,
+    keyGenerator,
+  )
+  const schema = compileSchema(
+    defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+  )
+  editor.snapshot.context.schema = schema
+  editor.snapshot.context.containers = resolveContainers(schema, [
+    defineContainer({type: 'callout', arrayField: 'content'}),
+  ])
+  const operations: Array<EngineOperation> = []
+  const apply = editor.apply
+  editor.apply = (operation) => {
+    operations.push(structuredClone(operation))
+    return apply(operation)
+  }
+  inTestChange(editor, () => normalize(editor, {force: true}))
+  expect(operations).toEqual([
+    {
+      type: 'set',
+      path: [{_key: 'k2'}, 'content', {_key: 'k0'}, '_type'],
+      value: 'block',
+      inverse: {
+        type: 'unset',
+        path: [{_key: 'k2'}, 'content', {_key: 'k0'}, '_type'],
+      },
+    },
+    {
+      type: 'set',
+      path: [{_key: 'k2'}, 'content', {_key: 'k0'}, 'markDefs'],
+      value: [],
+      inverse: {
+        type: 'unset',
+        path: [{_key: 'k2'}, 'content', {_key: 'k0'}, 'markDefs'],
+      },
+    },
+    {
+      type: 'set',
+      path: [{_key: 'k2'}, 'content', {_key: 'k0'}, 'style'],
+      value: 'normal',
+      inverse: {
+        type: 'unset',
+        path: [{_key: 'k2'}, 'content', {_key: 'k0'}, 'style'],
+      },
+    },
+  ])
 })

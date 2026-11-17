@@ -4,10 +4,9 @@ import type {TraversalSnapshot} from './traversal-snapshot'
 import {walkPath} from './walk-path'
 
 /**
- * Determine if a node at the given path is inline.
- *
- * A node is inline if its parent is a text block. This is the inverse of
- * `isBlock`. Top-level nodes are never inline.
+ * Determine if a node at the given path is inline. This is the inverse of
+ * `isBlock`: a node is inline when its parent is a text block at a block position.
+ * A text block inside another text block's `children` is inline itself, and its own children are not.
  *
  * @public
  */

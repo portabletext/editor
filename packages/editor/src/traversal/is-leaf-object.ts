@@ -1,14 +1,20 @@
-import type {PortableTextObject} from '@portabletext/schema'
+import {
+  isTypedObject,
+  isSpanNode,
+  isTextBlockNode,
+  type PortableTextObject,
+} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {isEditableContainer} from '../schema/is-editable-container'
+import {getNode} from './get-node'
+import {isBlock} from './is-block'
 import {isObject} from './is-object'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
- * Check if a node is a leaf object: an object node that has no editable
- * children (not a container).
- * Returns true for block objects and inline objects that don't have
- * registered editable content (containers).
+ * Check whether `node`, at `path`, is an object that is not a registered container.
+ * A text block at a block position and a span inside such a text block are not objects.
+ * Anything else with a `_type` is, including a span at a block position and a text block inside another text block's `children`.
  *
  * @public
  */
@@ -17,5 +23,14 @@ export function isLeafObject(
   node: unknown,
   path: Path,
 ): node is PortableTextObject {
-  return isObject(snapshot, node) && !isEditableContainer(snapshot, node, path)
+  const entry = getNode(snapshot, path)
+  return (
+    isTypedObject(node) &&
+    (entry === undefined
+      ? isObject(snapshot, node)
+      : isBlock(snapshot, path)
+        ? !isTextBlockNode(snapshot.context, node)
+        : !isSpanNode(snapshot.context, node)) &&
+    !isEditableContainer(snapshot, node as PortableTextObject, path)
+  )
 }

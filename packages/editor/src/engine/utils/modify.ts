@@ -3,6 +3,7 @@ import {
   type PortableTextBlock,
   type PortableTextSpan,
 } from '@portabletext/schema'
+import {isInline} from '../../traversal/is-inline'
 import type {WalkedNode} from '../../traversal/walk-path'
 import type {Editor} from '../interfaces/editor'
 import type {Node} from '../interfaces/node'
@@ -108,7 +109,10 @@ export const modifyLeaf = (
   f: (leaf: PortableTextSpan) => PortableTextSpan,
 ) =>
   modifyDescendant(editor, nodes, (node) => {
-    if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
+    if (
+      !isInline(editor.snapshot, nodes.at(-1)!.path) ||
+      !isSpan({schema: editor.snapshot.context.schema}, node)
+    ) {
       return node
     }
 

@@ -6,7 +6,7 @@ import type {
   SetPatch,
   UnsetPatch,
 } from '@portabletext/patches'
-import {isSpan, type PortableTextBlock} from '@portabletext/schema'
+import {type PortableTextBlock} from '@portabletext/schema'
 import {
   cleanupEfficiency,
   DIFF_DELETE,
@@ -19,7 +19,7 @@ import {
 import type {EditorContext} from '../editor/editor-snapshot'
 import type {Node} from '../engine/interfaces/node'
 import {hasUsableKey, isAddressableByKey} from '../paths/node-segment'
-import {getNode} from '../traversal/get-node'
+import {getSpan} from '../traversal/get-span'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {Path} from '../types/paths'
 import {applyDeselect} from './apply-selection'
@@ -187,12 +187,9 @@ function diffMatchPatch(
   }
 
   const spanPath = patch.path.slice(0, -1)
-  const spanEntry = getNode(editor.snapshot, spanPath)
+  const spanEntry = getSpan(editor.snapshot, spanPath)
 
-  if (
-    !spanEntry ||
-    !isSpan({schema: editor.snapshot.context.schema}, spanEntry.node)
-  ) {
+  if (!spanEntry) {
     return false
   }
 

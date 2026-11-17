@@ -1,5 +1,7 @@
 import {isSpan, isTextBlockNode} from '@portabletext/schema'
 import {getLeaf} from '../../traversal/get-leaf'
+import {isBlock} from '../../traversal/is-block'
+import {isInline} from '../../traversal/is-inline'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
 import type {Path} from '../interfaces/path'
@@ -31,14 +33,18 @@ export function point(
     const path: Path = nodePath
 
     if (
-      !isSpan({schema: editor.snapshot.context.schema}, node) &&
-      !isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
-      !isEditor(node)
+      !isEditor(node) &&
+      (!isSpan(editor.snapshot.context, node) ||
+        !isInline(editor.snapshot, path)) &&
+      !(
+        isBlock(editor.snapshot, path) &&
+        isTextBlockNode(editor.snapshot.context, node)
+      )
     ) {
       return {path, offset: 0}
     }
 
-    if (!isSpan({schema: editor.snapshot.context.schema}, node)) {
+    if (!isSpan(editor.snapshot.context, node)) {
       throw new Error(
         `Cannot get the ${edge} point in the node at path [${at}] because it has no ${edge} text node.`,
       )

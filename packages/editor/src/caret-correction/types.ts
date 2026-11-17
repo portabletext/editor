@@ -34,7 +34,10 @@ export type CaretRule =
   | 'empty-children'
   | 'inline-object-bracketing'
 
+// Keep `kind` and `childKind` in sync with `NodeKind` in `../traversal/walk-path.ts`.
 export type CaretEntry = CorrectionEntry & {
+  kind: 'text block' | 'span' | 'object' | undefined
+  childKind: (node: unknown) => 'text block' | 'span' | 'object' | undefined
   container: () =>
     | {field: CaretContainerField; placeholderStyle: () => string}
     | undefined

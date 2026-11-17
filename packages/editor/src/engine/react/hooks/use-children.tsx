@@ -20,8 +20,11 @@ import {
   reconcileChildChunks,
   type Chunk,
 } from '../../../internal-utils/chunks'
+import {nodeSegment} from '../../../paths/node-segment'
 import type {ContainerConfig} from '../../../renderers/renderer.types'
-import {isObject} from '../../../traversal/is-object'
+import {isBlock} from '../../../traversal/is-block'
+import {isInline} from '../../../traversal/is-inline'
+import {isNonArrayObject} from '../../../utils/is-non-array-object'
 import {isEditor} from '../../editor/is-editor'
 import type {Editor} from '../../interfaces/editor'
 import type {Node} from '../../interfaces/node'
@@ -85,6 +88,10 @@ const useChildren = (props: {
   const editor = useEngineStatic()
   editor.isNodeMapDirty = false
 
+  const parentIsTextBlock =
+    !isEditor(node) &&
+    isBlock(editor.snapshot, parentPath) &&
+    isTextBlockNode(editor.snapshot.context, node)
   const parentContainer = useParentContainer()
   const parentIsInNewPipeline = useContext(NewPipelineContext)
 
@@ -106,13 +113,23 @@ const useChildren = (props: {
 
   if (isEditor(node)) {
     children = node.snapshot.context.value
-  } else if (isTextBlock({schema: editor.snapshot.context.schema}, node)) {
+  } else if (
+    parentIsTextBlock &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+  ) {
     children = node.children
-  } else if (isObject(editor.snapshot, node)) {
+  } else if (
+    !isEditor(node) &&
+    !parentIsTextBlock &&
+    !(
+      isInline(editor.snapshot, parentPath) &&
+      isSpanNode(editor.snapshot.context, node)
+    )
+  ) {
     const containerConfig = resolveContainerForNode(
       editor,
       parentContainer,
-      node,
+      node as PortableTextObject,
     )
 
     if (containerConfig) {
@@ -163,12 +180,11 @@ const useChildren = (props: {
     ],
   )
 
-  const textBlockParent = isTextBlock(
-    {schema: editor.snapshot.context.schema},
-    node,
-  )
-    ? node
-    : undefined
+  const textBlockParent =
+    parentIsTextBlock &&
+    isTextBlock({schema: editor.snapshot.context.schema}, node)
+      ? node
+      : undefined
 
   /**
    * Wrap a rendered child in `NewPipelineContext.Provider value={true}`
@@ -248,24 +264,41 @@ const useChildren = (props: {
    * `NewPipelineContext.Provider value={true}`. `parentIsInNewPipeline`
    * short-circuits to `true` upstream of this call.
    */
-  const isInNewPipelineForChild = (n: Node, isContainerChild: boolean) => {
+  const isInNewPipelineForChild = (
+    childNode: Node,
+    isContainerChild: boolean,
+    path: Path,
+  ) => {
     if (isContainerChild) {
       return true
     }
-    if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
-      if (editor.textBlocks.has(n._type) || editor.textBlocks.has('*')) {
+    if (
+      isBlock(editor.snapshot, path) &&
+      isTextBlock({schema: editor.snapshot.context.schema}, childNode)
+    ) {
+      if (
+        editor.textBlocks.has(childNode._type) ||
+        editor.textBlocks.has('*')
+      ) {
         return true
       }
       if (parentContainer?.of) {
         for (const entry of parentContainer.of) {
-          if ('textBlock' in entry && entry.textBlock.type === n._type) {
+          if (
+            'textBlock' in entry &&
+            entry.textBlock.type === childNode._type
+          ) {
             return true
           }
         }
       }
       return false
     }
-    if (isObject(editor.snapshot, n)) {
+    if (
+      isBlock(editor.snapshot, path)
+        ? !isTextBlockNode(editor.snapshot.context, childNode)
+        : !isSpanNode(editor.snapshot.context, childNode)
+    ) {
       if (textBlockParent !== undefined) {
         // Inline-object position: pipeline mode is inherited from the
         // parent text block. An inline object never kicks off a new-
@@ -273,19 +306,28 @@ const useChildren = (props: {
         return false
       }
       // Block object position
-      if (editor.blockObjects.has(n._type) || editor.blockObjects.has('*')) {
+      if (
+        editor.blockObjects.has(childNode._type) ||
+        editor.blockObjects.has('*')
+      ) {
         return true
       }
       if (parentContainer?.of) {
         for (const entry of parentContainer.of) {
-          if ('blockObject' in entry && entry.blockObject.type === n._type) {
+          if (
+            'blockObject' in entry &&
+            entry.blockObject.type === childNode._type
+          ) {
             return true
           }
         }
       }
       return false
     }
-    if (isSpan({schema: editor.snapshot.context.schema}, n)) {
+    if (
+      isInline(editor.snapshot, path) &&
+      isSpan({schema: editor.snapshot.context.schema}, childNode)
+    ) {
       // Span position: pipeline mode is inherited from the parent text
       // block, same as inline objects above. `parentIsInNewPipeline`
       // short-circuits upstream when the text block is itself in the
@@ -295,39 +337,66 @@ const useChildren = (props: {
     return false
   }
 
-  const renderChild = (n: Node, i: number) => {
-    if (isTextBlock({schema: editor.snapshot.context.schema}, n)) {
+  const renderChild = (childNode: Node, childIndex: number) => {
+    if (!isNonArrayObject(childNode)) {
+      return null
+    }
+    const path: Path = isEditor(node)
+      ? [nodeSegment(childNode, childIndex)]
+      : [...parentPath, arrayFieldName, nodeSegment(childNode, childIndex)]
+    if (
+      isBlock(editor.snapshot, path) &&
+      isTextBlock({schema: editor.snapshot.context.schema}, childNode)
+    ) {
       return wrapNewPipeline(
-        renderElementComponent(n, i, false),
-        isInNewPipelineForChild(n, false),
-        n._key,
+        renderElementComponent(childNode, childIndex, false),
+        isInNewPipelineForChild(childNode, false, path),
+        childNode._key,
       )
     }
     // Fallback for text block nodes without `children`
-    if (isTextBlockNode({schema: editor.snapshot.context.schema}, n)) {
+    if (
+      isBlock(editor.snapshot, path) &&
+      isTextBlockNode({schema: editor.snapshot.context.schema}, childNode)
+    ) {
       return null
     }
-    if (isObject(editor.snapshot, n)) {
-      // Does `n` resolve as a container at this position?
+    if (
+      isBlock(editor.snapshot, path)
+        ? !isTextBlockNode(editor.snapshot.context, childNode)
+        : !isSpanNode(editor.snapshot.context, childNode)
+    ) {
+      const objectNode = childNode as PortableTextObject
+      // Does `childNode` resolve as a container at this position?
       // (positional override in childContainer.container.of, or global)
-      if (resolveContainerForNode(editor, childContainer, n)) {
-        return wrapNewPipeline(renderElementComponent(n, i, true), true, n._key)
+      if (resolveContainerForNode(editor, childContainer, objectNode)) {
+        return wrapNewPipeline(
+          renderElementComponent(objectNode, childIndex, true),
+          true,
+          childNode._key,
+        )
       }
       return wrapNewPipeline(
-        renderObjectNodeComponent(n, i),
-        isInNewPipelineForChild(n, false),
-        n._key,
+        renderObjectNodeComponent(objectNode, childIndex),
+        isInNewPipelineForChild(childNode, false, path),
+        childNode._key,
       )
     }
-    if (isSpan({schema: editor.snapshot.context.schema}, n)) {
+    if (
+      isInline(editor.snapshot, path) &&
+      isSpan({schema: editor.snapshot.context.schema}, childNode)
+    ) {
       return wrapNewPipeline(
-        renderTextComponent(n, i),
-        isInNewPipelineForChild(n, false),
-        n._key,
+        renderTextComponent(childNode, childIndex),
+        isInNewPipelineForChild(childNode, false, path),
+        childNode._key,
       )
     }
     // Fallback for span nodes without `text`
-    if (isSpanNode({schema: editor.snapshot.context.schema}, n)) {
+    if (
+      isInline(editor.snapshot, path) &&
+      isSpanNode({schema: editor.snapshot.context.schema}, childNode)
+    ) {
       return null
     }
     throw new Error(`Unexpected node type`)

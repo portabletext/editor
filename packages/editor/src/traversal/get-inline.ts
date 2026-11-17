@@ -1,9 +1,11 @@
-import {isSpanNode} from '@portabletext/schema'
-import type {PortableTextObject, PortableTextSpan} from '@portabletext/schema'
+import {
+  isTypedObject,
+  type PortableTextObject,
+  type PortableTextSpan,
+} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
 import {isInline} from './is-inline'
-import {isObject} from './is-object'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -19,16 +21,12 @@ export function getInline(
 ): {node: PortableTextSpan | PortableTextObject; path: Path} | undefined {
   const entry = getNode(snapshot, path)
 
-  if (!entry || !isInline(snapshot, entry.path)) {
+  if (!entry || !isInline(snapshot, entry.path) || !isTypedObject(entry.node)) {
     return undefined
   }
 
-  if (
-    !isSpanNode({schema: snapshot.context.schema}, entry.node) &&
-    !isObject(snapshot, entry.node)
-  ) {
-    return undefined
+  return {
+    node: entry.node,
+    path: entry.path,
   }
-
-  return {node: entry.node, path: entry.path}
 }

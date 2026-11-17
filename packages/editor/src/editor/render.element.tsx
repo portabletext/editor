@@ -15,6 +15,7 @@ import type {
   InlineObjectConfig,
   TextBlockConfig,
 } from '../renderers/renderer.types'
+import {isBlock} from '../traversal/is-block'
 import {isInline} from '../traversal/is-inline'
 import type {EditorSchema} from './editor-schema'
 import {
@@ -194,7 +195,10 @@ export function RenderElement(props: {
     )
   }
 
-  if (isTextBlock({schema}, props.element)) {
+  if (
+    isBlock(engineStatic.snapshot, props.path) &&
+    isTextBlock({schema}, props.element)
+  ) {
     let rendered: ReactElement | null
     if (renderableTextBlockConfig?.textBlock.render) {
       rendered = (
@@ -241,7 +245,7 @@ export function RenderElement(props: {
     return (
       <RenderInlineObject
         attributes={props.attributes}
-        element={props.element}
+        element={props.element as PortableTextObject}
         inlineObjectConfig={inlineObjectConfig}
         path={props.path}
         readOnly={props.readOnly}
@@ -255,7 +259,7 @@ export function RenderElement(props: {
   return (
     <RenderBlockObject
       attributes={props.attributes}
-      element={props.element}
+      element={props.element as PortableTextObject}
       blockObjectConfig={blockObjectConfig}
       path={props.path}
       readOnly={props.readOnly}

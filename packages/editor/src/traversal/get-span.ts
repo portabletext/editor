@@ -1,10 +1,11 @@
 import {isSpan, type PortableTextSpan} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
+import {isInline} from './is-inline'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
- * Get the span node at a given path.
+ * Get the span at a given path. Returns `undefined` for a span outside a text block's `children`.
  *
  * @public
  */
@@ -18,7 +19,10 @@ export function getSpan(
     return undefined
   }
 
-  if (!isSpan({schema: snapshot.context.schema}, entry.node)) {
+  if (
+    !isInline(snapshot, entry.path) ||
+    !isSpan({schema: snapshot.context.schema}, entry.node)
+  ) {
     return undefined
   }
 
