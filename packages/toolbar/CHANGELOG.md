@@ -1,5 +1,15 @@
 # Changelog
 
+## 9.0.29
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`ec72025`](https://github.com/portabletext/editor/commit/ec72025cbcea91bd87afbc61d2c54af32bc2c4b3) Thanks [@christianhg](https://github.com/christianhg)! - fix(toolbar): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`20bea8f`](https://github.com/portabletext/editor/commit/20bea8fc2afe8fe3a00405dc3bada443211034b7)]:
+  - @portabletext/keyboard-shortcuts@3.0.1
+
 ## 9.0.28
 
 ### Patch Changes

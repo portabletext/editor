@@ -1,5 +1,13 @@
 # @portabletext/plugin-paste-link
 
+## 5.0.28
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`be66f8f`](https://github.com/portabletext/editor/commit/be66f8fafcd64848bc67c6a798e421b1a89d2150) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-paste-link): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 5.0.27
 
 ### Patch Changes

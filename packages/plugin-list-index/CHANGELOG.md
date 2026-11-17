@@ -1,5 +1,13 @@
 # @portabletext/plugin-list-index
 
+## 2.0.28
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`ceb9b89`](https://github.com/portabletext/editor/commit/ceb9b8978adec1cfb711ba89f7734bf28647a050) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-list-index): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 2.0.27
 
 ### Patch Changes

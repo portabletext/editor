@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.28
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`6ed6f80`](https://github.com/portabletext/editor/commit/6ed6f80b171edc3211730eb4ddcf4159f9ed2586) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-one-line): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 8.0.27
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @portabletext/html
 
+## 2.0.3
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`93ec1cc`](https://github.com/portabletext/editor/commit/93ec1cc4c71968611345b3ee3847e2ad30df463c) Thanks [@christianhg](https://github.com/christianhg)! - fix(html): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`4b15514`](https://github.com/portabletext/editor/commit/4b155140891f0b93ce56ae6b4f4eec0274d94dd7)]:
+  - @portabletext/schema@3.1.1
+
 ## 2.0.2
 
 ### Patch Changes

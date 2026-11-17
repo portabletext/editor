@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.0.8
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`98f760c`](https://github.com/portabletext/editor/commit/98f760c7e038f1e461e5d5102a84fca39efde467) Thanks [@christianhg](https://github.com/christianhg)! - fix(block-tools): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`93ec1cc`](https://github.com/portabletext/editor/commit/93ec1cc4c71968611345b3ee3847e2ad30df463c), [`cd876cc`](https://github.com/portabletext/editor/commit/cd876ccb22995b98e27ed828c69e9197e7b55967), [`4b15514`](https://github.com/portabletext/editor/commit/4b155140891f0b93ce56ae6b4f4eec0274d94dd7)]:
+  - @portabletext/html@2.0.3
+  - @portabletext/sanity-bridge@5.0.1
+  - @portabletext/schema@3.1.1
+
 ## 6.0.7
 
 ### Patch Changes

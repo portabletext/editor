@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.6
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`20bfea0`](https://github.com/portabletext/editor/commit/20bfea025c45480b2046f7d6ae4ffc7c64945f03) Thanks [@christianhg](https://github.com/christianhg)! - fix(patches): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 3.0.5
 
 ### Patch Changes
