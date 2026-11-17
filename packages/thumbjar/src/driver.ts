@@ -186,6 +186,8 @@ let previousRun: Promise<void> = Promise.resolve()
  *   expect(typed.text).toEqual('Kyou ')
  * })
  * ```
+ *
+ * @public
  */
 export async function typeOnDevice(
   context: TestContext,
@@ -264,6 +266,8 @@ export async function typeOnDevice(
  *   })
  * })
  * ```
+ *
+ * @public
  */
 export async function runOnDevice(
   context: TestContext,

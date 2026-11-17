@@ -5,7 +5,11 @@ import {
   GLOBAL_SETUP_PAGE_SECONDS,
 } from '../device/budget.ts'
 
-/** Fail before any test when there is no device to type on or no page to open. */
+/**
+ * Fail before any test when there is no device to type on or no page to open.
+ *
+ * @public
+ */
 export default async function setup(
   project: Pick<TestProject, 'getProvidedContext'>,
 ): Promise<void> {
