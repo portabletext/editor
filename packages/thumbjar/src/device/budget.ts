@@ -244,8 +244,9 @@ export const FETCH_U2_JAR_WORST_SECONDS =
 
 /**
  * The number of tests in a device test file, from its `thumbjar-test-count` declaration
- * or its top-level `test(` and `test.fails(` calls. Keep a test that checks the count
- * against the tests Vitest collects from each file.
+ * or its `test(` and `test.fails(` calls at the start of a line. Declare
+ * `thumbjar-test-count` when those calls do not match the tests Vitest collects,
+ * for example when tests are generated in a loop.
  *
  * @public
  */
@@ -259,7 +260,7 @@ export function countDeviceTests(source: string): number {
 
 /**
  * How long the emulator runner action waits for the emulator to come online before it runs the script,
- * the workflow's `emulator-boot-timeout`.
+ * the CI step's `emulator-boot-timeout`.
  *
  * @internal
  */
@@ -272,11 +273,11 @@ export const EMULATOR_BOOT_SECONDS = 360
 export const RUNNER_SETUP_SECONDS = 30
 
 /**
- * The longest one run step of the workflow takes when every stage of `thumbjar run` hangs to its bound:
+ * The longest the CI step takes when every stage of `thumbjar run` hangs to its bound:
  * the runner setup, the boot wait, the cap read, the prep with its kill-after, the test file with its kill-after, the
  * device check and the final diagnostics, each with the time it gets to stop, plus one kill grace for each of
  * the eight `execute` calls, an upper bound because the diagnostics share one deadline. A step cap below this lets
- * GitHub cut the step off before thumbjar can report why it ended.
+ * the CI system cut the step off before thumbjar can report why it ended.
  *
  * @internal
  */

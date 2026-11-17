@@ -26,7 +26,7 @@ Download the pinned uiautomator2 server jar before booting the emulator. Run thi
 npx thumbjar fetch-u2-jar
 ```
 
-The download checks the jar's hash and reuses a matching cached file. The default path is `node_modules/.cache/thumbjar/u2.jar` in the nearest directory with a `package.json`, starting from the working directory. Set `CACHE_DIR` to a directory to use `$CACHE_DIR/thumbjar/u2.jar` instead. Run inside a package with a writable cache directory. The command tries three downloads of up to 45 seconds each, with 15 seconds between retries.
+The download checks the jar's hash and reuses a matching cached file. The default path is `node_modules/.cache/thumbjar/u2.jar` in the nearest directory with a `package.json`, starting from the working directory. Set `CACHE_DIR` to a directory to use `$CACHE_DIR/thumbjar/u2.jar` instead. It needs a writable cache directory in that package. The command tries three downloads of up to 45 seconds each, with 15 seconds between retries.
 
 Next, boot your emulator. Build your test page and serve its output directory in another terminal:
 
@@ -43,7 +43,9 @@ npx vitest run --project device
 
 `serve` defaults to port `8765`. `prepare` requires `--keyboard ja|en` and `--page-url`. Its `--out-dir` defaults to `out`. Optional `--booted` supplies the host's epoch seconds when the emulator came online. Without it, the dictionary wait uses the time preparation started.
 
-Preparation attempts to disable Play Store updates, waits out post-boot system error dialogs, sets up Chrome and the soft keyboard, and checks the page URL. For Japanese, it adds the QWERTY layout and waits for this boot's dictionary-load log. Then it switches Gboard to Japanese, first switching away if Japanese is already showing. It checks conversion candidates by typing `kyou` into the page. A Japanese dictionary that never loads exits with status `3`. Other preparation failures exit with status `1`. Bad flags exit with status `2`. If preparation receives `SIGINT`, `SIGHUP` or `SIGTERM`, it exits with status `130`, `129` or `143`, respectively. A dictionary wait allows up to 360 seconds from `--booted`.
+Preparation attempts to disable Play Store updates, waits out post-boot system error dialogs, sets up Chrome and the soft keyboard, and checks the page URL. For Japanese, it adds the QWERTY layout and waits for this boot's dictionary-load log. Then it switches Gboard to Japanese, first switching away if Japanese is already showing. It checks conversion candidates by typing `kyou` into the page. A dictionary wait allows up to 360 seconds from `--booted`.
+
+A Japanese dictionary that never loads exits with status `3`. Other preparation failures exit with status `1`. A missing or invalid flag value exits with status `2`. If preparation receives `SIGINT`, `SIGHUP` or `SIGTERM`, it exits with status `130`, `129` or `143`, respectively.
 
 The driver forwards a host `localhost` page port to the device with `adb reverse`. It adds or replaces the URL's `prefix` search parameter. Read that parameter in your page to put the prefix in its field.
 

@@ -16,7 +16,7 @@ declare global {
 
 /**
  * The selector `recordInput` uses to find the field when no `field` is given:
- * `textarea`, text `input` types and `[contenteditable]`. Other `input` types either take no text
+ * `textarea`, `input` types that take text and `[contenteditable]`. Other `input` types either take no text
  * or, like `email` and `number`, do not support `setSelectionRange`.
  *
  * @public
