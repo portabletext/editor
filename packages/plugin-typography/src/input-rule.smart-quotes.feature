@@ -11,12 +11,12 @@ Feature: Smart Quotes Input Rule
 
     Examples:
       | text       | inserted text     | new text         |
-      | "B: "      | "\"foo\""         | "B: “foo”"       |
+      | "B:"       | "\"foo\""         | "B: “foo”"       |
       | "B: “foo”" | " \"bar\""        | "B: “foo” “bar”" |
-      | "B: "      | "\"foo\" \"bar\"" | "B: “foo” “bar”" |
+      | "B:"       | "\"foo\" \"bar\"" | "B: “foo” “bar”" |
 
   Scenario: Inserting double smart quotes - 1
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When "\"" is inserted
@@ -28,7 +28,7 @@ Feature: Smart Quotes Input Rule
       """
 
   Scenario: Inserting double smart quotes - 2
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When "\"\"" is inserted
@@ -58,7 +58,7 @@ Feature: Smart Quotes Input Rule
       """
 
   Scenario: Inserting double smart quotes - 5
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When "\"foo\"" is inserted
@@ -130,7 +130,7 @@ Feature: Smart Quotes Input Rule
       """
 
   Scenario: Inserting single smart quotes - 1
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When "\'" is inserted
@@ -139,7 +139,7 @@ Feature: Smart Quotes Input Rule
     Then the editor state is "B: '"
 
   Scenario: Inserting single smart quotes - 2
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     # The "When {string} is inserted" step inserts all characters at once to
     # mimic how insert.text behaves on Android
     When "\'foo\'" is inserted
@@ -175,7 +175,7 @@ Feature: Smart Quotes Input Rule
     Then the editor state is "B: 'foo''bar'"
 
   Scenario: Mixed quotes
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When "\"'sorry' you say?\" she asked" is typed
     Then the editor state is "B: “‘sorry’ you say?” she asked"
 

@@ -7,8 +7,8 @@ Feature: Multiplication Input Rule
 
     Examples:
       | state | inserted text | new state    |
-      | "B: " | "1*2"         | "B: 1×2\|"   |
-      | "B: " | "1*2*3"       | "B: 1×2×3\|" |
+      | "B:"  | "1*2"         | "B: 1×2\|"   |
+      | "B:"  | "1*2*3"       | "B: 1×2×3\|" |
 
   Scenario Outline: Inserting multiplication sign and writing afterwards
     Given the editor state is <state>
@@ -19,5 +19,5 @@ Feature: Multiplication Input Rule
 
     Examples:
       | state | inserted text | new state       |
-      | "B: " | "1*2"         | "B: 1×2new\|"   |
-      | "B: " | "1*2*3"       | "B: 1×2×3new\|" |
+      | "B:"  | "1*2"         | "B: 1×2new\|"   |
+      | "B:"  | "1*2*3"       | "B: 1×2×3new\|" |
