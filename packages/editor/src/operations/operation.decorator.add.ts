@@ -15,6 +15,7 @@ import {applySplitNode} from '../internal-utils/apply-split-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {isInline} from '../traversal/is-inline'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorAddOperationImplementation: OperationImplementation<
@@ -63,7 +64,9 @@ export const decoratorAddOperationImplementation: OperationImplementation<
         getNodes(editor.snapshot, {
           from: atStart.path,
           to: atEnd.path,
-          match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
+          match: (node, path) =>
+            isSpan({schema: editor.snapshot.context.schema}, node) &&
+            isInline(editor.snapshot, path),
         }),
       )
 
@@ -107,7 +110,9 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       getNodes(editor.snapshot, {
         from: rangeStart(at, editor.snapshot.context).path,
         to: rangeEnd(at, editor.snapshot.context).path,
-        match: (node) => isSpan({schema: editor.snapshot.context.schema}, node),
+        match: (node, path) =>
+          isSpan({schema: editor.snapshot.context.schema}, node) &&
+          isInline(editor.snapshot, path),
       }),
     )?.at(0)
 
@@ -150,8 +155,9 @@ export const decoratorAddOperationImplementation: OperationImplementation<
       for (const {path: spanPath} of Array.from(
         getNodes(editor.snapshot, {
           at: blockPath,
-          match: (node) =>
-            isSpan({schema: editor.snapshot.context.schema}, node),
+          match: (node, path) =>
+            isSpan({schema: editor.snapshot.context.schema}, node) &&
+            isInline(editor.snapshot, path),
         }),
       )) {
         applyNodeProperties(editor, {marks: newMarks}, spanPath)

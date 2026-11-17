@@ -16,6 +16,7 @@ import {applySplitNode} from '../internal-utils/apply-split-node'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getParent} from '../traversal/get-parent'
+import {isInline} from '../traversal/is-inline'
 import type {OperationImplementation} from './operation.types'
 
 export const decoratorRemoveOperationImplementation: OperationImplementation<
@@ -65,7 +66,9 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
           ...getNodes(editor.snapshot, {
             from: rangeStart(updatedAt, editor.snapshot.context).path,
             to: rangeEnd(updatedAt, editor.snapshot.context).path,
-            match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
+            match: (node, path) =>
+              isSpan({schema: editor.snapshot.context.schema}, node) &&
+              isInline(editor.snapshot, path),
           }),
         ]
         for (const {node, path: nodePath} of splitTextNodes) {
@@ -119,8 +122,9 @@ export const decoratorRemoveOperationImplementation: OperationImplementation<
       for (const {path: spanPath} of Array.from(
         getNodes(editor.snapshot, {
           at: blockPath,
-          match: (node) =>
-            isSpan({schema: editor.snapshot.context.schema}, node),
+          match: (node, path) =>
+            isSpan({schema: editor.snapshot.context.schema}, node) &&
+            isInline(editor.snapshot, path),
         }),
       )) {
         applyNodeProperties(

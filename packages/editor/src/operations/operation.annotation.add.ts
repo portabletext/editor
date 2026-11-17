@@ -18,6 +18,7 @@ import {getChildren} from '../traversal/get-children'
 import {getNode} from '../traversal/get-node'
 import {getNodes} from '../traversal/get-nodes'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
+import {isBlock} from '../traversal/is-block'
 import {rangeIntersects} from '../traversal/range-intersects'
 import {parseAnnotation} from '../utils/parse-blocks'
 import type {OperationImplementation} from './operation.types'
@@ -66,8 +67,9 @@ export const addAnnotationOperationImplementation: OperationImplementation<
     getNodes(editor.snapshot, {
       from: rangeStart(effectiveSelection, editor.snapshot.context).path,
       to: rangeEnd(effectiveSelection, editor.snapshot.context).path,
-      match: (node) =>
-        isTextBlock({schema: editor.snapshot.context.schema}, node),
+      match: (node, path) =>
+        isTextBlock({schema: editor.snapshot.context.schema}, node) &&
+        isBlock(editor.snapshot, path),
       reverse: isBackwardRange(effectiveSelection, editor.snapshot.context),
     }),
   )

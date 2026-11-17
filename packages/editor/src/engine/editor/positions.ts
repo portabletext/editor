@@ -1,6 +1,8 @@
 import {isSpan, isTextBlockNode} from '@portabletext/schema'
 import {isEditableContainer} from '../../schema/is-editable-container'
 import {getNodes} from '../../traversal/get-nodes'
+import {isBlock} from '../../traversal/is-block'
+import {isInline} from '../../traversal/is-inline'
 import {isLeafObject} from '../../traversal/is-leaf-object'
 import type {Editor} from '../interfaces/editor'
 import type {Location} from '../interfaces/location'
@@ -77,7 +79,10 @@ export function* positions(
     /*
      * ELEMENT NODE - Yield position(s) for object nodes, collect blockText for blocks
      */
-    if (isTextBlockNode({schema: editor.snapshot.context.schema}, node)) {
+    if (
+      isBlock(editor.snapshot, nodePath) &&
+      isTextBlockNode({schema: editor.snapshot.context.schema}, node)
+    ) {
       // Block element node - set `blockText` to its text content.
       {
         // We always exhaust block nodes before encountering a new one:
@@ -104,7 +109,9 @@ export function* positions(
           {
             from: s.path,
             to: e.path,
-            match: (n) => isSpan({schema: editor.snapshot.context.schema}, n),
+            match: (node, path) =>
+              isSpan(editor.snapshot.context, node) &&
+              isInline(editor.snapshot, path),
           },
         )) {
           if (!isSpan({schema: editor.snapshot.context.schema}, spanNode)) {
@@ -128,9 +135,16 @@ export function* positions(
       continue
     }
 
+    const isTextLeaf =
+      isInline(editor.snapshot, nodePath) &&
+      isSpan({schema: editor.snapshot.context.schema}, node)
+
     if (
-      !isTextBlockNode({schema: editor.snapshot.context.schema}, node) &&
-      !isSpan({schema: editor.snapshot.context.schema}, node)
+      !(
+        (isBlock(editor.snapshot, nodePath) &&
+          isTextBlockNode(editor.snapshot.context, node)) ||
+        isTextLeaf
+      )
     ) {
       // Editable containers aren't leaf positions — descend into them.
       if (isEditableContainer(editor.snapshot, node, nodePath)) {
@@ -144,7 +158,7 @@ export function* positions(
      * TEXT LEAF NODE - Iterate through text content, yielding
      * positions every `distance` offset according to `unit`.
      */
-    if (isSpan({schema: editor.snapshot.context.schema}, node)) {
+    if (isTextLeaf) {
       const isFirst = pathEquals(nodePath, first.path)
 
       // Proof that we always exhaust text nodes before encountering a new one:

@@ -1,6 +1,7 @@
 import {isTextBlock, type PortableTextObject} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
+import {isBlock} from './is-block'
 import type {TraversalSnapshot} from './traversal-snapshot'
 import {walkPath} from './walk-path'
 
@@ -32,6 +33,7 @@ export function getAnnotation(
     !block ||
     fieldSegment !== 'markDefs' ||
     !isKeyedSegment(annotationSegment) ||
+    !isBlock(snapshot, block.path) ||
     !isTextBlock({schema: snapshot.context.schema}, block.node)
   ) {
     return undefined

@@ -3,7 +3,7 @@ import {
   type StructuralContext,
   type StructuralCorrection,
 } from '@portabletext/repair'
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {
   getAdjacentSpansCorrection,
   getCanonicalCorrection,
@@ -23,10 +23,10 @@ import {serializePath} from '../../paths/serialize-path'
 import {resolveContainerAt} from '../../schema/resolve-container-at'
 import {resolveContainerByPath} from '../../schema/resolve-container-by-path'
 import {getChildren} from '../../traversal/get-children'
-import {getParent} from '../../traversal/get-parent'
 import {getPathSubSchema} from '../../traversal/get-path-sub-schema'
 import {getTextBlock} from '../../traversal/get-text-block'
 import {isObject} from '../../traversal/is-object'
+import {childKind, walkParent, type NodeKind} from '../../traversal/walk-path'
 import {isNonArrayObject} from '../../utils/is-non-array-object'
 import {isEditor} from '../editor/is-editor'
 import type {Editor} from '../interfaces/editor'
@@ -42,6 +42,10 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   entry,
 ) => {
   const [node, path] = entry
+  const parentEntry = walkParent(editor.snapshot, path)
+  const kind = isEditor(node)
+    ? undefined
+    : childKind(editor.snapshot.context, parentEntry?.kind, node)
   const structuralContext: StructuralContext = {
     schema: editor.snapshot.context.schema,
     keyGenerator: editor.snapshot.context.keyGenerator,
@@ -50,7 +54,7 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   // Only non-object entries are corrected here. This pass gives repair no
   // siblings, so a correction for an object entry could use the wrong
   // generated keys. Objects are corrected on their own visit instead.
-  for (const child of getStructuralEntries(editor, node, path)) {
+  for (const child of getStructuralEntries(editor, node, path, kind)) {
     if (isNonArrayObject(child.node)) {
       continue
     }
@@ -86,7 +90,9 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
     return
   }
 
-  const parent = getParent(editor.snapshot, path)
+  const parent = parentEntry
+    ? {node: parentEntry.node as PortableTextBlock, path: parentEntry.path}
+    : undefined
 
   const structural = getStructuralCorrection(structuralContext, {
     node,
@@ -120,6 +126,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
       node,
       path,
       parent,
+      kind,
+      childKind: (child) => childKind(editor.snapshot.context, kind, child),
       container: () => {
         if (!isObject(editor.snapshot, node)) {
           return undefined
@@ -144,7 +152,8 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
         }
       },
     }) ??
-    (hasRemoteFrame(editor.applyContext)
+    (hasRemoteFrame(editor.applyContext) ||
+    (kind !== 'text block' && kind !== 'span')
       ? undefined
       : getCanonicalCorrection(structuralContext, {
           node,
@@ -184,14 +193,22 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   }
 }
 
-function* getStructuralEntries(editor: Editor, node: unknown, path: Path) {
+function* getStructuralEntries(
+  editor: Editor,
+  node: unknown,
+  path: Path,
+  kind: NodeKind | undefined,
+) {
   const arrays: Array<{
     value: unknown[]
     path: Path
   }> = []
   if (isEditor(node)) {
     arrays.push({value: node.snapshot.context.value, path: []})
-  } else if (isTextBlock(editor.snapshot.context, node)) {
+  } else if (
+    kind === 'text block' &&
+    isTextBlock(editor.snapshot.context, node)
+  ) {
     if (Array.isArray(node.children)) {
       arrays.push({value: node.children, path: [...path, 'children']})
     }

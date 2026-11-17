@@ -26,6 +26,7 @@ import {getEnclosingBlock} from '../../../traversal/get-enclosing-block'
 import {getNode} from '../../../traversal/get-node'
 import {getParent} from '../../../traversal/get-parent'
 import {getText} from '../../../traversal/get-text'
+import {isBlock} from '../../../traversal/is-block'
 import {isLeafObject} from '../../../traversal/is-leaf-object'
 import type {PortableTextEditorEngine} from '../../../types/editor-engine'
 import {collapse} from '../../core/collapse'
@@ -1338,15 +1339,15 @@ export const Editable = forwardRef(
                     if (!nodeClickEntry) {
                       return
                     }
-                    const node = nodeClickEntry.node
 
                     if (event.detail === TRIPLE_CLICK && path.length >= 1) {
                       let blockPath = path
 
                       if (
+                        !isBlock(editor.snapshot, path) ||
                         !isTextBlockNode(
-                          {schema: editor.snapshot.context.schema},
-                          node,
+                          editor.snapshot.context,
+                          nodeClickEntry.node,
                         )
                       ) {
                         const block = getParent(editor.snapshot, path, {

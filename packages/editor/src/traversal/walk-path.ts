@@ -1,3 +1,4 @@
+import {isTypedObject} from '@portabletext/schema'
 import type {Node} from '../engine/interfaces/node'
 import type {Path} from '../engine/interfaces/path'
 import {nodeSegment} from '../paths/node-segment'
@@ -6,6 +7,7 @@ import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {getNodeChildren} from './get-children'
+import {getContainerChildren} from './get-container-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
@@ -13,6 +15,7 @@ import type {TraversalSnapshot} from './traversal-snapshot'
  */
 export type WalkedNode<TParent = RegisteredContainer> = {
   node: Node
+  kind: NodeKind | undefined
   /**
    * Keyed wherever the node has a usable `_key`, numeric otherwise.
    */
@@ -78,12 +81,57 @@ export type PathWalk<TParent = RegisteredContainer> =
  * a path that breaks it anywhere is `invalid` no matter which nodes exist.
  */
 export function walkPath(snapshot: TraversalSnapshot, path: Path): PathWalk {
-  return walkNodes(
+  return walkNodesImpl(
     snapshot.context.value,
     path,
-    (node, parent) => getNodeChildren(snapshot.context, node, parent),
+    (entry) => {
+      const {node, container: parent, kind} = entry
+      if (kind === 'span' || kind === undefined) {
+        return undefined
+      }
+      if (kind === 'object') {
+        const children = getContainerChildren(
+          snapshot.context.containers,
+          node,
+          parent,
+        )
+        return children
+          ? {
+              children: children.children,
+              fieldName: children.container.field.name,
+              parent: children.container,
+            }
+          : undefined
+      }
+      return getNodeChildren(snapshot.context, node, parent)
+    },
     snapshot.blockIndexMap,
+    snapshot.context,
   )
+}
+
+export type NodeKind = 'text block' | 'span' | 'object'
+
+function nodeKind(
+  context: TraversalSnapshot['context'],
+  parentKind: NodeKind | undefined,
+  node: {_type?: unknown},
+): NodeKind {
+  return parentKind === 'text block'
+    ? node._type === context.schema.span.name
+      ? 'span'
+      : 'object'
+    : node._type === context.schema.block.name
+      ? 'text block'
+      : 'object'
+}
+
+export function childKind(
+  context: TraversalSnapshot['context'],
+  parentKind: NodeKind | undefined,
+  node: unknown,
+): NodeKind | undefined {
+  return isTypedObject(node) ? nodeKind(context, parentKind, node) : undefined
 }
 
 /**
@@ -100,8 +148,28 @@ export function walkNodes<TParent>(
     node: Node,
     parent: TParent | undefined,
     fieldName: string | undefined,
+    path: Path,
   ) => NodeChildren<TParent> | undefined,
   blockIndexMap: ReadonlyMap<string, number> = new Map(),
+): PathWalk<TParent> {
+  return walkNodesImpl(
+    value,
+    path,
+    (entry, fieldName) =>
+      childrenOf(entry.node, entry.container, fieldName, entry.path),
+    blockIndexMap,
+  )
+}
+
+function walkNodesImpl<TParent>(
+  value: Array<Node>,
+  path: Path,
+  childrenOf: (
+    entry: WalkedNode<TParent>,
+    fieldName: string | undefined,
+  ) => NodeChildren<TParent> | undefined,
+  blockIndexMap: ReadonlyMap<string, number> = new Map(),
+  context?: TraversalSnapshot['context'],
 ): PathWalk<TParent> {
   const nodes: Array<WalkedNode<TParent>> = []
   let siblings: Array<Node> = value
@@ -134,6 +202,7 @@ export function walkNodes<TParent>(
       index,
       siblings,
       container,
+      context,
       childrenOf,
       typeof nextSegment === 'string' ? nextSegment : undefined,
     )
@@ -180,13 +249,15 @@ class WalkedNodeImpl<TParent> implements WalkedNode<TParent> {
   readonly container: TParent | undefined
   private readonly previous: WalkedNodeImpl<TParent> | undefined
   private readonly childrenOf: (
-    node: Node,
-    parent: TParent | undefined,
+    entry: WalkedNode<TParent>,
     fieldName: string | undefined,
   ) => NodeChildren<TParent> | undefined
   private readonly fieldName: string | undefined
   private cachedPath: Path | undefined
   private cachedKey: string | undefined
+  private readonly context: TraversalSnapshot['context'] | undefined
+  private kindResolved = false
+  private cachedKind: NodeKind | undefined
   private childrenResolved = false
   private cachedChildren: NodeChildren<TParent> | undefined
 
@@ -198,13 +269,14 @@ class WalkedNodeImpl<TParent> implements WalkedNode<TParent> {
     index: number,
     siblings: Array<Node>,
     container: TParent | undefined,
+    context: TraversalSnapshot['context'] | undefined,
     childrenOf: (
-      node: Node,
-      parent: TParent | undefined,
+      entry: WalkedNode<TParent>,
       fieldName: string | undefined,
     ) => NodeChildren<TParent> | undefined,
     fieldName: string | undefined,
   ) {
+    this.context = context
     this.node = node
     this.segment = segment
     this.previous = previous
@@ -214,6 +286,16 @@ class WalkedNodeImpl<TParent> implements WalkedNode<TParent> {
     this.container = container
     this.childrenOf = childrenOf
     this.fieldName = fieldName
+  }
+
+  get kind(): NodeKind | undefined {
+    if (!this.kindResolved) {
+      this.cachedKind = this.context
+        ? childKind(this.context, this.previous?.kind, this.node)
+        : undefined
+      this.kindResolved = true
+    }
+    return this.cachedKind
   }
 
   get path(): Path {
@@ -243,11 +325,7 @@ class WalkedNodeImpl<TParent> implements WalkedNode<TParent> {
 
   get children(): NodeChildren<TParent> | undefined {
     if (!this.childrenResolved) {
-      this.cachedChildren = this.childrenOf(
-        this.node,
-        this.container,
-        this.fieldName,
-      )
+      this.cachedChildren = this.childrenOf(this, this.fieldName)
       this.childrenResolved = true
     }
     return this.cachedChildren

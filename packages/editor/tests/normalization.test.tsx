@@ -1,8 +1,19 @@
-import {type Patch, set} from '@portabletext/patches'
+import {applyAll, type Patch, set} from '@portabletext/patches'
+import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {defineSchema} from '../src'
+import {page, userEvent} from 'vitest/browser'
+import type {PortableTextEditor} from '../src/editor/PortableTextEditor'
+import type {EditorEmittedEvent} from '../src/editor/relay'
+import type {Path} from '../src/engine/interfaces/path'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalPortableTextEditorRefPlugin} from '../src/plugins/plugin.internal.portable-text-editor-ref'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {
+  defineBlockObject,
+  defineContainer,
+} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('normalization', () => {
@@ -3546,5 +3557,7763 @@ test('Scenario: selection is preserved when a remote marks change creates same-m
       },
       backward: false,
     })
+  })
+})
+
+describe('normalization', () => {
+  test('Scenario: a misplaced text block at root stays an object through Backspace and undo', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 6}, () => keyGenerator())
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: keys[0]!,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: keys[1]!,
+            text: 'foo',
+            marks: [],
+          },
+          {
+            _type: 'block',
+            _key: keys[2]!,
+            style: 'normal',
+            markDefs: [],
+            children: null,
+          },
+          {
+            _type: 'span',
+            _key: keys[4]!,
+            text: 'baz',
+            marks: [],
+          },
+        ],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[1]!,
+              text: 'foo',
+              marks: [],
+            },
+            {
+              _type: 'block',
+              _key: keys[2]!,
+              style: 'normal',
+              markDefs: [],
+              children: null,
+            },
+            {
+              _type: 'span',
+              _key: keys[4]!,
+              text: 'baz',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(
+        document.querySelector('[data-pt-inline="object"]')?.textContent,
+      ).toEqual('\uFEFF[block: k2]')
+      expect(patches).toEqual([])
+    })
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          offset: 0,
+        },
+      },
+    })
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('baz'),
+    )
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[1]!,
+              text: 'foobaz',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          origin: 'local',
+        },
+      ])
+    })
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[1]!,
+              text: 'foo',
+              marks: [],
+            },
+            {
+              _type: 'block',
+              _key: keys[2]!,
+              style: 'normal',
+              markDefs: [],
+              children: null,
+            },
+            {
+              _type: 'span',
+              _key: keys[4]!,
+              text: 'baz',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'setIfMissing',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'span',
+              _key: keys[4]!,
+              text: 'baz',
+              marks: [],
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,6 +1,3 @@\n foo\n-baz\n',
+          origin: 'local',
+        },
+        {
+          type: 'setIfMissing',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: keys[2]!,
+              style: 'normal',
+              markDefs: [],
+              children: null,
+            },
+          ],
+          origin: 'local',
+        },
+      ])
+    })
+    const line = document.querySelector('[data-pt-block="text"]')!
+    const bounds = line.getBoundingClientRect()
+    await userEvent.click(locator, {
+      position: {x: bounds.width - 2, y: bounds.height / 2},
+    })
+    await expect.element(locator).toBeVisible()
+  })
+
+  test('Scenario: a collaborator span with number text at root keeps the next block editable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 6}, () => keyGenerator())
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: keys[1]!,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: keys[2]!,
+            text: 'bar',
+            marks: [],
+          },
+        ],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'before',
+          items: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 123,
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'span',
+          _key: keys[0]!,
+          marks: [],
+          text: 123,
+        },
+        {
+          _type: 'block',
+          _key: keys[1]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[2]!,
+              text: 'bar',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(
+        document.querySelector('[data-pt-block="object"]')?.textContent,
+      ).toEqual('\uFEFF[span: k0]')
+      expect(patches).toEqual([])
+    })
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.focusOffset).toEqual(3),
+    )
+    await userEvent.keyboard('x')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'span',
+          _key: keys[0]!,
+          marks: [],
+          text: 123,
+        },
+        {
+          _type: 'block',
+          _key: keys[1]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[2]!,
+              text: 'barx',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          origin: 'local',
+          path: [
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+        },
+      ])
+    })
+    await expect.element(locator).toBeVisible()
+  })
+
+  test('Scenario: a collaborator span with string text at root keeps the next block editable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 6}, () => keyGenerator())
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _type: 'block',
+        _key: keys[1]!,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: keys[2]!,
+            text: 'bar',
+            marks: [],
+          },
+        ],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'before',
+          items: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 'foo',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'span',
+          _key: keys[0]!,
+          marks: [],
+          text: 'foo',
+        },
+        {
+          _type: 'block',
+          _key: keys[1]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[2]!,
+              text: 'bar',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(
+        document.querySelector('[data-pt-block="object"]')?.textContent,
+      ).toEqual('\uFEFF[span: k0]')
+      expect(patches).toEqual([])
+    })
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.focusOffset).toEqual(3),
+    )
+    await userEvent.keyboard('x')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'span',
+          _key: keys[0]!,
+          marks: [],
+          text: 'foo',
+        },
+        {
+          _type: 'block',
+          _key: keys[1]!,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keys[2]!,
+              text: 'barx',
+              marks: [],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          origin: 'local',
+          path: [
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+        },
+      ])
+    })
+    await expect.element(locator).toBeVisible()
+  })
+
+  test('Scenario: a misplaced text block at callout1 stays an object through Backspace and undo', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 6}, () => keyGenerator())
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _type: 'callout',
+        _key: keys[5]!,
+        content: [
+          {
+            _type: 'block',
+            _key: keys[0]!,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keys[1]!,
+                text: 'foo',
+                marks: [],
+              },
+              {
+                _type: 'block',
+                _key: keys[2]!,
+                style: 'normal',
+                markDefs: [],
+                children: null,
+              },
+              {
+                _type: 'span',
+                _key: keys[4]!,
+                text: 'baz',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[1]!,
+                  text: 'foo',
+                  marks: [],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[2]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: null,
+                },
+                {
+                  _type: 'span',
+                  _key: keys[4]!,
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(
+        document.querySelector('[data-pt-inline="object"]')?.textContent,
+      ).toEqual('\uFEFF[block: k2]')
+      expect(patches).toEqual([])
+    })
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          offset: 0,
+        },
+      },
+    })
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('baz'),
+    )
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[1]!,
+                  text: 'foobaz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          origin: 'local',
+        },
+      ])
+    })
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[1]!,
+                  text: 'foo',
+                  marks: [],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[2]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: null,
+                },
+                {
+                  _type: 'span',
+                  _key: keys[4]!,
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[4]!,
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'setIfMissing',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'span',
+              _key: keys[4]!,
+              text: 'baz',
+              marks: [],
+            },
+          ],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,6 +1,3 @@\n foo\n-baz\n',
+          origin: 'local',
+        },
+        {
+          type: 'setIfMissing',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[0]!,
+            },
+            'children',
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: keys[2]!,
+              style: 'normal',
+              markDefs: [],
+              children: null,
+            },
+          ],
+          origin: 'local',
+        },
+      ])
+    })
+    const line = document.querySelector('[data-pt-block="text"]')!
+    const bounds = line.getBoundingClientRect()
+    await userEvent.click(locator, {
+      position: {x: bounds.width - 2, y: bounds.height / 2},
+    })
+    await expect.element(locator).toBeVisible()
+  })
+
+  test('Scenario: a collaborator span with number text at callout1 keeps the next block editable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 6}, () => keyGenerator())
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _type: 'callout',
+        _key: keys[5]!,
+        content: [
+          {
+            _type: 'block',
+            _key: keys[1]!,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keys[2]!,
+                text: 'bar',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'before',
+          items: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 123,
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 123,
+            },
+            {
+              _type: 'block',
+              _key: keys[1]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[2]!,
+                  text: 'bar',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(
+        document.querySelector('[data-pt-block="object"]')?.textContent,
+      ).toEqual('\uFEFF[span: k0]')
+      expect(patches).toEqual([])
+    })
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.focusOffset).toEqual(3),
+    )
+    await userEvent.keyboard('x')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 123,
+            },
+            {
+              _type: 'block',
+              _key: keys[1]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[2]!,
+                  text: 'barx',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          origin: 'local',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+        },
+      ])
+    })
+    await expect.element(locator).toBeVisible()
+  })
+
+  test('Scenario: a collaborator span with string text at callout1 keeps the next block editable', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 6}, () => keyGenerator())
+    const patches: Array<Patch> = []
+    const initialValue = [
+      {
+        _type: 'callout',
+        _key: keys[5]!,
+        content: [
+          {
+            _type: 'block',
+            _key: keys[1]!,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: keys[2]!,
+                text: 'bar',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                patches.push(event.patch)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+          ],
+          position: 'before',
+          items: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 'foo',
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 'foo',
+            },
+            {
+              _type: 'block',
+              _key: keys[1]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[2]!,
+                  text: 'bar',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(
+        document.querySelector('[data-pt-block="object"]')?.textContent,
+      ).toEqual('\uFEFF[span: k0]')
+      expect(patches).toEqual([])
+    })
+    await expect.element(locator).toBeVisible()
+    await userEvent.click(locator)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() =>
+      expect(window.getSelection()?.focusOffset).toEqual(3),
+    )
+    await userEvent.keyboard('x')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'span',
+              _key: keys[0]!,
+              marks: [],
+              text: 'foo',
+            },
+            {
+              _type: 'block',
+              _key: keys[1]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {
+                  _type: 'span',
+                  _key: keys[2]!,
+                  text: 'barx',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(patches).toEqual([
+        {
+          type: 'diffMatchPatch',
+          origin: 'local',
+          path: [
+            {
+              _key: keys[5]!,
+            },
+            'content',
+            {
+              _key: keys[1]!,
+            },
+            'children',
+            {
+              _key: keys[2]!,
+            },
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+        },
+      ])
+    })
+    await expect.element(locator).toBeVisible()
+  })
+
+  const straySpanSchema = defineSchema({
+    blockObjects: [
+      {name: 'row'},
+      {
+        name: 'callout',
+        fields: [
+          {
+            name: 'content',
+            type: 'array',
+            of: [{type: 'block'}, {type: 'callout'}],
+          },
+        ],
+      },
+      {
+        name: 'table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'object',
+                name: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  const straySpanTableContainers = [
+    defineContainer({
+      type: 'table',
+      arrayField: 'rows',
+      render: ({children}) => <>{children}</>,
+    }),
+    defineContainer({
+      type: 'row',
+      arrayField: 'cells',
+      render: ({children}) => <>{children}</>,
+    }),
+    defineContainer({
+      type: 'cell',
+      arrayField: 'content',
+      render: ({children}) => <>{children}</>,
+    }),
+  ]
+
+  const straySpanCalloutContainers = [
+    defineContainer({
+      type: 'callout',
+      arrayField: 'content',
+      render: ({children}) => <>{children}</>,
+    }),
+  ]
+
+  const straySpanSelectableObject = defineBlockObject({
+    type: '*',
+    render: (props) =>
+      props.renderDefault({
+        ...props,
+        attributes: {...props.attributes, 'data-selected': props.selected},
+      }),
+  })
+
+  test('Scenario: callout span through start value stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a span a collaborator inserts into a callout stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: callout span through remote container stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[0]!}],
+          position: 'after',
+          items: [
+            {
+              _type: 'callout',
+              _key: keys[5]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foofoo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: nested callout span through start value stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: nested callout span through remote span stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+          ],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: nested callout span through remote container stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[0]!}],
+          position: 'after',
+          items: [
+            {
+              _type: 'callout',
+              _key: keys[5]!,
+              content: [
+                {
+                  _type: 'callout',
+                  _key: keys[6]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foofoo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: table cell span through start value stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keys[1]!,
+                          text: 'foox',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: table cell span through remote span stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+          ],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keys[1]!,
+                          text: 'foox',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: table cell span through remote container stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[0]!}],
+          position: 'after',
+          items: [
+            {
+              _type: 'table',
+              _key: keys[5]!,
+              rows: [
+                {
+                  _type: 'row',
+                  _key: keys[6]!,
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: keys[7]!,
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: keys[0]!,
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: keys[1]!,
+                              text: 'foo',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                        {
+                          _type: 'block',
+                          _key: keys[3]!,
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: keys[4]!,
+                              text: 'baz',
+                              marks: [],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foofoo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keys[1]!,
+                          text: 'foox',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: root span through remote span stays an object while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[...straySpanTableContainers, ...straySpanCalloutContainers]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[0]!}],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+      expect(locator.element().textContent).toEqual('foo\uFEFF[span: k2]baz')
+      expect(
+        Array.from(
+          locator.element().querySelectorAll('[data-pt-block="object"]'),
+          (element) => element.textContent,
+        ),
+      ).toEqual(['\uFEFF[span: k2]'])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 3,
+        },
+        focus: {
+          path: [{_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foox', marks: []}],
+        },
+        {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [{_key: keys[0]!}, 'children', {_key: keys[1]!}, 'text'],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Backspace deletes a keyed callout span object with one unset', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    await userEvent.click(page.getByText('[span: k2]'))
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+    await vi.waitFor(() => {
+      expect(
+        locator
+          .element()
+          .querySelector('[data-pt-block="object"]')
+          ?.getAttribute('data-selected'),
+      ).toEqual('true')
+    })
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
+            origin: 'local',
+          },
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+    })
+
+    events.length = 0
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: keys[2]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'setIfMissing',
+            path: [{_key: keys[5]!}, 'content'],
+            value: [],
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'insert',
+            path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
+            position: 'after',
+            items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+            origin: 'local',
+          },
+        },
+      ])
+    })
+    events.length = 0
+    editor.send({type: 'history.redo'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: Backspace deletes a keyless callout span object with one unset', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', text: 'bar', marks: ['em'], extra: 1},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    expect(keys).toEqual([
+      keys[0]!,
+      keys[1]!,
+      keys[2]!,
+      keys[3]!,
+      keys[4]!,
+      keys[5]!,
+      keys[6]!,
+      keys[7]!,
+    ])
+    await userEvent.click(page.getByText('[span: k10]'))
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+          offset: 0,
+        },
+        backward: false,
+      })
+    })
+    await vi.waitFor(() => {
+      expect(
+        locator
+          .element()
+          .querySelector('[data-pt-block="object"]')
+          ?.getAttribute('data-selected'),
+      ).toEqual('true')
+    })
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [{_key: keys[5]!}, 'content', 1, '_key'],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+            origin: 'local',
+          },
+        },
+      ])
+      expect(locator.element().getAttribute('contenteditable')).toEqual('true')
+    })
+
+    events.length = 0
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'span',
+              _key: expectedKeys[10]!,
+              text: 'bar',
+              marks: ['em'],
+              extra: 1,
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'setIfMissing',
+            path: [{_key: keys[5]!}, 'content'],
+            value: [],
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'insert',
+            path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
+            position: 'after',
+            items: [
+              {
+                _type: 'span',
+                _key: expectedKeys[10]!,
+                text: 'bar',
+                marks: ['em'],
+                extra: 1,
+              },
+            ],
+            origin: 'local',
+          },
+        },
+      ])
+    })
+    events.length = 0
+    editor.send({type: 'history.redo'})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a keyless span without text or marks in a callout receives a key and keeps its missing text and marks while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span'},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: expectedKeys[10]!},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+              ],
+            },
+            {_type: 'span', _key: expectedKeys[10]!},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [{_key: keys[5]!}, 'content', 1, '_key'],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a keyless span without text or marks in a nested callout receives a key and keeps its missing text and marks while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span'},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: expectedKeys[10]!},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foox', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: expectedKeys[10]!},
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              1,
+              '_key',
+            ],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a keyless span without text or marks in a table cell receives a key and keeps its missing text and marks while typing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span'},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: expectedKeys[10]!},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([])
+    })
+    locator.element().focus()
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.focusNode?.textContent).toEqual('foo')
+      expect(window.getSelection()?.focusOffset).toEqual(3)
+    })
+    await userEvent.type(locator, 'x', {skipClick: true})
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: keys[1]!,
+                          text: 'foox',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {_type: 'span', _key: expectedKeys[10]!},
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              1,
+              '_key',
+            ],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+        {
+          type: 'patch',
+          patch: {
+            type: 'diffMatchPatch',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              {_key: keys[0]!},
+              'children',
+              {_key: keys[1]!},
+              'text',
+            ],
+            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+            origin: 'local',
+          },
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a collaborator span sharing the preceding block key at the root is renamed and Backspace removes only the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[0]!}],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[0]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {_type: 'span', _key: expectedKeys[10]!, text: 'bar', marks: []},
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [1, '_key'],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+      ])
+    })
+    const valueBeforeDelete = editor.getSnapshot().context.value
+    events.length = 0
+    await userEvent.click(page.getByText('[span: k10]'))
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [{_key: expectedKeys[10]!}],
+            origin: 'local',
+          },
+        },
+      ])
+      expect(
+        applyAll(
+          valueBeforeDelete,
+          events.flatMap((event) =>
+            event.type === 'patch' ? [event.patch] : [],
+          ),
+        ),
+      ).toEqual([
+        {
+          _type: 'block',
+          _key: keys[0]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: keys[3]!,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a collaborator span sharing the preceding block key in a callout is renamed and Backspace removes only the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[0]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {_type: 'span', _key: expectedKeys[10]!, text: 'bar', marks: []},
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [{_key: keys[5]!}, 'content', 1, '_key'],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+      ])
+    })
+    const valueBeforeDelete = editor.getSnapshot().context.value
+    events.length = 0
+    await userEvent.click(page.getByText('[span: k10]'))
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+            origin: 'local',
+          },
+        },
+      ])
+      expect(
+        applyAll(
+          valueBeforeDelete,
+          events.flatMap((event) =>
+            event.type === 'patch' ? [event.patch] : [],
+          ),
+        ),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'block',
+              _key: keys[0]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+              ],
+            },
+            {
+              _type: 'block',
+              _key: keys[3]!,
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a collaborator span sharing the preceding block key in a nested callout is renamed and Backspace removes only the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+          ],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[0]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'span',
+                  _key: expectedKeys[10]!,
+                  text: 'bar',
+                  marks: [],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              1,
+              '_key',
+            ],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+      ])
+    })
+    const valueBeforeDelete = editor.getSnapshot().context.value
+    events.length = 0
+    await userEvent.click(page.getByText('[span: k10]'))
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [
+              {_key: keys[5]!},
+              'content',
+              {_key: keys[6]!},
+              'content',
+              {_key: expectedKeys[10]!},
+            ],
+            origin: 'local',
+          },
+        },
+      ])
+      expect(
+        applyAll(
+          valueBeforeDelete,
+          events.flatMap((event) =>
+            event.type === 'patch' ? [event.patch] : [],
+          ),
+        ),
+      ).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[5]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[6]!,
+              content: [
+                {
+                  _type: 'block',
+                  _key: keys[0]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: keys[3]!,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: a collaborator span sharing the preceding block key in a table cell is renamed and Backspace removes only the span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 8}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 11}, () => expectedKeyGenerator())
+    const events: Array<EditorEmittedEvent> = []
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: straySpanSchema,
+      initialValue: [
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      children: (
+        <>
+          <NodePlugin
+            nodes={[
+              ...straySpanTableContainers,
+              ...straySpanCalloutContainers,
+              straySpanSelectableObject,
+            ]}
+          />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                events.push(event)
+              }
+            }}
+          />
+        </>
+      ),
+    })
+    await expect.element(locator).toBeVisible()
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+          ],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[0]!, text: 'bar', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'span',
+                      _key: expectedKeys[10]!,
+                      text: 'bar',
+                      marks: [],
+                    },
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'set',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              1,
+              '_key',
+            ],
+            value: expectedKeys[10]!,
+            origin: 'local',
+          },
+        },
+      ])
+    })
+    const valueBeforeDelete = editor.getSnapshot().context.value
+    events.length = 0
+    await userEvent.click(page.getByText('[span: k10]'))
+    await userEvent.keyboard('{Backspace}')
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+      expect(events).toEqual([
+        {
+          type: 'patch',
+          patch: {
+            type: 'unset',
+            path: [
+              {_key: keys[5]!},
+              'rows',
+              {_key: keys[6]!},
+              'cells',
+              {_key: keys[7]!},
+              'content',
+              {_key: expectedKeys[10]!},
+            ],
+            origin: 'local',
+          },
+        },
+      ])
+      expect(
+        applyAll(
+          valueBeforeDelete,
+          events.flatMap((event) =>
+            event.type === 'patch' ? [event.patch] : [],
+          ),
+        ),
+      ).toEqual([
+        {
+          _type: 'table',
+          _key: keys[5]!,
+          rows: [
+            {
+              _type: 'row',
+              _key: keys[6]!,
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: keys[7]!,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: keys[0]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: keys[3]!,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: keys[4]!, text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ])
+    })
+  })
+  test('Scenario: style across a misplaced text block at root preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix: Path = []
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [first, last],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'style.toggle', style: 'h1'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {...first, style: 'h1'},
+        {...last, style: 'h1'},
+      ]),
+    )
+  })
+  test('Scenario: list across a misplaced text block at root preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix: Path = []
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [first, last],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'list item.toggle', listItem: 'bullet'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {...first, listItem: 'bullet', level: 1},
+        {...last, listItem: 'bullet', level: 1},
+      ]),
+    )
+  })
+  test('Scenario: annotation across a misplaced text block at root preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 14}, () => expectedKeyGenerator())
+    const prefix: Path = []
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [first, last],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'annotation.add', annotation: {name: 'link', value: {}}})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          ...first,
+          markDefs: [{_type: 'link', _key: expectedKeys[12]!}],
+          children: [
+            {...first.children[0], marks: [expectedKeys[12]!]},
+            misplaced,
+            {...first.children[2], marks: [expectedKeys[12]!]},
+          ],
+        },
+        {
+          ...last,
+          markDefs: [{_type: 'link', _key: expectedKeys[13]!}],
+          children: [{...last.children[0], marks: [expectedKeys[13]!]}],
+        },
+      ]),
+    )
+  })
+  test('Scenario: triple-clicking a misplaced text block at root selects its enclosing line', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix: Path = []
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [first, last],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.tripleClick(page.getByText('[block: k2]', {exact: true}))
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[4]!}],
+          offset: 3,
+        },
+        backward: false,
+      }),
+    )
+  })
+  test('Scenario: diff respects a misplaced span at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix: Path = []
+    const misplaced = {_type: 'span', _key: keys[0]!, text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keys[1]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+    }
+    const legacyRef = React.createRef<PortableTextEditor>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [misplaced, block],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={legacyRef} />
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+    const operations: Array<
+      Extract<EditorEmittedEvent, {type: 'operation'}>['operation']
+    > = []
+    editor.on('operation', (event) =>
+      operations.push(structuredClone(event.operation)),
+    )
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          path: [...prefix, {_key: keys[0]!}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            ...prefix,
+            {_key: keys[1]!},
+            'children',
+            {_key: keys[2]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        misplaced,
+        {...block, children: [{...block.children[0], text: 'barx'}]},
+      ]),
+    )
+    expect(operations).toEqual([
+      {
+        type: 'insert.text',
+        path: [...prefix, {_key: keys[1]!}, 'children', {_key: keys[2]!}],
+        offset: 3,
+        text: 'x',
+      },
+    ])
+  })
+  test('Scenario: canonical respects a misplaced span at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix: Path = []
+    const misplaced = {_type: 'span', _key: keys[0]!, text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keys[1]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+    }
+    const legacyRef = React.createRef<PortableTextEditor>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [misplaced, block],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={legacyRef} />
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'block.set',
+      at: [...prefix, {_key: keys[0]!}],
+      props: {_key: keys[3]!},
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {...misplaced, _key: keys[3]!},
+        block,
+      ]),
+    )
+  })
+  test('Scenario: style across a misplaced text block at callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [first, last]},
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'style.toggle', style: 'h1'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[8]!,
+          content: [
+            {...first, style: 'h1'},
+            {...last, style: 'h1'},
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: list across a misplaced text block at callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [first, last]},
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'list item.toggle', listItem: 'bullet'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[8]!,
+          content: [
+            {...first, listItem: 'bullet', level: 1},
+            {...last, listItem: 'bullet', level: 1},
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: annotation across a misplaced text block at callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 14}, () => expectedKeyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [first, last]},
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'annotation.add', annotation: {name: 'link', value: {}}})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[8]!,
+          content: [
+            {
+              ...first,
+              markDefs: [{_type: 'link', _key: expectedKeys[12]!}],
+              children: [
+                {...first.children[0], marks: [expectedKeys[12]!]},
+                misplaced,
+                {...first.children[2], marks: [expectedKeys[12]!]},
+              ],
+            },
+            {
+              ...last,
+              markDefs: [{_type: 'link', _key: expectedKeys[13]!}],
+              children: [{...last.children[0], marks: [expectedKeys[13]!]}],
+            },
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: triple-clicking a misplaced text block at callout selects its enclosing line', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [first, last]},
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.tripleClick(page.getByText('[block: k2]', {exact: true}))
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[4]!}],
+          offset: 3,
+        },
+        backward: false,
+      }),
+    )
+  })
+  test('Scenario: diff respects a misplaced span at callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {_type: 'span', _key: keys[0]!, text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keys[1]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+    }
+    const legacyRef = React.createRef<PortableTextEditor>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [misplaced, block]},
+      ],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={legacyRef} />
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+    const operations: Array<
+      Extract<EditorEmittedEvent, {type: 'operation'}>['operation']
+    > = []
+    editor.on('operation', (event) =>
+      operations.push(structuredClone(event.operation)),
+    )
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          path: [...prefix, {_key: keys[0]!}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            ...prefix,
+            {_key: keys[1]!},
+            'children',
+            {_key: keys[2]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[8]!,
+          content: [
+            misplaced,
+            {...block, children: [{...block.children[0], text: 'barx'}]},
+          ],
+        },
+      ]),
+    )
+    expect(operations).toEqual([
+      {
+        type: 'insert.text',
+        path: [...prefix, {_key: keys[1]!}, 'children', {_key: keys[2]!}],
+        offset: 3,
+        text: 'x',
+      },
+    ])
+  })
+  test('Scenario: canonical respects a misplaced span at callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {_type: 'span', _key: keys[0]!, text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keys[1]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+    }
+    const legacyRef = React.createRef<PortableTextEditor>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [misplaced, block]},
+      ],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={legacyRef} />
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'block.set',
+      at: [...prefix, {_key: keys[0]!}],
+      props: {_key: keys[3]!},
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[8]!,
+          content: [{...misplaced, _key: keys[3]!}, block],
+        },
+      ]),
+    )
+  })
+  test('Scenario: style across a misplaced text block at nested callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [{_type: 'callout', _key: keys[8]!, content: [first, last]}],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'style.toggle', style: 'h1'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [
+                {...first, style: 'h1'},
+                {...last, style: 'h1'},
+              ],
+            },
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: list across a misplaced text block at nested callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [{_type: 'callout', _key: keys[8]!, content: [first, last]}],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'list item.toggle', listItem: 'bullet'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [
+                {...first, listItem: 'bullet', level: 1},
+                {...last, listItem: 'bullet', level: 1},
+              ],
+            },
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: annotation across a misplaced text block at nested callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 14}, () => expectedKeyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [{_type: 'callout', _key: keys[8]!, content: [first, last]}],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'annotation.add', annotation: {name: 'link', value: {}}})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [
+                {
+                  ...first,
+                  markDefs: [{_type: 'link', _key: expectedKeys[12]!}],
+                  children: [
+                    {...first.children[0], marks: [expectedKeys[12]!]},
+                    misplaced,
+                    {...first.children[2], marks: [expectedKeys[12]!]},
+                  ],
+                },
+                {
+                  ...last,
+                  markDefs: [{_type: 'link', _key: expectedKeys[13]!}],
+                  children: [{...last.children[0], marks: [expectedKeys[13]!]}],
+                },
+              ],
+            },
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: triple-clicking a misplaced text block at nested callout selects its enclosing line', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[3]!, text: 'baz', marks: []}],
+    }
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [{_type: 'callout', _key: keys[8]!, content: [first, last]}],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    await userEvent.tripleClick(page.getByText('[block: k2]', {exact: true}))
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[4]!}],
+          offset: 3,
+        },
+        backward: false,
+      }),
+    )
+  })
+  test('Scenario: diff respects a misplaced span at nested callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {_type: 'span', _key: keys[0]!, text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keys[1]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+    }
+    const legacyRef = React.createRef<PortableTextEditor>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {_type: 'callout', _key: keys[8]!, content: [misplaced, block]},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={legacyRef} />
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+    const operations: Array<
+      Extract<EditorEmittedEvent, {type: 'operation'}>['operation']
+    > = []
+    editor.on('operation', (event) =>
+      operations.push(structuredClone(event.operation)),
+    )
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'diffMatchPatch',
+          path: [...prefix, {_key: keys[0]!}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'remote',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [
+            ...prefix,
+            {_key: keys[1]!},
+            'children',
+            {_key: keys[2]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n bar\n+x\n',
+          origin: 'remote',
+        },
+      ],
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [
+                misplaced,
+                {...block, children: [{...block.children[0], text: 'barx'}]},
+              ],
+            },
+          ],
+        },
+      ]),
+    )
+    expect(operations).toEqual([
+      {
+        type: 'insert.text',
+        path: [...prefix, {_key: keys[1]!}, 'children', {_key: keys[2]!}],
+        offset: 3,
+        text: 'x',
+      },
+    ])
+  })
+  test('Scenario: canonical respects a misplaced span at nested callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {_type: 'span', _key: keys[0]!, text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keys[1]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+    }
+    const legacyRef = React.createRef<PortableTextEditor>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {_type: 'callout', _key: keys[8]!, content: [misplaced, block]},
+          ],
+        },
+      ],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      children: (
+        <>
+          <InternalPortableTextEditorRefPlugin ref={legacyRef} />
+          <NodePlugin
+            nodes={[
+              defineContainer({
+                type: 'callout',
+                arrayField: 'content',
+                render: ({children}) => <>{children}</>,
+              }),
+            ]}
+          />
+        </>
+      ),
+    })
+    editor.send({
+      type: 'block.set',
+      at: [...prefix, {_key: keys[0]!}],
+      props: {_key: keys[3]!},
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [{...misplaced, _key: keys[3]!}, block],
+            },
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: a misplaced text block before an inline object at root receives a separating span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 7}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 10}, () => expectedKeyGenerator())
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      children: [],
+      style: 'normal',
+      markDefs: [],
+    }
+    const object = {_type: 'mystery', _key: keys[3]!}
+    const block = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        object,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [block],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+    const expected = {
+      ...block,
+      children: [
+        block.children[0],
+        misplaced,
+        {_type: 'span', _key: expectedKeys[9]!, text: '', marks: []},
+        object,
+        block.children[3],
+      ],
+    }
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([expected]),
+    )
+  })
+  test('Scenario: a misplaced text block before an inline object in a callout receives a separating span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 7}, () => keyGenerator())
+    const expectedKeyGenerator = createTestKeyGenerator()
+    const expectedKeys = Array.from({length: 10}, () => expectedKeyGenerator())
+    const misplaced = {
+      _type: 'block',
+      _key: keys[2]!,
+      children: [],
+      style: 'normal',
+      markDefs: [],
+    }
+    const object = {_type: 'mystery', _key: keys[3]!}
+    const block = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: keys[1]!, text: 'foo', marks: []},
+        misplaced,
+        object,
+        {_type: 'span', _key: keys[4]!, text: 'bar', marks: []},
+      ],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [{_type: 'callout', _key: keys[6]!, content: [block]}],
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      }),
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+    const expected = {
+      ...block,
+      children: [
+        block.children[0],
+        misplaced,
+        {_type: 'span', _key: expectedKeys[9]!, text: '', marks: []},
+        object,
+        block.children[3],
+      ],
+    }
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_type: 'callout', _key: keys[6]!, content: [expected]},
+      ]),
+    )
+  })
+  test('Scenario: decorator across a misplaced span at root preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix: Path = []
+    const misplaced = {_type: 'span', _key: keys[2]!, text: 'foo', marks: []}
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [first, misplaced, last],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'decorator.toggle', decorator: 'strong'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {...first, children: [{...first.children[0], marks: ['strong']}]},
+        misplaced,
+        {...last, children: [{...last.children[0], marks: ['strong']}]},
+      ]),
+    )
+  })
+  test('Scenario: decorator across a misplaced span at callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[8]!}, 'content']
+    const misplaced = {_type: 'span', _key: keys[2]!, text: 'foo', marks: []}
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_type: 'callout', _key: keys[8]!, content: [first, misplaced, last]},
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'decorator.toggle', decorator: 'strong'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[8]!,
+          content: [
+            {...first, children: [{...first.children[0], marks: ['strong']}]},
+            misplaced,
+            {...last, children: [{...last.children[0], marks: ['strong']}]},
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: decorator across a misplaced span at nested callout preserves its payload', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const keys = Array.from({length: 10}, () => keyGenerator())
+    const prefix = [{_key: keys[9]!}, 'content', {_key: keys[8]!}, 'content']
+    const misplaced = {_type: 'span', _key: keys[2]!, text: 'foo', marks: []}
+    const first = {
+      _type: 'block',
+      _key: keys[0]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[1]!, text: 'foo', marks: []}],
+    }
+    const last = {
+      _type: 'block',
+      _key: keys[5]!,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keys[6]!, text: 'baz', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        decorators: [{name: 'strong'}],
+        styles: [{name: 'normal'}, {name: 'h1'}],
+        lists: [{name: 'bullet'}],
+        annotations: [{name: 'link'}],
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'callout'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [first, misplaced, last],
+            },
+          ],
+        },
+      ],
+      children: (
+        <NodePlugin
+          nodes={[
+            defineContainer({
+              type: 'callout',
+              arrayField: 'content',
+              render: ({children}) => <>{children}</>,
+            }),
+          ]}
+        />
+      ),
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [...prefix, {_key: keys[0]!}, 'children', {_key: keys[1]!}],
+          offset: 0,
+        },
+        focus: {
+          path: [...prefix, {_key: keys[5]!}, 'children', {_key: keys[6]!}],
+          offset: 3,
+        },
+      },
+    })
+    editor.send({type: 'decorator.toggle', decorator: 'strong'})
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'callout',
+          _key: keys[9]!,
+          content: [
+            {
+              _type: 'callout',
+              _key: keys[8]!,
+              content: [
+                {
+                  ...first,
+                  children: [{...first.children[0], marks: ['strong']}],
+                },
+                misplaced,
+                {...last, children: [{...last.children[0], marks: ['strong']}]},
+              ],
+            },
+          ],
+        },
+      ]),
+    )
+  })
+  test('Scenario: explicit insert.text preserves a misplaced span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const misplaced = {_type: 'span', _key: keyGenerator(), text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [misplaced, block],
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: misplaced._key}],
+      offset: 3,
+      text: 'baz',
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: block._key}, 'children', {_key: block.children[0]!._key}],
+      offset: 3,
+      text: 'baz',
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        misplaced,
+        {...block, children: [{...block.children[0], text: 'barbaz'}]},
+      ]),
+    )
+  })
+
+  test('Scenario: explicit remove.text preserves a misplaced span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const misplaced = {_type: 'span', _key: keyGenerator(), text: 'foo'}
+    const block = {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: keyGenerator(), text: 'bar', marks: []}],
+    }
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [misplaced, block],
+    })
+    editor.send({
+      type: 'remove.text',
+      at: [{_key: misplaced._key}],
+      offset: 0,
+      text: 'foo',
+    })
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: block._key}, 'children', {_key: block.children[0]!._key}],
+      offset: 3,
+      text: 'baz',
+    })
+    await vi.waitFor(() =>
+      expect(editor.getSnapshot().context.value).toEqual([
+        misplaced,
+        {...block, children: [{...block.children[0], text: 'barbaz'}]},
+      ]),
+    )
   })
 })

@@ -1,8 +1,6 @@
-import {isSpan, isTextBlock} from '@portabletext/schema'
-import type {CorrectionEntry} from './correction-entry'
+import {isTextBlock} from '@portabletext/schema'
 import {createSpan} from './create-nodes'
-import {isObjectNode} from './node-kinds'
-import type {CaretContext, CaretCorrection} from './types'
+import type {CaretContext, CaretCorrection, CaretEntry} from './types'
 
 /**
  * Returns the next span an inline object in the text block needs: before it,
@@ -10,7 +8,7 @@ import type {CaretContext, CaretCorrection} from './types'
  */
 export function getInlineObjectBracketingCorrection(
   context: CaretContext,
-  entry: CorrectionEntry,
+  entry: CaretEntry,
 ): CaretCorrection | undefined {
   const {node, path} = entry
 
@@ -23,13 +21,13 @@ export function getInlineObjectBracketingCorrection(
   for (let index = 0; index < children.length; index++) {
     const child = children[index]
 
-    if (!isObjectNode(context.schema, child)) {
+    if (!child || entry.childKind(child) !== 'object') {
       continue
     }
 
     const previous = children[index - 1]
 
-    if (previous == null || !isSpan({schema: context.schema}, previous)) {
+    if (previous == null || entry.childKind(previous) !== 'span') {
       return {
         rule: 'inline-object-bracketing',
         type: 'insert',

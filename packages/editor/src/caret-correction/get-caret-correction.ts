@@ -10,6 +10,12 @@ export function getCaretCorrection(
   context: CaretContext,
   entry: CaretEntry,
 ): CaretCorrection | undefined {
+  if (entry.kind === 'object') {
+    return getContainerFieldCorrection(context, entry)
+  }
+  if (entry.kind !== 'text block') {
+    return undefined
+  }
   return (
     getContainerFieldCorrection(context, entry) ??
     getEmptyChildrenCorrection(context, entry) ??

@@ -1,9 +1,10 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlockNode} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {serializePath} from '../paths/serialize-path'
 import {isEditableContainer} from '../schema/is-editable-container'
 import {getAncestors} from '../traversal/get-ancestors'
 import {getNodes} from '../traversal/get-nodes'
+import {isBlock} from '../traversal/is-block'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 
 export type SelectionState = {
@@ -76,7 +77,7 @@ export function getSelectionState(
     const serialized = serializePath(path)
 
     if (
-      isTextBlock({schema: snapshot.context.schema}, node) ||
+      (isBlock(snapshot, path) && isTextBlockNode(snapshot.context, node)) ||
       isEditableContainer(snapshot, node, path)
     ) {
       selectedContainerPaths.add(serialized)
