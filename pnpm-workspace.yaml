@@ -52,6 +52,7 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - "@portabletext/*"
   - "@sanity/*"
+  - "@textspec/*"
   - "@types/*"
   - "@typescript/*"
   - "@vercel/stega"
