@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@textspec/notation": "^1.0.2"
+    "@textspec/notation": "^2.0.0"
   },
   "devDependencies": {
     "@portabletext/patches": "workspace:^",

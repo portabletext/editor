@@ -80,11 +80,11 @@ export function fromTextspec(
   blocks: Array<PortableTextBlock>
   selection: TextspecSelection
 } {
-  // If no selection markers are present, add a cursor at the end
-  // to satisfy the parser's requirement for a selection marker.
-  const hasSelection = /(?<!\\)[|^]/.test(textspec)
-  const input = hasSelection ? textspec : `${textspec}|`
-  const state = parse(input)
+  const state = parse(textspec)
+  if (!state.selection && !/(?<!\\)[|^]/.test(textspec)) {
+    const point = getDocumentEndPoint(state.blocks)
+    state.selection = {anchor: point, focus: point}
+  }
   const position = rootPosition(context.schema, context.containers ?? new Map())
   const blocks = state.blocks.flatMap((block) =>
     convertBlockToPTE(position, block, context.keyGenerator),
@@ -93,6 +93,37 @@ export function fromTextspec(
   const selection = convertSelectionToPTE(position, state.blocks, blocks, state)
 
   return {blocks, selection}
+}
+
+function getDocumentEndPoint(blocks: ReadonlyArray<TextspecBlock>): {
+  path: Array<number>
+  offset: number
+} {
+  const index = blocks.length - 1
+  const block = blocks[index]
+
+  if (block?.kind === 'containerBlock') {
+    const point = getDocumentEndPoint(block.children)
+    return {path: [index, ...point.path], offset: point.offset}
+  }
+
+  if (block?.kind === 'textBlock') {
+    const childIndex = block.children.length - 1
+    const child = block.children[childIndex]
+    return child?.kind === 'text'
+      ? {path: [index, childIndex], offset: child.text.length}
+      : {path: [index, block.children.length], offset: 0}
+  }
+
+  if (block?.kind === 'rawBlock') {
+    const lineIndex = block.lines.length - 1
+    return {
+      path: [index, lineIndex],
+      offset: block.lines[lineIndex]?.length ?? 0,
+    }
+  }
+
+  return {path: [index], offset: 1}
 }
 
 function blockTypeToStyle(type: string): string {
@@ -665,7 +696,7 @@ function computeTextOffset(
       return undefined
     }
 
-    // Empty children: pattern block is empty (e.g. `B: `). Treat the point
+    // Empty children: pattern block is empty (e.g. `B:`). Treat the point
     // as the start of the block. PTE normalizes empty blocks with a single
     // placeholder span at offset 0.
     if (currentChildren.length === 0) {
