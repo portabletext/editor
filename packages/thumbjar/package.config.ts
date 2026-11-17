@@ -2,8 +2,6 @@ import {defineConfig} from '@sanity/pkg-utils'
 
 export default defineConfig({
   tsconfig: 'tsconfig.dist.json',
-  // Private, so no release tags: nothing renders its API docs.
-  tsdoc: false,
   bundles: [
     {source: './src/guard.ts', import: './dist/guard.js', runtime: 'node'},
     {

@@ -12,6 +12,11 @@ export {
 } from '../device/budget.ts'
 
 declare module 'vitest' {
+  /**
+   * Page and summary settings supplied by `deviceProject`.
+   *
+   * @public
+   */
   export interface ProvidedContext {
     thumbjarPageUrl: string
     thumbjarPageHint: string
@@ -19,7 +24,11 @@ declare module 'vitest' {
   }
 }
 
-/** Options of `deviceProject`. */
+/**
+ * Options of `deviceProject`.
+ *
+ * @public
+ */
 export type DeviceProjectOptions = {
   /** The project's name, `device` unless given. */
   name?: string
@@ -67,6 +76,8 @@ export type DeviceProjectOptions = {
  *   },
  * })
  * ```
+ *
+ * @public
  */
 export function deviceProject({
   name = 'device',

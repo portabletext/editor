@@ -14,7 +14,11 @@ declare global {
   }
 }
 
-/** Other `input` types either take no text or, like `email` and `number`, do not support `setSelectionRange`. */
+/**
+ * Other `input` types either take no text or, like `email` and `number`, do not support `setSelectionRange`.
+ *
+ * @public
+ */
 export const TEXT_FIELD_SELECTOR =
   'textarea, input:not([type]), input[type=""], input[type="text" i], input[type="search" i], input[type="tel" i], input[type="url" i], input[type="password" i], [contenteditable]'
 
@@ -48,7 +52,8 @@ const EVENT_TYPES = [
  * listeners resolve `window.__field()` at event time. `beforeinput` and `input` also record
  * `isComposing`, `cancelable` and, when supported, `targetRanges` during dispatch. Each range is
  * `{start, end}` in UTF-16 offsets or `null` outside the field; no ranges gives `[]`.
- * `defaultPrevented` is absent until a zero-delay timer reads it after the whole dispatch.
+ * `defaultPrevented` is absent until a zero-delay timer reads it after the whole dispatch. Its absence
+ * means unknown, never `false`.
  * Failed reads record `null` for that field.
  *
  * Each recorded event is also printed to a `#log` element when the page has one.
@@ -69,6 +74,8 @@ const EVENT_TYPES = [
  *   recordInput({getText: () => editorText(editor.getSnapshot())})
  * }
  * ```
+ *
+ * @public
  */
 export function recordInput({
   getText,
@@ -80,6 +87,7 @@ export function recordInput({
   getText: () => string | null
   /** Optional JSON state read alongside the text, and exceptions propagate to the driver. */
   getState?: () => unknown
+  /** Named handlers awaited by page steps. A step without `args` passes `null`. */
   actions?: Record<string, (args: Json | undefined) => void | Promise<void>>
   /** The field to type into and record on, for a page with no editor model of its own. */
   field?: HTMLElement | HTMLTextAreaElement | HTMLInputElement
