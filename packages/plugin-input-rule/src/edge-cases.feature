@@ -12,11 +12,11 @@ Feature: Edge Cases
 
     Examples:
       | state         | inserted text | new state                |
-      | "B: "         | "."           | "B: ...new\|"            |
+      | "B:"          | "."           | "B: ...new\|"            |
       | "B: foo"      | "."           | "B: foo...new\|"         |
-      | "B: "         | "foo."        | "B: foo...new\|"         |
+      | "B:"          | "foo."        | "B: foo...new\|"         |
       | "B: foo."     | "."           | "B: foo....new\|"        |
-      | "B: "         | "foo.bar."    | "B: foo...bar...new\|"   |
+      | "B:"          | "foo.bar."    | "B: foo...bar...new\|"   |
       | "B: foo.bar." | "baz."        | "B: foo.bar.baz...new\|" |
 
   Scenario Outline: End String Rule
@@ -29,11 +29,11 @@ Feature: Edge Cases
     Examples:
       | state           | inserted text | new state                |
       | "B: -\|"        | ">"           | "B: →new\|"              |
-      | "B: "           | "->"          | "B: →new\|"              |
+      | "B:"            | "->"          | "B: →new\|"              |
       | "B: foo"        | "->"          | "B: foo→new\|"           |
-      | "B: "           | "foo->"       | "B: foo→new\|"           |
+      | "B:"            | "foo->"       | "B: foo→new\|"           |
       | "B: foo-"       | ">bar"        | "B: foo->barnew\|"       |
-      | "B: "           | "foo->bar->"  | "B: foo->bar→new\|"      |
+      | "B:"            | "foo->bar->"  | "B: foo->bar→new\|"      |
       | "B: foo->bar->" | "baz->"       | "B: foo->bar->baz→new\|" |
 
   Scenario Outline: Non-Global Rule
@@ -46,11 +46,11 @@ Feature: Edge Cases
     Examples:
       | state             | inserted text  | new state                  |
       | "B: (c"           | ")"            | "B: ©new\|"                |
-      | "B: "             | "(c)"          | "B: ©new\|"                |
+      | "B:"              | "(c)"          | "B: ©new\|"                |
       | "B: foo"          | "(c)"          | "B: foo©new\|"             |
-      | "B: "             | "foo(c)"       | "B: foo©new\|"             |
+      | "B:"              | "foo(c)"       | "B: foo©new\|"             |
       | "B: foo(c"        | ")bar"         | "B: foo©barnew\|"          |
-      | "B: "             | "foo(c)bar(c)" | "B: foo©bar©new\|"         |
+      | "B:"              | "foo(c)bar(c)" | "B: foo©bar©new\|"         |
       | "B: foo(c)bar(c)" | "baz(c)"       | "B: foo(c)bar(c)baz©new\|" |
 
   Scenario Outline: Writing after Multiple Groups Rule
@@ -62,11 +62,11 @@ Feature: Edge Cases
 
     Examples:
       | state      | inserted text | new state           |
-      | "B: "      | "xfooy"       | "B: zfooznew\|"     |
+      | "B:"       | "xfooy"       | "B: zfooznew\|"     |
       | "B: xfoo"  | "y"           | "B: zfooznew\|"     |
       | "B: xfooy" | "z"           | "B: xfooyznew\|"    |
-      | "B: "      | "xfyxoy"      | "B: zfzzoznew\|"    |
-      | "B: "      | "xfyxoyxoy"   | "B: zfzzozzoznew\|" |
+      | "B:"       | "xfyxoy"      | "B: zfzzoznew\|"    |
+      | "B:"       | "xfyxoyxoy"   | "B: zfzzozzoznew\|" |
 
   Scenario Outline: Replacing 'a' and 'c'
     Given the editor state is <state>
@@ -77,7 +77,7 @@ Feature: Edge Cases
 
     Examples:
       | state   | inserted text | new state     |
-      | "B: "   | "ABC"         | "B: CBAnew\|" |
+      | "B:"    | "ABC"         | "B: CBAnew\|" |
       | "B: AB" | "C"           | "B: CBAnew\|" |
 
   Scenario Outline: Undoing Multiple Groups Rule
@@ -90,11 +90,11 @@ Feature: Edge Cases
 
     Examples:
       | state      | inserted text | before undo      | after undo     |
-      | "B: "      | "xfooy"       | "B: zfooz\|"     | "B: xfooy"     |
+      | "B:"       | "xfooy"       | "B: zfooz\|"     | "B: xfooy"     |
       | "B: xfoo"  | "y"           | "B: zfooz\|"     | "B: xfooy"     |
       | "B: xfooy" | "z"           | "B: xfooyz\|"    | "B: xfooy"     |
-      | "B: "      | "xfyxoy"      | "B: zfzzoz\|"    | "B: xfyxoy"    |
-      | "B: "      | "xfyxoyxoy"   | "B: zfzzozzoz\|" | "B: xfyxoyxoy" |
+      | "B:"       | "xfyxoy"      | "B: zfzzoz\|"    | "B: xfyxoy"    |
+      | "B:"       | "xfyxoyxoy"   | "B: zfzzozzoz\|" | "B: xfyxoyxoy" |
 
   Scenario Outline: Preserving inline objects
     When the editor is focused
@@ -138,7 +138,7 @@ Feature: Edge Cases
       # Pressing Shift is a noop. It only exists so we can press Backspace in
       # subsequent Scenarios to position to caret at the edge of the inline
       # object.
-      | "B: "                  | after ""    | "{Shift}"     | "B: new\|"                    |
+      | "B:"                   | after ""    | "{Shift}"     | "B: new\|"                    |
       | "B: foo"               | after "foo" | "{Shift}"     | "B: foo# new\|"               |
       | "B: {stock-ticker}foo" | after "foo" | "{Shift}"     | "B: {stock-ticker}foo# new\|" |
       # This is an edge case we have to live with. There's no way of knowing
@@ -161,7 +161,7 @@ Feature: Edge Cases
       # Pressing Shift is a noop. It only exists so we can press Backspace in
       # subsequent Scenarios to position to caret at the edge of the inline
       # object.
-      | "B: "                  | after ""    | "{Shift}"     | "B: new\|"                     |
+      | "B:"                   | after ""    | "{Shift}"     | "B: new\|"                     |
       | "B: foo"               | after "foo" | "{Shift}"     | "B: foo## new\|"               |
       | "B: {stock-ticker}foo" | after "foo" | "{Shift}"     | "B: {stock-ticker}foo## new\|" |
       | "B: {stock-ticker}f"   | after "f"   | "{Backspace}" | "B: {stock-ticker}## new\|"    |
@@ -177,7 +177,7 @@ Feature: Edge Cases
 
     Examples:
       | state | position | inserted text | new state        |
-      | "B: " | after "" | "---"         | "B: <hr />new\|" |
+      | "B:"  | after "" | "---"         | "B: <hr />new\|" |
 
   Scenario Outline: Expanded selection
     Given the editor state is <state>
@@ -208,7 +208,7 @@ Feature: Edge Cases
       | "B: (cf" | "f"       | ")"           | "B: ©\|"    | "B: (c)"   |
 
   Scenario: Consecutive undo after selection change
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When "->" is typed
     And undo is performed
     And "{ArrowLeft}" is pressed
@@ -216,12 +216,12 @@ Feature: Edge Cases
     Then the editor state is "B: -|"
 
   Scenario Outline: Multiple overlapping matches in one insertion
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When "1*2*3" is inserted
     Then the editor state is "B: 1×2×3|"
 
   Scenario: Backspace after typing following input rule should delete character
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When "->" is typed
     Then the editor state is "B: →|"
     When "foo" is typed
@@ -238,7 +238,7 @@ Feature: Edge Cases
 
     Examples:
       | state    | inserted text | new state          |
-      | "B: "    | "!hi!"        | "B: WHOLEnew\|"    |
+      | "B:"     | "!hi!"        | "B: WHOLEnew\|"    |
       | "B: foo" | "!hi!"        | "B: fooWHOLEnew\|" |
 
   Scenario Outline: Optional Replace Group
@@ -250,11 +250,11 @@ Feature: Edge Cases
 
     Examples:
       | state | inserted text | new state         |
-      | "B: " | "judeee yeah" | "B: judeee!new\|" |
-      | "B: " | "judeee"      | "B: judeeenew\|"  |
+      | "B:"  | "judeee yeah" | "B: judeee!new\|" |
+      | "B:"  | "judeee"      | "B: judeeenew\|"  |
 
   Scenario: Backspace does not smart-undo after a competing behavior mutated the block
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "qqq" is typed
     Then the editor state is "B: Q|"
@@ -264,7 +264,7 @@ Feature: Edge Cases
     Then the editor state is "B style=\"consumed\": |"
 
   Scenario: Backspace after two consecutive rule applications only undoes the second
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "!hi!" is inserted
     Then the editor state is "B: WHOLE|"

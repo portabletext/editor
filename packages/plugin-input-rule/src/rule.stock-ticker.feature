@@ -10,7 +10,7 @@ Feature: Stock Ticker Rule
 
     Examples:
       | state | inserted text | new state                |
-      | "B: " | "{AAPL}"      | "B: {stock-ticker}new\|" |
+      | "B:"  | "{AAPL}"      | "B: {stock-ticker}new\|" |
 
   Scenario Outline: Smart undo with Backspace
     Given the editor state is <state>
