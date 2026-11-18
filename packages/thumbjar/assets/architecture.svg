@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 2400 1400" role="img" aria-labelledby="title desc">
+<title id="title">How thumbjar drives Gboard and Chrome on an emulator</title>
+<desc id="desc">A Vitest test calls runOnDevice. The driver uses adb to read Chrome over CDP and to reach uiautomator2, which finds and taps Gboard keys. thumbjar serve serves the page through adb reverse.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#606a74"/></marker></defs>
+<style>text { font-family: system-ui, -apple-system, Segoe UI, sans-serif; fill: #292f35; } .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } .muted { fill: #606a74; } .arrow { fill: none; stroke: #606a74; stroke-width: 3; marker-end: url(#arrow); }</style>
+<rect width="2400" height="1400" fill="white"/>
+<rect x="60" y="60" width="1080" height="1210" rx="30" fill="#f5f7f9" stroke="#d3dbe3" stroke-width="2"/>
+<rect x="1550" y="60" width="790" height="1210" rx="80" fill="white" stroke="#292f35" stroke-width="6"/>
+<text x="108" y="125" font-size="31" font-weight="650">Your machine or CI runner</text>
+<text x="1780" y="125" font-size="30" font-weight="650">Android emulator</text>
+<text x="1765" y="163" font-size="24" class="muted">API 36, Play Store image</text>
+<rect x="108" y="165" width="984" height="365" rx="22" fill="#f5fae7" stroke="#769b17" stroke-width="4"/>
+<path d="M130 165 H1070 Q1092 165 1092 187 V235 H108 V187 Q108 165 130 165" fill="#769b17"/>
+<text x="144" y="211" font-size="30" font-weight="650" style="fill:white">A Vitest test</text>
+<text x="144" y="273" font-size="19" class="code" xml:space="preserve">test(&#x27;kyou converts to 今日&#x27;, async (context) =&gt; {</text>
+<text x="144" y="301" font-size="19" class="code" xml:space="preserve">  const run = await runOnDevice(context, {</text>
+<text x="144" y="329" font-size="19" class="code" xml:space="preserve">    url: &#x27;http://localhost:8765/editor.html&#x27;,</text>
+<text x="144" y="357" font-size="19" class="code" xml:space="preserve">    keyboard: &#x27;ja&#x27;,</text>
+<text x="144" y="385" font-size="19" class="code" xml:space="preserve">    prefix: &#x27;&#x27;,</text>
+<text x="144" y="413" font-size="19" class="code" xml:space="preserve">    steps: [{type: &#x27;compose&#x27;, letters: &#x27;kyou&#x27;, commit: {candidate: &#x27;今日&#x27;}}],</text>
+<text x="144" y="441" font-size="19" class="code" xml:space="preserve">  })</text>
+<text x="144" y="469" font-size="19" class="code" xml:space="preserve">  expect(run.text).toEqual(&#x27;今日&#x27;)</text>
+<text x="144" y="497" font-size="19" class="code" xml:space="preserve">})</text>
+<rect x="108" y="590" width="984" height="160" rx="22" fill="#fff8e0" stroke="#dfa90b" stroke-width="3"/>
+<text x="144" y="637" font-size="30" font-weight="650">runOnDevice(), the driver</text>
+<text x="144" y="681" font-size="25" class="muted">Taps each step&#x27;s keys, reads the page after every step</text>
+<text x="144" y="717" font-size="25" class="muted">and returns a Run. Never retries an assertion.</text>
+<rect x="108" y="810" width="984" height="180" rx="22" fill="#edf1f5" stroke="#606a74" stroke-width="3"/>
+<text x="144" y="859" font-size="30" font-weight="650">adb (Android Debug Bridge)</text>
+<text x="144" y="907" font-size="25" class="muted">Google&#x27;s tool for controlling an Android device. Taps,</text>
+<text x="144" y="945" font-size="25" class="muted">shell commands, and port forwarding to the phone.</text>
+<rect x="108" y="1060" width="984" height="130" rx="22" fill="#fff8e0" stroke="#dfa90b" stroke-width="3"/>
+<text x="144" y="1110" font-size="30" font-weight="650">thumbjar serve</text>
+<text x="144" y="1155" font-size="25" class="muted">Serves your built page</text>
+<rect x="1598" y="205" width="694" height="385" rx="22" fill="#eaf2ff" stroke="#267bff" stroke-width="3"/>
+<text x="1634" y="255" font-size="31" font-weight="650">Chrome</text>
+<text x="2110" y="255" font-size="24" class="code muted">your page</text>
+<rect x="1634" y="285" width="622" height="178" rx="12" fill="white" stroke="#c6d9fb" stroke-width="2"/>
+<text x="1662" y="407" font-size="56">今日</text>
+<path d="M1785 355 V418" stroke="#267bff" stroke-width="4"/>
+<text x="1634" y="512" font-size="25" class="muted">recordInput() logs every composition,</text>
+<text x="1634" y="550" font-size="25" class="muted">beforeinput and input event</text>
+<rect x="1598" y="640" width="694" height="390" rx="22" fill="#fff0ee" stroke="#f0352b" stroke-width="3"/>
+<text x="1634" y="690" font-size="30" font-weight="650">Gboard, the real keyboard</text>
+<text x="1634" y="730" font-size="24" class="muted">Composes きょう itself, offers 今日</text>
+<rect x="1634" y="758" width="622" height="62" rx="10" fill="white" stroke="#ffb3ac" stroke-width="2"/>
+<text x="1705" y="801" font-size="30" font-weight="650">今日</text>
+<text x="1930" y="801" font-size="30">京</text>
+<text x="2104" y="801" font-size="28">きょう</text>
+<path d="M1841 770 V808 M2048 770 V808" stroke="#ffb3ac" stroke-width="2"/>
+<rect x="1634" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1652" y="888" font-size="27">q</text>
+<rect x="1697" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1715" y="888" font-size="27">w</text>
+<rect x="1760" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1778" y="888" font-size="27">e</text>
+<rect x="1823" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1841" y="888" font-size="27">r</text>
+<rect x="1886" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1904" y="888" font-size="27">t</text>
+<rect x="1949" y="842" width="55" height="71" rx="8" fill="#ffd8d2" stroke="#f0352b" stroke-width="3"/>
+<text x="1967" y="888" font-size="27" font-weight="650">y</text>
+<rect x="2012" y="842" width="55" height="71" rx="8" fill="#ffd8d2" stroke="#f0352b" stroke-width="3"/>
+<text x="2030" y="888" font-size="27" font-weight="650">u</text>
+<rect x="2075" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="2093" y="888" font-size="27">i</text>
+<rect x="2138" y="842" width="55" height="71" rx="8" fill="#ffd8d2" stroke="#f0352b" stroke-width="3"/>
+<text x="2156" y="888" font-size="27" font-weight="650">o</text>
+<rect x="2201" y="842" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="2219" y="888" font-size="27">p</text>
+<rect x="1665" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1683" y="971" font-size="27">a</text>
+<rect x="1728" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1746" y="971" font-size="27">s</text>
+<rect x="1791" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1809" y="971" font-size="27">d</text>
+<rect x="1854" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1872" y="971" font-size="27">f</text>
+<rect x="1917" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1935" y="971" font-size="27">g</text>
+<rect x="1980" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="1998" y="971" font-size="27">h</text>
+<rect x="2043" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="2061" y="971" font-size="27">j</text>
+<rect x="2106" y="925" width="55" height="71" rx="8" fill="#ffd8d2" stroke="#f0352b" stroke-width="3"/>
+<text x="2124" y="971" font-size="27" font-weight="650">k</text>
+<rect x="2169" y="925" width="55" height="71" rx="8" fill="white" stroke="#f5a39c" stroke-width="1.5"/>
+<text x="2187" y="971" font-size="27">l</text>
+<rect x="1598" y="1100" width="694" height="130" rx="22" fill="#fff8e0" stroke="#dfa90b" stroke-width="3"/>
+<text x="1634" y="1146" font-size="30" font-weight="650">uiautomator2</text>
+<text x="1634" y="1183" font-size="24" class="muted">Reads the screen to find where each key is,</text>
+<text x="1634" y="1213" font-size="24" class="muted">then taps it</text>
+<path class="arrow" d="M600 530 V583"/>
+<path class="arrow" d="M600 750 V803"/>
+<path class="arrow" d="M1092 875 H1200 V405 H1655"/>
+<text x="1224" y="317" font-size="23" font-weight="650">CDP over adb forward</text>
+<text x="1224" y="352" font-size="22" class="muted">run JS, read text</text>
+<text x="1224" y="382" font-size="22" class="muted">and every event</text>
+<path class="arrow" d="M1092 1125 H1450 V555 H1588"/>
+<text x="1224" y="650" font-size="24" font-weight="650">adb reverse</text>
+<text x="1224" y="684" font-size="23" class="muted">loads your page</text>
+<path class="arrow" d="M1092 940 H1250 V1165 H1588"/>
+<text x="1280" y="1210" font-size="23" font-weight="650">find each key, tap it</text>
+<path class="arrow" d="M2240 1100 V1003 H2205 V988"/>
+<text x="1772" y="1073" font-size="23" font-weight="650">taps, like a finger</text>
+<text x="695" y="1350" font-size="29">A failing expect fails the test like any Vitest test.</text>
+</svg>
