@@ -2,7 +2,46 @@
 
 # thumbjar
 
-thumbjar types with real Gboard on an Android emulator into a web page in Chrome. It returns what the page holds afterwards, so a Vitest test can assert on it. Real keyboard input lets you test how Gboard reacts when a page changes the DOM during a composition.
+Test your web text input against a real Android keyboard.
+
+Editors and text fields break on Android in ways desktop tests never show. Gboard composes words, offers conversion candidates, and reacts when the page changes the DOM in the middle of a composition. Synthetic events from Playwright or jsdom don't behave like that, so those bugs only show up on a phone. thumbjar taps real Gboard keys on an Android emulator, types into your page in Chrome, and hands the result back to a Vitest test.
+
+## At a glance
+
+In the page:
+
+```ts
+import {recordInput} from 'thumbjar/page'
+
+recordInput({getText: () => document.querySelector('textarea')!.value})
+```
+
+In the test:
+
+```ts
+import {runOnDevice} from 'thumbjar'
+import {expect, test} from 'vitest'
+
+test('kyou converts to 今日', async (context) => {
+  const run = await runOnDevice(context, {
+    url: 'http://localhost:8765/editor.html',
+    keyboard: 'ja',
+    prefix: '',
+    steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
+  })
+
+  expect(run.text).toEqual('今日')
+})
+```
+
+## How it works
+
+![How thumbjar drives Gboard and Chrome on an emulator](https://raw.githubusercontent.com/portabletext/editor/main/packages/thumbjar/assets/architecture.svg)
+
+1. `thumbjar serve` serves your built page, and `adb reverse` makes it reachable from Chrome on the emulator.
+2. `recordInput()` in the page records the field's text, selection and input events.
+3. For each step, the uiautomator2 server on the device finds Gboard's keys in the screen's accessibility tree and taps them.
+4. After each step, the driver reads what the page recorded over the Chrome DevTools protocol and returns it to your test as a `Run`.
 
 ## Install
 
