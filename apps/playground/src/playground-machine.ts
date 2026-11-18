@@ -2,7 +2,6 @@ import {
   keyGenerator,
   type ChangeEvent,
   type EditorSelection,
-  type MutationEvent,
   type PortableTextBlock,
 } from '@portabletext/editor'
 import {portableTextToMarkdown} from '@portabletext/markdown'
@@ -62,7 +61,7 @@ const editorMachine = setup({
     },
     events: {} as
       | ChangeEvent
-      | MutationEvent
+      | {type: 'local patches'; patches: Array<Patch>}
       | PatchesEvent
       | {type: 'value'; value?: Array<PortableTextBlock>}
       | {type: 'remove'}
@@ -119,22 +118,18 @@ const editorMachine = setup({
   }),
   on: {
     'change': {
-      actions: [
-        sendParent(({event, self}) => ({
-          type: 'editor.change',
-          editorId: self.id,
-          event,
-        })),
-      ],
+      actions: sendParent(({event, self}) => ({
+        type: 'editor.change',
+        editorId: self.id,
+        event,
+      })),
     },
-    'mutation': {
-      actions: [
-        sendParent(({event, self}) => ({
-          ...event,
-          type: 'editor.mutation',
-          editorId: self.id,
-        })),
-      ],
+    'local patches': {
+      actions: sendParent(({event, self}) => ({
+        type: 'editor.local.patches',
+        editorId: self.id,
+        patches: event.patches,
+      })),
     },
     'patches': {
       actions: ['store patches received', 'emitPatches'],
@@ -281,14 +276,15 @@ export const playgroundMachine = setup({
     },
     events: {} as
       | {type: 'add editor'}
-      | ({type: 'editor.mutation'; editorId: EditorActorRef['id']} & Omit<
-          MutationEvent,
-          'type'
-        >)
       | {
           type: 'editor.change'
           editorId: EditorActorRef['id']
           event: ChangeEvent
+        }
+      | {
+          type: 'editor.local.patches'
+          editorId: EditorActorRef['id']
+          patches: Array<Patch>
         }
       | {type: 'editor.remove'; editorId: EditorActorRef['id']}
       | {type: 'toggle value'}
@@ -346,7 +342,7 @@ export const playgroundMachine = setup({
   },
   actions: {
     'broadcast patches': ({context, event}) => {
-      assertEvent(event, 'editor.mutation')
+      assertEvent(event, 'editor.local.patches')
       context.editors.forEach((editor) => {
         editor.send({
           type: 'patches',
@@ -358,20 +354,20 @@ export const playgroundMachine = setup({
       })
     },
     'update value': assign({
-      value: ({event}) => {
-        assertEvent(event, 'editor.mutation')
-        return event.value
+      value: ({context, event}) => {
+        assertEvent(event, 'editor.local.patches')
+        return applyAll(context.value, event.patches)
       },
     }),
     'update patch-derived value': assign({
       patchDerivedValue: ({context, event}) => {
-        assertEvent(event, 'editor.mutation')
+        assertEvent(event, 'editor.local.patches')
         return applyAll(context.patchDerivedValue ?? [], event.patches)
       },
     }),
     'add to patch feed': assign({
       patchFeed: ({context, event}) => {
-        assertEvent(event, 'editor.mutation')
+        assertEvent(event, 'editor.local.patches')
         return [
           {
             id: keyGenerator(),
@@ -573,7 +569,7 @@ export const playgroundMachine = setup({
         'remove layers from context',
       ],
     },
-    'editor.mutation': {
+    'editor.local.patches': {
       actions: [
         'broadcast patches',
         'update value',

@@ -126,9 +126,6 @@ export function Editor(props: {
             <EditorEventListener
               editorRef={props.editorRef}
               on={(event) => {
-                if (event.type === 'mutation') {
-                  props.editorRef.send(event)
-                }
                 if (event.type === 'editable') {
                   setReadOnly(false)
                 }
@@ -323,6 +320,24 @@ function EditorEventListener(props: {
     return () => {
       subscription.unsubscribe()
     }
+  }, [editor, props.editorRef])
+
+  useEffect(() => {
+    const subscription = editor.on(
+      'change',
+      (events) => {
+        const patches = events
+          .filter((event) => event.origin === 'local')
+          .flatMap((event) => event.patches)
+
+        if (patches.length > 0) {
+          props.editorRef.send({type: 'local patches', patches})
+        }
+      },
+      {batch: true},
+    )
+
+    return () => subscription.unsubscribe()
   }, [editor, props.editorRef])
 
   useEffect(() => {
