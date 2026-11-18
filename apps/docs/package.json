@@ -18,6 +18,7 @@
     "@astrojs/starlight-tailwind": "^5.0.0",
     "@portabletext/editor": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
+    "@portabletext/patches": "workspace:*",
     "@portabletext/plugin-list-index": "workspace:*",
     "@portabletext/plugin-markdown-shortcuts": "workspace:*",
     "@portabletext/plugin-typography": "workspace:*",

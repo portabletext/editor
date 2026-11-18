@@ -43,7 +43,7 @@ Before starting, it helps to understand the components that make up the editor.
 
 Start by installing the editor (it requires React 19.2.8 or later):
 
-<PackageManagers pkg="@portabletext/editor" />
+<PackageManagers pkg="@portabletext/editor @portabletext/patches" />
 
 Next, import the components and types you'll need:
 
@@ -126,6 +126,7 @@ import {
 } from '@portabletext/editor'
 import type {PortableTextBlock} from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {applyAll} from '@portabletext/patches'
 import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
@@ -148,8 +149,8 @@ function App() {
       >
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              setValue(event.value)
+            if (event.type === 'change' && event.origin === 'local') {
+              setValue((value) => applyAll(value, event.patches))
             }
           }}
         />
@@ -509,6 +510,7 @@ import {
 } from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import {ListIndexProvider} from '@portabletext/plugin-list-index'
+import {applyAll} from '@portabletext/patches'
 import {useState} from 'react'
 
 // App.tsx
@@ -528,8 +530,8 @@ function App() {
       >
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              setValue(event.value)
+            if (event.type === 'change' && event.origin === 'local') {
+              setValue((value) => applyAll(value, event.patches))
             }
           }}
         />
