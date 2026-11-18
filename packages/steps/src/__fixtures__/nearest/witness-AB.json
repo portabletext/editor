@@ -1,0 +1,55 @@
+{
+  "before": [
+    {
+      "_key": "k0",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "marks": [],
+          "text": "aaa"
+        }
+      ]
+    },
+    {
+      "_key": "k2",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k3",
+          "_type": "span",
+          "marks": [],
+          "text": "bbb"
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "point": {
+    "path": [
+      {
+        "_key": "k0"
+      },
+      "children",
+      {
+        "_key": "k1"
+      }
+    ],
+    "offset": 1
+  }
+}

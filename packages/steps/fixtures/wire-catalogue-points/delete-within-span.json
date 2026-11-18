@@ -1,0 +1,55 @@
+{
+  "scenario": "delete-within-span",
+  "seed": "B: foo bar baz",
+  "result": "B: foo  baz",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@3"
+    },
+    {
+      "point": "b0.c0@4",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c0@5",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c0@6",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c0@7",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c0@8",
+      "expected": "b0@5"
+    },
+    {
+      "point": "b0.c0@9",
+      "expected": "b0@6"
+    },
+    {
+      "point": "b0.c0@10",
+      "expected": "b0@7"
+    },
+    {
+      "point": "b0.c0@11",
+      "expected": "b0@8"
+    }
+  ]
+}
