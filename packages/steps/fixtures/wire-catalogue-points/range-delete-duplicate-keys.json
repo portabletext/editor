@@ -1,0 +1,95 @@
+{
+  "scenario": "range-delete-duplicate-keys",
+  "seed": "B: foo [strong:bar]\nB: foo [strong:bar]",
+  "result": "B: foo | [strong:bar]",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@3"
+    },
+    {
+      "point": "b0.c0@4",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c1@0",
+      "expected": "b0@4",
+      "todayWrong": "b0@5",
+      "reason": "kA's `bar` (b0.c1) is inside the deleted range [kA/e0-k2@0, kB/e0-k1@3]; the deleted range collapses to the join point b0@4 (after `foo `). Today rides it onto kB's surviving `bar` (b0@5)."
+    },
+    {
+      "point": "b0.c1@1",
+      "expected": "b0@4",
+      "todayWrong": "b0@6",
+      "reason": "inside the deleted range, collapses to the join point b0@4"
+    },
+    {
+      "point": "b0.c1@2",
+      "expected": "b0@4",
+      "todayWrong": "b0@7",
+      "reason": "inside the deleted range, collapses to the join point b0@4"
+    },
+    {
+      "point": "b0.c1@3",
+      "expected": "b0@4",
+      "todayWrong": "b0@8",
+      "reason": "inside the deleted range, collapses to the join point b0@4"
+    },
+    {
+      "point": "b1.c0@0",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b1.c0@1",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b1.c0@2",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b1.c0@3",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b1.c0@4",
+      "expected": "b0@5"
+    },
+    {
+      "point": "b1.c1@0",
+      "expected": "b0@5",
+      "todayWrong": "null",
+      "reason": "kB's ` ` + `bar` survive the range delete and join kA: kB/e0-k2@0 is right after the surviving space, b0@5. Today returns null: the dup-key renames make it lose kB's `bar`."
+    },
+    {
+      "point": "b1.c1@1",
+      "expected": "b0@6",
+      "todayWrong": "null",
+      "reason": "kB's surviving `bar`, offset 1"
+    },
+    {
+      "point": "b1.c1@2",
+      "expected": "b0@7",
+      "todayWrong": "null",
+      "reason": "kB's surviving `bar`, offset 2"
+    },
+    {
+      "point": "b1.c1@3",
+      "expected": "b0@8",
+      "todayWrong": "null",
+      "reason": "kB's surviving `bar`, offset 3 (end of the block)"
+    }
+  ]
+}

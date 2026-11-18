@@ -1,0 +1,113 @@
+{
+  "before": [
+    {
+      "_type": "callout",
+      "_key": "k5",
+      "content": [
+        {
+          "_key": "k0",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "marks": [],
+              "text": "foo"
+            },
+            {
+              "_key": "k3",
+              "_type": "span",
+              "marks": ["strong"],
+              "text": "bar"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k5"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k5"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "position": "before",
+      "items": [
+        {
+          "_key": "k8",
+          "_type": "stock"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "link",
+        "fields": [
+          {
+            "name": "href",
+            "type": "string"
+          }
+        ]
+      }
+    ],
+    "inlineObjects": [
+      {
+        "name": "stock"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

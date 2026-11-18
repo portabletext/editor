@@ -1,0 +1,272 @@
+{
+  "before": [
+    {
+      "_key": "k8",
+      "_type": "table",
+      "rows": [
+        {
+          "_key": "k7",
+          "_type": "row",
+          "cells": [
+            {
+              "_key": "k6",
+              "_type": "cell",
+              "content": [
+                {
+                  "_key": "k0",
+                  "_type": "block",
+                  "style": "normal",
+                  "markDefs": [],
+                  "children": [
+                    {
+                      "_key": "k1",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "abc"
+                    }
+                  ]
+                },
+                {
+                  "_key": "k2",
+                  "_type": "block",
+                  "style": "normal",
+                  "markDefs": [],
+                  "children": [
+                    {
+                      "_key": "k3",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "def"
+                    }
+                  ]
+                },
+                {
+                  "_key": "k4",
+                  "_type": "block",
+                  "style": "normal",
+                  "markDefs": [],
+                  "children": [
+                    {
+                      "_key": "k5",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "ghi"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "rows",
+        {
+          "_key": "k7"
+        },
+        "cells",
+        {
+          "_key": "k6"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +0,0 @@\n-abc\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "rows",
+        {
+          "_key": "k7"
+        },
+        "cells",
+        {
+          "_key": "k6"
+        },
+        "content",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "rows",
+        {
+          "_key": "k7"
+        },
+        "cells",
+        {
+          "_key": "k6"
+        },
+        "content",
+        {
+          "_key": "k4"
+        },
+        "children",
+        {
+          "_key": "k5"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +1 @@\n-gh\n i\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "rows",
+        {
+          "_key": "k7"
+        },
+        "cells",
+        {
+          "_key": "k6"
+        },
+        "content",
+        {
+          "_key": "k0"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "blockObjects": [
+      {
+        "name": "table",
+        "fields": [
+          {
+            "name": "rows",
+            "type": "array",
+            "of": [
+              {
+                "type": "row"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "row",
+        "fields": [
+          {
+            "name": "cells",
+            "type": "array",
+            "of": [
+              {
+                "type": "cell"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "cell",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "comment": {
+    "anchor": {
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "rows",
+        {
+          "_key": "k7"
+        },
+        "cells",
+        {
+          "_key": "k6"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "offset": 1
+    },
+    "focus": {
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "rows",
+        {
+          "_key": "k7"
+        },
+        "cells",
+        {
+          "_key": "k6"
+        },
+        "content",
+        {
+          "_key": "k4"
+        },
+        "children",
+        {
+          "_key": "k5"
+        }
+      ],
+      "offset": 2
+    }
+  }
+}

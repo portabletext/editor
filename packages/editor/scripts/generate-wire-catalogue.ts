@@ -54,10 +54,7 @@ const commit = execSync('git describe --always --dirty', {
   .trim()
 
 const captures = readdirSync(fixturesDir)
-  .filter(
-    (file) =>
-      file.endsWith('@root.json') || file === 'span-merge-cosmetic.json',
-  )
+  .filter((file) => file.endsWith('@root.json'))
   .sort()
   .map((file) => {
     // oxlint-disable-next-line no-restricted-globals -- standalone script outside the package's `safeStringify`/`safeParse` boundary, reading its own well-formed fixtures

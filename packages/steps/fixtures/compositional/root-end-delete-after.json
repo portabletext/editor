@@ -1,0 +1,71 @@
+{
+  "before": [
+    {
+      "_type": "block",
+      "_key": "k0",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "marks": [],
+          "text": "foo"
+        },
+        {
+          "_type": "stock",
+          "_key": "k2"
+        },
+        {
+          "_key": "k3",
+          "_type": "span",
+          "marks": [],
+          "text": ""
+        }
+      ]
+    }
+  ],
+  "patches": [],
+  "schemaDefinition": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "link",
+        "fields": [
+          {
+            "name": "href",
+            "type": "string"
+          }
+        ]
+      }
+    ],
+    "inlineObjects": [
+      {
+        "name": "stock"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

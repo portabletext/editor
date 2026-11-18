@@ -1,0 +1,268 @@
+{
+  "before": [
+    {
+      "_type": "callout",
+      "_key": "k5",
+      "content": [
+        {
+          "_key": "k4",
+          "_type": "callout",
+          "content": [
+            {
+              "_key": "k0",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "k1",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "foo"
+                },
+                {
+                  "_key": "k2",
+                  "_type": "stock"
+                },
+                {
+                  "_key": "k3",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "bar"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_key": "k6",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k7",
+          "_type": "span",
+          "marks": [],
+          "text": "baz"
+        }
+      ]
+    }
+  ],
+  "after": [
+    {
+      "_type": "callout",
+      "_key": "k5",
+      "content": [
+        {
+          "_key": "k4",
+          "_type": "callout",
+          "content": [
+            {
+              "_key": "k0",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "k1",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "foo"
+                },
+                {
+                  "_key": "k2",
+                  "_type": "stock"
+                },
+                {
+                  "_key": "k3",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "bar"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_key": "k6",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k7",
+          "_type": "span",
+          "marks": [],
+          "text": "bxaz"
+        }
+      ]
+    }
+  ],
+  "mutations": [
+    {
+      "type": "mutation",
+      "patches": [
+        {
+          "type": "diffMatchPatch",
+          "path": [
+            {
+              "_key": "k6"
+            },
+            "children",
+            {
+              "_key": "k7"
+            },
+            "text"
+          ],
+          "value": "@@ -1,3 +1,4 @@\n b\n+x\n az\n",
+          "origin": "local"
+        }
+      ],
+      "value": [
+        {
+          "_type": "callout",
+          "_key": "k5",
+          "content": [
+            {
+              "_key": "k4",
+              "_type": "callout",
+              "content": [
+                {
+                  "_key": "k0",
+                  "_type": "block",
+                  "style": "normal",
+                  "markDefs": [],
+                  "children": [
+                    {
+                      "_key": "k1",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "foo"
+                    },
+                    {
+                      "_key": "k2",
+                      "_type": "stock"
+                    },
+                    {
+                      "_key": "k3",
+                      "_type": "span",
+                      "marks": [],
+                      "text": "bar"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_key": "k6",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k7",
+              "_type": "span",
+              "marks": [],
+              "text": "bxaz"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "schemaDefinition": {
+    "inlineObjects": [
+      {
+        "name": "stock"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "points": {
+    "left": {
+      "path": [
+        {
+          "_key": "k5"
+        },
+        "content",
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "offset": 3
+    },
+    "inline": {
+      "path": [
+        {
+          "_key": "k5"
+        },
+        "content",
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "offset": 0
+    },
+    "right": {
+      "path": [
+        {
+          "_key": "k5"
+        },
+        "content",
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "offset": 0
+    }
+  }
+}

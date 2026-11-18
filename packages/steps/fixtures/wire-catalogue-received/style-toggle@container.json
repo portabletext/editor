@@ -1,0 +1,27 @@
+{
+  "scenario": "style-toggle",
+  "depth": "container",
+  "source": "SquashingBuffer from @sanity/mutator 6.24.0, with the field-root setIfMissing envelope.",
+  "envelope": 1,
+  "patches": [
+    {
+      "type": "setIfMissing",
+      "path": [],
+      "value": []
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "style"
+      ],
+      "value": "@@ -1,6 +1,2 @@\n-normal\n+h1\n"
+    }
+  ]
+}
