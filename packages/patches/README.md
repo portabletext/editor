@@ -9,7 +9,7 @@ Patches are the small mutation operations Sanity and the Portable Text Editor em
 This is a low-level building block, and most apps never apply patches by hand:
 
 - **Rendering** Portable Text? Use a serializer like [`@portabletext/react`](https://www.portabletext.org/rendering/react/) or [`@portabletext/to-html`](https://www.portabletext.org/rendering/html/), not this.
-- **Editing** with the Portable Text Editor and you just want the new value? Read `event.value` off the `mutation` event; the editor has already applied the patches for you.
+- **Editing** with the Portable Text Editor and you just want the new value? Read `editor.getSnapshot().context.value` when a `change` event arrives.
 - **Using Sanity?** The Sanity client and Studio apply patches to your documents for you.
 
 Reach for this package only when you have to apply Sanity patches to a value yourself, outside those flows, such as a server replaying the patches an editor sends over the wire.
@@ -57,7 +57,7 @@ applyAll({count: 0}, [{type: 'inc', path: ['count'], value: 2}])
 
 ## With the Portable Text Editor
 
-The editor's `patch` events each carry one of these patches. Here is a full editor that keeps its own copy of the value by replaying those patches with `applyAll`, rendered live next to the editing surface:
+Each local `change` event from the editor carries its patches in `patches`. Here is a full editor that keeps its own copy of the value by replaying those patches with `applyAll`, rendered live next to the editing surface:
 
 ```tsx
 import {
@@ -82,11 +82,8 @@ export function Editor() {
     <EditorProvider initialConfig={{schemaDefinition}}>
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            // Redundant in a single app: the `mutation` event already carries
-            // the finished `value`. This just shows `applyAll` on a real
-            // patch stream.
-            setValue((current) => applyAll(current, [event.patch]))
+          if (event.type === 'change' && event.origin === 'local') {
+            setValue((current) => applyAll(current, event.patches))
           }
         }}
       />
@@ -97,4 +94,4 @@ export function Editor() {
 }
 ```
 
-As the comment notes, this is redundant in a single app: the editor's `mutation` event already includes the finished `value`, so listen for that and use `event.value` instead. You only need `applyAll` when you have the patches but not the value, such as a server or secondary store replaying them onto its own copy.
+Use `applyAll` to replay local `change.patches` onto your own copy, or to replay incoming patches on a server. Read `editor.getSnapshot().context.value` when you only need the editor’s current value.
