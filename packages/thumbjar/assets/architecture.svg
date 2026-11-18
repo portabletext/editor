@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1760 1580" role="img" aria-labelledby="title desc">
 <title id="title">How thumbjar drives Gboard and Chrome on an emulator</title>
-<desc id="desc">A Vitest test calls runOnDevice. The driver uses adb to read Chrome over CDP and to reach uiautomator2, which dumps the accessibility tree and taps where the driver asks. thumbjar serve serves the page through adb reverse.</desc>
+<desc id="desc">A Vitest test calls runOnDevice. The driver uses adb to read Chrome over CDP and to reach uiautomator2, which dumps the accessibility tree and taps where the driver asks. thumbjar serve serves the page, and adb reverse lets Chrome reach it.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#606a74"/></marker></defs>
 <style>text { font-family: system-ui, -apple-system, Segoe UI, sans-serif; fill: #292f35; } .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; } .muted { fill: #606a74; } .arrow { fill: none; stroke: #606a74; stroke-width: 3; marker-end: url(#arrow); }</style>
 
@@ -25,13 +25,13 @@
 <text x="86" y="696" font-size="28" font-weight="650" xml:space="preserve">runOnDevice(), the driver</text>
 <text x="86" y="739" font-size="26" class="muted" xml:space="preserve">Taps each step's keys, reads the page</text>
 <text x="86" y="773" font-size="26" class="muted" xml:space="preserve">after every step and returns one Run.</text>
-<text x="86" y="807" font-size="26" class="muted" xml:space="preserve">Retries a device fault once,</text>
+<text x="86" y="807" font-size="26" class="muted" xml:space="preserve">Retries some device faults once,</text>
 <text x="86" y="841" font-size="26" class="muted" xml:space="preserve">never your assertion.</text>
 <rect x="60" y="902" width="698" height="182" rx="18" fill="#edf1f5" stroke="#606a74" stroke-width="3"/>
 <text x="86" y="948" font-size="28" font-weight="650" xml:space="preserve">adb (Android Debug Bridge)</text>
 <text x="86" y="991" font-size="26" class="muted" xml:space="preserve">Carries shell commands, port forwarding</text>
 <text x="86" y="1025" font-size="26" class="muted" xml:space="preserve">and the uiautomator2 connection</text>
-<text x="86" y="1059" font-size="26" class="muted" xml:space="preserve">to the phone.</text>
+<text x="86" y="1059" font-size="26" class="muted" xml:space="preserve">to the emulator.</text>
 <rect x="60" y="1230" width="698" height="130" rx="18" fill="#fff8e0" stroke="#dfa90b" stroke-width="3"/>
 <text x="86" y="1280" font-size="28" font-weight="650" xml:space="preserve">thumbjar serve</text>
 <text x="86" y="1325" font-size="26" class="muted" xml:space="preserve">Serves your built page</text>
