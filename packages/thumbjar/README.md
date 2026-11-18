@@ -2,9 +2,9 @@
 
 # thumbjar
 
-Test web text fields and editors against a real Android keyboard.
+> Test rich text editors against a real Android keyboard.
 
-Editors and text fields break on Android in ways desktop tests never show. Gboard composes words, offers conversion candidates, and reacts when the page changes the DOM in the middle of a composition. Synthetic events from Playwright or jsdom don't behave like that, so those bugs only show up with a real Android keyboard. thumbjar taps real Gboard keys on an Android emulator while your page is open in Chrome, then hands what the page recorded back to your Vitest test.
+Rich text editors jump through hoops to support Android devices. At the same time there is no good way to ensure that Android input paths work besides testing manually: Gboard composes words, offers conversion candidates, and reacts when the page changes the DOM in the middle of a composition. Synthetic events from Playwright or jsdom don't behave like that, so those bugs only show up with a real Android keyboard. `thumbjar` bridges this gap by tapping real Gboard keys on an Android emulator and then handing a recording back to your Vitest test.
 
 ## At a glance
 
@@ -13,7 +13,9 @@ In the page under test, which you build and serve:
 ```ts
 import {recordInput} from 'thumbjar/page'
 
-recordInput({getText: () => document.querySelector('textarea')!.value})
+recordInput({
+  getText: () => document.querySelector('[contenteditable]')!.textContent,
+})
 ```
 
 In a Vitest test:
@@ -95,16 +97,16 @@ Call `recordInput({getText, getState?, actions?, field?})` from `thumbjar/page` 
 ```ts
 import {recordInput} from 'thumbjar/page'
 
-const field = document.querySelector('textarea')!
-field.value = new URL(location.href).searchParams.get('prefix') ?? ''
+const field = document.querySelector<HTMLElement>('[contenteditable]')!
+field.textContent = new URL(location.href).searchParams.get('prefix') ?? ''
 
 recordInput({
   field,
-  getText: () => field.value,
-  getState: () => ({length: field.value.length}),
+  getText: () => field.textContent,
+  getState: () => ({length: field.textContent?.length ?? 0}),
   actions: {
     clear: () => {
-      field.value = ''
+      field.textContent = ''
     },
   },
 })
