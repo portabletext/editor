@@ -18,6 +18,7 @@ import type {
 } from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
 import * as selectors from '@portabletext/editor/selectors'
+import {applyAll} from '@portabletext/patches'
 import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
 import {useState} from 'react'
 
@@ -81,8 +82,8 @@ function App() {
         {/* Subscribe to editor changes */}
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              setValue(event.value)
+            if (event.type === 'change' && event.origin === 'local') {
+              setValue((value) => applyAll(value, event.patches))
             }
           }}
         />
