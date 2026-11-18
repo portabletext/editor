@@ -37,10 +37,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -98,10 +100,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -147,10 +151,12 @@ describe(createPlaceholderBlock.name, () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
-                foreignValue = applyAll(foreignValue, [patch])
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                  foreignValue = applyAll(foreignValue, [patch])
+                }
               }
             }}
           />
@@ -203,10 +209,12 @@ describe(createPlaceholderBlock.name, () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
-                foreignValue = applyAll(foreignValue, [patch])
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                  foreignValue = applyAll(foreignValue, [patch])
+                }
               }
             }}
           />
@@ -271,9 +279,11 @@ describe(createPlaceholderBlock.name, () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -301,7 +311,47 @@ describe(createPlaceholderBlock.name, () => {
             style: 'normal',
           },
         ])
-        expect(patches).toEqual([])
+        expect(patches).toEqual([
+          {
+            type: 'set',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+            ],
+            value: [],
+          },
+          {
+            type: 'setIfMissing',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+            ],
+            value: [],
+          },
+          {
+            type: 'insert',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              0,
+            ],
+            position: 'before',
+            items: [
+              {
+                _type: 'span',
+                _key: 'k2',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+        ])
       })
 
       editor.send({
@@ -318,7 +368,47 @@ describe(createPlaceholderBlock.name, () => {
             style: 'normal',
           },
         ])
-        expect(patches).toEqual([])
+        expect(patches).toEqual([
+          {
+            type: 'set',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+            ],
+            value: [],
+          },
+          {
+            type: 'setIfMissing',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+            ],
+            value: [],
+          },
+          {
+            type: 'insert',
+            path: [
+              {
+                _key: 'k0',
+              },
+              'children',
+              0,
+            ],
+            position: 'before',
+            items: [
+              {
+                _type: 'span',
+                _key: 'k2',
+                text: '',
+                marks: [],
+              },
+            ],
+          },
+        ])
       })
     })
   })
@@ -342,10 +432,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -427,9 +519,11 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -552,10 +646,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -661,10 +757,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -761,10 +859,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -857,10 +957,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -947,10 +1049,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -1054,10 +1158,12 @@ describe(createPlaceholderBlock.name, () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -1173,10 +1279,12 @@ test('Scenario: Lonely block object removed by a remote `unset`', async () => {
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            const {origin: _, ...patch} = event.patch
-            patches.push(patch)
-            foreignValue = applyAll(foreignValue, [patch])
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              const {origin: _, ...patch} = changePatch
+              patches.push(patch)
+              foreignValue = applyAll(foreignValue, [patch])
+            }
           }
         }}
       />

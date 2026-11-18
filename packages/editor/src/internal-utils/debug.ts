@@ -13,7 +13,6 @@ function createDebugger(name: string) {
 export const debug = {
   behaviors: createDebugger('behaviors'),
   history: createDebugger('history'),
-  mutation: createDebugger('mutation'),
   normalization: createDebugger('normalization'),
   operation: createDebugger('operation'),
   selection: createDebugger('selection'),

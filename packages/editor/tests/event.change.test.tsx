@@ -12,12 +12,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {useEffect} from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {
-  type ChangeEvent,
-  type Editor,
-  type EditorEmittedEvent,
-  type MutationEvent,
-} from '../src'
+import {type ChangeEvent, type Editor, type EditorEmittedEvent} from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {useEditor} from '../src/editor/use-editor'
@@ -31,6 +26,305 @@ import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.change', () => {
+  test('Scenario: A remote patch applied right after a local edit keeps both at the root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const fooSpanPath = [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}]
+    const barSpanPath = [{_key: barBlockKey}, 'children', {_key: barSpanKey}]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        block(fooBlockKey, fooSpanKey, 'foo'),
+        block(barBlockKey, barSpanKey, 'bar'),
+      ],
+    })
+    const localChanges = collectLocalChanges(editor)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'baz'})
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...diffMatchPatch('bar', 'barbaz', [...barSpanPath, 'text']),
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(localChanges.flatMap((event) => event.patches)).toEqual([
+        {
+          ...diffMatchPatch('foo', 'foobaz', [...fooSpanPath, 'text']),
+          origin: 'local',
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        block(fooBlockKey, fooSpanKey, 'foobaz'),
+        block(barBlockKey, barSpanKey, 'barbaz'),
+      ])
+    })
+  })
+
+  test('Scenario: A remote patch applied right after a local edit keeps both inside a callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const prefix = [{_key: calloutKey}, 'content']
+    const fooSpanPath = [
+      ...prefix,
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    const barSpanPath = [
+      ...prefix,
+      {_key: barBlockKey},
+      'children',
+      {_key: barSpanKey},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: calloutSchemaDefinition,
+      children: (
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+      ),
+      initialValue: [
+        callout(calloutKey, [
+          block(fooBlockKey, fooSpanKey, 'foo'),
+          block(barBlockKey, barSpanKey, 'bar'),
+        ]),
+      ],
+    })
+    const localChanges = collectLocalChanges(editor)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'baz'})
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...diffMatchPatch('bar', 'barbaz', [...barSpanPath, 'text']),
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(localChanges.flatMap((event) => event.patches)).toEqual([
+        {
+          ...diffMatchPatch('foo', 'foobaz', [...fooSpanPath, 'text']),
+          origin: 'local',
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        callout(calloutKey, [
+          block(fooBlockKey, fooSpanKey, 'foobaz'),
+          block(barBlockKey, barSpanKey, 'barbaz'),
+        ]),
+      ])
+    })
+  })
+
+  test('Scenario: A remote patch applied right after a local edit keeps both inside a nested callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const outerKey = keyGenerator()
+    const innerKey = keyGenerator()
+    const prefix = [{_key: outerKey}, 'content', {_key: innerKey}, 'content']
+    const fooSpanPath = [
+      ...prefix,
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    const barSpanPath = [
+      ...prefix,
+      {_key: barBlockKey},
+      'children',
+      {_key: barSpanKey},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: nestedCalloutSchemaDefinition,
+      children: (
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+      ),
+      initialValue: [
+        callout(outerKey, [
+          callout(innerKey, [
+            block(fooBlockKey, fooSpanKey, 'foo'),
+            block(barBlockKey, barSpanKey, 'bar'),
+          ]),
+        ]),
+      ],
+    })
+    const localChanges = collectLocalChanges(editor)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'baz'})
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...diffMatchPatch('bar', 'barbaz', [...barSpanPath, 'text']),
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(localChanges.flatMap((event) => event.patches)).toEqual([
+        {
+          ...diffMatchPatch('foo', 'foobaz', [...fooSpanPath, 'text']),
+          origin: 'local',
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        callout(outerKey, [
+          callout(innerKey, [
+            block(fooBlockKey, fooSpanKey, 'foobaz'),
+            block(barBlockKey, barSpanKey, 'barbaz'),
+          ]),
+        ]),
+      ])
+    })
+  })
+
+  test('Scenario: A remote patch applied right after a local edit keeps both inside a note field', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const noteKey = keyGenerator()
+    const prefix = [{_key: noteKey}, 'body']
+    const fooSpanPath = [
+      ...prefix,
+      {_key: fooBlockKey},
+      'children',
+      {_key: fooSpanKey},
+    ]
+    const barSpanPath = [
+      ...prefix,
+      {_key: barBlockKey},
+      'children',
+      {_key: barSpanKey},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: noteSchemaDefinition,
+      children: (
+        <NodePlugin
+          nodes={[defineContainer({type: 'note', arrayField: 'body'})]}
+        />
+      ),
+      initialValue: [
+        note(noteKey, [
+          block(fooBlockKey, fooSpanKey, 'foo'),
+          block(barBlockKey, barSpanKey, 'bar'),
+        ]),
+      ],
+    })
+    const localChanges = collectLocalChanges(editor)
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {path: fooSpanPath, offset: 3},
+        focus: {path: fooSpanPath, offset: 3},
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'baz'})
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...diffMatchPatch('bar', 'barbaz', [...barSpanPath, 'text']),
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(localChanges.flatMap((event) => event.patches)).toEqual([
+        {
+          ...diffMatchPatch('foo', 'foobaz', [...fooSpanPath, 'text']),
+          origin: 'local',
+        },
+      ])
+      expect(editor.getSnapshot().context.value).toEqual([
+        note(noteKey, [
+          block(fooBlockKey, fooSpanKey, 'foobaz'),
+          block(barBlockKey, barSpanKey, 'barbaz'),
+        ]),
+      ])
+    })
+  })
+
   test('Scenario: Typing emits one local `change` per keystroke with its operations and patches', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
@@ -90,7 +384,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: A local `change` is emitted synchronously, before the mutation batcher flushes', async () => {
+  test('Scenario: A local `change` is emitted synchronously', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -107,11 +401,9 @@ describe('event.change', () => {
       },
     })
     const changes = collectChanges(editor)
-    const mutations = collectMutations(editor)
 
     editor.send({type: 'insert.text', text: '!'})
 
-    expect(mutations).toEqual([])
     expect(changes).toEqual([
       {
         type: 'change',
@@ -1422,24 +1714,6 @@ describe('event.change', () => {
         type: 'change',
       },
       {
-        patch: {
-          origin: 'local',
-          path: [
-            {
-              _key: 'k0',
-            },
-            'children',
-            {
-              _key: 'k1',
-            },
-            'text',
-          ],
-          type: 'diffMatchPatch',
-          value: '@@ -1,3 +1,4 @@\n foo\n+!\n',
-        },
-        type: 'patch',
-      },
-      {
         selection: {
           anchor: {
             offset: 4,
@@ -1796,22 +2070,23 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: The local `change` patches of a session equal the patches of its `mutation` events', async () => {
+  test('Scenario: The local `change` patches replay typing, splitting and undo', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const {editor, locator} = await createTestEditor({keyGenerator})
-    const changes = collectChanges(editor)
-    const mutations = collectMutations(editor)
+    const initialValue = undefined
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+    })
+    const localChanges = collectLocalChanges(editor)
     const fooSpanPath = [{_key: 'k0'}, 'children', {_key: 'k1'}]
     const barSpanPath = [{_key: 'k2'}, 'children', {_key: 'k3'}]
 
-    // No intake repairs here: the batcher may drop a superseded one from
-    // `mutation`, while `change` always carries its patches.
     await userEvent.type(locator, 'foo')
     await userEvent.keyboard('{Enter}')
     await userEvent.type(locator, 'bar')
     editor.send({type: 'history.undo'})
 
-    const sessionPatches = [
+    const sessionPatches: Array<Patch> = [
       {...setIfMissing([], []), origin: 'local'},
       {...insert([block('k0', 'k1', '')], 'before', [0]), origin: 'local'},
       {...diffMatchPatch('', 'f', [...fooSpanPath, 'text']), origin: 'local'},
@@ -1839,15 +2114,13 @@ describe('event.change', () => {
     ]
 
     await vi.waitFor(() => {
-      expect(mutations.flatMap((mutation) => mutation.patches)).toEqual(
+      expect(localChanges.flatMap((change) => change.patches)).toEqual(
         sessionPatches,
       )
     })
-    expect(
-      changes.flatMap((change) =>
-        change.origin === 'local' ? change.patches : [],
-      ),
-    ).toEqual(sessionPatches)
+    expect(applyAll(initialValue, sessionPatches)).toEqual(
+      editor.getSnapshot().context.value,
+    )
   })
 
   test('Scenario: A first load with multiple blocks commits one change', async () => {
@@ -2599,12 +2872,17 @@ function SendOnMount({event}: {event: Parameters<Editor['send']>[0]}) {
   return null
 }
 
-function collectMutations(editor: Editor): Array<MutationEvent> {
-  const mutations: Array<MutationEvent> = []
-  editor.on('mutation', (event) => {
-    mutations.push(event)
+function collectLocalChanges(
+  editor: Editor,
+): Array<Extract<ChangeEvent, {origin: 'local'}>> {
+  const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
+  editor.on('change', (event) => {
+    if (event.origin !== 'local') {
+      return
+    }
+    localChanges.push(event)
   })
-  return mutations
+  return localChanges
 }
 
 function block(
@@ -2844,11 +3122,7 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
     initialValue: [block(blockKey, spanKey, 'foo')],
   })
   const changes = collectChanges(editor)
-  const mutations = collectMutations(editor)
-  const patches: Array<Patch> = []
-  editor.on('patch', (event) => {
-    patches.push(event.patch)
-  })
+  const localChanges = collectLocalChanges(editor)
   const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
   const bazBlock = {
     _type: 'block',
@@ -3056,139 +3330,74 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
   })
 
   await vi.waitFor(() => {
-    expect(mutations).toEqual([
+    expect(localChanges.flatMap((event) => event.patches)).toEqual([
       {
-        type: 'mutation',
-        patches: [
+        type: 'insert',
+        path: [
           {
-            type: 'insert',
-            path: [
-              {
-                _key: 'k0',
-              },
-            ],
-            position: 'after',
-            items: [
-              {
-                _type: 'block',
-                _key: 'k4',
-                children: [
-                  {
-                    _type: 'span',
-                    _key: 'k5',
-                    text: 'baz',
-                    marks: [],
-                  },
-                ],
-              },
-            ],
-            origin: 'local',
-          },
-          {
-            type: 'set',
-            path: [
-              {
-                _key: 'k4',
-              },
-              'markDefs',
-            ],
-            value: [],
-            origin: 'local',
-          },
-          {
-            type: 'set',
-            path: [
-              {
-                _key: 'k4',
-              },
-              'style',
-            ],
-            value: 'normal',
-            origin: 'local',
-          },
-          {
-            type: 'diffMatchPatch',
-            path: [
-              {
-                _key: 'k0',
-              },
-              'children',
-              {
-                _key: 'k1',
-              },
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
-            origin: 'local',
+            _key: 'k0',
           },
         ],
-        value: [block(blockKey, spanKey, 'bar!'), bazBlock],
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: 'k4',
+            children: [
+              {
+                _type: 'span',
+                _key: 'k5',
+                text: 'baz',
+                marks: [],
+              },
+            ],
+          },
+        ],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [
+          {
+            _key: 'k4',
+          },
+          'markDefs',
+        ],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [
+          {
+            _key: 'k4',
+          },
+          'style',
+        ],
+        value: 'normal',
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [
+          {
+            _key: 'k0',
+          },
+          'children',
+          {
+            _key: 'k1',
+          },
+          'text',
+        ],
+        value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+        origin: 'local',
       },
     ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      block(blockKey, spanKey, 'bar!'),
+      bazBlock,
+    ])
   })
-  expect(patches).toEqual([
-    {
-      type: 'insert',
-      path: [
-        {
-          _key: 'k0',
-        },
-      ],
-      position: 'after',
-      items: [
-        {
-          _type: 'block',
-          _key: 'k4',
-          children: [
-            {
-              _type: 'span',
-              _key: 'k5',
-              text: 'baz',
-              marks: [],
-            },
-          ],
-        },
-      ],
-      origin: 'local',
-    },
-    {
-      type: 'set',
-      path: [
-        {
-          _key: 'k4',
-        },
-        'markDefs',
-      ],
-      value: [],
-      origin: 'local',
-    },
-    {
-      type: 'set',
-      path: [
-        {
-          _key: 'k4',
-        },
-        'style',
-      ],
-      value: 'normal',
-      origin: 'local',
-    },
-    {
-      type: 'diffMatchPatch',
-      path: [
-        {
-          _key: 'k0',
-        },
-        'children',
-        {
-          _key: 'k1',
-        },
-        'text',
-      ],
-      value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
-      origin: 'local',
-    },
-  ])
 })
 
 test('Scenario: A container registered by an `operation` listener during an `apply` is registered and its empty field gets a `correction`', async () => {
@@ -3215,8 +3424,13 @@ test('Scenario: A container registered by an `operation` listener during an `app
   })
   const changes = collectChanges(editor)
   const patches: Array<Patch> = []
-  editor.on('patch', (event) => {
-    patches.push(event.patch)
+  editor.on('change', (event) => {
+    if (event.origin !== 'local') {
+      return
+    }
+    for (const changePatch of event.patches) {
+      patches.push(changePatch)
+    }
   })
   const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
   editor.on('operation', (event) => {
@@ -3398,11 +3612,7 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
     node: defineContainer({type: 'callout', arrayField: 'content'}),
   })
   const changes = collectChanges(editor)
-  const mutations = collectMutations(editor)
-  const patches: Array<Patch> = []
-  editor.on('patch', (event) => {
-    patches.push(event.patch)
-  })
+  const localChanges = collectLocalChanges(editor)
   const contentPath = [{_key: calloutKey}, 'content']
   const spanPath = [
     ...contentPath,
@@ -3659,193 +3869,348 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
   })
 
   await vi.waitFor(() => {
-    expect(mutations).toEqual([
+    expect(localChanges.flatMap((event) => event.patches)).toEqual([
       {
-        type: 'mutation',
-        patches: [
+        type: 'setIfMissing',
+        path: [
           {
-            type: 'setIfMissing',
-            path: [
-              {
-                _key: 'k0',
-              },
-              'content',
-            ],
-            value: [],
-            origin: 'local',
+            _key: 'k0',
           },
+          'content',
+        ],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'insert',
+        path: [
           {
-            type: 'insert',
-            path: [
-              {
-                _key: 'k0',
-              },
-              'content',
-              {
-                _key: 'k1',
-              },
-            ],
-            position: 'after',
-            items: [
-              {
-                _type: 'block',
-                _key: 'k5',
-                children: [
-                  {
-                    _type: 'span',
-                    _key: 'k6',
-                    text: 'baz',
-                    marks: [],
-                  },
-                ],
-              },
-            ],
-            origin: 'local',
+            _key: 'k0',
           },
+          'content',
           {
-            type: 'set',
-            path: [
-              {
-                _key: 'k0',
-              },
-              'content',
-              {
-                _key: 'k5',
-              },
-              'markDefs',
-            ],
-            value: [],
-            origin: 'local',
-          },
-          {
-            type: 'set',
-            path: [
-              {
-                _key: 'k0',
-              },
-              'content',
-              {
-                _key: 'k5',
-              },
-              'style',
-            ],
-            value: 'normal',
-            origin: 'local',
-          },
-          {
-            type: 'diffMatchPatch',
-            path: [
-              {
-                _key: 'k0',
-              },
-              'content',
-              {
-                _key: 'k1',
-              },
-              'children',
-              {
-                _key: 'k2',
-              },
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
-            origin: 'local',
+            _key: 'k1',
           },
         ],
-        value: [
-          callout(calloutKey, [block(blockKey, spanKey, 'bar!'), bazBlock]),
+        position: 'after',
+        items: [
+          {
+            _type: 'block',
+            _key: 'k5',
+            children: [
+              {
+                _type: 'span',
+                _key: 'k6',
+                text: 'baz',
+                marks: [],
+              },
+            ],
+          },
         ],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k5',
+          },
+          'markDefs',
+        ],
+        value: [],
+        origin: 'local',
+      },
+      {
+        type: 'set',
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k5',
+          },
+          'style',
+        ],
+        value: 'normal',
+        origin: 'local',
+      },
+      {
+        type: 'diffMatchPatch',
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k1',
+          },
+          'children',
+          {
+            _key: 'k2',
+          },
+          'text',
+        ],
+        value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
+        origin: 'local',
       },
     ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      callout(calloutKey, [block(blockKey, spanKey, 'bar!'), bazBlock]),
+    ])
   })
-  expect(patches).toEqual([
+})
+
+test('Scenario: An initial correction at root reaches a change host without legacy events', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+
+  let hostValue: Array<PortableTextBlock> | undefined = [
     {
-      type: 'setIfMissing',
-      path: [
-        {
-          _key: 'k0',
-        },
-        'content',
-      ],
-      value: [],
-      origin: 'local',
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', text: 'foo', marks: []}],
     },
+  ]
+  const legacyEvents: Array<EditorEmittedEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue),
+
+    children: (
+      <>
+        <RemovedEventListeners events={legacyEvents} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  const correctedSpanPath = [{_key: blockKey}, 'children', 0]
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: correctedSpanPath, offset: 3},
+      focus: {path: correctedSpanPath, offset: 3},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  expect(legacyEvents).toEqual([])
+})
+
+test('Scenario: A read-only collaborator correction at root reaches a change host without legacy events', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+
+  let hostValue: Array<PortableTextBlock> | undefined = [
     {
-      type: 'insert',
-      path: [
-        {
-          _key: 'k0',
-        },
-        'content',
-        {
-          _key: 'k1',
-        },
-      ],
-      position: 'after',
-      items: [
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const legacyEvents: Array<EditorEmittedEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue),
+
+    children: (
+      <>
+        <RemovedEventListeners events={legacyEvents} />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  const incomingPatches = [
+    unset([{_key: blockKey}, 'children', {_key: spanKey}, '_key']),
+  ]
+  hostValue = applyAll(hostValue, incomingPatches)
+  editor.send({type: 'apply', patches: incomingPatches})
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  editor.send({type: 'update readOnly', readOnly: false})
+  const correctedSpanPath = [{_key: blockKey}, 'children', 0]
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: correctedSpanPath, offset: 3},
+      focus: {path: correctedSpanPath, offset: 3},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  expect(legacyEvents).toEqual([])
+})
+
+test('Scenario: An initial correction inside a callout reaches a change host without legacy events', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const calloutKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
         {
           _type: 'block',
-          _key: 'k5',
-          children: [
-            {
-              _type: 'span',
-              _key: 'k6',
-              text: 'baz',
-              marks: [],
-            },
-          ],
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', text: 'foo', marks: []}],
         },
       ],
-      origin: 'local',
     },
-    {
-      type: 'set',
-      path: [
-        {
-          _key: 'k0',
-        },
-        'content',
-        {
-          _key: 'k5',
-        },
-        'markDefs',
-      ],
-      value: [],
-      origin: 'local',
+  ]
+  const legacyEvents: Array<EditorEmittedEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue),
+    schemaDefinition: calloutSchemaDefinition,
+    children: (
+      <>
+        <RemovedEventListeners events={legacyEvents} />
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  const correctedSpanPath = [
+    {_key: calloutKey},
+    'content',
+    {_key: blockKey},
+    'children',
+    0,
+  ]
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: correctedSpanPath, offset: 3},
+      focus: {path: correctedSpanPath, offset: 3},
     },
-    {
-      type: 'set',
-      path: [
-        {
-          _key: 'k0',
-        },
-        'content',
-        {
-          _key: 'k5',
-        },
-        'style',
-      ],
-      value: 'normal',
-      origin: 'local',
-    },
-    {
-      type: 'diffMatchPatch',
-      path: [
-        {
-          _key: 'k0',
-        },
-        'content',
-        {
-          _key: 'k1',
-        },
-        'children',
-        {
-          _key: 'k2',
-        },
-        'text',
-      ],
-      value: '@@ -1,3 +1,4 @@\n bar\n+!\n',
-      origin: 'local',
-    },
-  ])
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  expect(legacyEvents).toEqual([])
 })
+
+test('Scenario: A read-only collaborator correction inside a callout reaches a change host without legacy events', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const calloutKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    },
+  ]
+  const legacyEvents: Array<EditorEmittedEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue),
+    schemaDefinition: calloutSchemaDefinition,
+    children: (
+      <>
+        <RemovedEventListeners events={legacyEvents} />
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  const incomingPatches = [
+    unset([
+      {_key: calloutKey},
+      'content',
+      {_key: blockKey},
+      'children',
+      {_key: spanKey},
+      '_key',
+    ]),
+  ]
+  hostValue = applyAll(hostValue, incomingPatches)
+  editor.send({type: 'apply', patches: incomingPatches})
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  editor.send({type: 'update readOnly', readOnly: false})
+  const correctedSpanPath = [
+    {_key: calloutKey},
+    'content',
+    {_key: blockKey},
+    'children',
+    0,
+  ]
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: correctedSpanPath, offset: 3},
+      focus: {path: correctedSpanPath, offset: 3},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'bar'})
+  expect(hostValue).toEqual(editor.getSnapshot().context.value)
+  expect(legacyEvents).toEqual([])
+})
+
+function RemovedEventListeners(props: {events: Array<EditorEmittedEvent>}) {
+  const editor = useEditor()
+  useEffect(() => {
+    const mutationSubscription = editor.on('mutation' as never, (event) => {
+      props.events.push(event)
+    })
+    const patchSubscription = editor.on('patch' as never, (event) => {
+      props.events.push(event)
+    })
+    return () => {
+      mutationSubscription.unsubscribe()
+      patchSubscription.unsubscribe()
+    }
+  }, [editor, props.events])
+  return null
+}

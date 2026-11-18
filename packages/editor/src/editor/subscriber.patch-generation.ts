@@ -10,9 +10,7 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
 /**
- * Converts every applied operation into `@portabletext/patches`, sends them
- * to the editor actor as `internal.patch` events and sets them on the
- * change recording the operation.
+ * Records the patches for each operation on its change, for `change` events and history.
  */
 export function subscribePatchGeneration({
   editorActor,
@@ -37,14 +35,6 @@ export function subscribePatchGeneration({
     }))
 
     setChangeEntryPatches(editor, event, localPatches)
-
-    for (const patch of localPatches) {
-      editorActor.send({
-        type: 'internal.patch',
-        patch,
-        operationId: event.undoStepId,
-      })
-    }
   })
 }
 

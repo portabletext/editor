@@ -26,13 +26,13 @@ The [Portable Text Playground](../../apps/playground/) is a complete editor buil
 
 ```sh
 # npm
-npm i @portabletext/editor
+npm i @portabletext/editor @portabletext/patches
 
 # pnpm
-pnpm add @portabletext/editor
+pnpm add @portabletext/editor @portabletext/patches
 
 # yarn
-yarn add @portabletext/editor
+yarn add @portabletext/editor @portabletext/patches
 
 ```
 
@@ -109,6 +109,7 @@ import {
 } from '@portabletext/editor'
 import type {PortableTextBlock} from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {applyAll} from '@portabletext/patches'
 import {useState} from 'react'
 
 const schemaDefinition = defineSchema({
@@ -131,8 +132,8 @@ function App() {
       >
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              setValue(event.value)
+            if (event.type === 'change' && event.origin === 'local') {
+              setValue((value) => applyAll(value, event.patches))
             }
           }}
         />
@@ -294,6 +295,7 @@ With the registrations created and a toolbar in place, you can fully render the 
 ```tsx continue
 // App.tsx
 // ...
+import {applyAll} from '@portabletext/patches'
 import {useState} from 'react'
 
 function App() {
@@ -311,8 +313,8 @@ function App() {
       >
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              setValue(event.value)
+            if (event.type === 'change' && event.origin === 'local') {
+              setValue((value) => applyAll(value, event.patches))
             }
           }}
         />

@@ -268,10 +268,12 @@ describe('recursive schemas (lists in list-items in lists)', () => {
           <NodePlugin nodes={[listContainer, listItemContainer]} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                remoteValue = applyAll(remoteValue, [patch])
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  remoteValue = applyAll(remoteValue, [patch])
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />

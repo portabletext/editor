@@ -20,9 +20,11 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -118,9 +120,11 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -211,8 +215,10 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -309,8 +315,10 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -359,9 +367,11 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -435,9 +445,11 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -575,7 +587,7 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
+            if (event.type === 'change' && event.origin === 'local') {
               for (const patch of event.patches) {
                 const {origin: _, ...rawPatch} = patch
                 patches.push(rawPatch)
@@ -704,9 +716,11 @@ describe('event.block.set', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -798,8 +812,10 @@ describe('event.block.set', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />

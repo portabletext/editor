@@ -43,10 +43,12 @@ describe('event.delete.backward', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />

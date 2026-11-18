@@ -24,9 +24,6 @@ import {
   textBlockDepthsSchemaDefinition,
 } from '../test-utils/text-block-depths'
 
-// `createTestEditors` forwards A's `mutation` events to B, and the batcher
-// flushes those on a 500ms interval, which leaves little of `vi.waitFor`'s
-// 1s default on a loaded runner.
 const remoteSyncTimeout = 3_000
 
 describe('event.patches', () => {
@@ -180,18 +177,22 @@ describe('event.patches', () => {
     await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+      expect(
+        vi
+          .mocked(onEditorEvent)
+          .mock.calls.flatMap(([event]) =>
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
+          ),
+      ).toEqual([
+        {
           type: 'setIfMissing',
           origin: 'local',
           path: [],
           value: [],
         },
-      })
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+        {
           type: 'insert',
           origin: 'local',
           path: [0],
@@ -206,16 +207,13 @@ describe('event.patches', () => {
             },
           ],
         },
-      })
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+        {
           type: 'diffMatchPatch',
           origin: 'local',
           path: [{_key: 'ea-k0'}, 'children', {_key: 'ea-k1'}, 'text'],
           value: '@@ -0,0 +1 @@\n+f\n',
         },
-      })
+      ])
     })
 
     await vi.waitFor(
@@ -250,18 +248,22 @@ describe('event.patches', () => {
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+      expect(
+        vi
+          .mocked(onEditorEvent)
+          .mock.calls.flatMap(([event]) =>
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
+          ),
+      ).toEqual([
+        {
           type: 'setIfMissing',
           origin: 'local',
           path: [],
           value: [],
         },
-      })
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+        {
           type: 'insert',
           origin: 'local',
           path: [0],
@@ -276,10 +278,7 @@ describe('event.patches', () => {
             },
           ],
         },
-      })
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+        {
           type: 'insert',
           origin: 'local',
           path: [{_key: 'ea-k0'}],
@@ -294,7 +293,7 @@ describe('event.patches', () => {
             },
           ],
         },
-      })
+      ])
     })
 
     await vi.waitFor(
@@ -343,18 +342,22 @@ describe('event.patches', () => {
     await userEvent.keyboard('{Enter}')
 
     await vi.waitFor(() => {
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+      expect(
+        vi
+          .mocked(onEditorEvent)
+          .mock.calls.flatMap(([event]) =>
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
+          ),
+      ).toEqual([
+        {
           type: 'setIfMissing',
           origin: 'local',
           path: [],
           value: [],
         },
-      })
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+        {
           type: 'insert',
           origin: 'local',
           path: [0],
@@ -369,10 +372,7 @@ describe('event.patches', () => {
             },
           ],
         },
-      })
-      expect(onEditorEvent).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+        {
           type: 'insert',
           origin: 'local',
           path: [{_key: 'ea-k0'}],
@@ -387,7 +387,7 @@ describe('event.patches', () => {
             },
           ],
         },
-      })
+      ])
     })
 
     await vi.waitFor(
@@ -839,10 +839,12 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
-              foreignValue = applyAll(foreignValue, [patch])
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
             }
           }}
         />
@@ -3429,10 +3431,12 @@ describe('event.patches', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
-                foreignValue = applyAll(foreignValue, [patch])
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                  foreignValue = applyAll(foreignValue, [patch])
+                }
               }
             }}
           />
@@ -4987,9 +4991,11 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -5063,9 +5069,11 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -6036,8 +6044,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6118,8 +6128,10 @@ describe('event.patches', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -6201,8 +6213,10 @@ describe('event.patches', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -6280,8 +6294,10 @@ describe('event.patches', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -6388,8 +6404,10 @@ describe('event.patches', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -6502,8 +6520,10 @@ describe('event.patches', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -6624,8 +6644,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6678,8 +6700,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6729,8 +6753,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6777,8 +6803,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6833,8 +6861,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6880,8 +6910,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -6936,8 +6968,10 @@ describe('event.patches', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -7006,7 +7040,7 @@ describe('event.patches with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7096,9 +7130,6 @@ describe('event.patches with a compact path at the root', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -7220,7 +7251,7 @@ describe('event.patches with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7310,9 +7341,6 @@ describe('event.patches with a compact path at the root', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -7432,7 +7460,7 @@ describe('event.patches with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7528,9 +7556,6 @@ describe('event.patches with a compact path at the root', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -7658,7 +7683,7 @@ describe('event.patches with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7753,9 +7778,6 @@ describe('event.patches with a compact path at the root', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -7882,7 +7904,7 @@ describe('event.patches with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7977,9 +7999,6 @@ describe('event.patches with a compact path at the root', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -8413,7 +8432,7 @@ describe('event.patches with a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -8507,7 +8526,7 @@ describe('event.patches with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -8624,9 +8643,6 @@ describe('event.patches with a compact path inside a callout', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -8787,7 +8803,7 @@ describe('event.patches with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -8899,9 +8915,6 @@ describe('event.patches with a compact path inside a callout', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -9055,7 +9068,7 @@ describe('event.patches with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -9173,9 +9186,6 @@ describe('event.patches with a compact path inside a callout', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -9337,7 +9347,7 @@ describe('event.patches with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -9454,9 +9464,6 @@ describe('event.patches with a compact path inside a callout', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -9617,7 +9624,7 @@ describe('event.patches with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -9734,9 +9741,6 @@ describe('event.patches with a compact path inside a callout', () => {
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -10294,7 +10298,7 @@ describe('event.patches with a compact path inside a callout', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -10413,7 +10417,7 @@ describe('event.patches with a compact path inside a callout inside a callout', 
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -10556,9 +10560,6 @@ describe('event.patches with a compact path inside a callout inside a callout', 
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -10751,7 +10752,7 @@ describe('event.patches with a compact path inside a callout inside a callout', 
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -10893,9 +10894,6 @@ describe('event.patches with a compact path inside a callout inside a callout', 
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -11087,7 +11085,7 @@ describe('event.patches with a compact path inside a callout inside a callout', 
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -11231,9 +11229,6 @@ describe('event.patches with a compact path inside a callout inside a callout', 
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -11427,7 +11422,7 @@ describe('event.patches with a compact path inside a callout inside a callout', 
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -11570,9 +11565,6 @@ describe('event.patches with a compact path inside a callout inside a callout', 
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -11765,7 +11757,7 @@ describe('event.patches with a compact path inside a callout inside a callout', 
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -11908,9 +11900,6 @@ describe('event.patches with a compact path inside a callout inside a callout', 
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -12593,7 +12582,7 @@ describe('event.patches with a compact path inside a field with its own sub-sche
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -12710,9 +12699,6 @@ describe('event.patches with a compact path inside a field with its own sub-sche
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -12873,7 +12859,7 @@ describe('event.patches with a compact path inside a field with its own sub-sche
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -12985,9 +12971,6 @@ describe('event.patches with a compact path inside a field with its own sub-sche
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -13141,7 +13124,7 @@ describe('event.patches with a compact path inside a field with its own sub-sche
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -13259,9 +13242,6 @@ describe('event.patches with a compact path inside a field with its own sub-sche
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -13423,7 +13403,7 @@ describe('event.patches with a compact path inside a field with its own sub-sche
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -13540,9 +13520,6 @@ describe('event.patches with a compact path inside a field with its own sub-sche
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -13703,7 +13680,7 @@ describe('event.patches with a compact path inside a field with its own sub-sche
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -13820,9 +13797,6 @@ describe('event.patches with a compact path inside a field with its own sub-sche
 
     const compactOnlyEvents: Array<EditorEmittedEvent> = []
     editor.on('change', (event) => {
-      compactOnlyEvents.push(event)
-    })
-    editor.on('patch', (event) => {
       compactOnlyEvents.push(event)
     })
 
@@ -14460,17 +14434,22 @@ test('Scenario: Retyping after clearing the field re-materializes it', async () 
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
         }}
       />
     ),
   })
 
-  const mutations: Array<Array<Patch>> = []
-  editor.on('mutation', (event) => {
-    mutations.push(event.patches)
+  const localChanges: Array<Array<Patch>> = []
+  editor.on('change', (event) => {
+    if (event.origin !== 'local') {
+      return
+    }
+    localChanges.push(event.patches)
   })
 
   await userEvent.click(locator)
@@ -14495,7 +14474,7 @@ test('Scenario: Retyping after clearing the field re-materializes it', async () 
   await userEvent.keyboard('{Backspace}')
 
   await vi.waitFor(() => {
-    expect(mutations.at(-1)?.at(-1)).toEqual({
+    expect(localChanges.at(-1)?.at(-1)).toEqual({
       type: 'unset',
       path: [],
       origin: 'local',

@@ -95,8 +95,10 @@ async function mergeDuplicateKeyedBlocks() {
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
         }}
       />
@@ -212,8 +214,10 @@ describe('Feature: block merge renames colliding keys', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -349,8 +353,10 @@ describe('Feature: block merge renames colliding keys', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -459,8 +465,10 @@ describe('Feature: block merge renames colliding keys', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -621,8 +629,10 @@ describe('Feature: block merge renames colliding keys', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -855,8 +865,10 @@ async function rangeDeleteMergeSharedKeyBlocks() {
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
         }}
       />
@@ -906,8 +918,10 @@ async function rangeDeleteMergeMarkDefCollisionBlocks() {
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
         }}
       />
@@ -1090,8 +1104,10 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -1356,8 +1372,10 @@ describe('Feature: range delete renames colliding keys before merging sibling bl
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />

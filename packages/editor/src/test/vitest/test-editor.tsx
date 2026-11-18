@@ -15,6 +15,7 @@ import {
 } from '../../editor/Editable'
 import {EditorProvider} from '../../editor/editor-provider'
 import type {EditorEmittedEvent} from '../../editor/relay'
+import {useEditor} from '../../editor/use-editor'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
 import type {Context} from './step-context'
@@ -115,20 +116,6 @@ export async function createTestEditors(
   const onEditorEvent = vi.fn<(event: EditorEmittedEvent) => void>()
   const onEditorBEvent = vi.fn<(event: EditorEmittedEvent) => void>()
 
-  function relayMutation(event: EditorEmittedEvent, peer: Editor | null) {
-    if (event.type !== 'mutation') {
-      return
-    }
-
-    peer?.send({
-      type: 'apply',
-      patches: event.patches.map((patch) => ({
-        ...patch,
-        origin: 'remote',
-      })),
-    })
-  }
-
   render(
     <>
       <EditorProvider
@@ -146,9 +133,9 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorEvent(event)
-            relayMutation(event, editorBRef.current)
           }}
         />
+        <BatchedChangeRelay peerRef={editorBRef} />
         {options.children}
       </EditorProvider>
       <EditorProvider
@@ -166,9 +153,9 @@ export async function createTestEditors(
         <EventListenerPlugin
           on={(event) => {
             onEditorBEvent(event)
-            relayMutation(event, editorRef.current)
           }}
         />
+        <BatchedChangeRelay peerRef={editorRef} />
         {options.children}
       </EditorProvider>
     </>,
@@ -188,4 +175,29 @@ export async function createTestEditors(
     locatorB,
     onEditorBEvent,
   }
+}
+
+function BatchedChangeRelay(props: {peerRef: React.RefObject<Editor | null>}) {
+  const editor = useEditor()
+
+  React.useEffect(() => {
+    const subscription = editor.on(
+      'change',
+      (events) => {
+        const patches = events
+          .filter((event) => event.origin === 'local')
+          .flatMap((event) => event.patches)
+          .map((patch) => ({...patch, origin: 'remote' as const}))
+
+        if (patches.length > 0) {
+          props.peerRef.current?.send({type: 'apply', patches})
+        }
+      },
+      {batch: true},
+    )
+
+    return () => subscription.unsubscribe()
+  }, [editor, props.peerRef])
+
+  return null
 }

@@ -67,7 +67,10 @@ describe('Feature: Schema-Less Decorator Marks', () => {
     })
 
     const patches: Array<{path?: unknown; value?: unknown}> = []
-    editor.on('mutation', (event) => {
+    editor.on('change', (event) => {
+      if (event.origin !== 'local') {
+        return
+      }
       patches.push(
         ...(event.patches as Array<{path?: unknown; value?: unknown}>),
       )

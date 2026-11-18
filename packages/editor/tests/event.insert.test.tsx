@@ -86,7 +86,7 @@ describe('event.insert with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -153,24 +153,6 @@ describe('event.insert with a compact path at the root', () => {
               ],
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'insert',
-            path: [{_key: 'b1'}],
-            position: 'after',
-            items: [
-              {
-                _type: 'block',
-                _key: 'b2',
-                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
         },
       ])
     })
@@ -242,7 +224,7 @@ describe('event.insert with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -318,33 +300,6 @@ describe('event.insert with a compact path inside a callout', () => {
               ],
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'setIfMissing',
-            path: [{_key: 'c0'}, 'content'],
-            value: [],
-          },
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'insert',
-            path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
-            position: 'after',
-            items: [
-              {
-                _type: 'block',
-                _key: 'b2',
-                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
         },
       ])
     })
@@ -432,7 +387,7 @@ describe('event.insert with a compact path inside a callout inside a callout', (
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -527,39 +482,6 @@ describe('event.insert with a compact path inside a callout inside a callout', (
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'setIfMissing',
-            path: [{_key: 'c0'}, 'content', {_key: 'c1'}, 'content'],
-            value: [],
-          },
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'insert',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-            ],
-            position: 'after',
-            items: [
-              {
-                _type: 'block',
-                _key: 'b2',
-                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
-        },
       ])
     })
     expect(editor.getSnapshot().context.value).toEqual([
@@ -642,7 +564,7 @@ describe('event.insert with a compact path inside a field with its own sub-schem
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -718,33 +640,6 @@ describe('event.insert with a compact path inside a field with its own sub-schem
               ],
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'setIfMissing',
-            path: [{_key: 'n0'}, 'body'],
-            value: [],
-          },
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'insert',
-            path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
-            position: 'after',
-            items: [
-              {
-                _type: 'block',
-                _key: 'b2',
-                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
-                markDefs: [],
-                style: 'normal',
-              },
-            ],
-          },
         },
       ])
     })

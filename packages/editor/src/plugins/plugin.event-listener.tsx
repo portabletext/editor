@@ -6,10 +6,10 @@ import {useEditor} from '../editor/use-editor'
  * @public
  * Listen for events emitted by the editor. Must be used inside `EditorProvider`. Events available include:
  *  - 'blurred'
+ *  - 'change'
  *  - 'editable'
  *  - 'focused'
- *  - 'mutation'
- *  - 'patch'
+ *  - 'operation'
  *  - 'read only'
  *  - 'ready'
  *  - 'selection'
@@ -35,12 +35,12 @@ import {useEditor} from '../editor/use-editor'
  * }
  * ```
  * @example
- * Handle events when there is a mutation.
+ * Handle local content changes.
  * ```tsx continue
  * <EventListenerPlugin
  *  on={(event) => {
- *    if (event.type === 'mutation') {
- *      console.log('Value changed:', event.value)
+ *    if (event.type === 'change' && event.origin === 'local') {
+ *      console.log('Patches emitted:', event.patches)
  *    }
  *  }}
  * />

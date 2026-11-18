@@ -75,8 +75,7 @@ export const withDOM = <T extends Editor>(editor: T): T & DOMEditor => {
   )
 
   // Subscribed at engine creation, so this runs first among `after`
-  // listeners — `isNodeMapDirty` must be set before patch generation
-  // notifies synchronous `internal.patch` consumers.
+  // listeners: `isNodeMapDirty` must be set before synchronous consumers run.
   subscribeToOperations(e, (event) => {
     switch (event.operation.type) {
       case 'insert':

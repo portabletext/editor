@@ -4,11 +4,7 @@ import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import type {
-  EditorEmittedEvent,
-  MutationEvent,
-  PatchEvent,
-} from '../src/editor/relay'
+import type {EditorEmittedEvent} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
 import {
@@ -49,8 +45,7 @@ describe('Feature: Self-solving', () => {
       origin: 'local',
     }
     const onEvent = vi.fn<(event: EditorEmittedEvent) => void>()
-    const patchEvents: Array<PatchEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
@@ -58,11 +53,10 @@ describe('Feature: Self-solving', () => {
           on={(event) => {
             onEvent(event)
 
-            if (event.type === 'patch') {
-              patchEvents.push(event)
-            }
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -77,7 +71,6 @@ describe('Feature: Self-solving', () => {
         type: 'ready',
       })
       expect(patchEvents).toEqual([])
-      expect(mutationEvents).toEqual([])
     })
 
     editor.send({
@@ -97,32 +90,21 @@ describe('Feature: Self-solving', () => {
     })
 
     await vi.waitFor(() => {
-      // The deferred `markDefs` default rides the same edit that dirtied
-      // the block, after the user's own patch.
-      expect(patchEvents).toEqual([
-        {type: 'patch', patch: strongPatch},
-        {type: 'patch', patch: blockPatch},
-      ])
-      expect(mutationEvents).toEqual([
+      expect(patchEvents).toEqual([strongPatch, blockPatch])
+      expect(editor.getSnapshot().context.value).toEqual([
         {
-          type: 'mutation',
-          patches: [strongPatch, blockPatch],
-          value: [
+          _key: blockKey,
+          _type: 'block',
+          children: [
             {
-              _key: blockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: spanKey,
-                  _type: 'span',
-                  text: 'foo',
-                  marks: ['strong'],
-                },
-              ],
-              style: 'normal',
-              markDefs: [],
+              _key: spanKey,
+              _type: 'span',
+              text: 'foo',
+              marks: ['strong'],
             },
           ],
+          style: 'normal',
+          markDefs: [],
         },
       ])
     })
@@ -155,8 +137,10 @@ describe('Feature: Self-solving', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -172,8 +156,6 @@ describe('Feature: Self-solving', () => {
     await userEvent.type(locator, 'f')
 
     await vi.waitFor(() => {
-      // The deferred `style` default rides the same edit that dirtied the
-      // block, after the user's typing patch.
       expect(patches).toEqual([
         {
           origin: 'local',
@@ -211,8 +193,10 @@ describe('Feature: Self-solving', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -378,8 +362,10 @@ describe('Feature: Self-solving', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -400,7 +386,21 @@ describe('Feature: Self-solving', () => {
         },
       ])
 
-      expect(patches).toEqual([])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'children',
+            1,
+            '_key',
+          ],
+          value: 'k4',
+          origin: 'local',
+        },
+      ])
     })
 
     await userEvent.click(locator)
@@ -478,8 +478,10 @@ describe('Feature: Self-solving', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -596,8 +598,10 @@ describe('Feature: Self-solving', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -610,7 +614,20 @@ describe('Feature: Self-solving', () => {
         {...block1, _key: 'k5'},
         {...image, _key: 'k6'},
       ])
-      expect(patches).toEqual([])
+      expect(patches).toEqual([
+        {
+          type: 'set',
+          path: [1, '_key'],
+          value: 'k5',
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [2, '_key'],
+          value: 'k6',
+          origin: 'local',
+        },
+      ])
     })
 
     await userEvent.click(locator)
@@ -705,8 +722,10 @@ describe('Feature: Self-solving', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />

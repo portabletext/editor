@@ -18,7 +18,6 @@ import {
   useEditor,
   type Decoration,
   type Editor,
-  type MutationEvent,
   type RangeDecoration,
   type RangeDecorationOnMovedDetails,
 } from '../src'
@@ -908,8 +907,6 @@ describe('RangeDecorations', () => {
   test("Scenario: Range Decorations don't affect the caret position", async () => {
     const keyGenerator = createTestKeyGenerator()
     const editorRef: RefObject<Editor | null> = createRef()
-    // Keeping track of the mutation events emitted by the editor
-    const mutationEvents: Array<MutationEvent> = []
 
     function SpanRangeDecoration(props: {children?: ReactNode}) {
       return <span data-testid="range-decoration">{props.children}</span>
@@ -932,53 +929,49 @@ describe('RangeDecorations', () => {
         >
           <EventListenerPlugin
             on={(event) => {
-              if (
-                event.type === 'patch' &&
-                event.patch.type === 'diffMatchPatch' &&
-                event.patch.origin === 'local'
-              ) {
-                const blockKey = getBlockKeyFromSelectionPoint({
-                  path: event.patch.path,
-                  offset: 0,
-                })
-                const spanKey = getChildKeyFromSelectionPoint({
-                  path: event.patch.path,
-                  offset: 0,
-                })
-                const block = editorRef.current
-                  ?.getSnapshot()
-                  .context.value?.find((block) => block._key === blockKey)
-                const child = isTextBlock({schema}, block)
-                  ? block?.children?.find((child) => child._key === spanKey)
-                  : undefined
-
-                if (!isSpan({schema}, child)) {
-                  return
-                }
-
-                // Create a Range Decoration that follows the span from the
-                // start to the end
-                const rangeDecoration: RangeDecoration = {
-                  component: SpanRangeDecoration,
-                  selection: {
-                    anchor: {
-                      path: event.patch.path.slice(0, 2),
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const patch of event.patches) {
+                  if (patch.type === 'diffMatchPatch') {
+                    const blockKey = getBlockKeyFromSelectionPoint({
+                      path: patch.path,
                       offset: 0,
-                    },
-                    focus: {
-                      path: event.patch.path.slice(0, 2),
-                      offset: child.text.length,
-                    },
-                  },
+                    })
+                    const spanKey = getChildKeyFromSelectionPoint({
+                      path: patch.path,
+                      offset: 0,
+                    })
+                    const block = editorRef.current
+                      ?.getSnapshot()
+                      .context.value?.find((block) => block._key === blockKey)
+                    const child = isTextBlock({schema}, block)
+                      ? block?.children?.find((child) => child._key === spanKey)
+                      : undefined
+
+                    if (!isSpan({schema}, child)) {
+                      continue
+                    }
+
+                    // Create a Range Decoration that follows the span from the
+                    // start to the end
+                    const rangeDecoration: RangeDecoration = {
+                      component: SpanRangeDecoration,
+                      selection: {
+                        anchor: {
+                          path: patch.path.slice(0, 2),
+                          offset: 0,
+                        },
+                        focus: {
+                          path: patch.path.slice(0, 2),
+                          offset: child.text.length,
+                        },
+                      },
+                    }
+
+                    setRangeDecorations([rangeDecoration])
+                  }
                 }
-
-                setRangeDecorations([rangeDecoration])
-              }
-
-              if (event.type === 'mutation') {
                 // Set the value to trigger a re-render of the App component
-                setValue(event.value ?? [])
-                mutationEvents.push(event)
+                setValue(editorRef.current?.getSnapshot().context.value ?? [])
               }
             }}
           />
@@ -1008,11 +1001,15 @@ describe('RangeDecorations', () => {
       expect(page.getByTestId('range-decoration')).toBeInTheDocument()
     })
 
-    // Waiting for the mutation event to be emitted so we know the value has
-    // been set inside `App`
-    await vi.waitFor(() => {
-      expect(mutationEvents.length).toEqual(1)
-    })
+    expect(editorRef.current?.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
 
     // Assert that the caret is still after "f"
     expect(editorRef.current?.getSnapshot().context.selection).toEqual(

@@ -77,7 +77,6 @@ export interface PortableTextEditorEngine extends DOMEditor {
   remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
 
-  isDeferringMutations: boolean
   /**
    * The initial host value recorded when it changes the engine. A pristine
    * block equal to it is persisted content. Patch generation also records

@@ -9,7 +9,7 @@ import {
   type Editor,
   EditorProvider,
   PortableTextEditable,
-  type MutationEvent,
+  type ChangeEvent,
 } from '../src'
 import {execute} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
@@ -48,18 +48,8 @@ async function whenTheCaretIsPutAfter(
 }
 
 describe('Collaborative editing', () => {
-  describe('Deferred normalization patches', () => {
-    test('Scenario: Remote patches conflict with local held-back patches', async () => {
-      /**
-       * This test mimics the following scenario:
-       * 1. Editor A loads with initial value missing `marks` on a span
-       * 2. Editor A normalizes and adds marks: [], but defers the patch until the editor is dirty
-       * 3. Editor B (simulated) also normalizes, then makes "foo" bold
-       * 4. Editor B emits: set marks to [], then set marks to ['strong']
-       * 5. Editor A receives these patches and applies them - "foo" becomes bold
-       * 6. Editor A user starts typing
-       * 7. Editor A does not emit the deferred patch (would overwrite the bold)
-       */
+  describe('Normalization corrections and remote patches', () => {
+    test('Scenario: Remote marks replace a missing local marks default', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -107,10 +97,12 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                remoteValue = applyAll(remoteValue, [patch])
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  remoteValue = applyAll(remoteValue, [patch])
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -196,17 +188,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Remote patches on unrelated path do not discard local patches', async () => {
-      /**
-       * This test verifies that local held-back patches are NOT discarded
-       * when remote patches arrive on unrelated paths:
-       * 1. Editor A loads with initial value missing `marks` on a span
-       * 2. Editor A normalizes and adds marks: [], but defers the patch
-       * 3. Editor B changes the `text` property (unrelated to marks)
-       * 4. Editor A receives the text patch
-       * 5. Editor A user starts typing
-       * 6. Editor A should emit BOTH the deferred marks patch AND the typing patches
-       */
+    test('Scenario: Remote text preserves normalization of missing marks', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -234,9 +216,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -288,8 +272,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // The typing patch first, then the span's deferred `marks` default
-      // riding the same edit.
       expect(emittedPatches).toEqual([
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
@@ -317,16 +299,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Remote patches conflict with local held-back style normalization', async () => {
-      /**
-       * This test verifies conflict detection for block `style` normalization:
-       * 1. Editor A loads with initial value missing `style` on a block
-       * 2. Editor A normalizes and adds style: 'normal', but defers the patch
-       * 3. Editor B changes style to 'h1'
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A should NOT emit the deferred style patch (would overwrite h1)
-       */
+    test('Scenario: Remote style replaces a missing local style default', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -356,9 +329,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -408,7 +383,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should NOT include the deferred style normalization patch
       expect(emittedPatches).toEqual([
         diffMatchPatch('foo', 'foo!', [
           {_key: blockKey},
@@ -419,19 +393,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Remote patches conflict with local held-back markDefs normalization', async () => {
-      /**
-       * This test verifies conflict detection for block `markDefs` normalization:
-       * 1. Editor A loads with initial value missing `markDefs` on a block
-       * 2. Editor A normalizes and adds markDefs: [], but defers the patch
-       * 3. Editor B changes markDefs to add a link AND updates span to use it
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing inside the link (not at the edge)
-       * 6. Editor A should NOT emit the deferred markDefs patch (would overwrite link)
-       *
-       * Note: The remote patches must also update the span's marks to reference
-       * the new markDef, otherwise normalization would clean up the unused markDef.
-       */
+    test('Scenario: Remote markDefs replace a missing local markDefs default', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -464,9 +426,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -542,7 +506,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should NOT include the deferred markDefs normalization patch
       expect(emittedPatches).toEqual([
         diffMatchPatch('click here', 'clickX here', [
           {_key: blockKey},
@@ -554,16 +517,6 @@ describe('Collaborative editing', () => {
     })
 
     test('Scenario: Remote patches on inline object do not conflict with sibling span normalization', async () => {
-      /**
-       * This test verifies that normalization patches on one child don't conflict
-       * with remote patches on a different child (sibling inline object):
-       * 1. Editor A loads with block containing: span (missing marks), inline object, span
-       * 2. Editor A normalizes and adds marks: [] to first span, defers the patch
-       * 3. Editor B updates the inline object's property
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A SHOULD emit the deferred marks patch (different child, no conflict)
-       */
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const span1Key = keyGenerator()
@@ -599,9 +552,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -664,8 +619,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // The typing patch first, then the span's deferred `marks` default
-      // riding the same edit.
       expect(emittedPatches).toEqual([
         diffMatchPatch('Price: ', 'Price: x', [
           {_key: blockKey},
@@ -697,17 +650,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Remote patch on parent path discards local patch on child path', async () => {
-      /**
-       * This test verifies that a remote patch on a parent path discards
-       * local pending patches on child paths:
-       * 1. Editor A loads with span missing marks
-       * 2. Editor A normalizes and adds marks: [], but defers the patch
-       * 3. Editor B replaces the entire span (parent of marks)
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A should NOT emit the deferred marks patch (parent was replaced)
-       */
+    test('Scenario: A remote span replaces a span missing marks', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -735,9 +678,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -787,7 +732,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should NOT include the deferred marks patch (parent path was replaced)
       expect(emittedPatches).toEqual([
         diffMatchPatch('bar', 'bar!', [
           {_key: blockKey},
@@ -798,17 +742,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Remote patch on child path does not discard local patch on parent path', async () => {
-      /**
-       * This test verifies that a remote patch on a child path does NOT discard
-       * local pending patches on parent paths (they don't conflict):
-       * 1. Editor A loads with block missing markDefs
-       * 2. Editor A normalizes and adds markDefs: [], but defers the patch
-       * 3. Editor B updates the text of a span (child path)
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A SHOULD emit the deferred markDefs patch (different paths)
-       */
+    test('Scenario: Remote span text preserves normalization of missing markDefs', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -836,9 +770,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -891,8 +827,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // The typing patch first, then the block's deferred `markDefs`
-      // default riding the same edit.
       expect(emittedPatches).toEqual([
         diffMatchPatch('hello', 'hello!', [
           {_key: blockKey},
@@ -920,16 +854,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Multiple normalization patches, only conflicting ones discarded', async () => {
-      /**
-       * This test verifies selective discarding when there are multiple pending patches:
-       * 1. Editor A loads with block missing both style and markDefs, span missing marks
-       * 2. Editor A normalizes all three issues, deferring three patches
-       * 3. Editor B changes the style to h1
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A should emit markDefs and marks patches, but NOT style patch
-       */
+    test('Scenario: Remote style preserves normalization of missing marks and markDefs', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -959,9 +884,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -1010,11 +937,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should include markDefs and marks patches, but NOT the style patch
-      // The typing patch first, then the block's deferred defaults riding
-      // the same edit (marks before markDefs: normalization processes spans
-      // before block-level properties). The remote `style` change is not
-      // overwritten: the style rule sees the field present and stays quiet.
       expect(emittedPatches).toEqual([
         diffMatchPatch('foo', 'foo!', [
           {_key: blockKey},
@@ -1047,17 +969,7 @@ describe('Collaborative editing', () => {
       ])
     })
 
-    test('Scenario: Remote patch on block replaces entire block, discards all local patches for that block', async () => {
-      /**
-       * This test verifies that when a remote patch replaces an entire block,
-       * all local patches targeting that block or its children are discarded:
-       * 1. Editor A loads with malformed block (missing style, markDefs, and marks)
-       * 2. Editor A normalizes and defers multiple patches
-       * 3. Editor B completely replaces the block
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing
-       * 6. Editor A should NOT emit any of the deferred patches
-       */
+    test('Scenario: Remote block replacement preserves the replacement defaults', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -1087,9 +999,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -1151,7 +1065,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // Should NOT include any deferred normalization patches
       expect(emittedPatches).toEqual([
         diffMatchPatch('replaced', 'replaced!', [
           {_key: blockKey},
@@ -1163,16 +1076,6 @@ describe('Collaborative editing', () => {
     })
 
     test('Scenario: Remote patches on different blocks do not conflict', async () => {
-      /**
-       * This test verifies that remote patches on one block do not affect
-       * pending normalization patches on a different block:
-       * 1. Editor A loads with two blocks, first block missing marks
-       * 2. Editor A normalizes first block, defers the patch
-       * 3. Editor B updates the second block's text
-       * 4. Editor A receives the patch
-       * 5. Editor A user starts typing in first block
-       * 6. Editor A SHOULD emit the deferred marks patch (different block)
-       */
       const keyGenerator = createTestKeyGenerator()
       const block1Key = keyGenerator()
       const span1Key = keyGenerator()
@@ -1216,9 +1119,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -1288,8 +1193,6 @@ describe('Collaborative editing', () => {
         ])
       })
 
-      // The typing patch first, then the block's deferred `marks` default
-      // riding the same edit.
       expect(emittedPatches).toEqual([
         diffMatchPatch('first', 'first!', [
           {_key: block1Key},
@@ -1360,9 +1263,11 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                emittedPatches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  emittedPatches.push(patch)
+                }
               }
             }}
           />
@@ -1452,8 +1357,8 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' && event.patch.origin === 'local') {
-                localPatchesA.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                localPatchesA.push(...event.patches)
               }
             }}
           />
@@ -1466,8 +1371,8 @@ describe('Collaborative editing', () => {
         children: (
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' && event.patch.origin === 'local') {
-                localPatchesB.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                localPatchesB.push(...event.patches)
               }
             }}
           />
@@ -1534,7 +1439,7 @@ describe('Collaborative editing', () => {
     })
   })
   describe('Two-editor harness', () => {
-    test('Scenario: Two mutations flushed together do not roll back the sender', async () => {
+    test('Scenario: Two consecutive local changes do not roll back the sender', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
       const spanKey = keyGenerator()
@@ -1619,7 +1524,6 @@ describe('Collaborative editing', () => {
           ],
           patches: [patchA],
         },
-        {type: 'patch', patch: patchA},
         {type: 'selection', selection: caret(4)},
         {
           type: 'operation',
@@ -1639,10 +1543,7 @@ describe('Collaborative editing', () => {
           ],
           patches: [patchB],
         },
-        {type: 'patch', patch: patchB},
         {type: 'selection', selection: caret(5)},
-        {type: 'mutation', patches: [patchA], value: value('fooab')},
-        {type: 'mutation', patches: [patchB], value: value('fooab')},
       ])
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['fooab'])
       expect(getTersePt(editorB.getSnapshot().context)).toEqual(['fooab'])
@@ -1650,7 +1551,7 @@ describe('Collaborative editing', () => {
   })
 })
 
-test('Scenario: Applying patches discards local held-back patches', async () => {
+test('Scenario: Applying patches preserves remote style while typing normalizes missing defaults', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()
@@ -1669,9 +1570,11 @@ test('Scenario: Applying patches discards local held-back patches', async () => 
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            const {origin: _, ...patch} = event.patch
-            emittedPatches.push(patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              const {origin: _, ...patch} = changePatch
+              emittedPatches.push(patch)
+            }
           }
         }}
       />
@@ -1774,7 +1677,7 @@ test('Scenario: Applying patches discards local held-back patches', async () => 
 
 // Clearing should leave both peers with the same keys, but each peer keeps its own placeholder keys.
 test.fails('Scenario: Each peer keeps its own placeholder keys after clearing', async () => {
-  const {editorA, editorB, locatorA, shared, nextMutation} =
+  const {editorA, editorB, locatorA, shared, nextLocalChange} =
     await renderPatchRelayingEditors()
 
   await userEvent.click(locatorA)
@@ -1801,19 +1704,19 @@ test.fails('Scenario: Each peer keeps its own placeholder keys after clearing', 
     {timeout: 3_000},
   )
 
-  const colonMutation = nextMutation('a')
+  const colonLocalChange = nextLocalChange('a')
   await userEvent.keyboard(':')
-  await colonMutation
+  await colonLocalChange
 
   editorB.send({type: 'update readOnly', readOnly: true})
 
-  const eaMutation = nextMutation('a')
+  const eaLocalChange = nextLocalChange('a')
   editorA.send({type: 'insert.text', text: 'ea'})
-  await eaMutation
+  await eaLocalChange
 
-  const heldMutation = nextMutation('b')
+  const heldLocalChange = nextLocalChange('b')
   editorB.send({type: 'update readOnly', readOnly: false})
-  await heldMutation
+  await heldLocalChange
 
   await vi.waitFor(
     () => {
@@ -1850,9 +1753,12 @@ async function renderPatchRelayingEditors() {
   const shared: {value: Array<PortableTextBlock> | undefined} = {
     value: undefined,
   }
-  const mutationWaiters: Array<{editorId: 'a' | 'b'; resolve: () => void}> = []
+  const changeWaiters: Array<{editorId: 'a' | 'b'; resolve: () => void}> = []
 
-  function relayMutation(editorId: 'a' | 'b', event: MutationEvent) {
+  function relayChange(
+    editorId: 'a' | 'b',
+    event: Extract<ChangeEvent, {origin: 'local'}>,
+  ) {
     for (const [peerId, peerRef] of [
       ['a', editorARef],
       ['b', editorBRef],
@@ -1863,13 +1769,13 @@ async function renderPatchRelayingEditors() {
       peerRef.current?.send({type: 'apply', patches: event.patches})
     }
 
-    shared.value = event.value
+    shared.value = applyAll(shared.value, event.patches)
 
-    for (const waiter of mutationWaiters.splice(0)) {
+    for (const waiter of changeWaiters.splice(0)) {
       if (waiter.editorId === editorId) {
         waiter.resolve()
       } else {
-        mutationWaiters.push(waiter)
+        changeWaiters.push(waiter)
       }
     }
   }
@@ -1891,8 +1797,8 @@ async function renderPatchRelayingEditors() {
             <PortableTextEditable data-testid={`editor-${editorId}`} />
             <EventListenerPlugin
               on={(event) => {
-                if (event.type === 'mutation') {
-                  relayMutation(editorId, event)
+                if (event.type === 'change' && event.origin === 'local') {
+                  relayChange(editorId, event)
                 }
               }}
             />
@@ -1913,9 +1819,9 @@ async function renderPatchRelayingEditors() {
     editorB: editorBRef.current!,
     locatorA,
     shared,
-    nextMutation: (editorId: 'a' | 'b') =>
+    nextLocalChange: (editorId: 'a' | 'b') =>
       new Promise<void>((resolve) => {
-        mutationWaiters.push({editorId, resolve})
+        changeWaiters.push({editorId, resolve})
       }),
   }
 }

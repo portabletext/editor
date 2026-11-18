@@ -2527,7 +2527,13 @@ describe('existing remote-patch corrections', () => {
       expectedValue: [
         {_type: 'container', _key: containerKey, content: [nestedBlock]},
       ],
-      expectedPatches: [],
+      expectedPatches: [
+        {
+          type: 'unset',
+          path: [{_key: containerKey}, 'content', 1],
+          origin: 'local',
+        },
+      ],
     },
     {
       name: 'two primitives in one remote insert',
@@ -2620,8 +2626,11 @@ describe('existing remote-patch corrections', () => {
           <>
             <EventListenerPlugin
               on={(editorEvent) => {
-                if (editorEvent.type === 'patch') {
-                  patches.push(editorEvent.patch)
+                if (
+                  editorEvent.type === 'change' &&
+                  editorEvent.origin === 'local'
+                ) {
+                  patches.push(...editorEvent.patches)
                 }
               }}
             />
@@ -2661,8 +2670,10 @@ describe('existing remote-patch corrections', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
