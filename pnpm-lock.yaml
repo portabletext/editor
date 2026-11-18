@@ -660,6 +660,9 @@ importers:
       '@portabletext/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@portabletext/patches':
+        specifier: workspace:*
+        version: link:../../packages/patches
       '@portabletext/plugin-list-index':
         specifier: workspace:*
         version: link:../../packages/plugin-list-index
