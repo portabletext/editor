@@ -338,6 +338,9 @@ importers:
       '@portabletext/keyboard-shortcuts':
         specifier: workspace:*
         version: link:../../packages/keyboard-shortcuts
+      '@portabletext/patches':
+        specifier: workspace:*
+        version: link:../../packages/patches
       '@portabletext/plugin-list-index':
         specifier: workspace:*
         version: link:../../packages/plugin-list-index

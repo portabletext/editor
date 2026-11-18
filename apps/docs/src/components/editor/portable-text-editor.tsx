@@ -12,6 +12,7 @@ import {
   type TextBlockRenderProps,
 } from '@portabletext/editor'
 import {EventListenerPlugin, NodePlugin} from '@portabletext/editor/plugins'
+import {applyAll} from '@portabletext/patches'
 import {ListIndexProvider, useListIndex} from '@portabletext/plugin-list-index'
 import {MarkdownShortcutsPlugin} from '@portabletext/plugin-markdown-shortcuts'
 import {TypographyPlugin} from '@portabletext/plugin-typography'
@@ -199,8 +200,8 @@ export function PortableTextEditor({customSchema}: PortableTextEditorProps) {
       >
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              setValue(event.value)
+            if (event.type === 'change' && event.origin === 'local') {
+              setValue((value) => applyAll(value, event.patches))
             }
           }}
         />
