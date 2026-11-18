@@ -1,5 +1,5 @@
 /**
- * Renders `__fixtures__/wire-catalogue/*.json` into a markdown catalogue.
+ * Renders `packages/steps/fixtures/wire-catalogue/*.json` into a markdown catalogue.
  *
  * Usage: `node scripts/generate-wire-catalogue.ts [outputPath]`
  * With no `outputPath`, the markdown goes to stdout: run through
@@ -45,7 +45,7 @@ function isTextspecCapture(
 }
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
-const fixturesDir = join(scriptDir, '../tests/__fixtures__/wire-catalogue')
+const fixturesDir = join(scriptDir, '../../steps/fixtures/wire-catalogue')
 
 const commit = execSync('git describe --always --dirty', {
   cwd: scriptDir,
@@ -54,7 +54,10 @@ const commit = execSync('git describe --always --dirty', {
   .trim()
 
 const captures = readdirSync(fixturesDir)
-  .filter((file) => file.endsWith('.json'))
+  .filter(
+    (file) =>
+      file.endsWith('@root.json') || file === 'span-merge-cosmetic.json',
+  )
   .sort()
   .map((file) => {
     // oxlint-disable-next-line no-restricted-globals -- standalone script outside the package's `safeStringify`/`safeParse` boundary, reading its own well-formed fixtures

@@ -1,0 +1,825 @@
+{
+  "scenario": "annotation-add-mid-span",
+  "depth": "nested",
+  "schema": {
+    "annotations": [
+      {
+        "name": "link",
+        "fields": [
+          {
+            "name": "href",
+            "type": "string"
+          }
+        ]
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "aside",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "seed": "ASIDE:\n  CALLOUT:\n    B: foo bar baz",
+  "seedValue": [
+    {
+      "_type": "aside",
+      "_key": "k3",
+      "content": [
+        {
+          "_type": "callout",
+          "_key": "k2",
+          "content": [
+            {
+              "style": "normal",
+              "markDefs": [],
+              "_type": "block",
+              "_key": "k0",
+              "children": [
+                {
+                  "_key": "k1",
+                  "_type": "span",
+                  "text": "foo bar baz",
+                  "marks": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": ["send {type: 'annotation.add', annotation: link}"],
+  "patches": [
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "markDefs"
+      ],
+      "value": [
+        {
+          "_type": "link",
+          "_key": "k6",
+          "href": "https://example.com"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -4,8 +4,4 @@\n  bar\n- baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k7",
+          "_type": "span",
+          "marks": [],
+          "text": " baz"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,7 +1,4 @@\n foo \n-bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k8",
+          "_type": "span",
+          "marks": [],
+          "text": "bar"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k3"
+        },
+        "content",
+        {
+          "_key": "k2"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k8"
+        },
+        "marks"
+      ],
+      "value": ["k6"],
+      "origin": "local"
+    }
+  ],
+  "mutationSizes": [8],
+  "result": "ASIDE:\n  CALLOUT:\n    B: foo [@link href=\"https://example.com\":^bar|] baz",
+  "resultValue": [
+    {
+      "_type": "aside",
+      "_key": "k3",
+      "content": [
+        {
+          "_type": "callout",
+          "_key": "k2",
+          "content": [
+            {
+              "style": "normal",
+              "markDefs": [
+                {
+                  "_type": "link",
+                  "_key": "k6",
+                  "href": "https://example.com"
+                }
+              ],
+              "_type": "block",
+              "_key": "k0",
+              "children": [
+                {
+                  "_key": "k1",
+                  "_type": "span",
+                  "text": "foo ",
+                  "marks": []
+                },
+                {
+                  "_key": "k8",
+                  "_type": "span",
+                  "marks": ["k6"],
+                  "text": "bar"
+                },
+                {
+                  "_key": "k7",
+                  "_type": "span",
+                  "marks": [],
+                  "text": " baz"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "editorPoints": [
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 0
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 1
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 2
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 3
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 4
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k8"
+          }
+        ],
+        "offset": 0
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 5
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k8"
+          }
+        ],
+        "offset": 1
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 6
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k8"
+          }
+        ],
+        "offset": 2
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 7
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k7"
+          }
+        ],
+        "offset": 0
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 8
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k7"
+          }
+        ],
+        "offset": 1
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 9
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k7"
+          }
+        ],
+        "offset": 2
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 10
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k7"
+          }
+        ],
+        "offset": 3
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 11
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k3"
+          },
+          "content",
+          {
+            "_key": "k2"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k7"
+          }
+        ],
+        "offset": 4
+      }
+    }
+  ]
+}

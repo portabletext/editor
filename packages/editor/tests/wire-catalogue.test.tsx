@@ -7,6 +7,7 @@ import {
   toTextspec,
 } from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
+import {server} from 'vitest/browser'
 import {
   defineSchema,
   type Editor,
@@ -15,25 +16,9 @@ import {
   type PortableTextTextBlock,
   type SchemaDefinition,
 } from '../src'
-import {safeStringify} from '../src/internal-utils/safe-json'
+import {safeParse} from '../src/internal-utils/safe-json'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
-
-/**
- * The wire catalogue: one scenario per test, each producing a committed
- * snapshot under `__fixtures__/wire-catalogue/`. The snapshot IS the
- * fixture: `scripts/generate-wire-catalogue.ts` reads it back to render the
- * markdown catalogue.
- *
- * `seed` and `result` are textspec notation strings (see
- * `@portabletext/test`'s `fromTextspec`/`toTextspec`):
- * together with the `schema` field and the deterministic
- * `createTestKeyGenerator`, `seed` is enough to replay the scenario.
- * Scenarios textspec can't express, such as a span boundary that isn't a
- * mark boundary or a duplicate `_key` across sibling blocks, keep the
- * pre-textspec shape instead (`seed` as full blocks,
- * `seedTerse`/`resultTerse`).
- */
 
 type Capture = {
   scenario: string
@@ -56,10 +41,13 @@ type LegacyCapture = {
   proof?: string
 }
 
-async function writeCapture(capture: Capture | LegacyCapture) {
-  await expect(`${safeStringify(capture, 2)}\n`).toMatchFileSnapshot(
-    `__fixtures__/wire-catalogue/${capture.scenario}.json`,
+async function assertCapture(capture: Capture | LegacyCapture) {
+  const fixture = safeParse(
+    await server.commands.readFile(
+      `../steps/fixtures/wire-catalogue/${capture.scenario}.json`,
+    ),
   )
+  expect(capture).toEqual(fixture)
 }
 
 function captureResult(schema: Schema, editor: Editor): string {
@@ -84,7 +72,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'type-text',
       schema,
       seed,
@@ -110,7 +98,7 @@ describe('wire catalogue', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo  baz'])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'delete-within-span',
       schema,
       seed,
@@ -137,7 +125,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-split',
       schema,
       seed,
@@ -168,7 +156,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-split-multi-span',
       schema,
       seed,
@@ -195,7 +183,7 @@ describe('wire catalogue', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foobar'])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-merge-backspace',
       schema,
       seed,
@@ -255,7 +243,7 @@ describe('wire catalogue', () => {
       expect(editor.getSnapshot().context.value.length).toBe(1)
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-merge-duplicate-keys',
       schema,
       seed,
@@ -316,7 +304,7 @@ describe('wire catalogue', () => {
       expect(editor.getSnapshot().context.value.length).toBe(1)
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-merge-duplicate-keys-forward',
       schema,
       seed,
@@ -380,7 +368,7 @@ describe('wire catalogue', () => {
       expect(editor.getSnapshot().context.value.length).toBe(1)
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-merge-duplicate-keys-markdefs',
       schema,
       seed,
@@ -442,7 +430,7 @@ describe('wire catalogue', () => {
       expect(editor.getSnapshot().context.value.length).toBe(1)
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'range-delete-duplicate-keys',
       schema,
       seed,
@@ -473,7 +461,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'decorator-add-mid-span',
       schema,
       seed,
@@ -508,7 +496,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'annotation-add-mid-span',
       schema,
       seed,
@@ -536,7 +524,7 @@ describe('wire catalogue', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'decorator-remove-whole-span',
       schema,
       seed,
@@ -566,7 +554,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'decorator-remove-sub-range',
       schema,
       seed,
@@ -599,7 +587,7 @@ describe('wire catalogue', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar baz'])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'annotation-remove',
       schema,
       seed,
@@ -657,7 +645,7 @@ describe('wire catalogue', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['foo bar!'])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'span-merge-cosmetic',
       schema,
       seed,
@@ -684,7 +672,7 @@ describe('wire catalogue', () => {
       expect(getTersePt(editor.getSnapshot().context)).toEqual(['bar', 'foo'])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'block-move',
       schema,
       seed,
@@ -718,7 +706,7 @@ describe('wire catalogue', () => {
       ])
     })
 
-    await writeCapture({
+    await assertCapture({
       scenario: 'insert-blocks-auto',
       schema,
       seed,
