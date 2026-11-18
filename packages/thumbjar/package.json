@@ -2,7 +2,7 @@
   "name": "thumbjar",
   "version": "0.0.0",
   "private": true,
-  "description": "Types on real Gboard on an Android emulator and reports what a web page ended up with",
+  "description": "Test rich text editors against a real Android keyboard",
   "license": "MIT",
   "bin": {
     "thumbjar": "./bin/thumbjar.js"
