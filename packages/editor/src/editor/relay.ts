@@ -1,5 +1,4 @@
 import type {Patch} from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import type {EditorSelection} from '../types/editor'
 import type {Operation} from '../types/operation'
@@ -20,17 +19,14 @@ export type EditorEmittedEvent =
       type: 'focused'
       event: FocusEvent<HTMLDivElement, Element>
     }
-  | MutationEvent
   | {
       /**
        * @beta
        * Emitted synchronously for every document-changing operation the
        * engine applies (`set.selection` is excluded; the `selection` event
-       * serves selection observers), including operations from initial
-       * load and normalization, unlike `patch` and `mutation`
-       * events, which are held back until the editor is dirty. Do not
-       * dispatch editor events from a listener; read current state via
-       * `editor.getSnapshot()`.
+       * serves selection observers), including operations from initial load and
+       * normalization. Do not dispatch editor events from a listener; read
+       * current state via `editor.getSnapshot()`.
        *
        * The `operation` object is the engine's own, passed by reference:
        * treat it as read-only and copy anything you retain. Normalization
@@ -53,7 +49,6 @@ export type EditorEmittedEvent =
        */
       origin: 'local' | 'remote'
     }
-  | PatchEvent
   | {
       type: 'read only'
     }
@@ -73,9 +68,7 @@ export type EditorEmittedEvent =
  *   event and everything it raised. Undo and redo are one action each.
  *   Local changes arrive in application order, and one user action can
  *   produce several when the editor fixes something mid-action. `patches`
- *   are the change as Sanity patches, the same patches the `patch` event
- *   emits for the action, available as soon as the action finishes
- *   instead of on the `mutation` event's debounced schedule.
+ *   are the change as Sanity patches, available as soon as the action finishes.
  * - `origin: 'local'` with `correction: true`: the editor's own fixes to
  *   the content (normalization, such as merging adjacent spans with the
  *   same marks or replacing a duplicate `_key`), emitted right after the
@@ -86,7 +79,7 @@ export type EditorEmittedEvent =
  *   child `_key`, an empty `children` array) is a correction too, and the
  *   remote change holds the value as received. Corrections are not held
  *   back: one to the initial value, or to a value received while the editor
- *   is read-only, carries `patches` that no `patch` or `mutation` event emits.
+ *   is read-only, carries `patches` immediately.
  * - `origin: 'remote'`: one event per applied `apply` event that changes
  *   the content. Remote changes carry no `patches`.
  *
@@ -120,20 +113,6 @@ export type ChangeEvent =
       operations: Array<Operation>
     }
 
-/**
- * @public
- */
-export type MutationEvent = {
-  type: 'mutation'
-  patches: Array<Patch>
-  value: Array<PortableTextBlock> | undefined
-}
-
-export type PatchEvent = {
-  type: 'patch'
-  patch: Patch
-}
-
 type RelayListener = (event: EditorEmittedEvent) => void
 
 /**
@@ -150,8 +129,8 @@ type RelayListener = (event: EditorEmittedEvent) => void
  *   normalization runs synchronously within it, so a batched listener sees one
  *   fully-applied, normalized change per call, never a half-normalized
  *   intermediate. Note that two synchronous `editor.send` calls coalesce into
- *   one burst. For persistence-aligned batching, the `mutation` event already
- *   coalesces patches on its own (debounced) schedule.
+ *   one burst. To relay local `change` patches to another editor, batch them so
+ *   that an edit and the correction it caused arrive in one `apply`.
  */
 export type EditorEventListenerOptions = {
   batch?: boolean
@@ -239,8 +218,7 @@ export function createRelay(): Relay {
       listener?.(event)
     } catch (error) {
       // One consumer's throwing listener must not starve other listeners of
-      // the event, nor break the editor flow that emitted it — patch events,
-      // for example, are sent synchronously from the mutation batcher.
+      // the event or break the editor flow that emitted it.
       console.error(error)
     }
   }

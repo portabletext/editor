@@ -164,9 +164,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -219,8 +221,6 @@ describe('container normalization', () => {
       ])
     })
 
-    // Normalization patches are deferred during setup. Trigger the dirty
-    // state so deferred patches get emitted.
     editor.send({
       type: 'select',
       at: {
@@ -305,9 +305,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -620,9 +622,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -854,9 +858,11 @@ describe('container normalization', () => {
           <NodePlugin nodes={calloutContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -1646,9 +1652,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3084,9 +3092,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3198,9 +3208,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3306,9 +3318,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3446,9 +3460,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3540,9 +3556,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3662,9 +3680,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3784,9 +3804,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />
@@ -3912,9 +3934,11 @@ describe('container normalization', () => {
         <>
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                const {origin: _, ...patch} = event.patch
-                patches.push(patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                }
               }
             }}
           />

@@ -9,7 +9,6 @@ import {
   EditorProvider,
   PortableTextEditable,
   type Editor,
-  type MutationEvent,
   type PortableTextBlock,
   type TextBlockRenderProps,
 } from '../src'
@@ -343,8 +342,6 @@ describe('registered render: blocks', () => {
     // Keeping track of the mount/unmount events for the registered
     // text block's `render`
     const textBlockMountEvents: Array<'mount' | 'unmount'> = []
-    // Keeping track of the mutation events emitted by the editor
-    const mutationEvents: Array<MutationEvent> = []
 
     function App(props: {children: React.ReactNode}) {
       const [value, setValue] = useState<Array<PortableTextBlock>>([])
@@ -381,11 +378,10 @@ describe('registered render: blocks', () => {
         >
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'mutation') {
-                mutationEvents.push(event)
+              if (event.type === 'change' && event.origin === 'local') {
                 // Setting the value to trigger a re-render of App and thereby
                 // a recreation of the `render` callback
-                setValue(event.value ?? [])
+                setValue(editorRef.current?.getSnapshot().context.value ?? [])
               }
             }}
           />
@@ -408,10 +404,16 @@ describe('registered render: blocks', () => {
     await userEvent.click(locator)
     await userEvent.type(locator, 'foo')
 
-    // Waiting for the mutation event to be emitted so we know the value has
-    // been set inside `App`
     await vi.waitFor(() => {
-      expect(mutationEvents.length).toEqual(1)
+      expect(editorRef.current?.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
 
     // Asserting that the text block's `render` has been mounted exactly once

@@ -60,6 +60,69 @@ const editorRows = patchPathRules
   // The editor cannot load an item that is not an object, re-keys a duplicate key and turns an empty array into a placeholder block on load, so the row would not test a path rule.
   .filter((row) => !isStartTheEditorCannotHold(row.start))
 
+test('Scenario: Remote paths two levels into marks and style keep the normalized value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const fooSpanKey = keyGenerator()
+  const barSpanKey = keyGenerator()
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  onTestFinished(() => {
+    const calls = {error: consoleError.mock.calls, warn: consoleWarn.mock.calls}
+    consoleError.mockRestore()
+    consoleWarn.mockRestore()
+    expect(calls).toEqual({error: [], warn: []})
+  })
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    initialValue: [
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: fooSpanKey, text: 'foobar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ],
+  })
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'unset',
+        path: [{_key: blockKey}, 'children', {_key: barSpanKey}, 'marks', 0, 0],
+      },
+      {type: 'unset', path: [{_key: blockKey}, 'style', 0, 0]},
+      {
+        type: 'unset',
+        path: [{_key: blockKey}, 'children', {_key: fooSpanKey}, 'marks', 0, 0],
+      },
+    ],
+  })
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+    offset: 6,
+    text: 'baz',
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [
+          {_type: 'span', _key: fooSpanKey, text: 'foobarbaz', marks: []},
+        ],
+        style: 'normal',
+        markDefs: [],
+      },
+    ])
+  })
+})
+
 describe.each([
   {depth: 'at the root', wrap: atRoot},
   {depth: 'inside a callout', wrap: inCallout},

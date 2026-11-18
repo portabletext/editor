@@ -23,7 +23,7 @@ interface SubscribableActor {
  * concern lives: the snapshot is cumulative, so delivering only the settled
  * state once per burst is sound, and it lands on the same microtask boundary
  * the editor's render already coalesces to. Consumers that need every
- * operation (patch generation, the mutation batcher) subscribe to the raw
+ * operation (patch generation) subscribe to the raw
  * actor or the `operation` event stream instead.
  *
  * `error`/`complete` are forwarded untouched; only `next` is coalesced.

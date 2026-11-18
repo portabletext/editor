@@ -1688,7 +1688,7 @@ describe('Behavior API with a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1742,15 +1742,6 @@ describe('Behavior API with a compact path at the root', () => {
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
       },
     ])
     expect(consoleError.mock.calls).toEqual([])
@@ -1820,7 +1811,7 @@ describe('Behavior API with a compact path inside a callout', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1893,22 +1884,6 @@ describe('Behavior API with a compact path inside a callout', () => {
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
       },
     ])
     expect(consoleError.mock.calls).toEqual([])
@@ -1986,7 +1961,7 @@ describe('Behavior API with a compact path inside a callout inside a callout', (
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -2088,24 +2063,6 @@ describe('Behavior API with a compact path inside a callout inside a callout', (
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
-      },
     ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
@@ -2174,7 +2131,7 @@ describe('Behavior API with a compact path inside a field with its own sub-schem
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -2248,22 +2205,6 @@ describe('Behavior API with a compact path inside a field with its own sub-schem
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
-      },
     ])
     expect(consoleError.mock.calls).toEqual([])
     expect(consoleWarn.mock.calls).toEqual([])
@@ -2320,7 +2261,7 @@ describe('Behavior API with a compact address on a native or synthetic event at 
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -2357,15 +2298,6 @@ describe('Behavior API with a compact address on a native or synthetic event at 
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -2453,7 +2385,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -2507,22 +2439,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -2626,7 +2542,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -2692,24 +2608,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -2819,7 +2717,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -2873,22 +2771,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -2976,7 +2858,7 @@ describe('Behavior API with a compact address on a native or synthetic event at 
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -3024,15 +2906,6 @@ describe('Behavior API with a compact address on a native or synthetic event at 
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -3120,7 +2993,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -3181,22 +3054,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -3300,7 +3157,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -3374,24 +3231,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(seenEvents).toEqual([
       {
@@ -3500,7 +3339,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -3561,22 +3400,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -3664,7 +3487,7 @@ describe('Behavior API with a compact address on a native or synthetic event at 
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -3721,15 +3544,6 @@ describe('Behavior API with a compact address on a native or synthetic event at 
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -3817,7 +3631,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -3906,22 +3720,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(seenEvents).toEqual([
       {
@@ -4024,7 +3822,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -4129,24 +3927,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(seenEvents).toEqual([
       {
@@ -4255,7 +4035,7 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -4344,22 +4124,6 @@ describe('Behavior API with a compact address on a native or synthetic event ins
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(seenEvents).toEqual([
       {
@@ -4439,7 +4203,7 @@ describe('Behavior API with a compact native origin at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -4512,15 +4276,6 @@ describe('Behavior API with a compact native origin at the root', () => {
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -4606,7 +4361,7 @@ describe('Behavior API with a compact native origin inside a callout', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -4716,22 +4471,6 @@ describe('Behavior API with a compact native origin inside a callout', () => {
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -4855,7 +4594,7 @@ describe('Behavior API with a compact native origin inside a callout inside a ca
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -4997,24 +4736,6 @@ describe('Behavior API with a compact native origin inside a callout inside a ca
             value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
       },
     ])
     expect(seenEvents).toEqual([
@@ -5166,7 +4887,7 @@ describe('Behavior API with a compact native origin inside a field with its own 
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -5265,22 +4986,6 @@ describe('Behavior API with a compact native origin inside a field with its own 
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b0'},
-            'children',
-            {_key: 's0'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n foo\n+baz\n',
-        },
-      },
     ])
     expect(seenEvents).toEqual([
       {
@@ -5347,7 +5052,7 @@ describe('Behavior API with a compact native origin inside a field with its own 
 })
 
 describe('Behavior API executing an edit at a compact path at the root', () => {
-  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5398,7 +5103,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -5430,15 +5135,6 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -5462,7 +5158,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout', () => {
-  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5529,7 +5225,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -5574,22 +5270,6 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -5619,7 +5299,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
-  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5698,7 +5378,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -5747,24 +5427,6 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -5802,7 +5464,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 })
 
 describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
-  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `set` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5869,7 +5531,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -5914,22 +5576,6 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -5959,7 +5605,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 })
 
 describe('Behavior API executing an edit at a compact path at the root', () => {
-  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6010,7 +5656,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6042,15 +5688,6 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -6074,7 +5711,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout', () => {
-  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6137,7 +5774,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6182,22 +5819,6 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -6227,7 +5848,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
-  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6305,7 +5926,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6354,24 +5975,6 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -6409,7 +6012,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 })
 
 describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
-  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `unset` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6472,7 +6075,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6517,22 +6120,6 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -6562,7 +6149,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 })
 
 describe('Behavior API executing an edit at a compact path at the root', () => {
-  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6623,7 +6210,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6655,15 +6242,6 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -6687,7 +6265,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout', () => {
-  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6760,7 +6338,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6805,22 +6383,6 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -6850,7 +6412,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
-  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -6935,7 +6497,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -6984,24 +6546,6 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7039,7 +6583,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 })
 
 describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
-  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7112,7 +6656,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7157,22 +6701,6 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7202,7 +6730,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 })
 
 describe('Behavior API executing an edit at a compact path at the root', () => {
-  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7258,7 +6786,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7290,15 +6818,6 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7322,7 +6841,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout', () => {
-  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7390,7 +6909,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7435,22 +6954,6 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7480,7 +6983,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
-  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7560,7 +7063,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7609,24 +7112,6 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7664,7 +7149,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 })
 
 describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
-  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `insert.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7732,7 +7217,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7777,22 +7262,6 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7822,7 +7291,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 })
 
 describe('Behavior API executing an edit at a compact path at the root', () => {
-  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7878,7 +7347,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -7910,15 +7379,6 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -7942,7 +7402,7 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout', () => {
-  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8010,7 +7470,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -8055,22 +7515,6 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -8100,7 +7544,7 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 })
 
 describe('Behavior API executing an edit at a compact path inside a callout inside a callout', () => {
-  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8180,7 +7624,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -8229,24 +7673,6 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -8284,7 +7710,7 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 })
 
 describe('Behavior API executing an edit at a compact path inside a field with its own sub-schema', () => {
-  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `patch` and no `change` content (indexed)', async () => {
+  test('Scenario: an executed `remove.text` at a compact span path changes nothing and emits no `change` for it (indexed)', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8352,7 +7778,7 @@ describe('Behavior API executing an edit at a compact path inside a field with i
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -8396,22 +7822,6 @@ describe('Behavior API executing an edit at a compact path inside a field with i
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([

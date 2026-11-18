@@ -145,9 +145,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -285,9 +287,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -580,9 +584,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -644,9 +650,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -715,9 +723,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -814,9 +824,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -890,9 +902,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -974,9 +988,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1029,9 +1045,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1105,9 +1123,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1181,9 +1201,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1264,9 +1286,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1373,9 +1397,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1448,9 +1474,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1537,9 +1565,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1610,9 +1640,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1708,9 +1740,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1767,9 +1801,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1826,9 +1862,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -1896,9 +1934,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2002,9 +2042,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2074,9 +2116,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2166,9 +2210,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2255,9 +2301,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2373,9 +2421,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2462,9 +2512,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2571,9 +2623,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2667,9 +2721,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2765,9 +2821,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2862,9 +2920,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -2960,9 +3020,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -3066,9 +3128,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -3153,9 +3217,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -3243,9 +3309,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -3351,9 +3419,11 @@ describe('normalization', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              const {origin: _, ...patch} = event.patch
-              patches.push(patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+              }
             }
           }}
         />
@@ -3618,8 +3688,10 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -3965,8 +4037,10 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -4147,8 +4221,10 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -4348,8 +4424,10 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -4771,8 +4849,10 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -4987,8 +5067,10 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
-                patches.push(event.patch)
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  patches.push(changePatch)
+                }
               }
             }}
           />
@@ -5279,7 +5361,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -5394,22 +5476,25 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -5455,7 +5540,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -5581,22 +5666,25 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -5625,7 +5713,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -5791,22 +5879,25 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -5859,7 +5950,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -5990,24 +6081,27 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -6059,7 +6153,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -6207,24 +6301,27 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -6253,7 +6350,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -6441,24 +6538,27 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -6517,7 +6617,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -6669,26 +6769,29 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -6746,7 +6849,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -6917,26 +7020,29 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -6965,7 +7071,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -7190,26 +7296,29 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -7245,7 +7354,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -7339,15 +7448,18 @@ describe('normalization', () => {
           children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [{_key: keys[0]!}, 'children', {_key: keys[1]!}, 'text'],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [{_key: keys[0]!}, 'children', {_key: keys[1]!}, 'text'],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -7398,7 +7510,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -7466,14 +7578,17 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
+          origin: 'local',
         },
       ])
       expect(locator.element().getAttribute('contenteditable')).toEqual('true')
@@ -7509,25 +7624,25 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'setIfMissing',
-            path: [{_key: keys[5]!}, 'content'],
-            value: [],
-            origin: 'local',
-          },
+          type: 'setIfMissing',
+          path: [{_key: keys[5]!}, 'content'],
+          value: [],
+          origin: 'local',
         },
         {
-          type: 'patch',
-          patch: {
-            type: 'insert',
-            path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
-            position: 'after',
-            items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
-            origin: 'local',
-          },
+          type: 'insert',
+          path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
+          position: 'after',
+          items: [{_type: 'span', _key: keys[2]!, text: 'bar', marks: []}],
+          origin: 'local',
         },
       ])
     })
@@ -7560,14 +7675,17 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [{_key: keys[5]!}, 'content', {_key: keys[2]!}],
+          origin: 'local',
         },
       ])
     })
@@ -7620,7 +7738,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -7688,23 +7806,23 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [{_key: keys[5]!}, 'content', 1, '_key'],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [{_key: keys[5]!}, 'content', 1, '_key'],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+          origin: 'local',
         },
       ])
       expect(locator.element().getAttribute('contenteditable')).toEqual('true')
@@ -7746,33 +7864,33 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'setIfMissing',
-            path: [{_key: keys[5]!}, 'content'],
-            value: [],
-            origin: 'local',
-          },
+          type: 'setIfMissing',
+          path: [{_key: keys[5]!}, 'content'],
+          value: [],
+          origin: 'local',
         },
         {
-          type: 'patch',
-          patch: {
-            type: 'insert',
-            path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
-            position: 'after',
-            items: [
-              {
-                _type: 'span',
-                _key: expectedKeys[10]!,
-                text: 'bar',
-                marks: ['em'],
-                extra: 1,
-              },
-            ],
-            origin: 'local',
-          },
+          type: 'insert',
+          path: [{_key: keys[5]!}, 'content', {_key: keys[0]!}],
+          position: 'after',
+          items: [
+            {
+              _type: 'span',
+              _key: expectedKeys[10]!,
+              text: 'bar',
+              marks: ['em'],
+              extra: 1,
+            },
+          ],
+          origin: 'local',
         },
       ])
     })
@@ -7805,14 +7923,17 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+          origin: 'local',
         },
       ])
     })
@@ -7865,7 +7986,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -7902,7 +8023,53 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([])
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          correction: true,
+          operations: [
+            {
+              type: 'set',
+              path: [
+                {
+                  _key: keys[5]!,
+                },
+                'content',
+                1,
+                '_key',
+              ],
+              value: expectedKeys[10]!,
+              inverse: {
+                type: 'unset',
+                path: [
+                  {
+                    _key: keys[5]!,
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+              },
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              path: [
+                {
+                  _key: keys[5]!,
+                },
+                'content',
+                1,
+                '_key',
+              ],
+              value: expectedKeys[10]!,
+              origin: 'local',
+            },
+          ],
+        },
+      ])
     })
     locator.element().focus()
     editor.send({
@@ -7963,31 +8130,31 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [{_key: keys[5]!}, 'content', 1, '_key'],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [{_key: keys[5]!}, 'content', 1, '_key'],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -8046,7 +8213,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -8089,7 +8256,65 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([])
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          correction: true,
+          operations: [
+            {
+              type: 'set',
+              path: [
+                {
+                  _key: keys[5]!,
+                },
+                'content',
+                {
+                  _key: keys[6]!,
+                },
+                'content',
+                1,
+                '_key',
+              ],
+              value: expectedKeys[10]!,
+              inverse: {
+                type: 'unset',
+                path: [
+                  {
+                    _key: keys[5]!,
+                  },
+                  'content',
+                  {
+                    _key: keys[6]!,
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+              },
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              path: [
+                {
+                  _key: keys[5]!,
+                },
+                'content',
+                {
+                  _key: keys[6]!,
+                },
+                'content',
+                1,
+                '_key',
+              ],
+              value: expectedKeys[10]!,
+              origin: 'local',
+            },
+          ],
+        },
+      ])
     })
     locator.element().focus()
     editor.send({
@@ -8160,40 +8385,40 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              1,
-              '_key',
-            ],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            1,
+            '_key',
+          ],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -8258,7 +8483,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -8307,7 +8532,77 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([])
+      expect(events).toEqual([
+        {
+          type: 'change',
+          origin: 'local',
+          correction: true,
+          operations: [
+            {
+              type: 'set',
+              path: [
+                {
+                  _key: keys[5]!,
+                },
+                'rows',
+                {
+                  _key: keys[6]!,
+                },
+                'cells',
+                {
+                  _key: keys[7]!,
+                },
+                'content',
+                1,
+                '_key',
+              ],
+              value: expectedKeys[10]!,
+              inverse: {
+                type: 'unset',
+                path: [
+                  {
+                    _key: keys[5]!,
+                  },
+                  'rows',
+                  {
+                    _key: keys[6]!,
+                  },
+                  'cells',
+                  {
+                    _key: keys[7]!,
+                  },
+                  'content',
+                  1,
+                  '_key',
+                ],
+              },
+            },
+          ],
+          patches: [
+            {
+              type: 'set',
+              path: [
+                {
+                  _key: keys[5]!,
+                },
+                'rows',
+                {
+                  _key: keys[6]!,
+                },
+                'cells',
+                {
+                  _key: keys[7]!,
+                },
+                'content',
+                1,
+                '_key',
+              ],
+              value: expectedKeys[10]!,
+              origin: 'local',
+            },
+          ],
+        },
+      ])
     })
     locator.element().focus()
     editor.send({
@@ -8393,44 +8688,44 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              1,
-              '_key',
-            ],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            1,
+            '_key',
+          ],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
         {
-          type: 'patch',
-          patch: {
-            type: 'diffMatchPatch',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              {_key: keys[0]!},
-              'children',
-              {_key: keys[1]!},
-              'text',
-            ],
-            value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
-            origin: 'local',
-          },
+          type: 'diffMatchPatch',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: keys[0]!},
+            'children',
+            {_key: keys[1]!},
+            'text',
+          ],
+          value: '@@ -1,3 +1,4 @@\n foo\n+x\n',
+          origin: 'local',
         },
       ])
     })
@@ -8472,7 +8767,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -8511,15 +8806,18 @@ describe('normalization', () => {
           children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [1, '_key'],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [1, '_key'],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
       ])
     })
@@ -8544,21 +8842,26 @@ describe('normalization', () => {
           children: [{_type: 'span', _key: keys[4]!, text: 'baz', marks: []}],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [{_key: expectedKeys[10]!}],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [{_key: expectedKeys[10]!}],
+          origin: 'local',
         },
       ])
       expect(
         applyAll(
           valueBeforeDelete,
           events.flatMap((event) =>
-            event.type === 'patch' ? [event.patch] : [],
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
           ),
         ),
       ).toEqual([
@@ -8626,7 +8929,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -8675,15 +8978,18 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [{_key: keys[5]!}, 'content', 1, '_key'],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [{_key: keys[5]!}, 'content', 1, '_key'],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
       ])
     })
@@ -8718,21 +9024,26 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [{_key: keys[5]!}, 'content', {_key: expectedKeys[10]!}],
+          origin: 'local',
         },
       ])
       expect(
         applyAll(
           valueBeforeDelete,
           events.flatMap((event) =>
-            event.type === 'patch' ? [event.patch] : [],
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
           ),
         ),
       ).toEqual([
@@ -8816,7 +9127,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -8882,22 +9193,25 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              1,
-              '_key',
-            ],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            1,
+            '_key',
+          ],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
       ])
     })
@@ -8938,27 +9252,32 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [
-              {_key: keys[5]!},
-              'content',
-              {_key: keys[6]!},
-              'content',
-              {_key: expectedKeys[10]!},
-            ],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [
+            {_key: keys[5]!},
+            'content',
+            {_key: keys[6]!},
+            'content',
+            {_key: expectedKeys[10]!},
+          ],
+          origin: 'local',
         },
       ])
       expect(
         applyAll(
           valueBeforeDelete,
           events.flatMap((event) =>
-            event.type === 'patch' ? [event.patch] : [],
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
           ),
         ),
       ).toEqual([
@@ -9054,7 +9373,7 @@ describe('normalization', () => {
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch') {
+              if (event.type === 'change' && event.origin === 'local') {
                 events.push(event)
               }
             }}
@@ -9128,24 +9447,27 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'set',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              1,
-              '_key',
-            ],
-            value: expectedKeys[10]!,
-            origin: 'local',
-          },
+          type: 'set',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            1,
+            '_key',
+          ],
+          value: expectedKeys[10]!,
+          origin: 'local',
         },
       ])
     })
@@ -9192,29 +9514,34 @@ describe('normalization', () => {
           ],
         },
       ])
-      expect(events).toEqual([
+      expect(
+        events.flatMap((event) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
         {
-          type: 'patch',
-          patch: {
-            type: 'unset',
-            path: [
-              {_key: keys[5]!},
-              'rows',
-              {_key: keys[6]!},
-              'cells',
-              {_key: keys[7]!},
-              'content',
-              {_key: expectedKeys[10]!},
-            ],
-            origin: 'local',
-          },
+          type: 'unset',
+          path: [
+            {_key: keys[5]!},
+            'rows',
+            {_key: keys[6]!},
+            'cells',
+            {_key: keys[7]!},
+            'content',
+            {_key: expectedKeys[10]!},
+          ],
+          origin: 'local',
         },
       ])
       expect(
         applyAll(
           valueBeforeDelete,
           events.flatMap((event) =>
-            event.type === 'patch' ? [event.patch] : [],
+            event.type === 'change' && event.origin === 'local'
+              ? event.patches
+              : [],
           ),
         ),
       ).toEqual([

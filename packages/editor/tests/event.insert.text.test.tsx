@@ -1044,7 +1044,7 @@ describe('event.insert.text with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1081,15 +1081,6 @@ describe('event.insert.text with a compact path at the root', () => {
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -1153,7 +1144,7 @@ describe('event.insert.text with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1208,22 +1199,6 @@ describe('event.insert.text with a compact path inside a callout', () => {
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -1303,7 +1278,7 @@ describe('event.insert.text with a compact path inside a callout inside a callou
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1370,24 +1345,6 @@ describe('event.insert.text with a compact path inside a callout inside a callou
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -1465,7 +1422,7 @@ describe('event.insert.text with a compact path inside a field with its own sub-
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1520,22 +1477,6 @@ describe('event.insert.text with a compact path inside a field with its own sub-
             value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'diffMatchPatch',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([

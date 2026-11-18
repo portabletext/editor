@@ -3,7 +3,7 @@ import {createTestKeyGenerator} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test, vi} from 'vitest'
 import {defineSchema} from '../src'
-import type {MutationEvent, PatchEvent} from '../src/editor/relay'
+import type {ChangeEvent} from '../src/editor/relay'
 import {EventListenerPlugin} from '../src/plugins'
 import {
   getMarkState,
@@ -29,18 +29,16 @@ describe('remote patches skip cosmetic normalization', () => {
     const fooKey = keyGenerator()
     const barKey = keyGenerator()
     const bazKey = keyGenerator()
-    const patchEvents: Array<PatchEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patchEvents.push(event)
-            }
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -106,41 +104,7 @@ describe('remote patches skip cosmetic normalization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(patchEvents.map((event) => event.patch)).toEqual([
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: bazKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar'))),
-          origin: 'local',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: barKey}],
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
-          value: stringifyPatches(
-            makePatches(makeDiff('foobar', 'foobarbaz!')),
-          ),
-          origin: 'local',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: bazKey}],
-          origin: 'local',
-        },
-      ])
-    })
-    await vi.waitFor(() => {
-      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+      expect(patchEvents).toEqual([
         {
           type: 'diffMatchPatch',
           path: [{_key: blockKey}, 'children', {_key: bazKey}, 'text'],
@@ -179,18 +143,16 @@ describe('remote patches skip cosmetic normalization', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const patchEvents: Array<PatchEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patchEvents.push(event)
-            }
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -254,28 +216,7 @@ describe('remote patches skip cosmetic normalization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(patchEvents.map((event) => event.patch)).toEqual([
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('bar', 'bar!'))),
-          origin: 'local',
-        },
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('foo', 'foobar!'))),
-          origin: 'local',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
-          origin: 'local',
-        },
-      ])
-    })
-    await vi.waitFor(() => {
-      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+      expect(patchEvents).toEqual([
         {
           type: 'diffMatchPatch',
           path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}, 'text'],
@@ -304,18 +245,16 @@ describe('remote patches skip cosmetic normalization', () => {
     const otherBlockKey = keyGenerator()
     const otherSpanKey = keyGenerator()
     const stagingSpanKey = keyGenerator()
-    const patchEvents: Array<PatchEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patchEvents.push(event)
-            }
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -411,22 +350,7 @@ describe('remote patches skip cosmetic normalization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(patchEvents.map((event) => event.patch)).toEqual([
-        {
-          type: 'diffMatchPatch',
-          path: [
-            {_key: otherBlockKey},
-            'children',
-            {_key: otherSpanKey},
-            'text',
-          ],
-          value: stringifyPatches(makePatches(makeDiff('baz', 'baz!'))),
-          origin: 'local',
-        },
-      ])
-    })
-    await vi.waitFor(() => {
-      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+      expect(patchEvents).toEqual([
         {
           type: 'diffMatchPatch',
           path: [
@@ -447,18 +371,16 @@ describe('remote patches skip cosmetic normalization', () => {
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
     const barKey = keyGenerator()
-    const patchEvents: Array<PatchEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patchEvents.push(event)
-            }
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -526,22 +448,7 @@ describe('remote patches skip cosmetic normalization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(patchEvents.map((event) => event.patch)).toEqual([
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
-          origin: 'local',
-        },
-        {
-          type: 'unset',
-          path: [{_key: blockKey}, 'children', {_key: 'remoteSpan'}],
-          origin: 'local',
-        },
-      ])
-    })
-    await vi.waitFor(() => {
-      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+      expect(patchEvents).toEqual([
         {
           type: 'diffMatchPatch',
           path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
@@ -561,14 +468,14 @@ describe('remote patches skip cosmetic normalization', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const mutationEvents: Array<MutationEvent> = []
+    const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              localChanges.push(event)
             }
           }}
         />
@@ -635,7 +542,7 @@ describe('remote patches skip cosmetic normalization', () => {
     })
 
     await vi.waitFor(() => {
-      expect(mutationEvents.length).toBeGreaterThan(0)
+      expect(localChanges.length).toBeGreaterThan(0)
     })
   })
 
@@ -655,14 +562,16 @@ describe('remote patches skip cosmetic normalization', () => {
     const fooKey = keyGenerator()
     const barKey = keyGenerator()
     const bazKey = keyGenerator()
-    const patchEvents: Array<PatchEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patchEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -775,9 +684,7 @@ describe('remote patches skip cosmetic normalization', () => {
     // synchronously off the same apply cycle that produced the value
     // above, so this is already final for that cycle. The receiver
     // normalized nothing itself, so there is no echo to emit.
-    const patchEventsFromRemoteConvergence = patchEvents.map(
-      (event) => event.patch,
-    )
+    const patchEventsFromRemoteConvergence = patchEvents
     expect(patchEventsFromRemoteConvergence).toEqual([])
 
     // The document survives: applying the receiver's emissions (asserted
@@ -807,7 +714,7 @@ describe('remote patches skip cosmetic normalization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(patchEvents.map((event) => event.patch)).toEqual([
+      expect(patchEvents).toEqual([
         {
           type: 'diffMatchPatch',
           path: [{_key: blockKey}, 'children', {_key: fooKey}, 'text'],
@@ -878,18 +785,16 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
-    const patchEvents: Array<PatchEvent> = []
-    const mutationEvents: Array<MutationEvent> = []
+    const patchEvents: Array<Patch> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patchEvents.push(event)
-            }
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patchEvents.push(changePatch)
+              }
             }
           }}
         />
@@ -949,23 +854,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(patchEvents.map((event) => event.patch)).toEqual([
-        {
-          type: 'diffMatchPatch',
-          path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
-          value: stringifyPatches(makePatches(makeDiff('foo', 'foo!'))),
-          origin: 'local',
-        },
-        {
-          type: 'set',
-          path: [{_key: blockKey}, 'markDefs'],
-          value: [],
-          origin: 'local',
-        },
-      ])
-    })
-    await vi.waitFor(() => {
-      expect(mutationEvents.flatMap((event) => event.patches)).toEqual([
+      expect(patchEvents).toEqual([
         {
           type: 'diffMatchPatch',
           path: [{_key: blockKey}, 'children', {_key: spanKey}, 'text'],
@@ -1046,14 +935,14 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     const blockKey = keyGenerator()
     const fooKey = keyGenerator()
     const emptyKey = keyGenerator()
-    const mutationEvents: Array<MutationEvent> = []
+    const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
 
     const {editor} = await createTestEditor({
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'mutation') {
-              mutationEvents.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              localChanges.push(event)
             }
           }}
         />
@@ -1108,7 +997,7 @@ describe('adoption and remote patches skip markDef and annotation cleanup', () =
     })
 
     await vi.waitFor(() => {
-      expect(mutationEvents.length).toBeGreaterThan(0)
+      expect(localChanges.length).toBeGreaterThan(0)
     })
   })
 })

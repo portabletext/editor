@@ -506,7 +506,7 @@ describe('event.set with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -546,15 +546,6 @@ describe('event.set with a compact path at the root', () => {
             value: 'baz',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-          value: 'baz',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -618,7 +609,7 @@ describe('event.set with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -686,22 +677,6 @@ describe('event.set with a compact path inside a callout', () => {
             value: 'baz',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'set',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: 'baz',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -781,7 +756,7 @@ describe('event.set with a compact path inside a callout inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -862,24 +837,6 @@ describe('event.set with a compact path inside a callout inside a callout', () =
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'set',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: 'baz',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -954,7 +911,7 @@ describe('event.set with a compact path inside a field with its own sub-schema',
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1023,22 +980,6 @@ describe('event.set with a compact path inside a field with its own sub-schema',
           },
         ],
       },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'set',
-          path: [
-            {_key: 'n0'},
-            'body',
-            {_key: 'b1'},
-            'children',
-            {_key: 's1'},
-            'text',
-          ],
-          value: 'baz',
-        },
-      },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
       {
@@ -1106,7 +1047,7 @@ describe('event.set with a path into an array inside an array at the root', () =
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1146,15 +1087,6 @@ describe('event.set with a path into an array inside an array at the root', () =
             value: 'baz',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'i0'}, 'data', 'caption'],
-          value: 'baz',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -1198,7 +1130,7 @@ describe('event.set with a path into an array inside an array inside a callout',
           />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -1250,15 +1182,6 @@ describe('event.set with a path into an array inside an array inside a callout',
             value: 'baz',
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: 'c0'}, 'content', {_key: 'i0'}, 'data', 'caption'],
-          value: 'baz',
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([

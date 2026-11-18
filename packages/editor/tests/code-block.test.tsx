@@ -73,7 +73,7 @@ describe('code block', () => {
           <NodePlugin nodes={[codeBlockContainer]} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'mutation') {
+              if (event.type === 'change' && event.origin === 'local') {
                 for (const patch of event.patches) {
                   const {origin: _, ...rawPatch} = patch
                   patches.push(rawPatch)

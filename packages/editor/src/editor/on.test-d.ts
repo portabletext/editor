@@ -70,3 +70,10 @@ test('removed value events are rejected', () => {
   // @ts-expect-error
   editor.on('value changed', () => {})
 })
+
+test('removed content events are rejected', () => {
+  // @ts-expect-error
+  editor.on('patch', () => {})
+  // @ts-expect-error
+  editor.on('mutation', () => {})
+})

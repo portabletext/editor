@@ -14,7 +14,7 @@ import {
 } from '../test-utils/text-block-depths'
 
 describe('a path to a missing key at the root', () => {
-  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -63,7 +63,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -107,15 +107,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -152,7 +143,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -201,7 +192,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -245,15 +236,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -290,7 +272,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -339,7 +321,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -383,15 +365,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -428,7 +401,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -477,7 +450,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -520,15 +493,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -564,7 +528,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -613,7 +577,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -654,15 +618,6 @@ describe('a path to a missing key at the root', () => {
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -728,7 +683,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -858,7 +813,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -987,7 +942,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1116,7 +1071,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1211,7 +1166,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -1260,7 +1215,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1304,15 +1259,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -1349,7 +1295,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -1398,7 +1344,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1442,15 +1388,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -1487,7 +1424,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -1536,7 +1473,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1580,15 +1517,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -1625,7 +1553,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -1674,7 +1602,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1717,15 +1645,6 @@ describe('a path to a missing key at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -1761,7 +1680,7 @@ describe('a path to a missing key at the root', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -1810,7 +1729,7 @@ describe('a path to a missing key at the root', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -1851,15 +1770,6 @@ describe('a path to a missing key at the root', () => {
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -1928,7 +1838,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2058,7 +1968,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2192,7 +2102,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2326,7 +2236,7 @@ describe('a path to a missing key at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2463,7 +2373,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2504,15 +2414,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -2583,7 +2484,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2626,15 +2527,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -2705,7 +2597,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2752,15 +2644,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -2831,7 +2714,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -2880,15 +2763,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -2959,7 +2833,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3000,15 +2874,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -3079,7 +2944,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3122,15 +2987,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -3201,7 +3057,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3248,15 +3104,6 @@ describe('a path to a missing span key by block position at the root', () => {
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -3327,7 +3174,7 @@ describe('a path to a missing span key by block position at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3377,15 +3224,6 @@ describe('a path to a missing span key by block position at the root', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 's0'}, 'text'],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
-        },
       ])
     })
     expect(editor.getSnapshot().context.value).toEqual([
@@ -3417,7 +3255,7 @@ describe('a path to a missing span key by block position at the root', () => {
 })
 
 describe('a path to a missing key inside a callout', () => {
-  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -3472,7 +3310,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3535,22 +3373,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -3599,7 +3421,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -3654,7 +3476,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3717,22 +3539,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -3781,7 +3587,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -3836,7 +3642,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -3899,22 +3705,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -3963,7 +3753,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -4018,7 +3808,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -4081,22 +3871,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -4145,7 +3919,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -4200,7 +3974,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -4260,22 +4034,6 @@ describe('a path to a missing key inside a callout', () => {
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -4362,7 +4120,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -4526,7 +4284,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -4690,7 +4448,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -4854,7 +4612,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -4977,7 +4735,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5032,7 +4790,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -5095,22 +4853,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -5159,7 +4901,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5214,7 +4956,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -5277,22 +5019,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -5341,7 +5067,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5396,7 +5122,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -5459,22 +5185,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -5523,7 +5233,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5578,7 +5288,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -5641,22 +5351,6 @@ describe('a path to a missing key inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -5705,7 +5399,7 @@ describe('a path to a missing key inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -5760,7 +5454,7 @@ describe('a path to a missing key inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -5820,22 +5514,6 @@ describe('a path to a missing key inside a callout', () => {
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -5922,7 +5600,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6086,7 +5764,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6250,7 +5928,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6414,7 +6092,7 @@ describe('a path to a missing key inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6585,7 +6263,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6645,22 +6323,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -6743,7 +6405,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6805,22 +6467,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -6903,7 +6549,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -6969,22 +6615,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -7067,7 +6697,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -7135,22 +6765,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -7233,7 +6847,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -7293,22 +6907,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -7391,7 +6989,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -7453,22 +7051,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -7551,7 +7133,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -7617,22 +7199,6 @@ describe('a path to a missing span key by block position inside a callout', () =
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -7715,7 +7281,7 @@ describe('a path to a missing span key by block position inside a callout', () =
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -7784,22 +7350,6 @@ describe('a path to a missing span key by block position inside a callout', () =
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
-        },
       ])
     })
     expect(editor.getSnapshot().context.value).toEqual([
@@ -7837,7 +7387,7 @@ describe('a path to a missing span key by block position inside a callout', () =
 })
 
 describe('a path to a missing key inside a callout inside a callout', () => {
-  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -7902,7 +7452,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -7979,24 +7529,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -8063,7 +7595,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8128,7 +7660,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -8205,24 +7737,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -8289,7 +7803,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8354,7 +7868,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -8431,24 +7945,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -8515,7 +8011,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8580,7 +8076,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -8657,24 +8153,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -8741,7 +8219,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -8806,7 +8284,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -8880,24 +8358,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -9012,7 +8472,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -9214,7 +8674,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -9416,7 +8876,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -9618,7 +9078,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -9769,7 +9229,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -9834,7 +9294,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -9911,24 +9371,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -9995,7 +9437,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -10060,7 +9502,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -10137,24 +9579,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -10221,7 +9645,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -10286,7 +9710,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -10363,24 +9787,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -10447,7 +9853,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -10512,7 +9918,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -10589,24 +9995,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -10673,7 +10061,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -10738,7 +10126,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -10812,24 +10200,6 @@ describe('a path to a missing key inside a callout inside a callout', () => {
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -10944,7 +10314,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -11146,7 +10516,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -11348,7 +10718,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -11550,7 +10920,7 @@ describe('a path to a missing key inside a callout inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -11761,7 +11131,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -11835,24 +11205,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -11955,7 +11307,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -12031,24 +11383,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -12151,7 +11485,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -12231,24 +11565,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -12351,7 +11667,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -12433,24 +11749,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -12553,7 +11851,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -12627,24 +11925,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -12747,7 +12027,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -12823,24 +12103,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -12943,7 +12205,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -13023,24 +12285,6 @@ describe('a path to a missing span key by block position inside a callout inside
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -13143,7 +12387,7 @@ describe('a path to a missing span key by block position inside a callout inside
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -13226,24 +12470,6 @@ describe('a path to a missing span key by block position inside a callout inside
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
-        },
       ])
     })
     expect(editor.getSnapshot().context.value).toEqual([
@@ -13289,7 +12515,7 @@ describe('a path to a missing span key by block position inside a callout inside
 })
 
 describe('a path to a missing key inside a field with its own sub-schema', () => {
-  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -13344,7 +12570,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -13407,22 +12633,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -13471,7 +12681,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -13526,7 +12736,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -13589,22 +12799,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -13653,7 +12847,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -13708,7 +12902,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -13771,22 +12965,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -13835,7 +13013,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -13890,7 +13068,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -13953,22 +13131,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -14017,7 +13179,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing span key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -14072,7 +13234,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -14132,22 +13294,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -14234,7 +13380,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -14398,7 +13544,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -14562,7 +13708,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -14726,7 +13872,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -14849,7 +13995,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -14904,7 +14050,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -14967,22 +14113,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -15031,7 +14161,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `insert` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -15086,7 +14216,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -15149,22 +14279,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -15213,7 +14327,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `remove.text` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -15268,7 +14382,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -15331,22 +14445,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -15395,7 +14493,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `set` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -15450,7 +14548,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -15513,22 +14611,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
             },
           ],
         },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
-        },
       ])
     })
     expect(seenEvents).toEqual([
@@ -15577,7 +14659,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
     expect(consoleWarn.mock.calls).toEqual([])
   })
 
-  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `patch` and no `change` content', async () => {
+  test('Scenario: `unset` at the missing top-level key reaches Behaviors unchanged, changes nothing and emits no `change` for it', async () => {
     const consoleError = vi.spyOn(console, 'error')
     const consoleWarn = vi.spyOn(console, 'warn')
     onTestFinished(() => {
@@ -15632,7 +14714,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -15692,22 +14774,6 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
               value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n bar\n+baz\n',
-          },
         },
       ])
     })
@@ -15794,7 +14860,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -15958,7 +15024,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -16122,7 +15188,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -16286,7 +15352,7 @@ describe('a path to a missing key inside a field with its own sub-schema', () =>
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -16457,7 +15523,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -16517,22 +15583,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -16615,7 +15665,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -16677,22 +15727,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -16775,7 +15809,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -16841,22 +15875,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -16939,7 +15957,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -17007,22 +16025,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -17105,7 +16107,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -17165,22 +16167,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -17263,7 +16249,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -17325,22 +16311,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -17423,7 +16393,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -17489,22 +16459,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })
@@ -17587,7 +16541,7 @@ describe('a path to a missing span key by block position inside a field with its
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(emitted) => {
-              if (emitted.type === 'patch' || emitted.type === 'change') {
+              if (emitted.type === 'change') {
                 events.push(emitted)
               }
             }}
@@ -17655,22 +16609,6 @@ describe('a path to a missing span key by block position inside a field with its
               value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b0'},
-              'children',
-              {_key: 's0'},
-              'text',
-            ],
-            value: '@@ -1,3 +1,6 @@\n foo\n+qux\n',
-          },
         },
       ])
     })

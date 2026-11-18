@@ -56,15 +56,26 @@ describe('initialization', () => {
     editor.send({type: 'insert.text', text: '!'})
 
     await vi.waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith({
-        type: 'patch',
-        patch: {
+      expect(
+        onChange.mock.calls.flatMap(([event]) =>
+          event.type === 'change' && event.origin === 'local'
+            ? event.patches
+            : [],
+        ),
+      ).toEqual([
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: '123'}, 'children', {_key: '567'}, 'text'],
+          value: '@@ -1,5 +1,6 @@\n Hello\n+!\n',
+          origin: 'local',
+        },
+        {
           type: 'set',
           path: [{_key: '123'}, 'style'],
           value: 'normal',
           origin: 'local',
         },
-      })
+      ])
       expect(editor.getSnapshot().context.value).toStrictEqual([
         {
           _key: '123',
@@ -122,33 +133,20 @@ describe('initialization', () => {
       ])
     })
 
-    expect(onChange).not.toHaveBeenCalledWith({
-      type: 'patch',
-      patch: {
-        type: 'set',
-        path: [{_key: 'bbb'}, 'style'],
-        value: 'normal',
+    expect(
+      onChange.mock.calls.flatMap(([event]) =>
+        event.type === 'change' && event.origin === 'local'
+          ? event.patches
+          : [],
+      ),
+    ).toEqual([
+      {
+        type: 'diffMatchPatch',
+        path: [{_key: 'aaa'}, 'children', {_key: 'a1'}, 'text'],
+        value: '@@ -1,5 +1,6 @@\n Alpha\n+!\n',
         origin: 'local',
       },
-    })
-    expect(onChange).not.toHaveBeenCalledWith({
-      type: 'patch',
-      patch: {
-        type: 'set',
-        path: [{_key: 'bbb'}, 'markDefs'],
-        value: [],
-        origin: 'local',
-      },
-    })
-    expect(onChange).not.toHaveBeenCalledWith({
-      type: 'patch',
-      patch: {
-        type: 'set',
-        path: [{_key: 'bbb'}, 'children', {_key: 'b1'}, 'marks'],
-        value: [],
-        origin: 'local',
-      },
-    })
+    ])
   })
 
   test('Scenario: an initial selection from props is adopted', async () => {

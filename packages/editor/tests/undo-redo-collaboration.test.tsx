@@ -8,9 +8,6 @@ import {
   getSelectionBeforeText,
 } from '../test-utils/text-selection'
 
-// `createTestEditors` forwards each editor's `mutation` events to the other,
-// and the batcher flushes those on a 500ms interval, which leaves little of
-// `vi.waitFor`'s 1s default on a loaded runner.
 const remoteSyncTimeout = 3_000
 
 function createInitialValue(text: string): Array<PortableTextBlock> {

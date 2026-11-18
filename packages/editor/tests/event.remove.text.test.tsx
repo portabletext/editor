@@ -133,8 +133,10 @@ describe('event.remove.text', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -220,7 +222,7 @@ describe('event.remove.text with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -258,15 +260,6 @@ describe('event.remove.text with a compact path at the root', () => {
               value: '@@ -1,3 +1 @@\n b\n-ar\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [{_key: 'b1'}, 'children', {_key: 's1'}, 'text'],
-            value: '@@ -1,3 +1 @@\n b\n-ar\n',
-          },
         },
       ])
     })
@@ -331,7 +324,7 @@ describe('event.remove.text with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -387,22 +380,6 @@ describe('event.remove.text with a compact path inside a callout', () => {
               value: '@@ -1,3 +1 @@\n b\n-ar\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1 @@\n b\n-ar\n',
-          },
         },
       ])
     })
@@ -483,7 +460,7 @@ describe('event.remove.text with a compact path inside a callout inside a callou
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -551,24 +528,6 @@ describe('event.remove.text with a compact path inside a callout inside a callou
               value: '@@ -1,3 +1 @@\n b\n-ar\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'c0'},
-              'content',
-              {_key: 'c1'},
-              'content',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1 @@\n b\n-ar\n',
-          },
         },
       ])
     })
@@ -645,7 +604,7 @@ describe('event.remove.text with a compact path inside a field with its own sub-
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -701,22 +660,6 @@ describe('event.remove.text with a compact path inside a field with its own sub-
               value: '@@ -1,3 +1 @@\n b\n-ar\n',
             },
           ],
-        },
-        {
-          type: 'patch',
-          patch: {
-            origin: 'local',
-            type: 'diffMatchPatch',
-            path: [
-              {_key: 'n0'},
-              'body',
-              {_key: 'b1'},
-              'children',
-              {_key: 's1'},
-              'text',
-            ],
-            value: '@@ -1,3 +1 @@\n b\n-ar\n',
-          },
         },
       ])
     })

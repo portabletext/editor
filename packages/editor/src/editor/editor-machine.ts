@@ -16,7 +16,6 @@ import type {
   ExternalBehaviorEvent,
 } from '../behaviors/behavior.types.event'
 import type {Converter} from '../converters/converter.types'
-import {isInNormalization} from '../engine/core/apply-context'
 import {withChange} from '../engine/core/change'
 import {DOMEditor} from '../engine/dom/plugin/dom-editor'
 import {normalize} from '../engine/editor/normalize'
@@ -24,9 +23,6 @@ import {debug} from '../internal-utils/debug'
 import type {EventPosition} from '../internal-utils/event-position'
 import {sortByPriority} from '../priority/priority.sort'
 import type {RegistrableNode} from '../renderers/renderer.types'
-import {pathContains} from '../traversal/path-contains'
-import {walkPath} from '../traversal/walk-path'
-import type {NamespaceEvent, OmitFromUnion} from '../type-utils'
 import type {EditorSelection} from '../types/editor'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorSchema} from './editor-schema'
@@ -34,7 +30,7 @@ import {
   registerNodeOnEngine,
   unregisterNodeOnEngine,
 } from './register-node-on-engine'
-import type {EditorEmittedEvent, MutationEvent, PatchEvent} from './relay'
+import type {EditorEmittedEvent} from './relay'
 
 export * from 'xstate/guards'
 
@@ -64,10 +60,6 @@ export type ExternalEditorEvent =
       readOnly: boolean
     }
   | ApplyEvent
-
-type InternalPatchEvent = NamespaceEvent<PatchEvent, 'internal'> & {
-  operationId?: string
-}
 
 /**
  * @internal
@@ -117,8 +109,6 @@ type InternalEditorEvent =
       editor: PortableTextEditorEngine
       nativeEvent?: {preventDefault: () => void}
     }
-  | MutationEvent
-  | InternalPatchEvent
   | {
       type: 'set drag ghost'
       ghost: HTMLElement
@@ -143,10 +133,7 @@ type InternalEditorEvent =
 /**
  * @internal
  */
-type InternalEditorEmittedEvent =
-  | OmitFromUnion<EditorEmittedEvent, 'type', 'patch'>
-  | InternalPatchEvent
-  | InternalApplyEvent
+type InternalEditorEmittedEvent = EditorEmittedEvent | InternalApplyEvent
 
 export function rerouteExternalBehaviorEvent({
   event,
@@ -201,7 +188,6 @@ export const editorMachine = setup({
       behaviorsSorted: boolean
       initialConverters: Array<Converter>
       keyGenerator: () => string
-      pendingEvents: Array<InternalPatchEvent | MutationEvent>
       pendingIncomingPatchesEvents: Array<InternalApplyEvent>
       pendingRegistrations: Array<RegistrableNode>
       schema: EditorSchema
@@ -298,14 +284,6 @@ export const editorMachine = setup({
       })
       engine.onChange()
     },
-    'emit patch event': emit(({event}) => {
-      assertEvent(event, 'internal.patch')
-      return event
-    }),
-    'emit mutation event': emit(({event}) => {
-      assertEvent(event, 'mutation')
-      return event
-    }),
     'emit read only': enqueueActions(({context, enqueue}) => {
       if (context.editorEngine) {
         context.editorEngine.snapshot.context.readOnly = true
@@ -320,52 +298,7 @@ export const editorMachine = setup({
       }
       enqueue.emit({type: 'editable'})
     }),
-    'defer event': assign({
-      pendingEvents: ({context, event}) => {
-        assertEvent(event, ['internal.patch', 'mutation'])
-        return [...context.pendingEvents, event]
-      },
-    }),
-    'emit pending events': enqueueActions(({context, enqueue}) => {
-      for (const event of context.pendingEvents) {
-        enqueue.emit(event)
-      }
-    }),
     'emit ready': emit({type: 'ready'}),
-    'clear pending events': assign({
-      pendingEvents: [],
-    }),
-    'discard conflicting pending patches': assign({
-      pendingEvents: ({context, event}) => {
-        if (event.type !== 'internal.apply') {
-          return context.pendingEvents
-        }
-
-        // A path that cannot address anything changes nothing, whatever
-        // the value. A path to a missing node is still compared: an earlier
-        // patch in the same batch can insert the node it names.
-        const editorEngine = context.editorEngine
-        const incomingPaths = event.patches
-          .map((patch) => patch.path)
-          .filter(
-            (path) =>
-              !editorEngine ||
-              walkPath(editorEngine.snapshot, path).status !== 'invalid',
-          )
-
-        return context.pendingEvents.filter((pendingEvent) => {
-          if (pendingEvent.type !== 'internal.patch') {
-            return true
-          }
-
-          return !incomingPaths.some(
-            (incomingPath) =>
-              pathContains(pendingEvent.patch.path, incomingPath) ||
-              pathContains(incomingPath, pendingEvent.patch.path),
-          )
-        })
-      },
-    }),
     'defer incoming patches': assign({
       pendingIncomingPatchesEvents: ({context, event}) => {
         return event.type === 'internal.apply'
@@ -485,13 +418,6 @@ export const editorMachine = setup({
 
       return context.editorEngine.operations.length > 0
     },
-    'engine is normalizing node': ({context}) => {
-      if (!context.editorEngine) {
-        return false
-      }
-
-      return isInNormalization(context.editorEngine.applyContext)
-    },
   },
 }).createMachine({
   id: 'editor',
@@ -500,7 +426,6 @@ export const editorMachine = setup({
     behaviorsSorted: false,
     initialConverters: input.converters ?? [],
     keyGenerator: input.keyGenerator,
-    pendingEvents: [],
     pendingIncomingPatchesEvents: [],
     pendingRegistrations: [],
     schema: input.schema,
@@ -751,12 +676,6 @@ export const editorMachine = setup({
             'clear pending incoming patches',
           ],
           on: {
-            'internal.patch': {
-              actions: 'defer event',
-            },
-            'mutation': {
-              actions: 'defer event',
-            },
             'done loading': {
               target: 'set up',
             },
@@ -787,79 +706,6 @@ export const editorMachine = setup({
                   on: {
                     'internal.apply': {
                       actions: [emit(({event}) => event)],
-                    },
-                  },
-                },
-              },
-            },
-            'writing': {
-              initial: 'pristine',
-              states: {
-                pristine: {
-                  initial: 'idle',
-                  states: {
-                    idle: {
-                      entry: [
-                        () => {
-                          debug.state(
-                            'entry: setup->set up->writing->pristine->idle',
-                          )
-                        },
-                      ],
-                      exit: [
-                        () => {
-                          debug.state(
-                            'exit: setup->set up->writing->pristine->idle',
-                          )
-                        },
-                      ],
-                      on: {
-                        'internal.patch': [
-                          {
-                            guard: 'engine is normalizing node',
-                            actions: 'defer event',
-                          },
-                          {
-                            actions: 'defer event',
-                            target: '#editor.setup.set up.writing.dirty',
-                          },
-                        ],
-                        'mutation': [
-                          {
-                            guard: 'engine is normalizing node',
-                            actions: 'defer event',
-                          },
-                          {
-                            actions: 'defer event',
-                            target: '#editor.setup.set up.writing.dirty',
-                          },
-                        ],
-                        'internal.apply': {
-                          actions: 'discard conflicting pending patches',
-                        },
-                      },
-                    },
-                  },
-                },
-                dirty: {
-                  entry: [
-                    () => {
-                      debug.state('entry: setup->set up->writing->dirty')
-                    },
-                    'emit pending events',
-                    'clear pending events',
-                  ],
-                  exit: [
-                    () => {
-                      debug.state('exit: setup->set up->writing->dirty')
-                    },
-                  ],
-                  on: {
-                    'internal.patch': {
-                      actions: 'emit patch event',
-                    },
-                    'mutation': {
-                      actions: 'emit mutation event',
                     },
                   },
                 },

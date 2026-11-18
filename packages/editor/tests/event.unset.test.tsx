@@ -533,7 +533,7 @@ describe('event.unset with a compact path at the root', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -568,10 +568,6 @@ describe('event.unset with a compact path at the root', () => {
           },
         ],
         patches: [{origin: 'local', type: 'unset', path: [{_key: 'b1'}]}],
-      },
-      {
-        type: 'patch',
-        patch: {origin: 'local', type: 'unset', path: [{_key: 'b1'}]},
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -628,7 +624,7 @@ describe('event.unset with a compact path inside a callout', () => {
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -669,14 +665,6 @@ describe('event.unset with a compact path inside a callout', () => {
             path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'c0'}, 'content', {_key: 'b1'}],
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -749,7 +737,7 @@ describe('event.unset with a compact path inside a callout inside a callout', ()
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -811,20 +799,6 @@ describe('event.unset with a compact path inside a callout inside a callout', ()
             ],
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'unset',
-          path: [
-            {_key: 'c0'},
-            'content',
-            {_key: 'c1'},
-            'content',
-            {_key: 'b1'},
-          ],
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([
@@ -893,7 +867,7 @@ describe('event.unset with a compact path inside a field with its own sub-schema
           <NodePlugin nodes={textBlockDepthsContainers} />
           <EventListenerPlugin
             on={(event) => {
-              if (event.type === 'patch' || event.type === 'change') {
+              if (event.type === 'change') {
                 events.push(event)
               }
             }}
@@ -934,14 +908,6 @@ describe('event.unset with a compact path inside a field with its own sub-schema
             path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
           },
         ],
-      },
-      {
-        type: 'patch',
-        patch: {
-          origin: 'local',
-          type: 'unset',
-          path: [{_key: 'n0'}, 'body', {_key: 'b1'}],
-        },
       },
     ])
     expect(editor.getSnapshot().context.value).toEqual([

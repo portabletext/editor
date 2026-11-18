@@ -18,7 +18,6 @@ import {createEditorEngine} from './create-editor-engine'
 import {createEditorDom} from './editor-dom'
 import type {EditorActor} from './editor-machine'
 import {editorMachine, rerouteExternalBehaviorEvent} from './editor-machine'
-import {createMutationBatcher} from './mutation-batcher'
 import {
   rangeDecorationsMachine,
   type RangeDecorationsActor,
@@ -215,12 +214,6 @@ function createActors(config: {
 } {
   debug.setup('creating new actors')
 
-  const mutationBatcher = createMutationBatcher({
-    editorActor: config.editorActor,
-    editorEngine: config.editorEngine,
-    relay: config.relay,
-  })
-
   const syncActor = createActor(syncMachine, {
     input: {
       initialValue: config.editorActor.getSnapshot().context.initialValue,
@@ -233,8 +226,6 @@ function createActors(config: {
       config.relay.sendAll(toChangeEvents(config.editorEngine, change))
     }),
   )
-
-  config.subscriptions.push(mutationBatcher.subscribe)
 
   config.subscriptions.push(() => {
     return subscribeToOperations(config.editorEngine, (event) => {
@@ -300,7 +291,6 @@ function createActors(config: {
     const subscription = config.editorActor.on('*', (event) => {
       switch (event.type) {
         case 'editable':
-        case 'mutation':
         case 'ready':
         case 'read only':
         case 'selection':

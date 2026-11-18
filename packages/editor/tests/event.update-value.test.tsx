@@ -11,7 +11,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
   defineSchema,
-  type MutationEvent,
+  type ChangeEvent,
   type Patch,
   type EditorEmittedEvent,
   type PortableTextBlock,
@@ -24,7 +24,7 @@ import {createTestEditor} from '../src/test/vitest'
 describe('initial value key corrections', () => {
   test('Scenario: a startup value with a keyless child gets its missing key through a correction', async () => {
     const patches: Array<Patch> = []
-    const mutations: Array<MutationEvent> = []
+    const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({}),
@@ -40,11 +40,13 @@ describe('initial value key corrections', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
-            if (event.type === 'mutation') {
-              mutations.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              localChanges.push(event)
             }
           }}
         />
@@ -103,21 +105,19 @@ describe('initial value key corrections', () => {
           value: '@@ -1,5 +1,6 @@\n hello\n+!\n',
         },
       ])
-      expect(mutations.map((mutation) => mutation.patches)).toEqual([
-        [
-          {
-            type: 'set',
-            path: [{_key: 'b0'}, 'children', 0, '_key'],
-            value: 'k2',
-            origin: 'local',
-          },
-          {
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
-            value: stringifyPatches(makePatches(makeDiff('hello', 'hello!'))),
-            origin: 'local',
-          },
-        ],
+      expect(localChanges.flatMap((change) => change.patches)).toEqual([
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'children', 0, '_key'],
+          value: 'k2',
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 'k2'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('hello', 'hello!'))),
+          origin: 'local',
+        },
       ])
     })
   })
@@ -125,7 +125,7 @@ describe('initial value key corrections', () => {
   test('Scenario: a startup value with an empty keyless child before another keyless child emits the key corrections before the local edit', async () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const patches: Array<Patch> = []
-    const mutations: Array<MutationEvent> = []
+    const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
     const {editor} = await createTestEditor({
       keyGenerator: createTestKeyGenerator(),
       schemaDefinition: defineSchema({}),
@@ -144,11 +144,13 @@ describe('initial value key corrections', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
-            if (event.type === 'mutation') {
-              mutations.push(event)
+            if (event.type === 'change' && event.origin === 'local') {
+              localChanges.push(event)
             }
           }}
         />
@@ -180,8 +182,6 @@ describe('initial value key corrections', () => {
       ])
     })
 
-    // Causal sentinel: the edit makes a pristine editor flush its pending
-    // patches, so the `mutation` shows every patch the sync emitted.
     editor.send({
       type: 'select',
       at: {
@@ -241,58 +241,54 @@ describe('initial value key corrections', () => {
           origin: 'local',
         },
       ])
-      expect(mutations.map((mutation) => mutation.patches)).toEqual([
-        [
-          {
-            type: 'set',
-            path: [{_key: 'b0'}, 'children', 1, '_key'],
-            value: 'k2',
-            origin: 'local',
-          },
-          {
-            type: 'set',
-            path: [{_key: 'b0'}, 'children', 0, '_key'],
-            value: 'k3',
-            origin: 'local',
-          },
-        ],
-        [
-          {
-            type: 'setIfMissing',
-            path: [{_key: 'b0'}, 'children'],
-            value: [],
-            origin: 'local',
-          },
-          {
-            type: 'insert',
-            path: [{_key: 'b0'}, 'children', {_key: 'k2'}],
-            position: 'before',
-            items: [{_key: 'k4', _type: 'span', text: 'baz', marks: []}],
-            origin: 'local',
-          },
-          {
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 'k3'}, 'text'],
-            value: stringifyPatches(makePatches(makeDiff('', 'baz'))),
-            origin: 'local',
-          },
-          {
-            type: 'unset',
-            path: [{_key: 'b0'}, 'children', {_key: 'k4'}],
-            origin: 'local',
-          },
-          {
-            type: 'diffMatchPatch',
-            path: [{_key: 'b0'}, 'children', {_key: 'k3'}, 'text'],
-            value: stringifyPatches(makePatches(makeDiff('baz', 'bazbar'))),
-            origin: 'local',
-          },
-          {
-            type: 'unset',
-            path: [{_key: 'b0'}, 'children', {_key: 'k2'}],
-            origin: 'local',
-          },
-        ],
+      expect(localChanges.flatMap((change) => change.patches)).toEqual([
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'children', 1, '_key'],
+          value: 'k2',
+          origin: 'local',
+        },
+        {
+          type: 'set',
+          path: [{_key: 'b0'}, 'children', 0, '_key'],
+          value: 'k3',
+          origin: 'local',
+        },
+        {
+          type: 'setIfMissing',
+          path: [{_key: 'b0'}, 'children'],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [{_key: 'b0'}, 'children', {_key: 'k2'}],
+          position: 'before',
+          items: [{_key: 'k4', _type: 'span', text: 'baz', marks: []}],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 'k3'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('', 'baz'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: 'b0'}, 'children', {_key: 'k4'}],
+          origin: 'local',
+        },
+        {
+          type: 'diffMatchPatch',
+          path: [{_key: 'b0'}, 'children', {_key: 'k3'}, 'text'],
+          value: stringifyPatches(makePatches(makeDiff('baz', 'bazbar'))),
+          origin: 'local',
+        },
+        {
+          type: 'unset',
+          path: [{_key: 'b0'}, 'children', {_key: 'k2'}],
+          origin: 'local',
+        },
       ])
     })
     consoleWarn.mockRestore()
@@ -2998,7 +2994,7 @@ test('Scenario: Swapping two blocks emits no patches of its own', async () => {
   const foo = textBlock(fooKey, fooSpanKey, 'foo')
   const bar = textBlock(barKey, barSpanKey, 'bar')
   const patches: Array<Patch> = []
-  const mutations: Array<MutationEvent> = []
+  const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     schemaDefinition: defineSchema({}),
@@ -3006,11 +3002,13 @@ test('Scenario: Swapping two blocks emits no patches of its own', async () => {
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
-          if (event.type === 'mutation') {
-            mutations.push(event)
+          if (event.type === 'change' && event.origin === 'local') {
+            localChanges.push(event)
           }
         }}
       />
@@ -3053,8 +3051,8 @@ test('Scenario: Swapping two blocks emits no patches of its own', async () => {
 
   await vi.waitFor(() => {
     expect(patches).toEqual([sentinelPatch])
-    expect(mutations.map((mutation) => mutation.patches)).toEqual([
-      [sentinelPatch],
+    expect(localChanges.flatMap((change) => change.patches)).toEqual([
+      sentinelPatch,
     ])
   })
   expect(applyAll([bar, foo], patches)).toEqual(
@@ -3074,7 +3072,7 @@ test('Scenario: Moving the first block to the end emits no patches of its own', 
   const bar = textBlock(barKey, barSpanKey, 'bar')
   const baz = textBlock(bazKey, bazSpanKey, 'baz')
   const patches: Array<Patch> = []
-  const mutations: Array<MutationEvent> = []
+  const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     schemaDefinition: defineSchema({}),
@@ -3082,11 +3080,13 @@ test('Scenario: Moving the first block to the end emits no patches of its own', 
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
-          if (event.type === 'mutation') {
-            mutations.push(event)
+          if (event.type === 'change' && event.origin === 'local') {
+            localChanges.push(event)
           }
         }}
       />
@@ -3129,8 +3129,8 @@ test('Scenario: Moving the first block to the end emits no patches of its own', 
 
   await vi.waitFor(() => {
     expect(patches).toEqual([sentinelPatch])
-    expect(mutations.map((mutation) => mutation.patches)).toEqual([
-      [sentinelPatch],
+    expect(localChanges.flatMap((change) => change.patches)).toEqual([
+      sentinelPatch,
     ])
   })
   expect(applyAll([bar, baz, foo], patches)).toEqual(
@@ -3150,7 +3150,7 @@ test('Scenario: Moving the last block to the start emits no patches of its own',
   const bar = textBlock(barKey, barSpanKey, 'bar')
   const baz = textBlock(bazKey, bazSpanKey, 'baz')
   const patches: Array<Patch> = []
-  const mutations: Array<MutationEvent> = []
+  const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     schemaDefinition: defineSchema({}),
@@ -3158,11 +3158,13 @@ test('Scenario: Moving the last block to the start emits no patches of its own',
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
-          if (event.type === 'mutation') {
-            mutations.push(event)
+          if (event.type === 'change' && event.origin === 'local') {
+            localChanges.push(event)
           }
         }}
       />
@@ -3205,8 +3207,8 @@ test('Scenario: Moving the last block to the start emits no patches of its own',
 
   await vi.waitFor(() => {
     expect(patches).toEqual([sentinelPatch])
-    expect(mutations.map((mutation) => mutation.patches)).toEqual([
-      [sentinelPatch],
+    expect(localChanges.flatMap((change) => change.patches)).toEqual([
+      sentinelPatch,
     ])
   })
   expect(applyAll([baz, foo, bar], patches)).toEqual(
@@ -4111,8 +4113,10 @@ test('Scenario: replacing a whole value with the same block/span keys emits no p
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'patch') {
-            patches.push(event.patch)
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const changePatch of event.patches) {
+              patches.push(changePatch)
+            }
           }
         }}
       />
@@ -4232,15 +4236,15 @@ test('Scenario: Clearing synced value with an empty array', async () => {
 })
 
 test('Scenario: Clearing locally typed text with an empty array after the value echoed back', async () => {
-  const mutations: Array<MutationEvent> = []
+  let hostValue: Array<PortableTextBlock> | undefined
   const {editor, locator} = await createTestEditor({
     keyGenerator: createTestKeyGenerator(),
     schemaDefinition: defineSchema({}),
     children: (
       <EventListenerPlugin
         on={(event) => {
-          if (event.type === 'mutation') {
-            mutations.push(event)
+          if (event.type === 'change' && event.origin === 'local') {
+            hostValue = applyAll(hostValue, event.patches)
           }
         }}
       />
@@ -4251,7 +4255,7 @@ test('Scenario: Clearing locally typed text with an empty array after the value 
   await userEvent.type(locator, 'foo')
 
   await vi.waitFor(() => {
-    expect(mutations.at(-1)?.value).toEqual([
+    expect(hostValue).toEqual([
       {
         _key: 'k0',
         _type: 'block',
@@ -4337,8 +4341,10 @@ describe('block object children', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
@@ -4412,8 +4418,10 @@ describe('block object children', () => {
       children: (
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                patches.push(changePatch)
+              }
             }
           }}
         />
