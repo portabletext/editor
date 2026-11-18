@@ -38,10 +38,10 @@ test('kyou converts to 今日', async (context) => {
 
 ![How thumbjar drives Gboard and Chrome on an emulator](assets/architecture.svg)
 
-1. `thumbjar serve` serves your built page, and the driver runs `adb reverse` so Chrome on the emulator reaches it at the same `localhost` URL.
+1. `thumbjar serve` serves your built page. If the page URL is on `localhost`, the driver runs `adb reverse` so Chrome on the emulator can open the same URL.
 2. `recordInput()` in the page records the field's text, selection and input events.
-3. For each step, the driver reads Gboard's keys from the screen's accessibility tree and has the uiautomator2 server on the device tap them.
-4. After each step, the driver reads what the page recorded over the Chrome DevTools protocol. When the last step is done, `runOnDevice` returns all of it to your test as one `Run`.
+3. For each step, the driver reads where Gboard's keys are from the screen's accessibility tree, then has uiautomator2, a small server on the device, tap them.
+4. After each step, the driver reads what `recordInput()` recorded over the Chrome DevTools protocol. When the last step is done, `runOnDevice` returns all of it to your test as one `Run`.
 
 ## Install
 
