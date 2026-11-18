@@ -2,13 +2,13 @@
 
 # thumbjar
 
-Test your web text input against a real Android keyboard.
+Test web text fields and editors against a real Android keyboard.
 
-Editors and text fields break on Android in ways desktop tests never show. Gboard composes words, offers conversion candidates, and reacts when the page changes the DOM in the middle of a composition. Synthetic events from Playwright or jsdom don't behave like that, so those bugs only show up on a phone. thumbjar taps real Gboard keys on an Android emulator, types into your page in Chrome, and hands the result back to a Vitest test.
+Editors and text fields break on Android in ways desktop tests never show. Gboard composes words, offers conversion candidates, and reacts when the page changes the DOM in the middle of a composition. Synthetic events from Playwright or jsdom don't behave like that, so those bugs only show up with a real Android keyboard. thumbjar taps real Gboard keys on an Android emulator while your page is open in Chrome, then hands what the page recorded back to your Vitest test.
 
 ## At a glance
 
-In the page:
+In the page under test, which you build and serve:
 
 ```ts
 import {recordInput} from 'thumbjar/page'
@@ -16,7 +16,7 @@ import {recordInput} from 'thumbjar/page'
 recordInput({getText: () => document.querySelector('textarea')!.value})
 ```
 
-In the test:
+In a Vitest test:
 
 ```ts
 import {runOnDevice} from 'thumbjar'
@@ -36,12 +36,12 @@ test('kyou converts to 今日', async (context) => {
 
 ## How it works
 
-![How thumbjar drives Gboard and Chrome on an emulator](https://raw.githubusercontent.com/portabletext/editor/main/packages/thumbjar/assets/architecture.svg)
+![How thumbjar drives Gboard and Chrome on an emulator](assets/architecture.svg)
 
-1. `thumbjar serve` serves your built page, and `adb reverse` makes it reachable from Chrome on the emulator.
+1. `thumbjar serve` serves your built page, and the driver runs `adb reverse` so Chrome on the emulator reaches it at the same `localhost` URL.
 2. `recordInput()` in the page records the field's text, selection and input events.
-3. For each step, the uiautomator2 server on the device finds Gboard's keys in the screen's accessibility tree and taps them.
-4. After each step, the driver reads what the page recorded over the Chrome DevTools protocol and returns it to your test as a `Run`.
+3. For each step, the driver reads Gboard's keys from the screen's accessibility tree and has the uiautomator2 server on the device tap them.
+4. After each step, the driver reads what the page recorded over the Chrome DevTools protocol. When the last step is done, `runOnDevice` returns all of it to your test as one `Run`.
 
 ## Install
 
