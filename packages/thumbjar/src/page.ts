@@ -64,16 +64,16 @@ const EVENT_TYPES = [
  * ```ts
  * import {recordInput} from 'thumbjar/page'
  *
- * const field = document.querySelector('textarea')!
- * field.value = new URL(location.href).searchParams.get('prefix') ?? ''
+ * const field = document.querySelector<HTMLElement>('[contenteditable]')!
+ * field.textContent = new URL(location.href).searchParams.get('prefix') ?? ''
  *
  * recordInput({
  *   field,
- *   getText: () => field.value,
- *   getState: () => ({length: field.value.length}),
+ *   getText: () => field.textContent,
+ *   getState: () => ({length: field.textContent?.length ?? 0}),
  *   actions: {
  *     clear: () => {
- *       field.value = ''
+ *       field.textContent = ''
  *     },
  *   },
  * })
