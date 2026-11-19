@@ -5,7 +5,7 @@ import {
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import React from 'react'
-import {expect, vi} from 'vitest'
+import {assert, expect, vi} from 'vitest'
 import {render} from 'vitest-browser-react'
 import {page} from 'vitest/browser'
 import type {Editor} from '../../editor'
@@ -16,11 +16,18 @@ import {
 import {EditorProvider} from '../../editor/editor-provider'
 import type {EditorEmittedEvent} from '../../editor/relay'
 import {useEditor} from '../../editor/use-editor'
+import {DOMEditor} from '../../engine/dom/plugin/dom-editor'
+import type {Editor as Engine} from '../../engine/interfaces/editor'
+import {rangeEquals} from '../../engine/range/range-equals'
+import {useEngineStatic} from '../../engine/react/hooks/use-engine-static'
+import {resolveSelection} from '../../internal-utils/apply-selection'
 import {EventListenerPlugin} from '../../plugins'
 import {EditorRefPlugin} from '../../plugins/plugin.editor-ref'
+import {isSelectionExpanded} from '../../selectors/selector.is-selection-expanded'
 import type {Context} from './step-context'
 
 const editableTimeout = 5_000
+const testEditorEngines = new WeakMap<Editor, Engine>()
 
 type CreateTestEditorOptions = {
   initialValue?: Array<PortableTextBlock>
@@ -51,6 +58,7 @@ export async function createTestEditor(
       }}
     >
       <EditorRefPlugin ref={editorRef} />
+      <TestEditorEnginePlugin />
       <PortableTextEditable {...options.editableProps} />
       {options.children}
     </EditorProvider>,
@@ -67,6 +75,7 @@ export async function createTestEditor(
             }}
           >
             <EditorRefPlugin ref={editorRef} />
+            <TestEditorEnginePlugin />
             <PortableTextEditable {...newOptions.editableProps} />
             {newOptions.children}
           </EditorProvider>,
@@ -80,6 +89,7 @@ export async function createTestEditor(
             }}
           >
             <EditorRefPlugin ref={editorRef} />
+            <TestEditorEnginePlugin />
             <PortableTextEditable {...options.editableProps} />
             {options.children}
           </EditorProvider>,
@@ -126,6 +136,7 @@ export async function createTestEditors(
         }}
       >
         <EditorRefPlugin ref={editorRef} />
+        <TestEditorEnginePlugin />
         <PortableTextEditable
           {...options.editableProps}
           data-testid="editor-a"
@@ -146,6 +157,7 @@ export async function createTestEditors(
         }}
       >
         <EditorRefPlugin ref={editorBRef} />
+        <TestEditorEnginePlugin />
         <PortableTextEditable
           {...options.editableProps}
           data-testid="editor-b"
@@ -199,5 +211,86 @@ function BatchedChangeRelay(props: {peerRef: React.RefObject<Editor | null>}) {
     return () => subscription.unsubscribe()
   }, [editor, props.peerRef])
 
+  return null
+}
+
+/**
+ * Typing needs the browser caret where the selection step put it.
+ * Otherwise input can land at the caret left by the focus click.
+ */
+export async function syncDOMCaret(editor: Editor) {
+  const engine = testEditorEngines.get(editor)
+  assert(engine, 'Expected a mounted test editor engine')
+  const snapshot = editor.getSnapshot()
+  const selection = snapshot.context.selection
+  if (isSelectionExpanded(snapshot)) {
+    return
+  }
+  await vi.waitFor(
+    () => {
+      expect(
+        editor.getSnapshot().context.selection,
+        'Expected the selected model range to remain unchanged',
+      ).toEqual(selection)
+      const domSelection = DOMEditor.getWindow(engine).getSelection()
+      assert(domSelection, 'Expected a native DOM selection')
+      if (!selection) {
+        domSelection.removeAllRanges()
+        expect(
+          domSelection.rangeCount,
+          'Expected the DOM selection to be cleared',
+        ).toEqual(0)
+        return
+      }
+      assert(
+        editor.dom.getSelectionRect(snapshot),
+        'Expected the selection to be rendered',
+      )
+      const range = resolveSelection({snapshot}, selection)
+      assert(range, 'Expected the model selection to resolve')
+      const domRange =
+        domSelection.rangeCount > 0
+          ? DOMEditor.toEditorSelection(engine, domSelection, {
+              exactMatch: false,
+              suppressThrow: true,
+            })
+          : null
+      if (!domRange || !rangeEquals(domRange, range)) {
+        const [anchorNode, anchorOffset] = DOMEditor.toDOMPoint(
+          engine,
+          range.anchor,
+        )
+        const [focusNode, focusOffset] = DOMEditor.toDOMPoint(
+          engine,
+          range.focus,
+        )
+        domSelection.setBaseAndExtent(
+          anchorNode,
+          anchorOffset,
+          focusNode,
+          focusOffset,
+        )
+      }
+      expect(
+        DOMEditor.toEditorSelection(engine, domSelection, {
+          exactMatch: false,
+          suppressThrow: true,
+        }),
+        'Expected the DOM selection to match the model selection',
+      ).toEqual(range)
+    },
+    {timeout: 1_000},
+  )
+}
+
+function TestEditorEnginePlugin() {
+  const editor = useEditor()
+  const engine = useEngineStatic()
+  React.useLayoutEffect(() => {
+    testEditorEngines.set(editor, engine)
+    return () => {
+      testEditorEngines.delete(editor)
+    }
+  }, [editor, engine])
   return null
 }
