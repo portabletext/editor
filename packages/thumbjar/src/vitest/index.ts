@@ -47,7 +47,7 @@ export type DeviceProjectOptions = {
   pageUrl: string
   /** How to build and serve the page, printed when global setup cannot fetch `pageUrl`. */
   pageHint: string
-  /** Where `typeOnDevice` writes its artifacts, relative to the working directory. `out` unless given. */
+  /** Where `runOnDevice` writes its artifacts, relative to the working directory. `out` unless given. */
   outDir?: string
   /** A file the setup file appends each test file's outcome counts and a table of its tests to, such as GitHub's job summary. None is written unless given. */
   summaryFile?: string | undefined
@@ -57,7 +57,7 @@ export type DeviceProjectOptions = {
 
 /**
  * A Vitest project that types on one device (`android` by default, or the iOS Simulator): Node environment, one file at a
- * time, no Vitest retry (on Android `typeOnDevice` retries its own driver faults once; on iOS it makes one attempt), and a test timeout that
+ * time, no Vitest retry (on Android `runOnDevice` retries eligible driver faults once; on iOS it makes one attempt), and a test timeout that
  * covers the driver's worst case.
  *
  * Global setup fails the run before any test when `pageUrl` does not answer, or on Android when `adb` has no device.

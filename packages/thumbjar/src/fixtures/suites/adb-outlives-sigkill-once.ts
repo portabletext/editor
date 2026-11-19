@@ -24,18 +24,22 @@ vi.mock(import('node:child_process'), async (importOriginal) => ({
 
 vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  typeInChrome: () => {
+  runInChrome: () => {
     device.attempts += 1
     if (globalThis.firstAttemptFaults && device.attempts === 1) {
       return Promise.reject(new Error('Gboard window did not appear'))
     }
     return Promise.resolve({
+      steps: [],
+      selection: null,
+      events: [],
       text: 'ｋ用今日',
-      picked: ['今日'],
-      compositionstart: 2,
-      nested: 1,
-      compositionstartPerWord: [2],
     })
+  },
+  stopChromeForRetry: async () => {
+    const {closeChrome} = await import('../../gboard/typing.ts')
+    await closeChrome()
+    return ['100']
   },
   dumpFailure: async () => {},
 }))

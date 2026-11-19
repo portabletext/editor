@@ -1,14 +1,14 @@
 import {expect, test, vi} from 'vitest'
-import {driverRuns, typeOnDevice} from '../../driver.ts'
+import {driverRuns, runOnDevice} from '../../driver.ts'
 
 test.fails('Scenario: Stopping Chrome after typing leaves an adb process that outlives SIGKILL', async (context) => {
   globalThis.firstAttemptFaults = false
   vi.useFakeTimers()
-  const typing = typeOnDevice(context, {
+  const typing = runOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
-    words: [{letters: 'kyou', candidate: '今日'}],
+    steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
   })
   await Promise.allSettled([typing, vi.runAllTimersAsync()])
   const typed = await typing
@@ -18,11 +18,11 @@ test.fails('Scenario: Stopping Chrome after typing leaves an adb process that ou
 
 test('Scenario: The next test types nothing', async (context) => {
   await expect(
-    typeOnDevice(context, {
+    runOnDevice(context, {
       keyboard: 'ja',
       url: 'http://localhost:8765/editor.html',
       prefix: 'x',
-      words: [{letters: 'kyou', candidate: '今日'}],
+      steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
     }),
   ).rejects.toThrow(
     'not starting device work while adb shell am force-stop com.android.chrome (pid 4242) may still run',

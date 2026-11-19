@@ -1,13 +1,16 @@
-import {typeOnDevice} from 'thumbjar'
+import {runOnDevice} from 'thumbjar'
 import {expect, test} from 'vitest'
 
 test('Scenario: Typing kyou twice into a plain textarea', async (context) => {
-  const typed = await typeOnDevice(context, {
+  const run = await runOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/textarea.html',
     prefix: '',
-    words: [{letters: 'kyou'}, {letters: 'kyou'}],
+    steps: [
+      {type: 'compose', letters: 'kyou', commit: 'space'},
+      {type: 'compose', letters: 'kyou', commit: 'space'},
+    ],
   })
 
-  expect(typed.text).toEqual('Kyou kyou ')
+  expect(run.text).toEqual('Kyou kyou ')
 })

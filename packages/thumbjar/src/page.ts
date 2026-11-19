@@ -34,7 +34,7 @@ const EVENT_TYPES = [
 
 /**
  * Record the page's `beforeinput`, `input` and composition events and install `window.__state`, which
- * `typeOnDevice` reads after each word. Call it once from the page `typeOnDevice` opens.
+ * `runOnDevice` reads at each step boundary. Call it once from the page `runOnDevice` opens.
  *
  * The driver types into `field`, or without it into the first `textarea`, text `input` or
  * `[contenteditable]` in the document. A field's text is its `value` for a `textarea` or an `input`

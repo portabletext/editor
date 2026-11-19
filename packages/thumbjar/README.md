@@ -190,17 +190,9 @@ A failed step ends the attempt. Later steps are `skipped`. The driver attempts o
 
 Unknown or rejected page actions are page exceptions and are never retried. Cases containing page steps disable the final text's unexpected-digit check because actions may seed arbitrary text. The event-based symbol mistap check still applies.
 
-### Type words
-
-`typeOnDevice(context, {url, keyboard, prefix, words})` accepts words shaped as `{letters, candidate?}`. It taps the letters, then the candidate if offered, otherwise Space. Japanese assertions may need to accept kana when conversion candidates have not loaded.
-
-The returned `Typed` contains `text`, optional `state`, `picked`, `compositionstart`, `nested` and `compositionstartPerWord`. `picked` records each chosen candidate or `space`. `compositionstart` counts those events in the recorded event log. `compositionstartPerWord` counts them between consecutive word boundaries.
-
-`nested` counts `compositionstart` events that follow an earlier `compositionstart` without an intervening `compositionend`. The counter tracks one open composition flag. A start opens it and an end closes it.
-
 ## Retries and failures
 
-Assertions never retry. `typeOnDevice` retries a driver fault once after restarting Chrome. Each attempt has a 180-second deadline. Driver faults include missing keyboard layouts, unavailable device services and CDP connection failures.
+Assertions never retry. Each attempt has a 180-second deadline. Driver faults include missing keyboard layouts, unavailable device services and CDP connection failures.
 
 `runOnDevice` retries a fault before keyboard input only after proving Chrome restarted with a fresh process. An ordinary fault after input is inconclusive because that input may still arrive. Explicit adb device-loss errors end the call as device offline. A timeout may trigger one bounded `adb get-state` check to distinguish device loss from an inconclusive result.
 
@@ -214,7 +206,7 @@ Known sources of flakes include slow emulator boots, dropped Chrome DevTools con
 
 `thumbjar/vitest` exports `deviceTestFileSeconds(testCount)`, `prepWorstSeconds(keyboard)`, `FETCH_U2_JAR_WORST_SECONDS` and `countDeviceTests(source)` for callers budgeting device runs.
 
-The current worst-case bounds are 520 seconds for `typeOnDevice`, 636 for `runOnDevice` and 661 for the Vitest test timeout. These bounds assume adb processes exit after SIGKILL. A process that survives it blocks subsequent typing. Queue time also consumes the test timeout. These are caps, not expected durations.
+The current worst-case bounds are 636 seconds for `runOnDevice` and 661 for the Vitest test timeout. These bounds assume adb processes exit after SIGKILL. A process that survives it blocks subsequent typing. Queue time also consumes the test timeout. These are caps, not expected durations.
 
 `countDeviceTests` uses a `// thumbjar-test-count: 13` declaration when present. Otherwise it counts literal top-level `test(` and `test.fails(` calls. For data-driven test files, or tests registered through an expression, declare the total collected rows, including skipped rows. Keep a collection test that checks your declaration against Vitest's count.
 
@@ -238,9 +230,9 @@ The output includes `timing.txt`, `phases.log`, `http.log` and `vitest.log`. `lo
 
 ## iOS Simulator
 
-`deviceProject({device: 'ios', ...})` sends the same `typeOnDevice(context, options)` calls to Mobile Safari through a local Appium XCUITest server on port 4723. `device` defaults to `'android'`. The `UDID` and `IOS_VERSION` environment variables select the simulator. The simulator opens the host's localhost directly. The page and `recordInput` need no changes.
+`deviceProject({device: 'ios', ...})` sends the same `runOnDevice(context, options)` calls to Mobile Safari through a local Appium XCUITest server on port 4723. `device` defaults to `'android'`. The `UDID` and `IOS_VERSION` environment variables select the simulator. The simulator opens the host's localhost directly. The page and `recordInput` need no changes.
 
-This backend supports lowercase letter key names, English or Japanese Romaji, prefix text, and Japanese candidate cells. A missing candidate falls back to Space (then Return on Japanese to commit the conversion). Unsupported letter keys skip the whole test before a session opens. English candidate requests skip the whole test: autocorrect and QuickType never appeared on the iOS Simulator. `runOnDevice` skips before device interaction on iOS; its step API is not supported. There are no iOS driver retries. Install the optional `webdriverio` peer dependency to use this backend.
+This backend supports compose steps with lowercase letter keys and a Space commit or required Japanese candidate. A missing candidate fails the step. Japanese Space commits with Space then Return. Enter, backspace, page actions, compose with text, uncommitted composition, English candidates and nonlowercase letter keys skip the whole test before a session opens. English autocorrect and QuickType never appeared on the iOS Simulator. There are no iOS driver retries. Install the optional `webdriverio` peer dependency to use this backend.
 
 `.github/workflows/thumbjar-ios.yml` runs the existing English and Japanese typing suites, one job per language. This workflow is not a required check. On iOS the editor leaves the first word of an empty block lowercase (`kyou kyou `). Drop `test.fails` once it capitalises.
 
