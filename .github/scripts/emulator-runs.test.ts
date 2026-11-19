@@ -2595,8 +2595,12 @@ describe('the workflow', () => {
 
   test('skips Version Packages pull requests, whose head branch is `changeset-release/`, and nothing else', () => {
     expect({
+      filterIf: /^ {8}if: (.*)$/m.exec(
+        workflow.split('\n  changes:\n')[1]?.split('\n  emulator:\n')[0] ?? '',
+      )?.[1],
       jobIf: /^ {4}if: (.*)$/m.exec(workflow)?.[1],
-      editorPackageInPaths: /^ {6}- packages\/editor\/package\.json$/m.test(
+      androidOutput: /^ {6}android: (.*)$/m.exec(workflow)?.[1],
+      editorPackageInPaths: /^ {14}- packages\/editor\/package\.json$/m.test(
         workflow,
       ),
       triggers: [
@@ -2605,7 +2609,11 @@ describe('the workflow', () => {
         ),
       ].map((match) => match[1]),
     }).toEqual({
-      jobIf: "${{ !startsWith(github.head_ref, 'changeset-release/') }}",
+      filterIf:
+        "github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')",
+      jobIf: "needs.changes.outputs.android == 'true'",
+      androidOutput:
+        "${{ github.event_name != 'pull_request' || (!startsWith(github.head_ref, 'changeset-release/') && steps.filter.outputs.android == 'true') }}",
       editorPackageInPaths: true,
       triggers: ['pull_request', 'schedule', 'workflow_dispatch'],
     })
