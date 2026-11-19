@@ -187,4 +187,4 @@ Text blocks inside [containers](/editor/concepts/containers/) render through the
 
 The editor toggles a list type on the selected blocks with the `list item.toggle` event, and the `useListButton` hook from `@portabletext/toolbar` builds a toolbar button around it (see [Customize the toolbar](/editor/guides/customize-toolbar/)). In a list item, Tab indents the item one level and Shift+Tab outdents it.
 
-The plugin keeps positions correct through every kind of change: local edits, remote patches from collaborators, and value updates. A component that reads `useListIndex` re-renders only when its own position changes.
+The plugin keeps positions correct through local edits and remote patches from collaborators. A component that reads `useListIndex` re-renders only when its own position changes.
