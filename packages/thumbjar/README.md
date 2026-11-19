@@ -86,6 +86,8 @@ npx vitest run --project device
 
 Preparation attempts to disable Play Store updates, waits out post-boot system error dialogs, sets up Chrome and the soft keyboard, and checks the page URL. For Japanese, it adds the QWERTY layout and waits for this boot's dictionary-load log. Then it switches Gboard to Japanese, first switching away if Japanese is already showing. It checks conversion candidates by typing `kyou` into the page. A dictionary wait allows up to 360 seconds from `--booted`.
 
+For English, preparation then types `hello` and Space once into the page at `--page-url`, opened with `thumbjar=english-warmup` added to its address, so Chrome and Gboard are past their first use before tests start. The page receives that input, so a page that saves what it receives will save `Hello`. It tries up to three times and fails if none gives "Hello", ignoring case, with a space, a non-breaking space or nothing after it. Count retries as drops when measuring cold starts. Each attempt is a line in `en-warmup.jsonl` and in the GitHub step summary.
+
 A Japanese dictionary that never loads exits with status `3`. Other preparation failures exit with status `1`. A missing or invalid flag value exits with status `2`. If preparation receives `SIGINT`, `SIGHUP` or `SIGTERM`, it exits with status `130`, `129` or `143`, respectively.
 
 The driver forwards a host `localhost` page port to the device with `adb reverse`. It adds or replaces the URL's `prefix` search parameter. Read that parameter in your page to put the prefix in its field.

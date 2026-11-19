@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {localhostPort, prefixedPageUrl} from './page-url.ts'
+import {localhostPort, prefixedPageUrl, purposePageUrl} from './page-url.ts'
 
 describe(prefixedPageUrl.name, () => {
   test('a bare origin gets the path Chrome reports for it', () => {
@@ -50,5 +50,21 @@ describe(localhostPort.name, () => {
     expect(localhostPort('http://example.com:8765/editor.html')).toEqual(
       undefined,
     )
+  })
+})
+
+describe(purposePageUrl.name, () => {
+  test('preserves the Japanese dictionary URL including existing parameters and hash', () => {
+    expect(
+      purposePageUrl(
+        'http://localhost/app?foo=a%20b&thumbjar=old#field',
+        'dictionary-check',
+      ),
+    ).toEqual('http://localhost/app?foo=a+b&thumbjar=dictionary-check#field')
+  })
+  test('adds the English warm-up parameter to the configured page URL', () => {
+    expect(
+      purposePageUrl('http://localhost/app?foo=bar#field', 'english-warmup'),
+    ).toEqual('http://localhost/app?foo=bar&thumbjar=english-warmup#field')
   })
 })
