@@ -450,8 +450,11 @@ describe('Feature: Chrome Label Overrides', () => {
     })
 
     // The built-in menu's items render the `menu-*` keys once opened.
-    await focusElement('button[aria-label="Tabellenoptionen"]')
-    await userEvent.keyboard(' ')
+    // The trigger takes pointer events only while the table is hovered.
+    await userEvent.hover(document.querySelector('table.pt-plugin-table')!)
+    await userEvent.click(
+      document.querySelector('button[aria-label="Tabellenoptionen"]')!,
+    )
 
     await vi.waitFor(() => {
       const items = Array.from(
