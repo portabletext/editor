@@ -36,6 +36,7 @@ import {reverseSelection} from '../../utils/util.reverse-selection'
 import type {Parameter} from '../gherkin-parameter-types'
 import {gherkinSchemaDefinition} from '../gherkin-schema'
 import type {Context} from './step-context'
+import {syncDOMCaret} from './test-editor'
 
 export {gherkinSchemaDefinition}
 
@@ -264,6 +265,7 @@ export const stepDefinitions = [
         expect(currentSelection?.anchor).toEqual(selection.anchor)
         expect(currentSelection?.focus).toEqual(selection.focus)
       })
+      await syncDOMCaret(context.editor)
     },
   ),
 
@@ -485,6 +487,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   When(
@@ -505,6 +508,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editorB)
     },
   ),
   Then(
@@ -540,6 +544,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   When(
@@ -560,6 +565,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editorB)
     },
   ),
   Then(
@@ -582,7 +588,7 @@ export const stepDefinitions = [
       expect(context.editor.getSnapshot().context.selection).toBeNull()
     })
   }),
-  When('everything is selected', (context: Context) => {
+  When('everything is selected', async (context: Context) => {
     const editorSelection = getEditorSelection(
       context.editor.getSnapshot().context,
     )
@@ -591,8 +597,9 @@ export const stepDefinitions = [
       type: 'select',
       at: editorSelection,
     })
+    await syncDOMCaret(context.editor)
   }),
-  When('everything is selected backwards', (context: Context) => {
+  When('everything is selected backwards', async (context: Context) => {
     const editorSelection = reverseSelection(
       getEditorSelection(context.editor.getSnapshot().context),
     )
@@ -601,6 +608,7 @@ export const stepDefinitions = [
       type: 'select',
       at: editorSelection,
     })
+    await syncDOMCaret(context.editor)
   }),
   When('{string} is selected', async (context: Context, text: string) => {
     await vi.waitFor(() => {
@@ -614,6 +622,7 @@ export const stepDefinitions = [
         at: selection,
       })
     })
+    await syncDOMCaret(context.editor)
   }),
   When(
     '{string} is selected {direction}',
@@ -634,6 +643,7 @@ export const stepDefinitions = [
             direction === 'forwards' ? selection : reverseSelection(selection),
         })
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   When(
@@ -649,6 +659,7 @@ export const stepDefinitions = [
           at: selection,
         })
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   Then(
@@ -774,6 +785,7 @@ export const stepDefinitions = [
           at: selection,
         })
       })
+      await syncDOMCaret(context.editor)
 
       const value = context.editor.getSnapshot().context.value
       const priorAnnotationKeys = getValueAnnotations(
@@ -1020,8 +1032,9 @@ export const stepDefinitions = [
   When('redo is performed', (context: Context) => {
     context.editor.send({type: 'history.redo'})
   }),
-  When('the selection is cleared', (context: Context) => {
+  When('the selection is cleared', async (context: Context) => {
     context.editor.send({type: 'select', at: null})
+    await syncDOMCaret(context.editor)
   }),
   When(
     'text is deleted{event-delete-options}{event-location}',
@@ -1147,6 +1160,7 @@ async function selectionFromInput(context: Context, textspec: string) {
     const selection = rangeFromInput(context, textspec)
     context.editor.send({type: 'select', at: selection})
   })
+  await syncDOMCaret(context.editor)
 }
 
 function rangeFromInput(context: Context, textspec: string) {
