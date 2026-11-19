@@ -12,7 +12,7 @@
     "@portabletext/editor": "workspace:*",
     "@portabletext/html": "workspace:*",
     "@portabletext/keyboard-shortcuts": "workspace:*",
-    "@portabletext/markdown": "^2.9.5",
+    "@portabletext/markdown": "^2.9.6",
     "@portabletext/patches": "workspace:*",
     "@portabletext/plugin-character-pair-decorator": "workspace:*",
     "@portabletext/plugin-decorations": "workspace:*",
