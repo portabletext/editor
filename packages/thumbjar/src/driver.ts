@@ -90,6 +90,7 @@ export type DriverRun = {
   /** Classified mistaps for which this call began its one retry. */
   mistapRetries?: number
   /**
+   * On iOS, one attempt ends `faulted` before a typing tap and `inconclusive` after one; aborts stay `aborted`.
    * `driving` until the driver returned a result and cleaned up, `faulted` when it ended on a driver fault,
    * after one attempt or two. A second attempt's timeout before any input stays `faulted` whatever `adb get-state`
    * answers, unless the read completed with an answer other than `device`, and carries neither marker below.
@@ -200,7 +201,7 @@ export async function typeOnDevice(
   }
   if (inject('thumbjarDevice') === 'ios') {
     const {simulatorUnsupportedNote, typeOnSimulator} =
-      await import('./ios/typing.ts')
+      await import('./ios/legacy-typing.ts')
     context.signal.throwIfAborted()
     const note = simulatorUnsupportedNote(options)
     if (note) {
@@ -311,9 +312,43 @@ export async function runOnDevice(
     )
   }
   if (inject('thumbjarDevice') === 'ios') {
-    context.skip(
-      'iOS simulator: runOnDevice is not supported; no steps were sent',
+    const {simulatorUnsupportedNote, runOnSimulator} =
+      await import('./ios/typing.ts')
+    context.signal.throwIfAborted()
+    const note = simulatorUnsupportedNote(options)
+    if (note) {
+      context.skip(note)
+    }
+    const run: DriverRun = {
+      test: context.task.name,
+      fails: Boolean(context.task.fails),
+      state: 'driving',
+    }
+    driverRuns.push(run)
+    runTasks.set(run, context.task)
+    const pending = previousRun.then(async () => {
+      try {
+        context.signal.throwIfAborted()
+        const result = await runOnSimulator(context, options, (taps) => {
+          run.taps = taps
+        })
+        run.state = 'complete'
+        return result
+      } catch (error) {
+        run.state = context.signal.aborted
+          ? 'aborted'
+          : run.taps?.some((step) => step.keys.length > 0)
+            ? 'inconclusive'
+            : 'faulted'
+        run.reason = GUARDED_INSPECTION.describe(error)
+        throw error
+      }
+    })
+    previousRun = pending.then(
+      () => {},
+      () => {},
     )
+    return await pending
   }
   if (context.signal.aborted) {
     // Its test already ended, so it may not skip it, and the device may belong to the next test.
