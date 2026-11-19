@@ -3,33 +3,43 @@ import {join} from 'node:path'
 import type {TestContext} from 'vitest'
 import {remote} from 'webdriverio'
 import {prefixedPageUrl} from '../device/page-url.ts'
+import {pyRepr, sleep} from '../device/util.ts'
 import {slug} from '../driver.ts'
 import {
+  FIELD_BOUNDARY,
   FIELD_MISSING,
-  nestedCompositionstart,
+  failedStepRecords,
+  graphemeSelection,
   outDir,
-  type TypeOnDeviceOptions,
-  type Typed,
+  withStepRecords,
+  type StepTaps,
 } from '../gboard/typing.ts'
-import type {PageEvent} from '../steps.ts'
+import type {PageEvent, Run, RunOnDeviceOptions, StepRecord} from '../steps.ts'
 import {safariCapabilities} from './capabilities.ts'
 import {focusField, readyField} from './field.ts'
 import {tapLanded} from './tap-landed.ts'
 
 type PageState = {text: string | null; events: PageEvent[]; state?: unknown}
 
-export async function typeOnSimulator(
+export async function runOnSimulator(
   context: TestContext,
-  options: TypeOnDeviceOptions,
-): Promise<Typed> {
+  options: RunOnDeviceOptions,
+  onTaps?: (taps: StepTaps[]) => void,
+): Promise<Run> {
   context.signal.throwIfAborted()
+  const records: StepRecord[] = []
+  let activeKeys: string[] | undefined
   const directory = outDir()
   mkdirSync(directory, {recursive: true})
   const artifact = join(
     directory,
     `${options.keyboard}-${slug(context.task.name)}`,
   )
-  const result: Record<string, unknown> = {options, droppedFirstTaps: 0}
+  const result: Record<string, unknown> = {
+    options,
+    records,
+    droppedFirstTaps: 0,
+  }
   let browser!: Awaited<ReturnType<typeof remote>>
   let webContext = ''
   async function web() {
@@ -59,12 +69,29 @@ export async function typeOnSimulator(
     }
     return JSON.parse(serialized)
   }
+  async function boundary() {
+    await web()
+    const serialized = await browser.execute(
+      `return JSON.stringify(${FIELD_BOUNDARY})`,
+    )
+    if (typeof serialized !== 'string') {
+      throw new Error('Safari returned no serialized page boundary')
+    }
+    const reply: {state: PageState; selection: unknown; focused: unknown} =
+      JSON.parse(serialized)
+    return {
+      state: reply.state,
+      selection: graphemeSelection(reply.selection),
+      focused: typeof reply.focused === 'boolean' ? reply.focused : null,
+    }
+  }
   async function tap(name: string) {
     await native()
     const key = browser.$(
       `-ios predicate string:(type == "XCUIElementTypeKey" OR type == "XCUIElementTypeButton") AND name ==[c] ${JSON.stringify(name)}`,
     )
     await key.waitForExist({timeout: 5000})
+    activeKeys?.push(name)
     await key.click()
   }
   async function waitForTap(before: PageState): Promise<boolean> {
@@ -134,80 +161,131 @@ export async function typeOnSimulator(
       },
       {timeout: 5000},
     )
-    const picked: string[] = []
-    const compositionstartPerWord: number[] = []
-    let previousEvents = (await state()).events.length
-    for (const word of options.words) {
-      if (word.letters.length > 0) {
-        const beforeTap = await state()
-        await tap(word.letters[0]!)
-        if (!(await waitForTap(beforeTap))) {
-          result.droppedFirstTaps = Number(result.droppedFirstTaps) + 1
+    let last = await boundary()
+    const firstEvent = last.state.events.length
+    for (const [index, step] of options.steps.entries()) {
+      if (step.type !== 'compose' || step.letters === undefined) {
+        throw new Error('Unsupported iOS step')
+      }
+      const word = {
+        letters: step.letters,
+        candidate:
+          typeof step.commit === 'object' ? step.commit.candidate : undefined,
+      }
+      const previousEvents = last.state.events.length
+      const keys: string[] = []
+      activeKeys = keys
+      try {
+        if (word.letters.length > 0) {
+          const beforeTap = await state()
           await tap(word.letters[0]!)
+          if (!(await waitForTap(beforeTap))) {
+            result.droppedFirstTaps = Number(result.droppedFirstTaps) + 1
+            await tap(word.letters[0]!)
+          }
+          for (const letter of word.letters.slice(1)) {
+            await tap(letter)
+          }
         }
-        for (const letter of word.letters.slice(1)) {
-          await tap(letter)
+        await native()
+        const candidate =
+          word.candidate === undefined
+            ? undefined
+            : browser.$(
+                `-ios predicate string:type == "XCUIElementTypeCell" AND name == ${JSON.stringify(word.candidate)}`,
+              )
+        let candidateExists = candidate ? await candidate.isExisting() : false
+        if (candidate) {
+          for (let check = 0; check < 6 && !candidateExists; check++) {
+            await sleep(0.5)
+            context.signal.throwIfAborted()
+            candidateExists = await candidate.isExisting()
+          }
         }
+        if (candidate && candidateExists) {
+          keys.push(word.candidate!)
+          await candidate.click()
+        } else if (word.candidate !== undefined) {
+          const candidates = await browser
+            .$$('//XCUIElementTypeCell')
+            .map((cell) => cell.getAttribute('name'))
+          throw new Error(
+            `iOS keyboard did not offer the candidate ${pyRepr(word.candidate)} in step ${index + 1}, candidates ${pyRepr(candidates)}`,
+          )
+        } else {
+          await tap('space')
+          if (options.keyboard === 'ja' && word.letters.length > 0) {
+            // Japanese Space selects a conversion; Return commits it on the simulator.
+            await tap('Return')
+          }
+        }
+        await browser.waitUntil(
+          async () => {
+            const events = (await state()).events.slice(previousEvents)
+            return options.keyboard === 'ja'
+              ? events.some((event) => event.type === 'compositionend')
+              : events.filter(
+                  (event) =>
+                    event.type === 'input' ||
+                    (event.type === 'beforeinput' &&
+                      event.defaultPrevented === true),
+                ).length >=
+                  word.letters.length + 1
+          },
+          {timeout: 5000},
+        )
+        last = await boundary()
+        records.push({
+          type: step.type,
+          status: 'done',
+          textAfter: last.state.text,
+          selectionAfter: last.selection,
+          focusedAfter: last.focused,
+          ...(Object.hasOwn(last.state, 'state')
+            ? {stateAfter: last.state.state}
+            : {}),
+          events: last.state.events.slice(previousEvents),
+          keys: [...keys],
+        })
+      } catch (error) {
+        const after = await boundary().catch(() => undefined)
+        const failed = failedStepRecords(
+          options.steps,
+          index,
+          String(error),
+          keys,
+        )
+        Object.assign(failed[0]!, {
+          textAfter: after?.state.text ?? null,
+          selectionAfter: after?.selection ?? null,
+          focusedAfter: after?.focused ?? null,
+          ...(after && Object.hasOwn(after.state, 'state')
+            ? {stateAfter: after.state.state}
+            : {}),
+          events: after?.state.events.slice(previousEvents) ?? [],
+        })
+        records.push(...failed)
+        throw withStepRecords(error, records)
       }
-      await native()
-      const candidate =
-        word.candidate === undefined
-          ? undefined
-          : browser.$(
-              `-ios predicate string:type == "XCUIElementTypeCell" AND name == ${JSON.stringify(word.candidate)}`,
-            )
-      if (candidate && (await candidate.isExisting())) {
-        await candidate.click()
-        picked.push(word.candidate!)
-      } else {
-        await tap('space')
-        if (options.keyboard === 'ja' && word.letters.length > 0) {
-          // Japanese Space selects a conversion; Return commits it on the simulator.
-          await tap('Return')
-        }
-        picked.push('space')
-      }
-      await browser.waitUntil(
-        async () => {
-          const events = (await state()).events.slice(previousEvents)
-          return options.keyboard === 'ja'
-            ? events.some((event) => event.type === 'compositionend')
-            : events.filter(
-                (event) =>
-                  event.type === 'input' ||
-                  (event.type === 'beforeinput' &&
-                    event.defaultPrevented === true),
-              ).length >=
-                word.letters.length + 1
-        },
-        {timeout: 5000},
-      )
-      const after = await state()
-      compositionstartPerWord.push(
-        after.events
-          .slice(previousEvents)
-          .filter((event) => event.type === 'compositionstart').length,
-      )
-      previousEvents = after.events.length
     }
-    const final = await state()
-    const typed: Typed = {
-      ...(Object.hasOwn(final, 'state') ? {state: final.state} : {}),
-      text: final.text,
-      picked,
-      compositionstart: final.events.filter(
-        (event) => event.type === 'compositionstart',
-      ).length,
-      nested: nestedCompositionstart(final.events),
-      compositionstartPerWord,
+    const run: Run = {
+      steps: records,
+      text: last.state.text,
+      selection: last.selection,
+      events: last.state.events.slice(firstEvent),
+      ...(Object.hasOwn(last.state, 'state') ? {state: last.state.state} : {}),
     }
-    result.final = final
-    result.typed = typed
-    return typed
+    result.run = run
+    return run
   } catch (error) {
     result.error = String(error)
     throw error
   } finally {
+    onTaps?.(
+      records
+        .filter((record) => record.status !== 'skipped')
+        .map((record) => ({keys: record.keys, events: record.events})),
+    )
     if (browser) {
       try {
         await browser.switchContext('NATIVE_APP')
@@ -227,28 +305,26 @@ export async function typeOnSimulator(
 }
 
 export function simulatorUnsupportedNote(
-  options: TypeOnDeviceOptions,
+  options: RunOnDeviceOptions,
 ): string | undefined {
-  const unsupported = options.words.flatMap((word, position) =>
-    /^[a-z]*$/.test(word.letters)
+  const unsupported = options.steps.flatMap((step, index) => {
+    const reason =
+      step.type !== 'compose'
+        ? `iOS simulator does not support ${step.type}`
+        : step.letters === undefined
+          ? 'iOS simulator does not support compose with text'
+          : !/^[a-z]*$/.test(step.letters)
+            ? 'iOS simulator supports lowercase a-z letter keys only'
+            : step.commit === 'none'
+              ? 'iOS simulator does not support uncommitted composition'
+              : options.keyboard === 'ja' && step.letters === ''
+                ? 'iOS simulator: Japanese words need letters'
+                : options.keyboard === 'en' && typeof step.commit === 'object'
+                  ? 'English candidates: autocorrect and QuickType never appeared on the iOS Simulator'
+                  : undefined
+    return reason === undefined
       ? []
-      : [
-          `word ${position + 1}: iOS simulator supports lowercase a-z letter keys only`,
-        ],
-  )
-  if (
-    options.keyboard === 'ja' &&
-    options.words.some((word) => word.letters === '')
-  ) {
-    unsupported.push('iOS simulator: Japanese words need letters')
-  }
-  if (
-    options.keyboard === 'en' &&
-    options.words.some((word) => word.candidate !== undefined)
-  ) {
-    unsupported.push(
-      'English candidates: autocorrect and QuickType never appeared on the iOS Simulator',
-    )
-  }
+      : [`step ${index + 1} (${step.type}): ${reason}`]
+  })
   return unsupported.length > 0 ? unsupported.join('; ') : undefined
 }

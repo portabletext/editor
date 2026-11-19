@@ -558,28 +558,11 @@ async function runSteps<Input>(
         currentInspection().guard(
           () =>
             records.push(
-              {
-                type: step.type,
-                status: 'failed',
-                reason: guardedErrorRepr(thrownValue(error)),
-                textAfter: null,
-                selectionAfter: null,
-                focusedAfter: null,
-                events: [],
-                keys: [...entry.keys],
-              },
-              ...Array.from(
-                inputs.slice(index + 1),
-                (skipped): StepRecord => ({
-                  type: toStep(skipped).type,
-                  status: 'skipped',
-                  reason: `step ${position} failed`,
-                  textAfter: null,
-                  selectionAfter: null,
-                  focusedAfter: null,
-                  events: [],
-                  keys: [],
-                }),
+              ...failedStepRecords(
+                inputs.map(toStep),
+                index,
+                guardedErrorRepr(thrownValue(error)),
+                entry.keys,
               ),
             ),
           undefined,
@@ -624,6 +607,24 @@ async function runSteps<Input>(
     events: state.events,
     taps,
   }
+}
+
+export function failedStepRecords(
+  steps: Step[],
+  index: number,
+  reason: string,
+  keys: string[],
+): StepRecord[] {
+  return steps.slice(index).map((step, offset) => ({
+    type: step.type,
+    status: offset === 0 ? 'failed' : 'skipped',
+    reason: offset === 0 ? reason : `step ${index + 1} failed`,
+    textAfter: null,
+    selectionAfter: null,
+    focusedAfter: null,
+    events: [],
+    keys: offset === 0 ? [...keys] : [],
+  }))
 }
 
 /**
@@ -1470,7 +1471,7 @@ const FIELD_SELECTION = `(typeof window.__selection === 'function' ? window.__se
 
 // The page's `window.__state()`, the field's selection and whether it has focus from one evaluation, so no
 // event can land between them.
-const FIELD_BOUNDARY = `({state: window.__state(), selection: ${FIELD_SELECTION}, focused: ${FIELD_FOCUSED}})`
+export const FIELD_BOUNDARY = `({state: window.__state(), selection: ${FIELD_SELECTION}, focused: ${FIELD_FOCUSED}})`
 
 /** A `FIELD_SELECTION` reply in grapheme clusters. */
 export function graphemeSelection(reply: unknown): GraphemeSelection | null {
