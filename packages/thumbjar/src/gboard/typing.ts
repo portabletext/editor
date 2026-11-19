@@ -1128,7 +1128,7 @@ async function evalOnField(expression: string): Promise<unknown> {
   throw new Error(FIELD_MISSING)
 }
 
-const FIELD_MISSING =
+export const FIELD_MISSING =
   'page never rendered its field: `window.__field()` found no `textarea`, text `input` or `[contenteditable]`'
 
 async function waitForChrome(device: Device): Promise<void> {

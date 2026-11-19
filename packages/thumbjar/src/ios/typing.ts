@@ -4,8 +4,8 @@ import type {TestContext} from 'vitest'
 import {remote} from 'webdriverio'
 import {prefixedPageUrl} from '../device/page-url.ts'
 import {slug} from '../driver.ts'
-import {FOCUS_FIELD} from '../gboard/field.ts'
 import {
+  FIELD_MISSING,
   nestedCompositionstart,
   outDir,
   type TypeOnDeviceOptions,
@@ -13,6 +13,7 @@ import {
 } from '../gboard/typing.ts'
 import type {PageEvent} from '../steps.ts'
 import {safariCapabilities} from './capabilities.ts'
+import {focusField, readyField} from './field.ts'
 import {tapLanded} from './tap-landed.ts'
 
 type PageState = {text: string | null; events: PageEvent[]; state?: unknown}
@@ -86,8 +87,15 @@ export async function typeOnSimulator(
     })
     await web()
     await browser.url(prefixedPageUrl(options.url, options.prefix))
-    await browser.$('[contenteditable="true"]').waitForExist({timeout: 20_000})
-    await browser.$('[contenteditable="true"]').click()
+    let field: WebdriverIO.Element | null = null
+    await browser.waitUntil(
+      async () => (field = await browser.execute(readyField)) !== null,
+      {timeout: 20_000, timeoutMsg: FIELD_MISSING},
+    )
+    if (field === null) {
+      throw new Error(FIELD_MISSING)
+    }
+    await browser.$(field).click()
     await native()
     const keyboard = browser.$('//XCUIElementTypeKeyboard')
     try {
@@ -99,7 +107,9 @@ export async function typeOnSimulator(
       await keyboard.waitForExist({timeout: 15_000})
     }
     await web()
-    await browser.execute(`return ${FOCUS_FIELD}`)
+    if ((await browser.execute(focusField)) === false) {
+      throw new Error(FIELD_MISSING)
+    }
     await native()
     for (let attempt = 0; attempt < 5; attempt++) {
       const japanese =
