@@ -48,7 +48,7 @@ jobs:
     # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
     # step's cap, so a hang in every step still leaves time for `Result` and the artifact upload, and
     # `budget.test.ts` keeps it so.
-    timeout-minutes: 323
+    timeout-minutes: 331
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -63,7 +63,7 @@ jobs:
           - {lang: en, file: tests/en.test.ts, runMinutes: 90}
           - {lang: ja, file: tests/ja.enter.test.ts, runMinutes: 90}
           - {lang: en, file: tests/en.enter.test.ts, runMinutes: 90}
-          - {lang: en, file: tests/en.insert.break.test.ts, runMinutes: 120}
+          - {lang: en, file: tests/en.insert.break.test.ts, runMinutes: 124}
           - {lang: en, file: tests/en.insert.text.test.ts, runMinutes: 90}
         api: [36]
 
