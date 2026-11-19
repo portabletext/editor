@@ -38,7 +38,7 @@ export function setupRemotePatches({
     let changed = false
 
     withChange(editor, {type: 'remote patches'}, () => {
-      withRemoteChanges(editor, 'patches', () => {
+      withRemoteChanges(editor, () => {
         withoutNormalizing(editor, () => {
           withoutPatching(editor, () => {
             pluginWithoutHistory(editor, () => {

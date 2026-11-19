@@ -320,7 +320,7 @@ describe('operation channel', () => {
     inTestChange(editor, () => editor.apply(insertTextOperation))
 
     inTestChange(editor, () =>
-      withRemoteChanges(editor, 'patches', () => {
+      withRemoteChanges(editor, () => {
         editor.apply({...insertTextOperation, offset: 0})
       }),
     )
@@ -550,7 +550,7 @@ describe('operation channel', () => {
 
     fixApplied = false
     inTestChange(editor, () =>
-      withRemoteChanges(editor, 'patches', () => {
+      withRemoteChanges(editor, () => {
         editor.apply(setStyle('normal'))
       }),
     )
@@ -567,9 +567,9 @@ describe('operation channel', () => {
       {origin: 'local', context: []},
       {
         origin: 'normalization',
-        context: [{kind: 'remote', source: 'patches'}, {kind: 'normalization'}],
+        context: [{kind: 'remote'}, {kind: 'normalization'}],
       },
-      {origin: 'remote', context: [{kind: 'remote', source: 'patches'}]},
+      {origin: 'remote', context: [{kind: 'remote'}]},
       {
         origin: 'undo',
         context: [{kind: 'undo'}, {kind: 'normalization'}],
@@ -587,7 +587,7 @@ describe('operation channel', () => {
     })
 
     expect(() =>
-      withRemoteChanges(editor, 'patches', () => {
+      withRemoteChanges(editor, () => {
         throw new Error('boom')
       }),
     ).toThrow('boom')

@@ -245,7 +245,7 @@ function insertPatch(
       context.schema,
     ) &&
     (editor.valueUnsetEmitted ||
-      // Mirrors `editorWasEmpty` in `subscriber.patch-generation.ts`: once
+      // Mirrors `wasPlaceholder` in `field-lifecycle-patches.ts`: once
       // this editor's stream has unset the field, a value-equal recording
       // is not proof of persistence.
       !isEqualValues(
