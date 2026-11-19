@@ -1,15 +1,11 @@
 import {afterAll, describe, expect, test, TestRunner} from 'vitest'
-import {
-  driverRuns,
-  typeOnDevice,
-  type TypeOnDeviceOptions,
-} from '../../driver.ts'
+import {driverRuns, runOnDevice, type RunOnDeviceOptions} from '../../driver.ts'
 
-const options: TypeOnDeviceOptions = {
+const options: RunOnDeviceOptions = {
   keyboard: 'ja',
   url: 'http://localhost:8765/editor.html',
   prefix: 'foo',
-  words: [{letters: 'kyou', candidate: '今日'}],
+  steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
 }
 
 // The test Vitest holds as current when each first test calls the driver.
@@ -24,14 +20,14 @@ describe('concurrent tests', () => {
   test.concurrent('Scenario: First type resumes while the second test is current', async (context) => {
     await released
     currentAtCall.push(TestRunner.getCurrentTest()?.name)
-    const typed = await typeOnDevice(context, options)
+    const typed = await runOnDevice(context, options)
 
     expect(typed.text).toEqual('fooｋ用今日')
   })
 
   test.concurrent('Scenario: Second type of the concurrent tests', async (context) => {
     release()
-    const typed = await typeOnDevice(context, options)
+    const typed = await runOnDevice(context, options)
 
     expect(typed.text).toEqual('fooｋ用今日')
   })
@@ -50,7 +46,7 @@ describe('sequential tests in concurrent suites', () => {
       async (context) => {
         await released
         currentAtCall.push(TestRunner.getCurrentTest()?.name)
-        const typed = await typeOnDevice(context, options)
+        const typed = await runOnDevice(context, options)
 
         expect(typed.text).toEqual('fooｋ用今日')
       },
@@ -63,7 +59,7 @@ describe('sequential tests in concurrent suites', () => {
       {concurrent: false},
       async (context) => {
         release()
-        const typed = await typeOnDevice(context, options)
+        const typed = await runOnDevice(context, options)
 
         expect(typed.text).toEqual('fooｋ用今日')
       },

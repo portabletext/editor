@@ -5,36 +5,34 @@ import {describe, expect, test} from 'vitest'
 const root = fileURLToPath(new URL('..', import.meta.url))
 
 describe('the Japanese device tests', () => {
-  test('passes every case when Gboard commits a word as kana', async () => {
+  test('fails every case when the run returns kana for required candidates', async () => {
     expect(
       await runSuite({
         root,
         file: 'tests/ja.test.ts',
-        setupFiles: [
-          'scripts/fixtures/suites/typing-commits-kana-then-kanji.ts',
-        ],
+        setupFiles: ['scripts/fixtures/suites/typing-commits-kana.ts'],
       }),
     ).toEqual({
-      file: 'passed',
+      file: 'failed',
       errors: [],
       tests: [
         {
           name: 'Scenario: Typing kyou twice into a plain contenteditable',
-          state: 'passed',
+          state: 'failed',
         },
         {
           name: 'Scenario: Typing kyou twice into an empty block',
-          state: 'passed',
+          state: 'failed',
         },
         {
           name: 'Scenario: Typing kyou twice after existing text',
-          state: 'passed',
+          state: 'failed',
         },
       ],
     })
   }, 30_000)
 
-  test('passes every case when Space converts a word to kanji', async () => {
+  test('passes every case when the run returns the required kanji', async () => {
     expect(
       await runSuite({
         root,

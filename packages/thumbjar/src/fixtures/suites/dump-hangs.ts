@@ -7,18 +7,17 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
   let attempts = 0
   return {
     ...(await importOriginal()),
-    typeInChrome: () => {
+    runInChrome: () => {
       attempts += 1
       calls.push(`attempt ${attempts}`)
       if (attempts === 1) {
         return Promise.reject(new Error('Gboard window did not appear'))
       }
       return Promise.resolve({
+        steps: [],
+        selection: null,
+        events: [],
         text: '今日',
-        picked: ['今日'],
-        compositionstart: 1,
-        nested: 0,
-        compositionstartPerWord: [1],
       })
     },
     dumpFailure: async () => {
@@ -28,6 +27,10 @@ vi.mock(import('../../gboard/typing.ts'), async (importOriginal) => {
       } finally {
         calls.push('dump stopped')
       }
+    },
+    stopChromeForRetry: () => {
+      calls.push('close chrome')
+      return Promise.resolve(['100'])
     },
     closeChrome: () => {
       calls.push('close chrome')

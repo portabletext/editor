@@ -8,7 +8,7 @@ import {
   closeChrome,
   dumpFailure,
   MistapError,
-  typeInChrome,
+  runInChrome,
 } from '../gboard/typing.ts'
 
 export type WarmupOutcome = {
@@ -34,21 +34,21 @@ export async function prepareEnglishKeyboard(
       await closeChrome()
       let dumped = false
       try {
-        const result = await typeInChrome(
+        const run = await runInChrome(
           `en-warmup-${attempt}`,
           {
             url,
             keyboard: 'en',
             prefix: '',
-            words: [{letters: 'hello'}],
+            steps: [{type: 'compose', letters: 'hello', commit: 'space'}],
           },
           connect,
         )
-        if (!isWarm(result.text)) {
+        if (!isWarm(run.text)) {
           dumped = true
           await dumpFailure(`en-warmup-${attempt}`, connect)
         }
-        return result.text
+        return run.text
       } catch (error) {
         if (!dumped) {
           await dumpFailure(`en-warmup-${attempt}`, connect)
@@ -56,7 +56,7 @@ export async function prepareEnglishKeyboard(
         if (!(error instanceof MistapError)) {
           throw error
         }
-        // `typeInChrome` throws a mistap only after it typed the word and Space, so the field holds a whole attempt to record.
+        // The digit and symbol mistap checks run after the compose step, so the field holds the whole `hello` and Space attempt to record.
         const state: unknown = await cdpEval('window.__state()')
         if (
           state !== null &&
