@@ -163,12 +163,17 @@ export const DICTIONARY_CHECK_KILL_SECONDS = 10
 /** How long the prep gets to stop once it ran past its deadline. */
 export const PREP_KILL_SECONDS = 10
 
+/** The English prep's warm-up, up to three attempts at typing `hello` and Space into the page, `warmup.js`. */
+export const ENGLISH_WARMUP_SECONDS = 180
+/** How long the warm-up gets to stop once it ran past its deadline. */
+export const ENGLISH_WARMUP_KILL_SECONDS = 10
+
 /**
  * The longest `thumbjar prepare` runs for `keyboard`, its kill-after included, so the time a caller's prep
- * stage needs. English runs its stages and the Play Store block. Japanese adds the boot capture before its
- * deadline and the dictionary wait and check, and the wait ends `DICTIONARY_LOAD_SECONDS` after the
- * emulator came online, which the stages before it already cover, or with one last read when they ran past
- * it.
+ * stage needs. English adds the warm-up to its stages and the Play Store block. Japanese adds the boot
+ * capture before its deadline and the dictionary wait and check, and the wait ends
+ * `DICTIONARY_LOAD_SECONDS` after the emulator came online, which the stages before it already cover, or
+ * with one last read when they ran past it.
  *
  * @public
  */
@@ -179,7 +184,7 @@ export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
     PREP_STAGES_SECONDS +
     PREP_KILL_SECONDS
   if (keyboard === 'en') {
-    return english
+    return english + ENGLISH_WARMUP_SECONDS + ENGLISH_WARMUP_KILL_SECONDS
   }
   return (
     english -

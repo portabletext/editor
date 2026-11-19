@@ -7,6 +7,7 @@ import {randomUUID} from 'node:crypto'
 import {readFileSync} from 'node:fs'
 import {adb} from '../device/adb.ts'
 import {cdpEval} from '../device/cdp.ts'
+import {purposePageUrl} from '../device/page-url.ts'
 import type {Device} from '../device/u2.ts'
 import {pyRepr, pySorted, sleep} from '../device/util.ts'
 import {
@@ -43,7 +44,11 @@ export function openScratchKeyboard(
 ): Promise<Device> {
   return openKeyboard(
     NAME,
-    {url: dictionaryCheckUrl(pageUrl), keyboard: 'en', prefix: ''},
+    {
+      url: purposePageUrl(pageUrl, 'dictionary-check'),
+      keyboard: 'en',
+      prefix: '',
+    },
     connect,
     {},
   )
@@ -131,10 +136,4 @@ async function scratchField(): Promise<{
 
 function readCapture(out: string): Capture {
   return parseCapture(readFileSync(`${out}/boot-logcat.txt`, 'utf8'))
-}
-
-function dictionaryCheckUrl(pageUrl: string): string {
-  const url = new URL(pageUrl)
-  url.searchParams.set('thumbjar', 'dictionary-check')
-  return url.href
 }

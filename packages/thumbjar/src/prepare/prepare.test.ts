@@ -222,6 +222,28 @@ test('keeps the prep deadline status when its stage needs SIGKILL', () => {
 }, 15_000)
 
 describe('prepare.sh', () => {
+  test('fails English prep when the warm-up fails instead of starting tests', async () => {
+    const result = await prepare({
+      keyboard: 'en',
+      playStore: 'disabled',
+      warmup: 'fails',
+    })
+    expect(result.status).toEqual(1)
+    expect(result.phases).toEqual([
+      'self-update block: disabling com.android.vending succeeded, pm list packages -d lists it',
+      'settle start',
+      'settle done after 0s quiet=30',
+      'diagnose start',
+      'chrome flags',
+      'soft keyboard',
+      'logcat',
+      'http ok',
+      'english warm-up',
+      'english warm-up rc=1',
+      'PREP FAILED: English Gboard warm-up: page never loaded over CDP',
+    ])
+  })
+
   test('disables Play Store before the settle and logs one line saying the disable succeeded and Play Store is listed as disabled', async () => {
     expect(await prepareWithoutProcesses('disabled')).toEqual({
       status: 0,
@@ -232,6 +254,7 @@ describe('prepare.sh', () => {
         ...SETTLE_AND_DIAGNOSE,
         ...DEVICE_SETTINGS,
         ...SERVE,
+        'node warmup.js out http://localhost:8765/editor.html',
       ],
       phases: [
         'self-update block: disabling com.android.vending succeeded, pm list packages -d lists it',
@@ -242,6 +265,8 @@ describe('prepare.sh', () => {
         'soft keyboard',
         'logcat',
         'http ok',
+        'english warm-up',
+        'english warm-up rc=0',
       ],
     })
   })
@@ -256,6 +281,7 @@ describe('prepare.sh', () => {
         ...SETTLE_AND_DIAGNOSE,
         ...DEVICE_SETTINGS,
         ...SERVE,
+        'node warmup.js out http://localhost:8765/editor.html',
       ],
       phases: [
         "self-update block: disabling com.android.vending failed (exit 255: Exception occurred while executing 'disable-user': java.lang.SecurityException: Shell cannot change component state for com.android.vending/null to 3), pm list packages -d does not list it",
@@ -266,6 +292,8 @@ describe('prepare.sh', () => {
         'soft keyboard',
         'logcat',
         'http ok',
+        'english warm-up',
+        'english warm-up rc=0',
       ],
     })
   })
@@ -280,6 +308,7 @@ describe('prepare.sh', () => {
         ...SETTLE_AND_DIAGNOSE,
         ...DEVICE_SETTINGS,
         ...SERVE,
+        'node warmup.js out http://localhost:8765/editor.html',
       ],
       phases: [
         'self-update block: disabling com.android.vending failed (no answer within 8s), pm list packages -d does not list it',
@@ -290,6 +319,8 @@ describe('prepare.sh', () => {
         'soft keyboard',
         'logcat',
         'http ok',
+        'english warm-up',
+        'english warm-up rc=0',
       ],
     })
   }, 30_000)
@@ -310,6 +341,7 @@ describe('prepare.sh', () => {
         ...SETTLE_AND_DIAGNOSE,
         ...DEVICE_SETTINGS,
         ...SERVE,
+        'node warmup.js out http://localhost:8765/editor.html',
       ],
       phases: [
         'self-update block: disabling com.android.vending succeeded, pm list packages -d lists it',
@@ -320,6 +352,8 @@ describe('prepare.sh', () => {
         'soft keyboard',
         'logcat',
         'http ok',
+        'english warm-up',
+        'english warm-up rc=0',
       ],
     })
   })
@@ -553,6 +587,7 @@ describe('prepare.sh exit status', () => {
           ...SETTLE_AND_DIAGNOSE,
           ...DEVICE_SETTINGS,
           ...SERVE,
+          'node warmup.js out http://localhost:8765/editor.html',
         ],
         phases: [
           'self-update block: disabling com.android.vending succeeded, pm list packages -d lists it',
@@ -564,6 +599,8 @@ describe('prepare.sh exit status', () => {
           'logcat',
           'http ok',
           'adb reverse --list rc=3',
+          'english warm-up',
+          'english warm-up rc=0',
         ],
       },
       {
@@ -757,6 +794,7 @@ type PrepareOptions = {
   keyboard: 'en' | 'ja'
   portable?: boolean
   playStore: 'disabled' | 'refused' | 'hung'
+  warmup?: 'fails'
   dictionary?:
     | 'loaded'
     | 'never'
@@ -839,6 +877,19 @@ exit 0
       }
     }
   }
+  const warmupStub = join(directory, 'stub-warmup.mjs')
+  if (options.portable) {
+    writeFileSync(
+      warmupStub,
+      `import {registerHooks} from 'node:module'
+registerHooks({load(url, context, nextLoad) {
+  return url === ${JSON.stringify(new URL('warmup.ts', import.meta.url).href)}
+    ? {format: 'module', source: '', shortCircuit: true}
+    : nextLoad(url, context)
+}})
+`,
+    )
+  }
   const result = spawnSync(
     process.execPath,
     options.portable
@@ -861,6 +912,11 @@ exit 0
       env: {
         ...process.env,
         PATH: options.portable ? bin : `${bin}:${process.env.PATH}`,
+        ...(options.portable
+          ? {
+              NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${warmupStub}`,
+            }
+          : {}),
         THUMBJAR_KEYBOARD: options.keyboard,
         THUMBJAR_OUT_DIR: 'out',
         THUMBJAR_PAGE_URL: 'http://localhost:8765/editor.html',
@@ -1032,7 +1088,7 @@ process.exitCode = await prepare({
   booted: Number(process.env.THUMBJAR_BOOTED),
 }, {
   node: ${JSON.stringify(join(directory, 'bin/node'))},
-  setup: 'setup-ja.js', dictionary: 'dictionary.js',
+  setup: 'setup-ja.js', dictionary: 'dictionary.js', warmup: 'warmup.js',
   sleep: async () => {}, request: async () => true,
   deadline: undefined,
 })
@@ -1196,6 +1252,10 @@ async function controlledPrepare(
           status = 3
         }
         if (command === 'node') {
+          if (args[0] === 'warmup.js' && settings.warmup === 'fails') {
+            status = 1
+            stderr = 'WARM-UP FAILED: page never loaded over CDP\n'
+          }
           if (args[0] === 'setup-ja.js' && settings.setup === 'exits 3') {
             status = 3
           }
@@ -1265,6 +1325,7 @@ async function controlledPrepare(
         node: 'node',
         setup: 'setup-ja.js',
         dictionary: 'dictionary.js',
+        warmup: 'warmup.js',
         sleep: async () => {},
         ...(http ? {deadline: 5} : {request: () => Promise.resolve(true)}),
       },

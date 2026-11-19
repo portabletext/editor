@@ -11,6 +11,8 @@ import {
   RESTART_SECONDS,
   RUN_ON_DEVICE_WORST_SECONDS,
   TYPE_ON_DEVICE_WORST_SECONDS,
+  ENGLISH_WARMUP_SECONDS,
+  ENGLISH_WARMUP_KILL_SECONDS,
   DICTIONARY_CHECK_KILL_SECONDS,
   DICTIONARY_CHECK_SECONDS,
   DICTIONARY_LOAD_SECONDS,
@@ -59,17 +61,18 @@ describe('the worst case of a call', () => {
 })
 
 describe(prepWorstSeconds.name, () => {
-  test('gives English the 600 seconds of its stages and the Play Store block, 632 seconds with the kill-after', () => {
+  test('gives English the 600 seconds of its stages, Play Store block and warm-up, 822 seconds with the kill-after', () => {
     expect({
       prep: prepWorstSeconds('en'),
       parts: {
         stages: PREP_STAGES_SECONDS,
+        warmup: ENGLISH_WARMUP_SECONDS + ENGLISH_WARMUP_KILL_SECONDS,
         selfUpdateBlock: SELF_UPDATE_BLOCK_SECONDS + KILL_GRACE_SECONDS,
         kill: PREP_KILL_SECONDS,
       },
     }).toEqual({
-      prep: 632,
-      parts: {stages: 600, selfUpdateBlock: 22, kill: 10},
+      prep: 822,
+      parts: {stages: 600, warmup: 190, selfUpdateBlock: 22, kill: 10},
     })
   })
 
@@ -101,7 +104,7 @@ describe(prepWorstSeconds.name, () => {
     })
   })
 
-  test('runs Japanese prep for 862 seconds after its 17-second boot capture and English prep for 622, each with its kill-after, and each new stage under the caps the prep sums', () => {
+  test('runs Japanese prep for 862 seconds after its 17-second boot capture and English prep for 812, each with its kill-after, and each new stage under the caps the prep sums', () => {
     expect({
       deadlines: [prepDeadlines.prep.ja, prepDeadlines.prep.en],
       prep: [prepDeadlines.prep.killAfter],
@@ -123,7 +126,7 @@ describe(prepWorstSeconds.name, () => {
         prepDeadlines.dictionaryCheck.seconds,
       ],
     }).toEqual({
-      deadlines: [862, 622],
+      deadlines: [862, 812],
       prep: [PREP_KILL_SECONDS],
       bootCapture: [KILL_GRACE_SECONDS, CAPTURE_SEED_SECONDS],
       selfUpdateBlock: [KILL_GRACE_SECONDS, SELF_UPDATE_BLOCK_SECONDS],
@@ -173,12 +176,12 @@ describe(runStepWorstSeconds.name, () => {
       en9: runStepWorstSeconds('en', 9),
       ja3: runStepWorstSeconds('ja', 3),
       en1: runStepWorstSeconds('en', 1),
-    }).toEqual({en9: 7192, ja3: 3483, en1: 1904})
+    }).toEqual({en9: 7382, ja3: 3483, en1: 2094})
   })
 })
 
 test('includes runner setup and the kill grace of all eight execute calls', () => {
-  expect(runStepWorstSeconds('en', 9) - 7146).toEqual(
+  expect(runStepWorstSeconds('en', 9) - 7336).toEqual(
     RUNNER_SETUP_SECONDS + 8 * KILL_GRACE_SECONDS,
   )
 })
