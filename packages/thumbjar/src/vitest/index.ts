@@ -2,6 +2,9 @@ import {fileURLToPath} from 'node:url'
 import type {TestProjectInlineConfiguration} from 'vitest/config'
 import {DEVICE_TEST_TIMEOUT_SECONDS} from '../device/budget.ts'
 
+// One iOS test, including the first WebDriverAgent launch; no budget derivation yet.
+const IOS_TEST_TIMEOUT_SECONDS = 1200
+
 export {
   countDeviceTests,
   deviceTestFileSeconds,
@@ -18,6 +21,7 @@ declare module 'vitest' {
    * @public
    */
   export interface ProvidedContext {
+    thumbjarDevice?: 'android' | 'ios'
     thumbjarPageUrl: string
     thumbjarPageHint: string
     thumbjarSummaryFile?: string | undefined
@@ -32,6 +36,8 @@ declare module 'vitest' {
 export type DeviceProjectOptions = {
   /** The project's name, `device` unless given. */
   name?: string
+  /** The keyboard backend. Defaults to `android`. */
+  device?: 'android' | 'ios'
   /** The device test files. */
   include: string[]
   /**
@@ -50,11 +56,12 @@ export type DeviceProjectOptions = {
 }
 
 /**
- * A Vitest project that types on the one attached Android device: Node environment, one file at a
- * time, no Vitest retry (`typeOnDevice` retries its own driver faults once), and a test timeout that
+ * A Vitest project that types on one device (`android` by default, or the iOS Simulator): Node environment, one file at a
+ * time, no Vitest retry (on Android `typeOnDevice` retries its own driver faults once; on iOS it makes one attempt), and a test timeout that
  * covers the driver's worst case.
  *
- * Global setup fails the run before any test when `adb` has no device or `pageUrl` does not answer.
+ * Global setup fails the run before any test when `pageUrl` does not answer, or on Android when `adb` has no device.
+ * The iOS backend uses a local Appium XCUITest server on port 4723 and makes one attempt, without a retry.
  * A setup file fails a test file in which an adb process outlived SIGKILL or the page threw while the
  * driver typed, or whose `test.fails` test ended inconclusive, with the device offline, on a driver fault or
  * never completed. With `summaryFile` given, it appends each test file's outcome counts and a table of its tests to it.
@@ -81,6 +88,7 @@ export type DeviceProjectOptions = {
  */
 export function deviceProject({
   name = 'device',
+  device = 'android',
   include,
   pageUrl,
   pageHint,
@@ -101,17 +109,23 @@ export function deviceProject({
         ...setupFiles,
       ],
       provide: {
+        ...(device === 'ios' ? {thumbjarDevice: device} : {}),
         thumbjarPageUrl: pageUrl,
         thumbjarPageHint: pageHint,
         thumbjarSummaryFile: summaryFile,
       },
       env: {THUMBJAR_OUT_DIR: outDir},
       fileParallelism: false,
-      // The driver retries its own faults once. A failed assertion is a result of the page and never reruns.
+      // On Android the driver retries its own faults once; on iOS it makes one attempt. A failed assertion is a result of the page and never reruns.
       retry: 0,
-      // A test takes 1 to 2 minutes. The timeout covers the driver's worst case, see `src/device/budget.ts`.
-      testTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
-      hookTimeout: DEVICE_TEST_TIMEOUT_SECONDS * 1000,
+      testTimeout:
+        device === 'ios'
+          ? IOS_TEST_TIMEOUT_SECONDS * 1000
+          : DEVICE_TEST_TIMEOUT_SECONDS * 1000,
+      hookTimeout:
+        device === 'ios'
+          ? IOS_TEST_TIMEOUT_SECONDS * 1000
+          : DEVICE_TEST_TIMEOUT_SECONDS * 1000,
     },
   }
 }

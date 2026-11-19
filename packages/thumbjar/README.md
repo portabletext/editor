@@ -2,7 +2,7 @@
 
 # thumbjar
 
-> Test rich text editors against a real Android keyboard.
+> Test rich text editors against a real Android or iOS keyboard.
 
 Rich text editors jump through hoops to support Android devices. At the same time there is no good way to ensure that Android input paths work besides testing manually: Gboard composes words, offers conversion candidates, and reacts when the page changes the DOM in the middle of a composition. Synthetic events from Playwright or jsdom don't behave like that, so those bugs only show up with a real Android keyboard. `thumbjar` bridges this gap by tapping real Gboard keys on an Android emulator and then handing a recording back to your Vitest test.
 
@@ -214,7 +214,7 @@ Known sources of flakes include slow emulator boots, dropped Chrome DevTools con
 
 The current worst-case bounds are 520 seconds for `typeOnDevice`, 636 for `runOnDevice` and 661 for the Vitest test timeout. These bounds assume adb processes exit after SIGKILL. A process that survives it blocks subsequent typing. Queue time also consumes the test timeout. These are caps, not expected durations.
 
-`countDeviceTests` uses a `// thumbjar-test-count: 13` declaration when present. Otherwise it counts literal top-level `test(` and `test.fails(` calls. For data-driven files, declare the total collected rows, including skipped rows. Keep a collection test that checks your declaration against Vitest's count.
+`countDeviceTests` uses a `// thumbjar-test-count: 13` declaration when present. Otherwise it counts literal top-level `test(` and `test.fails(` calls. For data-driven test files, or tests registered through an expression, declare the total collected rows, including skipped rows. Keep a collection test that checks your declaration against Vitest's count.
 
 ## Artifacts and running one file
 
@@ -233,3 +233,13 @@ The output includes `timing.txt`, `phases.log`, `http.log` and `vitest.log`. `lo
 ## Test helpers
 
 `runSuite({root, file, setupFiles, testTimeout?, provide?})` from `thumbjar/testing` runs one file in a separate Vitest instance without reporters. It returns a `SuiteResult` with the file state in `file`, error messages in `errors`, and each test's `name`, `state` and optional skip `note` in `tests`. Paths are relative to `root`. `testTimeout` defaults to 5000 milliseconds. `provide` supplies values to the inner run. Use this when testing your own Vitest integration with fake device behavior.
+
+## iOS Simulator
+
+`deviceProject({device: 'ios', ...})` sends the same `typeOnDevice(context, options)` calls to Mobile Safari through a local Appium XCUITest server on port 4723. `device` defaults to `'android'`. The `UDID` and `IOS_VERSION` environment variables select the simulator. The simulator opens the host's localhost directly. The page and `recordInput` need no changes.
+
+This backend supports lowercase letter key names, English or Japanese Romaji, prefix text, and Japanese candidate cells. A missing candidate falls back to Space (then Return on Japanese to commit the conversion). Unsupported letter keys skip the whole test before a session opens. English candidate requests skip the whole test: autocorrect and QuickType never appeared on the iOS Simulator. `runOnDevice` skips before device interaction on iOS; its step API is not supported. There are no iOS driver retries. Install the optional `webdriverio` peer dependency to use this backend.
+
+`.github/workflows/thumbjar-ios.yml` runs the existing English and Japanese typing suites, one job per language. This workflow is not a required check. On iOS the editor leaves the first word of an empty block lowercase (`kyou kyou `). Drop `test.fails` once it capitalises.
+
+Artifacts include page state and events, a native hierarchy and a screenshot, alongside simulator, HTTP and Appium logs in `packages/editor/android/out`.
