@@ -28,6 +28,7 @@
         "src/utils/_exports/index.ts!",
         "package.config.ts!",
         "vitest.android.config.ts",
+        "vitest.ios.config.ts",
         "android/vite.config.ts",
         "android/page/editor.tsx",
         "android/page/gherkin.tsx",
