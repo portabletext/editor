@@ -10,6 +10,8 @@ import {
 import {join} from 'node:path'
 import {setTimeout as delay} from 'node:timers/promises'
 import {
+  ENGLISH_WARMUP_SECONDS,
+  ENGLISH_WARMUP_KILL_SECONDS,
   CAPTURE_SEED_SECONDS,
   KILL_GRACE_SECONDS,
   PREP_KILL_SECONDS,
@@ -100,6 +102,7 @@ export async function prepare(
   dependencies: {
     node?: string
     setup?: string
+    warmup?: string
     dictionary?: string
     sleep?: (seconds: number, signal: AbortSignal) => Promise<void>
     request?: (url: string, signal: AbortSignal) => Promise<boolean>
@@ -517,6 +520,34 @@ export async function prepare(
           const listed = await adb(['reverse', '--list'], signal)
           if (listed.status !== 0) {
             log(`adb reverse --list rc=${listed.status}`)
+          }
+        }
+        if (keyboard === 'en') {
+          log('english warm-up')
+          const earlier = read(join(out, 'en-warmup.log')).length
+          const warmup = await node(
+            dependencies.warmup ?? entry('prepare/warmup'),
+            [out, pageUrl],
+            ENGLISH_WARMUP_SECONDS,
+            ENGLISH_WARMUP_KILL_SECONDS,
+            'en-warmup.log',
+            signal,
+          )
+          log(`english warm-up rc=${warmup.status}`)
+          if (warmup.status !== 0) {
+            const reason = read(join(out, 'en-warmup.log'))
+              .subarray(earlier)
+              .toString()
+              .split('\n')
+              .find((line) => line.startsWith('WARM-UP FAILED: '))
+              ?.replace('WARM-UP FAILED: ', '')
+            fail(
+              reason === undefined
+                ? 'english Gboard warm-up, see en-warmup.log'
+                : reason.startsWith('English Gboard warm-up:')
+                  ? reason
+                  : `English Gboard warm-up: ${reason}`,
+            )
           }
         }
       },
