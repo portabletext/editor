@@ -4,14 +4,7 @@ The editor owns the value after mount. `initialConfig` (including `initialValue`
 
 ## Outgoing changes
 
-Two emitted events carry the user's changes as patches.
-
-- `mutation` carries `patches` and `value`. It is batched: it flushes 250 ms after typing stops, and on a 1 second interval for other pending work. Use it to save.
-- `patch` fires once per patch, right away. Use it when you stream every operation, for example over a socket.
-
-Listen with `editor.on(type, listener)` (it returns `{unsubscribe}`) or with `EventListenerPlugin` from `@portabletext/editor/plugins`.
-
-Do not drive UI from `mutation`. Its debounce makes it lag while the user types. Read live state with `useEditorSelector`.
+Local `change` events carry the user's changes, and the editor's own corrections, as `patches`. Remote changes carry none. Listen with `editor.on('change', listener)` (it returns `{unsubscribe}`) or with `EventListenerPlugin` from `@portabletext/editor/plugins`. To send a burst of changes in one message, listen with `{batch: true}`. Read live state with `useEditorSelector`, not from `change`.
 
 ## Incoming changes from other writers
 
@@ -32,16 +25,23 @@ export function SyncPlugin(props: {channel: Channel}) {
   const {channel} = props
 
   useEffect(() => {
-    const mutationSubscription = editor.on('mutation', (event) => {
-      channel.publish(event.patches)
-    })
+    const changeSubscription = editor.on(
+      'change',
+      (events) => {
+        const patches = events.flatMap((event) =>
+          event.origin === 'local' ? event.patches : [],
+        )
+        if (patches.length > 0) channel.publish(patches)
+      },
+      {batch: true},
+    )
 
     const unsubscribe = channel.subscribe((patches) => {
       editor.send({type: 'apply', patches})
     })
 
     return () => {
-      mutationSubscription.unsubscribe()
+      changeSubscription.unsubscribe()
       unsubscribe()
     }
   }, [editor, channel])
