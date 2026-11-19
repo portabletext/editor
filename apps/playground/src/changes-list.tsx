@@ -23,8 +23,6 @@ const badgeStyle = tv({
       local: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300',
       remote:
         'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300',
-      correction:
-        'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
       editor: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
     },
   },
@@ -89,9 +87,6 @@ function ChangeCard(props: {
         <span className={badgeStyle({kind: entry.event.origin})}>
           {entry.event.origin}
         </span>
-        {entry.event.origin === 'local' && entry.event.correction ? (
-          <span className={badgeStyle({kind: 'correction'})}>correction</span>
-        ) : null}
         <span className="text-xs text-gray-600 dark:text-gray-400">
           {operationCount} {operationCount === 1 ? 'operation' : 'operations'}
         </span>
