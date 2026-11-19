@@ -15,21 +15,18 @@ import {
 import {adb} from '../device/adb.ts'
 import {prefixedPageUrl} from '../device/page-url.ts'
 import {recordInput} from '../page.ts'
+import type {RunOnDeviceOptions} from '../steps.ts'
 import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './field.ts'
 import {packageKeys, packageNodes} from './hierarchy.ts'
 import {
-  compositionstartPerWord,
   graphemeOffset,
   isJapanese,
   keyboardState,
-  nestedCompositionstart,
   openInChrome,
   roleKey,
   runInChrome,
-  typeInChrome,
   unexpectedDigit,
   withStepRecords,
-  type TypeOnDeviceOptions,
 } from './typing.ts'
 
 const FIELD_EXPRESSIONS = new Map([
@@ -91,34 +88,6 @@ beforeEach(() => {
   fake.pageModule = undefined
   fake.evaluating = () => {}
   vi.unstubAllGlobals()
-})
-
-describe(nestedCompositionstart.name, () => {
-  test('the Japanese empty-block run restarted the composition once', () => {
-    expect(
-      nestedCompositionstart(fixtureEvents('ja-editor-empty.json')),
-    ).toEqual(1)
-  })
-
-  test('the English run composes nothing', () => {
-    expect(
-      nestedCompositionstart(fixtureEvents('en-plain-empty.json')),
-    ).toEqual(0)
-  })
-})
-
-describe(compositionstartPerWord.name, () => {
-  test('the Japanese empty-block run started two compositions in the first word and one in the second', () => {
-    expect(
-      compositionstartPerWord(fixtureEvents('ja-editor-empty.json'), [17, 38]),
-    ).toEqual([2, 1])
-  })
-
-  test('the Japanese run after existing text started one composition per word', () => {
-    expect(
-      compositionstartPerWord(fixtureEvents('ja-editor-prefix.json'), [17, 34]),
-    ).toEqual([1, 1])
-  })
 })
 
 describe(unexpectedDigit.name, () => {
@@ -206,7 +175,7 @@ describe(openInChrome.name, () => {
   })
 })
 
-describe(typeInChrome.name, () => {
+describe(runInChrome.name, () => {
   test('after Chrome reopens the page, the driver taps the field the page names', async () => {
     fake.foreground = 'com.google.android.apps.nexuslauncher'
     fake.opened = (opens) => {
@@ -216,9 +185,9 @@ describe(typeInChrome.name, () => {
       }
     }
 
-    await expect(
-      typeInChrome('reopen', options, connectDevice),
-    ).rejects.toThrow('stop after the tap')
+    await expect(runInChrome('reopen', options, connectDevice)).rejects.toThrow(
+      'stop after the tap',
+    )
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
       [
@@ -245,9 +214,9 @@ describe(typeInChrome.name, () => {
     fake.foreground = 'com.android.chrome'
     fake.opened = () => loadNamedTextareaPage()
 
-    await expect(
-      typeInChrome('loaded', options, connectDevice),
-    ).rejects.toThrow('stop after the tap')
+    await expect(runInChrome('loaded', options, connectDevice)).rejects.toThrow(
+      'stop after the tap',
+    )
 
     expect(fake.timeline).toEqual([
       'phase adb reverse/forward set',
@@ -285,7 +254,7 @@ describe(typeInChrome.name, () => {
       fake.pageModule = runOnTwentiethSleep
     }
 
-    await expect(typeInChrome('late', options, connectDevice)).rejects.toThrow(
+    await expect(runInChrome('late', options, connectDevice)).rejects.toThrow(
       'stop after the tap',
     )
 
@@ -313,7 +282,7 @@ describe(typeInChrome.name, () => {
     fake.opened = () => loadLateFieldPage(2)
 
     await expect(
-      typeInChrome('late-field', options, connectDevice),
+      runInChrome('late-field', options, connectDevice),
     ).rejects.toThrow('stop after the tap')
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
@@ -343,7 +312,7 @@ describe(typeInChrome.name, () => {
     fake.opened = () => loadLateFieldPage(Infinity)
 
     await expect(
-      typeInChrome('no-field', options, connectDevice),
+      runInChrome('no-field', options, connectDevice),
     ).rejects.toThrow(
       new Error(
         'page never rendered its field: `window.__field()` found no `textarea`, text `input` or `[contenteditable]`',
@@ -376,7 +345,7 @@ describe(typeInChrome.name, () => {
     }
 
     await expect(
-      typeInChrome('navigated', options, connectDevice),
+      runInChrome('navigated', options, connectDevice),
     ).rejects.toThrow('stop after the tap')
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
@@ -414,7 +383,7 @@ describe(typeInChrome.name, () => {
     }
 
     await expect(
-      typeInChrome('reopen-navigated', options, connectDevice),
+      runInChrome('reopen-navigated', options, connectDevice),
     ).rejects.toThrow('stop after the tap')
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
@@ -452,7 +421,7 @@ describe(typeInChrome.name, () => {
     }
 
     await expect(
-      typeInChrome('rerendered', options, connectDevice),
+      runInChrome('rerendered', options, connectDevice),
     ).rejects.toThrow('stop after the tap')
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
@@ -495,7 +464,7 @@ describe(typeInChrome.name, () => {
     }
 
     await expect(
-      typeInChrome('rerendered-after-tap', options, connectTappingDevice),
+      runInChrome('rerendered-after-tap', options, connectTappingDevice),
     ).rejects.toThrow('stop after the focus')
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
@@ -537,7 +506,7 @@ describe(typeInChrome.name, () => {
     }
 
     await expect(
-      typeInChrome('removed', options, connectDevice),
+      runInChrome('removed', options, connectDevice),
     ).rejects.toThrow(
       new Error(
         'page never rendered its field: `window.__field()` found no `textarea`, text `input` or `[contenteditable]`',
@@ -574,7 +543,7 @@ describe(typeInChrome.name, () => {
     }
 
     await expect(
-      typeInChrome('rect-throws', options, connectDevice),
+      runInChrome('rect-throws', options, connectDevice),
     ).rejects.toThrow(new Error('layout failed'))
 
     expect(fake.timeline.filter((entry) => !entry.startsWith('phase'))).toEqual(
@@ -597,7 +566,7 @@ describe(typeInChrome.name, () => {
       fake.pageModule = undefined
     }
 
-    await expect(typeInChrome('never', options, connectDevice)).rejects.toThrow(
+    await expect(runInChrome('never', options, connectDevice)).rejects.toThrow(
       new Error('page never loaded over CDP: None'),
     )
 
@@ -612,40 +581,6 @@ describe(typeInChrome.name, () => {
         ]).flat(),
       ],
     )
-  })
-
-  test('a malformed word throws when the driver reaches it, after the words before it are typed', async () => {
-    vi.stubEnv('THUMBJAR_OUT_DIR', mkdtempSync(join(tmpdir(), 'thumbjar-run-')))
-    const adbImplementation = vi.mocked(adb).getMockImplementation()!
-    vi.mocked(adb).mockImplementation((args) =>
-      args.includes('input_method')
-        ? Promise.resolve('mInputShown=true')
-        : adbImplementation(args),
-    )
-    onTestFinished(() => {
-      vi.mocked(adb).mockImplementation(adbImplementation)
-      vi.unstubAllEnvs()
-    })
-    fake.foreground = 'com.android.chrome'
-    fake.opened = () => loadGboardTextareaPage('', 'en-keyboard.xml')
-
-    await expect(
-      typeInChrome(
-        'null-word',
-        {...options, words: [{letters: 'foo'}, null as never]},
-        connectGboard,
-      ),
-    ).rejects.toThrow(
-      new TypeError("Cannot read properties of null (reading 'letters')"),
-    )
-
-    expect(fake.timeline.filter((entry) => entry.startsWith('tap'))).toEqual([
-      'tap 110,60',
-      'tap 432,1885',
-      'tap 914,1731',
-      'tap 914,1731',
-      'tap 593,2196',
-    ])
   })
 
   test('returns the final page state after typing', async () => {
@@ -664,18 +599,138 @@ describe(typeInChrome.name, () => {
         })
       }
     }
-    const typed = await typeInChrome(
+    const typed = await runInChrome(
       'state',
-      {...options, words: [{letters: 'bar'}]},
+      {...options, steps: [{type: 'compose', letters: 'bar'}]},
       connectGboard,
     )
     expect(typed).toEqual({
       text: 'bar',
       state: {value: 'bar'},
-      picked: ['space'],
-      compositionstart: 0,
-      nested: 0,
-      compositionstartPerWord: [0],
+      selection: {anchor: 3, focus: 3},
+      events: [
+        {
+          type: 'beforeinput',
+          inputType: 'insertText',
+          data: null,
+          text: '',
+          selection: {anchor: 0, focus: 0},
+          isComposing: false,
+          cancelable: false,
+        },
+        {
+          type: 'input',
+          inputType: 'insertText',
+          data: null,
+          text: 'b',
+          selection: {anchor: 1, focus: 1},
+          isComposing: false,
+          cancelable: false,
+        },
+        {
+          type: 'beforeinput',
+          inputType: 'insertText',
+          data: null,
+          text: 'b',
+          selection: {anchor: 1, focus: 1},
+          isComposing: false,
+          cancelable: false,
+        },
+        {
+          type: 'input',
+          inputType: 'insertText',
+          data: null,
+          text: 'ba',
+          selection: {anchor: 2, focus: 2},
+          isComposing: false,
+          cancelable: false,
+        },
+        {
+          type: 'beforeinput',
+          inputType: 'insertText',
+          data: null,
+          text: 'ba',
+          selection: {anchor: 2, focus: 2},
+          isComposing: false,
+          cancelable: false,
+        },
+        {
+          type: 'input',
+          inputType: 'insertText',
+          data: null,
+          text: 'bar',
+          selection: {anchor: 3, focus: 3},
+          isComposing: false,
+          cancelable: false,
+        },
+      ],
+      steps: [
+        {
+          type: 'compose',
+          status: 'done',
+          textAfter: 'bar',
+          selectionAfter: {anchor: 3, focus: 3},
+          focusedAfter: true,
+          stateAfter: {value: 'bar'},
+          keys: ['B', 'A', 'R', 'Space'],
+          events: [
+            {
+              type: 'beforeinput',
+              inputType: 'insertText',
+              data: null,
+              text: '',
+              selection: {anchor: 0, focus: 0},
+              isComposing: false,
+              cancelable: false,
+            },
+            {
+              type: 'input',
+              inputType: 'insertText',
+              data: null,
+              text: 'b',
+              selection: {anchor: 1, focus: 1},
+              isComposing: false,
+              cancelable: false,
+            },
+            {
+              type: 'beforeinput',
+              inputType: 'insertText',
+              data: null,
+              text: 'b',
+              selection: {anchor: 1, focus: 1},
+              isComposing: false,
+              cancelable: false,
+            },
+            {
+              type: 'input',
+              inputType: 'insertText',
+              data: null,
+              text: 'ba',
+              selection: {anchor: 2, focus: 2},
+              isComposing: false,
+              cancelable: false,
+            },
+            {
+              type: 'beforeinput',
+              inputType: 'insertText',
+              data: null,
+              text: 'ba',
+              selection: {anchor: 2, focus: 2},
+              isComposing: false,
+              cancelable: false,
+            },
+            {
+              type: 'input',
+              inputType: 'insertText',
+              data: null,
+              text: 'bar',
+              selection: {anchor: 3, focus: 3},
+              isComposing: false,
+              cancelable: false,
+            },
+          ],
+        },
+      ],
     })
   })
 
@@ -683,10 +738,12 @@ describe(typeInChrome.name, () => {
     useGboardTextarea()
     let taps: unknown
 
-    await typeInChrome(
+    await runInChrome(
       'lost-letter',
-      {...options, words: [{letters: 'foo'}]},
+      {...options, steps: [{type: 'compose', letters: 'foo'}]},
       connectGboard,
+      undefined,
+      undefined,
       (handed) => {
         taps = handed
       },
@@ -737,12 +794,12 @@ describe(typeInChrome.name, () => {
     ])
   })
 
-  test('the run reads the page and taps the device as often as it did before it kept the taps', async () => {
+  test('reads one boundary per step after the initial boundary', async () => {
     useGboardTextarea()
 
-    await typeInChrome(
+    await runInChrome(
       'tap-count',
-      {...options, words: [{letters: 'foo'}]},
+      {...options, steps: [{type: 'compose', letters: 'foo'}]},
       connectGboard,
     )
 
@@ -1550,11 +1607,11 @@ describe(runInChrome.name, () => {
   })
 })
 
-const options: TypeOnDeviceOptions = {
+const options: RunOnDeviceOptions = {
   url: 'https://example.test/textarea.html',
   keyboard: 'en',
   prefix: '',
-  words: [],
+  steps: [],
 }
 
 /** A page that runs `recordInput` with no field and renders its `textarea` on the `sleeps`th sleep after. */
@@ -1820,10 +1877,4 @@ function fixtureKeys(fixture: string): Map<string, [number, number]> {
     readFileSync(new URL(`../fixtures/${fixture}`, import.meta.url), 'utf8'),
     'com.google.android.inputmethod.latin',
   )
-}
-
-function fixtureEvents(fixture: string): Array<{type: string}> {
-  return JSON.parse(
-    readFileSync(new URL(`../fixtures/${fixture}`, import.meta.url), 'utf8'),
-  ).state.events
 }

@@ -9,7 +9,6 @@ vi.mock(import('../../device/adb.ts'), async (importOriginal) => ({
     Promise.resolve(args.includes('input_method') ? 'mInputShown=true' : ''),
 }))
 
-// Keep this fake device in sync with the one in `device-types-digit-once.ts`.
 vi.mock(import('../../device/u2.ts'), async (importOriginal) => {
   const keyboard = readFileSync(
     new URL('../en-keyboard.xml', import.meta.url),
@@ -113,7 +112,7 @@ function evaluate(expression: string): Record<string, unknown> {
       screenHeight: 800,
     })
   }
-  if (expression === 'window.__state()' && page.attempt === 1) {
+  if (expression.includes('window.__state()') && page.attempt === 1) {
     return {
       result: {type: 'object', subtype: 'error'},
       exceptionDetails: {
@@ -121,6 +120,13 @@ function evaluate(expression: string): Record<string, unknown> {
         exception: {description: 'Error: getSnapshot failed'},
       },
     }
+  }
+  if (expression.includes('focused:')) {
+    return value({
+      state: {text: 'Kyou ', events: []},
+      selection: null,
+      focused: true,
+    })
   }
   if (expression === 'window.__state()') {
     return value({text: 'Kyou ', events: []})

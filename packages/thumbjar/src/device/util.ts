@@ -268,7 +268,7 @@ export type Inspection = {
   guard: <T>(inspect: () => T, fallback: T) => T
 }
 
-/** Lets every conversion throw as it did, so the errors and log lines of `typeOnDevice` stay as they were. */
+/** Inspects a value directly, allowing conversion errors to propagate. */
 export const PLAIN_INSPECTION: Inspection = {
   describe: errorRepr,
   message: (error) => error.message,

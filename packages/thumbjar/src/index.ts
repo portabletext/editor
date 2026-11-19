@@ -1,4 +1,4 @@
-export {runOnDevice, typeOnDevice} from './driver.ts'
+export {runOnDevice} from './driver.ts'
 export type {
   BackspaceStep,
   Commit,
@@ -13,7 +13,4 @@ export type {
   Step,
   StepRecord,
   StepStatus,
-  TypeOnDeviceOptions,
-  Typed,
-  Word,
 } from './driver.ts'

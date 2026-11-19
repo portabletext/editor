@@ -1,5 +1,5 @@
 import {expect, test, vi} from 'vitest'
-import {driverRuns, runOnDevice, typeOnDevice} from '../../driver.ts'
+import {driverRuns, runOnDevice} from '../../driver.ts'
 import * as typing from '../../gboard/typing.ts'
 
 for (const keyboard of ['en', 'ja'] as const) {
@@ -176,22 +176,6 @@ test('Scenario: a page exception takes precedence over a symbol mistap', async (
   expect(gboardDevice.attempt).toEqual(1)
 })
 
-test('Scenario: typeOnDevice counts a digit mistap retry', async (context) => {
-  vi.useFakeTimers()
-  gboardDevice.reset()
-  gboardDevice.typedOverrides = ['7']
-  const typing = typeOnDevice(context, {
-    keyboard: 'en',
-    url: 'http://localhost:8765/editor.html',
-    prefix: '',
-    words: [{letters: 'a'}],
-  })
-  await vi.runAllTimersAsync()
-  expect((await typing).text).toEqual('a ')
-  expect(driverRuns.at(-1)?.mistapRetries).toEqual(1)
-  expect(gboardDevice.attempt).toEqual(2)
-})
-
 test('Scenario: a timeout after mistap classification keeps its reason', async (context) => {
   vi.useFakeTimers()
   gboardDevice.reset()
@@ -327,4 +311,21 @@ test('Scenario: a Dash mistap restart whose old Chrome never stops ends inconclu
     mistapRetries: 1,
     attempt: 1,
   })
+})
+
+test('Scenario: a digit already in the prefix counts as an editor result', async (context) => {
+  vi.useFakeTimers()
+  gboardDevice.reset()
+  gboardDevice.typedOverrides = ['x7a']
+  gboardDevice.rewrittenText = 'x7a'
+  const typing = runOnDevice(context, {
+    keyboard: 'en',
+    url: 'http://localhost:8765/editor.html',
+    prefix: 'x7',
+    steps: [{type: 'compose', letters: 'a', commit: 'none'}],
+  })
+  await vi.runAllTimersAsync()
+  expect((await typing).text).toEqual('x7a')
+  expect(driverRuns.at(-1)?.mistapRetries).toEqual(undefined)
+  expect(gboardDevice.attempt).toEqual(1)
 })

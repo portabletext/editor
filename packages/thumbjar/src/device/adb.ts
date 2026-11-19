@@ -419,7 +419,7 @@ export class DeviceLost extends Error {
  * In a `runOnDevice` call, throw `DeviceLost` when `error` is adb's own error for a lost device, and pass
  * on a `DeviceLost` as it is, never classified again. A helper that logs a failure and goes on calls it
  * first, so a `runOnDevice` call ends `device-offline` on that error instead of on whatever the helper
- * tries next. `typeOnDevice` keeps going, and never sees a `DeviceLost`.
+ * tries next. Calls outside a strict scope keep polling.
  */
 export function throwIfStrictLoss(error: unknown): void {
   if (strictCall.getStore() === undefined) {

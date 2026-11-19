@@ -135,9 +135,9 @@ test('a missing Japanese candidate fails the step and skips later steps without 
         {type: 'compose', letters: 'kyou', commit: {candidate: '今日'}},
         {type: 'compose', letters: 'foo'},
       ],
-    }),
-  ).rejects.toThrow(
-    "iOS keyboard did not offer the candidate '今日' in step 1, candidates ['きょう']",
+    }).catch((error: Error) => error.message),
+  ).resolves.toEqual(
+    "iOS keyboard did not offer the candidate '今日' in step 1, candidates ['きょう']\nSteps:\n  1. compose: failed (Error: iOS keyboard did not offer the candidate '今日' in step 1, candidates ['きょう']), textAfter 'kyou', keys k y o u\n  2. compose: skipped (step 1 failed), textAfter None, keys none",
   )
   expect(device.taps).toEqual(['k', 'y', 'o', 'u'])
   expect(device.candidate.mock.calls).toEqual([[], [], [], [], [], [], []])

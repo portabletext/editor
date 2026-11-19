@@ -3,100 +3,13 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {describe, expect, test, vi} from 'vitest'
-import {runOnDevice, typeOnDevice, withDriverRetry} from './driver.ts'
+import {runOnDevice} from './driver.ts'
+import {FIELD_BOUNDARY} from './gboard/typing.ts'
 import {runSuite} from './testing.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
-describe(withDriverRetry.name, () => {
-  test('a driver fault restarts and types once more', async () => {
-    const calls: string[] = []
-
-    const result = await withDriverRetry({
-      name: 'ja-typing',
-      attempt: (attempt) => {
-        calls.push(`attempt ${attempt}`)
-        if (attempt === 1) {
-          return Promise.reject(new Error('Gboard window did not appear'))
-        }
-        return Promise.resolve('typed')
-      },
-      restart: () => {
-        calls.push('restart')
-        return Promise.resolve()
-      },
-    })
-
-    expect({result, calls}).toEqual({
-      result: 'typed',
-      calls: ['attempt 1', 'restart', 'attempt 2'],
-    })
-  })
-
-  test('a second driver fault is not retried again', async () => {
-    const calls: string[] = []
-
-    await expect(
-      withDriverRetry({
-        name: 'ja-typing',
-        attempt: (attempt) => {
-          calls.push(`attempt ${attempt}`)
-          return Promise.reject(new Error(`mistap ${attempt}`))
-        },
-        restart: () => {
-          calls.push('restart')
-          return Promise.resolve()
-        },
-      }),
-    ).rejects.toThrow('mistap 2')
-    expect(calls).toEqual(['attempt 1', 'restart', 'attempt 2'])
-  })
-
-  test('a fault is not retried while an earlier process may still touch the device', async () => {
-    const calls: string[] = []
-
-    await expect(
-      withDriverRetry({
-        name: 'ja-typing',
-        attempt: (attempt) => {
-          calls.push(`attempt ${attempt}`)
-          return Promise.reject(
-            new Error('adb shell input text still runs after SIGKILL'),
-          )
-        },
-        restart: () => {
-          calls.push('restart')
-          return Promise.resolve()
-        },
-        canRetry: () => false,
-      }),
-    ).rejects.toThrow('adb shell input text still runs after SIGKILL')
-    expect(calls).toEqual(['attempt 1'])
-  })
-
-  test('a wrong editor result is returned once and never retried', async () => {
-    const calls: string[] = []
-
-    const typed = await withDriverRetry({
-      name: 'ja-typing',
-      attempt: (attempt) => {
-        calls.push(`attempt ${attempt}`)
-        return Promise.resolve({text: 'ｋ用今日', nested: 1})
-      },
-      restart: () => {
-        calls.push('restart')
-        return Promise.resolve()
-      },
-    })
-
-    expect({typed, calls}).toEqual({
-      typed: {text: 'ｋ用今日', nested: 1},
-      calls: ['attempt 1'],
-    })
-  })
-})
-
-describe(typeOnDevice.name, () => {
+describe(runOnDevice.name, () => {
   test('stops a hung failure dump before the retry starts', async () => {
     expect(
       await runSuite({
@@ -170,36 +83,6 @@ describe(typeOnDevice.name, () => {
   }, 30_000)
 })
 
-describe('a digit in the typed text', () => {
-  test('retries an attempt whose text holds a digit the inputs do not, and returns a digit the prefix holds', async () => {
-    expect(
-      await runSuite({
-        root,
-        file: 'src/fixtures/suites/typing-with-long-press-digit.ts',
-        setupFiles: ['src/fixtures/suites/device-types-digit-once.ts'],
-        testTimeout: 15_000,
-      }),
-    ).toEqual({
-      file: 'passed',
-      errors: [],
-      tests: [
-        {
-          name: 'Scenario: A long press types a digit on the first attempt',
-          state: 'passed',
-        },
-        {
-          name: 'Scenario: A digit the prefix already holds is an editor result',
-          state: 'passed',
-        },
-        {
-          name: 'Scenario: A digit on both attempts fails the test as a driver fault',
-          state: 'passed',
-        },
-      ],
-    })
-  }, 30_000)
-})
-
 describe('an exception in the page', () => {
   test('ends the call without a retry and fails the file of a test.fails test with the exception', async () => {
     expect(
@@ -215,7 +98,7 @@ describe('an exception in the page', () => {
     ).toEqual({
       file: 'failed',
       errors: [
-        'The page threw while the driver typed, which can be an editor failure, so it is not retried: "Scenario: The editor throws while kyou is typed into an empty block": Uncaught in `window.__state()`: Error: getSnapshot failed.',
+        `The page threw while the driver typed, which can be an editor failure, so it is not retried: "Scenario: The editor throws while kyou is typed into an empty block": Uncaught in \`${FIELD_BOUNDARY.slice(0, 60)}\`: Error: getSnapshot failed.`,
       ],
       tests: [
         {
@@ -413,7 +296,7 @@ describe('a test.fails device test with the device setup file', () => {
 })
 
 describe(runOnDevice.name, () => {
-  test('retries a driver fault the way `typeOnDevice` does, and skips a case with a step Gboard cannot drive before the device', async () => {
+  test('retries a driver fault before input, and skips a case with a step Gboard cannot drive before the device', async () => {
     expect(
       await runSuite({
         root,
@@ -816,13 +699,10 @@ describe('the retry of a `runOnDevice` call', () => {
           state: 'passed',
         },
         {
-          name: "Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes",
+          name: "Scenario: A `runOnDevice` call a compose step queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
           state: 'passed',
         },
-        {
-          name: "Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
-          state: 'passed',
-        },
+
         {
           name: 'Scenario: A pid read that times out and an `adb get-state` that answers offline end the call device offline',
           state: 'passed',
@@ -857,6 +737,10 @@ describe('the retry of a `runOnDevice` call', () => {
         },
         {
           name: "Scenario: The adb server's wrapped `FAIL` for a lost device is read once to classify and quote it, so a message that throws when read again cannot reopen a retry after input",
+          state: 'passed',
+        },
+        {
+          name: 'Scenario: a queued call leaves the strict scope before cleanup',
           state: 'passed',
         },
       ],
@@ -1039,32 +923,6 @@ describe('the step records of a `runOnDevice` call', () => {
         },
         {
           name: "Scenario: ' ' in English text is tapped on the symbol layout even when the dump after Symbol keyboard still shows the letters",
-          state: 'passed',
-        },
-      ],
-    })
-  }, 60_000)
-})
-
-describe('a `typeOnDevice` call', () => {
-  test('commits a candidate Gboard does not offer with Space, and retries a fault after input in a restarted Chrome', async () => {
-    expect(
-      await runSuite({
-        root,
-        file: 'src/fixtures/suites/typing-keeps-its-outcomes.ts',
-        setupFiles: ['src/fixtures/suites/gboard-device.ts'],
-        testTimeout: 15_000,
-      }),
-    ).toEqual({
-      file: 'passed',
-      errors: [],
-      tests: [
-        {
-          name: 'Scenario: A candidate Gboard does not offer is committed with Space',
-          state: 'passed',
-        },
-        {
-          name: 'Scenario: A fault after a key tap is retried in a restarted Chrome without a pid check',
           state: 'passed',
         },
       ],
@@ -1388,10 +1246,6 @@ test('classified mistaps under runOnDevice', async () => {
         state: 'passed',
       },
       {
-        name: 'Scenario: typeOnDevice counts a digit mistap retry',
-        state: 'passed',
-      },
-      {
         name: 'Scenario: a timeout after mistap classification keeps its reason',
         state: 'passed',
       },
@@ -1405,6 +1259,10 @@ test('classified mistaps under runOnDevice', async () => {
       },
       {
         name: 'Scenario: a Dash mistap restart whose old Chrome never stops ends inconclusive',
+        state: 'passed',
+      },
+      {
+        name: 'Scenario: a digit already in the prefix counts as an editor result',
         state: 'passed',
       },
     ],

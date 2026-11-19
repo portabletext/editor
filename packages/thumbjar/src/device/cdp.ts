@@ -26,7 +26,7 @@ export class ProtocolError extends Error {
 
 /**
  * The evaluated expression threw in the page. It can be an editor result, so neither `cdpEval` nor
- * `withDriverRetry` retries it.
+ * `runOnDevice` retries it.
  */
 export class PageExceptionError extends Error {
   override name = 'PageExceptionError'
