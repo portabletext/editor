@@ -9,5 +9,5 @@ pnpm-lock.yaml
 apps/docs/.astro
 apps/docs/src/content/docs/api
 packages/html/src/tests/**/*.html
-.changeset/*.md
+.changeset/**/*.md
 packages/editor/tests/__fixtures__/wire-catalogue
