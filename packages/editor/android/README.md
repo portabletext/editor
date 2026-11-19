@@ -38,14 +38,14 @@ A job goes red when a device prep step failed, or a test failed, including a tes
 5. `run outcome: no emulator process was recorded; the launched emulator cannot be verified` fails an otherwise passing run. A passing run must provide evidence of the pin; failing and cancelled runs without a record keep their existing diagnosis.
 6. Otherwise Vitest's output lists each test. A failed assertion shows the expected and actual
    values, and the `github-actions` reporter annotates the test file and writes the job summary. A
-   driver fault the driver retried prints a `Driver fault in <test>` line. Each driver call retries
-   a classified mistap once, including after input under `runOnDevice`, after stopping the old
-   Chrome and checking the new pid. A second mistap under `runOnDevice` ends `inconclusive` with the
+   driver fault the driver retried prints a `Driver fault in <test>` line. `runOnDevice` retries a fault before input once,
+   and a classified mistap once even after input, after stopping the old Chrome and checking the new
+   pid. A second mistap ends `inconclusive` with the
    mistap message. Other faults after input are not retried. Mistaps are unexpected digits absent
    from the inputs, or a symbol tap whose own `insertText` beforeinput reports a recorded long-press
    popup character. Symbol classification requires one event per tap, in order, so page text the
    editor rewrote never classifies as a symbol mistap. The per-file job summary counts every mistap
-   retry the driver began and names its test, under both drivers.
+   retry the driver began and names its test.
 
 Each job retries once, on a fresh emulator, when the first emulator never booted (a `BOOT_RETRY` line), when adb lost the device after boot, during prep or the tests (a `DEVICE_LOST_RETRY` line), or when Gboard's Japanese dictionary never loaded on a device the check found reachable (a `DICTIONARY_RETRY` line). The lines also go to the job summary, and the `run outcome` line names the retry. `thumbjar prepare` exits 3 for that dictionary and 1 for every other prep failure, and `thumbjar run` writes `PREP DICTIONARY_NOT_LOADED` to `timing.txt` for status 3 only, so the retry never reads the prep's reason. Any other failure on a device adb still reaches is never retried, whether a test, another prep step, the dictionary check after the load or a driver fault failed. A dictionary that never loaded on the first run, then a run that could not retry, quotes the prep's reason like any other prep failure. After a prep or test stage fails, `thumbjar run` reads `adb get-state` once, with its stdout apart from its stderr, where adb prints its daemon start-up lines, and writes its verdict to `timing.txt` as one line before anything else: `CHECKED device` when stdout is `device`, and `CHECKED lost` when stdout is `offline` or adb fails with `error: device offline`, the answer of a dead emulator, or reports no such device (`no devices/emulators found`, `device '<serial>' not found`). Anything else proves nothing and gets no verdict: a device that is `unauthorized`, in `bootloader` or `recovery` or in another state is still there, any other adb error says nothing about the device, and an `adb get-state` that does not answer within 5 seconds may only be a slow adb server. A retry on a reachable device could turn a real test failure into a passing retry. The read runs once the stage has ended, so it never changes a test's outcome. A run that needed no check writes `CHECKED skipped`. A lost verdict is retried whatever stops the run after it. A run that ended after boot without a verdict, because the step's `timeout-minutes` or the check's own timeout stopped it first or `adb get-state` proved nothing, is never retried. Its result reads `run outcome: the run ended after boot without a completed device check, not a test result`. A cancelled run reads `run outcome: cancelled`. `.github/scripts/emulator-runs.mjs` decides the retry and the result from `timing.txt`, and the Boot time step prints each run's boot as `BOOT_SECONDS run <n>: <seconds>`.
 
@@ -116,26 +116,28 @@ Without an emulator, `pnpm test:android:unit` runs `tests/ja.test.ts` against fa
 
 ## Adding a test
 
-Add the test to the file for its language. It calls `typeOnDevice` from `thumbjar` with the test's `context` and the page's `url`, the `keyboard`, the `prefix` the block holds and the `words` to type, and asserts on what it returns. thumbjar's README describes each option and result. For example, to check that Japanese composition after a full-width prefix commits without a restarted composition, typing `sakura` and committing 桜:
+Add the test to the file for its language. It calls `runOnDevice` from `thumbjar` with the test's `context` and the page's `url`, the `keyboard`, the `prefix` the block holds and the `steps` to drive, and asserts on what it returns. thumbjar's README describes each option and result. For example, to check that Japanese composition after a full-width prefix commits without a restarted composition, typing `sakura` and committing 桜:
 
 ```ts
 test('Scenario: Typing sakura after full-width text', async (context) => {
-  const typed = await typeOnDevice(context, {
+  const run = await runOnDevice(context, {
     url: 'http://localhost:8765/editor.html',
     keyboard: 'ja',
     prefix: 'あ',
-    words: [{letters: 'sakura', candidate: '桜'}],
+    steps: [{type: 'compose', letters: 'sakura', commit: {candidate: '桜'}}],
   })
 
-  expect(typed.text).toMatch(/^あ(桜|さくら)$/)
-  expect({
-    nested: typed.nested,
-    compositionstartPerWord: typed.compositionstartPerWord,
-  }).toEqual({nested: 0, compositionstartPerWord: [1]})
+  expect(run.text).toEqual('あ桜')
+  expect(
+    run.steps.map(
+      (step) =>
+        step.events.filter((event) => event.type === 'compositionstart').length,
+    ),
+  ).toEqual([1])
 })
 ```
 
-When Gboard has not loaded a word's candidates yet, the driver commits it with Space as kana, so a Japanese test accepts the kana for each word as well as the candidate.
+A required candidate Gboard does not offer fails the step and rejects the call. Assert the exact converted text. Use `run.steps` for each step's events and `run.events` for the full event sequence; count nested compositions by tracking `compositionstart` and `compositionend` in order.
 
 Then:
 
