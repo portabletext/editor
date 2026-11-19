@@ -12,9 +12,9 @@ export function isEqualValues(
   b: Array<PortableTextBlock | Node> | undefined,
 ): boolean {
   if (!a || !b) {
-    // `undefined` and `[]` both mean "empty value". Treating them as
-    // different makes the sync machine count an empty→empty value update
-    // as a remote change and clear locally typed content.
+    // `undefined` and `[]` both mean an empty value. Telling them apart would
+    // make an empty field look edited to the placeholder checks in
+    // `field-lifecycle-patches.ts` and `applyPatch.ts`.
     return (a?.length ?? 0) === (b?.length ?? 0)
   }
 

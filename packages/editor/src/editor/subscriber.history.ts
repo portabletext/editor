@@ -34,10 +34,6 @@ export function subscribeHistory({
           continue
         }
 
-        if (patch.origin === 'local') {
-          continue
-        }
-
         if (patch.type === 'unset' && patch.path.length === 0) {
           editor.history = {undos: [], redos: []}
           editor.remotePatches.splice(0, editor.remotePatches.length)

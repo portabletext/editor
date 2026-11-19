@@ -29,7 +29,7 @@ export const syncMachine = setup({
       }
       const editorEngine = context.editorEngine
       withChange(editorEngine, {type: 'load'}, () => {
-        withRemoteChanges(editorEngine, 'initial-sync', () => {
+        withRemoteChanges(editorEngine, () => {
           withoutNormalizing(editorEngine, () => {
             pluginWithoutHistory(editorEngine, () => {
               withoutPatching(editorEngine, () => {

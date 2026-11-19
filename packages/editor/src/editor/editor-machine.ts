@@ -78,7 +78,10 @@ export type EditorActor = ActorRefFrom<typeof editorMachine>
  * @internal
  */
 type InternalEditorEvent =
-  | ExternalEditorEvent
+  | {
+      type: 'update readOnly'
+      readOnly: boolean
+    }
   | InternalApplyEvent
   | {
       type: 'add behavior'

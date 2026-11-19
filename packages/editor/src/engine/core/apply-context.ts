@@ -9,7 +9,7 @@ import type {OperationOrigin} from './operation-channel'
  * below instead of only the innermost.
  */
 export type ApplyContextFrame =
-  | {kind: 'remote'; source: 'patches' | 'initial-sync'}
+  | {kind: 'remote'}
   | {kind: 'undo'}
   | {kind: 'redo'}
   | {kind: 'normalization'}

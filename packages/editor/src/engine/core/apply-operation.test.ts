@@ -488,7 +488,7 @@ describe(applyOperation.name, () => {
       ])
 
       inTestChange(editor, () =>
-        withRemoteChanges(editor, 'patches', () => {
+        withRemoteChanges(editor, () => {
           editor.apply({type: 'unset', path: [{_key: imageKey}, 'alt']})
           editor.apply({
             type: 'unset',
@@ -522,7 +522,7 @@ describe(applyOperation.name, () => {
       ])
 
       inTestChange(editor, () =>
-        withRemoteChanges(editor, 'patches', () => {
+        withRemoteChanges(editor, () => {
           editor.apply({
             type: 'unset',
             path: [{_key: imageKey}, 'meta', 'tags', 'baz'],
@@ -592,7 +592,7 @@ describe(applyOperation.name, () => {
       const value = editor.snapshot.context.value
 
       inTestChange(editor, () =>
-        withRemoteChanges(editor, 'patches', () => {
+        withRemoteChanges(editor, () => {
           editor.apply({
             type: 'unset',
             path: ['markDefs', {_key: markDefKey}, 'href'],
@@ -619,7 +619,7 @@ describe(applyOperation.name, () => {
       const value = editor.snapshot.context.value
 
       inTestChange(editor, () =>
-        withRemoteChanges(editor, 'patches', () => {
+        withRemoteChanges(editor, () => {
           editor.apply({
             type: 'unset',
             path: [{_key: missingKey}, 'markDefs', {_key: markDefKey}, 'href'],
@@ -645,7 +645,7 @@ describe(applyOperation.name, () => {
       const value = editor.snapshot.context.value
 
       inTestChange(editor, () =>
-        withRemoteChanges(editor, 'patches', () => {
+        withRemoteChanges(editor, () => {
           editor.apply({type: 'unset', path: [-2, 'markDefs', 0, 'href']})
         }),
       )
@@ -894,7 +894,7 @@ describe(applyOperation.name, () => {
       )
 
       inTestChange(editor, () =>
-        withRemoteChanges(editor, 'patches', () => {
+        withRemoteChanges(editor, () => {
           editor.apply({
             type: 'unset',
             path: [{_key: blockKey}, 'children', {_key: spanKey}],
