@@ -2447,6 +2447,29 @@ describe('emulator-runs.mjs result after a failed prep', () => {
 })
 
 describe('the workflow', () => {
+  test('keeps the required result job running and checks every outcome', () => {
+    const result = workflow.split('\n  result:\n')[1] ?? ''
+    expect({
+      name: /^ {4}name: (.*)$/m.exec(result)?.[1],
+      needs: /^ {4}needs: (.*)$/m.exec(result)?.[1],
+      condition: /^ {4}if: (.*)$/m.exec(result)?.[1],
+      script: result.split('        run: |\n')[1],
+    }).toEqual({
+      name: 'Android IME',
+      needs: '[changes, emulator]',
+      condition: 'always()',
+      script: `          echo "changes: $CHANGES_RESULT, android: $ANDROID_CHANGED, emulator: $EMULATOR_RESULT"
+          test "$CHANGES_RESULT" = success
+          if [ "$ANDROID_CHANGED" = true ]; then
+            test "$EMULATOR_RESULT" = success
+          else
+            test "$ANDROID_CHANGED" = false
+            test "$EMULATOR_RESULT" = skipped
+          fi
+`,
+    })
+  })
+
   test('installs the pin on both attempts without requesting an emulator from sdkmanager', () => {
     const workflow = readFileSync(
       new URL('../workflows/android-ime.yml', import.meta.url),
@@ -2610,10 +2633,10 @@ describe('the workflow', () => {
       ].map((match) => match[1]),
     }).toEqual({
       filterIf:
-        "github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')",
+        "github.event_name == 'pull_request' && !(startsWith(github.head_ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository)",
       jobIf: "needs.changes.outputs.android == 'true'",
       androidOutput:
-        "${{ github.event_name != 'pull_request' || (!startsWith(github.head_ref, 'changeset-release/') && steps.filter.outputs.android == 'true') }}",
+        "${{ github.event_name != 'pull_request' || (!(startsWith(github.head_ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository) && steps.filter.outputs.android == 'true') }}",
       editorPackageInPaths: true,
       triggers: ['pull_request', 'schedule', 'workflow_dispatch'],
     })
