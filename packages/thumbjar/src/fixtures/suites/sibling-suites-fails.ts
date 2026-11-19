@@ -1,11 +1,11 @@
 import {describe, expect, test} from 'vitest'
-import {typeOnDevice, type TypeOnDeviceOptions} from '../../driver.ts'
+import {runOnDevice, type RunOnDeviceOptions} from '../../driver.ts'
 
-const options: TypeOnDeviceOptions = {
+const options: RunOnDeviceOptions = {
   keyboard: 'ja',
   url: 'http://localhost:8765/editor.html',
   prefix: 'foo',
-  words: [{letters: 'kyou', candidate: '今日'}],
+  steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
 }
 
 let release: () => void
@@ -16,7 +16,7 @@ const released = new Promise<void>((resolve) => {
 describe.concurrent('first suite', () => {
   test.fails('Scenario: First type', {concurrent: false}, async (context) => {
     await released
-    const typed = await typeOnDevice(context, options)
+    const typed = await runOnDevice(context, options)
 
     expect(typed.text).toEqual('bar')
   })
@@ -25,7 +25,7 @@ describe.concurrent('first suite', () => {
 describe.concurrent('second suite', () => {
   test.fails('Scenario: Second type', {concurrent: false}, async (context) => {
     release()
-    const typed = await typeOnDevice(context, options)
+    const typed = await runOnDevice(context, options)
 
     expect(typed.text).toEqual('bar')
   })

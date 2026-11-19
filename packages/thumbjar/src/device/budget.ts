@@ -1,5 +1,5 @@
-// Time bounds of one `typeOnDevice` or `runOnDevice` call, in seconds. Every stage of the call is cut off at
-// its bound, so the call ends within `TYPE_ON_DEVICE_WORST_SECONDS` or `RUN_ON_DEVICE_WORST_SECONDS` however
+// Time bounds of one `runOnDevice` call, in seconds. Every stage of the call is cut off at
+// its bound, so the call ends within `RUN_ON_DEVICE_WORST_SECONDS` however
 // the device hangs, as long as its adb processes exit on SIGKILL. After one that does not, no typing starts
 // and no run completes, see `assertNoUnstoppedProcess`.
 
@@ -23,9 +23,6 @@ export const KILL_GRACE_SECONDS = 2
 
 /** Each adb call that stops Chrome. */
 export const CHROME_ADB_SECONDS = 15
-
-/** Stopping Chrome between the two attempts of a `typeOnDevice` call, which reads no pid. */
-export const RESTART_SECONDS = CHROME_ADB_SECONDS + 5
 
 /** Each `pidof` that reads Chrome's process ids, before and after the restart between the attempts. */
 export const CHROME_PID_SECONDS = 5
@@ -69,14 +66,6 @@ const ATTEMPT_WORST_SECONDS =
   SERVER_CLOSE_SECONDS +
   JOIN_GRACE_SECONDS
 
-/** The longest a `typeOnDevice` call takes: two failed attempts with their dumps, the restart and the cleanup. */
-export const TYPE_ON_DEVICE_WORST_SECONDS =
-  2 * ATTEMPT_WORST_SECONDS +
-  RESTART_SECONDS +
-  JOIN_GRACE_SECONDS +
-  CLEANUP_SECONDS +
-  JOIN_GRACE_SECONDS
-
 /**
  * The longest a `runOnDevice` call takes: two failed attempts, each with the read of the page after its
  * failed step, the restart that proves Chrome fresh, the one `adb get-state` a call reads and the cleanup.
@@ -91,14 +80,11 @@ export const RUN_ON_DEVICE_WORST_SECONDS =
   JOIN_GRACE_SECONDS
 
 /**
- * The device test timeout, for the longer of the two calls. A test that timed out leaves its cleanup
- * running, and the next test waits for it before typing, so each test has room for one carried-over cleanup
- * on top of its own worst case.
+ * The device test timeout: the worst case of one `runOnDevice` call plus one cleanup carried over
+ * from a test that timed out, which the next test waits for before typing.
  */
 export const DEVICE_TEST_TIMEOUT_SECONDS =
-  Math.max(TYPE_ON_DEVICE_WORST_SECONDS, RUN_ON_DEVICE_WORST_SECONDS) +
-  CLEANUP_SECONDS +
-  JOIN_GRACE_SECONDS
+  RUN_ON_DEVICE_WORST_SECONDS + CLEANUP_SECONDS + JOIN_GRACE_SECONDS
 
 /**
  * The global setup's `adb get-state`, which checks for a device. Stopping it after the timeout takes up to

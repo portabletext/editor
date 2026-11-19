@@ -8,9 +8,7 @@ import {
   FAULT_READ_SECONDS,
   FRESH_RESTART_SECONDS,
   JOIN_GRACE_SECONDS,
-  RESTART_SECONDS,
   RUN_ON_DEVICE_WORST_SECONDS,
-  TYPE_ON_DEVICE_WORST_SECONDS,
   ENGLISH_WARMUP_SECONDS,
   ENGLISH_WARMUP_KILL_SECONDS,
   DICTIONARY_CHECK_KILL_SECONDS,
@@ -41,20 +39,18 @@ describe(deviceTestFileSeconds.name, () => {
 })
 
 describe('the worst case of a call', () => {
-  test('leaves a `typeOnDevice` call at 520 seconds and gives a `runOnDevice` call 636 for its reads after a fault, its fresh Chrome and its device state, and the test timeout covers the longer', () => {
+  test('gives a `runOnDevice` call 636 for its reads after a fault, its fresh Chrome and its device state, and the test timeout covers it', () => {
     expect({
-      typeOnDevice: TYPE_ON_DEVICE_WORST_SECONDS,
       runOnDevice: RUN_ON_DEVICE_WORST_SECONDS,
       parts: {
         faultReads: 2 * (FAULT_READ_SECONDS + JOIN_GRACE_SECONDS),
-        restartGrowth: FRESH_RESTART_SECONDS - RESTART_SECONDS,
+        restart: FRESH_RESTART_SECONDS,
         deviceState: DEVICE_STATE_READ_SECONDS + JOIN_GRACE_SECONDS,
       },
       testTimeout: DEVICE_TEST_TIMEOUT_SECONDS,
     }).toEqual({
-      typeOnDevice: 520,
       runOnDevice: 636,
-      parts: {faultReads: 70, restartGrowth: 32, deviceState: 14},
+      parts: {faultReads: 70, restart: 52, deviceState: 14},
       testTimeout: 661,
     })
   })

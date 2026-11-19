@@ -4,7 +4,7 @@ import {join} from 'node:path'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {cdpEval} from '../device/cdp.ts'
 import {Device} from '../device/u2.ts'
-import {closeChrome, dumpFailure, typeInChrome} from './typing.ts'
+import {closeChrome, dumpFailure, runInChrome} from './typing.ts'
 import {prepareEnglishKeyboard, warmEnglishKeyboard} from './warmup.ts'
 
 vi.mock(import('../device/cdp.ts'), () => ({cdpEval: vi.fn()}))
@@ -12,7 +12,7 @@ vi.mock(import('../device/u2.ts'))
 vi.mock('node:crypto', () => ({randomUUID: () => 'warmup-run'}))
 vi.mock(import('./typing.ts'), async (importOriginal) => ({
   ...(await importOriginal()),
-  typeInChrome: vi.fn(),
+  runInChrome: vi.fn(),
   closeChrome: vi.fn(),
   dumpFailure: vi.fn(),
 }))
@@ -32,15 +32,14 @@ describe(prepareEnglishKeyboard.name, () => {
       .mockResolvedValueOnce(first as never)
       .mockResolvedValueOnce(second as never)
     const connected: unknown[] = []
-    vi.mocked(typeInChrome).mockImplementationOnce(
+    vi.mocked(runInChrome).mockImplementationOnce(
       async (_name, _options, connect) => {
         connected.push(await connect(), await connect())
         return {
           text: 'Hello ',
-          picked: ['space'],
-          compositionstart: 1,
-          nested: 0,
-          compositionstartPerWord: [1],
+          steps: [],
+          selection: null,
+          events: [],
         }
       },
     )
@@ -52,12 +51,11 @@ describe(prepareEnglishKeyboard.name, () => {
 
   test('does not dump a second time when the first dump throws', async () => {
     const out = mkdtempSync(join(tmpdir(), 'thumbjar-warmup-'))
-    vi.mocked(typeInChrome).mockResolvedValueOnce({
+    vi.mocked(runInChrome).mockResolvedValueOnce({
       text: 'Helo ',
-      picked: ['space'],
-      compositionstart: 1,
-      nested: 0,
-      compositionstartPerWord: [1],
+      steps: [],
+      selection: null,
+      events: [],
     })
     vi.mocked(dumpFailure).mockRejectedValueOnce(new Error('dump failed'))
     await expect(
@@ -80,7 +78,7 @@ describe(prepareEnglishKeyboard.name, () => {
       chromeStopped = true
       return Promise.resolve()
     })
-    vi.mocked(typeInChrome).mockImplementation(
+    vi.mocked(runInChrome).mockImplementation(
       async (name, options, connect) => {
         expect(chromeStopped).toEqual(true)
         chromeStopped = false
@@ -88,10 +86,9 @@ describe(prepareEnglishKeyboard.name, () => {
         calls.push([name, options])
         return {
           text: name.endsWith('1') ? 'Helo\u00a0' : 'Hello\u00a0',
-          picked: ['space'],
-          compositionstart: 1,
-          nested: 0,
-          compositionstartPerWord: [1],
+          steps: [],
+          selection: null,
+          events: [],
         }
       },
     )
@@ -103,7 +100,7 @@ describe(prepareEnglishKeyboard.name, () => {
           url: 'http://localhost:8765/custom?foo=bar&thumbjar=english-warmup',
           keyboard: 'en',
           prefix: '',
-          words: [{letters: 'hello'}],
+          steps: [{type: 'compose', letters: 'hello', commit: 'space'}],
         },
       ],
       [
@@ -112,7 +109,7 @@ describe(prepareEnglishKeyboard.name, () => {
           url: 'http://localhost:8765/custom?foo=bar&thumbjar=english-warmup',
           keyboard: 'en',
           prefix: '',
-          words: [{letters: 'hello'}],
+          steps: [{type: 'compose', letters: 'hello', commit: 'space'}],
         },
       ],
     ])
@@ -134,12 +131,11 @@ describe(prepareEnglishKeyboard.name, () => {
     const out = mkdtempSync(join(tmpdir(), 'thumbjar-warmup-'))
     const summary = join(out, 'summary.md')
     vi.stubEnv('GITHUB_STEP_SUMMARY', summary)
-    vi.mocked(typeInChrome).mockResolvedValueOnce({
+    vi.mocked(runInChrome).mockResolvedValueOnce({
       text: 'hello ',
-      picked: ['space'],
-      compositionstart: 1,
-      nested: 0,
-      compositionstartPerWord: [1],
+      steps: [],
+      selection: null,
+      events: [],
     })
     await prepareEnglishKeyboard(out, 'http://localhost/app')
     expect(readFileSync(summary, 'utf8')).toEqual(
@@ -154,20 +150,18 @@ describe(prepareEnglishKeyboard.name, () => {
     const out = mkdtempSync(join(tmpdir(), 'thumbjar-warmup-'))
     const summary = join(out, 'summary.md')
     vi.stubEnv('GITHUB_STEP_SUMMARY', summary)
-    vi.mocked(typeInChrome)
+    vi.mocked(runInChrome)
       .mockResolvedValueOnce({
         text: null,
-        picked: ['space'],
-        compositionstart: 1,
-        nested: 0,
-        compositionstartPerWord: [1],
+        steps: [],
+        selection: null,
+        events: [],
       })
       .mockResolvedValueOnce({
         text: 'hello',
-        picked: ['space'],
-        compositionstart: 1,
-        nested: 0,
-        compositionstartPerWord: [1],
+        steps: [],
+        selection: null,
+        events: [],
       })
     await prepareEnglishKeyboard(out, 'http://localhost/app')
     expect(readFileSync(summary, 'utf8')).toEqual(
@@ -177,7 +171,7 @@ describe(prepareEnglishKeyboard.name, () => {
 
   test('saves failure diagnostics and closes Chrome after a driver fault', async () => {
     const out = mkdtempSync(join(tmpdir(), 'thumbjar-warmup-'))
-    vi.mocked(typeInChrome).mockRejectedValueOnce(new Error('device offline'))
+    vi.mocked(runInChrome).mockRejectedValueOnce(new Error('device offline'))
     await expect(
       prepareEnglishKeyboard(out, 'http://localhost/app'),
     ).rejects.toThrow('device offline')

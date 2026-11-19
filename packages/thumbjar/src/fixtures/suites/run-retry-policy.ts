@@ -3,7 +3,7 @@ import {join} from 'node:path'
 import {beforeEach, expect, test, vi} from 'vitest'
 import {AdbError, CommandError, DeviceLost} from '../../device/adb.ts'
 import {HTTPError} from '../../device/u2.ts'
-import {driverRuns, runOnDevice, typeOnDevice} from '../../driver.ts'
+import {driverRuns, runOnDevice, type ComposeStep} from '../../driver.ts'
 
 beforeEach(() => {
   globalThis.gboardDevice.reset()
@@ -970,78 +970,7 @@ test("Scenario: The wait for the page over CDP passes on a lost device a helper 
   })
 })
 
-test("Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes", async (context) => {
-  const fault = new CommandError('device offline')
-  let queued: Promise<unknown> | undefined
-  const step = {
-    get type(): 'enter' {
-      if (globalThis.gboardDevice.attempt === 1 && queued === undefined) {
-        // Read while the strict attempt runs, so the call is queued from inside its strict scope.
-        globalThis.gboardDevice.infoErrors = [fault, fault]
-        queued = typeOnDevice(context, {
-          keyboard: 'en',
-          url: 'http://localhost:8765/editor.html',
-          prefix: 'foo',
-          words: [],
-        }).catch((error: unknown) => error)
-      }
-      return 'enter'
-    },
-  }
-  const running = runOnDevice(context, {
-    keyboard: 'en',
-    url: 'http://localhost:8765/editor.html',
-    prefix: 'foo',
-    steps: [step],
-  })
-  await vi.runAllTimersAsync()
-  const run = await running
-  const typed = await queued
-
-  expect({
-    text: run.text,
-    typed,
-    runs: driverRuns.slice(-2),
-    calls: globalThis.gboardDevice.calls,
-  }).toEqual({
-    text: 'foo\n',
-    typed: {
-      text: 'foo',
-      picked: [],
-      compositionstart: 0,
-      nested: 0,
-      compositionstartPerWord: [],
-    },
-    runs: [
-      {
-        test: "Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes",
-        fails: false,
-        state: 'complete',
-        taps: [{keys: ['Enter'], events: []}],
-      },
-      {
-        test: "Scenario: A `typeOnDevice` call a `runOnDevice` step queues keeps its own retry, so adb's lost-device error while uiautomator2 starts is polled through and the call completes",
-        fails: false,
-        state: 'complete',
-      },
-    ],
-    calls: [
-      'open chrome',
-      'attempt 1',
-      'tap field',
-      'tap Enter',
-      'force-stop chrome',
-      'uiautomator2 info rejected',
-      'uiautomator2 info rejected',
-      'open chrome',
-      'attempt 2',
-      'tap field',
-      'force-stop chrome',
-    ],
-  })
-})
-
-test("Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline", async (context) => {
+test("Scenario: A `runOnDevice` call a compose step queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline", async (context) => {
   const answer = new AdbError('device offline')
   answer.serverFailed = true
   const fault = new HTTPError(
@@ -1049,27 +978,28 @@ test("Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for 
     {cause: answer},
   )
   let queued: Promise<unknown> | undefined
-  const word = {
+  const step: ComposeStep = {
+    type: 'compose',
     get letters() {
-      if (queued === undefined) {
-        // Read while the legacy attempt runs, so the call is queued from inside it.
+      if (globalThis.gboardDevice.attempt === 1 && queued === undefined) {
+        // Read while the attempt runs, so the call is queued from inside it.
         queued = runOnDevice(context, {
           keyboard: 'en',
           url: 'http://localhost:8765/editor.html',
           prefix: 'foo',
           steps: [{type: 'enter'}],
         }).catch((error: unknown) => error)
-        // Armed for the queued call, once the legacy call's own readiness passed.
+        // Armed for the queued call, once the outer call's own readiness passed.
         globalThis.gboardDevice.infoErrors = [fault]
       }
       return 'a'
     },
   }
-  const typing = typeOnDevice(context, {
+  const typing = runOnDevice(context, {
     keyboard: 'en',
     url: 'http://localhost:8765/editor.html',
     prefix: 'foo',
-    words: [word],
+    steps: [step],
   })
   await vi.runAllTimersAsync()
   const typed = await typing
@@ -1085,13 +1015,13 @@ test("Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for 
     identical: true,
     runs: [
       {
-        test: "Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
+        test: "Scenario: A `runOnDevice` call a compose step queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
         fails: false,
         state: 'complete',
         taps: [{keys: ['A', 'Space'], events: []}],
       },
       {
-        test: "Scenario: A `runOnDevice` call a `typeOnDevice` word queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
+        test: "Scenario: A `runOnDevice` call a compose step queues is strict for its own attempt, so adb's lost-device error while uiautomator2 starts ends it device offline",
         fails: false,
         state: 'device-offline',
         reason:
@@ -1489,4 +1419,45 @@ test("Scenario: The adb server's wrapped `FAIL` for a lost device is read once t
       'force-stop chrome',
     ],
   })
+})
+
+test('Scenario: a queued call leaves the strict scope before cleanup', async (context) => {
+  let queued: Promise<unknown> | undefined
+  const step: ComposeStep = {
+    type: 'compose',
+    get letters() {
+      if (gboardDevice.attempt === 1 && queued === undefined) {
+        queued = runOnDevice(context, {
+          keyboard: 'en',
+          url: 'http://localhost:8765/editor.html',
+          prefix: 'foo',
+          steps: [{type: 'enter'}],
+        }).catch((error: unknown) => error)
+        gboardDevice.adbAnswers = [
+          {match: /am force-stop/, answer: 'device'},
+          {
+            match: /am force-stop/,
+            answer: {stdout: '', stderr: 'error: device offline', code: 1},
+          },
+        ]
+      }
+      return 'a'
+    },
+  }
+  const typing = runOnDevice(context, {
+    keyboard: 'en',
+    url: 'http://localhost:8765/editor.html',
+    prefix: 'foo',
+    steps: [step],
+  })
+  await vi.runAllTimersAsync()
+  await typing
+  await queued
+  expect(driverRuns.slice(-2).map((run) => run.state)).toEqual([
+    'complete',
+    'complete',
+  ])
+  expect(
+    gboardDevice.calls.filter((call) => call === 'force-stop chrome'),
+  ).toEqual(['force-stop chrome', 'force-stop chrome'])
 })

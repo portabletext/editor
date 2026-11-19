@@ -1,23 +1,23 @@
 import {expect, test} from 'vitest'
-import {typeOnDevice} from '../../driver.ts'
+import {runOnDevice} from '../../driver.ts'
 
 test.fails('Scenario: Typing kyou into an empty block', async (context) => {
-  const typed = await typeOnDevice(context, {
+  const typed = await runOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
-    words: [{letters: 'kyou', candidate: '今日'}],
+    steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
   })
 
   expect(typed.text).toEqual('今日')
 })
 
 test('Scenario: Typing kyou after existing text', async (context) => {
-  const typed = await typeOnDevice(context, {
+  const typed = await runOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: 'x',
-    words: [{letters: 'kyou', candidate: '今日'}],
+    steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
   })
 
   expect(typed.text).toEqual('x今日')

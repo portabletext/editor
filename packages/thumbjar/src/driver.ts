@@ -1,7 +1,7 @@
 // Type through Gboard's own keys into a page in Android Chrome and read the result back over CDP.
 //
-// A device test calls `typeOnDevice` or `runOnDevice` and asserts on what it returns. Both go through
-// `drive`, which retries only driver faults, and `runOnDevice` only the way `strictRetry` allows. A
+// A device test calls `runOnDevice` and asserts on what it returns. It goes through
+// `drive`, which retries only driver faults, the way `strictRetry` allows. A
 // classified mistap is a digit absent from the inputs in the typed text or a symbol popup character
 // recorded in the tapped key's own `beforeinput` event.
 
@@ -23,7 +23,6 @@ import {
   FAILURE_DUMP_SECONDS,
   FAULT_READ_SECONDS,
   FRESH_RESTART_SECONDS,
-  RESTART_SECONDS,
   SERVER_CLOSE_SECONDS,
 } from './device/budget.ts'
 import {PageExceptionError} from './device/cdp.ts'
@@ -32,10 +31,8 @@ import {
   currentInspection,
   currentSignal,
   describeError,
-  errorRepr,
   GUARDED_INSPECTION,
   isInstance,
-  PLAIN_INSPECTION,
   phase,
   resetPhaseClock,
   runAbortable,
@@ -55,16 +52,12 @@ import {
   readDeviceState,
   runInChrome,
   stopChromeForRetry,
-  typeInChrome,
   withStepRecords,
   type AdbLoss,
   type AttemptHooks,
-  type TypeOnDeviceOptions,
-  type Typed,
 } from './gboard/typing.ts'
 import type {Run, RunOnDeviceOptions, StepRecord} from './steps.ts'
 
-export type {TypeOnDeviceOptions, Typed, Word} from './gboard/typing.ts'
 export type {
   BackspaceStep,
   Commit,
@@ -83,7 +76,7 @@ export type {
 
 const WATCHDOG_SECONDS = ATTEMPT_SECONDS - 15
 
-/** One `typeOnDevice` or `runOnDevice` call and how it ended. */
+/** One `runOnDevice` call and how it ended. */
 export type DriverRun = {
   test: string
   fails: boolean
@@ -96,20 +89,19 @@ export type DriverRun = {
    * answers, unless the read completed with an answer other than `device`, and carries neither marker below.
    * One after input ends `inconclusive` instead, and is marked `deviceUnconfirmed` when the first attempt
    * already used the call's one state read.
-   * `aborted` when the test timed out or was cancelled first, and no later cleanup changes it. For
-   * `runOnDevice`, a timeout while the driver still decides whether to retry a first attempt's fault before
-   * any input ends on what that fault would end the call on if it were final instead: `inconclusive` for a
+   * `aborted` when the test timed out or was cancelled first, and no later cleanup changes it. A timeout while
+   * the driver still decides whether to retry a first attempt's fault before any input ends on what that fault would end the call on if it were final instead: `inconclusive` for a
    * timeout and `faulted` for any other fault.
    * `page-exception` when an expression threw in the page, which can be an editor result and is never
    * retried. It takes precedence over every other state here, including when the read of the page after
    * a failed step raised it.
-   * `inconclusive`, for `runOnDevice` only, when a driver fault came after the attempt sent input, which
+   * `inconclusive`, when a driver fault came after the attempt sent input, which
    * may still reach a page a retry would type into, when the restart before the retry could not show
    * a fresh Chrome, or when the test timed out while the driver decided whether to retry a first attempt's
    * timeout before any input, or after a classified mistap on the second attempt. A first classified
    * mistap is retried once. A timeout before the second attempt begins, including during the restart,
    * also ends `inconclusive` with the mistap message. An inconclusive call says nothing about the page.
-   * `device-offline`, for `runOnDevice` only, when an adb call of any step failed on adb's own error for a
+   * `device-offline`, when an adb call of any step failed on adb's own error for a
    * lost device, the restart's force-stop included, which its `reason` quotes, or timed out and the `adb get-state` read for that timeout completed with an
    * answer other than `device`. It is never retried on that device.
    */
@@ -143,7 +135,7 @@ export type DriverRun = {
 }
 
 /**
- * Every `typeOnDevice` and `runOnDevice` call in the current test file. `test.fails` counts any error, a timeout included, as
+ * Every `runOnDevice` call in the current test file. `test.fails` counts any error, a timeout included, as
  * its expected failure, so the setup file `deviceProject` adds fails the file for a `test.fails` run that never completed,
  * and counts each test by its last call in the job summary.
  */
@@ -163,100 +155,9 @@ let previousRun: Promise<void> = Promise.resolve()
 
 /**
  * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
- * URL. Type `words` on Gboard and read back what the page holds. A driver fault restarts Chrome and types
- * everything again once. With `deviceProject({device: 'ios'})` it types in Mobile Safari through Appium, in one attempt. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
- *
- * `context` is the context Vitest passes to the test that calls it. The timeout, the artifact names and
- * the `driverRuns` record all belong to that test, also in a test that runs alongside others. Only the
- * context's shape is checked, so the context of another test makes that test the owner of the call.
- * `test.each` passes no context, `test.for` does.
- *
- * @example
- * ```ts
- * import {typeOnDevice} from 'thumbjar'
- * import {expect, test} from 'vitest'
- *
- * test('Scenario: Typing kyou into an empty block', async (context) => {
- *   const typed = await typeOnDevice(context, {
- *     url: 'http://localhost:8765/editor.html',
- *     keyboard: 'en',
- *     prefix: '',
- *     words: [{letters: 'kyou'}],
- *   })
- *
- *   expect(typed.text).toEqual('Kyou ')
- * })
- * ```
- *
- * @public
- */
-export async function typeOnDevice(
-  context: TestContext,
-  options: TypeOnDeviceOptions,
-): Promise<Typed> {
-  if (!isTestContext(context)) {
-    throw new Error(
-      '`typeOnDevice` takes the context Vitest passes to the test first: `typeOnDevice(context, options)`',
-    )
-  }
-  if (inject('thumbjarDevice') === 'ios') {
-    const {simulatorUnsupportedNote, typeOnSimulator} =
-      await import('./ios/legacy-typing.ts')
-    context.signal.throwIfAborted()
-    const note = simulatorUnsupportedNote(options)
-    if (note) {
-      context.skip(note)
-    }
-    const run: DriverRun = {
-      test: context.task.name,
-      fails: Boolean(context.task.fails),
-      state: 'driving',
-    }
-    driverRuns.push(run)
-    runTasks.set(run, context.task)
-    const pending = previousRun.then(async () => {
-      try {
-        context.signal.throwIfAborted()
-        const typed = await typeOnSimulator(context, options)
-        run.state = 'complete'
-        return typed
-      } catch (error) {
-        run.state = context.signal.aborted ? 'aborted' : 'faulted'
-        throw error
-      }
-    })
-    previousRun = pending.then(
-      () => {},
-      () => {},
-    )
-    return await pending
-  }
-  return await drive(
-    PLAIN_INSPECTION,
-    options.keyboard,
-    {
-      name: context.task.name,
-      fails: Boolean(context.task.fails),
-      signal: context.signal,
-      task: context.task,
-    },
-    (run) => (name, connect) => {
-      delete run.taps
-      // An attempt the call gave up on may still report once it stops, and must not replace the taps of
-      // the attempt that followed it.
-      const signal = currentSignal()
-      return typeInChrome(name, options, connect, (taps) => {
-        if (!signal?.aborted) {
-          run.taps = taps
-        }
-      })
-    },
-  )
-}
-
-/**
- * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
- * URL. Drive `steps` on Gboard and return a record of each and what the page holds after the last.
+ * URL. Drive `steps` on Gboard and return a record of each and what the page holds after the last. With
+ * `deviceProject({device: 'ios'})`, drive compose steps with lowercase letters and a Space commit or a
+ * required Japanese candidate in Mobile Safari through Appium, in one attempt.
  *
  * `context` is the context Vitest passes to the test that calls it. The skip, the timeout, the artifact
  * names and the `driverRuns` record all belong to that test, also in a concurrent test. Only the context's
@@ -264,7 +165,7 @@ export async function typeOnDevice(
  * passes no context, `test.for` does. Calls still drive the device one at a time, in the order they were
  * made, and a call's wait for the calls before it counts against its own test's timeout.
  *
- * Before it touches the device it checks that Gboard can drive every step on `keyboard`. When it cannot,
+ * Before it touches the device it checks that the backend can drive every step on `keyboard`. When it cannot,
  * it skips the test with a note that names each step it cannot drive, its position, its type and why, so
  * a case never runs halfway. A call made after its test timed out or was cancelled is recorded `aborted`
  * against that test and rejects with the signal's reason, before it checks the steps or touches the
@@ -376,7 +277,6 @@ export async function runOnDevice(
     // A value a step throws and the signal's reason end up in its records and its error, never a
     // conversion error.
     return await drive(
-      GUARDED_INSPECTION,
       options.keyboard,
       {
         name: context.task.name,
@@ -407,7 +307,6 @@ export async function runOnDevice(
           throw error
         })
       },
-      true,
     )
   } catch (error) {
     // `Object.is`, so a step that threw `NaN` is recognised.
@@ -425,15 +324,13 @@ export async function runOnDevice(
 /**
  * Record the call in `driverRuns` against `test`, run `attempt` under the time bounds once every earlier
  * call settled, retry it once after a driver fault, and stop Chrome after it. Every thrown value and abort
- * reason of the call is read through `inspection`. A `strict` call, `runOnDevice`'s, passes each attempt
- * its `AttemptHooks` and retries only the way `strictRetry` allows.
+ * reason of the call is read through `GUARDED_INSPECTION`. Each attempt receives its `AttemptHooks`
+ * and retries only the way `strictRetry` allows.
  */
 async function drive<T>(
-  inspection: Inspection,
   keyboard: RunOnDeviceOptions['keyboard'],
   test: {name: string; fails: boolean; signal: AbortSignal; task: object},
   attempt: (run: DriverRun) => Attempt<T>,
-  strict = false,
 ): Promise<T> {
   const run: DriverRun = {
     test: test.name,
@@ -449,14 +346,13 @@ async function drive<T>(
   // instance, so it sets the call's own inspection and leaves any strict scope before it starts.
   const running = previousRun.then(() =>
     runNotStrict(() =>
-      runInspecting(inspection, () =>
+      runInspecting(GUARDED_INSPECTION, () =>
         driveAfterPrevious(
-          inspection,
+          GUARDED_INSPECTION,
           run,
           name,
           test.signal,
           attempt(run),
-          strict,
         ),
       ),
     ),
@@ -480,7 +376,6 @@ async function driveAfterPrevious<T>(
   name: string,
   testSignal: AbortSignal,
   attempt: Attempt<T>,
-  strict: boolean,
 ): Promise<T> {
   try {
     assertNoUnstoppedProcess()
@@ -597,40 +492,18 @@ async function driveAfterPrevious<T>(
   return await runAbortable(testSignal, async () => {
     let result: T
     try {
-      result = strict
-        ? await strictRetry(
-            name,
-            inspection,
-            attempt,
-            pageException,
-            record,
-            pend,
-            classify,
-            () => {
-              run.mistapRetries = (run.mistapRetries ?? 0) + 1
-            },
-          )
-        : await withDriverRetry({
-            name,
-            attempt: (number) =>
-              timedAttempt(
-                number === 1 ? name : `${name}-retry`,
-                inspection,
-                attempt,
-              ),
-            restart: () =>
-              withDeadline('restarting Chrome', RESTART_SECONDS, closeChrome),
-            canRetry: (error) => {
-              const retry =
-                pageException(error) === undefined &&
-                unstoppedProcesses().length === 0
-              if (retry && isInstance(error, MistapError)) {
-                run.mistapRetries = (run.mistapRetries ?? 0) + 1
-              }
-              return retry
-            },
-            describeError: inspection.describe,
-          })
+      result = await strictRetry(
+        name,
+        inspection,
+        attempt,
+        pageException,
+        record,
+        pend,
+        classify,
+        () => {
+          run.mistapRetries = (run.mistapRetries ?? 0) + 1
+        },
+      )
     } catch (error) {
       const thrownInPage = pageException(error)
       if (recorded) {
@@ -1022,43 +895,6 @@ function throwIfUnstopped(error: unknown): void {
     throw error
   }
   assertNoUnstoppedProcess()
-}
-
-/**
- * Run `attempt`, and once more after `restart` when it throws and `canRetry` allows it. The second
- * attempt's error is the one that propagates.
- */
-export async function withDriverRetry<T>({
-  name,
-  attempt,
-  restart,
-  canRetry = () => true,
-  describeError = errorRepr,
-}: {
-  name: string
-  attempt: (attempt: 1 | 2) => Promise<T>
-  restart: () => Promise<void>
-  /**
-   * Whether the first attempt's `error` may be retried: it is a driver fault, and the attempt has stopped
-   * touching the device, so a second one cannot overlap it.
-   */
-  canRetry?: (error: unknown) => boolean
-  /** How the retry's log lines show the first attempt's error. */
-  describeError?: (error: unknown) => string
-}): Promise<T> {
-  try {
-    return await attempt(1)
-  } catch (error) {
-    if (!canRetry(error)) {
-      throw error
-    }
-    phase(`RETRY ${name}: ${describeError(error)}`)
-    console.warn(
-      `Driver fault in ${name}, restarting Chrome and typing again: ${describeError(error)}`,
-    )
-    await restart()
-    return await attempt(2)
-  }
 }
 
 /**

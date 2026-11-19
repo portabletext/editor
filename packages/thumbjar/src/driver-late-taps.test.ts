@@ -1,6 +1,6 @@
 import {expect, test, vi} from 'vitest'
 import {ATTEMPT_SECONDS, JOIN_GRACE_SECONDS} from './device/budget.ts'
-import {lastDriverRun, runOnDevice, typeOnDevice} from './driver.ts'
+import {lastDriverRun, runOnDevice} from './driver.ts'
 import type {StepTaps} from './gboard/typing.ts'
 
 const control = vi.hoisted(() => ({
@@ -31,12 +31,6 @@ vi.mock('./gboard/typing.ts', async (importOriginal) => {
   }
   return {
     ...(await importOriginal<typeof import('./gboard/typing.ts')>()),
-    typeInChrome: (
-      _name: string,
-      _options: unknown,
-      _connect: unknown,
-      onTaps: (taps: StepTaps[]) => void,
-    ) => attempt(onTaps),
     runInChrome: (
       _name: string,
       _options: unknown,
@@ -53,25 +47,25 @@ vi.mock('./gboard/typing.ts', async (importOriginal) => {
 
 const url = 'http://localhost:8765/editor.html'
 
-for (const api of ['typeOnDevice', 'runOnDevice'] as const) {
-  test(`${api} keeps the taps of the retry when the first attempt reports after it was given up on`, async (context) => {
-    vi.useFakeTimers()
-    control.attempts = 0
-    const running =
-      api === 'typeOnDevice'
-        ? typeOnDevice(context, {url, keyboard: 'en', prefix: '', words: []})
-        : runOnDevice(context, {url, keyboard: 'en', prefix: '', steps: []})
-    await vi.advanceTimersByTimeAsync(
-      (ATTEMPT_SECONDS + 2 * JOIN_GRACE_SECONDS) * 1000,
-    )
-    expect(control.attempts).toEqual(2)
-
-    control.releaseFirst()
-    await control.firstReported
-    const taps = lastDriverRun(context.task)?.taps
-    control.releaseSecond()
-    await running
-
-    expect(taps).toEqual([{keys: ['second'], events: []}])
+test(`runOnDevice keeps the taps of the retry when the first attempt reports after it was given up on`, async (context) => {
+  vi.useFakeTimers()
+  control.attempts = 0
+  const running = runOnDevice(context, {
+    url,
+    keyboard: 'en',
+    prefix: '',
+    steps: [],
   })
-}
+  await vi.advanceTimersByTimeAsync(
+    (ATTEMPT_SECONDS + 2 * JOIN_GRACE_SECONDS) * 1000,
+  )
+  expect(control.attempts).toEqual(2)
+
+  control.releaseFirst()
+  await control.firstReported
+  const taps = lastDriverRun(context.task)?.taps
+  control.releaseSecond()
+  await running
+
+  expect(taps).toEqual([{keys: ['second'], events: []}])
+})

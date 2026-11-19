@@ -1,14 +1,14 @@
 import {expect, test, vi} from 'vitest'
-import {driverRuns, typeOnDevice} from '../../driver.ts'
+import {driverRuns, runOnDevice} from '../../driver.ts'
 
 test('Scenario: Stopping Chrome for the retry leaves an adb process that outlives SIGKILL', async (context) => {
   globalThis.firstAttemptFaults = true
   vi.useFakeTimers()
-  const typing = typeOnDevice(context, {
+  const typing = runOnDevice(context, {
     keyboard: 'ja',
     url: 'http://localhost:8765/editor.html',
     prefix: '',
-    words: [{letters: 'kyou', candidate: '今日'}],
+    steps: [{type: 'compose', letters: 'kyou', commit: {candidate: '今日'}}],
   }).catch((error: Error) => error.name)
   await vi.runAllTimersAsync()
 
