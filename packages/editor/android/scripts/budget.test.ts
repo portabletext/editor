@@ -58,6 +58,8 @@ describe('the workflow', () => {
     new URL('../../../../.github/workflows/android-ime.yml', import.meta.url),
     'utf8',
   )
+    .split('\n  emulator:\n')[1]!
+    .split('\n  result:\n')[0]!
   // oxfmt wraps a long row over several lines, so each row is read as the flow mapping between its braces.
   const rows = [...workflow.matchAll(/^ {10}- \{([^}]*)\}$/gm)].map((match) => {
     const row = Object.fromEntries(
