@@ -34,4 +34,6 @@ sp defaults read com.apple.Preferences | tee "$out/preferences.txt" > /dev/null
 xcrun simctl shutdown "$udid"
 xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b > /dev/null
+open -a Simulator --args -CurrentDeviceUDID "$udid"
+xcrun simctl bootstatus "$udid" -b > /dev/null
 echo "SIM booted at $(date +%s)" | tee -a "$out/sim.txt"
