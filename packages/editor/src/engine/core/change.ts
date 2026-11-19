@@ -1,6 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import type {Editor} from '../interfaces/editor'
-import {isInNormalization, isPlaceholder} from './apply-context'
+import {isPlaceholder} from './apply-context'
 import type {OperationEvent} from './operation-channel'
 
 /**
@@ -44,12 +44,7 @@ export type Change = {
 
 export type ChangeListener = (change: Change) => void
 
-/**
- * `remote`: content that arrived from outside. `correction`: a
- * normalization fix made while patching, which is local content the host
- * has to save. `edit`: everything else.
- */
-export type ChangeEntryKind = 'edit' | 'correction' | 'remote'
+export type ChangeEntryKind = 'local' | 'remote'
 
 export function getChangeEntryKind(
   change: Change,
@@ -62,16 +57,11 @@ export function getChangeEntryKind(
       // applies while patching or as the placeholder for a field it emptied
       // is its own fix of that content.
       return entry.event.isPatching || isPlaceholder(entry.event.context)
-        ? 'correction'
+        ? 'local'
         : 'remote'
     case 'registration':
-      return entry.event.isPatching ? 'correction' : 'edit'
     case 'behavior event':
-      // A user action interleaves its own operations with the fixes they
-      // trigger, and only the frame tells them apart.
-      return isInNormalization(entry.event.context) && entry.event.isPatching
-        ? 'correction'
-        : 'edit'
+      return 'local'
   }
 }
 

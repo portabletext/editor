@@ -6,7 +6,7 @@ import type {ChangeEvent, Editor} from '../src'
 import {createTestEditor} from '../src/test/vitest'
 
 describe('event.apply', () => {
-  test('Scenario: A collaborator’s text change emits one remote `change` and no correction', async () => {
+  test('Scenario: A collaborator’s text change emits one remote `change` and no local change', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()

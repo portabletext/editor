@@ -21,8 +21,8 @@ import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
-describe('initial value key corrections', () => {
-  test('Scenario: a startup value with a keyless child gets its missing key through a correction', async () => {
+describe('initial value key repairs', () => {
+  test('Scenario: a startup value with a keyless child gets its missing key through a local change', async () => {
     const patches: Array<Patch> = []
     const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
     const {editor} = await createTestEditor({
@@ -122,7 +122,7 @@ describe('initial value key corrections', () => {
     })
   })
 
-  test('Scenario: a startup value with an empty keyless child before another keyless child emits the key corrections before the local edit', async () => {
+  test('Scenario: a startup value with an empty keyless child before another keyless child emits the key repairs before the local edit', async () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const patches: Array<Patch> = []
     const localChanges: Array<Extract<ChangeEvent, {origin: 'local'}>> = []
