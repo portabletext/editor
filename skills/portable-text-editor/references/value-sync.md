@@ -4,7 +4,7 @@ The editor owns the value after mount. `initialConfig` (including `initialValue`
 
 ## Outgoing changes
 
-Local `change` events carry the user's changes, and the editor's own corrections, as `patches`. Remote changes carry none. Listen with `editor.on('change', listener)` (it returns `{unsubscribe}`) or with `EventListenerPlugin` from `@portabletext/editor/plugins`. To send a burst of changes in one message, listen with `{batch: true}`. Read live state with `useEditorSelector`, not from `change`.
+A user action and the fixes it causes arrive as one local `change`, with their `patches` in order. Fixes to received content are their own local changes. Remote changes carry no `patches`. Listen with `editor.on('change', listener)` (it returns `{unsubscribe}`) or with `EventListenerPlugin` from `@portabletext/editor/plugins`. To send a burst of changes in one message, listen with `{batch: true}`. Read live state with `useEditorSelector`, not from `change`.
 
 ## Incoming changes from other writers
 

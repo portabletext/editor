@@ -181,7 +181,6 @@ test('Scenario: insert removes null at root', async () => {
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ]),
   )
@@ -256,7 +255,6 @@ test('Scenario: root set removes null at root', async () => {
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ]),
   )
@@ -370,7 +368,6 @@ test('Scenario: array set removes null at table cell', async () => {
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ]),
   )
@@ -445,7 +442,6 @@ test('Scenario: keyed node set removes null at root', async () => {
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ]),
   )
@@ -520,7 +516,6 @@ test('Scenario: positional node set removes null at root', async () => {
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ]),
   )
@@ -606,7 +601,6 @@ test('Scenario: initialValue removes null from markDefs in table cell', async ()
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ]),
   )
@@ -675,7 +669,6 @@ test('Scenario: insert removes first and last non-objects in one batch', async (
           {type: 'unset', path: [4], origin: 'local'},
           {type: 'unset', path: [0], origin: 'local'},
         ],
-        correction: true,
       },
     ]),
   )
@@ -794,7 +787,6 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
         },
       ],
       patches: [{type: 'set', path: [2, '_key'], value: 'k7', origin: 'local'}],
-      correction: true,
     },
   ])
   expect(controlReplica).toEqual([
@@ -873,7 +865,6 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
         {type: 'unset', path: [1], origin: 'local'},
         {type: 'set', path: [2, '_key'], value: 'k7', origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(controlChanges).toEqual([
@@ -912,7 +903,6 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
         },
       ],
       patches: [{type: 'set', path: [2, '_key'], value: 'k7', origin: 'local'}],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -1067,7 +1057,6 @@ test('Scenario: removing the caret block matches a remote unset', async () => {
       origin: 'local',
       operations: [{type: 'unset', path: [1]}],
       patches: [{type: 'unset', path: [1], origin: 'local'}],
-      correction: true,
     },
   ])
   expect(controlChanges).toEqual([
@@ -1196,7 +1185,6 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -1254,7 +1242,6 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
     {
       type: 'change',
@@ -1410,7 +1397,6 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -1468,7 +1454,6 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
     {
       type: 'change',
@@ -1879,7 +1864,6 @@ test('Scenario: array set removes null at markDefs', async () => {
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -2014,7 +1998,6 @@ test('Scenario: array set removes a string at markDefs', async () => {
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -2179,7 +2162,6 @@ test('Scenario: root set removes null at markDefs', async () => {
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -2344,7 +2326,6 @@ test('Scenario: root set removes a string at markDefs', async () => {
       patches: [
         {type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1], origin: 'local'},
       ],
-      correction: true,
     },
   ])
   expect(replica).toEqual([
@@ -2363,7 +2344,7 @@ test('Scenario: root set removes a string at markDefs', async () => {
   ])
 })
 
-describe('existing remote-patch corrections', () => {
+describe('existing remote-patch repairs', () => {
   const container = defineContainer({
     type: 'container',
     arrayField: 'content',

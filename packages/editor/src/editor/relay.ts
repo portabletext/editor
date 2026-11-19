@@ -64,22 +64,12 @@ export type EditorEmittedEvent =
  * Emitted once for every change to the editor's content, synchronously, in
  * the order the changes were applied:
  *
- * - `origin: 'local'`: what a user action did, the outermost Behavior
- *   event and everything it raised. Undo and redo are one action each.
- *   Local changes arrive in application order, and one user action can
- *   produce several when the editor fixes something mid-action. `patches`
- *   are the change as Sanity patches, available as soon as the action finishes.
- * - `origin: 'local'` with `correction: true`: the editor's own fixes to
- *   the content (normalization, such as merging adjacent spans with the
- *   same marks or replacing a duplicate `_key`), emitted right after the
- *   change that caused them, with their own operations and patches. A fix
- *   to content the editor received (remote patches or the initial value) is
- *   a correction too. A host that persists patches saves corrections like
- *   any other local change. A repair of a received value (a missing
- *   child `_key`, an empty `children` array) is a correction too, and the
- *   remote change holds the value as received. Corrections are not held
- *   back: one to the initial value, or to a value received while the editor
- *   is read-only, carries `patches` immediately.
+ * - `origin: 'local'`: one user action, the outermost Behavior event and
+ *   everything it raised, including normalization fixes, with operations and
+ *   patches in application order. Undo and redo are one action each. A fix
+ *   that no user action caused is its own local change. That covers fixes
+ *   to the initial value and to content that remote patches changed, also
+ *   while read-only, and fixes after a registration. Its `patches` are emitted at once.
  * - `origin: 'remote'`: one event per applied `apply` event that changes
  *   the content. Remote changes carry no `patches`.
  *
@@ -88,14 +78,14 @@ export type EditorEmittedEvent =
  *
  * `operations` are the {@link Operation}s the editor applied to its
  * content, never the inputs it received. The first load of the initial
- * value emits no `change`, except a `correction` when the editor fixes
+ * value emits no `change`, except a local change when the editor fixes
  * the loaded value. A `change` never has an empty `operations` array.
  *
  * The empty block an empty editor shows is part of the snapshot and
  * never reported. One the editor inserts later, after the last block is
  * deleted or the field is unset remotely, is an insert in the change that
  * emptied the field: the local change's own `operations`, or a
- * `correction` without `patches` after a remote change.
+ * local change with `patches: []` after a remote change.
  *
  * @beta
  */
@@ -105,7 +95,6 @@ export type ChangeEvent =
       origin: 'local'
       operations: Array<Operation>
       patches: Array<Patch>
-      correction?: true
     }
   | {
       type: 'change'
@@ -129,8 +118,8 @@ type RelayListener = (event: EditorEmittedEvent) => void
  *   normalization runs synchronously within it, so a batched listener sees one
  *   fully-applied, normalized change per call, never a half-normalized
  *   intermediate. Note that two synchronous `editor.send` calls coalesce into
- *   one burst. To relay local `change` patches to another editor, batch them so
- *   that an edit and the correction it caused arrive in one `apply`.
+ *   one burst. To relay a burst in one `apply`, concatenate the `patches` of
+ *   its local `change` events in order.
  */
 export type EditorEventListenerOptions = {
   batch?: boolean

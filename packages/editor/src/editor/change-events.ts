@@ -1,4 +1,3 @@
-import type {Patch} from '@portabletext/patches'
 import {isPlaceholder} from '../engine/core/apply-context'
 import {
   getChangeEntryKind,
@@ -12,8 +11,7 @@ import type {ChangeEvent} from './relay'
 
 /**
  * The `change` events for a committed change: its remote operations first,
- * then its local operations in application order, each run of consecutive
- * edits or consecutive corrections as its own event.
+ * then one local event with its local operations in application order.
  */
 export function toChangeEvents(
   editor: PortableTextEditorEngine,
@@ -36,23 +34,19 @@ export function toChangeEvents(
     })
   }
 
-  for (const run of localRuns(change)) {
-    events.push(
-      run.kind === 'correction'
-        ? {
-            type: 'change',
-            origin: 'local',
-            operations: run.operations,
-            patches: run.patches,
-            correction: true,
-          }
-        : {
-            type: 'change',
-            origin: 'local',
-            operations: run.operations,
-            patches: run.patches,
-          },
-    )
+  const localEntries = entries.filter(
+    (entry): entry is ChangeEntry & {event: {operation: Operation}} =>
+      getChangeEntryKind(change, entry) === 'local' &&
+      isReported(change, entry),
+  )
+
+  if (localEntries.length > 0) {
+    events.push({
+      type: 'change',
+      origin: 'local',
+      operations: localEntries.map((entry) => entry.event.operation),
+      patches: localEntries.flatMap((entry) => entry.patches),
+    })
   }
 
   return events
@@ -82,45 +76,11 @@ function hasRemoteContentChanged(
   })
 }
 
-function localRuns(change: Change): Array<{
-  kind: 'edit' | 'correction'
-  operations: Array<Operation>
-  patches: Array<Patch>
-}> {
-  const runs: Array<{
-    kind: 'edit' | 'correction'
-    operations: Array<Operation>
-    patches: Array<Patch>
-  }> = []
-
-  for (const entry of change.entries) {
-    const kind = getChangeEntryKind(change, entry)
-
-    if (kind === 'remote' || !isReported(change, entry)) {
-      continue
-    }
-
-    const operation = entry.event.operation
-    const patches = entry.patches
-    const lastRun = runs.at(-1)
-
-    if (lastRun !== undefined && lastRun.kind === kind) {
-      lastRun.operations.push(operation)
-      lastRun.patches.push(...patches)
-      continue
-    }
-
-    runs.push({kind, operations: [operation], patches: [...patches]})
-  }
-
-  return runs
-}
-
 /**
  * Selection changes and the first load's remote operations are applied
  * like any other operation but are not changes to report, and neither is
  * a placeholder the first load inserts: the one in the snapshot is never
- * reported. A correction to the first load is.
+ * reported. A local fix to the first load is.
  */
 function isReported(
   change: Change,
@@ -135,7 +95,7 @@ function isReported(
   }
 
   return (
-    getChangeEntryKind(change, entry) !== 'remote' &&
+    getChangeEntryKind(change, entry) === 'local' &&
     !isPlaceholder(entry.event.context)
   )
 }

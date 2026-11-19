@@ -498,7 +498,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: Pasting text into a span emits the paste, then a `correction` merging the pasted span', async () => {
+  test('Scenario: Pasting text into a span emits one local change including the pasted span merge', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -551,20 +551,6 @@ describe('event.change', () => {
             node: pastedSpan,
             inverse: {type: 'unset', path: pastedSpanPath},
           },
-        ],
-        patches: [
-          {...set([], [{_key: blockKey}, 'markDefs']), origin: 'local'},
-          {
-            ...setIfMissing([], [{_key: blockKey}, 'children']),
-            origin: 'local',
-          },
-          {...insert([pastedSpan], 'after', spanPath), origin: 'local'},
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
           {type: 'insert.text', path: spanPath, offset: 3, text: 'bar'},
           {
             type: 'unset',
@@ -578,13 +564,18 @@ describe('event.change', () => {
           },
         ],
         patches: [
+          {...set([], [{_key: blockKey}, 'markDefs']), origin: 'local'},
+          {
+            ...setIfMissing([], [{_key: blockKey}, 'children']),
+            origin: 'local',
+          },
+          {...insert([pastedSpan], 'after', spanPath), origin: 'local'},
           {
             ...diffMatchPatch('foo', 'foobar', [...spanPath, 'text']),
             origin: 'local',
           },
           {...unset(pastedSpanPath), origin: 'local'},
         ],
-        correction: true,
       },
     ])
   })
@@ -669,7 +660,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: An edit whose normalization merges spans emits the edit, then a `correction` with the fix', async () => {
+  test('Scenario: An edit whose normalization merges spans emits one local change including the fix', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
@@ -720,18 +711,6 @@ describe('event.change', () => {
         origin: 'local',
         operations: [
           {type: 'insert.text', path: bazSpanPath, offset: 3, text: '!'},
-        ],
-        patches: [
-          {
-            ...diffMatchPatch('baz', 'baz!', [...bazSpanPath, 'text']),
-            origin: 'local',
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
           {type: 'insert.text', path: fooSpanPath, offset: 3, text: 'bar'},
           {
             type: 'unset',
@@ -751,17 +730,20 @@ describe('event.change', () => {
         ],
         patches: [
           {
+            ...diffMatchPatch('baz', 'baz!', [...bazSpanPath, 'text']),
+            origin: 'local',
+          },
+          {
             ...diffMatchPatch('foo', 'foobar', [...fooSpanPath, 'text']),
             origin: 'local',
           },
           {...unset(barSpanPath), origin: 'local'},
         ],
-        correction: true,
       },
     ])
   })
 
-  test('Scenario: A fix between two action groups of one Behavior event emits the edit, the correction and the next edit in application order', async () => {
+  test('Scenario: A fix between two action groups of one Behavior event emits one local change with both edits and the fix in application order', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const fooSpanKey = keyGenerator()
@@ -825,18 +807,6 @@ describe('event.change', () => {
         origin: 'local',
         operations: [
           {type: 'insert.text', path: bazSpanPath, offset: 3, text: '!'},
-        ],
-        patches: [
-          {
-            ...diffMatchPatch('baz', 'baz!', [...bazSpanPath, 'text']),
-            origin: 'local',
-          },
-        ],
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
           {type: 'insert.text', path: fooSpanPath, offset: 3, text: 'bar'},
           {
             type: 'unset',
@@ -853,23 +823,18 @@ describe('event.change', () => {
               },
             },
           },
+          {type: 'insert.text', path: bazSpanPath, offset: 4, text: '?'},
         ],
         patches: [
+          {
+            ...diffMatchPatch('baz', 'baz!', [...bazSpanPath, 'text']),
+            origin: 'local',
+          },
           {
             ...diffMatchPatch('foo', 'foobar', [...fooSpanPath, 'text']),
             origin: 'local',
           },
           {...unset(barSpanPath), origin: 'local'},
-        ],
-        correction: true,
-      },
-      {
-        type: 'change',
-        origin: 'local',
-        operations: [
-          {type: 'insert.text', path: bazSpanPath, offset: 4, text: '?'},
-        ],
-        patches: [
           {
             ...diffMatchPatch('baz!', 'baz!?', [...bazSpanPath, 'text']),
             origin: 'local',
@@ -915,7 +880,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: A remote patch that triggers a fix emits the remote `change`, then a local `correction` with the fix', async () => {
+  test('Scenario: A remote patch that triggers a fix emits the remote `change`, then a local change with the fix', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -975,7 +940,6 @@ describe('event.change', () => {
           },
         ],
         patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
-        correction: true,
       },
     ])
   })
@@ -1046,7 +1010,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: A first load with a keyless child emits only a `correction` with the minted key', async () => {
+  test('Scenario: A first load with a keyless child emits only a local change with the minted key', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const changes: Array<ChangeEvent> = []
@@ -1077,7 +1041,6 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
-        correction: true,
         operations: [
           {
             inverse: {
@@ -1155,7 +1118,6 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
-        correction: true,
         operations: [
           {
             inverse: {
@@ -1242,7 +1204,6 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
-        correction: true,
         operations: [
           {
             inverse: {
@@ -1439,7 +1400,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: Another writer unsetting the field emits the remote `change`, then a `correction` with the placeholder insert and no patches', async () => {
+  test('Scenario: Another writer unsetting the field emits the remote `change`, then a local change with the placeholder insert and no patches', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1475,7 +1436,6 @@ describe('event.change', () => {
           },
         ],
         patches: [],
-        correction: true,
       },
     ])
   })
@@ -1746,7 +1706,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: A first load the editor has to fix emits only a `correction` with the fix', async () => {
+  test('Scenario: A first load the editor has to fix emits only a local change with the fix', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const duplicateKey = keyGenerator()
@@ -1835,7 +1795,6 @@ describe('event.change', () => {
         type: 'operation',
       },
       {
-        correction: true,
         operations: [
           {
             inverse: {
@@ -1886,7 +1845,7 @@ describe('event.change', () => {
     ])
   })
 
-  test('Scenario: A container registered with `editor.registerNode` after load that fills existing content emits a `correction` with the fix', async () => {
+  test('Scenario: A container registered with `editor.registerNode` after load that fills existing content emits a local change with the fix', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1932,12 +1891,11 @@ describe('event.change', () => {
         patches: [
           {...set([block('k5', 'k6', '')], contentPath), origin: 'local'},
         ],
-        correction: true,
       },
     ])
   })
 
-  test('Scenario: A container registered with `editor.registerNode` after load that fills an empty array field emits a `correction` with the fix', async () => {
+  test('Scenario: A container registered with `editor.registerNode` after load that fills an empty array field emits a local change with the fix', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -1988,12 +1946,11 @@ describe('event.change', () => {
             origin: 'local',
           },
         ],
-        correction: true,
       },
     ])
   })
 
-  test('Scenario: Unregistering a node after load emits a `correction` with the fix the editor makes to existing content', async () => {
+  test('Scenario: Unregistering a node after load emits a local change with the fix the editor makes to existing content', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
@@ -2065,7 +2022,6 @@ describe('event.change', () => {
           },
           {...unset(secondSpanPath), origin: 'local'},
         ],
-        correction: true,
       },
     ])
   })
@@ -2153,7 +2109,7 @@ describe('event.change', () => {
     expect(editor.getSnapshot().context.value).toEqual(initialValue)
   })
 
-  test('Scenario: A remote patch sent before the first load finishes arrives after the correction of the load', async () => {
+  test('Scenario: A remote patch sent before the first load finishes arrives after the local fix of the load', async () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const duplicateKey = keyGenerator()
@@ -2259,7 +2215,6 @@ describe('event.change', () => {
         type: 'operation',
       },
       {
-        correction: true,
         operations: [
           {
             inverse: {
@@ -3017,7 +2972,7 @@ function getTextAt(
   return (span as {text?: string} | undefined)?.text ?? ''
 }
 
-test('Scenario: A `change` listener that edits on a remote `change` gets the correction of the remote `change` before its own edit', async () => {
+test('Scenario: A `change` listener that edits on a remote `change` gets the local fix of the remote `change` before its own edit', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()
@@ -3078,7 +3033,6 @@ test('Scenario: A `change` listener that edits on a remote `change` gets the cor
         },
       ],
       patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
-      correction: true,
     },
     {
       type: 'change',
@@ -3223,38 +3177,6 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
             ],
           },
         },
-      ],
-      patches: [
-        {
-          type: 'insert',
-          path: [
-            {
-              _key: 'k0',
-            },
-          ],
-          position: 'after',
-          items: [
-            {
-              _type: 'block',
-              _key: 'k4',
-              children: [
-                {
-                  _type: 'span',
-                  _key: 'k5',
-                  text: 'baz',
-                  marks: [],
-                },
-              ],
-            },
-          ],
-          origin: 'local',
-        },
-      ],
-    },
-    {
-      type: 'change',
-      origin: 'local',
-      operations: [
         {
           type: 'set',
           path: [
@@ -3296,6 +3218,30 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
       ],
       patches: [
         {
+          type: 'insert',
+          path: [
+            {
+              _key: 'k0',
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k4',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k5',
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          origin: 'local',
+        },
+        {
           type: 'set',
           path: [
             {
@@ -3318,7 +3264,6 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
           origin: 'local',
         },
       ],
-      correction: true,
     },
   ])
 
@@ -3400,7 +3345,7 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
   })
 })
 
-test('Scenario: A container registered by an `operation` listener during an `apply` is registered and its empty field gets a `correction`', async () => {
+test('Scenario: A container registered by an `operation` listener during an `apply` is registered and its empty field gets a local change', async () => {
   const calloutSchemaDefinition = defineSchema({
     decorators: [{name: 'strong'}],
     blockObjects: [
@@ -3554,7 +3499,6 @@ test('Scenario: A container registered by an `operation` listener during an `app
           origin: 'local',
         },
       ],
-      correction: true,
     },
   ])
   await vi.waitFor(() =>
@@ -3723,53 +3667,6 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
             ],
           },
         },
-      ],
-      patches: [
-        {
-          type: 'setIfMissing',
-          path: [
-            {
-              _key: 'k0',
-            },
-            'content',
-          ],
-          value: [],
-          origin: 'local',
-        },
-        {
-          type: 'insert',
-          path: [
-            {
-              _key: 'k0',
-            },
-            'content',
-            {
-              _key: 'k1',
-            },
-          ],
-          position: 'after',
-          items: [
-            {
-              _type: 'block',
-              _key: 'k5',
-              children: [
-                {
-                  _type: 'span',
-                  _key: 'k6',
-                  text: 'baz',
-                  marks: [],
-                },
-              ],
-            },
-          ],
-          origin: 'local',
-        },
-      ],
-    },
-    {
-      type: 'change',
-      origin: 'local',
-      operations: [
         {
           type: 'set',
           path: [
@@ -3827,6 +3724,45 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
       ],
       patches: [
         {
+          type: 'setIfMissing',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+          ],
+          value: [],
+          origin: 'local',
+        },
+        {
+          type: 'insert',
+          path: [
+            {
+              _key: 'k0',
+            },
+            'content',
+            {
+              _key: 'k1',
+            },
+          ],
+          position: 'after',
+          items: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [
+                {
+                  _type: 'span',
+                  _key: 'k6',
+                  text: 'baz',
+                  marks: [],
+                },
+              ],
+            },
+          ],
+          origin: 'local',
+        },
+        {
           type: 'set',
           path: [
             {
@@ -3857,7 +3793,6 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
           origin: 'local',
         },
       ],
-      correction: true,
     },
   ])
 
@@ -3965,7 +3900,7 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
   })
 })
 
-test('Scenario: An initial correction at root reaches a change host without legacy events', async () => {
+test('Scenario: An initial local fix at root reaches a change host without legacy events', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
 
@@ -4010,7 +3945,7 @@ test('Scenario: An initial correction at root reaches a change host without lega
   expect(legacyEvents).toEqual([])
 })
 
-test('Scenario: A read-only collaborator correction at root reaches a change host without legacy events', async () => {
+test('Scenario: A read-only collaborator local fix at root reaches a change host without legacy events', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()
@@ -4063,7 +3998,7 @@ test('Scenario: A read-only collaborator correction at root reaches a change hos
   expect(legacyEvents).toEqual([])
 })
 
-test('Scenario: An initial correction inside a callout reaches a change host without legacy events', async () => {
+test('Scenario: An initial local fix inside a callout reaches a change host without legacy events', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const calloutKey = keyGenerator()
@@ -4123,7 +4058,7 @@ test('Scenario: An initial correction inside a callout reaches a change host wit
   expect(legacyEvents).toEqual([])
 })
 
-test('Scenario: A read-only collaborator correction inside a callout reaches a change host without legacy events', async () => {
+test('Scenario: A read-only collaborator local fix inside a callout reaches a change host without legacy events', async () => {
   const keyGenerator = createTestKeyGenerator()
   const blockKey = keyGenerator()
   const spanKey = keyGenerator()

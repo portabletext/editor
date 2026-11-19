@@ -8027,7 +8027,6 @@ describe('normalization', () => {
         {
           type: 'change',
           origin: 'local',
-          correction: true,
           operations: [
             {
               type: 'set',
@@ -8260,7 +8259,6 @@ describe('normalization', () => {
         {
           type: 'change',
           origin: 'local',
-          correction: true,
           operations: [
             {
               type: 'set',
@@ -8536,7 +8534,6 @@ describe('normalization', () => {
         {
           type: 'change',
           origin: 'local',
-          correction: true,
           operations: [
             {
               type: 'set',
