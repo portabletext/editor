@@ -1,12 +1,12 @@
 {
   "name": "@portabletext/html",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Convert HTML to Portable Text with built-in support for Google Docs, Word, and Notion",
   "keywords": [
     "html",
     "portable-text"
   ],
-  "homepage": "https://portabletext.org",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

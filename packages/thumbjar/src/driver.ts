@@ -6,7 +6,7 @@
 // recorded in the tapped key's own `beforeinput` event.
 
 import {mkdirSync} from 'node:fs'
-import type {TestContext} from 'vitest'
+import {inject, type TestContext} from 'vitest'
 import {
   assertNoUnstoppedProcess,
   DeviceLost,
@@ -163,7 +163,7 @@ let previousRun: Promise<void> = Promise.resolve()
 /**
  * Open `url` in Chrome, which is stopped and started again for each test, picking the page by its exact
  * URL. Type `words` on Gboard and read back what the page holds. A driver fault restarts Chrome and types
- * everything again once. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
+ * everything again once. With `deviceProject({device: 'ios'})` it types in Mobile Safari through Appium, in one attempt. Artifacts go to `<outDir>/<keyboard>-<test name>*`.
  *
  * `context` is the context Vitest passes to the test that calls it. The timeout, the artifact names and
  * the `driverRuns` record all belong to that test, also in a test that runs alongside others. Only the
@@ -186,6 +186,8 @@ let previousRun: Promise<void> = Promise.resolve()
  *   expect(typed.text).toEqual('Kyou ')
  * })
  * ```
+ *
+ * @public
  */
 export async function typeOnDevice(
   context: TestContext,
@@ -195,6 +197,38 @@ export async function typeOnDevice(
     throw new Error(
       '`typeOnDevice` takes the context Vitest passes to the test first: `typeOnDevice(context, options)`',
     )
+  }
+  if (inject('thumbjarDevice') === 'ios') {
+    const {simulatorUnsupportedNote, typeOnSimulator} =
+      await import('./ios/typing.ts')
+    context.signal.throwIfAborted()
+    const note = simulatorUnsupportedNote(options)
+    if (note) {
+      context.skip(note)
+    }
+    const run: DriverRun = {
+      test: context.task.name,
+      fails: Boolean(context.task.fails),
+      state: 'driving',
+    }
+    driverRuns.push(run)
+    runTasks.set(run, context.task)
+    const pending = previousRun.then(async () => {
+      try {
+        context.signal.throwIfAborted()
+        const typed = await typeOnSimulator(context, options)
+        run.state = 'complete'
+        return typed
+      } catch (error) {
+        run.state = context.signal.aborted ? 'aborted' : 'faulted'
+        throw error
+      }
+    })
+    previousRun = pending.then(
+      () => {},
+      () => {},
+    )
+    return await pending
   }
   return await drive(
     PLAIN_INSPECTION,
@@ -264,6 +298,8 @@ export async function typeOnDevice(
  *   })
  * })
  * ```
+ *
+ * @public
  */
 export async function runOnDevice(
   context: TestContext,
@@ -272,6 +308,11 @@ export async function runOnDevice(
   if (!isTestContext(context)) {
     throw new Error(
       '`runOnDevice` takes the context Vitest passes to the test first: `runOnDevice(context, options)`',
+    )
+  }
+  if (inject('thumbjarDevice') === 'ios') {
+    context.skip(
+      'iOS simulator: runOnDevice is not supported; no steps were sent',
     )
   }
   if (context.signal.aborted) {
@@ -1066,7 +1107,7 @@ function isTestContext(value: unknown): value is TestContext {
   )
 }
 
-function slug(testName: string): string {
+export function slug(testName: string): string {
   return testName
     .replace(/^Scenario: /, '')
     .toLowerCase()

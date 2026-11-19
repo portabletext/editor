@@ -1,12 +1,12 @@
 {
   "name": "@portabletext/sanity-bridge",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Convert a Sanity Schema to a Portable Text Schema",
   "keywords": [
     "portable-text",
     "sanity"
   ],
-  "homepage": "https://www.portabletext.org/",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

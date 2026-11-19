@@ -284,7 +284,7 @@ describe(toTextspec.name, () => {
 
   test('empty span text', () => {
     const value: Array<PortableTextBlock> = [block({children: [span('')]})]
-    expect(toTextspec({schema, value, selection: null})).toBe('B: ')
+    expect(toTextspec({schema, value, selection: null})).toBe('B:')
   })
 
   test('table without containers is void', () => {

@@ -1,5 +1,15 @@
 # @portabletext/plugin-typography
 
+## 9.0.29
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`9142d3e`](https://github.com/portabletext/editor/commit/9142d3ea02aaeaddd87826c3db41d89adef64358) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-typography): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`0e6eca4`](https://github.com/portabletext/editor/commit/0e6eca43211286a259587ef91d7690bc85881574)]:
+  - @portabletext/plugin-input-rule@7.0.29
+
 ## 9.0.28
 
 ### Patch Changes

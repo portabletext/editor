@@ -1,5 +1,10 @@
 import {startVitest} from 'vitest/node'
 
+/**
+ * The file outcome, errors and test results from `runSuite`.
+ *
+ * @public
+ */
 export type SuiteResult = {
   file: string
   errors: string[]
@@ -11,6 +16,8 @@ export type SuiteResult = {
  * Run one test file in a Vitest of its own, without reporters, and collect the
  * file's errors, each test's state and the note of a test skipped with one.
  * `file` and `setupFiles` are relative to `root`.
+ *
+ * @public
  */
 export async function runSuite({
   root,

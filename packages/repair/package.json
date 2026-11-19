@@ -1,12 +1,12 @@
 {
   "name": "@portabletext/repair",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Structural corrections for Portable Text values",
   "keywords": [
     "portabletext",
     "repair"
   ],
-  "homepage": "https://www.portabletext.org/",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

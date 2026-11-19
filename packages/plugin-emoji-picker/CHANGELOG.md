@@ -1,5 +1,16 @@
 # @portabletext/plugin-emoji-picker
 
+## 8.0.29
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`5607986`](https://github.com/portabletext/editor/commit/5607986e7be8fc40a9dc101919261d0a493af722) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-emoji-picker): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`20bea8f`](https://github.com/portabletext/editor/commit/20bea8fc2afe8fe3a00405dc3bada443211034b7), [`0e6eca4`](https://github.com/portabletext/editor/commit/0e6eca43211286a259587ef91d7690bc85881574)]:
+  - @portabletext/keyboard-shortcuts@3.0.1
+  - @portabletext/plugin-input-rule@7.0.29
+
 ## 8.0.28
 
 ### Patch Changes

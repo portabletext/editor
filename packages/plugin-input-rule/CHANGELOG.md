@@ -1,5 +1,13 @@
 # @portabletext/plugin-input-rule
 
+## 7.0.29
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`0e6eca4`](https://github.com/portabletext/editor/commit/0e6eca43211286a259587ef91d7690bc85881574) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-input-rule): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 7.0.28
 
 ### Patch Changes

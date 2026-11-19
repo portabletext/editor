@@ -1,12 +1,12 @@
 {
   "name": "@portabletext/toolbar",
-  "version": "9.0.28",
+  "version": "9.0.29",
   "description": "Utilities for building a toolbar for the Portable Text Editor",
   "keywords": [
     "portabletext",
     "toolbar"
   ],
-  "homepage": "https://portabletext.org",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

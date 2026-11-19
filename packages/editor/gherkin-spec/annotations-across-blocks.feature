@@ -5,7 +5,7 @@ Feature: Annotations Across Blocks
     And a global keymap
 
   Scenario: Adding annotation across blocks
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -19,7 +19,7 @@ Feature: Annotations Across Blocks
       """
 
   Scenario: Adding annotation across blocks (backwards selection)
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "foo" is typed
     And "{Enter}" is pressed
@@ -140,7 +140,7 @@ Feature: Annotations Across Blocks
     When the editor is focused
     And the caret is put before "foo"
     And "{Enter}" is pressed
-    Then the editor state is "B: ;;B: [@link _key=\"l1\":foo]"
+    Then the editor state is "B:;;B: [@link _key=\"l1\":foo]"
 
   Scenario: Splitting block after annotation
     Given the editor state is "B: foo"
@@ -148,7 +148,7 @@ Feature: Annotations Across Blocks
     When the editor is focused
     And the caret is put after "foo"
     And "{Enter}" is pressed
-    Then the editor state is "B: [@link _key=\"l1\":foo];;B: "
+    Then the editor state is "B: [@link _key=\"l1\":foo];;B:"
 
   Scenario: Merging blocks with annotations
     Given the editor state is "B: foo"

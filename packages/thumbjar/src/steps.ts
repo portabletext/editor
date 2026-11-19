@@ -1,18 +1,26 @@
 // A case is data: a list of steps that `runOnDevice` drives on the keyboard, and one record per step of
 // what the page held after it.
 
-/** One event `recordInput` recorded in the page. */
+/**
+ * One event `recordInput` recorded in the page.
+ *
+ * @public
+ */
 export type PageEvent = {type: string; [key: string]: unknown}
 
 /**
  * Where the selection sat in the field, in grapheme clusters from the start of the field's text: its
  * `value` for a `textarea` or an `input` and its text content otherwise.
+ *
+ * @public
  */
 export type GraphemeSelection = {anchor: number; focus: number}
 
 /**
  * How a `compose` step ends: tap the conversion `candidate`, which fails the step when Gboard does not
  * offer it, tap Space, or leave the composition open for the next step.
+ *
+ * @public
  */
 export type Commit = {candidate: string} | 'space' | 'none'
 
@@ -27,17 +35,32 @@ export type Commit = {candidate: string} | 'space' | 'none'
  * on both layouts, and a case with any other character is unsupported, a capital included: whether a
  * key types a capital is Gboard's to decide, by auto-capitalisation or its Shift state, which
  * `runOnDevice` does not drive yet. `letters: 'k'` taps the K key whether Gboard shows it as `k` or `K`.
+ *
+ * @public
  */
 export type ComposeStep =
   | {type: 'compose'; letters: string; text?: never; commit?: Commit}
   | {type: 'compose'; text: string; letters?: never; commit?: Commit}
 
-/** Tap Enter. */
+/**
+ * Tap Enter.
+ *
+ * @public
+ */
 export type EnterStep = {type: 'enter'}
 
-/** Tap Backspace `times` times, once by default. */
+/**
+ * Tap Backspace `times` times, once by default.
+ *
+ * @public
+ */
 export type BackspaceStep = {type: 'backspace'; times?: number}
 
+/**
+ * A JSON value passed to a page action.
+ *
+ * @public
+ */
 export type Json =
   | null
   | boolean
@@ -46,14 +69,25 @@ export type Json =
   | Json[]
   | {[key: string]: Json}
 
-/** Call a handler registered by the page, then read the usual step boundary. */
+/**
+ * Call a handler registered by the page, then read the usual step boundary.
+ *
+ * @public
+ */
 export type PageStep = {type: 'page'; action: string; args?: Json}
 
+/**
+ * One keyboard operation or named page action.
+ *
+ * @public
+ */
 export type Step = ComposeStep | EnterStep | BackspaceStep | PageStep
 
 /**
  * `done` when the step ran, `failed` when it threw, which ends the attempt, and `skipped` for a step that
  * never ran because an earlier one failed.
+ *
+ * @public
  */
 export type StepStatus = 'done' | 'failed' | 'skipped'
 
@@ -70,6 +104,8 @@ export type StepStatus = 'done' | 'failed' | 'skipped'
  * it. The step's `events` are the events between its boundary before and its boundary after, so an
  * event the page recorded before the first boundary, while loading or focusing the field, is in no
  * record, and every other event is in exactly one.
+ *
+ * @public
  */
 export type StepRecord = {
   /** The optional page state at this boundary, absent when no state could be read. */
@@ -97,7 +133,11 @@ export type StepRecord = {
   keys: string[]
 }
 
-/** What `runOnDevice` opens and drives. */
+/**
+ * What `runOnDevice` opens and drives.
+ *
+ * @public
+ */
 export type RunOnDeviceOptions = {
   /**
    * The page to type into, served on the host. A `localhost` port is reversed to the device with
@@ -112,7 +152,11 @@ export type RunOnDeviceOptions = {
   steps: Step[]
 }
 
-/** One record per step and the page's state at the boundary after the last one. */
+/**
+ * One record per step and the page's state at the boundary after the last one.
+ *
+ * @public
+ */
 export type Run = {
   /** The optional page state at the last boundary. */
   state?: unknown

@@ -18,6 +18,11 @@ vi.mock('../device/budget.ts', async (importOriginal) => ({
   GLOBAL_SETUP_ADB_SECONDS: 0.5,
 }))
 
+const {resolvePeer} = vi.hoisted(() => ({resolvePeer: vi.fn()}))
+vi.mock('node:module', () => ({
+  createRequire: () => ({resolve: resolvePeer}),
+}))
+
 let directory: string
 const leftRunning: number[] = []
 
@@ -28,6 +33,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+  resolvePeer.mockReset()
   for (const pid of leftRunning.splice(0)) {
     try {
       process.kill(pid, 'SIGKILL')
@@ -37,6 +44,41 @@ afterEach(() => {
 })
 
 describe('the global setup', () => {
+  test('names the iOS prerequisites when webdriverio is missing', async () => {
+    resolvePeer.mockImplementation(() => {
+      throw new Error('module missing')
+    })
+    await expect(
+      globalSetup({
+        getProvidedContext: () => ({
+          thumbjarDevice: 'ios',
+          thumbjarPageUrl: 'http://localhost:8765/editor.html',
+          thumbjarPageHint: 'Serve it.',
+        }),
+      }),
+    ).rejects.toThrow(
+      'iOS needs the optional `webdriverio` peer dependency and an Appium XCUITest server on port 4723, see the thumbjar README.',
+    )
+  })
+
+  test('names the iOS prerequisites when Appium is unavailable', async () => {
+    resolvePeer.mockReturnValue('/webdriverio/index.js')
+    const request = vi.fn().mockRejectedValue(new Error('connection refused'))
+    vi.stubGlobal('fetch', request)
+    await expect(
+      globalSetup({
+        getProvidedContext: () => ({
+          thumbjarDevice: 'ios',
+          thumbjarPageUrl: 'http://localhost:8765/editor.html',
+          thumbjarPageHint: 'Serve it.',
+        }),
+      }),
+    ).rejects.toThrow(
+      'iOS needs the optional `webdriverio` peer dependency and an Appium XCUITest server on port 4723, see the thumbjar README.',
+    )
+    expect(request.mock.calls[0]?.[0]).toEqual('http://127.0.0.1:4723/status')
+  })
+
   test('fails within its bound when adb ignores SIGTERM', async () => {
     fakeAdb(
       `#!${process.execPath}\nprocess.on('SIGTERM', () => {}); setInterval(() => {}, 1000)`,

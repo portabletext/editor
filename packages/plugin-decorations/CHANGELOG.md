@@ -1,5 +1,13 @@
 # @portabletext/plugin-decorations
 
+## 1.0.16
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`732f001`](https://github.com/portabletext/editor/commit/732f001b7e3afa96222838661308747aef01c633) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-decorations): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 1.0.15
 
 ### Patch Changes

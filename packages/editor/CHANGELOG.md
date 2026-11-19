@@ -1,5 +1,19 @@
 # Changelog
 
+## 8.2.15
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`ecf31e8`](https://github.com/portabletext/editor/commit/ecf31e8a9914cab9bdf742723800c85fe01fd3fd) Thanks [@christianhg](https://github.com/christianhg)! - fix(editor): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`93ec1cc`](https://github.com/portabletext/editor/commit/93ec1cc4c71968611345b3ee3847e2ad30df463c), [`20bea8f`](https://github.com/portabletext/editor/commit/20bea8fc2afe8fe3a00405dc3bada443211034b7), [`20bfea0`](https://github.com/portabletext/editor/commit/20bfea025c45480b2046f7d6ae4ffc7c64945f03), [`93825ce`](https://github.com/portabletext/editor/commit/93825cee0216dd5d85a39ac20a0b9a7d68ef600e), [`4b15514`](https://github.com/portabletext/editor/commit/4b155140891f0b93ce56ae6b4f4eec0274d94dd7)]:
+  - @portabletext/html@2.0.3
+  - @portabletext/keyboard-shortcuts@3.0.1
+  - @portabletext/patches@3.0.6
+  - @portabletext/repair@1.0.4
+  - @portabletext/schema@3.1.1
+
 ## 8.2.14
 
 ### Patch Changes

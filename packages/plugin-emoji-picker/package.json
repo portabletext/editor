@@ -1,13 +1,13 @@
 {
   "name": "@portabletext/plugin-emoji-picker",
-  "version": "8.0.28",
+  "version": "8.0.29",
   "description": "Easily configure an Emoji Picker for the Portable Text Editor",
   "keywords": [
     "emoji-picker",
     "plugin",
     "portabletext"
   ],
-  "homepage": "https://www.portabletext.org/",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

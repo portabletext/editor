@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/plugin-list-index",
-  "version": "2.0.27",
+  "version": "2.0.28",
   "description": "Compute the list index of each list item for custom list rendering",
   "keywords": [
     "bullet-list",
@@ -12,7 +12,7 @@
     "plugin",
     "portabletext"
   ],
-  "homepage": "https://portabletext.org",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

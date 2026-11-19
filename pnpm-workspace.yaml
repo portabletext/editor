@@ -44,6 +44,7 @@ catalogs:
     tailwindcss: ^4.1.18
     typescript: ^7.0.2
     vite: ^8.3.8
+    webdriverio: ^9.27.1
     vitest: ^5.0.5
     vitest-browser-react: ^2.3.0
 
@@ -52,6 +53,7 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - "@portabletext/*"
   - "@sanity/*"
+  - "@textspec/*"
   - "@types/*"
   - "@typescript/*"
   - "@vercel/stega"

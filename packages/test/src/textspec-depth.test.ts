@@ -662,6 +662,125 @@ describe(toTextspec.name, () => {
 })
 
 describe(fromTextspec.name, () => {
+  test('places the caret in an empty final block', () => {
+    expect(
+      fromTextspec(
+        {schema, keyGenerator: createTestKeyGenerator(), containers},
+        'B:',
+      ),
+    ).toEqual({
+      blocks: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          style: 'normal',
+        },
+      ],
+      selection: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      },
+    })
+  })
+
+  test('places the caret after a nonempty block in an empty final block', () => {
+    expect(
+      fromTextspec(
+        {schema, keyGenerator: createTestKeyGenerator(), containers},
+        'B: foo;;B:',
+      ),
+    ).toEqual({
+      blocks: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          style: 'normal',
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          style: 'normal',
+        },
+      ],
+      selection: {
+        anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+        focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      },
+    })
+  })
+
+  test('places the caret in an empty final child of a container', () => {
+    expect(
+      fromTextspec(
+        {schema, keyGenerator: createTestKeyGenerator(), containers},
+        'CALLOUT:\n  B:',
+      ),
+    ).toEqual({
+      blocks: [
+        {
+          _type: 'callout',
+          _key: 'k2',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
+      selection: {
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k0'},
+            'children',
+            {_key: 'k1'},
+          ],
+          offset: 0,
+        },
+      },
+    })
+  })
+
+  test('places the caret after a block object in an empty final block', () => {
+    expect(
+      fromTextspec(
+        {schema, keyGenerator: createTestKeyGenerator(), containers},
+        '{IMAGE};;B:',
+      ),
+    ).toEqual({
+      blocks: [
+        {_type: 'image', _key: 'k0'},
+        {
+          _type: 'block',
+          _key: 'k1',
+          children: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+          style: 'normal',
+        },
+      ],
+      selection: {
+        anchor: {path: [{_key: 'k1'}, 'children', {_key: 'k2'}], offset: 0},
+        focus: {path: [{_key: 'k1'}, 'children', {_key: 'k2'}], offset: 0},
+      },
+    })
+  })
+
   test('gives a text block inside a container the named block member type', () => {
     expect(
       fromTextspec(

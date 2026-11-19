@@ -60,7 +60,7 @@ Feature: Decorators
     Then the editor state is "B: [em:foo ^bar| baz]"
 
   Scenario: Toggling bold as you write
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And the caret is put after ""
     And "foo" is typed
@@ -69,7 +69,7 @@ Feature: Decorators
     Then the editor state is "B: foo[strong:bar|]"
 
   Scenario: Toggling bold inside italic as you write
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And the caret is put after ""
     And "em" is toggled
@@ -90,7 +90,7 @@ Feature: Decorators
     Then the editor state is "B: foobar|"
 
   Scenario: Deleting marked text and writing again, marked
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And the caret is put after ""
     And "strong" is toggled
@@ -177,7 +177,7 @@ Feature: Decorators
     When the editor is focused
     And "{Enter}" is pressed 2 times
     And "bar" is typed
-    Then the editor state is "B: foo;;B: ;;B: bar|"
+    Then the editor state is "B: foo;;B:;;B: bar|"
     When "ooba" is selected
     And "strong" is toggled
     Then the editor state is
@@ -187,10 +187,10 @@ Feature: Decorators
       B: [strong:ba|]r
       """
     When "strong" is toggled
-    Then the editor state is "B: f^oo;;B: ;;B: ba|r"
+    Then the editor state is "B: f^oo;;B:;;B: ba|r"
 
   Scenario Outline: Toggling bold on a cross-selection with the first line empty
-    Given the editor state is "B: ;;B: foo"
+    Given the editor state is "B:;;B: foo"
     When everything is <selection>
     And "strong" is toggled
     Then the editor state is <toggled>
@@ -203,7 +203,7 @@ Feature: Decorators
       | selected backwards | "B: [strong:\|];;B: [strong:foo^]" | "B: \|;;B: foo^" |
 
   Scenario Outline: Toggling bold on a cross-selection with the last line empty
-    Given the editor state is "B: foo;;B: "
+    Given the editor state is "B: foo;;B:"
     When everything is <selection>
     And "strong" is toggled
     Then the editor state is <toggled>
@@ -244,7 +244,7 @@ Feature: Decorators
       | before " baz" | "B: foo [strong:bar];;B: \| baz" | before " baz" |
 
   Scenario: Toggling decorators in empty block
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "foo" is typed
     And "{Backspace}" is pressed 3 times
@@ -252,7 +252,7 @@ Feature: Decorators
     Then the editor state is "B: [strong:|]"
 
   Scenario: Splitting empty decorated block
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And the caret is put after ""
     And "strong" is toggled
@@ -276,7 +276,7 @@ Feature: Decorators
     Then the editor state is "B: [strong:[em:foo^bar|]]"
 
   Scenario: Toggling decorator with leading block object and trailing empty text
-    Given the editor state is "{IMAGE};;B: foo;;B: "
+    Given the editor state is "{IMAGE};;B: foo;;B:"
     When everything is selected
     And "strong" is toggled
     Then the editor state is
@@ -286,4 +286,4 @@ Feature: Decorators
       B: [strong:]
       """
     When "strong" is toggled
-    Then the editor state is "{IMAGE};;B: foo;;B: "
+    Then the editor state is "{IMAGE};;B: foo;;B:"

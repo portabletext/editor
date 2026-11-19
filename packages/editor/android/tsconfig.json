@@ -28,6 +28,7 @@
     "scripts/**/*.mjs",
     "tests/**/*.ts",
     "vite.config.ts",
-    "../vitest.android.config.ts"
+    "../vitest.android.config.ts",
+    "../vitest.ios.config.ts"
   ]
 }

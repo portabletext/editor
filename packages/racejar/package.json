@@ -1,6 +1,6 @@
 {
   "name": "racejar",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "A testing framework agnostic Gherkin driver",
   "keywords": [
     "cucumber",
@@ -9,7 +9,7 @@
     "test",
     "vitest"
   ],
-  "homepage": "https://www.sanity.io/",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },

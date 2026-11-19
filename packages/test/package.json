@@ -1,13 +1,13 @@
 {
   "name": "@portabletext/test",
-  "version": "2.1.3",
+  "version": "3.0.0",
   "description": "Testing utilities for the Portable Text Editor",
   "keywords": [
     "editor",
     "portable-text",
     "test"
   ],
-  "homepage": "https://www.portabletext.org/",
+  "homepage": "https://www.portabletext.org",
   "bugs": {
     "url": "https://github.com/portabletext/editor/issues"
   },
@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@portabletext/schema": "workspace:^",
-    "@textspec/notation": "^1.0.2"
+    "@textspec/notation": "^2.0.0"
   },
   "devDependencies": {
     "@portabletext/patches": "workspace:^",

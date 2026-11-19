@@ -70,7 +70,11 @@ type PageState = {
   [key: string]: unknown
 }
 
-/** One word to type on Gboard. */
+/**
+ * One word to type on Gboard.
+ *
+ * @public
+ */
 export type Word = {
   /** The keys to tap, one character each. */
   letters: string
@@ -78,7 +82,11 @@ export type Word = {
   candidate?: string
 }
 
-/** What `typeOnDevice` opens and types. */
+/**
+ * What `typeOnDevice` opens and types.
+ *
+ * @public
+ */
 export type TypeOnDeviceOptions = {
   /**
    * The page to type into, served on the host. A `localhost` port is reversed to the device with
@@ -93,7 +101,11 @@ export type TypeOnDeviceOptions = {
   words: Word[]
 }
 
-/** What the page held after typing, and how Gboard composed it. */
+/**
+ * What the page held after typing, and how Gboard composed it.
+ *
+ * @public
+ */
 export type Typed = {
   /** The optional page state after typing. */
   state?: unknown
@@ -101,6 +113,7 @@ export type Typed = {
   text: string | null
   /** How each word was committed: its candidate or `space`. */
   picked: string[]
+  /** The number of `compositionstart` events in the recorded event log. */
   compositionstart: number
   /** `compositionstart` events that arrived while an earlier composition was still open. */
   nested: number
@@ -1115,7 +1128,7 @@ async function evalOnField(expression: string): Promise<unknown> {
   throw new Error(FIELD_MISSING)
 }
 
-const FIELD_MISSING =
+export const FIELD_MISSING =
   'page never rendered its field: `window.__field()` found no `textarea`, text `input` or `[contenteditable]`'
 
 async function waitForChrome(device: Device): Promise<void> {

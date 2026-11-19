@@ -61,7 +61,7 @@ Feature: Emoji Picker
 
     Examples:
       | state      | position     | inserted text | final state  | keyword |
-      | "B: "      | after ""     | ":j"          | "B: :j\|"    | "j"     |
+      | "B:"       | after ""     | ":j"          | "B: :j\|"    | "j"     |
       | "B: :"     | after ":"    | "j"           | "B: :j\|"    | ""      |
       | "B: :j\|"  | after ":j"   | "o"           | "B: :jo\|"   | ""      |
       | "B: :jo\|" | after ":jo"  | ":"           | "B: :jo:\|"  | ""      |
@@ -170,10 +170,10 @@ Feature: Emoji Picker
 
     Examples:
       | state | inserted text | new text | final state |
-      | "B: " | ":"           | "joy:"   | "B: 😂\|"   |
-      | "B: " | ":j"          | "oy:"    | "B: 😂\|"   |
-      | "B: " | ":joy"        | ":"      | "B: 😂\|"   |
-      | "B: " | ":joy:"       | ":"      | "B: 😂:\|"  |
+      | "B:"  | ":"           | "joy:"   | "B: 😂\|"   |
+      | "B:"  | ":j"          | "oy:"    | "B: 😂\|"   |
+      | "B:"  | ":joy"        | ":"      | "B: 😂\|"   |
+      | "B:"  | ":joy:"       | ":"      | "B: 😂:\|"  |
 
   Scenario Outline: Matching inside decorator
     Given the editor state is <state>
@@ -270,9 +270,9 @@ Feature: Emoji Picker
 
     Examples:
       | state   | inserted text | button                   | new text |
-      | "B: "   | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      |
+      | "B:"    | ":j"          | "{ArrowLeft}{ArrowLeft}" | "f"      |
       | "B: fo" | ":j"          | "{ArrowLeft}{ArrowLeft}" | "o"      |
-      | "B: "   | ":j"          | "{ArrowLeft}{ArrowLeft}" | ":"      |
+      | "B:"    | ":j"          | "{ArrowLeft}{ArrowLeft}" | ":"      |
 
   Scenario Outline: Navigating away from the keyword
     Given the editor state is <state>
@@ -289,7 +289,7 @@ Feature: Emoji Picker
       | "B: foo bar baz" | after "foo" | ":j"    | "{ArrowLeft}{ArrowLeft}{ArrowLeft}" | "B: fo;;B: \|o:j bar baz" |
 
   Scenario: Dismissing by pressing Space
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When ":joy" is typed
     Then the keyword is "joy"
     When " " is typed
@@ -303,12 +303,12 @@ Feature: Emoji Picker
 
     Examples:
       | state | inserted text | keyword | matches        |
-      | "B: " | ":joy!"       | "joy!"  | "🕹️"          |
-      | "B: " | ":*"          | "*"     | "😘"           |
-      | "B: " | ":!"          | "!"     | "🕹️,❗️,⁉️,‼️" |
-      | "B: " | ":!!"         | "!!"    | "‼️"           |
-      | "B: " | "::)"         | ":)"    | "😊"           |
-      | "B: " | "::"          | ":"     | "😊"           |
+      | "B:"  | ":joy!"       | "joy!"  | "🕹️"          |
+      | "B:"  | ":*"          | "*"     | "😘"           |
+      | "B:"  | ":!"          | "!"     | "🕹️,❗️,⁉️,‼️" |
+      | "B:"  | ":!!"         | "!!"    | "‼️"           |
+      | "B:"  | "::)"         | ":)"    | "😊"           |
+      | "B:"  | "::"          | ":"     | "😊"           |
 
   Scenario: Narrowing keyword by deletion
     Given the editor state is "B: foo"
@@ -326,7 +326,7 @@ Feature: Emoji Picker
       | ":j👻y"       | "B: fo:jyo" | "jy"    |
 
   Scenario: Inserting character to form exact match triggers auto-complete
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And ":og:" is typed
     Then the editor state is "B: :og:"

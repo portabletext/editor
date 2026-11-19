@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.1.1
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`8245ba0`](https://github.com/portabletext/editor/commit/8245ba04a69b48e6672bda25d90b681374bd950a) Thanks [@christianhg](https://github.com/christianhg)! - fix(racejar): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+
 ## 4.1.0
 
 ### Minor Changes

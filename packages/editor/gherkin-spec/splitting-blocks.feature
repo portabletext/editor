@@ -12,7 +12,7 @@ Feature: Splitting Blocks
     When the editor is focused
     And the selection is "B: |foo"
     And "{Enter}" is pressed
-    Then the editor state is "B: ;;B _key=\"b1\": |foo"
+    Then the editor state is "B:;;B _key=\"b1\": |foo"
 
   Scenario: Splitting block in the middle
     Given the editor state is
@@ -43,7 +43,7 @@ Feature: Splitting Blocks
       """
 
   Scenario: Splitting empty block creates a new block below
-    Given the editor state is "B _key=\"b1\": foo;;B _key=\"b2\": "
+    Given the editor state is "B _key=\"b1\": foo;;B _key=\"b2\":"
     When the editor is focused
     And the selection is
       """
@@ -52,7 +52,7 @@ Feature: Splitting Blocks
       """
     And "{Enter}" is pressed
     And "baz" is typed
-    Then the editor state is "B _key=\"b1\": foo;;B _key=\"b2\": ;;B: baz|"
+    Then the editor state is "B _key=\"b1\": foo;;B _key=\"b2\":;;B: baz|"
 
   Scenario: Soft-splitting block at the beginning
     Given the editor state is
@@ -92,7 +92,7 @@ Feature: Splitting Blocks
     When the editor is focused
     And the selection is "B style=\"h1\": |foo"
     And "{Enter}" is pressed
-    Then the editor state is "B: ;;B style=\"h1\": |foo"
+    Then the editor state is "B:;;B style=\"h1\": |foo"
 
   Scenario: Splitting styled block in the middle
     Given the editor state is

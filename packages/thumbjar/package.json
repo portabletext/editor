@@ -2,7 +2,7 @@
   "name": "thumbjar",
   "version": "0.0.0",
   "private": true,
-  "description": "Types on real Gboard on an Android emulator and reports what a web page ended up with",
+  "description": "Test rich text editors against a real Android or iOS keyboard",
   "license": "MIT",
   "bin": {
     "thumbjar": "./bin/thumbjar.js"
@@ -65,10 +65,17 @@
     "@types/node": "catalog:tooling",
     "jsdom": "catalog:tooling",
     "typescript": "catalog:tooling",
-    "vitest": "catalog:tooling"
+    "vitest": "catalog:tooling",
+    "webdriverio": "catalog:tooling"
   },
   "peerDependencies": {
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "webdriverio": "^9.27.1"
+  },
+  "peerDependenciesMeta": {
+    "webdriverio": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=24"

@@ -1,5 +1,27 @@
 # @portabletext/test
 
+## 3.0.0
+
+### Major Changes
+
+- [#3717](https://github.com/portabletext/editor/pull/3717) [`4d5e694`](https://github.com/portabletext/editor/commit/4d5e6940724c9a1446ef4f2ed767c8e12df2f409) Thanks [@christianhg](https://github.com/christianhg)! - fix(test)!: use @textspec/notation 2.0.0
+  
+  `toTextspec` writes an empty text block as `B:` instead of `B: `, with or without attributes, for example `B style="h1":`, and at any depth inside containers. Expected strings that end a block with `B: ` (followed by the end of the string, a line break, `;;` or `}`) need the space removed. An empty block that holds the caret is still `B: |`.
+  
+  In multiline output, when a text block's line ends in a space, that last space is written as `\s`: `B: foo \nB: bar` becomes `B: foo\s\nB: bar`. Single-line output (`{singleLine: true}`) keeps a final content space as a plain space.
+  
+  `fromTextspec` and `selectionFromTextspec` accept both `B:` and `B: ` for an empty text block. A block type followed by `:` with no indented children, such as `CALLOUT:`, is now read as an empty text block instead of failing with "Container has no children".
+
+## 2.1.4
+
+### Patch Changes
+
+- [#3714](https://github.com/portabletext/editor/pull/3714) [`5251365`](https://github.com/portabletext/editor/commit/525136572614b11c3ad6e7a0e42ea8e83deb976b) Thanks [@christianhg](https://github.com/christianhg)! - fix(test): point the npm homepage to www.portabletext.org
+  
+  The package's npm page now links to https://www.portabletext.org.
+- Updated dependencies [[`4b15514`](https://github.com/portabletext/editor/commit/4b155140891f0b93ce56ae6b4f4eec0274d94dd7)]:
+  - @portabletext/schema@3.1.1
+
 ## 2.1.3
 
 ### Patch Changes

@@ -79,7 +79,7 @@ describe('the workflow', () => {
       {lang: 'en', file: 'tests/en.test.ts', runMinutes: 90},
       {lang: 'ja', file: 'tests/ja.enter.test.ts', runMinutes: 90},
       {lang: 'en', file: 'tests/en.enter.test.ts', runMinutes: 90},
-      {lang: 'en', file: 'tests/en.insert.break.test.ts', runMinutes: 120},
+      {lang: 'en', file: 'tests/en.insert.break.test.ts', runMinutes: 124},
       {lang: 'en', file: 'tests/en.insert.text.test.ts', runMinutes: 90},
     ])
   })

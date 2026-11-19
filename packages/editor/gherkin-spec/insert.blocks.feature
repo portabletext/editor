@@ -12,11 +12,11 @@ Feature: Insert Blocks
     Examples:
       | placement | selection | text                       |
       | "before"  | "none"    | "B: foo;;B: bar;;B: baz\|" |
-      | "before"  | "start"   | "B: baz\|foo;;B: bar;;B: " |
-      | "before"  | "end"     | "B: foo;;B: barbaz\|;;B: " |
+      | "before"  | "start"   | "B: baz\|foo;;B: bar;;B:"  |
+      | "before"  | "end"     | "B: foo;;B: barbaz\|;;B:"  |
       | "after"   | "none"    | "B: baz\|;;B: foo;;B: bar" |
-      | "after"   | "start"   | "B: ;;B: baz\|foo;;B: bar" |
-      | "after"   | "end"     | "B: ;;B: foo;;B: barbaz\|" |
+      | "after"   | "start"   | "B:;;B: baz\|foo;;B: bar"  |
+      | "after"   | "end"     | "B:;;B: foo;;B: barbaz\|"  |
       | "auto"    | "none"    | "B: foo;;B: bar"           |
       | "auto"    | "start"   | "B: baz\|foo;;B: bar"      |
 
@@ -25,10 +25,10 @@ Feature: Insert Blocks
     Then the editor state is <text>
 
     Examples:
-      | placement | text              |
-      | "before"  | "^{IMAGE}\|;;B: " |
-      | "after"   | "B: ;;^{IMAGE}\|" |
-      | "auto"    | "^{IMAGE}\|"      |
+      | placement | text             |
+      | "before"  | "^{IMAGE}\|;;B:" |
+      | "after"   | "B:;;^{IMAGE}\|" |
+      | "auto"    | "^{IMAGE}\|"     |
 
   Scenario Outline: Inserting blocks on a block object
     When "{image}" is inserted at "auto" and selected at the "end"
@@ -130,8 +130,8 @@ Feature: Insert Blocks
 
     Examples:
       | text                   | selection                 | select-position | new text                          |
-      | "B: "                  | the caret is put after "" | "start"         | "B: \|foo [@link:bar] baz"        |
-      | "B: "                  | the caret is put after "" | "end"           | "B: foo [@link:bar] baz\|"        |
+      | "B:"                   | the caret is put after "" | "start"         | "B: \|foo [@link:bar] baz"        |
+      | "B:"                   | the caret is put after "" | "end"           | "B: foo [@link:bar] baz\|"        |
       | "B: existing"          | "is" is selected          | "start"         | "B: ex\|foo [@link:bar] bazting"  |
       | "B: existing"          | "is" is selected          | "end"           | "B: exfoo [@link:bar] baz\|ting"  |
       | "B: existing;;B: text" | "ingte" is selected       | "start"         | "B: exist\|foo [@link:bar] bazxt" |

@@ -6,7 +6,7 @@ Feature: Inline Objects
     And a global keymap
 
   Scenario: Writing after inserting an inline object
-    Given the editor state is "B: "
+    Given the editor state is "B:"
     When the editor is focused
     And "foo" is typed
     And a "stock-ticker" is inserted

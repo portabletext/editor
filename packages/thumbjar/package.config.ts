@@ -2,9 +2,12 @@ import {defineConfig} from '@sanity/pkg-utils'
 
 export default defineConfig({
   tsconfig: 'tsconfig.dist.json',
-  // Private, so no release tags: nothing renders its API docs.
-  tsdoc: false,
   bundles: [
+    {
+      source: './src/prepare/warmup.ts',
+      import: './dist/prepare/warmup.js',
+      runtime: 'node',
+    },
     {source: './src/guard.ts', import: './dist/guard.js', runtime: 'node'},
     {
       source: './src/prepare/capture.ts',

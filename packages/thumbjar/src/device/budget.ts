@@ -114,8 +114,10 @@ export const VITEST_STARTUP_SECONDS = 60
 
 /**
  * The longest a run of one device test file of `testCount` tests takes, the timeout to run it under.
- * Cutting the run off earlier would stop Vitest before its last test times out and before `afterAll` in
- * `src/vitest/setup.ts` can name a driver fault.
+ * Cutting the run off earlier would stop Vitest before its last test times out and before thumbjar's setup
+ * file can name a driver fault.
+ *
+ * @public
  */
 export function deviceTestFileSeconds(testCount: number): number {
   return (
@@ -161,12 +163,19 @@ export const DICTIONARY_CHECK_KILL_SECONDS = 10
 /** How long the prep gets to stop once it ran past its deadline. */
 export const PREP_KILL_SECONDS = 10
 
+/** The English prep's warm-up, up to three attempts at typing `hello` and Space into the page, `warmup.js`. */
+export const ENGLISH_WARMUP_SECONDS = 180
+/** How long the warm-up gets to stop once it ran past its deadline. */
+export const ENGLISH_WARMUP_KILL_SECONDS = 10
+
 /**
  * The longest `thumbjar prepare` runs for `keyboard`, its kill-after included, so the time a caller's prep
- * stage needs. English runs its stages and the Play Store block. Japanese adds the boot capture before its
- * deadline and the dictionary wait and check, and the wait ends `DICTIONARY_LOAD_SECONDS` after the
- * emulator came online, which the stages before it already cover, or with one last read when they ran past
- * it.
+ * stage needs. English adds the warm-up to its stages and the Play Store block. Japanese adds the boot
+ * capture before its deadline and the dictionary wait and check, and the wait ends
+ * `DICTIONARY_LOAD_SECONDS` after the emulator came online, which the stages before it already cover, or
+ * with one last read when they ran past it.
+ *
+ * @public
  */
 export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
   const english =
@@ -175,7 +184,7 @@ export function prepWorstSeconds(keyboard: 'ja' | 'en'): number {
     PREP_STAGES_SECONDS +
     PREP_KILL_SECONDS
   if (keyboard === 'en') {
-    return english
+    return english + ENGLISH_WARMUP_SECONDS + ENGLISH_WARMUP_KILL_SECONDS
   }
   return (
     english -
@@ -229,15 +238,22 @@ export const U2_JAR_ATTEMPTS = 3
 /** The wait before the next download. The host's 504s come several in a row, so a retry waits past them. */
 export const U2_JAR_RETRY_SECONDS = 15
 
-/** The longest `thumbjar fetch-u2-jar` runs: every download times out, with the waits between them. */
+/**
+ * The longest `thumbjar fetch-u2-jar` runs: every download times out, with the waits between them.
+ *
+ * @public
+ */
 export const FETCH_U2_JAR_WORST_SECONDS =
   U2_JAR_ATTEMPTS * U2_JAR_ATTEMPT_SECONDS +
   (U2_JAR_ATTEMPTS - 1) * U2_JAR_RETRY_SECONDS
 
 /**
  * The number of tests in a device test file, from its `thumbjar-test-count` declaration
- * or its top-level `test(` and `test.fails(` calls. A unit test checks the count
- * against the tests Vitest collects from each file.
+ * or its `test(` and `test.fails(` calls at the start of a line. Declare
+ * `thumbjar-test-count` when those calls do not match the tests Vitest collects,
+ * for example when tests are generated in a loop.
+ *
+ * @public
  */
 export function countDeviceTests(source: string): number {
   const declared = /^\/\/ thumbjar-test-count: ([1-9]\d*)$/m.exec(source)
@@ -249,7 +265,9 @@ export function countDeviceTests(source: string): number {
 
 /**
  * How long the emulator runner action waits for the emulator to come online before it runs the script,
- * the workflow's `emulator-boot-timeout`.
+ * the CI step's `emulator-boot-timeout`.
+ *
+ * @internal
  */
 export const EMULATOR_BOOT_SECONDS = 360
 
@@ -260,11 +278,13 @@ export const EMULATOR_BOOT_SECONDS = 360
 export const RUNNER_SETUP_SECONDS = 30
 
 /**
- * The longest one run step of the workflow takes when every stage of `thumbjar run` hangs to its bound:
+ * The longest the CI step takes when every stage of `thumbjar run` hangs to its bound:
  * the runner setup, the boot wait, the cap read, the prep with its kill-after, the test file with its kill-after, the
  * device check and the final diagnostics, each with the time it gets to stop, plus one kill grace for each of
  * the eight `execute` calls, an upper bound because the diagnostics share one deadline. A step cap below this lets
- * GitHub cut the step off before thumbjar can report why it ended.
+ * the CI system cut the step off before thumbjar can report why it ended.
+ *
+ * @internal
  */
 export function runStepWorstSeconds(
   keyboard: 'ja' | 'en',

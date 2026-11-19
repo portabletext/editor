@@ -49,5 +49,5 @@
       "origin": "local"
     }
   ],
-  "result": "B: foo \nB: |bar baz"
+  "result": "B: foo\\s\nB: |bar baz"
 }

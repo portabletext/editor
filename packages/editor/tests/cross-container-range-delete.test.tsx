@@ -1174,7 +1174,7 @@ describe('cross-container range delete: deep structures', () => {
         '      CALLOUT:',
         '        B: f|',
         '    CELL:',
-        '      B: ',
+        '      B:',
         'B: x',
       ].join('\n'),
     )
@@ -1336,7 +1336,7 @@ describe('cross-container range delete: deep structures', () => {
         'TABLE:',
         '  ROW:',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
         '      CALLOUT:',
         '        B: z',
@@ -1482,7 +1482,7 @@ describe('cross-container range delete: deep structures', () => {
         '    CELL:',
         '      B: f|',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
         '      B: z',
       ].join('\n'),
@@ -1665,9 +1665,9 @@ describe('cross-container range delete: deep structures', () => {
         '      B: f|',
         '  ROW:',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '  ROW:',
         '    CELL:',
         '      B: z',
@@ -1978,9 +1978,9 @@ describe('cross-container range delete: deep structures', () => {
         '    CELL:',
         '      B: |',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
-        '      B: ',
+        '      B:',
       ].join('\n'),
     )
   })
@@ -2169,16 +2169,16 @@ describe('cross-container range delete: deep structures', () => {
         '    CELL:',
         '      B: |',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '  ROW:',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
-        '      B: ',
+        '      B:',
         '    CELL:',
-        '      B: ',
+        '      B:',
       ].join('\n'),
     )
   })
@@ -2233,7 +2233,7 @@ describe('cross-container range delete: deep structures', () => {
     })
 
     expect(toTextspec(editor.getSnapshot().context)).toEqual(
-      ['CALLOUT:', '  B: '].join('\n'),
+      ['CALLOUT:', '  B:'].join('\n'),
     )
   })
 
