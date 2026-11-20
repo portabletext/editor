@@ -72,6 +72,9 @@ jobs:
             sleep 2
           done
           test "$ready" = true
+      - name: Warm Safari before language tests
+        timeout-minutes: 6
+        run: node .github/scripts/thumbjar-ios-warm.mjs
       - name: Run language tests
         working-directory: packages/editor
         run: |
