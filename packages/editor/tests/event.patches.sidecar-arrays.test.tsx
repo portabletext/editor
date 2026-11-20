@@ -6,7 +6,7 @@ import {createTestEditor} from '../src/test/vitest'
 
 /**
  * Remote patches produced by diffing tools (e.g. `@sanity/diff-patch` in
- * `@portabletext/plugin-sdk-value`, or Studio's remote patch stream) can
+ * `@portabletext/plugin-sdk-value`, or Sanity's remote patch stream) can
  * address elements of sidecar arrays: `span.marks` (array of strings) and
  * `block.markDefs`. These paths end in a keyed or numeric segment just like
  * structural node paths, but the target array is not the owning node's
