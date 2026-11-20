@@ -3,7 +3,8 @@
   "version": "9.0.29",
   "description": "Utilities for building a toolbar for the Portable Text Editor",
   "keywords": [
-    "portabletext",
+    "portable-text",
+    "portable-text-editor",
     "toolbar"
   ],
   "homepage": "https://www.portabletext.org",
