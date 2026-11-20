@@ -11,7 +11,7 @@ import {isElementDecorationsEqual} from '../../dom/utils/range-list'
 import type {Path} from '../../interfaces/path'
 import type {DecoratedRange} from '../../interfaces/text'
 import {pathEquals} from '../../path/path-equals'
-import useChildren from '../hooks/use-children'
+import useChildren from '../hooks/use-children-impl'
 import {useDecorations} from '../hooks/use-decorations'
 import {useEngineStatic} from '../hooks/use-engine-static'
 import getDirection from '../utils/direction'
@@ -39,7 +39,7 @@ const Element = (props: {
   renderElement: (props: RenderElementProps) => JSX.Element
   renderText?: (props: RenderTextProps) => JSX.Element
   renderLeaf?: (props: RenderLeafProps) => JSX.Element
-}) => {
+}): JSX.Element => {
   const {
     decorations: parentDecorations,
     element,
@@ -52,14 +52,17 @@ const Element = (props: {
   const editor = useEngineStatic()
   const isInline = isInlinePath(editor.snapshot, props.path)
   const decorations = useDecorations(element, props.path, parentDecorations)
-  const children = useChildren({
-    decorations,
-    node: element,
-    path: props.path,
-    renderElement,
-    renderLeaf,
-    renderText,
-  })
+  const children = useChildren(
+    {
+      decorations,
+      node: element,
+      path: props.path,
+      renderElement,
+      renderLeaf,
+      renderText,
+    },
+    MemoizedElement,
+  )
 
   // Attributes that the developer must mix into the element in their
   // custom node renderer component.
