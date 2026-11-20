@@ -26,7 +26,6 @@ import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
 import {NodePlugin} from '../../plugins/plugin.node'
 import {resolveContainers} from '../../schema/resolve-containers'
-import {createTestEditor, createTestEditors} from '../../test/vitest'
 import {
   parseBlocks,
   parseInlineObject,
@@ -36,6 +35,7 @@ import {reverseSelection} from '../../utils/util.reverse-selection'
 import type {Parameter} from '../gherkin-parameter-types'
 import {gherkinSchemaDefinition} from '../gherkin-schema'
 import type {Context} from './step-context'
+import {createTestEditor, createTestEditors} from './test-editor'
 import {syncDOMCaret} from './test-editor'
 
 export {gherkinSchemaDefinition}

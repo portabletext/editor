@@ -1,5 +1,6 @@
 import type {RefObject} from 'react'
-import {isDOMElement, isTrackedMutation} from '../../../dom/utils/dom'
+import {isDOMElement} from '../../../dom/utils/dom'
+import {isTrackedMutation} from '../../../dom/utils/is-tracked-mutation'
 import type {Editor} from '../../../interfaces/editor'
 
 export type RestoreDOMManager = {
