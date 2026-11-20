@@ -198,13 +198,12 @@ The compact form differs from the full conversion in two ways:
 
 ### Keep hold of the original Sanity types
 
-The expanded Portable Text schema is what the editor runs on, but
-Studio-side code usually wants the original Sanity types back: they
-carry everything the expansion drops, validation rules, previews,
-custom components. `createPortableTextMemberSchemaTypes` buckets the
-members of a Portable Text array into their Sanity types, so render
-callbacks and inputs can join back by name and work with the real
-thing.
+The expanded Portable Text schema is what the editor runs on, but code running
+in Sanity Studio usually wants the original Sanity types back: they carry
+everything the expansion drops, including validation rules, previews, and
+custom components. `createPortableTextMemberSchemaTypes` buckets the members of
+a Portable Text array into their Sanity types, so render callbacks and inputs
+can join back by name and work with the real thing.
 
 ```ts nocheck
 import {createPortableTextMemberSchemaTypes} from '@portabletext/sanity-bridge'
