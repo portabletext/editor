@@ -6,8 +6,8 @@ import {serializePath, serializePathSegment} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/resolve-containers'
 import {isNonArrayObject} from '../utils/is-non-array-object'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import {getNodeChildren} from './get-children'
 import {getContainerChildren} from './get-container-children'
+import {getNodeChildren} from './get-node-children'
 import type {TraversalSnapshot} from './traversal-snapshot'
 
 /**
