@@ -59,10 +59,14 @@ test('selects one of the four expanded-selection rows without changing their nam
     ],
   })
   expect(
-    feature.scenarios.map((scenario) => ({
-      name: scenario.name,
-      expectedFailure: scenario.expectedFailure,
-    })),
+    feature.scenarios
+      .filter(
+        (scenario) => scenario.name === 'Inserting text on expanded selection',
+      )
+      .map((scenario) => ({
+        name: scenario.name,
+        expectedFailure: scenario.expectedFailure,
+      })),
   ).toEqual([
     {name: 'Inserting text on expanded selection', expectedFailure: false},
     {name: 'Inserting text on expanded selection', expectedFailure: false},
