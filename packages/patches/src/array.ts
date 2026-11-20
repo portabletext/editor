@@ -1,4 +1,3 @@
-import applyPatch from './applyPatch'
 import insert from './arrayInsert'
 import type {JSONValue, KeyedSegment, Patch, PathSegment} from './types'
 
@@ -30,6 +29,7 @@ function findTargetIndex(array: any[], pathSegment: PathSegment | undefined) {
 export function applyPatchToArray(
   value: Array<JSONValue>,
   patch: Patch,
+  applyPatch: (value: unknown, patch: Patch) => unknown,
 ): Array<JSONValue> | undefined {
   const nextValue = value.slice() // make a copy for internal mutation
 

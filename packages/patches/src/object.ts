@@ -1,9 +1,9 @@
-import applyPatch from './applyPatch'
 import type {JSONValue, Patch} from './types'
 
 export function applyPatchToObject(
   value: {[key: string]: JSONValue},
   patch: Patch,
+  applyPatch: (value: unknown, patch: Patch) => unknown,
 ): {[key: string]: JSONValue} | undefined {
   const nextValue = {...value}
 
