@@ -1,0 +1,134 @@
+{
+  "before": [
+    {
+      "_key": "k0",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "marks": [],
+          "text": "foo"
+        }
+      ]
+    },
+    {
+      "_key": "k3",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k4",
+          "_type": "span",
+          "marks": [],
+          "text": "bar"
+        }
+      ]
+    },
+    {
+      "_key": "k5",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k6",
+          "_type": "span",
+          "marks": [],
+          "text": "baz"
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "block",
+          "_key": "k9",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k10",
+              "text": "baz",
+              "marks": []
+            }
+          ]
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k9"
+        },
+        "markDefs"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k9"
+        },
+        "style"
+      ],
+      "value": "normal",
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "styles": [
+      {
+        "name": "normal"
+      },
+      {
+        "name": "h1"
+      }
+    ],
+    "lists": [
+      {
+        "name": "bullet"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "image"
+      },
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "image"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
