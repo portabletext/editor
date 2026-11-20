@@ -1,10 +1,10 @@
 import {expect, type Locator, type Page} from '@playwright/test'
 
 /**
- * Selects `word`, opens Studio's inline "Add comment" popover
- * (`inline-comment-button`, the floating button `CommentsPortableTextInput`
- * shows over a text selection), types `message` into the popover's own
- * one-line editor, and submits.
+ * Selects `word`, opens Sanity Studio's inline "Add comment" popover
+ * (`inline-comment-button`, the floating button
+ * `CommentsPortableTextInput` shows over a text selection), types
+ * `message` into the popover's own one-line editor, and submits.
  *
  * Scoped to `InlineCommentInputPopover`'s own `data-ui` root: the "Create a
  * new comment" composer docked in the comments inspector renders a second,
@@ -30,11 +30,11 @@ export async function addInlineComment(
 }
 
 /**
- * The range decoration Studio renders around commented text once a comment
- * is added, scoped to the editor body: the comments inspector panel quotes
- * the same commented text in a `blockquote` styled with the same
- * `data-inline-comment-state="added"` attribute, so an unscoped locator
- * matches that quote too.
+ * The range decoration Sanity Studio renders around commented text once
+ * a comment is added, scoped to the editor body: the comments inspector
+ * panel quotes the same commented text in a `blockquote` styled with
+ * the same `data-inline-comment-state="added"` attribute, so an
+ * unscoped locator matches that quote too.
  *
  * The decoration's end boundary also wraps the zero-width text node the
  * editor renders at the start of the next span, so this excludes any match

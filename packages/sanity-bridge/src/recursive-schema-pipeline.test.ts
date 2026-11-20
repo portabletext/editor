@@ -13,14 +13,14 @@ import {expect, test} from 'vitest'
 import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text-schema'
 
 /**
- * Regression test for the field-reported Studio freeze/OOM on doc-open
- * with a large mutually recursive block schema: ~25 members where several
- * container types recurse back into the shared Portable Text array.
+ * Regression test for the field-reported Sanity freeze/OOM on document open
+ * with a large mutually recursive block schema: ~25 members where
+ * several container types recurse back into the shared Portable Text array.
  *
  * The conversion builds shared `OfDefinition` objects, so it is fast
  * regardless of the emitted shape; the failure lived in the output's
  * TREE size, which everything downstream walks. This test runs the
- * pipeline a studio runs, convert from the document field's type, then
+ * pipeline Sanity runs, convert from the document field's type, then
  * `compileSchema`, and bounds the tree size. Before root block objects
  * referenced by name at every position, this shape exhausted the heap.
  */

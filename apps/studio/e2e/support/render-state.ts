@@ -13,9 +13,9 @@ export async function openDocument(page: Page, id: string) {
 
 /**
  * A structurally broken top-level array (a missing or duplicate `_key`) trips
- * Studio's own array-input guard before the PTE engine mounts, so a repair
- * spec needs to tell "PTE mounted" apart from "Studio is showing a guard
- * screen instead" rather than assume the editor always renders.
+ * Sanity Studio's own array-input guard before the PTE engine mounts, so a
+ * repair spec needs to tell "PTE mounted" apart from "Sanity Studio is showing
+ * a guard screen instead" rather than assume the editor always renders.
  */
 export async function waitForRenderState(
   page: Page,

@@ -102,7 +102,7 @@ async function countSelectorInvocations(
 // stays bounded in this harness because the editor's selection deduplication
 // (apply-operation.ts transformSelection ref-stability) keeps the upstream
 // snapshot stable across re-renders once the initial selection settles. The
-// same selector under a noisier consumer (toolbar, popover) loops in Studio.
+// same selector under a noisier consumer (toolbar, popover) loops in Sanity.
 const UNSTABLE_SELECTORS = [
   {name: 'getActiveAnnotations', selector: getActiveAnnotations},
   {name: 'getSelectedValue', selector: getSelectedValue},
