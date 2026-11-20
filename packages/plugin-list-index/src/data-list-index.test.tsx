@@ -17,7 +17,7 @@ import {ListIndexProvider, useListIndex} from './plugin.list-index'
  * Pins the consumer story end-to-end: a `defineTextBlock` render in the new
  * pipeline uses `useListIndex` to reproduce the `data-list-index` attribute
  * the engine's default text-block render emits in the legacy pipeline. This
- * is the exact shape Studio's catch-all text-block render uses.
+ * is the exact shape Sanity's catch-all text-block render uses.
  */
 describe('data-list-index in the new render pipeline', () => {
   test('Scenario: A registered text-block render reproduces `data-list-index`', async () => {
