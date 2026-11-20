@@ -6,7 +6,8 @@
     "decorations",
     "highlights",
     "plugin",
-    "portabletext",
+    "portable-text",
+    "portable-text-editor",
     "presence",
     "range"
   ],
