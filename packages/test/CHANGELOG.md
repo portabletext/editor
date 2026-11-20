@@ -1,5 +1,15 @@
 # @portabletext/test
 
+## 3.0.1
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`0de4518`](https://github.com/portabletext/editor/commit/0de4518c08ad901cb4a2028f78acd9c0bd84d303) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text-editor` in the npm keywords of @portabletext/test
+  
+  npm search and keyword filters now find it under `portable-text-editor`.
+- Updated dependencies [[`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a)]:
+  - @portabletext/schema@3.1.2
+
 ## 3.0.0
 
 ### Major Changes

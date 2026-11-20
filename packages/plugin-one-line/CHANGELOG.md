@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.0.29
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`f6de2fb`](https://github.com/portabletext/editor/commit/f6de2fb3a0b12db7ed1e1592fb94a5bd1f65d5ca) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-one-line
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+
 ## 8.0.28
 
 ### Patch Changes

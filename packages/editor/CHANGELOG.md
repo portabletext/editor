@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.2.16
+
+### Patch Changes
+
+- Updated dependencies [[`6d007ac`](https://github.com/portabletext/editor/commit/6d007acbe2429d462f2f031b4e1b6879fd266f48), [`f5ac5a0`](https://github.com/portabletext/editor/commit/f5ac5a0cc8ad6ce18f54147a90e7be898868aa5e), [`99979cf`](https://github.com/portabletext/editor/commit/99979cf5dc3c124ae210625363849418cce0ad8e), [`0e4c76b`](https://github.com/portabletext/editor/commit/0e4c76bd8fb9065755b6cf2d641134642afd436c), [`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a)]:
+  - @portabletext/html@2.0.4
+  - @portabletext/keyboard-shortcuts@3.0.2
+  - @portabletext/patches@3.0.7
+  - @portabletext/repair@1.0.5
+  - @portabletext/schema@3.1.2
+
 ## 8.2.15
 
 ### Patch Changes

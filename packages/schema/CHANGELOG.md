@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.1.2
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` in the npm keywords of @portabletext/schema
+  
+  npm search and keyword filters now find it under `portable-text`. It no longer lists `portabletext`.
+
 ## 3.1.1
 
 ### Patch Changes
