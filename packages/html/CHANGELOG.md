@@ -1,5 +1,15 @@
 # @portabletext/html
 
+## 2.0.4
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`6d007ac`](https://github.com/portabletext/editor/commit/6d007acbe2429d462f2f031b4e1b6879fd266f48) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `google-docs`, `word` and `notion` in the npm keywords of @portabletext/html
+  
+  npm search and keyword filters now find it under `google-docs`, `word` and `notion`.
+- Updated dependencies [[`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a)]:
+  - @portabletext/schema@3.1.2
+
 ## 2.0.3
 
 ### Patch Changes

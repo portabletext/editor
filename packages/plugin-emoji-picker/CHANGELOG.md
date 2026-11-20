@@ -1,5 +1,16 @@
 # @portabletext/plugin-emoji-picker
 
+## 8.0.30
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`b665677`](https://github.com/portabletext/editor/commit/b6656777bf2121e7006d2e5eba81d5ec061b6859) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-emoji-picker
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+- Updated dependencies [[`f5ac5a0`](https://github.com/portabletext/editor/commit/f5ac5a0cc8ad6ce18f54147a90e7be898868aa5e), [`45ad6ee`](https://github.com/portabletext/editor/commit/45ad6ee71dc254de4a090acea6de4283c9176103)]:
+  - @portabletext/keyboard-shortcuts@3.0.2
+  - @portabletext/plugin-input-rule@7.0.30
+
 ## 8.0.29
 
 ### Patch Changes

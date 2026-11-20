@@ -1,5 +1,13 @@
 # @portabletext/plugin-list-index
 
+## 2.0.29
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`fc5ec8a`](https://github.com/portabletext/editor/commit/fc5ec8a37eff2c4dc69c1f912e94538ed2eee568) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-list-index
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+
 ## 2.0.28
 
 ### Patch Changes
