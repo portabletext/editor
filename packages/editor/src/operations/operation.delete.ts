@@ -44,6 +44,9 @@ export const deleteOperationImplementation: OperationImplementation<
     : operation.editor.snapshot.context.selection
 
   if (!at) {
+    if (operation.at) {
+      return
+    }
     throw new Error('Unable to delete without a selection')
   }
 

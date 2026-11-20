@@ -26,6 +26,7 @@ import {
   isEqualChildren,
   isEqualMarks,
 } from '../internal-utils/equality'
+import {namesMissingTarget} from '../internal-utils/names-missing-target'
 import {toEngineBlock} from '../internal-utils/values'
 import {getDeclarationsInScope} from '../schema/declarations-in-scope'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
@@ -63,24 +64,20 @@ export const insertBlockOperationImplementation: OperationImplementation<
 > = ({snapshot, operation}) => {
   const {context} = snapshot
   const editor = operation.editor
-  // When `placement` is `before` or `after`, the caller has already chosen
-  // where the new block should land. Resolving `operation.at` would descend
-  // block-level paths to leaves, which `findContainingBlock` then walks back
-  // up, losing the caller's intent to anchor at a specific block. We still
-  // use `resolveSelection` to detect unresolvable `at` values (referenced
-  // block was removed) so we can fall back to the editor selection, which
-  // matches the behavior expected by `insert.blocks`-style chained inserts
-  // where a previous block in the chain may have been aborted.
-  // Resolve both `operation.at` and the editor's own selection through
-  // `resolveSelection` so a selection whose endpoints reference nodes that
-  // no longer exist (e.g. after a previous `delete` whose target was
-  // unset by normalization) doesn't drag `resolveTarget` up to an
-  // ancestor that's still in the tree. Treat such stale selections like
-  // "no selection at all" — `resolveTarget` then uses the editor's end,
-  // which lands the block in the right field of an empty container.
+  // Preserve whole-block anchors for `before` and `after`: resolving them
+  // descends to leaves and loses the intended insertion container. Explicit
+  // missing targets must not fall back to the document's edges.
   const resolved = operation.at
     ? resolveSelection(editor, operation.at)
     : resolveSelection(editor, editor.snapshot.context.selection)
+  if (
+    operation.at &&
+    !resolved &&
+    namesMissingTarget(editor.snapshot, operation.at)
+  ) {
+    return
+  }
+
   const at =
     resolved && operation.at && operation.placement !== 'auto'
       ? operation.at

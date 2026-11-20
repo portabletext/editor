@@ -16,6 +16,7 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {blockOffsetToSpanSelectionPoint} from '../utils/util.block-offset'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {getBlockKeyFromSelectionPoint} from '../utils/util.selection-point'
+import {pointNamesMissingTarget} from './names-missing-target'
 
 type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
 
@@ -23,7 +24,7 @@ type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
  * Normalize a selection so that each point resolves to a valid leaf path.
  *
  * Handles block-level paths by descending to the appropriate child,
- * recovers from missing children by falling back to the first child, and
+ * resolves a point whose child has gone to nothing, and
  * clamps offsets to the text length for spans and to 0 for non-span nodes.
  *
  * Works at any depth, including inside containers.
@@ -31,6 +32,7 @@ type ResolveSelectionEditor = Pick<PortableTextEditorEngine, 'snapshot'>
 export function resolveSelection(
   editor: ResolveSelectionEditor,
   selection: EditorSelection,
+  options?: {gone: 'fallback'},
 ): Range | null {
   if (!selection) {
     return null
@@ -41,6 +43,7 @@ export function resolveSelection(
       editor,
       selection.anchor,
       selection.backward ? 'backward' : 'forward',
+      options,
     )
 
     if (!anchorPoint) {
@@ -57,11 +60,13 @@ export function resolveSelection(
     editor,
     selection.anchor,
     selection.backward ? 'forward' : 'backward',
+    options,
   )
   const focusPoint = resolveSelectionPoint(
     editor,
     selection.focus,
     selection.backward ? 'backward' : 'forward',
+    options,
   )
 
   if (!anchorPoint || !focusPoint) {
@@ -78,6 +83,7 @@ function resolveSelectionPoint(
   editor: ResolveSelectionEditor,
   selectionPoint: {path: Path; offset: number},
   direction: 'forward' | 'backward',
+  options?: {gone: 'fallback'},
 ):
   | {
       path: Path
@@ -141,8 +147,13 @@ function resolveSelectionPoint(
     return leaf ? {path: leaf.path, offset: 0} : {path: entry.path, offset: 0}
   }
 
-  // Path doesn't resolve (e.g. a child was removed).
-  // Fall back to the first leaf of the block.
+  if (
+    options?.gone !== 'fallback' &&
+    pointNamesMissingTarget(snapshot, selectionPoint)
+  ) {
+    return undefined
+  }
+
   const blockKey = getBlockKeyFromSelectionPoint(selectionPoint)
 
   if (!blockKey) {

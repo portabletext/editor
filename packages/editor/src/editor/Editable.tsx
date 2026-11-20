@@ -354,7 +354,9 @@ export const PortableTextEditable = forwardRef<
       if (debug.selection.enabled) {
         debug.selection(`Selection from props ${safeStringify(propsSelection)}`)
       }
-      const resolvedSelection = resolveSelection(editorEngine, propsSelection)
+      const resolvedSelection = resolveSelection(editorEngine, propsSelection, {
+        gone: 'fallback',
+      })
       if (resolvedSelection) {
         if (debug.selection.enabled) {
           debug.selection(

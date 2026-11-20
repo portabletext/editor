@@ -98,7 +98,17 @@ describe('Performance', () => {
     })
 
     test('Inserting 1000 blocks before an existing block', async () => {
-      const {editor, locator} = await createTestEditor()
+      const {editor, locator} = await createTestEditor({
+        initialValue: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          },
+        ],
+      })
 
       const start = performance.now()
 
@@ -131,7 +141,17 @@ describe('Performance', () => {
     }, 30_000)
 
     test('Inserting 1000 blocks after an existing block', async () => {
-      const {editor, locator} = await createTestEditor()
+      const {editor, locator} = await createTestEditor({
+        initialValue: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          },
+        ],
+      })
 
       const start = performance.now()
 
@@ -369,6 +389,15 @@ describe('Performance', () => {
     test('Inserting 1000 tables before an existing block', async () => {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
+        initialValue: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          },
+        ],
         children: (
           <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
         ),
@@ -405,6 +434,15 @@ describe('Performance', () => {
     test('Inserting 1000 tables after an existing block', async () => {
       const {editor, locator} = await createTestEditor({
         schemaDefinition,
+        initialValue: [
+          {
+            _key: 'b0',
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_key: 's0', _type: 'span', text: 'foo', marks: []}],
+          },
+        ],
         children: (
           <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
         ),
