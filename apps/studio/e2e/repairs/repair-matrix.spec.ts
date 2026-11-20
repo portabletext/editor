@@ -33,9 +33,9 @@ const EXPECTATIONS: Record<string, string> = {
   'pte-lab.repairs.keyless-child':
     'known storm of 2-3 transactions rewriting the same childs _key (repair-on-load.spec.ts); re-measured here against the current build.',
   'pte-lab.repairs.keyless-block':
-    'repair expected, but a top-level keyless array item trips Studios own "Missing keys" array-input guard before the PTE engine mounts, so no repair mutation fires without a manual "Add missing keys" click.',
+    'repair expected, but a top-level keyless array item trips the "Missing keys" array-input guard in Sanity Studio before the PTE engine mounts, so no repair mutation fires without a manual "Add missing keys" click.',
   'pte-lab.repairs.duplicate-keys':
-    'repair expected, but a duplicate key on a top-level block trips Studios own "Non-unique keys" array-input guard before the PTE engine mounts, so no repair mutation fires without a manual "Generate unique keys" click.',
+    'repair expected, but a duplicate key on a top-level block trips the "Non-unique keys" array-input guard in Sanity Studio before the PTE engine mounts, so no repair mutation fires without a manual "Generate unique keys" click.',
   'pte-lab.repairs.empty-children':
     'repair expected (filler span inserted into the empty children array).',
   'pte-lab.repairs.orphan-markdefs':

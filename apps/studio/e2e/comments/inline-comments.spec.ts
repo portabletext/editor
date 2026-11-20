@@ -58,8 +58,8 @@ test.describe.serial('inline comments', () => {
     await expect(decoration).toHaveText('bar')
 
     // Clicking on or near the decoration selects its whole commented range
-    // (Studio's own click-to-select-the-comment behavior), so the caret is
-    // placed programmatically instead of with the mouse.
+    // (Sanity Studio's own click-to-select-the-comment behavior), so the
+    // caret is placed programmatically instead of with the mouse.
     const editorBody = page.locator('[data-pt-editor]').first()
     await putCaretBefore(page, 'bar')
     await page.keyboard.type('XY')
