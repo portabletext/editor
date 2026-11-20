@@ -10,7 +10,8 @@ This is a low-level building block, and most apps never apply patches by hand:
 
 - **Rendering** Portable Text? Use a serializer like [`@portabletext/react`](https://www.portabletext.org/rendering/react/) or [`@portabletext/to-html`](https://www.portabletext.org/rendering/html/), not this.
 - **Editing** with the Portable Text Editor and you just want the new value? Read `editor.getSnapshot().context.value` when a `change` event arrives.
-- **Using Sanity?** The Sanity client and Studio apply patches to your documents for you.
+- **Using Sanity?** The Sanity client and Sanity Studio apply patches to your
+  documents for you.
 
 Reach for this package only when you have to apply Sanity patches to a value yourself, outside those flows, such as a server replaying the patches an editor sends over the wire.
 
