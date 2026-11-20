@@ -7,7 +7,7 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
  * Regression test for a combinatorial blow-up in the deep schema walk.
  *
  * When many block-object types embed the same named Portable Text array
- * type (a common pattern in real studios: a shared `blockContent` array
+ * type (a common pattern in Sanity schemas: a shared `blockContent` array
  * reused as a field inside accordions, quotes, cards, ...), Sanity
  * compiles a single canonical instance of that array type, and every
  * embedding position resolves to the same `of` member instances.
@@ -17,7 +17,7 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
  * every simple path through the mutually-embedding type graph - O(n!) in
  * the number of block objects. Real-world schemas with ~30 block objects
  * took seconds per conversion (and `PortableTextInput` converts on
- * render), freezing the studio when opening any document with a Portable
+ * render), freezing Sanity when opening any document with a Portable
  * Text field.
  *
  * Converting each compiled type instance once and sharing the result
@@ -68,7 +68,7 @@ describe('mutually-embedding block objects', () => {
     // DAG) in linear time, but before root block objects referenced by
     // name at every position, each type's single expansion inlined the
     // expansions of every type not on its first-visit ancestor path:
-    // 57 MB serialized for these 12 types, out-of-memory in real studios
+    // 57 MB serialized for these 12 types, out-of-memory in real Sanity schemas
     // with ~25. Every consumer walks the tree (`compileSchema`, React,
     // serialization), so tree size is the contract, and conversion time
     // alone cannot pin it.
