@@ -759,8 +759,8 @@ importers:
         specifier: 'catalog:'
         version: 3.0.0
       scroll-into-view-if-needed:
-        specifier: ^3.1.0
-        version: 3.1.0
+        specifier: github:scroll-into-view/scroll-into-view-if-needed#cody/scroll-if-needed-option-ca89
+        version: https://codeload.github.com/scroll-into-view/scroll-into-view-if-needed/tar.gz/a3b3f0093e5434ee611e988c445c20a630a5253b
       xstate:
         specifier: 'catalog:'
         version: 5.33.2
@@ -7515,6 +7515,9 @@ packages:
   compute-scroll-into-view@3.1.1:
     resolution: {integrity: sha512-VRhuHOLoKYOy4UbilLbUzbYg93XLjv2PncJC50EuTWPA3gaja1UjBsUP/D/9/juV3vQFr6XBEzn9KCAHdUvOHw==}
 
+  compute-scroll-into-view@4.0.0:
+    resolution: {integrity: sha512-iqlKRtz6qi/eesmcjIbrqbpvYI4yNAkbCCHah+jLlBETELLoxHX8DUuutzdXku5DGQU1zvvvwQZsBaMHFV7xeg==}
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -10541,6 +10544,10 @@ packages:
 
   scroll-into-view-if-needed@3.1.0:
     resolution: {integrity: sha512-49oNpRjWRvnU8NyGVmUaYG4jtTkNonFZI86MmGRDqBphEK2EXT9gdEUoQPZhuBM8yWHxCWbobltqYO5M4XrUvQ==}
+
+  scroll-into-view-if-needed@https://codeload.github.com/scroll-into-view/scroll-into-view-if-needed/tar.gz/a3b3f0093e5434ee611e988c445c20a630a5253b:
+    resolution: {tarball: https://codeload.github.com/scroll-into-view/scroll-into-view-if-needed/tar.gz/a3b3f0093e5434ee611e988c445c20a630a5253b}
+    version: 3.2.1
 
   scrollmirror@1.2.4:
     resolution: {integrity: sha512-UkEHHOV6j5cE3IsObQRK6vO4twSuhE4vtLD4UmX+doHgrtg2jRwXkz4O6cz0jcoxK5NGU7rFjyvLcWHzw7eQ5A==}
@@ -18325,6 +18332,8 @@ snapshots:
 
   compute-scroll-into-view@3.1.1: {}
 
+  compute-scroll-into-view@4.0.0: {}
+
   concat-map@0.0.1: {}
 
   config-chain@1.1.13:
@@ -22142,6 +22151,10 @@ snapshots:
   scroll-into-view-if-needed@3.1.0:
     dependencies:
       compute-scroll-into-view: 3.1.1
+
+  scroll-into-view-if-needed@https://codeload.github.com/scroll-into-view/scroll-into-view-if-needed/tar.gz/a3b3f0093e5434ee611e988c445c20a630a5253b:
+    dependencies:
+      compute-scroll-into-view: 4.0.0
 
   scrollmirror@1.2.4: {}
 

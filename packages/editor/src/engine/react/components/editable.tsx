@@ -15,6 +15,7 @@ import React, {
   type JSX,
 } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
+import {selection} from 'scroll-into-view-if-needed/middleware'
 import {getDomNode} from '../../../dom-traversal/get-dom-node'
 import {getDomNodePath} from '../../../dom-traversal/get-dom-node-path'
 import type {EditorActor} from '../../../editor/editor-machine'
@@ -1959,51 +1960,44 @@ const defaultScrollSelectionIntoView = (
   editor: PortableTextEditorEngine,
   domRange: DOMRange,
 ) => {
-  // Scroll to the focus point of the selection, in case the selection is expanded
+  // A DOM range has no direction, so collapse to the caret before measuring.
   const isBackward =
     !!editor.snapshot.context.selection &&
     isBackwardRange(editor.snapshot.context.selection, editor.snapshot.context)
   const domFocusPoint = domRange.cloneRange()
   domFocusPoint.collapse(isBackward)
 
-  if (domFocusPoint.getBoundingClientRect) {
-    const leafEl = domFocusPoint.startContainer.parentElement!
-
-    // COMPAT: In Chrome, domFocusPoint.getBoundingClientRect() can return zero dimensions for valid ranges (e.g. line breaks).
-    // When this happens, do not scroll like most editors do.
-    const domRect = domFocusPoint.getBoundingClientRect()
-    const isZeroDimensionRect =
-      domRect.width === 0 &&
-      domRect.height === 0 &&
-      domRect.x === 0 &&
-      domRect.y === 0
-
-    if (isZeroDimensionRect) {
-      const leafRect = leafEl.getBoundingClientRect()
-      const leafHasDimensions = leafRect.width > 0 || leafRect.height > 0
-
-      if (leafHasDimensions) {
-        return
-      }
-    }
-
-    // Default behavior: use domFocusPoint's getBoundingClientRect
-    leafEl.getBoundingClientRect =
-      domFocusPoint.getBoundingClientRect.bind(domFocusPoint)
-    scrollIntoView(leafEl, {
-      scrollMode: 'if-needed',
-      // Native-caret semantics: the minimal delta to the nearest edge. The
-      // library's default `block: 'center'` re-centered the viewport on
-      // every sync whose focus was even slightly clipped, yanking the
-      // editor around on programmatic selects (a table handle click whose
-      // rectangle ends in an off-screen column, for example).
-      block: 'nearest',
-      inline: 'nearest',
-    })
-
-    // @ts-expect-error an unorthodox delete D:
-    delete leafEl.getBoundingClientRect
+  const leafEl = domFocusPoint.startContainer.parentElement
+  if (!leafEl || !domFocusPoint.getBoundingClientRect) {
+    return
   }
+
+  // COMPAT: In Chrome, a collapsed range can report a zero box at 0,0 for a
+  // real caret, such as a line break. selection() then has nothing to measure.
+  // Leave the scroll alone when the leaf itself has a box.
+  const domRect = domFocusPoint.getBoundingClientRect()
+  const isZeroDimensionRect =
+    domRect.width === 0 &&
+    domRect.height === 0 &&
+    domRect.x === 0 &&
+    domRect.y === 0
+
+  if (isZeroDimensionRect) {
+    const leafRect = leafEl.getBoundingClientRect()
+    if (leafRect.width > 0 || leafRect.height > 0) {
+      return
+    }
+  }
+
+  // Native-caret semantics: the minimal delta to the nearest edge. The
+  // default `block: 'center'` re-centered the viewport on every sync whose
+  // focus was even slightly clipped.
+  scrollIntoView(leafEl, {
+    scroll: 'if-needed',
+    block: 'nearest',
+    inline: 'nearest',
+    middleware: [selection(domFocusPoint)],
+  })
 }
 
 /**
