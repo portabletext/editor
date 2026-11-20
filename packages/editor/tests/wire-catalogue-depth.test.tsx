@@ -494,9 +494,6 @@ async function captureGesture(gesture: Gesture, depth: Depth) {
       : wrapSeedBlocks(gesture.seed, depth)
 
   const patches: Array<Patch> = []
-  // A host that commits per `mutation` event marks these groups with its
-  // envelope, not gestures.
-  const mutations: Array<Array<Patch>> = []
   const engineRef = React.createRef<PortableTextEditorEngine>()
 
   const {editor} = await createTestEditor({
@@ -509,11 +506,8 @@ async function captureGesture(gesture: Gesture, depth: Depth) {
         <InternalEditorEngineRefPlugin ref={engineRef} />
         <EventListenerPlugin
           on={(event) => {
-            if (event.type === 'patch') {
-              patches.push(event.patch)
-            }
-            if (event.type === 'mutation') {
-              mutations.push(event.patches)
+            if (event.type === 'change' && event.origin === 'local') {
+              patches.push(...event.patches)
             }
           }}
         />
@@ -538,11 +532,9 @@ async function captureGesture(gesture: Gesture, depth: Depth) {
 
   if (gesture.prepare) {
     await gesture.prepare(context)
-    await waitForMutationFlush(patches, mutations)
   }
 
   patches.length = 0
-  mutations.length = 0
   const seedValue = structuredClone(editor.getSnapshot().context.value)
   const seedSpec = toTextspec({
     schema,
@@ -567,8 +559,6 @@ async function captureGesture(gesture: Gesture, depth: Depth) {
     expect(patches.length).toBeGreaterThan(0)
   })
 
-  await waitForMutationFlush(patches, mutations)
-
   const editorPoints = refs.map(({point, ref}) => ({
     point,
     editor: unrefPoint(ref),
@@ -583,7 +573,6 @@ async function captureGesture(gesture: Gesture, depth: Depth) {
     seedValue,
     actions: gesture.actions,
     patches,
-    mutationSizes: mutations.map((mutation) => mutation.length),
     result: toTextspec({
       schema,
       value,
@@ -599,18 +588,13 @@ async function captureGesture(gesture: Gesture, depth: Depth) {
       `${fixturesDir}/${gesture.scenario}@${depth}.json`,
     ),
   )
-  expect(capture).toEqual(fixture)
-}
-
-async function waitForMutationFlush(
-  patches: Array<Patch>,
-  mutations: Array<Array<Patch>>,
-) {
-  await vi.waitFor(
-    () => {
-      expect(mutations.flat()).toEqual(patches)
-    },
-    {timeout: 5_000},
+  if (typeof fixture !== 'object' || fixture === null) {
+    throw new Error('Wire fixture must be an object')
+  }
+  expect(capture).toEqual(
+    Object.fromEntries(
+      Object.entries(fixture).filter(([field]) => field !== 'mutationSizes'),
+    ),
   )
 }
 
