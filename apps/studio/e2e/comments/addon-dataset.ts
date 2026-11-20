@@ -1,10 +1,10 @@
 import type {SanityClient} from '@sanity/client'
 
 /**
- * Resolves Studio's comments addon dataset for the lab project/dataset
- * (`e2sapjbh`'s `scratch` gets `scratch-comments`) and returns a client
- * scoped to it. Studio provisions this dataset lazily on a project's first
- * comment; by the time a comments spec runs against `e2sapjbh` it already
+ * Resolves Sanity Studio's comments addon dataset for the lab project/dataset
+ * (`e2sapjbh`'s `scratch` gets `scratch-comments`) and returns a client scoped
+ * to it. Sanity Studio provisions this dataset lazily on a project's first
+ * comment. By the time a comments spec runs against `e2sapjbh` it already
  * exists, so this only resolves the name, never creates it.
  */
 export async function getCommentsAddonDatasetClient(
@@ -17,7 +17,7 @@ export async function getCommentsAddonDatasetClient(
   })
   if (!addonDataset) {
     throw new Error(
-      `no comments addon dataset for ${projectId}/${dataset}; add a comment through Studio once to provision it`,
+      `no comments addon dataset for ${projectId}/${dataset}. Add a comment through Sanity Studio once to provision it`,
     )
   }
   return client.withConfig({dataset: addonDataset.name, useCdn: false})
