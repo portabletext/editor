@@ -4,7 +4,7 @@
   "description": "Create platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms",
   "keywords": [
     "keyboard-shortcuts",
-    "portabletext"
+    "portable-text"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {
