@@ -652,7 +652,7 @@ export function TableTrashLayer({
   onDeleteCol: (index: number) => void
   /**
    * Where the layer portals. Hosts with their own portal/layer system (for
-   * example Sanity Studio's document-panel portal) pass their element so the
+   * example Sanity's document-panel portal) pass their element so the
    * chrome joins the host's stacking context and inherits its styling scope.
    */
   portalElement?: HTMLElement | null
