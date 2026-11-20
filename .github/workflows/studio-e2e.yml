@@ -34,7 +34,7 @@ jobs:
       - name: Install project dependencies
         run: pnpm install
 
-      - name: Build the editor packages the studio rig depends on
+      - name: Build the editor packages the Sanity Studio rig depends on
         run: pnpm exec turbo build --filter='studio^...'
 
       - name: Install Playwright Chromium
@@ -46,7 +46,7 @@ jobs:
           SANITY_PTE_LAB_TOKEN: ${{ secrets.SANITY_PTE_LAB_TOKEN }}
         run: node scripts/seed.mjs
 
-      - name: Run the Studio Lab Playwright suite
+      - name: Run the Sanity Studio Playwright suite
         env:
           SANITY_PTE_LAB_TOKEN: ${{ secrets.SANITY_PTE_LAB_TOKEN }}
           # Written outside `playwright-report/`: the html reporter owns
