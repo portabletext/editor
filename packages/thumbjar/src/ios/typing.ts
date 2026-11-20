@@ -17,7 +17,6 @@ import {
 import type {PageEvent, Run, RunOnDeviceOptions, StepRecord} from '../steps.ts'
 import {safariCapabilities} from './capabilities.ts'
 import {focusField, readyField} from './field.ts'
-import {tapLanded} from './tap-landed.ts'
 
 type PageState = {text: string | null; events: PageEvent[]; state?: unknown}
 
@@ -38,7 +37,6 @@ export async function runOnSimulator(
   const result: Record<string, unknown> = {
     options,
     records,
-    droppedFirstTaps: 0,
   }
   let browser!: Awaited<ReturnType<typeof remote>>
   let webContext = ''
@@ -93,16 +91,6 @@ export async function runOnSimulator(
     await key.waitForExist({timeout: 5000})
     activeKeys?.push(name)
     await key.click()
-  }
-  async function waitForTap(before: PageState): Promise<boolean> {
-    const deadline = Date.now() + 1000
-    do {
-      if (tapLanded(before, await state())) {
-        return true
-      }
-      await browser.pause(100)
-    } while (Date.now() < deadline)
-    return false
   }
   try {
     browser = await remote({
@@ -176,16 +164,8 @@ export async function runOnSimulator(
       const keys: string[] = []
       activeKeys = keys
       try {
-        if (word.letters.length > 0) {
-          const beforeTap = await state()
-          await tap(word.letters[0]!)
-          if (!(await waitForTap(beforeTap))) {
-            result.droppedFirstTaps = Number(result.droppedFirstTaps) + 1
-            await tap(word.letters[0]!)
-          }
-          for (const letter of word.letters.slice(1)) {
-            await tap(letter)
-          }
+        for (const letter of word.letters) {
+          await tap(letter)
         }
         await native()
         const candidate =
