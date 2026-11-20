@@ -27,7 +27,7 @@ import {createTestEditor} from '../src/test/vitest'
  *   (b) the prop is a function (callable)
  *   (c) calling it produces the engine default wrapper
  *
- * Mirrors Studio's `renderDefault` pattern. PTE has no chained layer
+ * Mirrors Sanity's `renderDefault` pattern. PTE has no chained layer
  * semantics for nodes - `renderDefault` is always the engine default,
  * not "the next render layer down."
  */
