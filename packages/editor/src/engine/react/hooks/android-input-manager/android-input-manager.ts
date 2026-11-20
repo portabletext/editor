@@ -19,7 +19,8 @@ import {
   type StringDiff,
   type TextDiff,
 } from '../../../dom/utils/diff-text'
-import {isDOMSelection, isTrackedMutation} from '../../../dom/utils/dom'
+import {isDOMSelection} from '../../../dom/utils/dom'
+import {isTrackedMutation} from '../../../dom/utils/is-tracked-mutation'
 import {after} from '../../../editor/after'
 import {range as editorRange} from '../../../editor/range'
 import {rangeRef} from '../../../editor/range-ref'
