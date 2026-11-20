@@ -4,7 +4,8 @@
   "description": "Automatically transform text to typographic variants",
   "keywords": [
     "plugin",
-    "portabletext",
+    "portable-text",
+    "portable-text-editor",
     "typography"
   ],
   "homepage": "https://www.portabletext.org",
