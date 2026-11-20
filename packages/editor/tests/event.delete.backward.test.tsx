@@ -572,64 +572,6 @@ describe('event.delete.backward', () => {
         })
       })
     })
-
-    describe('without selection', () => {
-      test('Scenario: Deleting a word backward at a collapsed `at` removes the word before it', async () => {
-        const {editor} = await createTestEditor({
-          initialValue,
-        })
-
-        editor.send({
-          type: 'delete',
-          direction: 'backward',
-          unit: 'word',
-          at: {
-            anchor: {
-              path: [{_key: blockKey}, 'children', {_key: spanKey}],
-              offset: 7,
-            },
-            focus: {
-              path: [{_key: blockKey}, 'children', {_key: spanKey}],
-              offset: 7,
-            },
-          },
-        })
-
-        await vi.waitFor(() => {
-          expect(toTextspec(editor.getSnapshot().context)).toEqual(
-            'B: foo  baz',
-          )
-        })
-      })
-
-      test('Scenario: Deleting a word backward at an expanded `at` removes only that range', async () => {
-        const {editor} = await createTestEditor({
-          initialValue,
-        })
-
-        editor.send({
-          type: 'delete',
-          direction: 'backward',
-          unit: 'word',
-          at: {
-            anchor: {
-              path: [{_key: blockKey}, 'children', {_key: spanKey}],
-              offset: 5,
-            },
-            focus: {
-              path: [{_key: blockKey}, 'children', {_key: spanKey}],
-              offset: 7,
-            },
-          },
-        })
-
-        await vi.waitFor(() => {
-          expect(toTextspec(editor.getSnapshot().context)).toEqual(
-            'B: foo b baz',
-          )
-        })
-      })
-    })
   })
 
   describe('Deleting line', () => {
@@ -668,38 +610,6 @@ describe('event.delete.backward', () => {
 
       await vi.waitFor(() => {
         expect(toTextspec(editor.getSnapshot().context)).toEqual('B: |bar baz')
-      })
-    })
-
-    test('Scenario: Deleting a line backward at `at` removes the text before it', async () => {
-      const {editor} = await createTestEditor({
-        initialValue: [
-          {
-            _key: 'k0',
-            _type: 'block',
-            children: [{_key: 'k1', _type: 'span', text: 'foo bar baz'}],
-          },
-        ],
-      })
-
-      editor.send({
-        type: 'delete',
-        direction: 'backward',
-        unit: 'line',
-        at: {
-          anchor: {
-            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
-            offset: 4,
-          },
-          focus: {
-            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
-            offset: 4,
-          },
-        },
-      })
-
-      await vi.waitFor(() => {
-        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bar baz')
       })
     })
   })

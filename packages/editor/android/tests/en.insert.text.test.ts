@@ -1,4 +1,4 @@
-// thumbjar-test-count: 4
+// thumbjar-test-count: 5
 import {readFileSync} from 'node:fs'
 import {Feature} from 'racejar/vitest'
 import {deviceDefinitions} from '../scripts/gherkin.ts'

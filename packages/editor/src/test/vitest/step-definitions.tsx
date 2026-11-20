@@ -1,4 +1,6 @@
+import {compileSchema} from '@portabletext/schema'
 import {
+  createTestKeyGenerator,
   fromTextspec,
   getTersePt,
   parseTersePt,
@@ -22,6 +24,8 @@ import {
 import {getValueAnnotations} from '../../../test-utils/value-annotations'
 import {IS_MAC} from '../../internal-utils/is-hotkey'
 import {safeParse} from '../../internal-utils/safe-json'
+import {NodePlugin} from '../../plugins/plugin.node'
+import {resolveContainers} from '../../schema/resolve-containers'
 import {createTestEditor, createTestEditors} from '../../test/vitest'
 import {
   parseBlocks,
@@ -32,6 +36,7 @@ import {reverseSelection} from '../../utils/util.reverse-selection'
 import type {Parameter} from '../gherkin-parameter-types'
 import {gherkinSchemaDefinition} from '../gherkin-schema'
 import type {Context} from './step-context'
+import {syncDOMCaret} from './test-editor'
 
 export {gherkinSchemaDefinition}
 
@@ -39,12 +44,31 @@ export {gherkinSchemaDefinition}
  * @internal
  */
 
-function setEditorState(context: Context, textspec: string): void {
-  const {schema, keyGenerator} = context.editor.getSnapshot().context
-  const {containers} = context.editor.getSnapshot().context
-
+async function setEditorState(
+  context: Context,
+  textspec: string,
+): Promise<void> {
+  if (context.editorConfig) {
+    const {schemaDefinition, containers} = context.editorConfig
+    const keyGenerator = createTestKeyGenerator()
+    const schema = compileSchema(schemaDefinition)
+    const {blocks} = fromTextspec(
+      {schema, keyGenerator, containers: resolveContainers(schema, containers)},
+      textspec,
+    )
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: blocks,
+      children: <NodePlugin nodes={containers} />,
+    })
+    context.editor = editor
+    context.locator = locator
+    return
+  }
+  const {schema, keyGenerator, containers} =
+    context.editor.getSnapshot().context
   const {blocks} = fromTextspec({schema, keyGenerator, containers}, textspec)
-
   context.editor.send({
     type: 'insert.blocks',
     blocks,
@@ -165,27 +189,6 @@ async function assertEditorState(
   })
 }
 
-async function selectionFromInput(context: Context, textspec: string) {
-  const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
-
-  await vi.waitFor(() => {
-    const {schema, value} = context.editor.getSnapshot().context
-    const {containers} = context.editor.getSnapshot().context
-
-    const selection = selectionFromTextspec(
-      {schema, containers},
-      normalized,
-      value ?? [],
-    )
-
-    if (!selection) {
-      throw new Error(`Could not resolve selection from textspec: ${textspec}`)
-    }
-
-    context.editor.send({type: 'select', at: selection})
-  })
-}
-
 /**
  * @internal
  */
@@ -243,45 +246,26 @@ export const stepDefinitions = [
 
   Given(
     'the editor state is {string}',
-    (context: Context, textspec: string) => {
-      setEditorState(context, textspec.replace(/;;/g, '\n'))
+    async (context: Context, textspec: string) => {
+      await setEditorState(context, textspec.replace(/;;/g, '\n'))
     },
   ),
-  Given('the editor state is', (context: Context, textspec: string) => {
-    setEditorState(context, textspec)
+  Given('the editor state is', async (context: Context, textspec: string) => {
+    await setEditorState(context, textspec)
   }),
 
   When('the selection is', selectionFromInput),
   When(
     'the selection is {string}',
     async (context: Context, textspec: string) => {
-      const normalized = textspec.replace(/\\n/g, '\n').replace(/;;/g, '\n')
-
       await vi.waitFor(() => {
-        const {schema, value} = context.editor.getSnapshot().context
-        const {containers} = context.editor.getSnapshot().context
-
-        const selection = selectionFromTextspec(
-          {schema, containers},
-          normalized,
-          value ?? [],
-        )
-
-        if (!selection) {
-          throw new Error(
-            `Could not resolve selection from textspec: ${textspec}`,
-          )
-        }
-
-        context.editor.send({
-          type: 'select',
-          at: selection,
-        })
-
+        const selection = rangeFromInput(context, textspec)
+        context.editor.send({type: 'select', at: selection})
         const currentSelection = context.editor.getSnapshot().context.selection
         expect(currentSelection?.anchor).toEqual(selection.anchor)
         expect(currentSelection?.focus).toEqual(selection.focus)
       })
+      await syncDOMCaret(context.editor)
     },
   ),
 
@@ -503,6 +487,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   When(
@@ -523,6 +508,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editorB)
     },
   ),
   Then(
@@ -558,6 +544,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   When(
@@ -578,6 +565,7 @@ export const stepDefinitions = [
           selection,
         )
       })
+      await syncDOMCaret(context.editorB)
     },
   ),
   Then(
@@ -600,7 +588,7 @@ export const stepDefinitions = [
       expect(context.editor.getSnapshot().context.selection).toBeNull()
     })
   }),
-  When('everything is selected', (context: Context) => {
+  When('everything is selected', async (context: Context) => {
     const editorSelection = getEditorSelection(
       context.editor.getSnapshot().context,
     )
@@ -609,8 +597,9 @@ export const stepDefinitions = [
       type: 'select',
       at: editorSelection,
     })
+    await syncDOMCaret(context.editor)
   }),
-  When('everything is selected backwards', (context: Context) => {
+  When('everything is selected backwards', async (context: Context) => {
     const editorSelection = reverseSelection(
       getEditorSelection(context.editor.getSnapshot().context),
     )
@@ -619,6 +608,7 @@ export const stepDefinitions = [
       type: 'select',
       at: editorSelection,
     })
+    await syncDOMCaret(context.editor)
   }),
   When('{string} is selected', async (context: Context, text: string) => {
     await vi.waitFor(() => {
@@ -632,6 +622,7 @@ export const stepDefinitions = [
         at: selection,
       })
     })
+    await syncDOMCaret(context.editor)
   }),
   When(
     '{string} is selected {direction}',
@@ -652,6 +643,7 @@ export const stepDefinitions = [
             direction === 'forwards' ? selection : reverseSelection(selection),
         })
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   When(
@@ -667,6 +659,7 @@ export const stepDefinitions = [
           at: selection,
         })
       })
+      await syncDOMCaret(context.editor)
     },
   ),
   Then(
@@ -792,6 +785,7 @@ export const stepDefinitions = [
           at: selection,
         })
       })
+      await syncDOMCaret(context.editor)
 
       const value = context.editor.getSnapshot().context.value
       const priorAnnotationKeys = getValueAnnotations(
@@ -1038,4 +1032,145 @@ export const stepDefinitions = [
   When('redo is performed', (context: Context) => {
     context.editor.send({type: 'history.redo'})
   }),
+  When('the selection is cleared', async (context: Context) => {
+    context.editor.send({type: 'select', at: null})
+    await syncDOMCaret(context.editor)
+  }),
+  When(
+    'text is deleted{event-delete-options}{event-location}',
+    async (
+      context: Context,
+      options: Parameter['eventDeleteOptions'],
+      location: string,
+      textspec?: string,
+    ) => {
+      const at = eventLocation(context, location, textspec)
+      if (options.unit === 'line') {
+        await vi.waitFor(() => {
+          const snapshot = context.editor.getSnapshot()
+          assert(
+            context.editor.dom.getSelectionRect(
+              createTestSnapshot({
+                context: {
+                  ...snapshot.context,
+                  selection: at ?? snapshot.context.selection,
+                },
+              }),
+            ),
+            'Expected the deletion range to be rendered',
+          )
+        })
+      }
+      context.editor.send({
+        type: 'delete',
+        ...options,
+        ...(at ? {at} : {}),
+      })
+    },
+  ),
+  When('a focus event is sent', async (context: Context) => {
+    await vi.waitFor(() => {
+      const snapshot = context.editor.getSnapshot()
+      if (snapshot.context.selection) {
+        assert(
+          context.editor.dom.getSelectionRect(snapshot),
+          'Expected the selection to be rendered',
+        )
+      }
+    })
+    context.editor.send({type: 'focus'})
+    await vi.waitFor(() => {
+      expect(document.activeElement).toEqual(context.locator.element())
+    })
+  }),
+  When('a backward character deletion is performed', (context: Context) => {
+    context.editor.send({type: 'delete.backward', unit: 'character'})
+  }),
+  When('block {int} is moved down', (context: Context, block: number) => {
+    const target = context.editor.getSnapshot().context.value[block - 1]
+    assert(target, `Missing block ${block}`)
+    context.editor.send({type: 'move.block down', at: [{_key: target._key}]})
+  }),
+  When('the block is split at the selection', (context: Context) => {
+    context.editor.send({type: 'split'})
+  }),
+  When(
+    'a keydown event for {string} is sent',
+    (context: Context, key: string) => {
+      context.editor.send({
+        type: 'keyboard.keydown',
+        originEvent: {
+          key,
+          code: key,
+          altKey: false,
+          ctrlKey: false,
+          metaKey: false,
+          shiftKey: false,
+        },
+      })
+    },
+  ),
+  When(
+    'a collaborator sets the span text at the following position to {string}',
+    (context: Context, value: string, textspec: string) => {
+      const at = eventLocation(context, 'the following range', textspec)
+      assert(at, 'Missing remote span target')
+      const path = [...at.anchor.path, 'text']
+      context.editor.send({
+        type: 'apply',
+        patches: [{type: 'set', origin: 'remote', path, value}],
+      })
+    },
+  ),
 ]
+
+function eventLocation(context: Context, location: string, textspec?: string) {
+  if (!location) {
+    return undefined
+  }
+  const backward = location.endsWith(' in backward order')
+    ? {backward: true}
+    : {}
+  const offsets = location.match(
+    /^block (\d+) offset (\d+) through block (\d+) offset (\d+)/,
+  )
+  if (offsets) {
+    const value = context.editor.getSnapshot().context.value
+    const anchorBlock = value[Number(offsets[1]) - 1]
+    const focusBlock = value[Number(offsets[3]) - 1]
+    assert(anchorBlock && focusBlock, 'Missing range blocks')
+    return {
+      anchor: {path: [{_key: anchorBlock._key}], offset: Number(offsets[2])},
+      focus: {path: [{_key: focusBlock._key}], offset: Number(offsets[4])},
+      ...backward,
+    }
+  }
+  if (location.startsWith('"')) {
+    const ending = location.lastIndexOf('"') + 1
+    const range = safeParse(location.slice(0, ending))
+    assert(typeof range === 'string', 'Expected a quoted textspec range')
+    textspec = range
+  }
+  assert(textspec, 'Expected a textspec range')
+  return {...rangeFromInput(context, textspec), ...backward}
+}
+
+async function selectionFromInput(context: Context, textspec: string) {
+  await vi.waitFor(() => {
+    const selection = rangeFromInput(context, textspec)
+    context.editor.send({type: 'select', at: selection})
+  })
+  await syncDOMCaret(context.editor)
+}
+
+function rangeFromInput(context: Context, textspec: string) {
+  const normalized = textspec.replace(/;;/g, '\n')
+  const {schema, value, containers} = context.editor.getSnapshot().context
+  const selection = selectionFromTextspec(
+    {schema, containers},
+    normalized,
+    value,
+  )
+  assert(selection, `Could not resolve selection from textspec: ${textspec}`)
+  return selection
+}
