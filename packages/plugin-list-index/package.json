@@ -10,7 +10,8 @@
     "numbered-list",
     "ordered-list",
     "plugin",
-    "portabletext"
+    "portable-text",
+    "portable-text-editor"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {
