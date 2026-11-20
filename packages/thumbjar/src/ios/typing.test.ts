@@ -46,10 +46,7 @@ beforeEach(() => {
         selector.slice(selector.lastIndexOf(' ') + 1),
       ) as string
       device.taps.push(name)
-      if (
-        device.dropped &&
-        (device.taps.length === 1 || device.taps.at(-2) === 'space')
-      ) {
+      if (device.dropped && device.taps.length === 1) {
         return
       }
       device.text += name
@@ -82,9 +79,6 @@ beforeEach(() => {
         : true,
     $: element,
     $$: () => ({map: () => ['きょう']}),
-    pause: () => {
-      vi.advanceTimersByTime(100)
-    },
     waitUntil: async (predicate: () => Promise<boolean>) => {
       if (!(await predicate())) {
         throw new Error('condition not met')
@@ -220,72 +214,86 @@ test('stops waiting for a required Japanese candidate when the signal aborts', a
   expect.soft(device.taps).toEqual(['k', 'y', 'o', 'u'])
 })
 
-test('records page boundaries and retries the first tap of each compose step', async (context) => {
-  vi.useFakeTimers()
-  try {
-    device.dropped = true
-    device.keyboard = 'en'
-    const run = await runOnSimulator(context, {
+test('records page boundaries and taps each letter once in each compose step', async (context) => {
+  device.keyboard = 'en'
+  const run = await runOnSimulator(context, {
+    url: 'http://localhost:8765/editor.html',
+    keyboard: 'en',
+    prefix: '',
+    steps: [
+      {type: 'compose', letters: 'foo', commit: 'space'},
+      {type: 'compose', letters: 'foo', commit: 'space'},
+    ],
+  })
+  expect(device.candidate.mock.calls).toEqual([])
+  expect(vi.mocked(sleep).mock.calls).toEqual([])
+  expect(run).toEqual({
+    text: 'foospacefoospace',
+    selection: {anchor: 16, focus: 16},
+    state: {foo: 'bar'},
+    events: [
+      {type: 'input'},
+      {type: 'input'},
+      {type: 'input'},
+      {type: 'input'},
+      {type: 'input'},
+      {type: 'input'},
+      {type: 'input'},
+      {type: 'input'},
+    ],
+    steps: [
+      {
+        type: 'compose',
+        status: 'done',
+        textAfter: 'foospace',
+        selectionAfter: {anchor: 8, focus: 8},
+        focusedAfter: true,
+        stateAfter: {foo: 'bar'},
+        events: [
+          {type: 'input'},
+          {type: 'input'},
+          {type: 'input'},
+          {type: 'input'},
+        ],
+        keys: ['f', 'o', 'o', 'space'],
+      },
+      {
+        type: 'compose',
+        status: 'done',
+        textAfter: 'foospacefoospace',
+        selectionAfter: {anchor: 16, focus: 16},
+        focusedAfter: true,
+        stateAfter: {foo: 'bar'},
+        events: [
+          {type: 'input'},
+          {type: 'input'},
+          {type: 'input'},
+          {type: 'input'},
+        ],
+        keys: ['f', 'o', 'o', 'space'],
+      },
+    ],
+  })
+})
+
+test('a dropped first tap fails with the letter missing instead of tapping it again', async (context) => {
+  device.dropped = true
+  device.keyboard = 'en'
+  await expect(
+    runOnSimulator(context, {
       url: 'http://localhost:8765/editor.html',
       keyboard: 'en',
       prefix: '',
       steps: [
         {type: 'compose', letters: 'foo', commit: 'space'},
-        {type: 'compose', letters: 'foo', commit: 'space'},
+        {type: 'compose', letters: 'bar', commit: 'space'},
       ],
-    })
-    expect(device.candidate.mock.calls).toEqual([])
-    expect(vi.mocked(sleep).mock.calls).toEqual([])
-    expect(run).toEqual({
-      text: 'foospacefoospace',
-      selection: {anchor: 16, focus: 16},
-      state: {foo: 'bar'},
-      events: [
-        {type: 'input'},
-        {type: 'input'},
-        {type: 'input'},
-        {type: 'input'},
-        {type: 'input'},
-        {type: 'input'},
-        {type: 'input'},
-        {type: 'input'},
-      ],
-      steps: [
-        {
-          type: 'compose',
-          status: 'done',
-          textAfter: 'foospace',
-          selectionAfter: {anchor: 8, focus: 8},
-          focusedAfter: true,
-          stateAfter: {foo: 'bar'},
-          events: [
-            {type: 'input'},
-            {type: 'input'},
-            {type: 'input'},
-            {type: 'input'},
-          ],
-          keys: ['f', 'f', 'o', 'o', 'space'],
-        },
-        {
-          type: 'compose',
-          status: 'done',
-          textAfter: 'foospacefoospace',
-          selectionAfter: {anchor: 16, focus: 16},
-          focusedAfter: true,
-          stateAfter: {foo: 'bar'},
-          events: [
-            {type: 'input'},
-            {type: 'input'},
-            {type: 'input'},
-            {type: 'input'},
-          ],
-          keys: ['f', 'f', 'o', 'o', 'space'],
-        },
-      ],
-    })
-  } finally {
-    vi.useRealTimers()
-  }
+    }).catch((error: Error) => error.message),
+  ).resolves.toEqual(
+    "condition not met\nSteps:\n  1. compose: failed (Error: condition not met), textAfter 'oospace', keys f o o space\n  2. compose: skipped (step 1 failed), textAfter None, keys none",
+  )
+  expect(device.taps).toEqual(['f', 'o', 'o', 'space'])
+  expect(device.text).toEqual('oospace')
 })
 
 test('an iOS session fault before a typing tap ends faulted', async (context) => {
