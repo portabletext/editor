@@ -6,7 +6,8 @@
     "behaviors",
     "markdown",
     "plugin",
-    "portabletext",
+    "portable-text",
+    "portable-text-editor",
     "shortcuts"
   ],
   "homepage": "https://www.portabletext.org",
