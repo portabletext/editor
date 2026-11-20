@@ -5,7 +5,8 @@
   "keywords": [
     "patches",
     "portable-text",
-    "portable-text-editor"
+    "portable-text-editor",
+    "sanity"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {
