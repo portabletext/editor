@@ -7,7 +7,7 @@ import type {Editor} from '../interfaces/editor'
 import type {EngineOperation} from '../interfaces/operation'
 import type {Path} from '../interfaces/path'
 import {isNormalizing} from './is-normalizing'
-import {withoutNormalizing} from './without-normalizing'
+import {setNormalizing} from './set-normalizing'
 
 export function normalize(
   editor: Editor,
@@ -127,4 +127,15 @@ export function normalize(
       dirtyPaths = getDirtyPaths(editor)
     }
   })
+}
+
+export function withoutNormalizing(editor: Editor, fn: () => void): void {
+  const value = isNormalizing(editor)
+  setNormalizing(editor, false)
+  try {
+    fn()
+  } finally {
+    setNormalizing(editor, value)
+  }
+  normalize(editor)
 }
