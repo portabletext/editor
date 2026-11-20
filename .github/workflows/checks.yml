@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: portabletext/.github/.github/workflows/checks.yml@main
+    uses: portabletext/.github/.github/workflows/checks.yml@1883b7424522d7be9fbdb2af2c6bdd0b729c6f60
     with:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     secrets:
