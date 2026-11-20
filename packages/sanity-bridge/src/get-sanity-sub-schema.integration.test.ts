@@ -1,7 +1,7 @@
 /**
- * Studio-shaped integration suite for `getSanitySubSchema`.
+ * Sanity-shaped integration suite for `getSanitySubSchema`.
  *
- * Mirrors the realistic lookup shapes Sanity Studio's render callbacks
+ * Mirrors the realistic lookup shapes Sanity's render callbacks
  * perform: `schemaTypes.blockObjects.find((t) => t.name === block._type)`,
  * `schemaTypes.decorators.find((t) => t.value === schemaType.value)`,
  * and so on. The fixtures set up the scenarios where today's flat-bucket
@@ -31,7 +31,7 @@ function compile(
   }).get('content') as ArraySchemaType<PortableTextBlock>
 }
 
-describe('getSanitySubSchema (Studio-shaped integration)', () => {
+describe('getSanitySubSchema (Sanity-shaped integration)', () => {
   describe('container-only types at depth', () => {
     // Code-block declares its own inline-object (`codeAnnotation`) and
     // decorator (`hex`) that are only registered inside the code-block's
@@ -103,7 +103,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
         {_key: 'ca1'},
       ])
 
-      // Studio's `InlineObject.tsx` does:
+      // Sanity's `InlineObject.tsx` does:
       //   schemaTypes.inlineObjects.find((t) => t.name === inline._type)
       expect(
         schemaTypes.inlineObjects.find((t) => t.name === 'codeAnnotation')
@@ -129,7 +129,7 @@ describe('getSanitySubSchema (Studio-shaped integration)', () => {
         {_key: 's1'},
       ])
 
-      // Studio's `Decorator.tsx` does:
+      // Sanity's `Decorator.tsx` does:
       //   schemaTypes.decorators.find((d) => d.value === schemaType.value)
       expect(
         schemaTypes.decorators.find((d) => d.value === 'hex')?.value,

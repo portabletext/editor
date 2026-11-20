@@ -453,8 +453,8 @@ function drain(conversion: Conversion): boolean {
       // Circuit breaker: legal schemas stay far below this (the output
       // of n mutually-embedding types is inherently O(n^2) entries, so
       // a 3,200-type graph legitimately drains ~10M work items; 100M
-      // corresponds to a schema no Studio could load anyway). Failing
-      // with a diagnostic beats exhausting the heap in a Studio tab if
+      // corresponds to a schema Sanity could not load anyway). Failing
+      // with a diagnostic beats exhausting the heap in the host app if
       // a future schema shape finds a cycle the cuts miss.
       throw new Error(
         `Portable Text schema conversion exceeded ${steps} work items; ` +

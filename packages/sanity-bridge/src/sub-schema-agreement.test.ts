@@ -13,7 +13,7 @@ import {sanitySchemaToPortableTextSchema} from './sanity-schema-to-portable-text
  * raw Sanity types versus the expanded Portable Text schema. Nothing
  * forces them to agree except these tests: a change to container
  * resolution on either side that drifts the answers would let the
- * editor permit one thing at a position while Studio validates
+ * editor permit one thing at a position while Sanity validates
  * another, with both sides looking self-consistently correct.
  *
  * The correspondence relation: Portable Text names map to Sanity

@@ -325,7 +325,7 @@ describe('sanitySchemaToPortableTextSchema: same name in multiple positions', ()
     // `{override: string}` instead. `Schema.compile()` accepts this
     // configuration without throwing and without emitting a console
     // warning (Sanity's validation layer flags this kind of conflict
-    // in Studio's UI / lint CLI, not at compile time, so the converter
+    // in Sanity's UI / lint CLI, not at compile time, so the converter
     // sees no signal).
     //
     // The converter walks the inline as inline (it has local fields

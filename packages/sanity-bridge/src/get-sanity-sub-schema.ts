@@ -27,7 +27,7 @@ import {
  *
  * The walk is structured against the raw Sanity `ArraySchemaType` and
  * value tree directly, without consulting PTE's runtime `Containers`
- * map, so it can run from anywhere a Studio integration sits.
+ * map, so it can run from anywhere a Sanity integration sits.
  *
  * A "Portable-Text-shaped" `of` is an array declaration that includes
  * a `{type: 'block'}` member. Text blocks' `children` field carries a
