@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/repair",
-  "version": "1.0.4",
+  "version": "2.0.0-next.0",
   "description": "Structural corrections for Portable Text values",
   "keywords": [
     "portabletext",

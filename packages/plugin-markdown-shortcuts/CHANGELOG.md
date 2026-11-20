@@ -1,5 +1,37 @@
 # Changelog
 
+## 10.0.0-next.0
+
+### Major Changes
+
+- [#3712](https://github.com/portabletext/editor/pull/3712) [`f8f688b`](https://github.com/portabletext/editor/commit/f8f688bf946890c77523a7962be793143010317e) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove the deprecated `schema` and `level` arguments from the config callbacks
+  
+  The callbacks of `MarkdownShortcutsPlugin` (`blockquoteStyle`, `defaultStyle`, `headingStyle`, `unorderedList`, `orderedList`, `boldDecorator`, `codeDecorator`, `italicDecorator` and `strikeThroughDecorator`) no longer receive a top-level `schema`. Read `context.schema` instead, which is the schema at the caret. `headingStyle` no longer receives a top-level `level` either, so read `props.level`.
+  
+  ```tsx
+  // Before
+  <MarkdownShortcutsPlugin
+    headingStyle={({schema, level}) =>
+      schema.styles.find((style) => style.name === `h${level}`)?.name
+    }
+  />
+  
+  // After
+  <MarkdownShortcutsPlugin
+    headingStyle={({context, props}) =>
+      context.schema.styles.find((style) => style.name === `h${props.level}`)
+        ?.name
+    }
+  />
+  ```
+
+### Patch Changes
+
+- Updated dependencies [[`216fb52`](https://github.com/portabletext/editor/commit/216fb5210eec66f79e6c070b218be1e23aa05f59), [`91d91a4`](https://github.com/portabletext/editor/commit/91d91a4af5e4a4c7f97eb340981a84afe43770c8), [`a8e5f6b`](https://github.com/portabletext/editor/commit/a8e5f6bef83793ed7885d5f61221eead8d79e90a), [`77b4cda`](https://github.com/portabletext/editor/commit/77b4cda5764d7b392d710c6578060d623b9e5507), [`be03281`](https://github.com/portabletext/editor/commit/be03281252910647eb369d18092bcfaa164cdea7), [`9758101`](https://github.com/portabletext/editor/commit/97581019a8024c583ea12e4ee4f998ec2aff2197), [`c822e68`](https://github.com/portabletext/editor/commit/c822e68640ec33342bb790909193300bbc3a330a), [`e4e4d1b`](https://github.com/portabletext/editor/commit/e4e4d1bc8cff842e5e4176979479a4bafc5061a8), [`0bab687`](https://github.com/portabletext/editor/commit/0bab6879efdd0443bb5d9295130927e64799190c), [`b32d78a`](https://github.com/portabletext/editor/commit/b32d78acdbb248a0cf038482f317ca40dfd1bc54), [`b3125b6`](https://github.com/portabletext/editor/commit/b3125b657a0b1d186b0a22f9224cea3db93c385c), [`e99d949`](https://github.com/portabletext/editor/commit/e99d9493249eb80078033527e523b7339340b2d4), [`b993cec`](https://github.com/portabletext/editor/commit/b993cec04e90ffaf0c44292a2671f6d6f026d5c9), [`0b3524c`](https://github.com/portabletext/editor/commit/0b3524c6aeb6bb0705de1d7b742708056b5c9509)]:
+  - @portabletext/editor@9.0.0-next.0
+  - @portabletext/plugin-character-pair-decorator@10.0.0-next.0
+  - @portabletext/plugin-input-rule@7.0.30-next.0
+
 ## 9.0.29
 
 ### Patch Changes
