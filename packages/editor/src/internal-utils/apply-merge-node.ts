@@ -3,11 +3,9 @@ import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import type {InsertOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
-import type {Range} from '../engine/interfaces/range'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {pathEquals} from '../engine/path/path-equals'
 import {isBackwardRange} from '../engine/range/is-backward-range'
-import {isRange} from '../engine/range/is-range'
 import {getNode} from '../traversal/get-node'
 import {getSibling} from '../traversal/get-sibling'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -118,79 +116,6 @@ export function applyMergeNode(
   // Save the pre-transformed selection
   const savedSelection = editor.snapshot.context.selection
 
-  // Pre-transform DOM-layer pending state with merge semantics, then
-  // suppress transforms during the decomposed operations by clearing them.
-  // These properties are added by the DOM plugin at runtime.
-  const editorAny = editor as unknown as Record<string, unknown>
-  const savedPendingDiffs = editorAny['pendingDiffs']
-  const savedPendingSelection = editorAny['pendingSelection']
-  const savedPendingAction = editorAny['pendingAction']
-
-  if (Array.isArray(savedPendingDiffs) && savedPendingDiffs.length > 0) {
-    editorAny['pendingDiffs'] = savedPendingDiffs
-      .map(
-        (textDiff: {
-          diff: {start: number; end: number; text: string}
-          id: number
-          path: Path
-        }) => transformTextDiffForMerge(textDiff, path, prevKey, position),
-      )
-      .filter(Boolean)
-  }
-
-  if (
-    savedPendingSelection &&
-    typeof savedPendingSelection === 'object' &&
-    'anchor' in (savedPendingSelection as Record<string, unknown>) &&
-    'focus' in (savedPendingSelection as Record<string, unknown>)
-  ) {
-    const sel = savedPendingSelection as Range
-    const anchor = transformPointForMerge(sel.anchor, path, prevKey, position)
-    const focus = transformPointForMerge(sel.focus, path, prevKey, position)
-    editorAny['pendingSelection'] = anchor && focus ? {anchor, focus} : null
-  }
-
-  if (
-    savedPendingAction &&
-    typeof savedPendingAction === 'object' &&
-    'at' in (savedPendingAction as Record<string, unknown>)
-  ) {
-    const action = savedPendingAction as {at: Point | Range}
-    if ('offset' in action.at && typeof action.at.offset === 'number') {
-      const at = transformPointForMerge(
-        action.at as Point,
-        path,
-        prevKey,
-        position,
-      )
-      editorAny['pendingAction'] = at ? {...action, at} : null
-    } else if (isRange(action.at)) {
-      const anchor = transformPointForMerge(
-        action.at.anchor,
-        path,
-        prevKey,
-        position,
-      )
-      const focus = transformPointForMerge(
-        action.at.focus,
-        path,
-        prevKey,
-        position,
-      )
-      editorAny['pendingAction'] =
-        anchor && focus ? {...action, at: {anchor, focus}} : null
-    }
-  }
-
-  // Save the pre-transformed pending state and clear it so decomposed
-  // operations don't double-transform it
-  const preTransformedPendingDiffs = editorAny['pendingDiffs']
-  const preTransformedPendingSelection = editorAny['pendingSelection']
-  const preTransformedPendingAction = editorAny['pendingAction']
-  editorAny['pendingDiffs'] = []
-  editorAny['pendingSelection'] = null
-  editorAny['pendingAction'] = null
-
   try {
     withoutNormalizing(editor, () => {
       if (isSpan({schema: editor.snapshot.context.schema}, node)) {
@@ -266,49 +191,6 @@ export function applyMergeNode(
     for (const ref of rangeRefs) {
       editor.rangeRefs.add(ref)
     }
-
-    // Restore pre-transformed pending state
-    editorAny['pendingDiffs'] = preTransformedPendingDiffs
-    editorAny['pendingSelection'] = preTransformedPendingSelection
-    editorAny['pendingAction'] = preTransformedPendingAction
-  }
-}
-
-/**
- * Transform a text diff for a merge operation.
- */
-function transformTextDiffForMerge(
-  textDiff: {
-    diff: {start: number; end: number; text: string}
-    id: number
-    path: Path
-  },
-  mergePath: Path,
-  prevKey: string,
-  position: number,
-): {
-  diff: {start: number; end: number; text: string}
-  id: number
-  path: Path
-} | null {
-  const {path, diff, id} = textDiff
-
-  if (!pathEquals(mergePath, path)) {
-    const newPath = transformPathForMerge(path, mergePath, prevKey, position)
-    if (!newPath) {
-      return null
-    }
-    return {diff, id, path: newPath}
-  }
-
-  return {
-    diff: {
-      start: diff.start + position,
-      end: diff.end + position,
-      text: diff.text,
-    },
-    id,
-    path: transformPathForMerge(path, mergePath, prevKey, position)!,
   }
 }
 
