@@ -12,7 +12,7 @@ export function applyAll<TValue>(value: TValue, patches: Array<Patch>): TValue {
 
 export default function applyPatch(value: unknown, patch: Patch) {
   if (Array.isArray(value)) {
-    return applyPatchToArray(value, patch)
+    return applyPatchToArray(value, patch, applyPatch)
   }
 
   if (typeof value === 'string') {
@@ -20,7 +20,7 @@ export default function applyPatch(value: unknown, patch: Patch) {
   }
 
   if (isObject(value)) {
-    return applyPatchToObject(value, patch)
+    return applyPatchToObject(value, patch, applyPatch)
   }
 
   if (typeof value === 'number') {
