@@ -1,14 +1,14 @@
-# studio
+# Sanity Studio test bed
 
 A Sanity Studio used as an integration test bed for the workspace
 `@portabletext/editor` package (`packages/editor` in this repo): a real
-Studio, a real workspace, the editor wired in as it would be for any
-consumer. Tests drive a real browser against a running Studio and listen
-on the Sanity mutation stream (`client.listen`, subscribed before
+Sanity Studio, a real workspace, the editor wired in as it would be for any
+consumer. Tests drive a real browser against a running Sanity Studio and
+listen on the Sanity mutation stream (`client.listen`, subscribed before
 navigating) to observe what the editor actually persists, rather than
 asserting on in-memory editor state. All families share one Sanity
 project/dataset (`e2sapjbh`/`scratch`), so the CI workflow serializes every
-run through a single concurrency group; see "CI" below.
+run through a single concurrency group. See "CI" below.
 
 Tests are organized into **families**, each a self-contained scenario
 area with its own namespaced fixtures. "Repairs" (below) is the first
@@ -32,8 +32,8 @@ pnpm --filter studio e2e               # run the full Playwright suite
 CORS on project `e2sapjbh` is configured for `http://localhost:3391`, and
 the e2e suite's `webServer` starts `sanity dev` on that port. Plain `pnpm
 dev` (no `--port`) falls back to Sanity's own default of 3333, which won't
-match CORS and collides with any other local Studio squatting that port;
-always pass `--port 3391` for manual browsing against this project.
+match CORS and collides with any other local Sanity Studio using that port.
+Always pass `--port 3391` for manual browsing against this project.
 
 `seed` and `reset` both read `SANITY_PTE_LAB_TOKEN` from `.env.local` via
 `node --env-file`, and fail loudly if it's missing.
@@ -50,9 +50,9 @@ specs read as scenario and assertions only:
 - `seed.ts`: `resetDoc(client, fixtures, id)`, client-based (re)seeding of
   one document against a family's fixture array.
 - `render-state.ts`: `openDocument(page, id)` and `waitForRenderState(page)`,
-  which tells the PTE engine mounting apart from Studio's own "Missing
-  keys" / "Non-unique keys" array-input guard screens winning the race
-  first.
+  which tells the PTE engine mounting apart from Sanity Studio's own
+  "Missing keys" / "Non-unique keys" array-input guard screens winning
+  the race first.
 - `transactions.ts`: classifiers over recorded mutations, e.g.
   `hasEditorRepairPatch` (an editor-emitted repair addresses the node by
   key: a `set`/`diffMatchPatch` on a `body[_key=="..."]...._key` path) and
@@ -81,7 +81,7 @@ pnpm --filter studio e2e
 Playwright starts `pnpm dev --port 3391` for you if nothing is already
 listening on port 3391 (`reuseExistingServer`), and authenticates the
 browser context by seeding `localStorage` with `SANITY_PTE_LAB_TOKEN`
-under the Studio's own auth-token key, so no interactive login happens.
+under Sanity Studio's own auth-token key, so no interactive login happens.
 
 - **`repair-on-load.spec.ts`**, run serially against
   `pte-lab.repairs.keyless-child` and `pte-lab.repairs.clean`:
@@ -105,24 +105,24 @@ under the Studio's own auth-token key, so no interactive login happens.
 
 Fixtures: `pte-lab.comments.*` (`scripts/seed.mjs`, `commentsFixtures`).
 Specs: `e2e/comments/inline-comments.spec.ts`. Family-local support (not
-shared with repairs) lives alongside the specs: `e2e/comments/addon-dataset.ts`
-resolves and cleans up Studio's comments addon dataset
-(`e2sapjbh`'s `scratch` gets a `scratch-comments` dataset, created lazily by
-Studio on a project's first comment), and `e2e/comments/comment-ui.ts` drives
-Studio's own inline-comment UI (the floating "Add comment" button, the
-popover's comment composer, and the range-decoration span it renders around
-commented text).
+shared with repairs) lives alongside the specs:
+`e2e/comments/addon-dataset.ts` resolves and cleans up Sanity Studio's
+comments addon dataset (`e2sapjbh`'s `scratch` gets a `scratch-comments`
+dataset, created lazily by Sanity Studio on a project's first comment), and
+`e2e/comments/comment-ui.ts` drives Sanity Studio's own inline-comment UI
+(the floating "Add comment" button, the popover's comment composer, and the
+range-decoration span it renders around commented text).
 
-This family proves Studio's inline comments still work end to end against
-this branch's `rangeDecorations` consumer: creating a comment decorates the
-selected text, and editing text next to a decorated range leaves the
-decoration wrapping exactly the original commented word.
+This family proves Sanity Studio's inline comments still work end to end
+against this branch's `rangeDecorations` consumer: creating a comment
+decorates the selected text, and editing text next to a decorated range
+leaves the decoration wrapping exactly the original commented word.
 
 - **`inline-comments.spec.ts`**:
   - **creating an inline comment decorates the selected text**: resets the
     control article and its addon-dataset comments, opens the document,
-    selects the word "bar", adds a comment through Studio's own UI, and
-    asserts a single decoration renders around exactly that word.
+    selects the word "bar", adds a comment through Sanity Studio's own UI,
+    and asserts a single decoration renders around exactly that word.
   - **the comment highlight tracks edits**: same setup, then places the
     caret at the start of the commented word and types two characters, and
     asserts the decoration still wraps exactly the original word rather
@@ -131,17 +131,17 @@ decoration wrapping exactly the original commented word.
 ### The editor handle (test instrumentation)
 
 The workspace config mounts `TestEditorHandlePlugins`
-(`schemaTypes/test-editor-handle.tsx`) through Studio's
-`form.components.portableText.plugins` slot, which Studio renders inside
-the input's `EditorProvider`. It renders the default plugins unchanged
+(`schemaTypes/test-editor-handle.tsx`) through Sanity Studio's
+`form.components.portableText.plugins` slot, which Sanity Studio renders
+inside the input's `EditorProvider`. It renders the default plugins unchanged
 and parks the field's editor instance on `window.__pteLabEditor` (first
-registration wins, so Studio's comment composer, itself a Portable Text
-editor, can neither steal nor clear the handle). Specs drive the editor
+registration wins, so Sanity Studio's comment composer, itself a Portable
+Text editor, can neither steal nor clear the handle). Specs drive the editor
 through its own event API with it (`putCaretBefore` in
 `e2e/comments/comment-ui.ts` sends `focus` and `select` events computed
 from the editor's snapshot) instead of synthesizing DOM selections. This
 works because the root `pnpm.overrides` pin `sanity>@portabletext/editor`
-to the workspace package, so the handle shares Studio's React context.
+to the workspace package, so the handle shares Sanity Studio's React context.
 
 ### Environment note: `fs.watch` and this monorepo's `node_modules`
 

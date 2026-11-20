@@ -1,0 +1,127 @@
+{
+  "before": [
+    {
+      "_key": "k0",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "marks": [],
+          "text": "aaa"
+        }
+      ]
+    },
+    {
+      "_key": "k2",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k3",
+          "_type": "span",
+          "marks": [],
+          "text": "bbb"
+        }
+      ]
+    },
+    {
+      "_key": "k4",
+      "_type": "block",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k5",
+          "_type": "span",
+          "marks": [],
+          "text": "ccc"
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k4"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "block",
+          "_key": "k0",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k1",
+              "text": "aaa",
+              "marks": []
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "comment": {
+    "anchor": {
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "offset": 1
+    },
+    "focus": {
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "children",
+        {
+          "_key": "k5"
+        }
+      ],
+      "offset": 2
+    }
+  },
+  "schemaDefinition": {
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

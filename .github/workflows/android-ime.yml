@@ -8,24 +8,14 @@ name: Android IME
 # failed, an editor assertion included, or as an infrastructure failure when
 # the SDK install failed twice, the emulator never booted, adb lost the
 # device or Gboard's Japanese dictionary never loaded on the retry too. A
-# failed SDK install is retried once. This workflow is not a required check,
-# so a red job blocks nothing.
+# failed SDK install is retried once.
+#
+# The `main` ruleset requires the `Android IME` job, so every pull request
+# starts this workflow. The emulator jobs run only when `changes` matches a
+# path in its filter. Otherwise `Android IME` passes without them.
 
 on:
   pull_request:
-    paths:
-      - packages/editor/src/engine/react/components/editable.tsx
-      - packages/editor/src/engine/react/hooks/android-input-manager/**
-      - packages/editor/src/engine/react/hooks/use-track-user-input.ts
-      - packages/editor/src/engine/dom/plugin/dom-editor.ts
-      - packages/editor/src/behaviors/behavior.abstract.input.ts
-      - packages/editor/src/editor/Editable.tsx
-      - packages/editor/package.json
-      - packages/editor/android/**
-      - .github/scripts/**
-      - packages/editor/vitest.android.config.ts
-      - packages/thumbjar/**
-      - .github/workflows/android-ime.yml
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
@@ -38,11 +28,40 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      android: ${{ github.event_name != 'pull_request' || (!(startsWith(github.head_ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository) && steps.filter.outputs.android == 'true') }}
+    steps:
+      # Version Packages pull requests, from `changeset-release/main` and `changeset-release/next`, only bump
+      # versions and changelogs. Other pull requests that touch `packages/editor/package.json` still run.
+      - uses: dorny/paths-filter@v4
+        id: filter
+        if: github.event_name == 'pull_request' && !(startsWith(github.head_ref, 'changeset-release/') && github.event.pull_request.head.repo.full_name == github.repository)
+        with:
+          filters: |
+            android:
+              - packages/editor/src/engine/react/components/editable.tsx
+              - packages/editor/src/engine/react/hooks/android-input-manager/**
+              - packages/editor/src/engine/react/hooks/use-track-user-input.ts
+              - packages/editor/src/engine/dom/plugin/dom-editor.ts
+              - packages/editor/src/behaviors/behavior.abstract.input.ts
+              - packages/editor/src/editor/Editable.tsx
+              - packages/editor/package.json
+              - packages/editor/android/**
+              - .github/scripts/**
+              - packages/editor/vitest.android.config.ts
+              - packages/thumbjar/**
+              - .github/workflows/android-ime.yml
+
   emulator:
     name: Android IME (${{ matrix.suite.file }})
-    # Version Packages pull requests, from `changeset-release/main` and `changeset-release/next`, only bump
-    # versions and changelogs. Other pull requests that touch `packages/editor/package.json` still run.
-    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     # Backstops only: `thumbjar run` bounds its own work and logs the reason when it stops the work, see
     # the time budget in `packages/editor/android/README.md`. The job's cap is the sum of every
@@ -331,3 +350,25 @@ jobs:
         with:
           name: android-ime-${{ steps.suite.outputs.name }}-api${{ matrix.api }}-${{ github.run_attempt }}
           path: packages/editor/android/out/
+
+  result:
+    name: Android IME
+    needs: [changes, emulator]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CHANGES_RESULT: ${{ needs.changes.result }}
+      ANDROID_CHANGED: ${{ needs.changes.outputs.android }}
+      EMULATOR_RESULT: ${{ needs.emulator.result }}
+    steps:
+      - name: Check the emulator jobs
+        run: |
+          echo "changes: $CHANGES_RESULT, android: $ANDROID_CHANGED, emulator: $EMULATOR_RESULT"
+          test "$CHANGES_RESULT" = success
+          if [ "$ANDROID_CHANGED" = true ]; then
+            test "$EMULATOR_RESULT" = success
+          else
+            test "$ANDROID_CHANGED" = false
+            test "$EMULATOR_RESULT" = skipped
+          fi

@@ -1,0 +1,119 @@
+{
+  "scenario": "block-merge-duplicate-keys-forward",
+  "seed": "B: foo [strong:bar] baz\nB: foo [strong:bar] baz",
+  "result": "B: foo [strong:bar] baz|foo [strong:bar] baz",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@3"
+    },
+    {
+      "point": "b0.c0@4",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c1@0",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c1@1",
+      "expected": "b0@5"
+    },
+    {
+      "point": "b0.c1@2",
+      "expected": "b0@6"
+    },
+    {
+      "point": "b0.c1@3",
+      "expected": "b0@7"
+    },
+    {
+      "point": "b0.c2@0",
+      "expected": "b0@7"
+    },
+    {
+      "point": "b0.c2@1",
+      "expected": "b0@8"
+    },
+    {
+      "point": "b0.c2@2",
+      "expected": "b0@9"
+    },
+    {
+      "point": "b0.c2@3",
+      "expected": "b0@10"
+    },
+    {
+      "point": "b0.c2@4",
+      "expected": "b0@11"
+    },
+    {
+      "point": "b1.c0@0",
+      "expected": "b0@11"
+    },
+    {
+      "point": "b1.c0@1",
+      "expected": "b0@12"
+    },
+    {
+      "point": "b1.c0@2",
+      "expected": "b0@13"
+    },
+    {
+      "point": "b1.c0@3",
+      "expected": "b0@14"
+    },
+    {
+      "point": "b1.c0@4",
+      "expected": "b0@15"
+    },
+    {
+      "point": "b1.c1@0",
+      "expected": "b0@15"
+    },
+    {
+      "point": "b1.c1@1",
+      "expected": "b0@16"
+    },
+    {
+      "point": "b1.c1@2",
+      "expected": "b0@17"
+    },
+    {
+      "point": "b1.c1@3",
+      "expected": "b0@18"
+    },
+    {
+      "point": "b1.c2@0",
+      "expected": "b0@18"
+    },
+    {
+      "point": "b1.c2@1",
+      "expected": "b0@19"
+    },
+    {
+      "point": "b1.c2@2",
+      "expected": "b0@20"
+    },
+    {
+      "point": "b1.c2@3",
+      "expected": "b0@21"
+    },
+    {
+      "point": "b1.c2@4",
+      "expected": "b0@22"
+    }
+  ]
+}

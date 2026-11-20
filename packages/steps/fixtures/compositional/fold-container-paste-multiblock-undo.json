@@ -1,0 +1,461 @@
+{
+  "before": [
+    {
+      "_type": "callout",
+      "_key": "k7",
+      "content": [
+        {
+          "_key": "k0",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "marks": [],
+              "text": "fbar"
+            }
+          ]
+        },
+        {
+          "_type": "block",
+          "_key": "k16",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k14",
+              "text": "bazoo",
+              "marks": []
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        },
+        {
+          "_key": "k3",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k4",
+              "_type": "span",
+              "marks": [],
+              "text": "bar"
+            }
+          ]
+        },
+        {
+          "_key": "k5",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k6",
+              "_type": "span",
+              "marks": [],
+              "text": "baz"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_key": "k15",
+          "_type": "span",
+          "marks": [],
+          "text": ""
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k14",
+          "text": "bar",
+          "marks": []
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1 @@\n f\n-bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children",
+        {
+          "_key": "k14"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k15",
+          "text": "oo",
+          "marks": []
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children",
+        {
+          "_key": "k14"
+        },
+        "text"
+      ],
+      "value": "@@ -1,5 +1,3 @@\n baz\n-oo\n",
+      "origin": "local"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children",
+        {
+          "_key": "k14"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k17",
+          "text": "baz",
+          "marks": []
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children",
+        {
+          "_key": "k14"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +0,0 @@\n-baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "children",
+        {
+          "_key": "k17"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        },
+        "markDefs"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k16"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k15"
+        },
+        "text"
+      ],
+      "value": "@@ -0,0 +1,2 @@\n+oo\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k14"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k15"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1 +1,3 @@\n f\n+oo\n",
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "markDefs"
+      ],
+      "value": [],
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "styles": [
+      {
+        "name": "normal"
+      },
+      {
+        "name": "h1"
+      }
+    ],
+    "lists": [
+      {
+        "name": "bullet"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "image"
+      },
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "image"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

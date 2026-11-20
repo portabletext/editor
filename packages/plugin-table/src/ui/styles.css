@@ -25,9 +25,9 @@
      theme; the hit-testing adapts. */
   --pt-plugin-table-cell-padding: 8px 12px;
   /* Text in the portaled layers (menu, trash). Portals land on
-     `document.body`, outside any app font scope (Studio sets its font on
+     `document.body`, outside any app font scope (Sanity sets its font on
      `#sanity`, not `body`), so inheritance cannot deliver the host font
-     there; the token can. The default approximates modern app fonts. */
+     there. The token can. The default approximates modern app fonts. */
   --pt-plugin-table-font-family:
     system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Contrast partner rendered on top of accent-colored surfaces. */
@@ -135,7 +135,7 @@
 
 /* While a multi-cell range is active, the blue rectangle overlay stands in
    for the selection, so hide the native text-selection highlight. This is
-   structural and must beat host apps' own `::selection` styling (Studio
+   structural and must beat host apps' own `::selection` styling (Sanity
    scopes one under its text blocks at equal specificity, and whoever injects
    last would win the tie), hence the `!important`. */
 table.pt-plugin-table[data-pt-plugin-table-cell-range] ::selection {

@@ -487,7 +487,7 @@ export function Table({
 
   return (
     // The render-props `attributes` land on their own element: hosts style
-    // their block wrappers (Studio pads its PT blocks), and the chrome's
+    // their block wrappers (Sanity pads its PT blocks), and the chrome's
     // geometry (relative positioning, gutter padding) must not share an
     // element with styles it cannot control.
     <div {...attributes}>

@@ -1,0 +1,303 @@
+{
+  "scenario": "block-move",
+  "depth": "root",
+  "schema": {
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "aside",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "seed": "B: foo\nB: bar",
+  "seedValue": [
+    {
+      "style": "normal",
+      "markDefs": [],
+      "_type": "block",
+      "_key": "k0",
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "text": "foo",
+          "marks": []
+        }
+      ]
+    },
+    {
+      "style": "normal",
+      "markDefs": [],
+      "_type": "block",
+      "_key": "k2",
+      "children": [
+        {
+          "_key": "k3",
+          "_type": "span",
+          "text": "bar",
+          "marks": []
+        }
+      ]
+    }
+  ],
+  "actions": ["send {type: 'move.block down', at: block 1}"],
+  "patches": [
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k0"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "style": "normal",
+          "markDefs": [],
+          "_type": "block",
+          "_key": "k0",
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "text": "foo",
+              "marks": []
+            }
+          ]
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "mutationSizes": [2],
+  "result": "B: bar\nB: foo",
+  "resultValue": [
+    {
+      "style": "normal",
+      "markDefs": [],
+      "_type": "block",
+      "_key": "k2",
+      "children": [
+        {
+          "_key": "k3",
+          "_type": "span",
+          "text": "bar",
+          "marks": []
+        }
+      ]
+    },
+    {
+      "style": "normal",
+      "markDefs": [],
+      "_type": "block",
+      "_key": "k0",
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "text": "foo",
+          "marks": []
+        }
+      ]
+    }
+  ],
+  "editorPoints": [
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": null
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": null
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": null
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": null
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 0
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 1
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 2
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k2"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 3
+      }
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "scenario": "paste-text-multi-block",
+  "seed": "B: foo bar",
+  "result": "B: foo baz\nB: fizz|bar",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@3"
+    },
+    {
+      "point": "b0.c0@4",
+      "expected": "b1@4",
+      "todayWrong": "b0@4",
+      "reason": "the paste point. Forward affinity follows text inserted at the point (as `type-text` and `paste-text-single-block` do) and attaches to the character after it (as `block-split` sends its split point to b1@0): after `baz\\n\\nfizz`, before `bar` = b1@4, where the editor puts its own selection. Today leaves it at b0@4, before the pasted text."
+    },
+    {
+      "point": "b0.c0@5",
+      "expected": "b1@5",
+      "todayWrong": "b0@4",
+      "reason": "seed `foo bar`, paste `baz\\n\\nfizz` at 4: result `foo baz` / `fizzbar`. Seed offset 5 is inside `bar`, which ends up after `fizz` in the new block: b1@4+1. Today collapses it to b0@4."
+    },
+    {
+      "point": "b0.c0@6",
+      "expected": "b1@6",
+      "todayWrong": "b0@4",
+      "reason": "`bar` offset 2 -> new block, after `fizz`"
+    },
+    {
+      "point": "b0.c0@7",
+      "expected": "b1@7",
+      "todayWrong": "b0@4",
+      "reason": "end of `bar` -> end of the new block"
+    }
+  ]
+}

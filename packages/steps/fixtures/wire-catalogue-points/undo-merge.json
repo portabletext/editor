@@ -1,0 +1,43 @@
+{
+  "scenario": "undo-merge",
+  "seed": "B: foobar",
+  "result": "B: foo\nB: |bar",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b1@0",
+      "todayWrong": "b0@3",
+      "reason": "the split point between `foo` and `bar`. Undo re-splits there; forward affinity attaches the point to `b`, the same rule that sends `block-split`'s split point to b1@0. Today keeps b0@3."
+    },
+    {
+      "point": "b0.c0@4",
+      "expected": "b1@1",
+      "todayWrong": "b0@3",
+      "reason": "seed `foobar` (after the merge), undo restores `foo` / `bar`. Seed offset 4 is inside `bar`, which returns to block 2: b1@1. Today clamps it to b0@3, the end of `foo`."
+    },
+    {
+      "point": "b0.c0@5",
+      "expected": "b1@2",
+      "todayWrong": "b0@3",
+      "reason": "`bar` offset 2 -> restored block b1"
+    },
+    {
+      "point": "b0.c0@6",
+      "expected": "b1@3",
+      "todayWrong": "b0@3",
+      "reason": "end of `bar` -> end of the restored block"
+    }
+  ]
+}
