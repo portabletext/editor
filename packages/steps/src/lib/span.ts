@@ -1,3 +1,4 @@
+import {isNonArrayObject as isRecord} from '@portabletext/traversal'
 import type {Path} from '@portabletext/patches'
 import {
   compileSchema,
@@ -9,7 +10,6 @@ import {
 } from '@portabletext/schema'
 import type {ArrayKeyCache} from './array-index'
 import {getValue} from './get-value'
-import {isRecord} from './is-record'
 
 export const defaultSchema = compileSchema(defineSchema({}))
 

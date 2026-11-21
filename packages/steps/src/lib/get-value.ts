@@ -1,6 +1,6 @@
+import {isNonArrayObject as isRecord} from '@portabletext/traversal'
 import type {Path} from '@portabletext/patches'
 import {arrayIndex, type ArrayKeyCache} from './array-index'
-import {isRecord} from './is-record'
 
 export function getValue(
   root: unknown,

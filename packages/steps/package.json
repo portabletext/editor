@@ -52,6 +52,7 @@
   "dependencies": {
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
+    "@portabletext/traversal": "workspace:^",
     "@sanity/diff-match-patch": "catalog:"
   },
   "devDependencies": {

@@ -1,9 +1,7 @@
+import {isNonArrayObject as isRecord, pathContains, pathEquals} from '@portabletext/traversal'
 import {isSpan, isTextBlock, type Schema} from '@portabletext/schema'
 import type {StepPath} from '../step-mapper'
 import {arrayIndex, getArrayKeys, type ArrayKeyCache} from './array-index'
-import {isRecord} from './is-record'
-import {pathContains} from './path-contains'
-import {pathEquals} from './path-equals'
 import {schemaForField} from './span'
 
 export function arraySegments(

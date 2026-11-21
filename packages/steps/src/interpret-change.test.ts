@@ -11,11 +11,10 @@ import {
   type SchemaDefinition,
 } from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import {isNonArrayObject as isRecord, pathEquals} from '@portabletext/traversal'
 import {makePatches, stringifyPatches} from '@sanity/diff-match-patch'
 import {describe, expect, test} from 'vitest'
 import {interpretChange, mapPoint, mapRange, type Point} from './index'
-import {isRecord} from './lib/is-record'
-import {pathEquals} from './lib/path-equals'
 import type {StepPath} from './step-mapper'
 
 type Capture = {

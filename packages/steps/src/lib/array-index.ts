@@ -1,6 +1,5 @@
+import {isKeyedSegment, isNonArrayObject as isRecord} from '@portabletext/traversal'
 import type {KeyedSegment, PathSegment} from '@portabletext/patches'
-import {isKeyedSegment} from './is-keyed-segment'
-import {isRecord} from './is-record'
 
 export function arrayIndex(
   value: ReadonlyArray<unknown>,
