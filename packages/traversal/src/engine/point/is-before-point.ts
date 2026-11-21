@@ -1,0 +1,11 @@
+import type {Node} from '../interfaces/node'
+import type {Point} from '../interfaces/point'
+import {comparePoints} from './compare-points'
+
+export function isBeforePoint(
+  point: Point,
+  another: Point,
+  root: {value: Array<Node>},
+): boolean {
+  return comparePoints(point, another, root) === -1
+}

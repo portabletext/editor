@@ -1,0 +1,291 @@
+import {compileSchema} from '@portabletext/schema'
+import {describe, expect, test} from 'vitest'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../../test-utils/text-block-depths'
+import {getAncestors} from './get-ancestors'
+import {createNodeTraversalTestbed} from './node-traversal-testbed'
+import {resolveTestbedContainers} from './node-traversal-testbed'
+
+describe(getAncestors.name, () => {
+  const testbed = createNodeTraversalTestbed()
+
+  test('empty path returns empty array', () => {
+    expect(getAncestors(testbed.snapshot, [])).toEqual([])
+  })
+
+  test('top-level block has no ancestors', () => {
+    expect(getAncestors(testbed.snapshot, [{_key: 'k3'}])).toEqual([])
+  })
+
+  test('span in text block has one ancestor', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k3'},
+      'children',
+      {_key: 'k1'},
+    ])
+    expect(ancestors).toHaveLength(1)
+    expect(ancestors.at(0)?.node).toBe(testbed.textBlock1)
+    expect(ancestors.at(0)?.path).toEqual([{_key: 'k3'}])
+  })
+
+  test('span in cell block has four ancestors', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+      'content',
+      {_key: 'k14'},
+      'children',
+      {_key: 'k12'},
+    ])
+    expect(ancestors).toHaveLength(4)
+    expect(ancestors.at(0)?.node).toBe(testbed.cellBlock1)
+    expect(ancestors.at(0)?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+      'content',
+      {_key: 'k14'},
+    ])
+    expect(ancestors.at(1)?.node).toBe(testbed.cell1)
+    expect(ancestors.at(1)?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+    ])
+    expect(ancestors.at(2)?.node).toBe(testbed.row1)
+    expect(ancestors.at(2)?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+    ])
+    expect(ancestors.at(3)?.node).toBe(testbed.table)
+    expect(ancestors.at(3)?.path).toEqual([{_key: 'k26'}])
+  })
+
+  test('block in cell has three ancestors', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+      'content',
+      {_key: 'k14'},
+    ])
+    expect(ancestors).toHaveLength(3)
+    expect(ancestors.at(0)?.node).toBe(testbed.cell1)
+    expect(ancestors.at(0)?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+    ])
+    expect(ancestors.at(1)?.node).toBe(testbed.row1)
+    expect(ancestors.at(1)?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+    ])
+    expect(ancestors.at(2)?.node).toBe(testbed.table)
+    expect(ancestors.at(2)?.path).toEqual([{_key: 'k26'}])
+  })
+
+  test('cell has two ancestors', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+    ])
+    expect(ancestors).toHaveLength(2)
+    expect(ancestors.at(0)?.node).toBe(testbed.row1)
+    expect(ancestors.at(0)?.path).toEqual([
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+    ])
+    expect(ancestors.at(1)?.node).toBe(testbed.table)
+    expect(ancestors.at(1)?.path).toEqual([{_key: 'k26'}])
+  })
+
+  test('row has one ancestor', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+    ])
+    expect(ancestors).toHaveLength(1)
+    expect(ancestors.at(0)?.node).toBe(testbed.table)
+    expect(ancestors.at(0)?.path).toEqual([{_key: 'k26'}])
+  })
+
+  test('code span has two ancestors', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k11'},
+      'code',
+      {_key: 'k8'},
+      'children',
+      {_key: 'k7'},
+    ])
+    expect(ancestors).toHaveLength(2)
+    expect(ancestors.at(0)?.node).toBe(testbed.codeLine1)
+    expect(ancestors.at(0)?.path).toEqual([{_key: 'k11'}, 'code', {_key: 'k8'}])
+    expect(ancestors.at(1)?.node).toBe(testbed.codeBlock)
+    expect(ancestors.at(1)?.path).toEqual([{_key: 'k11'}])
+  })
+
+  test('code line has one ancestor', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k11'},
+      'code',
+      {_key: 'k8'},
+    ])
+    expect(ancestors).toHaveLength(1)
+    expect(ancestors.at(0)?.node).toBe(testbed.codeBlock)
+    expect(ancestors.at(0)?.path).toEqual([{_key: 'k11'}])
+  })
+
+  test('ancestors are ordered from nearest to furthest', () => {
+    const ancestors = getAncestors(testbed.snapshot, [
+      {_key: 'k26'},
+      'rows',
+      {_key: 'k21'},
+      'cells',
+      {_key: 'k17'},
+      'content',
+      {_key: 'k14'},
+      'children',
+      {_key: 'k12'},
+    ])
+    const paths = ancestors.map((ancestor) => ancestor.path)
+    expect(paths).toEqual([
+      [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+      ],
+      [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k17'}],
+      [{_key: 'k26'}, 'rows', {_key: 'k21'}],
+      [{_key: 'k26'}],
+    ])
+  })
+})
+
+describe(`${getAncestors.name} with a compact path to a text block`, () => {
+  const schema = compileSchema(textBlockDepthsSchemaDefinition)
+  const containers = resolveTestbedContainers(schema, textBlockDepthsContainers)
+
+  test('at the root, a compact span path (indexed) returns no ancestors', () => {
+    const value = [
+      {
+        _type: 'block',
+        _key: 'b0',
+        children: [
+          {_type: 'span', _key: 's0', text: 'foo', marks: []},
+          {_type: 'span', _key: 's1', text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getAncestors(snapshot, [0, 0])).toEqual([])
+  })
+
+  test('inside a callout, a compact span path (indexed) returns no ancestors', () => {
+    const value = [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getAncestors(snapshot, [0, 'content', 0, 0])).toEqual([])
+  })
+
+  test('inside a callout inside a callout, a compact span path (indexed) returns no ancestors', () => {
+    const value = [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getAncestors(snapshot, [0, 'content', 0, 'content', 0, 0])).toEqual(
+      [],
+    )
+  })
+
+  test('inside a field with its own sub-schema, a compact span path (indexed) returns no ancestors', () => {
+    const value = [
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getAncestors(snapshot, [0, 'body', 0, 0])).toEqual([])
+  })
+})

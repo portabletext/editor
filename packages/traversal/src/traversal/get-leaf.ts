@@ -1,0 +1,70 @@
+import type {PortableTextBlock, PortableTextSpan} from '@portabletext/schema'
+import type {Node} from '../engine/interfaces/node'
+import type {Path} from '../engine/interfaces/path'
+import type {Containers} from '../schema/container-types'
+import {getChildren} from './get-children'
+import {getNode} from './get-node'
+import type {TraversalSnapshot} from './traversal-snapshot'
+
+/**
+ * Get the deepest leaf node starting from a path, walking toward either the
+ * start or end edge. A leaf is any node that has no children according to the
+ * traversal context.
+ *
+ * @public
+ */
+export function getLeaf(
+  snapshot: TraversalSnapshot & {context: {containers: Containers}},
+  path: Path,
+  options: {edge: 'start' | 'end'},
+): {node: PortableTextBlock | PortableTextSpan; path: Path} | undefined
+/** @public */
+export function getLeaf(
+  snapshot: TraversalSnapshot,
+  path: Path,
+  options: {edge: 'start' | 'end'},
+): {node: Node; path: Path} | undefined
+export function getLeaf(
+  snapshot: TraversalSnapshot,
+  path: Path,
+  options: {edge: 'start' | 'end'},
+): {node: Node; path: Path} | undefined {
+  const {edge} = options
+
+  let currentPath = path
+
+  // If starting from root (empty path), descend into first/last child
+  if (currentPath.length === 0) {
+    const children = getChildren(snapshot, [])
+    if (children.length === 0) {
+      return undefined
+    }
+    const firstOrLast = edge === 'end' ? children.at(-1)! : children.at(0)!
+    const nodeChildren = getChildren(snapshot, firstOrLast.path)
+    if (nodeChildren.length === 0) {
+      return firstOrLast
+    }
+    currentPath = firstOrLast.path
+  } else {
+    // Check if the node at path is already a leaf
+    const entry = getNode(snapshot, currentPath)
+    if (!entry) {
+      return undefined
+    }
+    const children = getChildren(snapshot, currentPath)
+    if (children.length === 0) {
+      return entry
+    }
+  }
+
+  // Descend to deepest leaf
+  while (true) {
+    const children = getChildren(snapshot, currentPath)
+    if (children.length === 0) {
+      const entry = getNode(snapshot, currentPath)
+      return entry ?? undefined
+    }
+    const child = edge === 'end' ? children.at(-1)! : children.at(0)!
+    currentPath = child.path
+  }
+}
