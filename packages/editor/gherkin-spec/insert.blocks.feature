@@ -17,8 +17,13 @@ Feature: Insert Blocks
       | "after"   | "none"    | "B: baz\|;;B: foo;;B: bar" |
       | "after"   | "start"   | "B:;;B: baz\|foo;;B: bar"  |
       | "after"   | "end"     | "B:;;B: foo;;B: barbaz\|"  |
-      | "auto"    | "none"    | "B: foo;;B: bar"           |
       | "auto"    | "start"   | "B: baz\|foo;;B: bar"      |
+
+  Scenario: Inserting blocks at auto placement on an empty editor without selecting them
+    When the editor is focused
+    And "foo|bar" is inserted at "auto" and selected at the "none"
+    Then nothing is selected
+    And the editor state is "B: foo;;B: bar"
 
   Scenario Outline: Inserting block objects an empty editor
     When "{image}" is inserted at <placement>
