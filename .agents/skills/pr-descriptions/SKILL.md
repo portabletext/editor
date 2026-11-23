@@ -112,7 +112,7 @@ This is the earned-length case (a factorial blow-up in a public
 conversion path), not the default fix-PR length; the default is #558
 below.
 
-> **fix(sanity-bridge): avoid combinatorial blow-up converting mutually-embedding types**
+> **fix: avoid combinatorial blow-up converting mutually-embedding types**
 >
 > While upgrading our studio from v4 to v5 we hit a complete freeze: opening any document with a portable text field would pin the main thread until the tab crashed. No errors, nothing in the console. We eventually traced it to `sanitySchemaToPortableTextSchema`.
 >
@@ -141,7 +141,7 @@ and it **volunteers a behavioral change nobody would have caught in review**.
 
 ## Exemplar: short fix PR, two paragraphs (#558, merged)
 
-> **fix(perf): stream the initial value into the editor**
+> **fix: stream the initial value into the editor**
 >
 > If the initial value is thousands of blocks long, it will block the main thread
 > while syncing. Therefore, we now stream the initial value, making the process
