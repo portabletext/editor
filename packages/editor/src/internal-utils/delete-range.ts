@@ -1,6 +1,6 @@
 import {after} from '../engine/editor/after'
 import {before} from '../engine/editor/before'
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import type {Range} from '../engine/interfaces/range'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'

@@ -1,5 +1,5 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import type {InsertOperation} from '../engine/interfaces/operation'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'

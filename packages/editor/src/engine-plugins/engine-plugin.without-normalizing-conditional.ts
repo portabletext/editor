@@ -1,4 +1,4 @@
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import type {Editor} from '../engine/interfaces/editor'
 
 export function withoutNormalizingConditional(
