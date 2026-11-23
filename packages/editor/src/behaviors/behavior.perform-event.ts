@@ -4,8 +4,14 @@ import type {EditorSchema} from '../editor/editor-schema'
 import {createEditorSnapshot} from '../editor/editor-snapshot'
 import {withPerformingBehaviorOperation} from '../engine-plugins/engine-plugin.performing-behavior-operation'
 import {withoutNormalizingConditional} from '../engine-plugins/engine-plugin.without-normalizing-conditional'
+import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
+import {
+  prepareInsertBlocks,
+  prepareInsertBlocksOperation,
+  type InsertBlocksPreparation,
+} from '../operations/operation.insert.blocks'
 import {performOperation} from '../operations/operation.perform'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {defaultKeyGenerator} from '../utils/key-generator'
@@ -108,6 +114,23 @@ export function performEvent({
       `(${mode}:${eventCategory(event)})`,
       safeStringify(event, 2),
     )
+  }
+
+  if (
+    mode === 'execute' &&
+    event.type === 'insert.blocks' &&
+    prepareInsertBlocks in event
+  ) {
+    withPerformingBehaviorOperation(editor, () => {
+      withoutNormalizing(editor, () => {
+        prepareInsertBlocksOperation(
+          editor,
+          event,
+          event[prepareInsertBlocks] as InsertBlocksPreparation,
+        )
+      })
+    })
+    return
   }
 
   const eventBehaviors = [
@@ -276,7 +299,14 @@ export function performEvent({
 
       if (
         !undoStepCreated &&
-        actions.some((action) => action.type === 'execute')
+        actions.some(
+          (action) =>
+            action.type === 'execute' &&
+            !(
+              action.event.type === 'insert.blocks' &&
+              prepareInsertBlocks in action.event
+            ),
+        )
       ) {
         // Since at least one action is about to `execute` changes in the editor,
         // we set up a new undo step.

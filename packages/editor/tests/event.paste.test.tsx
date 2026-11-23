@@ -1176,6 +1176,152 @@ describe('event.clipboard.paste', () => {
   })
 })
 
+test('Scenario: onPaste returning blocks over the last two paragraphs uses the pasted block `_key` values', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'h3',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: '1', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'h3',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: '2', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'P3', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'P4', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_key: keyGenerator(), _type: 'span', text: 'Q1', marks: []},
+        {_key: keyGenerator(), _type: 'span', text: 'te', marks: ['code']},
+        {_key: keyGenerator(), _type: 'span', text: 'xt', marks: []},
+      ],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'P2', marks: []}],
+    },
+  ]
+  const pastedBlocks = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_key: keyGenerator(), _type: 'span', text: 'Q1text', marks: []},
+      ],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'Q2', marks: []}],
+    },
+  ]
+  const {editor, locator} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: {
+      styles: [{name: 'normal'}, {name: 'h3'}],
+      decorators: [{name: 'code'}],
+    },
+    editableProps: {onPaste: () => Promise.resolve({insert: pastedBlocks})},
+  })
+  await userEvent.click(locator)
+  const at = {
+    anchor: {path: [{_key: 'k8'}, 'children', {_key: 'k9'}], offset: 0},
+    focus: {path: [{_key: 'k12'}, 'children', {_key: 'k13'}], offset: 2},
+  }
+  editor.send({type: 'select', at})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...at,
+      backward: false,
+    })
+  })
+  const clipboardData = new DataTransfer()
+  clipboardData.setData('text/plain', 'Q1\n\nQ2')
+  locator.element().dispatchEvent(
+    new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData,
+    }),
+  )
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        style: 'h3',
+        markDefs: [],
+        children: [{_key: 'k1', _type: 'span', text: '1', marks: []}],
+      },
+      {
+        _key: 'k2',
+        _type: 'block',
+        style: 'h3',
+        markDefs: [],
+        children: [{_key: 'k3', _type: 'span', text: '2', marks: []}],
+      },
+      {
+        _key: 'k4',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k5', _type: 'span', text: 'P3', marks: []}],
+      },
+      {
+        _key: 'k6',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k7', _type: 'span', text: 'P4', marks: []}],
+      },
+      {
+        _key: 'k14',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k15', _type: 'span', text: 'Q1text', marks: []}],
+      },
+      {
+        _key: 'k16',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k17', _type: 'span', text: 'Q2', marks: []}],
+      },
+    ])
+  })
+})
+
 function textBlock(blockKey: string, spanKey: string, text: string) {
   return {
     _type: 'block',

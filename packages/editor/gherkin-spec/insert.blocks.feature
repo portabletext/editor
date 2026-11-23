@@ -136,3 +136,44 @@ Feature: Insert Blocks
       | "B: existing"          | "is" is selected          | "end"           | "B: exfoo [@link:bar] baz\|ting"  |
       | "B: existing;;B: text" | "ingte" is selected       | "start"         | "B: exist\|foo [@link:bar] bazxt" |
       | "B: existing;;B: text" | "ingte" is selected       | "end"           | "B: existfoo [@link:bar] baz\|xt" |
+
+  Scenario: Replacing an expanded root selection with select start
+    Given the editor state is "B: foo;;B: bar;;B: baz;;B: foo"
+    When the selection is "B: f^oo;;B: ba|r;;B: baz;;B: foo"
+    And "bar|baz" is inserted at "auto" and selected at the "start"
+    Then the editor state is "B: f|bar;;B: bazr;;B: baz;;B: foo"
+
+  Scenario: Replacing an expanded root selection with select none
+    Given the editor state is "B: foo;;B: bar;;B: baz;;B: foo"
+    When the selection is "B: f^oo;;B: ba|r;;B: baz;;B: foo"
+    And "bar|baz" is inserted at "auto" and selected at the "none"
+    Then the editor state is "B: f|bar;;B: bazr;;B: baz;;B: foo"
+
+  Scenario: Replacing an expanded root selection with select none backward
+    Given the editor state is "B: foo;;B: bar;;B: baz;;B: foo"
+    When the selection is "B: foo;;B: b|ar;;B: ba^z;;B: foo"
+    And "bar|baz" is inserted at "auto" and selected at the "none"
+    Then the editor state is "B: foo;;B: b|bar;;B: bazz;;B: foo"
+
+  Scenario: Empty blocks preserve an expanded selection
+    Given the editor state is "B: foo;;B: bar;;B: baz"
+    When the selection is "B: f^oo;;B: bar;;B: baz|"
+    And blocks are inserted at "auto" and selected at the "end"
+      ```
+      []
+      ```
+    Then the editor state is "B: f^oo;;B: bar;;B: baz|"
+
+  Scenario Outline: Replacing selection shapes with several blocks
+    Given the editor state is <before>
+    When the selection is <selection>
+    And "foo|bar" is inserted at "auto"
+    Then the editor state is <after>
+
+    Examples:
+      | before                                                                                    | selection                                                                                    | after                                                                                |
+      | "B style=\"h3\": foo;;B: foo[strong:bar]baz;;B: bar;;B style=\"h3\": bar;;B: baz;;B: foo" | "B style=\"h3\": foo;;B: \|foo[strong:bar]baz;;B: bar^;;B style=\"h3\": bar;;B: baz;;B: foo" | "B style=\"h3\": foo;;B: foo;;B: bar\|;;B style=\"h3\": bar;;B: baz;;B: foo"         |
+      | "B style=\"h3\": foo;;B style=\"h3\": bar;;B: baz;;B: foo;;B: foo[strong:bar]baz;;B: bar" | "B style=\"h3\": foo;;B style=\"h3\": bar;;B: baz;;B: foo;;B: \|foo[strong:bar]baz;;B: bar^" | "B style=\"h3\": foo;;B style=\"h3\": bar;;B: baz;;B: foo;;B: foo;;B: bar\|"         |
+      | "B style=\"h3\": foo;;B: foo[strong:bar]baz;;B: bar;;B style=\"h3\": bar;;B: baz;;B: foo" | "B style=\"h3\": foo;;B: ^foo[strong:bar]baz;;B: bar\|;;B style=\"h3\": bar;;B: baz;;B: foo" | "B style=\"h3\": foo;;B: foo;;B: bar\|;;B style=\"h3\": bar;;B: baz;;B: foo"         |
+      | "B style=\"h3\": foo;;B: foo[strong:bar]baz;;B: bar;;B style=\"h3\": bar;;B: baz;;B: foo" | "B style=\"h3\": foo;;B: ^foo[strong:bar]baz\|;;B: bar;;B style=\"h3\": bar;;B: baz;;B: foo" | "B style=\"h3\": foo;;B: foo;;B: bar\|;;B: bar;;B style=\"h3\": bar;;B: baz;;B: foo" |
+      | "B style=\"h3\": foo;;B style=\"h3\": bar;;B: baz;;B: foo;;B: foo[strong:bar]baz;;B: bar" | "B style=\"h3\": foo;;B style=\"h3\": bar;;B: baz;;B: foo;;B: ^foo[strong:bar]baz\|;;B: bar" | "B style=\"h3\": foo;;B style=\"h3\": bar;;B: baz;;B: foo;;B: foo;;B: bar\|;;B: bar" |

@@ -3568,3 +3568,123 @@ describe('event.drag.drop', () => {
     })
   })
 })
+
+test('Scenario: One undo restores an internal two-block drop over an expanded selection', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'baz', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+    ],
+  })
+  const dragSelection = {
+    anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+    focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+  }
+  editor.send({type: 'select', at: dragSelection})
+  const serialized = converterPortableText.serialize({
+    snapshot: editor.getSnapshot(),
+    event: {type: 'serialize', originEvent: 'drag.dragstart'},
+  })
+  if (serialized.type === 'serialization.failure') {
+    assert.fail(serialized.reason)
+  }
+  const dataTransfer = new DataTransfer()
+  dataTransfer.setData(serialized.mimeType, serialized.data)
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+      focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 3},
+    },
+  })
+  editor.send({
+    type: 'drag.drop',
+    originEvent: {dataTransfer},
+    dragOrigin: {selection: dragSelection},
+    position: {
+      block: 'start',
+      isEditor: false,
+      isContainer: false,
+      selection: {
+        anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+        focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 3},
+      },
+    },
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+      backward: false,
+    })
+  })
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+      },
+      {
+        _key: 'k2',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k3', _type: 'span', text: 'bar', marks: []}],
+      },
+      {
+        _key: 'k4',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k5', _type: 'span', text: 'baz', marks: []}],
+      },
+      {
+        _key: 'k6',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k7', _type: 'span', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
