@@ -1,4 +1,4 @@
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import {
   applyDeselect,
   applySelect,

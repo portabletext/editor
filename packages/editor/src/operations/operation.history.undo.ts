@@ -1,6 +1,6 @@
 import {pluginUndoing} from '../engine-plugins/engine-plugin.undoing'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import {inverseOperation} from '../engine/operation/inverse-operation'
 import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'

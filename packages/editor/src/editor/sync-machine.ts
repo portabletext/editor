@@ -4,7 +4,7 @@ import {withRemoteChanges} from '../engine-plugins/engine-plugin.remote-changes'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
 import {withChange} from '../engine/core/change'
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 
 export type SyncActor = ActorRefFrom<typeof syncMachine>

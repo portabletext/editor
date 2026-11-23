@@ -1,6 +1,6 @@
 import {pluginRedoing} from '../engine-plugins/engine-plugin.redoing'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
-import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import {withoutNormalizing} from '../engine/editor/normalize'
 import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'
 import type {OperationImplementation} from './operation.types'
