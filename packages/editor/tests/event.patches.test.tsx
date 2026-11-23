@@ -7104,6 +7104,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7203,6 +7226,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'flushed', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7315,6 +7361,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7412,6 +7481,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'flushed', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7530,6 +7622,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7635,6 +7750,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'flushed', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7752,6 +7890,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7856,6 +8017,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'flushed', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -7973,6 +8157,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -8077,6 +8284,29 @@ describe('event.patches with a compact path at the root', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'flushed', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b2',
+            children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -8462,6 +8692,13 @@ describe('event.patches with a compact path at the root', () => {
     await vi.waitFor(() => {
       expect(events).toEqual([
         {
+          value: [
+            {
+              _type: 'image',
+              _key: 'i0',
+              data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+            },
+          ],
           type: 'change',
           origin: 'remote',
           operations: [
@@ -8610,6 +8847,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -8742,6 +9010,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -8882,6 +9181,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9007,6 +9337,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9153,6 +9514,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9286,6 +9678,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9431,6 +9854,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9563,6 +10017,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9708,6 +10193,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -9840,6 +10356,37 @@ describe('event.patches with a compact path inside a callout', () => {
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -10337,6 +10884,19 @@ describe('event.patches with a compact path inside a callout', () => {
     await vi.waitFor(() => {
       expect(events).toEqual([
         {
+          value: [
+            {
+              _type: 'callout',
+              _key: 'c0',
+              content: [
+                {
+                  _type: 'image',
+                  _key: 'i0',
+                  data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+                },
+              ],
+            },
+          ],
           type: 'change',
           origin: 'remote',
           operations: [
@@ -10519,6 +11079,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -10679,6 +11280,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -10853,6 +11495,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -11012,6 +11695,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -11188,6 +11912,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -11349,6 +12114,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -11524,6 +12330,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -11684,6 +12531,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -11859,6 +12747,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -12019,6 +12948,47 @@ describe('event.patches with a compact path inside a callout inside a callout', 
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b2',
+                    children: [
+                      {_type: 'span', _key: 's2', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -12666,6 +13636,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -12798,6 +13799,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -12938,6 +13970,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13063,6 +14126,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13209,6 +14303,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13342,6 +14467,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13487,6 +14643,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13619,6 +14806,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13764,6 +14982,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -13896,6 +15145,37 @@ describe('event.patches with a compact path inside a field with its own sub-sche
     })
     expect(compactOnlyEvents).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'flushed', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b2',
+                children: [{_type: 'span', _key: 's2', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [

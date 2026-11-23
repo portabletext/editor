@@ -1,4 +1,5 @@
 import type {Patch} from '@portabletext/patches'
+import type {PortableTextBlock} from '@portabletext/schema'
 import type {FocusEvent} from 'react'
 import type {EditorSelection} from '../types/editor'
 import type {Operation} from '../types/operation'
@@ -91,12 +92,36 @@ export type EditorEmittedEvent =
  */
 export type ChangeEvent =
   | {
+      /**
+       * The document a host holds after this change. Start from the loaded
+       * value, then apply each remote change's incoming `apply` patches and
+       * each local change's `patches`, in order.
+       *
+       * A collaborator's value is passed on as it arrived, so its entries can
+       * be broken at runtime. When the editor makes a correction, the local
+       * change that follows carries the corrected value.
+       *
+       * `undefined` means the field is absent.
+       */
+      value: Array<PortableTextBlock> | undefined
       type: 'change'
       origin: 'local'
       operations: Array<Operation>
       patches: Array<Patch>
     }
   | {
+      /**
+       * The document a host holds after this change. Start from the loaded
+       * value, then apply each remote change's incoming `apply` patches and
+       * each local change's `patches`, in order.
+       *
+       * A collaborator's value is passed on as it arrived, so its entries can
+       * be broken at runtime. When the editor makes a correction, the local
+       * change that follows carries the corrected value.
+       *
+       * `undefined` means the field is absent.
+       */
+      value: Array<PortableTextBlock> | undefined
       type: 'change'
       origin: 'remote'
       operations: Array<Operation>

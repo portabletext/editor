@@ -1158,6 +1158,7 @@ describe(createPlaceholderBlock.name, () => {
     let hostValue: Array<PortableTextBlock> | undefined = [
       {_type: 'image', _key: blockKey},
     ]
+    const values: Array<import('../src').ChangeEvent['value']> = []
     const patches: Array<Patch> = []
     const operations: Array<Operation> = []
     const {editor} = await createTestEditor({
@@ -1166,6 +1167,8 @@ describe(createPlaceholderBlock.name, () => {
       schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
     })
     editor.on('change', (event) => {
+      values.push(event.value)
+
       if (event.origin === 'local') {
         for (const {origin: _, ...patch} of event.patches) {
           patches.push(patch)
@@ -1181,8 +1184,10 @@ describe(createPlaceholderBlock.name, () => {
     await vi.waitFor(() => {
       expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
       expect(hostValue).toEqual(undefined)
+      expect(values.at(-1)).toEqual(undefined)
     })
     patches.length = 0
+    values.length = 0
     editor.send({type: 'history.undo'})
     await vi.waitFor(() => {
       expect(patches).toEqual([
@@ -1206,14 +1211,17 @@ describe(createPlaceholderBlock.name, () => {
         insert([{_type: 'image', _key: blockKey}], 'before', [0]),
       ])
       expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+      expect(values.at(-1)).toEqual([{_type: 'image', _key: blockKey}])
     })
 
     patches.length = 0
+    values.length = 0
     operations.length = 0
     editor.send({type: 'history.redo'})
     await vi.waitFor(() => {
       expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
       expect(hostValue).toEqual(undefined)
+      expect(values.at(-1)).toEqual(undefined)
       expect(operations).toEqual([
         {
           type: 'unset',
@@ -1241,6 +1249,7 @@ describe(createPlaceholderBlock.name, () => {
       ])
     })
     patches.length = 0
+    values.length = 0
     editor.send({type: 'history.undo'})
     await vi.waitFor(() => {
       expect(patches).toEqual([
@@ -1264,14 +1273,17 @@ describe(createPlaceholderBlock.name, () => {
         insert([{_type: 'image', _key: blockKey}], 'before', [0]),
       ])
       expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+      expect(values.at(-1)).toEqual([{_type: 'image', _key: blockKey}])
     })
 
     patches.length = 0
+    values.length = 0
     operations.length = 0
     editor.send({type: 'history.redo'})
     await vi.waitFor(() => {
       expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
       expect(hostValue).toEqual(undefined)
+      expect(values.at(-1)).toEqual(undefined)
       expect(operations).toEqual([
         {
           type: 'unset',
@@ -1299,6 +1311,7 @@ describe(createPlaceholderBlock.name, () => {
       ])
     })
     patches.length = 0
+    values.length = 0
     editor.send({type: 'history.undo'})
     await vi.waitFor(() => {
       expect(patches).toEqual([
@@ -1322,12 +1335,15 @@ describe(createPlaceholderBlock.name, () => {
         insert([{_type: 'image', _key: blockKey}], 'before', [0]),
       ])
       expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+      expect(values.at(-1)).toEqual([{_type: 'image', _key: blockKey}])
     })
 
     patches.length = 0
+    values.length = 0
     editor.send({type: 'insert.text', text: 'x'})
     await vi.waitFor(() => {
       expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+      expect(values).toEqual([])
       expect(patches).toEqual([])
     })
   })
@@ -1486,6 +1502,7 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const operations: Array<Operation> = []
   const {editor} = await createTestEditor({
@@ -1493,6 +1510,8 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
     initialValue: hostValue,
   })
   editor.on('change', (event) => {
+    values.push(event.value)
+
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -1508,8 +1527,10 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
   await vi.waitFor(() => {
     expect(patches).toEqual([set([], []), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -1551,14 +1572,25 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([set([], []), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'set',
@@ -1594,6 +1626,7 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
     ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -1635,14 +1668,25 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([set([], []), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'set',
@@ -1678,6 +1722,7 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
     ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -1719,9 +1764,19 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -1746,10 +1801,20 @@ test('Scenario: Redoing a field set to an empty array leaves no host field', asy
         children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
   })
 })
 
 test('Scenario: Loading a null entry removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = [null]
   const {editor} = await createTestEditor({
@@ -1759,6 +1824,8 @@ test('Scenario: Loading a null entry removes the host field', async () => {
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -1771,9 +1838,11 @@ test('Scenario: Loading a null entry removes the host field', async () => {
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -1814,8 +1883,18 @@ test('Scenario: Loading a null entry removes the host field', async () => {
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -1828,8 +1907,10 @@ test('Scenario: Loading a null entry removes the host field', async () => {
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -1855,6 +1936,15 @@ test('Scenario: Loading a null entry removes the host field', async () => {
       ]),
     ])
     expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+    expect(values.at(-1)).toEqual([
       {
         _type: 'block',
         _key: 'k2',
@@ -1879,6 +1969,7 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const operations: Array<Operation> = []
   const {editor} = await createTestEditor({
@@ -1886,6 +1977,8 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
     initialValue: hostValue,
   })
   editor.on('change', (event) => {
+    values.push(event.value)
+
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -1901,8 +1994,10 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -1946,14 +2041,25 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'unset',
@@ -1987,6 +2093,7 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
     ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2030,14 +2137,25 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'unset',
@@ -2071,6 +2189,7 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
     ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2114,9 +2233,19 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -2133,6 +2262,15 @@ test('Scenario: Redoing deletion of a text block leaves no host field', async ()
       ]),
     ])
     expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
+    expect(values.at(-1)).toEqual([
       {
         _type: 'block',
         _key: 'k0',
@@ -2157,6 +2295,7 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const operations: Array<Operation> = []
   const {editor} = await createTestEditor({
@@ -2164,6 +2303,8 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
     initialValue: hostValue,
   })
   editor.on('change', (event) => {
+    values.push(event.value)
+
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -2179,8 +2320,10 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2222,14 +2365,25 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'unset',
@@ -2264,6 +2418,7 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
     ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2305,14 +2460,25 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'unset',
@@ -2347,6 +2513,7 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
     ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2388,9 +2555,19 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -2415,6 +2592,15 @@ test('Scenario: Redoing field unset leaves no host field', async () => {
         children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
   })
 })
 
@@ -2431,6 +2617,7 @@ test('Scenario: Redoing a field set to an empty array while read-only keeps the 
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const {editor} = await createTestEditor({
     keyGenerator,
@@ -2439,6 +2626,8 @@ test('Scenario: Redoing a field set to an empty array while read-only keeps the 
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2452,6 +2641,7 @@ test('Scenario: Redoing a field set to an empty array while read-only keeps the 
   await vi.waitFor(() => {
     expect(patches).toEqual([set([], []), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
@@ -2464,8 +2654,18 @@ test('Scenario: Redoing a field set to an empty array while read-only keeps the 
         children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'update readOnly', readOnly: true})
   expect(editor.getSnapshot().context.readOnly).toEqual(true)
   editor.send({type: 'history.redo'})
@@ -2479,6 +2679,7 @@ test('Scenario: Redoing a field set to an empty array while read-only keeps the 
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ])
+  expect(values).toEqual([])
 })
 
 test('Scenario: Redoing deletion of a text block while read-only keeps the host document', async () => {
@@ -2494,6 +2695,7 @@ test('Scenario: Redoing deletion of a text block while read-only keeps the host 
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const {editor} = await createTestEditor({
     keyGenerator,
@@ -2502,6 +2704,8 @@ test('Scenario: Redoing deletion of a text block while read-only keeps the host 
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2515,6 +2719,7 @@ test('Scenario: Redoing deletion of a text block while read-only keeps the host 
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
@@ -2527,8 +2732,18 @@ test('Scenario: Redoing deletion of a text block while read-only keeps the host 
         children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'update readOnly', readOnly: true})
   expect(editor.getSnapshot().context.readOnly).toEqual(true)
   editor.send({type: 'history.redo'})
@@ -2542,6 +2757,7 @@ test('Scenario: Redoing deletion of a text block while read-only keeps the host 
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ])
+  expect(values).toEqual([])
 })
 
 test('Scenario: Redoing field unset while read-only keeps the host document', async () => {
@@ -2557,6 +2773,7 @@ test('Scenario: Redoing field unset while read-only keeps the host document', as
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const {editor} = await createTestEditor({
     keyGenerator,
@@ -2565,6 +2782,8 @@ test('Scenario: Redoing field unset while read-only keeps the host document', as
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2578,6 +2797,7 @@ test('Scenario: Redoing field unset while read-only keeps the host document', as
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
@@ -2590,8 +2810,18 @@ test('Scenario: Redoing field unset while read-only keeps the host document', as
         children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'update readOnly', readOnly: true})
   expect(editor.getSnapshot().context.readOnly).toEqual(true)
   editor.send({type: 'history.redo'})
@@ -2605,9 +2835,11 @@ test('Scenario: Redoing field unset while read-only keeps the host document', as
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ])
+  expect(values).toEqual([])
 })
 
 test('Scenario: Loading only strings removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = ['foo', 'bar']
   const {editor} = await createTestEditor({
@@ -2617,6 +2849,8 @@ test('Scenario: Loading only strings removes the host field', async () => {
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2629,9 +2863,11 @@ test('Scenario: Loading only strings removes the host field', async () => {
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([1]), unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -2672,8 +2908,18 @@ test('Scenario: Loading only strings removes the host field', async () => {
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2686,8 +2932,10 @@ test('Scenario: Loading only strings removes the host field', async () => {
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2713,6 +2961,15 @@ test('Scenario: Loading only strings removes the host field', async () => {
       ]),
     ])
     expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+    expect(values.at(-1)).toEqual([
       {
         _type: 'block',
         _key: 'k2',
@@ -2725,6 +2982,7 @@ test('Scenario: Loading only strings removes the host field', async () => {
 })
 
 test('Scenario: Loading only numbers removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = [1, 2]
   const {editor} = await createTestEditor({
@@ -2734,6 +2992,8 @@ test('Scenario: Loading only numbers removes the host field', async () => {
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2746,9 +3006,11 @@ test('Scenario: Loading only numbers removes the host field', async () => {
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([1]), unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -2789,8 +3051,18 @@ test('Scenario: Loading only numbers removes the host field', async () => {
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2803,8 +3075,10 @@ test('Scenario: Loading only numbers removes the host field', async () => {
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2830,6 +3104,15 @@ test('Scenario: Loading only numbers removes the host field', async () => {
       ]),
     ])
     expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+    expect(values.at(-1)).toEqual([
       {
         _type: 'block',
         _key: 'k2',
@@ -2842,6 +3125,7 @@ test('Scenario: Loading only numbers removes the host field', async () => {
 })
 
 test('Scenario: Loading several invalid entries removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = [null, 'foo', 1]
   const {editor} = await createTestEditor({
@@ -2851,6 +3135,8 @@ test('Scenario: Loading several invalid entries removes the host field', async (
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2863,9 +3149,11 @@ test('Scenario: Loading several invalid entries removes the host field', async (
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([2]), unset([1]), unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -2906,8 +3194,18 @@ test('Scenario: Loading several invalid entries removes the host field', async (
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2920,8 +3218,10 @@ test('Scenario: Loading several invalid entries removes the host field', async (
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -2955,10 +3255,20 @@ test('Scenario: Loading several invalid entries removes the host field', async (
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
 })
 
 test('Scenario: Loading a null entry while read-only removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = [null]
   const editorRef = createRef<Editor>()
@@ -2976,6 +3286,8 @@ test('Scenario: Loading a null entry while read-only removes the host field', as
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -2991,9 +3303,11 @@ test('Scenario: Loading a null entry while read-only removes the host field', as
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'update readOnly', readOnly: false})
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -3034,8 +3348,18 @@ test('Scenario: Loading a null entry while read-only removes the host field', as
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3048,8 +3372,10 @@ test('Scenario: Loading a null entry while read-only removes the host field', as
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3083,10 +3409,20 @@ test('Scenario: Loading a null entry while read-only removes the host field', as
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
 })
 
 test('Scenario: Loading only strings while read-only removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = ['foo', 'bar']
   const editorRef = createRef<Editor>()
@@ -3104,6 +3440,8 @@ test('Scenario: Loading only strings while read-only removes the host field', as
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -3119,9 +3457,11 @@ test('Scenario: Loading only strings while read-only removes the host field', as
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([1]), unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'update readOnly', readOnly: false})
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -3162,8 +3502,18 @@ test('Scenario: Loading only strings while read-only removes the host field', as
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3176,8 +3526,10 @@ test('Scenario: Loading only strings while read-only removes the host field', as
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3211,10 +3563,20 @@ test('Scenario: Loading only strings while read-only removes the host field', as
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
 })
 
 test('Scenario: Loading only numbers while read-only removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = [1, 2]
   const editorRef = createRef<Editor>()
@@ -3232,6 +3594,8 @@ test('Scenario: Loading only numbers while read-only removes the host field', as
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -3247,9 +3611,11 @@ test('Scenario: Loading only numbers while read-only removes the host field', as
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([1]), unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'update readOnly', readOnly: false})
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -3290,8 +3656,18 @@ test('Scenario: Loading only numbers while read-only removes the host field', as
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3304,8 +3680,10 @@ test('Scenario: Loading only numbers while read-only removes the host field', as
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3339,10 +3717,20 @@ test('Scenario: Loading only numbers while read-only removes the host field', as
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
 })
 
 test('Scenario: Loading several invalid entries while read-only removes the host field', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: unknown = [null, 'foo', 1]
   const editorRef = createRef<Editor>()
@@ -3360,6 +3748,8 @@ test('Scenario: Loading several invalid entries while read-only removes the host
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
               hostValue = applyAll(hostValue, [patch])
@@ -3375,9 +3765,11 @@ test('Scenario: Loading several invalid entries while read-only removes the host
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([2]), unset([1]), unset([0]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'update readOnly', readOnly: false})
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'select',
     at: {
@@ -3418,8 +3810,18 @@ test('Scenario: Loading several invalid entries while read-only removes the host
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3432,8 +3834,10 @@ test('Scenario: Loading several invalid entries while read-only removes the host
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3467,10 +3871,20 @@ test('Scenario: Loading several invalid entries while read-only removes the host
         children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
   })
 })
 
 test('Scenario: Loading [] keeps the host document', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: Array<PortableTextBlock> | undefined = []
   await createTestEditor({
@@ -3480,6 +3894,8 @@ test('Scenario: Loading [] keeps the host document', async () => {
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             patches.push(...event.patches)
             hostValue = applyAll(hostValue, event.patches)
           }
@@ -3489,9 +3905,11 @@ test('Scenario: Loading [] keeps the host document', async () => {
   })
   expect(patches).toEqual([])
   expect(hostValue).toEqual([])
+  expect(values).toEqual([])
 })
 
 test('Scenario: Loading undefined keeps the host document', async () => {
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   let hostValue: Array<PortableTextBlock> | undefined = undefined
   await createTestEditor({
@@ -3501,6 +3919,8 @@ test('Scenario: Loading undefined keeps the host document', async () => {
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             patches.push(...event.patches)
             hostValue = applyAll(hostValue, event.patches)
           }
@@ -3510,6 +3930,7 @@ test('Scenario: Loading undefined keeps the host document', async () => {
   })
   expect(patches).toEqual([])
   expect(hostValue).toEqual(undefined)
+  expect(values).toEqual([])
 })
 
 test('Scenario: Redoing select-all deletion keeps the field absent', async () => {
@@ -3525,12 +3946,15 @@ test('Scenario: Redoing select-all deletion keeps the field absent', async () =>
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     initialValue: hostValue,
   })
   editor.on('change', (event) => {
+    values.push(event.value)
+
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -3569,6 +3993,7 @@ test('Scenario: Redoing select-all deletion keeps the field absent', async () =>
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
@@ -3581,8 +4006,18 @@ test('Scenario: Redoing select-all deletion keeps the field absent', async () =>
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3595,6 +4030,7 @@ test('Scenario: Redoing select-all deletion keeps the field absent', async () =>
       unset([]),
     ])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
 })
 
@@ -3617,6 +4053,7 @@ test('Scenario: Loading a malformed nested block keeps its corrected content in 
       ],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const {editor} = await createTestEditor({
     keyGenerator,
@@ -3637,6 +4074,8 @@ test('Scenario: Loading a malformed nested block keeps its corrected content in 
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'change' && event.origin === 'local') {
+              values.push(event.value)
+
               for (const {origin: _, ...patch} of event.patches) {
                 patches.push(patch)
               }
@@ -3674,9 +4113,25 @@ test('Scenario: Loading a malformed nested block keeps its corrected content in 
         ],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
   })
 
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'insert.text',
     at: [{_key: 'k0'}, 'content', {_key: 'k1'}, 'children', {_key: 'k4'}],
@@ -3709,8 +4164,24 @@ test('Scenario: Loading a malformed nested block keeps its corrected content in 
         ],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3738,8 +4209,24 @@ test('Scenario: Loading a malformed nested block keeps its corrected content in 
         ],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3753,6 +4240,21 @@ test('Scenario: Loading a malformed nested block keeps its corrected content in 
       ]),
     ])
     expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+    expect(values.at(-1)).toEqual([
       {
         _type: 'callout',
         _key: 'k0',
@@ -3789,6 +4291,7 @@ test('Scenario: Loading a malformed nested block while read-only keeps its corre
       ],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const editorRef = createRef<Editor>()
   const {getByTestId} = await render(
@@ -3815,6 +4318,8 @@ test('Scenario: Loading a malformed nested block while read-only keeps its corre
       <EventListenerPlugin
         on={(event) => {
           if (event.type === 'change' && event.origin === 'local') {
+            values.push(event.value)
+
             for (const {origin: _, ...patch} of event.patches) {
               patches.push(patch)
             }
@@ -3854,9 +4359,25 @@ test('Scenario: Loading a malformed nested block while read-only keeps its corre
         ],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
   })
   editor.send({type: 'update readOnly', readOnly: false})
   patches.length = 0
+  values.length = 0
   editor.send({
     type: 'insert.text',
     at: [{_key: 'k0'}, 'content', {_key: 'k1'}, 'children', {_key: 'k4'}],
@@ -3889,8 +4410,24 @@ test('Scenario: Loading a malformed nested block while read-only keeps its corre
         ],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3918,8 +4455,24 @@ test('Scenario: Loading a malformed nested block while read-only keeps its corre
         ],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -3933,6 +4486,21 @@ test('Scenario: Loading a malformed nested block while read-only keeps its corre
       ]),
     ])
     expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+    expect(values.at(-1)).toEqual([
       {
         _type: 'callout',
         _key: 'k0',
@@ -3966,12 +4534,14 @@ test('Scenario: Redo after a collaborator inserts a paragraph after the original
     },
   ]
   const patches: Array<Patch> = []
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     initialValue: hostValue,
     schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
   })
   editor.on('change', (event) => {
+    values.push(event.value)
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -4105,6 +4675,22 @@ test('Scenario: Redo after a collaborator inserts a paragraph after the original
         children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: 'x', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
   })
 })
 
@@ -4124,12 +4710,14 @@ test('Scenario: Redo after a collaborator inserts a paragraph before the origina
     },
   ]
   const patches: Array<Patch> = []
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     initialValue: hostValue,
     schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
   })
   editor.on('change', (event) => {
+    values.push(event.value)
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -4263,6 +4851,22 @@ test('Scenario: Redo after a collaborator inserts a paragraph before the origina
         children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: 'x', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
   })
 })
 
@@ -4281,12 +4885,14 @@ test('Scenario: Redo after a collaborator inserts a block object after the origi
     },
   ]
   const patches: Array<Patch> = []
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     initialValue: hostValue,
     schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
   })
   editor.on('change', (event) => {
+    values.push(event.value)
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -4382,6 +4988,16 @@ test('Scenario: Redo after a collaborator inserts a block object after the origi
       },
       {_type: 'image', _key: 'k2'},
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: 'x', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
   })
 })
 
@@ -4400,12 +5016,14 @@ test('Scenario: Redo after a collaborator inserts a block object before the orig
     },
   ]
   const patches: Array<Patch> = []
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const {editor} = await createTestEditor({
     keyGenerator,
     initialValue: hostValue,
     schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
   })
   editor.on('change', (event) => {
+    values.push(event.value)
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -4501,6 +5119,16 @@ test('Scenario: Redo after a collaborator inserts a block object before the orig
       },
       {_type: 'image', _key: 'k2'},
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: 'x', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
   })
 })
 
@@ -4517,6 +5145,7 @@ test('Scenario: Redoing deletion after a collaborator edit leaves no host field'
       children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const operations: Array<Operation> = []
   const {editor} = await createTestEditor({
@@ -4524,6 +5153,8 @@ test('Scenario: Redoing deletion after a collaborator edit leaves no host field'
     initialValue: hostValue,
   })
   editor.on('change', (event) => {
+    values.push(event.value)
+
     if (event.origin === 'local') {
       for (const {origin: _, ...patch} of event.patches) {
         patches.push(patch)
@@ -4539,8 +5170,10 @@ test('Scenario: Redoing deletion after a collaborator edit leaves no host field'
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
   })
   patches.length = 0
+  values.length = 0
   editor.send({type: 'history.undo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([
@@ -4584,6 +5217,15 @@ test('Scenario: Redoing deletion after a collaborator edit leaves no host field'
         children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
       },
     ])
+    expect(values.at(-1)).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
   })
 
   const incoming = [set('h1', [{_key: blockKey}, 'style'])]
@@ -4598,12 +5240,23 @@ test('Scenario: Redoing deletion after a collaborator edit leaves no host field'
       children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
     },
   ])
+  expect(values.at(-1)).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'h1',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+  ])
   patches.length = 0
+  values.length = 0
   operations.length = 0
   editor.send({type: 'history.redo'})
   await vi.waitFor(() => {
     expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
     expect(hostValue).toEqual(undefined)
+    expect(values.at(-1)).toEqual(undefined)
     expect(operations).toEqual([
       {
         type: 'unset',
@@ -4658,6 +5311,7 @@ test('Scenario: A collaborator emptying a callout keeps the nested empty block i
       ],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   const {editor} = await createTestEditor({
     keyGenerator,
@@ -4678,6 +5332,8 @@ test('Scenario: A collaborator emptying a callout keeps the nested empty block i
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'change' && event.origin === 'local') {
+              values.push(event.value)
+
               for (const {origin: _, ...patch} of event.patches) {
                 patches.push(patch)
               }
@@ -4722,6 +5378,21 @@ test('Scenario: A collaborator emptying a callout keeps the nested empty block i
       ],
     },
   ])
+  expect(values.at(-1)).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k0',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k5',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        },
+      ],
+    },
+  ])
 })
 
 test('Scenario: An empty nested block stays in the host document', async () => {
@@ -4744,6 +5415,7 @@ test('Scenario: An empty nested block stays in the host document', async () => {
       ],
     },
   ]
+  const values: Array<import('../src').ChangeEvent['value']> = []
   const patches: Array<Patch> = []
   await createTestEditor({
     keyGenerator,
@@ -4764,6 +5436,8 @@ test('Scenario: An empty nested block stays in the host document', async () => {
         <EventListenerPlugin
           on={(event) => {
             if (event.type === 'change' && event.origin === 'local') {
+              values.push(event.value)
+
               for (const {origin: _, ...patch} of event.patches) {
                 patches.push(patch)
               }
@@ -4791,4 +5465,5 @@ test('Scenario: An empty nested block stays in the host document', async () => {
       ],
     },
   ])
+  expect(values).toEqual([])
 })

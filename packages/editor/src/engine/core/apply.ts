@@ -49,6 +49,7 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
   applyOperation(editor, op, target)
+  operationEvent.afterValue = editor.snapshot.context.value
 
   updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
 

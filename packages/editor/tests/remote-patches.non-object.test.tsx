@@ -154,6 +154,30 @@ test('Scenario: insert removes null at root', async () => {
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          null,
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -166,6 +190,29 @@ test('Scenario: insert removes null at root', async () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -229,6 +276,23 @@ test('Scenario: root set removes null at root', async () => {
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          null,
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -240,6 +304,22 @@ test('Scenario: root set removes null at root', async () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -319,6 +399,45 @@ test('Scenario: array set removes null at table cell', async () => {
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'table',
+            _key: 'k6',
+            rows: [
+              {
+                _type: 'row',
+                _key: 'k7',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k8',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                        ],
+                      },
+                      null,
+                      {
+                        _type: 'block',
+                        _key: 'k4',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k5', text: 'baz', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -337,6 +456,44 @@ test('Scenario: array set removes null at table cell', async () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'table',
+            _key: 'k6',
+            rows: [
+              {
+                _type: 'row',
+                _key: 'k7',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k8',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                        ],
+                      },
+                      {
+                        _type: 'block',
+                        _key: 'k4',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k5', text: 'baz', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -416,6 +573,23 @@ test('Scenario: keyed node set removes null at root', async () => {
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          null,
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -427,6 +601,22 @@ test('Scenario: keyed node set removes null at root', async () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -490,6 +680,23 @@ test('Scenario: positional node set removes null at root', async () => {
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          null,
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -501,6 +708,22 @@ test('Scenario: positional node set removes null at root', async () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -566,6 +789,40 @@ test('Scenario: initialValue removes null from markDefs in table cell', async ()
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'table',
+            _key: 'k3',
+            rows: [
+              {
+                _type: 'row',
+                _key: 'k4',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k5',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        markDefs: [{_type: 'link', _key: 'k2', href: 'foo'}],
+                        children: [
+                          {
+                            _type: 'span',
+                            _key: 'k1',
+                            text: 'foo',
+                            marks: ['k2'],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -646,6 +903,31 @@ test('Scenario: insert removes first and last non-objects in one batch', async (
   await vi.waitFor(() =>
     expect(changes).toEqual([
       {
+        value: [
+          null,
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+          'str',
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -659,6 +941,29 @@ test('Scenario: insert removes first and last non-objects in one batch', async (
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -753,6 +1058,28 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
   ])
   expect(controlChanges).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -776,6 +1103,29 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+          _key: 'k7',
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -826,6 +1176,29 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
   ])
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        null,
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -850,6 +1223,29 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+          _key: 'k7',
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -869,6 +1265,28 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
   ])
   expect(controlChanges).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -892,6 +1310,29 @@ test('Scenario: a shifted keyless block gets the same key with and without a non
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k3',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k4', text: 'baz', marks: []}],
+        },
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+          _key: 'k7',
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -1001,6 +1442,22 @@ test('Scenario: removing the caret block matches a remote unset', async () => {
   })
   expect(controlChanges).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [{type: 'unset', path: [{_key: 'k2'}]}],
@@ -1012,6 +1469,22 @@ test('Scenario: removing the caret block matches a remote unset', async () => {
   ])
   expect(controlChanges).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [{type: 'unset', path: [{_key: 'k2'}]}],
@@ -1048,11 +1521,44 @@ test('Scenario: removing the caret block matches a remote unset', async () => {
   ])
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        null,
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [{type: 'set', path: [{_key: 'k2'}], value: null!}],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [1]}],
@@ -1061,6 +1567,22 @@ test('Scenario: removing the caret block matches a remote unset', async () => {
   ])
   expect(controlChanges).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [{type: 'unset', path: [{_key: 'k2'}]}],
@@ -1167,6 +1689,27 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            null,
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1179,6 +1722,26 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -1224,6 +1787,27 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
   ])
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            null,
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1236,6 +1820,26 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -1244,6 +1848,26 @@ test('Scenario: a local edit after removing null from markDefs emits only its ch
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'bar',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -1379,6 +2003,27 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            'str',
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1391,6 +2036,26 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -1436,6 +2101,27 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
   ])
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            'str',
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1448,6 +2134,26 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -1456,6 +2162,26 @@ test('Scenario: a local edit after removing a string from markDefs emits only it
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k9', href: 'bar'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'bar',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -1615,6 +2341,22 @@ test('Scenario: non-array markDefs on remote insert without non-object entries',
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: 'oops',
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1700,6 +2442,22 @@ test('Scenario: non-array markDefs on remote node set without non-object entries
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: {a: 1},
+          children: [{_type: 'span', _key: 'k3', text: 'baz', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1843,6 +2601,26 @@ test('Scenario: array set removes null at markDefs', async () => {
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            null,
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1858,6 +2636,25 @@ test('Scenario: array set removes null at markDefs', async () => {
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -1977,6 +2774,26 @@ test('Scenario: array set removes a string at markDefs', async () => {
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            'str',
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -1992,6 +2809,25 @@ test('Scenario: array set removes a string at markDefs', async () => {
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -2126,6 +2962,26 @@ test('Scenario: root set removes null at markDefs', async () => {
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            null,
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -2156,6 +3012,25 @@ test('Scenario: root set removes null at markDefs', async () => {
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -2290,6 +3165,26 @@ test('Scenario: root set removes a string at markDefs', async () => {
   )
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            'str',
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -2320,6 +3215,25 @@ test('Scenario: root set removes a string at markDefs', async () => {
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k8', href: 'foo'},
+            {_type: 'link', _key: 'k10', href: 'baz'},
+          ],
+          children: [
+            {
+              _type: 'span',
+              _key: 'k7',
+              text: 'foo',
+              marks: ['k8', 'k9', 'k10'],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [{type: 'unset', path: [{_key: 'k6'}, 'markDefs', 1]}],
@@ -2770,6 +3684,15 @@ test('Scenario: remote set preserves an annotation without a type', async () => 
   ])
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [{_key: 'k2', href: 'foo'}],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -2830,6 +3753,18 @@ test('Scenario: remote set preserves duplicate annotation keys', async () => {
   ])
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [
+            {_type: 'link', _key: 'k2', href: 'foo'},
+            {_key: 'k2', href: 'bar'},
+          ],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [

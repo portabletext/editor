@@ -84,6 +84,8 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * an empty field, since the host then holds that block.
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
+  /** The host document after the last committed change, once initialized. */
+  hostValue: {value: Array<PortableTextBlock> | undefined} | undefined
   /**
    * True while this editor's own emitted patch stream has destroyed the
    * field (a root `unset([])` went out) and not yet re-materialized it (a

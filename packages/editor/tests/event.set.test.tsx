@@ -524,6 +524,22 @@ describe('event.set with a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -634,6 +650,28 @@ describe('event.set with a compact path inside a callout', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -787,6 +825,38 @@ describe('event.set with a compact path inside a callout inside a callout', () =
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'baz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -936,6 +1006,28 @@ describe('event.set with a compact path inside a field with its own sub-schema',
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [{_type: 'span', _key: 's1', text: 'baz', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1069,6 +1161,13 @@ describe('event.set with a path into an array inside an array at the root', () =
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'image',
+            _key: 'i0',
+            data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1161,6 +1260,19 @@ describe('event.set with a path into an array inside an array inside a callout',
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'image',
+                _key: 'i0',
+                data: {matrix: [[{text: 'foo'}]], caption: 'baz'},
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [

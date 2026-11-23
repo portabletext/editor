@@ -19,6 +19,44 @@ export function toChangeEvents(
 ): Array<ChangeEvent> {
   const entries = change.entries
   const events: Array<ChangeEvent> = []
+  let value = editor.hostValue?.value
+  if (!editor.hostValue) {
+    value = editor.lastSyncedValue
+  }
+  let remoteValue = value
+  for (const entry of entries) {
+    const {event, patches} = entry
+    if (event.operation.type === 'set.selection') {
+      continue
+    }
+    const kind = getChangeEntryKind(change, entry)
+    if (!(isPlaceholder(event.context) && patches.length === 0)) {
+      value = event.afterValue
+      if (kind === 'remote') {
+        if (
+          event.operation.type === 'unset' &&
+          event.operation.path.length === 0
+        ) {
+          value = undefined
+        }
+      } else {
+        for (const patch of patches) {
+          if (patch.path.length === 0 && patch.type === 'unset') {
+            value = undefined
+          } else if (
+            patch.path.length === 0 &&
+            (patch.type === 'set' || patch.type === 'setIfMissing')
+          ) {
+            value = event.afterValue
+          }
+        }
+      }
+    }
+    if (kind === 'remote') {
+      remoteValue = value
+    }
+  }
+  editor.hostValue = {value}
 
   const remoteOperations = entries.flatMap((entry) =>
     getChangeEntryKind(change, entry) === 'remote' && isReported(change, entry)
@@ -30,6 +68,7 @@ export function toChangeEvents(
     events.push({
       type: 'change',
       origin: 'remote',
+      value: remoteValue,
       operations: remoteOperations,
     })
   }
@@ -44,6 +83,7 @@ export function toChangeEvents(
     events.push({
       type: 'change',
       origin: 'local',
+      value,
       operations: localEntries.map((entry) => entry.event.operation),
       patches: localEntries.flatMap((entry) => entry.patches),
     })
