@@ -9,11 +9,20 @@ import {
 } from '@portabletext/patches'
 import {type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
+import {createRef} from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import {render} from 'vitest-browser-react'
 import {userEvent} from 'vitest/browser'
-import {defineSchema} from '../src'
+import {
+  defineSchema,
+  EditorProvider,
+  PortableTextEditable,
+  type Editor,
+  type Operation,
+} from '../src'
 import {createPlaceholderBlock} from '../src/internal-utils/create-placeholder-block'
-import {EventListenerPlugin} from '../src/plugins'
+import {EventListenerPlugin, EditorRefPlugin, NodePlugin} from '../src/plugins'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 
 describe(createPlaceholderBlock.name, () => {
@@ -1142,64 +1151,184 @@ describe(createPlaceholderBlock.name, () => {
     })
   })
 
-  test.fails('Scenario: Redoing the deletion of a lonely block object', async () => {
-    const patches: Array<Patch> = []
+  test('Scenario: Redoing the deletion of a lonely block object', async () => {
     const keyGenerator = createTestKeyGenerator()
-    const imageKey = keyGenerator()
-    let foreignValue: Array<PortableTextBlock> | undefined = [
-      {_type: 'image', _key: imageKey},
+    const blockKey = keyGenerator()
+
+    let hostValue: Array<PortableTextBlock> | undefined = [
+      {_type: 'image', _key: blockKey},
     ]
+    const patches: Array<Patch> = []
+    const operations: Array<Operation> = []
     const {editor} = await createTestEditor({
       keyGenerator,
-      initialValue: foreignValue,
-      schemaDefinition: defineSchema({
-        blockObjects: [{name: 'image'}],
-      }),
-      children: (
-        <EventListenerPlugin
-          on={(event) => {
-            if (event.type === 'change' && event.origin === 'local') {
-              for (const changePatch of event.patches) {
-                const {origin: _, ...patch} = changePatch
-                patches.push(patch)
-                foreignValue = applyAll(foreignValue, [patch])
-              }
-            }
-          }}
-        />
-      ),
+      initialValue: hostValue,
+      schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
     })
-
-    const placeholder = {
-      _type: 'block',
-      _key: 'k3',
-      children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
-      markDefs: [],
-      style: 'normal',
-    }
-
-    editor.send({type: 'delete.block', at: [{_key: imageKey}]})
-
+    editor.on('change', (event) => {
+      if (event.origin === 'local') {
+        for (const {origin: _, ...patch} of event.patches) {
+          patches.push(patch)
+          hostValue = applyAll(hostValue, [patch])
+        }
+      }
+    })
+    editor.on('operation', (event) => {
+      expect(Object.hasOwn(event.operation, 'patching')).toEqual(false)
+      operations.push(event.operation)
+    })
+    editor.send({type: 'delete.block', at: [{_key: blockKey}]})
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([placeholder])
-      expect(patches).toEqual([unset([{_key: imageKey}]), unset([])])
-      expect(foreignValue).toEqual(undefined)
+      expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
+      expect(hostValue).toEqual(undefined)
     })
-
+    patches.length = 0
     editor.send({type: 'history.undo'})
-
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([
-        {_type: 'image', _key: imageKey},
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            },
+          ],
+          'before',
+          [0],
+        ),
+        unset([{_key: 'k3'}]),
+        unset([]),
+        setIfMissing([], []),
+        insert([{_type: 'image', _key: blockKey}], 'before', [0]),
       ])
-      expect(foreignValue).toEqual([{_type: 'image', _key: imageKey}])
+      expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
     })
 
+    patches.length = 0
+    operations.length = 0
     editor.send({type: 'history.redo'})
-
     await vi.waitFor(() => {
-      expect(editor.getSnapshot().context.value).toEqual([placeholder])
-      expect(foreignValue).toEqual(undefined)
+      expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
+      expect(hostValue).toEqual(undefined)
+      expect(operations).toEqual([
+        {
+          type: 'unset',
+          path: [{_key: blockKey}],
+          inverse: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            node: {_type: 'image', _key: blockKey},
+          },
+        },
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+          inverse: {type: 'unset', path: [{_key: 'k3'}]},
+        },
+      ])
+    })
+    patches.length = 0
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            },
+          ],
+          'before',
+          [0],
+        ),
+        unset([{_key: 'k3'}]),
+        unset([]),
+        setIfMissing([], []),
+        insert([{_type: 'image', _key: blockKey}], 'before', [0]),
+      ])
+      expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+    })
+
+    patches.length = 0
+    operations.length = 0
+    editor.send({type: 'history.redo'})
+    await vi.waitFor(() => {
+      expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
+      expect(hostValue).toEqual(undefined)
+      expect(operations).toEqual([
+        {
+          type: 'unset',
+          path: [{_key: blockKey}],
+          inverse: {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            node: {_type: 'image', _key: blockKey},
+          },
+        },
+        {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+          inverse: {type: 'unset', path: [{_key: 'k3'}]},
+        },
+      ])
+    })
+    patches.length = 0
+    editor.send({type: 'history.undo'})
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert(
+          [
+            {
+              _type: 'block',
+              _key: 'k3',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            },
+          ],
+          'before',
+          [0],
+        ),
+        unset([{_key: 'k3'}]),
+        unset([]),
+        setIfMissing([], []),
+        insert([{_type: 'image', _key: blockKey}], 'before', [0]),
+      ])
+      expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+    })
+
+    patches.length = 0
+    editor.send({type: 'insert.text', text: 'x'})
+    await vi.waitFor(() => {
+      expect(hostValue).toEqual([{_type: 'image', _key: blockKey}])
+      expect(patches).toEqual([])
     })
   })
 
@@ -1342,4 +1471,3324 @@ test('Scenario: Lonely block object removed by a remote `unset`', async () => {
       diffMatchPatch('', 'f', [{_key: 'k3'}, 'children', {_key: 'k4'}, 'text']),
     ])
   })
+})
+
+test('Scenario: Redoing a field set to an empty array leaves no host field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const operations: Array<Operation> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.on('operation', (event) => {
+    expect(Object.hasOwn(event.operation, 'patching')).toEqual(false)
+    operations.push(event.operation)
+  })
+  editor.send({type: 'set', at: [], value: []})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([set([], []), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      set(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        [],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([set([], []), unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'set',
+        path: [],
+        value: [],
+        inverse: {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+          ],
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      set(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        [],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([set([], []), unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'set',
+        path: [],
+        value: [],
+        inverse: {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+          ],
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      set(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        [],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading a null entry removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = [null]
+  const {editor} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Redoing deletion of a text block leaves no host field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const operations: Array<Operation> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.on('operation', (event) => {
+    expect(Object.hasOwn(event.operation, 'patching')).toEqual(false)
+    operations.push(event.operation)
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'unset',
+        path: [{_key: 'k0'}],
+        inverse: {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'unset',
+        path: [{_key: 'k0'}],
+        inverse: {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Redoing field unset leaves no host field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const operations: Array<Operation> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.on('operation', (event) => {
+    expect(Object.hasOwn(event.operation, 'patching')).toEqual(false)
+    operations.push(event.operation)
+  })
+  editor.send({type: 'unset', at: []})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      set(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        [],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'unset',
+        path: [],
+        inverse: {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+          ],
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      set(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        [],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'unset',
+        path: [],
+        inverse: {
+          type: 'set',
+          path: [],
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+          ],
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      set(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        [],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Redoing a field set to an empty array while read-only keeps the host document', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  editor.send({type: 'set', at: [], value: []})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([set([], []), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'update readOnly', readOnly: true})
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  editor.send({type: 'history.redo'})
+  expect(patches).toEqual([])
+  expect(hostValue).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: Redoing deletion of a text block while read-only keeps the host document', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([{_key: blockKey}]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'update readOnly', readOnly: true})
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  editor.send({type: 'history.redo'})
+  expect(patches).toEqual([])
+  expect(hostValue).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: Redoing field unset while read-only keeps the host document', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  editor.send({type: 'unset', at: []})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'update readOnly', readOnly: true})
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  editor.send({type: 'history.redo'})
+  expect(patches).toEqual([])
+  expect(hostValue).toEqual([
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: Loading only strings removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = ['foo', 'bar']
+  const {editor} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([1]), unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading only numbers removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = [1, 2]
+  const {editor} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([1]), unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading several invalid entries removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = [null, 'foo', 1]
+  const {editor} = await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([2]), unset([1]), unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading a null entry while read-only removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = [null]
+  const editorRef = createRef<Editor>()
+  const {getByTestId} = await render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition: defineSchema({}),
+        initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+        readOnly: true,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <PortableTextEditable data-testid="read-only-editor" />
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    </EditorProvider>,
+  )
+  await expect.element(getByTestId('read-only-editor')).toBeInTheDocument()
+  const editor = editorRef.current!
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading only strings while read-only removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = ['foo', 'bar']
+  const editorRef = createRef<Editor>()
+  const {getByTestId} = await render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition: defineSchema({}),
+        initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+        readOnly: true,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <PortableTextEditable data-testid="read-only-editor" />
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    </EditorProvider>,
+  )
+  await expect.element(getByTestId('read-only-editor')).toBeInTheDocument()
+  const editor = editorRef.current!
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([1]), unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading only numbers while read-only removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = [1, 2]
+  const editorRef = createRef<Editor>()
+  const {getByTestId} = await render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition: defineSchema({}),
+        initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+        readOnly: true,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <PortableTextEditable data-testid="read-only-editor" />
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    </EditorProvider>,
+  )
+  await expect.element(getByTestId('read-only-editor')).toBeInTheDocument()
+  const editor = editorRef.current!
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([1]), unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading several invalid entries while read-only removes the host field', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: unknown = [null, 'foo', 1]
+  const editorRef = createRef<Editor>()
+  const {getByTestId} = await render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator: createTestKeyGenerator(),
+        schemaDefinition: defineSchema({}),
+        initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+        readOnly: true,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <PortableTextEditable data-testid="read-only-editor" />
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+              hostValue = applyAll(hostValue, [patch])
+            }
+          }
+        }}
+      />
+    </EditorProvider>,
+  )
+  await expect.element(getByTestId('read-only-editor')).toBeInTheDocument()
+  const editor = editorRef.current!
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([2]), unset([1]), unset([0]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  patches.length = 0
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'foo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      diffMatchPatch('', 'foo', [
+        {_key: 'k2'},
+        'children',
+        {_key: 'k3'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading [] keeps the host document', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: Array<PortableTextBlock> | undefined = []
+  await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: hostValue,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            patches.push(...event.patches)
+            hostValue = applyAll(hostValue, event.patches)
+          }
+        }}
+      />
+    ),
+  })
+  expect(patches).toEqual([])
+  expect(hostValue).toEqual([])
+})
+
+test('Scenario: Loading undefined keeps the host document', async () => {
+  const patches: Array<Patch> = []
+  let hostValue: Array<PortableTextBlock> | undefined = undefined
+  await createTestEditor({
+    keyGenerator: createTestKeyGenerator(),
+    initialValue: hostValue,
+    children: (
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            patches.push(...event.patches)
+            hostValue = applyAll(hostValue, event.patches)
+          }
+        }}
+      />
+    ),
+  })
+  expect(patches).toEqual([])
+  expect(hostValue).toEqual(undefined)
+})
+
+test('Scenario: Redoing select-all deletion keeps the field absent', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 0,
+      },
+      focus: {path: [{_key: blockKey}, 'children', {_key: spanKey}], offset: 3},
+    },
+  })
+  editor.send({
+    type: 'delete',
+    at: {
+      anchor: {
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 0,
+      },
+      focus: {path: [{_key: blockKey}, 'children', {_key: spanKey}], offset: 3},
+    },
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k0'},
+        'children',
+        {_key: 'k1'},
+        'text',
+      ]),
+      unset([]),
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: Loading a malformed nested block keeps its corrected content in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  const blockKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [null],
+        },
+      ],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition: defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    children: (
+      <>
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const {origin: _, ...patch} of event.patches) {
+                patches.push(patch)
+              }
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      unset([{_key: 'k0'}, 'content', {_key: 'k1'}, 'children', 0]),
+      setIfMissing([], [{_key: 'k0'}, 'content', {_key: 'k1'}, 'children']),
+      insert([{_type: 'span', _key: 'k4', text: '', marks: []}], 'before', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        0,
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: 'k0'}, 'content', {_key: 'k1'}, 'children', {_key: 'k4'}],
+    offset: 0,
+    text: 'foo',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('', 'foo', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        {_key: 'k4'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        {_key: 'k4'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('', 'foo', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        {_key: 'k4'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: Loading a malformed nested block while read-only keeps its corrected content in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  const blockKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [null],
+        },
+      ],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const editorRef = createRef<Editor>()
+  const {getByTestId} = await render(
+    <EditorProvider
+      initialConfig={{
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {
+              name: 'callout',
+              fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+            },
+          ],
+        }),
+        initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+        readOnly: true,
+      }}
+    >
+      <EditorRefPlugin ref={editorRef} />
+      <PortableTextEditable data-testid="read-only-editor" />
+      <NodePlugin
+        nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+      />
+      <EventListenerPlugin
+        on={(event) => {
+          if (event.type === 'change' && event.origin === 'local') {
+            for (const {origin: _, ...patch} of event.patches) {
+              patches.push(patch)
+            }
+            hostValue = applyAll(hostValue, event.patches)
+          }
+        }}
+      />
+    </EditorProvider>,
+  )
+  await expect.element(getByTestId('read-only-editor')).toBeInTheDocument()
+  const editor = editorRef.current!
+  expect(editor.getSnapshot().context.readOnly).toEqual(true)
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      unset([{_key: 'k0'}, 'content', {_key: 'k1'}, 'children', 0]),
+      setIfMissing([], [{_key: 'k0'}, 'content', {_key: 'k1'}, 'children']),
+      insert([{_type: 'span', _key: 'k4', text: '', marks: []}], 'before', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        0,
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  editor.send({type: 'update readOnly', readOnly: false})
+  patches.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: 'k0'}, 'content', {_key: 'k1'}, 'children', {_key: 'k4'}],
+    offset: 0,
+    text: 'foo',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('', 'foo', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        {_key: 'k4'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', '', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        {_key: 'k4'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('', 'foo', [
+        {_key: 'k0'},
+        'content',
+        {_key: 'k1'},
+        'children',
+        {_key: 'k4'},
+        'text',
+      ]),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k1',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: Redo after a collaborator inserts a paragraph after the original keeps both blocks in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const remoteKey = keyGenerator()
+  const remoteSpanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => expect(hostValue).toEqual(undefined))
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() =>
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ]),
+  )
+  const incoming = [
+    insert(
+      [
+        {
+          _type: 'block',
+          _key: remoteKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: remoteSpanKey, text: 'bar', marks: []},
+          ],
+        },
+      ],
+      'after',
+      [{_key: blockKey}],
+    ),
+  ]
+  hostValue = applyAll(hostValue, incoming)
+  editor.send({type: 'apply', patches: incoming})
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+    expect(patches).toEqual([
+      unset([{_key: 'k0'}]),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k6',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [{_key: 'k2'}],
+      ),
+    ])
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k6'}, 'children', {_key: 'k7'}], offset: 0},
+      focus: {path: [{_key: 'k6'}, 'children', {_key: 'k7'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: 'x', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: 'x', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Redo after a collaborator inserts a paragraph before the original keeps both blocks in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const remoteKey = keyGenerator()
+  const remoteSpanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => expect(hostValue).toEqual(undefined))
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() =>
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ]),
+  )
+  const incoming = [
+    insert(
+      [
+        {
+          _type: 'block',
+          _key: remoteKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: remoteSpanKey, text: 'bar', marks: []},
+          ],
+        },
+      ],
+      'before',
+      [{_key: blockKey}],
+    ),
+  ]
+  hostValue = applyAll(hostValue, incoming)
+  editor.send({type: 'apply', patches: incoming})
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+    expect(patches).toEqual([
+      unset([{_key: 'k0'}]),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k6',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k7', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [{_key: 'k2'}],
+      ),
+    ])
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k6'}, 'children', {_key: 'k7'}], offset: 0},
+      focus: {path: [{_key: 'k6'}, 'children', {_key: 'k7'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: 'x', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k7', text: 'x', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Redo after a collaborator inserts a block object after the original keeps both blocks in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const remoteKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => expect(hostValue).toEqual(undefined))
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() =>
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ]),
+  )
+  const incoming = [
+    insert([{_type: 'image', _key: remoteKey}], 'after', [{_key: blockKey}]),
+  ]
+  hostValue = applyAll(hostValue, incoming)
+  editor.send({type: 'apply', patches: incoming})
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+    expect(patches).toEqual([
+      unset([{_key: 'k0'}]),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k5',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [{_key: 'k2'}],
+      ),
+    ])
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k5'}, 'children', {_key: 'k6'}], offset: 0},
+      focus: {path: [{_key: 'k5'}, 'children', {_key: 'k6'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: 'x', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: 'x', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+  })
+})
+
+test('Scenario: Redo after a collaborator inserts a block object before the original keeps both blocks in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  const remoteKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    schemaDefinition: defineSchema({blockObjects: [{name: 'image'}]}),
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => expect(hostValue).toEqual(undefined))
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() =>
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ]),
+  )
+  const incoming = [
+    insert([{_type: 'image', _key: remoteKey}], 'before', [{_key: blockKey}]),
+  ]
+  hostValue = applyAll(hostValue, incoming)
+  editor.send({type: 'apply', patches: incoming})
+  patches.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+    expect(patches).toEqual([
+      unset([{_key: 'k0'}]),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k5',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [{_key: 'k2'}],
+      ),
+    ])
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k5'}, 'children', {_key: 'k6'}], offset: 0},
+      focus: {path: [{_key: 'k5'}, 'children', {_key: 'k6'}], offset: 0},
+    },
+  })
+  editor.send({type: 'insert.text', text: 'x'})
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: 'x', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k5',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k6', text: 'x', marks: []}],
+      },
+      {_type: 'image', _key: 'k2'},
+    ])
+  })
+})
+
+test('Scenario: Redoing deletion after a collaborator edit leaves no host field', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const operations: Array<Operation> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+        hostValue = applyAll(hostValue, [patch])
+      }
+    }
+  })
+  editor.on('operation', (event) => {
+    expect(Object.hasOwn(event.operation, 'patching')).toEqual(false)
+    operations.push(event.operation)
+  })
+  editor.send({type: 'delete.block', at: [{_key: blockKey}]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
+    expect(hostValue).toEqual(undefined)
+  })
+  patches.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+      unset([{_key: 'k4'}]),
+      unset([]),
+      setIfMissing([], []),
+      insert(
+        [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        'before',
+        [0],
+      ),
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+
+  const incoming = [set('h1', [{_key: blockKey}, 'style'])]
+  hostValue = applyAll(hostValue, incoming)
+  editor.send({type: 'apply', patches: incoming})
+  expect(hostValue).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'h1',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+    },
+  ])
+  patches.length = 0
+  operations.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([{_key: 'k0'}]), unset([])])
+    expect(hostValue).toEqual(undefined)
+    expect(operations).toEqual([
+      {
+        type: 'unset',
+        path: [{_key: 'k0'}],
+        inverse: {
+          type: 'insert',
+          path: [0],
+          position: 'before',
+          node: {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        },
+      },
+      {
+        type: 'insert',
+        path: [0],
+        position: 'before',
+        node: {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+        },
+        inverse: {type: 'unset', path: [{_key: 'k4'}]},
+      },
+    ])
+  })
+})
+
+test('Scenario: A collaborator emptying a callout keeps the nested empty block in the host', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    },
+  ]
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    schemaDefinition: defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+    children: (
+      <>
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const {origin: _, ...patch} of event.patches) {
+                patches.push(patch)
+              }
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+  const incoming = [unset([{_key: calloutKey}, 'content', {_key: blockKey}])]
+  hostValue = applyAll(hostValue, incoming)
+  editor.send({type: 'apply', patches: incoming})
+  expect(patches).toEqual([
+    setIfMissing([], [{_key: 'k0'}, 'content']),
+    insert(
+      [
+        {
+          _type: 'block',
+          _key: 'k5',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        },
+      ],
+      'before',
+      [{_key: 'k0'}, 'content', 0],
+    ),
+  ])
+  expect(hostValue).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k0',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k5',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+        },
+      ],
+    },
+  ])
+})
+
+test('Scenario: An empty nested block stays in the host document', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+        },
+      ],
+    },
+  ]
+  const patches: Array<Patch> = []
+  await createTestEditor({
+    keyGenerator,
+    initialValue: hostValue,
+    schemaDefinition: defineSchema({
+      blockObjects: [
+        {
+          name: 'callout',
+          fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+        },
+      ],
+    }),
+    children: (
+      <>
+        <NodePlugin
+          nodes={[defineContainer({type: 'callout', arrayField: 'content'})]}
+        />
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const {origin: _, ...patch} of event.patches) {
+                patches.push(patch)
+              }
+              hostValue = applyAll(hostValue, event.patches)
+            }
+          }}
+        />
+      </>
+    ),
+  })
+
+  expect(patches).toEqual([])
+  expect(hostValue).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k0',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k1',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k2', text: '', marks: []}],
+        },
+      ],
+    },
+  ])
 })

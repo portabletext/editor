@@ -2,9 +2,9 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {HistoryOperation} from '../editor/undo-step'
 import type {ApplyContextFrame} from '../engine/core/apply-context'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
-import type {EngineOperation} from '../engine/interfaces/operation'
 import type {
   AnnotationConfig,
   BlockObjectConfig,
@@ -16,7 +16,7 @@ import type {
 import type {ResolvedContainers} from '../schema/resolve-containers'
 
 type HistoryItem = {
-  operations: EngineOperation[]
+  operations: HistoryOperation[]
   timestamp: Date
 }
 

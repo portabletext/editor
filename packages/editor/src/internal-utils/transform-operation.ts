@@ -5,6 +5,7 @@ import {
   DIFF_INSERT,
   parsePatch,
 } from '@sanity/diff-match-patch'
+import type {HistoryOperation} from '../editor/undo-step'
 import type {Node} from '../engine/interfaces/node'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
@@ -24,8 +25,8 @@ import {debug} from './debug'
 export function transformOperation(
   editor: PortableTextEditorEngine,
   patch: Patch,
-  operation: EngineOperation,
-): EngineOperation[] {
+  operation: HistoryOperation,
+): HistoryOperation[] {
   const snapshot: TraversalSnapshot = editor.snapshot
   const transformedOperation = {...operation}
 
