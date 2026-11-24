@@ -1,3 +1,4 @@
+import {isTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {comparePoints} from '../engine/point/compare-points'
@@ -5,6 +6,7 @@ import {isCollapsedRange} from '../engine/range/is-collapsed-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {getCompoundClientRect} from '../internal-utils/compound-client-rect'
 import {getDragSelection} from '../selectors/drag-selection'
+import {getFocusBlock} from '../selectors/selector.get-focus-block'
 import {getFocusInlineObject} from '../selectors/selector.get-focus-inline-object'
 import {getFocusTextBlock} from '../selectors/selector.get-focus-text-block'
 import {getFragment} from '../selectors/selector.get-fragment'
@@ -160,6 +162,40 @@ export const coreDndBehaviors = [
         ]
       },
     ],
+  }),
+
+  defineBehavior({
+    on: 'drag.dragover',
+    guard: ({snapshot, event}) => {
+      const dropFocusBlock = getFocusBlock({
+        ...snapshot,
+        context: {...snapshot.context, selection: event.position.selection},
+      })
+      if (
+        !dropFocusBlock ||
+        isTextBlock(snapshot.context, dropFocusBlock.node) ||
+        !event.dragOrigin
+      ) {
+        return false
+      }
+      const dragSelection = getDragSelection({
+        eventSelection: event.dragOrigin.selection,
+        snapshot,
+      })
+      const dragSnapshot = {
+        ...snapshot,
+        context: {...snapshot.context, selection: dragSelection},
+      }
+      return (
+        isSelectingEntireBlocks(dragSnapshot) &&
+        !isDropTargetingDragOrigin(
+          event.position.selection,
+          dragSelection,
+          snapshot,
+        )
+      )
+    },
+    actions: [],
   }),
 
   /**
