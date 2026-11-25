@@ -14,6 +14,7 @@ description: How to write commit messages in the Portable Text Editor monorepo. 
   - ✅ `fix: only rewrite the DOM selection when it disagrees with the model`
   - ❌ `fix: getNode path bug`, ❌ `fix: improve selection handling`
 - Backticks around code identifiers in subject and body.
+- No em dashes and no semicolons in subject or body. Use commas, colons, parentheses or separate sentences.
 - **Never reference issue-tracker ticket IDs** (Linear, Jira, anything) in subjects, bodies, or branch names. Branches are named after the change (`fix-inline-object-drag-selection`), not the ticket.
 
 ## Type selection
@@ -69,7 +70,7 @@ Includes test coverage for block-object, span, and inline-object
 paths with trailing primitive fields, and a round-trip assertion.
 ```
 
-Why it's good: names the function and its contract, gives a concrete input, states the downstream blast radius, then the fix as an invariant ("feeding `entry.path` back...").
+Why it's good: names the function and its contract, gives a concrete input, states the downstream blast radius, then the fix as an invariant ("feeding `entry.path` back..."). It predates the ban on em dashes, so imitate its structure, not its dashes.
 
 ### fix with a precise failure sequence + scoped behavioral change (`46593d537`)
 
