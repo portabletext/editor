@@ -1,6 +1,7 @@
 import {after} from '../engine/editor/after'
 import {before} from '../engine/editor/before'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
+import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
 import {isAncestorPath} from '../engine/path/is-ancestor-path'
 import {isCollapsedRange} from '../engine/range/is-collapsed-range'
@@ -13,6 +14,8 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {applyDelete, type SelectionMode} from './delete-internal'
 
 interface DeleteRangeOptions {
+  /** Called with the point where the deleted range was, after the delete. */
+  onDelete?: (point: Point) => void
   /**
    * What to do with the editor selection after the delete:
    * - `'collapse-to-start'` collapses to the start of the deleted range.
@@ -52,6 +55,7 @@ export function deleteRange(
     }
     applyDelete(editor, resolved, {
       capture: false,
+      onDelete: options.onDelete,
       collapsedInput: false,
       reverse: false,
       unit: 'character',

@@ -1,3 +1,4 @@
+import {subscribeToOperations} from '../engine/core/operation-channel'
 import {pointRef} from '../engine/editor/point-ref'
 import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
@@ -5,6 +6,7 @@ import type {Range} from '../engine/interfaces/range'
 import {commonPath} from '../engine/path/common-path'
 import {parentPath} from '../engine/path/parent-path'
 import {pathEquals} from '../engine/path/path-equals'
+import {transformPoint} from '../engine/point/transform-point'
 import {rangeEdges} from '../engine/range/range-edges'
 import type {TextUnit} from '../engine/types/types'
 import {getEnclosingContainer} from '../schema/get-enclosing-container'
@@ -23,6 +25,8 @@ import {applyMergeNode} from './apply-merge-node'
 import {applyNodeProperties} from './apply-node-properties'
 import {createPlaceholderBlock} from './create-placeholder-block'
 import {getFullyCoveredContainers} from './get-fully-covered-container'
+import {mapPointThroughRemoval} from './map-point-through-removal'
+import {toKeyedPatchPath} from './operation-to-patches'
 import {planMergeKeyRenames} from './plan-merge-key-renames'
 
 /**
@@ -49,6 +53,8 @@ const COMPOUND_SCRIPT_REGEX =
   /[\u0980-\u09FF\u0E00-\u0E7F\u1000-\u109F\u0900-\u097F\u1780-\u17FF\u0D00-\u0D7F\u0B00-\u0B7F\u0A00-\u0A7F\u0B80-\u0BFF\u0C00-\u0C7F\u0ACD\u1A60\u1B44\u1BAB\uA9C0\uAAF6]+/
 
 export interface ApplyDeleteOptions {
+  /** Called with the point where the deleted range was, after the delete. */
+  onDelete?: (point: Point) => void
   /** Return the removed text. Used for compound-grapheme handling. */
   capture: boolean
   /** `true` if the range was produced by expanding a collapsed cursor. */
@@ -85,11 +91,11 @@ export function applyDelete(
   } = options
 
   const startRef =
-    mode === 'collapse-to-start'
+    mode === 'collapse-to-start' || options.onDelete
       ? pointRef(editor, range.anchor, {affinity: 'forward'})
       : null
   const endRef =
-    mode === 'collapse-to-start'
+    mode === 'collapse-to-start' || options.onDelete
       ? pointRef(editor, range.focus, {affinity: 'backward'})
       : null
 
@@ -100,19 +106,57 @@ export function applyDelete(
         })
       : null
 
-  const removedText = mutateRange(editor, range, {
-    capture,
-    removeEmptyStartBlock,
-  })
+  const fallbackRef = options.onDelete
+    ? pointRef(editor, range.anchor, {affinity: 'forward'})
+    : null
+  const stopTracking = fallbackRef
+    ? subscribeToOperations(
+        editor,
+        ({operation}) => {
+          const point = fallbackRef.current
+          if (!point || operation.type !== 'unset') {
+            return
+          }
+          const path = toKeyedPatchPath(
+            editor.snapshot.context.value,
+            operation.path,
+          )
+          if (
+            transformPoint(editor.snapshot.context, point, {...operation, path})
+          ) {
+            return
+          }
+          fallbackRef.current = mapPointThroughRemoval(
+            editor.snapshot,
+            point,
+            path,
+          )
+        },
+        {phase: 'before'},
+      )
+    : undefined
 
+  let removedText: string | null
+  try {
+    removedText = mutateRange(editor, range, {
+      capture,
+      removeEmptyStartBlock,
+    })
+  } finally {
+    stopTracking?.()
+  }
+
+  const adjustedStart = startRef?.unref()
+  const adjustedEnd = endRef?.unref()
+  const fallback = fallbackRef?.unref()
+  const adjusted = adjustedStart ?? adjustedEnd ?? fallback ?? null
+  if (adjusted) {
+    options.onDelete?.(adjusted)
+  }
   if (mode === 'collapse-to-start') {
-    const adjusted = startRef?.unref() ?? endRef?.unref() ?? null
     if (adjusted) {
       editor.select(adjusted)
     }
-  } else {
-    startRef?.unref()
-    endRef?.unref()
   }
 
   const reinsertAt = reinsertRef?.unref() ?? null

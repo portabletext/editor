@@ -2,6 +2,12 @@ import {isTextBlockNode} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {Path} from '../engine/interfaces/path'
 import {siblingPath} from '../engine/path/sibling-path'
+import {isCollapsedRange} from '../engine/range/is-collapsed-range'
+import {
+  prepareInsertBlocks,
+  resolveInsertBlocksTarget,
+  type InsertBlocksPreparation,
+} from '../operations/operation.insert.blocks'
 import {serializePath} from '../paths/serialize-path'
 import {isSelectionExpanded} from '../selectors'
 import {getFocusBlock} from '../selectors/selector.get-focus-block'
@@ -15,7 +21,12 @@ import {getBlockStartPoint} from '../utils/util.get-block-start-point'
 import {isEmptyTextBlock} from '../utils/util.is-empty-text-block'
 import {isEqualSelectionPoints} from '../utils/util.is-equal-selection-points'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
-import {raise, type BehaviorAction} from './behavior.types.action'
+import {
+  execute,
+  forward,
+  raise,
+  type BehaviorAction,
+} from './behavior.types.action'
 import {defineBehavior} from './behavior.types.behavior'
 import type {SyntheticBehaviorEvent} from './behavior.types.event'
 
@@ -58,6 +69,8 @@ function newBlockPath(referencePath: Path, key: string): Path {
     : siblingPath(referencePath, key)
 }
 
+const insertBlocksAfterDelete = Symbol('insert.blocks.after-delete')
+
 export const abstractInsertBehaviors = [
   defineBehavior({
     on: 'insert.blocks',
@@ -81,6 +94,63 @@ export const abstractInsertBehaviors = [
           ...(event.at ? {at: event.at} : {}),
         }),
       ],
+    ],
+  }),
+
+  defineBehavior({
+    on: 'insert.blocks',
+    guard: ({snapshot, event}) => {
+      if (
+        event.blocks.length < 2 ||
+        event.placement !== 'auto' ||
+        !event.blocks.every(
+          (block) =>
+            typeof block === 'object' &&
+            block !== null &&
+            !Array.isArray(block),
+        )
+      ) {
+        return false
+      }
+      const selection = resolveInsertBlocksTarget(snapshot, event)
+      return selection !== null && !isCollapsedRange(selection)
+    },
+    actions: [
+      ({event}) => {
+        const capture: InsertBlocksPreparation = {
+          removeEmptyStartBlock: event.select !== 'none',
+        }
+        const insertEvent = {
+          ...event,
+          [insertBlocksAfterDelete]: capture,
+        }
+        const preparationEvent = {...event, [prepareInsertBlocks]: capture}
+        return [execute(preparationEvent), forward(insertEvent)]
+      },
+    ],
+  }),
+  defineBehavior({
+    on: 'insert.blocks',
+    guard: ({event}) => insertBlocksAfterDelete in event,
+    actions: [
+      ({event}) => {
+        const capture = (
+          event as typeof event & {
+            [insertBlocksAfterDelete]: InsertBlocksPreparation
+          }
+        )[insertBlocksAfterDelete]
+        const point = capture.pointRef?.unref()
+        const actions: Array<BehaviorAction> = [
+          forward({
+            type: 'insert.blocks',
+            blocks: event.blocks,
+            placement: event.placement,
+            select: event.select,
+            at: point ? {anchor: point, focus: point} : event.at,
+          }),
+        ]
+        return actions
+      },
     ],
   }),
 

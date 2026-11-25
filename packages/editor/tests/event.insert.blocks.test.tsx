@@ -1,10 +1,14 @@
-import {isTextBlock} from '@portabletext/schema'
+import {isTextBlock, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema} from '../src'
 import {defineBehavior, type InsertPlacement} from '../src/behaviors'
+import {effect, forward} from '../src/behaviors/behavior.types.action'
+import type {SyntheticBehaviorEvent} from '../src/behaviors/behavior.types.event'
 import {BehaviorPlugin} from '../src/plugins'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
 import {getTextBlockText} from '../src/utils'
 
@@ -2373,4 +2377,2071 @@ describe('event.insert.blocks', () => {
       )
     })
   })
+})
+
+test('Scenario: Replacing an expanded root selection with select start at an explicit target', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'bar', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'baz', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+    },
+  ]
+  const blocks = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'bar', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'baz', marks: []}],
+    },
+  ]
+  const {editor} = await createTestEditor({keyGenerator, initialValue})
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    select: 'start',
+    blocks,
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+    },
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k1', _type: 'span', text: 'fbar', marks: []}],
+      },
+      {
+        _key: 'k10',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k11', _type: 'span', text: 'bazr', marks: []}],
+      },
+      {
+        _key: 'k4',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k5', _type: 'span', text: 'baz', marks: []}],
+      },
+      {
+        _key: 'k6',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k7', _type: 'span', text: 'foo', marks: []}],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      backward: false,
+    })
+  })
+})
+
+describe('Replacing expanded callout selections', () => {
+  let keyGenerator: ReturnType<typeof createTestKeyGenerator>
+  let initialValue: Array<PortableTextBlock>
+  let blocks: Array<PortableTextBlock>
+  beforeEach(() => {
+    keyGenerator = createTestKeyGenerator()
+    initialValue = [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'callout',
+        content: [
+          {
+            _key: keyGenerator(),
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+            ],
+          },
+          {
+            _key: keyGenerator(),
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+            ],
+          },
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+    ]
+    blocks = [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'baz', marks: []},
+        ],
+      },
+    ]
+  })
+  test('Scenario: Replacing an expanded callout selection with select start at the selection', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: {
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      },
+      children: <NodePlugin nodes={[calloutContainer]} />,
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k5'},
+            'children',
+            {_key: 'k6'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      placement: 'auto',
+      select: 'start',
+      blocks,
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: 'k2',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'k3',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k4', _type: 'span', text: 'fbar', marks: []}],
+            },
+            {
+              _key: 'k11',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k12', _type: 'span', text: 'bazr', marks: []}],
+            },
+          ],
+        },
+        {
+          _key: 'k7',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k8', _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Replacing an expanded callout selection with select start at an explicit target', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: {
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      },
+      children: <NodePlugin nodes={[calloutContainer]} />,
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      placement: 'auto',
+      select: 'start',
+      blocks,
+      at: {
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k5'},
+            'children',
+            {_key: 'k6'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: 'k2',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'k3',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k4', _type: 'span', text: 'fbar', marks: []}],
+            },
+            {
+              _key: 'k11',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k12', _type: 'span', text: 'bazr', marks: []}],
+            },
+          ],
+        },
+        {
+          _key: 'k7',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k8', _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Replacing an expanded callout selection with select none at the selection', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: {
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      },
+      children: <NodePlugin nodes={[calloutContainer]} />,
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k5'},
+            'children',
+            {_key: 'k6'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      placement: 'auto',
+      select: 'none',
+      blocks,
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: 'k2',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'k3',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k4', _type: 'span', text: 'fbar', marks: []}],
+            },
+            {
+              _key: 'k11',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k12', _type: 'span', text: 'bazr', marks: []}],
+            },
+          ],
+        },
+        {
+          _key: 'k7',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k8', _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Replacing an expanded callout selection with select end at the selection', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: {
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      },
+      children: <NodePlugin nodes={[calloutContainer]} />,
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k5'},
+            'children',
+            {_key: 'k6'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      placement: 'auto',
+      select: 'end',
+      blocks,
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: 'k2',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'k3',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k4', _type: 'span', text: 'fbar', marks: []}],
+            },
+            {
+              _key: 'k11',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k12', _type: 'span', text: 'bazr', marks: []}],
+            },
+          ],
+        },
+        {
+          _key: 'k7',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k8', _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k11'},
+            'children',
+            {_key: 'k12'},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k11'},
+            'children',
+            {_key: 'k12'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+  })
+
+  test('Scenario: Replacing an expanded callout selection with select end at an explicit target', async () => {
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue,
+      schemaDefinition: {
+        blockObjects: [
+          {
+            name: 'callout',
+            fields: [{name: 'content', type: 'array', of: [{type: 'block'}]}],
+          },
+        ],
+      },
+      children: <NodePlugin nodes={[calloutContainer]} />,
+    })
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+        focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 0},
+      },
+    })
+    editor.send({
+      type: 'insert.blocks',
+      placement: 'auto',
+      select: 'end',
+      blocks,
+      at: {
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k3'},
+            'children',
+            {_key: 'k4'},
+          ],
+          offset: 1,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k5'},
+            'children',
+            {_key: 'k6'},
+          ],
+          offset: 2,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k0',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k1', _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: 'k2',
+          _type: 'callout',
+          content: [
+            {
+              _key: 'k3',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k4', _type: 'span', text: 'fbar', marks: []}],
+            },
+            {
+              _key: 'k11',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k12', _type: 'span', text: 'bazr', marks: []}],
+            },
+          ],
+        },
+        {
+          _key: 'k7',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k8', _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k11'},
+            'children',
+            {_key: 'k12'},
+          ],
+          offset: 3,
+        },
+        focus: {
+          path: [
+            {_key: 'k2'},
+            'content',
+            {_key: 'k11'},
+            'children',
+            {_key: 'k12'},
+          ],
+          offset: 3,
+        },
+        backward: false,
+      })
+    })
+  })
+})
+
+test('Scenario: Swallowing delete duplicates the tail over an expanded selection', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'bar', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'baz', marks: []}],
+    },
+  ]
+  const blocks = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'bar', marks: []}],
+    },
+  ]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    children: (
+      <BehaviorPlugin
+        behaviors={[defineBehavior({on: 'delete', actions: []})]}
+      />
+    ),
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+    },
+  })
+  editor.send({type: 'insert.blocks', placement: 'auto', blocks})
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k1', _type: 'span', text: 'ffoor', marks: []}],
+      },
+      {
+        _key: 'k8',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k9', _type: 'span', text: 'barr', marks: []}],
+      },
+      {
+        _key: 'k4',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k5', _type: 'span', text: 'baz', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Explicit at with select none emits one select of the user caret', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'bar', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'baz', marks: []}],
+    },
+  ]
+  const blocks = [
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'foo', marks: []}],
+    },
+    {
+      _key: keyGenerator(),
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_key: keyGenerator(), _type: 'span', text: 'bar', marks: []}],
+    },
+  ]
+  const selects: Array<SyntheticBehaviorEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    children: (
+      <BehaviorPlugin
+        behaviors={[
+          defineBehavior({
+            on: 'select',
+            actions: [
+              ({event}) => [
+                effect(() => {
+                  selects.push(event)
+                }),
+                forward(event),
+              ],
+            ],
+          }),
+        ]}
+      />
+    ),
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+      focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+    },
+  })
+  selects.length = 0
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    select: 'none',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+    },
+    blocks,
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+      focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+      backward: false,
+    })
+    expect(selects).toEqual([
+      {
+        type: 'select',
+        at: {
+          anchor: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+          focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 0},
+          backward: false,
+        },
+      },
+    ])
+  })
+})
+
+test('Scenario: An unresolvable explicit target preserves the user selection text', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    blocks: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+    at: {
+      anchor: {path: [{_key: 'k8'}, 'children', {_key: 'k9'}], offset: 1},
+      focus: {path: [{_key: 'k10'}, 'children', {_key: 'k11'}], offset: 2},
+    },
+  })
+  await vi.waitFor(() => {
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: foo\nB: bar\nB: foo\nB: bar|',
+    )
+  })
+})
+
+test('Scenario: An explicit target clamped to one point preserves the user selection text', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'baz', marks: []},
+        ],
+      },
+    ],
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 1},
+      focus: {path: [{_key: 'k4'}, 'children', {_key: 'k5'}], offset: 2},
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    blocks: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 9},
+      focus: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 3},
+    },
+  })
+  await vi.waitFor(() => {
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: foofoo\nB: bar|\nB: bar\nB: baz',
+    )
+  })
+})
+
+test('Scenario: A null block preserves the expanded selection', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+  })
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    blocks: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      null!,
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f^oo\nB: ba|r')
+  })
+  expect(error.mock.calls).toHaveLength(1)
+  const [firstCall] = error.mock.calls
+  expect(String(firstCall?.[0])).toMatch(
+    /^Error: Evaluating actions for "insert\.blocks" failed due to: /,
+  )
+  error.mockRestore()
+})
+
+test('Scenario: A forwarding block transform runs once over an expanded selection', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+    children: (
+      <BehaviorPlugin
+        behaviors={[
+          defineBehavior({
+            on: 'insert.blocks',
+            actions: [
+              ({event, snapshot}) => [
+                forward({
+                  ...event,
+                  blocks: event.blocks.map((block) =>
+                    isTextBlock(snapshot.context, block)
+                      ? {
+                          ...block,
+                          children: block.children.map((child) =>
+                            child._type === 'span'
+                              ? {...child, text: `${child.text}!`}
+                              : child,
+                          ),
+                        }
+                      : block,
+                  ),
+                }),
+              ],
+            ],
+          }),
+        ]}
+      />
+    ),
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {path: [{_key: 'k0'}, 'children', {_key: 'k1'}], offset: 1},
+      focus: {path: [{_key: 'k2'}, 'children', {_key: 'k3'}], offset: 2},
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    blocks: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(toTextspec(editor.getSnapshot().context)).toEqual(
+      'B: ffoo!\nB: bar!r|',
+    )
+  })
+})
+
+test('Scenario: Replacing a selection keeps both blocks in the table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const schemaDefinition = defineSchema({
+    blockObjects: [
+      {
+        name: 'table',
+        fields: [
+          {
+            name: 'rows',
+            type: 'array',
+            of: [
+              {
+                type: 'object',
+                name: 'row',
+                fields: [
+                  {
+                    name: 'cells',
+                    type: 'array',
+                    of: [
+                      {
+                        type: 'object',
+                        name: 'cell',
+                        fields: [
+                          {
+                            name: 'content',
+                            type: 'array',
+                            of: [{type: 'block'}],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })
+
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    schemaDefinition,
+    initialValue: [
+      {
+        _key: keyGenerator(),
+        _type: 'table',
+        rows: [
+          {
+            _key: keyGenerator(),
+            _type: 'row',
+            cells: [
+              {
+                _key: keyGenerator(),
+                _type: 'cell',
+                content: [
+                  {
+                    _key: keyGenerator(),
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _key: keyGenerator(),
+                        _type: 'span',
+                        text: 'foo',
+                        marks: [],
+                      },
+                    ],
+                  },
+                  {
+                    _key: keyGenerator(),
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _key: keyGenerator(),
+                        _type: 'span',
+                        text: 'bar',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    children: (
+      <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
+    ),
+  })
+  editor.send({
+    type: 'select',
+    at: {
+      anchor: {
+        path: [
+          {_key: 'k0'},
+          'rows',
+          {_key: 'k1'},
+          'cells',
+          {_key: 'k2'},
+          'content',
+          {_key: 'k3'},
+          'children',
+          {_key: 'k4'},
+        ],
+        offset: 1,
+      },
+      focus: {
+        path: [
+          {_key: 'k0'},
+          'rows',
+          {_key: 'k1'},
+          'cells',
+          {_key: 'k2'},
+          'content',
+          {_key: 'k5'},
+          'children',
+          {_key: 'k6'},
+        ],
+        offset: 2,
+      },
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    blocks: [
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'foo', marks: []},
+        ],
+      },
+      {
+        _key: keyGenerator(),
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_key: keyGenerator(), _type: 'span', text: 'bar', marks: []},
+        ],
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _key: 'k0',
+        _type: 'table',
+        rows: [
+          {
+            _key: 'k1',
+            _type: 'row',
+            cells: [
+              {
+                _key: 'k2',
+                _type: 'cell',
+                content: [
+                  {
+                    _key: 'k3',
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_key: 'k4', _type: 'span', text: 'ffoo', marks: []},
+                    ],
+                  },
+                  {
+                    _key: 'k11',
+                    _type: 'block',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_key: 'k12', _type: 'span', text: 'barr', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      ...{
+        anchor: {
+          path: [
+            {_key: 'k0'},
+            'rows',
+            {_key: 'k1'},
+            'cells',
+            {_key: 'k2'},
+            'content',
+            {_key: 'k11'},
+            'children',
+            {_key: 'k12'},
+          ],
+          offset: 4,
+        },
+        focus: {
+          path: [
+            {_key: 'k0'},
+            'rows',
+            {_key: 'k1'},
+            'cells',
+            {_key: 'k2'},
+            'content',
+            {_key: 'k11'},
+            'children',
+            {_key: 'k12'},
+          ],
+          offset: 4,
+        },
+      },
+      backward: false,
+    })
+  })
+})
+
+test('Scenario: Replacing an explicit range with deleted endpoints in a root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _type: 'image',
+      _key: keyGenerator(),
+      src: 'image-1',
+    },
+    {
+      _type: 'image',
+      _key: keyGenerator(),
+      src: 'image-2',
+    },
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'baz',
+          marks: [],
+        },
+      ],
+    },
+  ]
+  const blocks = [
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'foo',
+          marks: [],
+        },
+      ],
+    },
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'bar',
+          marks: [],
+        },
+      ],
+    },
+  ]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: {
+      blockObjects: [{name: 'image', fields: [{name: 'src', type: 'string'}]}],
+    },
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    at: {
+      anchor: {
+        path: [
+          {
+            _key: 'k0',
+          },
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {
+            _key: 'k1',
+          },
+        ],
+        offset: 0,
+      },
+    },
+    blocks,
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 'k5',
+            text: 'foo',
+            marks: [],
+          },
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k6',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {
+            _type: 'span',
+            _key: 'k7',
+            text: 'barbaz',
+            marks: [],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {
+            _key: 'k6',
+          },
+          'children',
+          {
+            _key: 'k7',
+          },
+        ],
+        offset: 6,
+      },
+      focus: {
+        path: [
+          {
+            _key: 'k6',
+          },
+          'children',
+          {
+            _key: 'k7',
+          },
+        ],
+        offset: 6,
+      },
+      backward: false,
+    })
+  })
+})
+
+test('Scenario: Replacing an explicit range with deleted endpoints in a callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _type: 'callout',
+      _key: keyGenerator(),
+      content: [
+        {
+          _type: 'image',
+          _key: keyGenerator(),
+          src: 'image-1',
+        },
+        {
+          _type: 'image',
+          _key: keyGenerator(),
+          src: 'image-2',
+        },
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'span',
+              _key: keyGenerator(),
+              text: 'baz',
+              marks: [],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  const blocks = [
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'foo',
+          marks: [],
+        },
+      ],
+    },
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'bar',
+          marks: [],
+        },
+      ],
+    },
+  ]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: {
+      blockObjects: [
+        {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        {
+          name: 'callout',
+          fields: [
+            {
+              name: 'content',
+              type: 'array',
+              of: [{type: 'block'}, {type: 'image'}],
+            },
+          ],
+        },
+      ],
+    },
+    children: <NodePlugin nodes={[calloutContainer]} />,
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    at: {
+      anchor: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k1',
+          },
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k2',
+          },
+        ],
+        offset: 0,
+      },
+    },
+    blocks,
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k5',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'k6',
+                text: 'foo',
+                marks: [],
+              },
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k7',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: 'k8',
+                text: 'barbaz',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k7',
+          },
+          'children',
+          {
+            _key: 'k8',
+          },
+        ],
+        offset: 6,
+      },
+      focus: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'content',
+          {
+            _key: 'k7',
+          },
+          'children',
+          {
+            _key: 'k8',
+          },
+        ],
+        offset: 6,
+      },
+      backward: false,
+    })
+  })
+})
+
+test('Scenario: Replacing an explicit range with deleted endpoints in a table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const initialValue = [
+    {
+      _type: 'table',
+      _key: keyGenerator(),
+      rows: [
+        {
+          _type: 'row',
+          _key: keyGenerator(),
+          cells: [
+            {
+              _type: 'cell',
+              _key: keyGenerator(),
+              content: [
+                {
+                  _type: 'image',
+                  _key: keyGenerator(),
+                  src: 'image-1',
+                },
+                {
+                  _type: 'image',
+                  _key: keyGenerator(),
+                  src: 'image-2',
+                },
+                {
+                  _type: 'block',
+                  _key: keyGenerator(),
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: keyGenerator(),
+                      text: 'baz',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  const blocks = [
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'foo',
+          marks: [],
+        },
+      ],
+    },
+    {
+      _type: 'block',
+      _key: keyGenerator(),
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {
+          _type: 'span',
+          _key: keyGenerator(),
+          text: 'bar',
+          marks: [],
+        },
+      ],
+    },
+  ]
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: {
+      blockObjects: [
+        {name: 'image', fields: [{name: 'src', type: 'string'}]},
+        {
+          name: 'table',
+          fields: [
+            {
+              name: 'rows',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'row',
+                  fields: [
+                    {
+                      name: 'cells',
+                      type: 'array',
+                      of: [
+                        {
+                          type: 'object',
+                          name: 'cell',
+                          fields: [
+                            {
+                              name: 'content',
+                              type: 'array',
+                              of: [{type: 'block'}, {type: 'image'}],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    children: (
+      <NodePlugin nodes={[tableContainer, rowContainer, cellContainer]} />
+    ),
+  })
+  editor.send({
+    type: 'insert.blocks',
+    placement: 'auto',
+    at: {
+      anchor: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'rows',
+          {
+            _key: 'k1',
+          },
+          'cells',
+          {
+            _key: 'k2',
+          },
+          'content',
+          {
+            _key: 'k3',
+          },
+        ],
+        offset: 0,
+      },
+      focus: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'rows',
+          {
+            _key: 'k1',
+          },
+          'cells',
+          {
+            _key: 'k2',
+          },
+          'content',
+          {
+            _key: 'k4',
+          },
+        ],
+        offset: 0,
+      },
+    },
+    blocks,
+  })
+  await vi.waitFor(() => {
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'table',
+        _key: 'k0',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k1',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k2',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k7',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: 'k8',
+                        text: 'foo',
+                        marks: [],
+                      },
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k9',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {
+                        _type: 'span',
+                        _key: 'k10',
+                        text: 'barbaz',
+                        marks: [],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'rows',
+          {
+            _key: 'k1',
+          },
+          'cells',
+          {
+            _key: 'k2',
+          },
+          'content',
+          {
+            _key: 'k9',
+          },
+          'children',
+          {
+            _key: 'k10',
+          },
+        ],
+        offset: 6,
+      },
+      focus: {
+        path: [
+          {
+            _key: 'k0',
+          },
+          'rows',
+          {
+            _key: 'k1',
+          },
+          'cells',
+          {
+            _key: 'k2',
+          },
+          'content',
+          {
+            _key: 'k9',
+          },
+          'children',
+          {
+            _key: 'k10',
+          },
+        ],
+        offset: 6,
+      },
+      backward: false,
+    })
+  })
+})
+
+const calloutContainer = defineContainer({
+  type: 'callout',
+  arrayField: 'content',
+  render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+})
+
+const tableContainer = defineContainer({
+  type: 'table',
+  arrayField: 'rows',
+  render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+})
+
+const rowContainer = defineContainer({
+  type: 'row',
+  arrayField: 'cells',
+  render: ({attributes, children}) => <div {...attributes}>{children}</div>,
+})
+
+const cellContainer = defineContainer({
+  type: 'cell',
+  arrayField: 'content',
+  render: ({attributes, children}) => <div {...attributes}>{children}</div>,
 })
