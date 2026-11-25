@@ -173,6 +173,9 @@ and nothing else.
   parentheses or separate sentences.
 - Bold run-in labels ("**Verified**: ...", "**Root cause**: ..."). Write a
   plain sentence, or a plain list for genuinely parallel items.
+- "Save", "saved" or "stored" for what the editor sends. The editor emits
+  patches and events, and the host app decides what to persist. Name the
+  mechanism: "emits an `unset` patch", "the `change` event carries".
 - The investigation narrative leaking into the body: how the bug was found
   belongs wherever the work is tracked; the body describes the change.
 - Appending paragraphs as the PR evolves instead of rewriting the body.

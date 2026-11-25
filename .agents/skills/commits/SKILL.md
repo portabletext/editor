@@ -15,6 +15,7 @@ description: How to write commit messages in the Portable Text Editor monorepo. 
   - ❌ `fix: getNode path bug`, ❌ `fix: improve selection handling`
 - Backticks around code identifiers in subject and body.
 - No em dashes and no semicolons in subject or body. Use commas, colons, parentheses or separate sentences.
+- Never "save", "saved" or "stored" for what the editor sends. Name the patch or event: "emits an `unset` patch", "the `change` event carries".
 - **Never reference issue-tracker ticket IDs** (Linear, Jira, anything) in subjects, bodies, or branch names. Branches are named after the change (`fix-inline-object-drag-selection`), not the ticket.
 
 ## Type selection
