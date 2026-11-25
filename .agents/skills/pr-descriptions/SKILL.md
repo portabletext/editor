@@ -171,6 +171,8 @@ and nothing else.
   a secondary change in a plain sentence instead.
 - Em dashes and semicolons anywhere in artifact prose. Use commas, colons,
   parentheses or separate sentences.
+- Bold run-in labels ("**Verified**: ...", "**Root cause**: ..."). Write a
+  plain sentence, or a plain list for genuinely parallel items.
 - The investigation narrative leaking into the body: how the bug was found
   belongs wherever the work is tracked; the body describes the change.
 - Appending paragraphs as the PR evolves instead of rewriting the body.
