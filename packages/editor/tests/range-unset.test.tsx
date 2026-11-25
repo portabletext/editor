@@ -2,7 +2,7 @@ import {defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {defineContainer} from '../src'
+import {defineContainer, type EditorEmittedEvent} from '../src'
 import {getValue} from '../src/internal-utils/get-value'
 import {NodePlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
@@ -466,6 +466,62 @@ describe('remote range unset', () => {
         ])
       })
     })
+  })
+
+  test('Scenario: a range on a block style that is not an array emits no operation', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+      children: <NodePlugin nodes={containers} />,
+    })
+    const events: Array<EditorEmittedEvent & {type: 'operation'}> = []
+    editor.on('operation', (event) => {
+      events.push(event)
+    })
+    const textPath = [{_key: blockKey}, 'children', {_key: spanKey}, 'text']
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'unset',
+          origin: 'remote',
+          path: [{_key: blockKey}, 'style', [0, '']],
+        },
+        {type: 'set', origin: 'remote', path: textPath, value: 'bar'},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'operation',
+          operation: {type: 'set', path: textPath, value: 'bar'},
+          origin: 'remote',
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 
   test('Scenario: moves the caret to the end of the remaining span when its span is removed', async () => {
