@@ -1,4 +1,4 @@
-import {insert} from '@portabletext/patches'
+import {diffMatchPatch, insert, set} from '@portabletext/patches'
 import {
   type PortableTextBlock,
   type PortableTextSpan,
@@ -7,7 +7,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
-import {type Editor, type Operation} from '../src'
+import {type Editor, type Operation, type EditorEmittedEvent} from '../src'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -378,6 +378,115 @@ describe('event.operation', () => {
       expect(firstSpanText(editor)).toBe('bar')
       expect(origins).toEqual(['remote'])
     })
+  })
+
+  test('Scenario: A remote `diffMatchPatch` on a block style whose hunks do not match emits no operation', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    })
+    const events: Array<EditorEmittedEvent & {type: 'operation'}> = []
+    editor.on('operation', (event) => {
+      events.push(event)
+    })
+    const textPath = [{_key: blockKey}, 'children', {_key: spanKey}, 'text']
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...diffMatchPatch('baz baz baz baz', 'baz baz bar baz', [
+            {_key: blockKey},
+            'style',
+          ]),
+          origin: 'remote',
+        },
+        {...set('bar', textPath), origin: 'remote'},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'operation',
+          operation: {type: 'set', path: textPath, value: 'bar'},
+          origin: 'remote',
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
+  })
+
+  test('Scenario: A remote `diffMatchPatch` on a block style that leaves it as it is emits no operation', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    })
+    const events: Array<EditorEmittedEvent & {type: 'operation'}> = []
+    editor.on('operation', (event) => {
+      events.push(event)
+    })
+    const textPath = [{_key: blockKey}, 'children', {_key: spanKey}, 'text']
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          ...diffMatchPatch('normal', 'normal', [{_key: blockKey}, 'style']),
+          origin: 'remote',
+        },
+        {...set('bar', textPath), origin: 'remote'},
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(events).toEqual([
+        {
+          type: 'operation',
+          operation: {type: 'set', path: textPath, value: 'bar'},
+          origin: 'remote',
+        },
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ])
   })
 
   test('Scenario: Undo and redo report origin `local`', async () => {

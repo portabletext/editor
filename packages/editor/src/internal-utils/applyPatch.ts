@@ -179,6 +179,10 @@ function diffMatchPatch(
       {allowExceedingIndices: true},
     )
 
+    if (newValue === currentValue) {
+      return false
+    }
+
     return editor.apply({
       type: 'set',
       path: patch.path,
@@ -363,6 +367,8 @@ function unsetPatch(editor: PortableTextEditorEngine, patch: UnsetPatch) {
 
       return changed
     }
+
+    return false
   }
 
   return editor.apply({type: 'unset', path: patch.path})
