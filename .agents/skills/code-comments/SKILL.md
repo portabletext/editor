@@ -23,7 +23,7 @@ What remains after those four channels is the legitimate comment: the fact a com
 - **Comments describe the present, never the diff.** A comment that argues for the new code against code that is no longer there ("Deterministic negative assert: ...", deterministic relative to a deleted sleep) is commit-body material wearing a comment's clothes. The tell: a label or contrast that only means something to someone who saw the old version.
 - Comments for an if statement go **inside** the if statement, not above it.
 - Use backticks around code identifiers: `` `markDefs` ``, not markDefs.
-- Rewrites are dense one-liners where possible: present tense, mechanism not narrative, no "we need to" preamble. "Chrome collapses the selection on `blur`; restore it before applying" beats three sentences of story.
+- Rewrites are dense one-liners where possible: present tense, mechanism not narrative, no "we need to" preamble. "Chrome collapses the selection on `blur`, so restore it before applying" beats three sentences of story.
 - A comment that mixes a real why with restated what gets rewritten down to the why, then re-tested against the bar: the residue must still prevent a wrong action, or it goes too.
 
 ## JSDoc is consumer documentation
