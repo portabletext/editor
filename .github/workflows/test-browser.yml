@@ -11,39 +11,48 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Each browser runs as three parts: the editor's suite split into two Vitest
+# shards, and one job for every other package. The rulesets on `main` and
+# `next` require the check names `Browser tests (<browser>)`, so one job per
+# browser reports the combined result under that name and fails unless every
+# part of that browser succeeded.
 jobs:
-  test:
+  chromium-part:
     timeout-minutes: 60
-    name: Browser tests (${{ matrix.browser }})
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
+    name: Browser tests (chromium, ${{ matrix.part.id }})
+    runs-on: ubuntu-latest
     # The image ships every browser with its system libraries, so no job
     # installs browsers or apt packages. Its tag must match the resolved
     # `playwright` version, or the browser executables are missing and the
     # tests fail on launch. Renovate bumps the two together.
-    container:
+    container: &container
       image: mcr.microsoft.com/playwright:v1.62.1-noble
       # Run as the runner's user, as Playwright's CI guide does.
       options: --user 1001
-    env:
+    env: &env
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     strategy:
-      # we want to know if a test fails on a specific node version
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        browser: [chromium, webkit]
-        node: [lts/*]
-        experimental: [false]
+        browser: [chromium]
+        part: &parts
+          - id: editor-1
+            turbo: --filter=@portabletext/editor
+            vitest: --shard=1/2
+          - id: editor-2
+            turbo: --filter=@portabletext/editor
+            vitest: --shard=2/2
+          - id: others
+            turbo: --filter=!@portabletext/editor
 
     steps: &steps
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: ${{ matrix.node }}
+          node-version: lts/*
 
       - name: Install project dependencies
         run: pnpm install
@@ -56,7 +65,7 @@ jobs:
           pnpm test:browser:${{ matrix.browser }} ${{ matrix.part.turbo }} --concurrency=2 -- --browser.trace=retain-on-failure ${{ matrix.part.vitest }}
 
       - name: racejar Playwright example
-        if: matrix.browser == 'chromium'
+        if: matrix.browser == 'chromium' && matrix.part.id == 'others'
         run: pnpm --filter racejar test:playwright
 
       # Vitest writes each failed test's Playwright trace to a `__traces__`
@@ -65,45 +74,48 @@ jobs:
         if: failure() && steps.test.outcome == 'failure'
         uses: actions/upload-artifact@v7
         with:
-          name: browser-traces-${{ matrix.browser }}${{ matrix.part.id && format('-{0}', matrix.part.id) || '' }}
+          name: browser-traces-${{ matrix.browser }}-${{ matrix.part.id }}
           path: |
             packages/**/__traces__/
             !**/node_modules/**
           if-no-files-found: ignore
           retention-days: 7
 
-  # The editor's Firefox suite is split into Vitest shards next to one job
-  # for every other package. The rulesets on `main` and `next` require the
-  # check name `Browser tests (firefox)`, so `firefox` reports the combined
-  # result under that name and fails unless every part succeeded.
   firefox-part:
     timeout-minutes: 60
     name: Browser tests (firefox, ${{ matrix.part.id }})
-    runs-on: ${{ matrix.os }}
-    container:
-      image: mcr.microsoft.com/playwright:v1.62.1-noble
-      options: --user 1001
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
+    runs-on: ubuntu-latest
+    container: *container
+    env: *env
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         browser: [firefox]
-        node: [lts/*]
-        part:
-          - id: editor-1
-            turbo: --filter=@portabletext/editor
-            vitest: --shard=1/2
-          - id: editor-2
-            turbo: --filter=@portabletext/editor
-            vitest: --shard=2/2
-          - id: others
-            turbo: --filter=!@portabletext/editor
-
+        part: *parts
     steps: *steps
+
+  webkit-part:
+    timeout-minutes: 60
+    name: Browser tests (webkit, ${{ matrix.part.id }})
+    runs-on: ubuntu-latest
+    container: *container
+    env: *env
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [webkit]
+        part: *parts
+    steps: *steps
+
+  chromium:
+    name: Browser tests (chromium)
+    needs: chromium-part
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every Chromium part to pass
+        run: test "${{ needs.chromium-part.result }}" = success
 
   firefox:
     name: Browser tests (firefox)
@@ -114,3 +126,13 @@ jobs:
     steps:
       - name: Require every Firefox part to pass
         run: test "${{ needs.firefox-part.result }}" = success
+
+  webkit:
+    name: Browser tests (webkit)
+    needs: webkit-part
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every WebKit part to pass
+        run: test "${{ needs.webkit-part.result }}" = success
