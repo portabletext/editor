@@ -14,6 +14,7 @@ import {
 } from 'vitest'
 import {adb} from '../device/adb.ts'
 import {prefixedPageUrl} from '../device/page-url.ts'
+import {RPCError, UiObject, type Device} from '../device/u2.ts'
 import {recordInput} from '../page.ts'
 import type {RunOnDeviceOptions} from '../steps.ts'
 import {FIELD_FOCUSED, FIELD_RECT, FOCUS_FIELD} from './field.ts'
@@ -176,6 +177,122 @@ describe(openInChrome.name, () => {
 })
 
 describe(runInChrome.name, () => {
+  test('recovers after two stale Chrome button errors before tapping once', async () => {
+    fake.foreground = 'com.android.chrome'
+    fake.opened = () => loadNamedTextareaPage()
+    const device = await chromeButtonDevice([
+      new RPCError(
+        'Unknown RPC error: -32002 androidx.test.uiautomator.StaleObjectException: foo',
+      ),
+      new RPCError(
+        'Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException',
+      ),
+    ])
+
+    await expect(
+      runInChrome('stale', options, () => Promise.resolve(device)),
+    ).rejects.toEqual(new Error('stop after the tap'))
+
+    expect(
+      fake.timeline.filter((entry) => entry.startsWith('chrome ')),
+    ).toEqual([
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome tap',
+      'chrome exist',
+      'chrome exist',
+    ])
+  })
+
+  test('continues without another wait when the stale Chrome button is gone', async () => {
+    fake.foreground = 'com.android.chrome'
+    fake.opened = () => loadNamedTextareaPage()
+    const device = await chromeButtonDevice(
+      [
+        new RPCError(
+          'Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException',
+        ),
+      ],
+      true,
+    )
+
+    await expect(
+      runInChrome('gone', options, () => Promise.resolve(device)),
+    ).rejects.toEqual(new Error('stop after the tap'))
+
+    expect(
+      fake.timeline.filter((entry) => entry.startsWith('chrome ')),
+    ).toEqual([
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome exist',
+      'chrome exist',
+      'chrome exist',
+    ])
+    expect(fake.timeline.filter((entry) => entry.startsWith('sleep '))).toEqual(
+      ['sleep 4'],
+    )
+  })
+
+  test('throws the original stale Chrome button error after two retries', async () => {
+    const error = new RPCError(
+      'Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException: foo',
+    )
+    const device = await chromeButtonDevice([
+      error,
+      new RPCError(
+        'Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException: bar',
+      ),
+      new RPCError(
+        'Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException: baz',
+      ),
+    ])
+
+    await expect(
+      runInChrome('exhausted', options, () => Promise.resolve(device)),
+    ).rejects.toBe(error)
+
+    expect(
+      fake.timeline.filter((entry) => entry.startsWith('chrome ')),
+    ).toEqual([
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome exist',
+      'chrome waitForExists',
+      'chrome objInfo',
+      'chrome exist',
+    ])
+  })
+
+  test.each([
+    new RPCError('Unknown RPC error: -32001 android.os.RemoteException'),
+    new Error(
+      'Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException',
+    ),
+  ])('throws other Chrome errors without retrying: %s', async (error) => {
+    const device = await chromeButtonDevice([error])
+
+    await expect(
+      runInChrome('other-error', options, () => Promise.resolve(device)),
+    ).rejects.toEqual(error)
+
+    expect(
+      fake.timeline.filter((entry) => entry.startsWith('chrome ')),
+    ).toEqual(['chrome exist', 'chrome waitForExists', 'chrome objInfo'])
+  })
+
   test('after Chrome reopens the page, the driver taps the field the page names', async () => {
     fake.foreground = 'com.google.android.apps.nexuslauncher'
     fake.opened = (opens) => {
@@ -1877,4 +1994,51 @@ function fixtureKeys(fixture: string): Map<string, [number, number]> {
     readFileSync(new URL(`../fixtures/${fixture}`, import.meta.url), 'utf8'),
     'com.google.android.inputmethod.latin',
   )
+}
+
+async function chromeButtonDevice(
+  errors: Error[],
+  disappearOnError = false,
+): Promise<Device> {
+  const device: Device = await connectDevice()
+  let visible = true
+  device.find = (selector) => {
+    if (
+      selector.packageName !== 'com.android.chrome' ||
+      selector.text !== 'No thanks'
+    ) {
+      return new UiObject(
+        {rpc: () => Promise.resolve(false)} as never,
+        selector,
+      )
+    }
+    return new UiObject(
+      {
+        waitTimeout: 20,
+        rpc: (method: string) => {
+          fake.timeline.push(`chrome ${method}`)
+          if (method === 'objInfo') {
+            const error = errors.shift()
+            if (error !== undefined) {
+              if (disappearOnError) {
+                visible = false
+              }
+              return Promise.reject(error)
+            }
+            return Promise.resolve({
+              bounds: {left: 0, top: 0, right: 20, bottom: 20},
+            })
+          }
+          return Promise.resolve(visible)
+        },
+        click: () => {
+          fake.timeline.push('chrome tap')
+          visible = false
+          return Promise.resolve()
+        },
+      } as never,
+      selector,
+    )
+  }
+  return device
 }

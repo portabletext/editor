@@ -26,7 +26,7 @@ import {
   targets,
 } from '../device/cdp.ts'
 import {localhostPort, prefixedPageUrl} from '../device/page-url.ts'
-import type {Device} from '../device/u2.ts'
+import {RPCError, type Device} from '../device/u2.ts'
 import {
   currentInspection,
   currentSignal,
@@ -997,7 +997,28 @@ async function dismissChromeScreens(device: Device): Promise<void> {
       return
     }
     phase(`chrome screen: tapping ${pyRepr(hit)}`)
-    await device.find({packageName: CHROME, text: hit}).click()
+    let staleError: RPCError | undefined
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await device.find({packageName: CHROME, text: hit}).click()
+        break
+      } catch (error) {
+        if (
+          !isInstance(error, RPCError) ||
+          !error.message.includes('StaleObjectException')
+        ) {
+          throw error
+        }
+        // `UiObject.click` sends the tap after the RPCs that can raise a stale error, so retrying cannot double-tap.
+        staleError ??= error
+        if (!(await device.find({packageName: CHROME, text: hit}).exists())) {
+          break
+        }
+        if (attempt >= 2) {
+          throw staleError
+        }
+      }
+    }
     await waitUntilGone(device, {packageName: CHROME, text: hit})
   }
 }
