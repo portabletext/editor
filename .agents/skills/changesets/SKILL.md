@@ -37,6 +37,7 @@ description: How to write changesets in the Portable Text Editor monorepo. Use w
 - Banned vocabulary in changeset prose (and any artifact prose): "delta" (write "change") and "rides along"/"ride along" (name the change in a plain sentence instead).
 - No em dashes and no semicolons in artifact prose. Use commas, colons, parentheses or separate sentences.
 - No bold run-in labels ("**Verified**: ..."). The changelog reads as prose, so the point goes in a plain sentence.
+- Never "save", "saved" or "stored" for what the editor sends. The editor emits patches and events, and the host app decides what to persist. Name the mechanism: "emits an `unset` patch", "the `change` event carries".
 - Small self-explanatory changes can be **subject-only**.
 
 ## Exemplars (real, from the repo history)
