@@ -2,7 +2,6 @@ import {pluginRedoing} from '../engine-plugins/engine-plugin.redoing'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {applyDeselect} from '../internal-utils/apply-selection'
-import {transformOperation} from '../internal-utils/transform-operation'
 import type {OperationImplementation} from './operation.types'
 
 export const historyRedoOperationImplementation: OperationImplementation<
@@ -15,20 +14,11 @@ export const historyRedoOperationImplementation: OperationImplementation<
     const step = redos[redos.length - 1]!
 
     if (step.operations.length > 0) {
-      const otherPatches = editor.remotePatches.filter(
-        (item) => item.time >= step.timestamp,
-      )
-      let transformedOperations = step.operations
-      otherPatches.forEach((item) => {
-        transformedOperations = transformedOperations.flatMap((op) =>
-          transformOperation(editor, item.patch, op),
-        )
-      })
       try {
         withoutNormalizing(editor, () => {
           pluginRedoing(editor, () => {
             pluginWithoutHistory(editor, () => {
-              transformedOperations.forEach((op) => {
+              step.operations.forEach((op) => {
                 editor.apply(op)
               })
             })
@@ -39,7 +29,6 @@ export const historyRedoOperationImplementation: OperationImplementation<
           `Could not perform 'history.redo' operation: ${err instanceof Error ? err.message : err}`,
         )
 
-        editor.remotePatches.splice(0, editor.remotePatches.length)
         applyDeselect(editor)
         editor.history = {undos: [], redos: []}
         editor.onChange()

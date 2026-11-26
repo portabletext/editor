@@ -22,6 +22,7 @@ const TEST_COMPILED_SOURCES = [
 
 export default defineConfig({
   test: {
+    silent: false,
     coverage: {
       provider: 'istanbul',
       reporter: ['html', 'json', 'json-summary'],
@@ -36,8 +37,16 @@ export default defineConfig({
           react({compiler: {target: '19', sources: TEST_COMPILED_SOURCES}}),
         ],
         resolve,
+        define: {
+          'globalThis.__historyRunStructuralProbes': Boolean(
+            process.env.HISTORY_NEIGHBOURS || process.env.HISTORY_BASELINE,
+          ),
+        },
         test: {
           name: 'browser',
+          setupFiles: process.env.HISTORY_NEIGHBOURS
+            ? ['tests/spike.neighbours.setup.ts']
+            : [],
           include: [
             'gherkin-tests/**/*.test.ts',
             'gherkin-tests/**/*.test.tsx',
@@ -51,7 +60,11 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright(),
+            provider: playwright({
+              launchOptions: process.env.HISTORY_CHROMIUM
+                ? {executablePath: process.env.HISTORY_CHROMIUM}
+                : undefined,
+            }),
             instances: [
               {
                 browser: 'chromium',

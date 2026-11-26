@@ -1,0 +1,418 @@
+{
+  "scenario": "block-merge-duplicate-keys-markdefs",
+  "depth": "nested",
+  "source": "SquashingBuffer from @sanity/mutator 6.24.0, with the field-root setIfMissing envelope.",
+  "envelope": 1,
+  "patches": [
+    {
+      "type": "setIfMissing",
+      "path": [],
+      "value": []
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "markDefs",
+        {
+          "_key": "link1"
+        },
+        "_key"
+      ],
+      "value": "@@ -1,5 +1,2 @@\n-link1\n+k2\n"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "s1"
+        },
+        "_key"
+      ],
+      "value": "@@ -1,2 +1,2 @@\n-s1\n+k3\n"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "s2"
+        },
+        "_key"
+      ],
+      "value": "@@ -1,2 +1,2 @@\n-s2\n+k4\n"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "k4"
+        },
+        "marks"
+      ],
+      "value": ["strong", "k2"]
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "s3"
+        },
+        "_key"
+      ],
+      "value": "@@ -1,2 +1,2 @@\n-s3\n+k5\n"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        }
+      ]
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "markDefs"
+      ],
+      "value": [
+        {
+          "_type": "link",
+          "_key": "link1",
+          "href": "https://a.example"
+        },
+        {
+          "_type": "link",
+          "_key": "k2",
+          "href": "https://b.example"
+        }
+      ]
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": []
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "s3"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k6",
+          "marks": [],
+          "text": ""
+        }
+      ]
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": []
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "s3"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k3",
+          "text": "foo ",
+          "marks": []
+        }
+      ]
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": []
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k4",
+          "text": "bar",
+          "marks": ["strong", "k2"]
+        }
+      ]
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": []
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k4"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k5",
+          "text": " baz",
+          "marks": []
+        }
+      ]
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "s3"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,8 @@\n  baz\n+foo \n"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ]
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "a0"
+        },
+        "content",
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k6"
+        }
+      ]
+    }
+  ]
+}

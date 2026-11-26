@@ -1,6 +1,6 @@
 /**
  * Makes the editor support undo/redo on the local state only. The undo/redo
- * steps are rebased against incoming patches since the step occurred.
+ * steps are rebased past each operation a remote patch applies.
  */
 
 import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
@@ -27,25 +27,16 @@ export function subscribeHistory({
 
   subscriptions.push(() => {
     const subscription = editorActor.on('internal.apply', ({patches}) => {
-      let reset = false
-
       for (const patch of patches) {
-        if (reset) {
+        if (patch.origin === 'local') {
           continue
         }
 
         if (patch.type === 'unset' && patch.path.length === 0) {
           editor.history = {undos: [], redos: []}
-          editor.remotePatches.splice(0, editor.remotePatches.length)
           editor.withHistory = true
-          reset = true
           return
         }
-
-        editor.remotePatches.push({
-          patch,
-          time: new Date(),
-        })
       }
     })
 
@@ -55,11 +46,11 @@ export function subscribeHistory({
   })
 
   return subscribeToOperations(editor, (event) => {
-    if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
+    if (hasRemoteFrame(event.context)) {
       return
     }
 
-    if (hasRemoteFrame(event.context)) {
+    if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
       return
     }
 

@@ -7,13 +7,14 @@ import {normalize} from '../engine/editor/normalize'
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {createApplyPatch} from '../internal-utils/applyPatch'
 import {debug} from '../internal-utils/debug'
+import {prepareHistoryBatch} from '../internal-utils/history-steps-control'
 import {safeStringify} from '../internal-utils/safe-json'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
 /**
  * Applies incoming remote patches to the editor. Registered on the
- * `subscriptions` array before `subscribeHistory`'s remote-rebase handler —
+ * `subscriptions` array before `subscribeHistory`'s root-unset handler —
  * activation order is subscription order.
  */
 export function setupRemotePatches({
@@ -36,6 +37,7 @@ export function setupRemotePatches({
     const patches = bufferedPatches
     bufferedPatches = []
     let changed = false
+    prepareHistoryBatch(editor, patches)
 
     withChange(editor, {type: 'remote patches'}, () => {
       withRemoteChanges(editor, () => {

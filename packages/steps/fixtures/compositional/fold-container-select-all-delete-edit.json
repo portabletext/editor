@@ -1,0 +1,183 @@
+{
+  "depth": "container",
+  "gesture": "select-all-delete",
+  "phase": "edit",
+  "before": [
+    {
+      "_type": "callout",
+      "_key": "k7",
+      "content": [
+        {
+          "_key": "k0",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "marks": [],
+              "text": "foo"
+            }
+          ]
+        },
+        {
+          "_key": "k3",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k4",
+              "_type": "span",
+              "marks": [],
+              "text": "bar"
+            }
+          ]
+        },
+        {
+          "_key": "k5",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k6",
+              "_type": "span",
+              "marks": [],
+              "text": "baz"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "after": [
+    {
+      "_type": "callout",
+      "_key": "k7",
+      "content": [
+        {
+          "_key": "k0",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "marks": [],
+              "text": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +0,0 @@\n-foo\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k3"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k5"
+        },
+        "children",
+        {
+          "_key": "k6"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +0,0 @@\n-baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k5"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "styles": [
+      {
+        "name": "normal"
+      },
+      {
+        "name": "h1"
+      }
+    ],
+    "lists": [
+      {
+        "name": "bullet"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "image"
+      },
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "image"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

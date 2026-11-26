@@ -3,7 +3,6 @@ import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-hist
 import {withoutNormalizing} from '../engine/editor/without-normalizing'
 import {inverseOperation} from '../engine/operation/inverse-operation'
 import {applyDeselect} from '../internal-utils/apply-selection'
-import {transformOperation} from '../internal-utils/transform-operation'
 import type {OperationImplementation} from './operation.types'
 
 export const historyUndoOperationImplementation: OperationImplementation<
@@ -16,18 +15,7 @@ export const historyUndoOperationImplementation: OperationImplementation<
     const step = undos[undos.length - 1]!
 
     if (step.operations.length > 0) {
-      const otherPatches = editor.remotePatches.filter(
-        (item) => item.time >= step.timestamp,
-      )
-      let transformedOperations = step.operations
-      otherPatches.forEach((item) => {
-        transformedOperations = transformedOperations.flatMap((op) =>
-          transformOperation(editor, item.patch, op),
-        )
-      })
-      const reversedOperations = transformedOperations
-        .map(inverseOperation)
-        .reverse()
+      const reversedOperations = step.operations.map(inverseOperation).reverse()
 
       try {
         withoutNormalizing(editor, () => {
@@ -44,7 +32,6 @@ export const historyUndoOperationImplementation: OperationImplementation<
           `Could not perform 'history.undo' operation: ${err instanceof Error ? err.message : err}`,
         )
 
-        editor.remotePatches.splice(0, editor.remotePatches.length)
         applyDeselect(editor)
         editor.history = {undos: [], redos: []}
         editor.onChange()

@@ -1,0 +1,359 @@
+{
+  "scenario": "span-merge-cosmetic",
+  "depth": "root",
+  "schema": {
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "aside",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "seed": "B: foo bar",
+  "seedValue": [
+    {
+      "_type": "block",
+      "_key": "b0",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "s0",
+          "text": "foo ",
+          "marks": []
+        },
+        {
+          "_type": "span",
+          "_key": "s1",
+          "text": "bar",
+          "marks": []
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "actions": ["send {type: 'insert.text', text: '!'}"],
+  "patches": [
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "b0"
+        },
+        "children",
+        {
+          "_key": "s1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +1,4 @@\n bar\n+!\n",
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "b0"
+        },
+        "children",
+        {
+          "_key": "s0"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,8 @@\n foo \n+bar!\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "b0"
+        },
+        "children",
+        {
+          "_key": "s1"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "mutationSizes": [3],
+  "result": "B: foo bar!|",
+  "resultValue": [
+    {
+      "_type": "block",
+      "_key": "b0",
+      "children": [
+        {
+          "_type": "span",
+          "_key": "s0",
+          "text": "foo bar!",
+          "marks": []
+        }
+      ],
+      "markDefs": [],
+      "style": "normal"
+    }
+  ],
+  "editorPoints": [
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 0
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 1
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 2
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 3
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 4
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 4
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s1"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 4
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s1"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 5
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s1"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 6
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s1"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "b0"
+          },
+          "children",
+          {
+            "_key": "s0"
+          }
+        ],
+        "offset": 8
+      }
+    }
+  ]
+}

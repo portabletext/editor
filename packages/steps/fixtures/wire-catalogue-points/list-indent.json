@@ -1,0 +1,39 @@
+{
+  "scenario": "list-indent",
+  "seed": "B listItem=\"bullet\": foo\nB listItem=\"bullet\": bar",
+  "result": "B listItem=\"bullet\": foo\nB level=2 listItem=\"bullet\": ba|r",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@3"
+    },
+    {
+      "point": "b1.c0@0",
+      "expected": "b1@0"
+    },
+    {
+      "point": "b1.c0@1",
+      "expected": "b1@1"
+    },
+    {
+      "point": "b1.c0@2",
+      "expected": "b1@2"
+    },
+    {
+      "point": "b1.c0@3",
+      "expected": "b1@3"
+    }
+  ]
+}
