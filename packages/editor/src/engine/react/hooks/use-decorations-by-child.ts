@@ -59,12 +59,14 @@ export const useDecorationsByChild = (
   node: Editor | Node,
   path: Path,
   decorations: DecoratedRange[],
+  childrenOverride?: readonly Node[],
 ): DecoratedRange[][] => {
   const decorationsByChild = splitDecorationsByChild(
     editor,
     node,
     path,
     decorations,
+    childrenOverride,
   )
   const [stable, setStable] = useState<DecoratedRange[][]>(decorationsByChild)
   const next = stabilizeDecorationsByChild(stable, decorationsByChild)

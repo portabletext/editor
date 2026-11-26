@@ -58,5 +58,15 @@ export function resolveChildEntryIndex(
     }
   }
 
-  return children.findIndex((child) => child.node._key === lastSegment._key)
+  const fallbackStart = performance.now()
+  const fallbackIndex = children.findIndex(
+    (child) => child.node._key === lastSegment._key,
+  )
+  const fallbackProfile = (globalThis as any).__LOAD_PROBE_FALLBACK__
+  if (fallbackProfile) {
+    fallbackProfile.count = (fallbackProfile.count ?? 0) + 1
+    fallbackProfile.time =
+      (fallbackProfile.time ?? 0) + performance.now() - fallbackStart
+  }
+  return fallbackIndex
 }

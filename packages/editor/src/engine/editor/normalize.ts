@@ -14,6 +14,16 @@ export function normalize(
   options: {force?: boolean; operation?: EngineOperation} = {},
 ): void {
   const {force = false, operation} = options
+  const loadProfile = (globalThis as any).__LOAD_PROBE_NORMALIZE__
+  if (loadProfile) {
+    loadProfile.calls ??= []
+    loadProfile.calls.push({
+      dirtyBefore: editor.dirtyPaths.length,
+      operation: operation?.type,
+      visits: 0,
+    })
+  }
+  const loadCall = loadProfile?.calls.at(-1)
   const getDirtyPaths = (editor: Editor) => {
     return editor.dirtyPaths
   }
@@ -78,6 +88,9 @@ export function normalize(
         ) {
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
+            if (loadCall) {
+              loadCall.visits++
+            }
             editor.normalizeNode([entry.node, entry.path], {operation})
           } finally {
             editor.applyContext.pop()
@@ -108,6 +121,9 @@ export function normalize(
       if (dirtyPath.length === 0) {
         editor.applyContext.push(Object.freeze({kind: 'normalization'}))
         try {
+          if (loadCall) {
+            loadCall.visits++
+          }
           editor.normalizeNode([editor, dirtyPath], {operation})
         } finally {
           editor.applyContext.pop()
@@ -117,6 +133,9 @@ export function normalize(
         if (entry) {
           editor.applyContext.push(Object.freeze({kind: 'normalization'}))
           try {
+            if (loadCall) {
+              loadCall.visits++
+            }
             editor.normalizeNode([entry.node, entry.path], {operation})
           } finally {
             editor.applyContext.pop()

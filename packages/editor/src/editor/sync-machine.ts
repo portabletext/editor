@@ -422,7 +422,9 @@ export const syncMachine = setup({
               schema: context.schema,
             },
             editorEngine: context.editorEngine,
-            streamBlocks: !context.initialValueSynced,
+            streamBlocks:
+              !context.initialValueSynced &&
+              !(globalThis as any).__LOAD_PROBE_OPTION_C__,
             value: context.pendingValue,
           }
         },
@@ -498,6 +500,107 @@ async function updateValue({
   const remoteSource: RemoteSyncSource = streamBlocks
     ? 'initial-sync'
     : 'update-value'
+
+  if (
+    (globalThis as any).__LOAD_PROBE_SPLIT_ENGINE__ &&
+    context.previousValue === undefined &&
+    value &&
+    value.length > 0
+  ) {
+    let index = 0
+    let firstChunk = true
+    const budget = (globalThis as any).__LOAD_PROBE_ENGINE_BUDGET__ ?? 12
+    while (index < value.length) {
+      const chunkStart = performance.now()
+      resumeChange(editorEngine, change, () => {
+        withRemoteChanges(editorEngine, remoteSource, () => {
+          withoutNormalizing(editorEngine, () => {
+            withoutPatching(editorEngine, () => {
+              while (
+                index < value.length &&
+                (firstChunk || performance.now() - chunkStart < budget)
+              ) {
+                const engineBlock = toEngineBlock(value[index]!, {
+                  schemaTypes: context.schema,
+                })
+                if (index === 0) {
+                  editorEngine.apply({
+                    type: 'set',
+                    path: [],
+                    value: [engineBlock],
+                  } as any)
+                } else {
+                  editorEngine.apply({
+                    type: 'insert',
+                    path: [index],
+                    node: engineBlock,
+                    position: 'before',
+                  })
+                }
+                index++
+                if (firstChunk && index >= 12) {
+                  break
+                }
+              }
+            })
+          })
+        })
+      })
+      firstChunk = false
+      editorEngine.onChange()
+      if (index < value.length) {
+        if (
+          !(globalThis as any).__LOAD_PROBE_FORCE_TIMEOUT__ &&
+          'scheduler' in globalThis &&
+          typeof (globalThis as any).scheduler?.yield === 'function'
+        ) {
+          await (globalThis as any).scheduler.yield()
+        } else {
+          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+        }
+      }
+    }
+    sendBack({type: 'value changed', value})
+    sendBack({type: 'done syncing', value, changed: true})
+    return
+  }
+
+  if (
+    (globalThis as any).__LOAD_PROBE_DIRECT__ &&
+    context.previousValue === undefined &&
+    value &&
+    value.length > 0
+  ) {
+    const profile = ((globalThis as any).__LOAD_PROBE_PROFILE__ ??= {})
+    const mark = (name: string, start: number) => {
+      profile[name] = (profile[name] ?? 0) + performance.now() - start
+    }
+    let start = performance.now()
+    const engineValue = value.map((block) =>
+      toEngineBlock(block, {schemaTypes: context.schema}),
+    )
+    mark('toEngineBlock', start)
+    start = performance.now()
+    withRemoteChanges(editorEngine, remoteSource, () => {
+      const applyRoot = () => {
+        withoutPatching(editorEngine, () => {
+          editorEngine.apply({type: 'set', path: [], value: engineValue} as any)
+        })
+      }
+      if ((globalThis as any).__LOAD_PROBE_DEFER_NORMALIZATION__) {
+        withoutNormalizing(editorEngine, applyRoot)
+      } else {
+        applyRoot()
+      }
+    })
+    mark('apply', start)
+    start = performance.now()
+    editorEngine.onChange()
+    mark('onChange', start)
+    sendBack({type: 'value changed', value})
+    sendBack({type: 'done syncing', value, changed: true})
+    return
+  }
 
   if (!value || value.length === 0) {
     clearEditor({
@@ -642,9 +745,28 @@ async function updateValue({
 
 async function* getStreamedBlocks({value}: {value: Array<PortableTextBlock>}) {
   let index = 0
+  let chunkStart = performance.now()
   for await (const block of value) {
-    if (index % 10 === 0) {
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    const budget = (globalThis as any).__LOAD_PROBE_BUDGET__ as
+      | number
+      | undefined
+    const firstChunk = (globalThis as any).__LOAD_PROBE_FIRST_CHUNK__ ?? 10
+    if (
+      budget
+        ? index >= firstChunk && performance.now() - chunkStart >= budget
+        : index % 10 === 0
+    ) {
+      if (
+        budget &&
+        !(globalThis as any).__LOAD_PROBE_FORCE_TIMEOUT__ &&
+        'scheduler' in globalThis &&
+        typeof (globalThis as any).scheduler?.yield === 'function'
+      ) {
+        await (globalThis as any).scheduler.yield()
+      } else {
+        await new Promise<void>((resolve) => setTimeout(resolve, 0))
+      }
+      chunkStart = performance.now()
     }
     yield [block, index] as const
     index++

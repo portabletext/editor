@@ -19,33 +19,56 @@ import {updateDirtyPaths} from './update-dirty-paths'
 export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
   assertChangeOpen(editor, op)
 
-  const operationEvent = createOperationEvent(editor, op)
-  const changePosition = getChangePosition(editor)
+  const {operationEvent, changePosition} = profileLoadStage(
+    'changeBookkeeping',
+    () => ({
+      operationEvent: createOperationEvent(editor, op),
+      changePosition: getChangePosition(editor),
+    }),
+  )
 
-  emitOperationEvent(editor.operationListeners.before, operationEvent)
+  profileLoadStage('keyHandling', () => {
+    emitOperationEvent(editor.operationListeners.before, operationEvent)
 
-  for (const ref of editor.pathRefs) {
-    PathRef.transform(ref, op)
-  }
+    for (const ref of editor.pathRefs) {
+      PathRef.transform(ref, op)
+    }
 
-  for (const ref of editor.pointRefs) {
-    PointRef.transform(editor.snapshot.context, ref, op)
-  }
+    for (const ref of editor.pointRefs) {
+      PointRef.transform(editor.snapshot.context, ref, op)
+    }
 
-  for (const ref of editor.rangeRefs) {
-    transformRangeRef(ref, op, editor.snapshot.context)
-  }
+    for (const ref of editor.rangeRefs) {
+      transformRangeRef(ref, op, editor.snapshot.context)
+    }
+  })
 
   // Apply the operation to the tree first, so that getDirtyPaths
   // reads the final op.node._key (apply-operation may re-key nodes to
   // resolve duplicate keys, mutating op.node in place).
-  applyOperation(editor, op)
+  profileLoadStage('structuralApply', () => applyOperation(editor, op))
 
-  updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op))
+  profileLoadStage('pathIndexMaps', () =>
+    updateDirtyPaths(editor, getDirtyPaths(editor.snapshot.context, op)),
+  )
 
   editor.operations.push(op)
-  normalize(editor, {
-    operation: op,
+  profileLoadStage('normalization', () => {
+    const restorePatchingForLoadNormalization =
+      (globalThis as any).__LOAD_PROBE_PATCH_NORMALIZATION__ &&
+      editor.isPatching === false
+    if (restorePatchingForLoadNormalization) {
+      editor.isPatching = true
+    }
+    try {
+      normalize(editor, {
+        operation: op,
+      })
+    } finally {
+      if (restorePatchingForLoadNormalization) {
+        editor.isPatching = false
+      }
+    }
   })
 
   // Clear any formats applied to the cursor if the selection changes.
@@ -140,8 +163,36 @@ export const apply: WithEditorFirstArg<Editor['apply']> = (editor, op) => {
     })
   }
 
-  recordApply(editor, operationEvent, changePosition)
-  // Emitted last so that, when normalization fixes re-enter `apply`, a fix
-  // operation's `after` listeners run before the triggering operation's.
-  emitOperationEvent(editor.operationListeners.after, operationEvent)
+  profileLoadStage('changeBookkeeping', () => {
+    recordApply(editor, operationEvent, changePosition)
+    // Emitted last so that, when normalization fixes re-enter `apply`, a fix
+    // operation's `after` listeners run before the triggering operation's.
+    emitOperationEvent(editor.operationListeners.after, operationEvent)
+  })
+}
+
+function profileLoadStage<Result>(name: string, fn: () => Result): Result {
+  const profile = (globalThis as any).__LOAD_PROBE_PROFILE__
+  if (!profile) {
+    return fn()
+  }
+  const sequence = ((globalThis as any).__LOAD_PROBE_MARK_SEQUENCE__ ??= 0)
+  ;(globalThis as any).__LOAD_PROBE_MARK_SEQUENCE__ = sequence + 1
+  const startMark = `load:${name}:${sequence}:start`
+  const endMark = `load:${name}:${sequence}:end`
+  performance.mark(startMark)
+  try {
+    return fn()
+  } finally {
+    performance.mark(endMark)
+    const measurement = performance.measure(
+      `load:${name}:${sequence}`,
+      startMark,
+      endMark,
+    )
+    profile[name] = (profile[name] ?? 0) + measurement.duration
+    performance.clearMarks(startMark)
+    performance.clearMarks(endMark)
+    performance.clearMeasures(`load:${name}:${sequence}`)
+  }
 }

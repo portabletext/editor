@@ -113,9 +113,16 @@ export function resolveNode(
         // disagree with the traversed value (snapshots that pair the live
         // map with a pre-apply value, e.g. `textPatch`). Fall back to a
         // linear scan in both cases.
+        const fallbackStart = performance.now()
         const scanIndex = currentChildren.findIndex(
           (child) => child._key === segment._key,
         )
+        const fallbackProfile = (globalThis as any).__LOAD_PROBE_FALLBACK__
+        if (fallbackProfile) {
+          fallbackProfile.count = (fallbackProfile.count ?? 0) + 1
+          fallbackProfile.time =
+            (fallbackProfile.time ?? 0) + performance.now() - fallbackStart
+        }
         node = scanIndex === -1 ? undefined : currentChildren[scanIndex]
         if (node) {
           resolvedPath[resolvedPath.length - 1] = nodeSegment(node, scanIndex)
