@@ -222,8 +222,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/keyboard-shortcuts
       '@portabletext/markdown':
-        specifier: ^2.9.6
-        version: 2.9.6
+        specifier: ^2.9.7
+        version: 2.9.7
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
@@ -466,8 +466,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/keyboard-shortcuts
       '@portabletext/markdown':
-        specifier: ^2.9.6
-        version: 2.9.6
+        specifier: ^2.9.7
+        version: 2.9.7
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../../packages/patches
@@ -3936,20 +3936,20 @@ packages:
   '@marijn/find-cluster-break@1.0.4':
     resolution: {integrity: sha512-Wy0V7+SGUjnF9/TkiM1hKVDPj7jKXduPNboMVtHTA8dySMURWqfg/JZ9E2Sq8JgSJmkl7k7Qe9FLeMSrSraWmQ==}
 
-  '@mdit/helper@1.1.1':
-    resolution: {integrity: sha512-Rrl14ZjFerzfAqCt0zxAWbPgRpsumgm9iBLrCVE05WS8dM6v/LnF1ppPFVnRz1F7fAaxn0kTFOlYwzcY+kRsHQ==}
+  '@mdit/helper@1.2.1':
+    resolution: {integrity: sha512-OS++ECXryTqYD3IQFngmYI5Eag8ZftewAmsFnZ8EqBV+YpoTNVFubb9fFgQDkxdNdDT/oh5wtEzcj1Tu1/BLSQ==}
     engines: {node: '>=22'}
     peerDependencies:
-      markdown-it: ^15.0.1
+      markdown-it: ^15.0.3
     peerDependenciesMeta:
       markdown-it:
         optional: true
 
-  '@mdit/plugin-alert@2.0.1':
-    resolution: {integrity: sha512-aWAjNZWQlXfCYUmTJvE+uWV0XZSz7SFcrI8N9Iq78XDZ3E/lEZo2apf9V5Nlbtc8cbda16fM9kx11GYwZlCSzw==}
+  '@mdit/plugin-alert@2.2.0':
+    resolution: {integrity: sha512-EHZy2aSJ5MUUhARQyidDRDHFXzvuQGWWY0IeT2Fibp01XqXgs/4jqXXbog69zGBT99hnRONFVzpXY6KiHVuhdA==}
     engines: {node: '>=22'}
     peerDependencies:
-      markdown-it: ^15.0.1
+      markdown-it: ^15.0.3
     peerDependenciesMeta:
       markdown-it:
         optional: true
@@ -4766,8 +4766,8 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@portabletext/markdown@2.9.6':
-    resolution: {integrity: sha512-o5mpsbMbnF2csz+izCumvIbuzYkhQh7laSWGcKpfaHHUWj7EcalmzigeRBX5a1hepiKJ147YxD38m4C4KN9IGw==}
+  '@portabletext/markdown@2.9.7':
+    resolution: {integrity: sha512-4jeD9IEokdFZVJ8bYEdHHEPgG142hha/XSUS4uoJ00I6U4zV6VlzdRJrQ8Q/FeXkF2iB67Cp00CYPKila2T60w==}
     engines: {node: '>=22.12'}
 
   '@portabletext/react@8.0.1':
@@ -4788,8 +4788,16 @@ packages:
     resolution: {integrity: sha512-+qSqe0KnefuZfNLUhzQRTpbSKxslZof+3pNwxg0DC8dfZ1yLKyyBUw6iR7EpDL+SJlrnpiBfEcfmEuFitK1NSQ==}
     engines: {node: '>=22.12'}
 
+  '@portabletext/toolkit@6.1.1':
+    resolution: {integrity: sha512-W04MbBkgcbRVNW3/01rs6hKbpwiDgKw8w1AGouVwG/If4gW6yrPMeYVQ0K5UfOnZztMJ3DQJQZ5CUWZ+GsuOCQ==}
+    engines: {node: '>=22.12'}
+
   '@portabletext/types@4.0.2':
     resolution: {integrity: sha512-djfIGU9n6DRrunlvj2nIDAp17URo/nA4jSXGvf+Gupx8NLLy9fmJBZ3GL8yhqn9lSVc+cKCharjOa3aOBnWbRw==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
+
+  '@portabletext/types@4.0.3':
+    resolution: {integrity: sha512-jSCKrutPWitTg6gC9uf4qBbVjPZflFvZl2rSzqtMlypmP7AChg5ZJ2u4sDf2C9d9YyeTotqfT3sHZOoX1LlZIg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@promptbook/utils@0.69.5':
@@ -12027,12 +12035,15 @@ packages:
 
   yuku-ast@0.8.7:
     resolution: {integrity: sha512-h6+4bDfyootiMB9vckk5uKo5r5j0GHrkr17FQTDNfEsFT3DWlN9uu1HJwQwc64pgmLCI945fWM3lbTIqxjT3GQ==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.8.3:
     resolution: {integrity: sha512-okdo5bb+TfebQa4JOjz9QxeT34D6CcBxu8dxaPUdFEKRdLkp+D2Fah2OanepK+XTyPXdmAJzAo9iXvYvZ/5rmg==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.8.7:
     resolution: {integrity: sha512-vRD9nwt4L3aYpxNqeSC4WqLv58xrXef0Ong1Mc45CTXTIpvLafx7JO05sczmQZwdLEZvywrLOGdNC5+Rp5N1BQ==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   zip-stream@7.0.5:
     resolution: {integrity: sha512-dSvYKdvLsAHCDqPOhIwk/q5CvuWtTB3Dgpoe0uVEFjTzIOAmsQpprX25InCvrvJsirEbu1OHyy67n/kAj1Sw/w==}
@@ -14539,13 +14550,13 @@ snapshots:
 
   '@marijn/find-cluster-break@1.0.4': {}
 
-  '@mdit/helper@1.1.1(markdown-it@15.0.3)':
+  '@mdit/helper@1.2.1(markdown-it@15.0.3)':
     optionalDependencies:
       markdown-it: 15.0.3
 
-  '@mdit/plugin-alert@2.0.1(markdown-it@15.0.3)':
+  '@mdit/plugin-alert@2.2.0(markdown-it@15.0.3)':
     dependencies:
-      '@mdit/helper': 1.1.1(markdown-it@15.0.3)
+      '@mdit/helper': 1.2.1(markdown-it@15.0.3)
     optionalDependencies:
       markdown-it: 15.0.3
 
@@ -15144,11 +15155,11 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@portabletext/markdown@2.9.6':
+  '@portabletext/markdown@2.9.7':
     dependencies:
-      '@mdit/plugin-alert': 2.0.1(markdown-it@15.0.3)
+      '@mdit/plugin-alert': 2.2.0(markdown-it@15.0.3)
       '@portabletext/schema': link:packages/schema
-      '@portabletext/toolkit': 6.0.0
+      '@portabletext/toolkit': 6.1.1
       '@sanity/diff-match-patch': 3.2.1
       linkify-it: 6.1.0
       markdown-it: 15.0.3
@@ -15177,7 +15188,13 @@ snapshots:
     dependencies:
       '@portabletext/types': 4.0.2
 
+  '@portabletext/toolkit@6.1.1':
+    dependencies:
+      '@portabletext/types': 4.0.3
+
   '@portabletext/types@4.0.2': {}
+
+  '@portabletext/types@4.0.3': {}
 
   '@promptbook/utils@0.69.5':
     dependencies:
