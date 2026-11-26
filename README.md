@@ -47,16 +47,18 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 
 ## Other libraries
 
-| Package                                                              | Description                                                        |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [`@portabletext/html`](./packages/html/)                             | Convert HTML to Portable Text                                      |
-| [`@portabletext/block-tools`](./packages/block-tools/)               | Sanity-flavored HTML to Portable Text (wraps `@portabletext/html`) |
-| [`@portabletext/markdown`](https://github.com/portabletext/markdown) | Convert Portable Text to Markdown and back again                   |
-| [`@portabletext/keyboard-shortcuts`](./packages/keyboard-shortcuts/) | Platform-aware keyboard shortcuts                                  |
-| [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas           |
-| [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                                    |
-| [`@portabletext/test`](./packages/test/)                             | Testing utilities for the Portable Text Editor                     |
-| [`racejar`](./packages/racejar/)                                     | A testing framework agnostic Gherkin driver                        |
+| Package                                                              | Description                                                            |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`@portabletext/html`](./packages/html/)                             | Convert HTML to Portable Text                                          |
+| [`@portabletext/block-tools`](./packages/block-tools/)               | Sanity-flavored HTML to Portable Text (wraps `@portabletext/html`)     |
+| [`@portabletext/markdown`](https://github.com/portabletext/markdown) | Convert Portable Text to Markdown and back again                       |
+| [`@portabletext/keyboard-shortcuts`](./packages/keyboard-shortcuts/) | Platform-aware keyboard shortcuts                                      |
+| [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas               |
+| [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                                        |
+| [`@portabletext/steps`](./packages/steps/)                           | Keep carets, selections and comments in place while a document changes |
+| [`@portabletext/traversal`](./packages/traversal/)                   | Compare Portable Text paths without an editor                          |
+| [`@portabletext/test`](./packages/test/)                             | Testing utilities for the Portable Text Editor                         |
+| [`racejar`](./packages/racejar/)                                     | A testing framework agnostic Gherkin driver                            |
 
 ## Contributing
 
