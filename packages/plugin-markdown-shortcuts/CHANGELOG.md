@@ -1,5 +1,16 @@
 # Changelog
 
+## 9.0.30
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`2c9e0a4`](https://github.com/portabletext/editor/commit/2c9e0a474b0b5a5b817a613ee015afa30dd137fb) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-markdown-shortcuts
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+- Updated dependencies [[`0cf6d73`](https://github.com/portabletext/editor/commit/0cf6d739e5bec615e660f640eab7466bb183b352), [`45ad6ee`](https://github.com/portabletext/editor/commit/45ad6ee71dc254de4a090acea6de4283c9176103)]:
+  - @portabletext/plugin-character-pair-decorator@9.0.30
+  - @portabletext/plugin-input-rule@7.0.30
+
 ## 9.0.29
 
 ### Patch Changes

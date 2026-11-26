@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.2
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`f5ac5a0`](https://github.com/portabletext/editor/commit/f5ac5a0cc8ad6ce18f54147a90e7be898868aa5e) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` in the npm keywords of @portabletext/keyboard-shortcuts
+  
+  npm search and keyword filters now find it under `portable-text`. It no longer lists `portabletext`.
+
 ## 3.0.1
 
 ### Patch Changes
