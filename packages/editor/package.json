@@ -69,6 +69,7 @@
     }
   },
   "scripts": {
+    "bench": "vitest bench --run --project \"browser (chromium)\" --reporter=verbose",
     "build": "pkg-utils build --strict --check",
     "build:android": "tsc --project android/tsconfig.page.json && vite build --config android/vite.config.ts",
     "check:types": "tsc && tsc --project android/tsconfig.json",

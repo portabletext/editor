@@ -48,6 +48,9 @@ export default defineConfig({
             'src/history/**/*.test.ts',
             'src/history/**/*.test.tsx',
           ],
+          benchmark: {
+            include: ['tests/**/*.bench.tsx'],
+          },
           browser: {
             enabled: true,
             headless: true,
