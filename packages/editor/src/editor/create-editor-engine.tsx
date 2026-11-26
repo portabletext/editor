@@ -97,7 +97,6 @@ export function createEditorEngine(
   })
   subscribeHistory({
     editorActor: config.editorActor,
-    subscriptions: config.subscriptions,
     editor: editorEngine,
   })
 

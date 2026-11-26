@@ -16,43 +16,12 @@ const UNDO_STEP_LIMIT = 1000
  */
 export function subscribeHistory({
   editorActor,
-  subscriptions,
   editor,
 }: {
   editorActor: EditorActor
-  subscriptions: Array<() => () => void>
   editor: PortableTextEditorEngine
 }): () => void {
   let previousUndoStepId = editor.undoStepId
-
-  subscriptions.push(() => {
-    const subscription = editorActor.on('internal.apply', ({patches}) => {
-      let reset = false
-
-      for (const patch of patches) {
-        if (reset) {
-          continue
-        }
-
-        if (patch.type === 'unset' && patch.path.length === 0) {
-          editor.history = {undos: [], redos: []}
-          editor.remotePatches.splice(0, editor.remotePatches.length)
-          editor.withHistory = true
-          reset = true
-          return
-        }
-
-        editor.remotePatches.push({
-          patch,
-          time: new Date(),
-        })
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  })
 
   return subscribeToOperations(editor, (event) => {
     if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {

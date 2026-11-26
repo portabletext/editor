@@ -11,9 +11,8 @@ import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 
 /**
- * Applies incoming remote patches to the editor. Registered on the
- * `subscriptions` array before `subscribeHistory`'s remote-rebase handler —
- * activation order is subscription order.
+ * Applies incoming remote patches to the editor and records the ones that
+ * changed it in `editor.remotePatches`, which undo and redo rebase against.
  */
 export function setupRemotePatches({
   editorActor,
@@ -35,6 +34,7 @@ export function setupRemotePatches({
     const patches = bufferedPatches
     bufferedPatches = []
     let changed = false
+    let reset = false
 
     withChange(editor, {type: 'remote patches'}, () => {
       withRemoteChanges(editor, () => {
@@ -44,6 +44,14 @@ export function setupRemotePatches({
               for (const patch of patches) {
                 try {
                   changed = applyPatch(editor, patch)
+
+                  if (changed && !reset) {
+                    if (patch.type === 'unset' && patch.path.length === 0) {
+                      reset = true
+                    } else {
+                      editor.remotePatches.push({patch, time: new Date()})
+                    }
+                  }
 
                   if (debug.syncPatch.enabled) {
                     if (changed) {
@@ -67,6 +75,12 @@ export function setupRemotePatches({
         }
       })
     })
+
+    if (reset) {
+      editor.history = {undos: [], redos: []}
+      editor.remotePatches.splice(0, editor.remotePatches.length)
+      editor.withHistory = true
+    }
   }
 
   const handlePatches = ({patches}: {patches: Patch[]}) => {
