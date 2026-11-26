@@ -324,8 +324,8 @@ importers:
         specifier: 'catalog:'
         version: 19.3.1
       thumbjar:
-        specifier: workspace:*
-        version: link:../../packages/thumbjar
+        specifier: ^1.0.0
+        version: 1.0.0(vitest@5.0.5)(webdriverio@9.33.1)
       typescript:
         specifier: catalog:tooling
         version: 7.0.2
@@ -826,8 +826,8 @@ importers:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
       thumbjar:
-        specifier: workspace:*
-        version: link:../thumbjar
+        specifier: ^1.0.0
+        version: 1.0.0(vitest@5.0.5)(webdriverio@9.33.1)
       typescript:
         specifier: catalog:tooling
         version: 7.0.2
@@ -840,6 +840,9 @@ importers:
       vitest-browser-react:
         specifier: catalog:tooling
         version: 2.3.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vitest@5.0.5)
+      webdriverio:
+        specifier: catalog:tooling
+        version: 9.33.1
 
   packages/html:
     dependencies:
@@ -1697,31 +1700,6 @@ importers:
       vitest:
         specifier: catalog:tooling
         version: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-
-  packages/thumbjar:
-    dependencies:
-      find-cache-directory:
-        specifier: ^6.0.0
-        version: 6.0.0
-    devDependencies:
-      '@sanity/pkg-utils':
-        specifier: catalog:tooling
-        version: 12.3.0(@babel/runtime@7.29.7)(@tsdown/css@0.22.14)(@types/node@24.12.2)(@volar/typescript@2.4.28)(babel-plugin-react-compiler@1.0.0)(oxc-resolver@11.19.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3))(oxc-transform-react@0.145.0)(typescript@7.0.2)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-      '@types/node':
-        specifier: catalog:tooling
-        version: 24.12.2
-      jsdom:
-        specifier: ^27.2.0
-        version: 27.2.0
-      typescript:
-        specifier: catalog:tooling
-        version: 7.0.2
-      vitest:
-        specifier: catalog:tooling
-        version: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
-      webdriverio:
-        specifier: catalog:tooling
-        version: 9.33.1
 
   packages/toolbar:
     dependencies:
@@ -9282,10 +9260,6 @@ packages:
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
 
-  lru-cache@11.5.2:
-    resolution: {integrity: sha512-4pfM1Ff0x50o0tQwb5ucw/RzNyD0/YJME6IVcStalZuMWxdt3sR3huStTtxz4PUmvZfRguvDejasvQ2kifR11g==}
-    engines: {node: 20 || >=22}
-
   lru-cache@11.5.3:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
@@ -11071,6 +11045,17 @@ packages:
   through2@4.0.2:
     resolution: {integrity: sha512-iOqSav00cVxEEICeD7TjLB1sueEL+81Wpzp2bY17uZjZN0pWZPuo4suZ/61VujxmqSGFfgOcNuTZ85QJwNZQpw==}
 
+  thumbjar@1.0.0:
+    resolution: {integrity: sha512-Tbo5L2LCgIMi/mvSARjaPyh1pcTXKoGK4wnvSgs8y+K3llVdxuVt3Ov9X5ydQOANSxXOQCowThq27XMzkunZxA==}
+    engines: {node: '>=24'}
+    hasBin: true
+    peerDependencies:
+      vitest: ^5.0.5
+      webdriverio: ^9.27.1
+    peerDependenciesMeta:
+      webdriverio:
+        optional: true
+
   tiny-inflate@1.0.3:
     resolution: {integrity: sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw==}
 
@@ -11293,10 +11278,6 @@ packages:
 
   undici@7.29.0:
     resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
-    engines: {node: '>=20.18.1'}
-
-  undici@7.29.1:
-    resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
     engines: {node: '>=20.18.1'}
 
   undici@7.30.1:
@@ -12155,7 +12136,7 @@ snapshots:
       '@csstools/css-color-parser': 3.1.0(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
 
   '@asamuzakjp/dom-selector@6.7.5':
     dependencies:
@@ -12163,7 +12144,7 @@ snapshots:
       bidi-js: 1.0.3
       css-tree: 3.2.1
       is-potential-custom-element-name: 1.0.1
-      lru-cache: 11.5.2
+      lru-cache: 11.5.3
 
   '@asamuzakjp/nwsapi@2.3.9': {}
 
@@ -19196,7 +19177,7 @@ snapshots:
 
   get-it@9.5.4(vitest@5.0.5):
     dependencies:
-      undici: 7.29.1
+      undici: 7.30.1
     optionalDependencies:
       vitest: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
 
@@ -20271,8 +20252,6 @@ snapshots:
       js-tokens: 4.0.0
 
   lru-cache@10.4.3: {}
-
-  lru-cache@11.5.2: {}
 
   lru-cache@11.5.3: {}
 
@@ -22781,6 +22760,13 @@ snapshots:
     dependencies:
       readable-stream: 3.6.2
 
+  thumbjar@1.0.0(vitest@5.0.5)(webdriverio@9.33.1):
+    dependencies:
+      find-cache-directory: 6.0.0
+      vitest: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+    optionalDependencies:
+      webdriverio: 9.33.1
+
   tiny-inflate@1.0.3: {}
 
   tinybench@6.2.2: {}
@@ -22980,8 +22966,6 @@ snapshots:
   undici@6.29.1: {}
 
   undici@7.29.0: {}
-
-  undici@7.29.1: {}
 
   undici@7.30.1: {}
 
