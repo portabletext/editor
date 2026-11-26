@@ -1,6 +1,6 @@
 ---
 title: Editor API overview
-description: Hooks for accessing the Portable Text Editor instance and deriving state with selectors.
+description: Hooks, events, subscriptions, utilities and types for working with the Portable Text Editor instance.
 ---
 
 The editor API provides access to the editor instance and selectors for deriving state.
@@ -30,3 +30,161 @@ const isActive = useEditorSelector(editor, selectors.isActiveDecorator('em'))
 ```
 
 An optional third argument, `compare`, decides whether the selected value has changed. It accepts the previous and next values and returns a boolean. The default is reference equality (`===`).
+
+## `editor.on`
+
+Register a listener for events the editor emits: `editor.on(type, listener, options?)`, where `options` is `{batch?: boolean}` (default `false`), returning `{unsubscribe: () => void}`. Pass an event type, or `'*'` for every event. A specific event type narrows the event the listener receives to that type.
+
+By default the listener runs synchronously for every matching event and receives a single event.
+
+With `{batch: true}` the listener receives an array of events instead, narrowed the same way. The first matching event schedules a microtask, and the listener is called once when it runs, with every matching event delivered until then, in delivery order. Events emitted after that start a new batch. No events are dropped. Two synchronous `editor.send` calls coalesce into one batch. A listener that unsubscribes before the microtask runs gets no call for that batch.
+
+```tsx
+import {useEditor} from '@portabletext/editor'
+import {useEffect} from 'react'
+
+function OperationLogger() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const subscription = editor.on(
+      'operation',
+      (events) => {
+        console.log(events.map((event) => event.operation.type))
+      },
+      {batch: true},
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [editor])
+
+  return null
+}
+```
+
+## `editor.subscribe`
+
+Subscribe to editor state changes: `editor.subscribe({next?, error?, complete?})`, returning `{unsubscribe: () => void}`. `next` is called with the current `EditorSnapshot`.
+
+Notifications are coalesced. A synchronous burst of state transitions results in a single `next` call on the next microtask, with the snapshot read at that point. Intermediate states are skipped. To observe every operation, use `editor.on('operation', ...)`. The editor never calls `error` or `complete`. Calling `unsubscribe` also cancels a `next` call that is already scheduled.
+
+```tsx
+import {useEditor} from '@portabletext/editor'
+import {useEffect} from 'react'
+
+function SelectionLogger() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const subscription = editor.subscribe({
+      next: (snapshot) => {
+        console.log(snapshot.context.selection)
+      },
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [editor])
+
+  return null
+}
+```
+
+## `keyGenerator`
+
+Returns a random 12 character hexadecimal key generated with `crypto.getRandomValues`. The editor uses it when `initialConfig.keyGenerator` is not set.
+
+```ts
+import {keyGenerator} from '@portabletext/editor'
+
+const key = keyGenerator()
+```
+
+## Utilities
+
+Helper functions for working with blocks, paths, selections and offsets.
+
+```ts
+import * as utils from '@portabletext/editor/utils'
+```
+
+| Signature                                                                                                                                                                                                                | Description                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockOffsetToSpanSelectionPoint({snapshot, blockOffset, direction}: {snapshot: EditorSnapshot; blockOffset: BlockOffset; direction: 'forward' \| 'backward'}): {path: ChildPath; offset: number} \| undefined`          | Converts a `BlockOffset` in a text block to a selection point in a span. `direction` decides which span a boundary offset lands in. Returns `undefined` when no span can be resolved.                                                                                            |
+| `spanSelectionPointToBlockOffset({snapshot, selectionPoint}: {snapshot: EditorSnapshot; selectionPoint: EditorSelectionPoint}): BlockOffset \| undefined`                                                                | Converts a selection point in a span to a `BlockOffset` in its text block. Returns `undefined` when it cannot be resolved.                                                                                                                                                       |
+| `blockOffsetsToSelection({snapshot, offsets, backward}: {snapshot: EditorSnapshot; offsets: {anchor: BlockOffset; focus: BlockOffset}; backward?: boolean}): EditorSelection`                                            | Converts an anchor and focus `BlockOffset` to an `EditorSelection`. Returns `null` when either cannot be resolved.                                                                                                                                                               |
+| `childSelectionPointToBlockOffset({snapshot, selectionPoint}: {snapshot: EditorSnapshot; selectionPoint: EditorSelectionPoint}): BlockOffset \| undefined`                                                               | Converts a selection point in any child of a text block, including inline objects, to a `BlockOffset`. Returns `undefined` when it cannot be resolved.                                                                                                                           |
+| `getBlockStartPoint({context, block}: {context: {schema: EditorSchema}; block: {node: PortableTextBlock; path: BlockPath}}): EditorSelectionPoint`                                                                       | Returns the selection point at the start of a block.                                                                                                                                                                                                                             |
+| `getBlockEndPoint({context, block}: {context: {schema: EditorSchema}; block: {node: PortableTextBlock; path: BlockPath}}): EditorSelectionPoint`                                                                         | Returns the selection point at the end of a block.                                                                                                                                                                                                                               |
+| `getSelectionStartPoint(selection: EditorSelection): EditorSelectionPoint \| null`                                                                                                                                       | Returns the point that comes first in the document, taking `backward` into account. Returns `null` for a `null` selection, and the return type is non-null when the argument type is non-null.                                                                                   |
+| `getSelectionEndPoint(selection: EditorSelection): EditorSelectionPoint \| null`                                                                                                                                         | Returns the point that comes last in the document, taking `backward` into account. Returns `null` for a `null` selection, and the return type is non-null when the argument type is non-null.                                                                                    |
+| `getTextBlockText(block: PortableTextTextBlock): string`                                                                                                                                                                 | Returns the concatenated `text` of a text block's children.                                                                                                                                                                                                                      |
+| `isEmptyTextBlock(context: {schema: EditorSchema}, block: unknown): boolean`                                                                                                                                             | Returns `true` if `block` is a text block whose children are all spans with no text.                                                                                                                                                                                             |
+| `isEqualPaths(a: Path, b: Path): boolean`                                                                                                                                                                                | Returns `true` if two paths have equal segments.                                                                                                                                                                                                                                 |
+| `isEqualSelectionPoints(a: EditorSelectionPoint, b: EditorSelectionPoint): boolean`                                                                                                                                      | Returns `true` if two selection points have equal paths and offsets.                                                                                                                                                                                                             |
+| `isEqualSelections(a: EditorSelection, b: EditorSelection): boolean`                                                                                                                                                     | Returns `true` if two selections have equal anchors and focuses, or are both `null`. `backward` is not compared.                                                                                                                                                                 |
+| `isKeyedSegment(segment: unknown): segment is {_key: string}`                                                                                                                                                            | Type guard for a path segment that is an object with a `_key`.                                                                                                                                                                                                                   |
+| `isSelectionCollapsed(selection: EditorSelection): boolean`                                                                                                                                                              | Returns `true` if the anchor and focus are equal. Returns `false` for a `null` selection.                                                                                                                                                                                        |
+| `isSpan(context: {schema: EditorSchema}, child: unknown): child is PortableTextSpan`                                                                                                                                     | Type guard for a span. Re-exported from `@portabletext/schema`.                                                                                                                                                                                                                  |
+| `isTextBlock(context: {schema: EditorSchema}, block: unknown): block is PortableTextTextBlock`                                                                                                                           | Type guard for a text block. Re-exported from `@portabletext/schema`.                                                                                                                                                                                                            |
+| `mergeTextBlocks({context, targetBlock, incomingBlock}: {context: {keyGenerator: () => string; schema: EditorSchema}; targetBlock: PortableTextTextBlock; incomingBlock: PortableTextTextBlock}): PortableTextTextBlock` | Parses `incomingBlock` leniently and appends its children and `markDefs` to those of `targetBlock` (beta). Parsing drops unused `markDefs`, filters out children it cannot parse and adds an empty span if no children remain. Returns `targetBlock` unchanged if parsing fails. |
+| `reverseSelection(selection: EditorSelection): EditorSelection`                                                                                                                                                          | Swaps anchor and focus and flips `backward`. Returns `null` for a `null` selection.                                                                                                                                                                                              |
+| `sliceBlocks({context, blocks}: {context: {schema: EditorSchema; selection: EditorSelection; keyGenerator?: () => string}; blocks: Array<PortableTextBlock>}): Array<PortableTextBlock>`                                 | Returns the parts of `blocks` covered by `context.selection`. Returns `[]` when there is no selection.                                                                                                                                                                           |
+
+All types named in the signatures are exported from `@portabletext/editor`. The `snapshot` parameter is declared as a narrower snapshot shape that `EditorSnapshot` satisfies, so you can pass `editor.getSnapshot()`. `getSelectionStartPoint`, `getSelectionEndPoint` and `reverseSelection` are generic over the selection type, shown here in their widest form.
+
+## Types
+
+### `BlockOffset`
+
+A character offset into a block.
+
+```ts nocheck
+type BlockOffset = {
+  path: BlockPath
+  offset: number
+}
+```
+
+### `BlockPath`, `ChildPath` and `AnnotationPath`
+
+Aliases of `Path` that name what the path points at: a block in the value, a child of a text block, and an annotation `markDef` on a block.
+
+```ts nocheck
+type BlockPath = Path
+type ChildPath = Path
+type AnnotationPath = Path
+```
+
+### `Operation`
+
+The document-changing operations delivered by `editor.on('operation', ...)` (beta). Selection changes are not included.
+
+```ts nocheck
+type Operation =
+  | {
+      type: 'insert'
+      path: Path
+      node: PortableTextTextBlock | PortableTextObject | PortableTextSpan
+      position: 'before' | 'after'
+    }
+  | {type: 'insert.text'; path: Path; offset: number; text: string}
+  | {type: 'remove.text'; path: Path; offset: number; text: string}
+  | {type: 'set'; path: Path; value: unknown}
+  | {type: 'unset'; path: Path}
+```
+
+For `set`, the path is `[...nodePath, propertyName]`. For `unset`, the path either ends in a property name, which removes that property, or in a keyed segment, which removes that node from its parent. `insert`, `set` and `unset` can also carry an optional `inverse`, whose presence is not a stable contract. Operation objects are passed by reference, so treat them as read-only.
+
+### `AddedAnnotationPaths`
+
+```ts nocheck
+type AddedAnnotationPaths = {
+  markDefPaths: Array<Path>
+}
+```
+
+`markDefPaths` holds a path per `markDef` created for the annotation.
