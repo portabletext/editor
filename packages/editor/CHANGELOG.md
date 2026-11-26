@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.2.17
+
+### Patch Changes
+
+- Updated dependencies [[`fe227d2`](https://github.com/portabletext/editor/commit/fe227d2fc048822f02543cae1201a05e2fe3a568)]:
+  - @portabletext/patches@4.0.0
+  - @portabletext/repair@1.0.6
+
 ## 8.2.16
 
 ### Patch Changes
