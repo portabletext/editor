@@ -34,6 +34,7 @@
     "@portabletext/test": "workspace:*",
     "@portabletext/to-html": "^6.0.0",
     "@portabletext/toolbar": "workspace:*",
+    "@portabletext/traversal": "workspace:*",
     "@sanity/asset-utils": "^2.3.0",
     "@sanity/image-url": "^2.1.1",
     "@sanity/schema": "catalog:",
