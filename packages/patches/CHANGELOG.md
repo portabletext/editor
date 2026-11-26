@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.0.7
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`99979cf`](https://github.com/portabletext/editor/commit/99979cf5dc3c124ae210625363849418cce0ad8e) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `sanity` in the npm keywords of @portabletext/patches
+  
+  npm search and keyword filters now find it under `sanity`.
+
 ## 3.0.6
 
 ### Patch Changes

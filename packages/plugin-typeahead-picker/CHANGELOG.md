@@ -1,5 +1,16 @@
 # @portabletext/plugin-typeahead-picker
 
+## 7.0.30
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`785fbfc`](https://github.com/portabletext/editor/commit/785fbfcb93a767ddb5cfb2492d59c089b546ae8b) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-typeahead-picker
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+- Updated dependencies [[`f5ac5a0`](https://github.com/portabletext/editor/commit/f5ac5a0cc8ad6ce18f54147a90e7be898868aa5e), [`45ad6ee`](https://github.com/portabletext/editor/commit/45ad6ee71dc254de4a090acea6de4283c9176103)]:
+  - @portabletext/keyboard-shortcuts@3.0.2
+  - @portabletext/plugin-input-rule@7.0.30
+
 ## 7.0.29
 
 ### Patch Changes

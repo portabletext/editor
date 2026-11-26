@@ -1,5 +1,17 @@
 # Changelog
 
+## 6.0.9
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`5b07e47`](https://github.com/portabletext/editor/commit/5b07e47f16e0363fca7968fc5b380ab376290094) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `html` and `sanity` in the npm keywords of @portabletext/block-tools
+  
+  npm search and keyword filters now find it under `html` and `sanity`.
+- Updated dependencies [[`6d007ac`](https://github.com/portabletext/editor/commit/6d007acbe2429d462f2f031b4e1b6879fd266f48), [`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a)]:
+  - @portabletext/html@2.0.4
+  - @portabletext/schema@3.1.2
+  - @portabletext/sanity-bridge@5.0.2
+
 ## 6.0.8
 
 ### Patch Changes
