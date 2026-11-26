@@ -72,6 +72,19 @@ const blocks = htmlToBlocks(html, blockContentType, {
 })
 ```
 
+### Rules from `@portabletext/block-tools/rules`
+
+The `@portabletext/block-tools/rules` subpath re-exports the table rules from `@portabletext/html/rules`: `createTableRule`, `createFlattenTableRule` and the `TableRuleContainers` type. They return rules that can be passed to the `rules` option of `htmlToBlocks`. Both take a `@portabletext/schema` `Schema`, not a compiled Sanity schema type. See [Table flattening](../html/README.md#table-flattening) and [Table deserialization](../html/README.md#table-deserialization) in the `@portabletext/html` README for their options and output.
+
+```ts nocheck
+import {htmlToBlocks} from '@portabletext/block-tools'
+import {createTableRule} from '@portabletext/block-tools/rules'
+
+const blocks = htmlToBlocks(html, blockContentType, {
+  rules: [createTableRule({schema})],
+})
+```
+
 ### `normalizeBlock(block, options?)`
 
 Normalize a block to ensure it has a `_key`. A text block also gets `children` and `markDefs`, and its children get new keys.
@@ -87,6 +100,12 @@ const block = {
 const normalized = normalizeBlock(block)
 // => { _key: '...', _type: 'block', children: [{ _key: '...', _type: 'span', text: 'Hello', marks: ['strong'] }], markDefs: [] }
 ```
+
+Options (`BlockNormalizationOptions`):
+
+- `allowedDecorators` (`string[]`, default `undefined`): when set, span marks that are neither listed here nor the `_key` of one of the block's `markDefs` are removed. When omitted, decorators are left alone.
+- `blockTypeName` (`string`, default `'block'`): the `_type` of text blocks. A block of any other type only gets a `_key` if it lacks one.
+- `keyGenerator` (`() => string`, default random keys): generates the keys added to the block and its children.
 
 ## License
 
