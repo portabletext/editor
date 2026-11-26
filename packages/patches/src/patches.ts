@@ -4,7 +4,6 @@ import type {
   InsertPatch,
   InsertPosition,
   Path,
-  PathSegment,
   SetIfMissingPatch,
   SetPatch,
   UnsetPatch,
@@ -52,15 +51,4 @@ export function set(value: any, path: Path = []): SetPatch {
 /** @public */
 export function unset(path: Path = []): UnsetPatch {
   return {type: 'unset', path}
-}
-
-/** @internal */
-export function prefixPath<T extends {path: Path}>(
-  patch: T,
-  segment: PathSegment,
-): T {
-  return {
-    ...patch,
-    path: [segment, ...patch.path],
-  }
 }
