@@ -66,10 +66,10 @@ Retrieve block-level elements from the editor.
 
 ### Navigation
 
-- `getFirstBlock` - Get the first block in the editor
-- `getLastBlock` - Get the last block in the editor
-- `getNextBlock` - Get the block after the current focus block
-- `getPreviousBlock` - Get the block before the current focus block
+- `getFirstBlock` - Get the first block in the focused container, or the first block in the editor when the focus is at root or there is no selection
+- `getLastBlock` - Get the last block in the focused container, or the last block in the editor when the focus is at root or there is no selection
+- `getNextBlock` - Get the block after the selection end block, within the same container
+- `getPreviousBlock` - Get the block before the selection start block, within the same container
 
 ### Focus & anchor
 
@@ -78,7 +78,7 @@ Retrieve block-level elements from the editor.
 
 ### Selection range
 
-- `getSelectedBlocks` - Get all blocks within the current selection
+- `getSelectedBlocks` - Get the root-level blocks the selection covers (a selection inside a container returns the whole container, not its nested blocks)
 - `getSelectionStartBlock` - Get the block at the start of the selection
 - `getSelectionEndBlock` - Get the block at the end of the selection
 

@@ -28,3 +28,5 @@ import * as selectors from '@portabletext/editor/selectors'
 const editor = useEditor()
 const isActive = useEditorSelector(editor, selectors.isActiveDecorator('em'))
 ```
+
+An optional third argument, `compare`, decides whether the selected value has changed. It accepts the previous and next values and returns a boolean. The default is reference equality (`===`).
