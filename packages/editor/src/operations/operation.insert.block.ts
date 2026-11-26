@@ -1,7 +1,6 @@
 import {isSpan, isTextBlock} from '@portabletext/schema'
 import {end as editorEnd} from '../engine/editor/end'
 import {pathRef} from '../engine/editor/path-ref'
-import {rangeRef} from '../engine/editor/range-ref'
 import {start as editorStart} from '../engine/editor/start'
 import type {Node} from '../engine/interfaces/node'
 import type {InsertOperation} from '../engine/interfaces/operation'
@@ -9,10 +8,8 @@ import type {Path} from '../engine/interfaces/path'
 import type {Point} from '../engine/interfaces/point'
 import type {Range} from '../engine/interfaces/range'
 import {parentPath} from '../engine/path/parent-path'
-import {pathEquals} from '../engine/path/path-equals'
 import {siblingPath} from '../engine/path/sibling-path'
 import {pointEquals} from '../engine/point/point-equals'
-import {isExpandedRange} from '../engine/range/is-expanded-range'
 import {rangeEdges} from '../engine/range/range-edges'
 import {rangeEnd} from '../engine/range/range-end'
 import {rangeStart} from '../engine/range/range-start'
@@ -20,7 +17,6 @@ import {applyInsertNodeAtPath} from '../internal-utils/apply-insert-node'
 import {applyNodeProperties} from '../internal-utils/apply-node-properties'
 import {applySelect, resolveSelection} from '../internal-utils/apply-selection'
 import {applySplitNode} from '../internal-utils/apply-split-node'
-import {deleteRange} from '../internal-utils/delete-range'
 import {
   isDeepEqual,
   isEqualChildren,
@@ -28,10 +24,9 @@ import {
 } from '../internal-utils/equality'
 import {toEngineBlock} from '../internal-utils/values'
 import {getDeclarationsInScope} from '../schema/declarations-in-scope'
+import {getCollapsedSpanBoundary} from '../traversal/get-collapsed-span-boundary'
 import {getEnclosingBlock} from '../traversal/get-enclosing-block'
-import {getParent} from '../traversal/get-parent'
 import {getPathSubSchema} from '../traversal/get-path-sub-schema'
-import {getSibling} from '../traversal/get-sibling'
 import {getSpan} from '../traversal/get-span'
 import {getTextBlock} from '../traversal/get-text-block'
 import type {EditorSelection} from '../types/editor'
@@ -56,7 +51,6 @@ type InsertTarget =
   | {kind: 'first-child'; insertAt: Path}
   | {kind: 'split-insert'; blockPath: Path; splitAt: Point}
   | {kind: 'fragment'; at: Point; endBlockPath: Path}
-  | {kind: 'delete-then-insert'; range: Range; startBlockPath: Path}
 
 export const insertBlockOperationImplementation: OperationImplementation<
   'insert.block'
@@ -130,13 +124,25 @@ export const insertBlockOperationImplementation: OperationImplementation<
     return
   }
 
+  const selectionAtEntry = editor.snapshot.context.selection
+  const collapsedCaret =
+    operation.placement === 'auto' &&
+    !operation.at &&
+    operation.select === 'none' &&
+    !isTextBlock(context, block) &&
+    selectionAtEntry
+      ? getCollapsedSpanBoundary(editor.snapshot, selectionAtEntry)
+      : undefined
+
   dispatchInsert({
     editor,
     context,
     block,
     target,
     select: operation.select ?? 'start',
-    selectionAtEntry: editor.snapshot.context.selection,
+    selectionAtEntry: collapsedCaret
+      ? {anchor: collapsedCaret, focus: collapsedCaret}
+      : selectionAtEntry,
   })
 }
 
@@ -212,10 +218,6 @@ function resolveTarget(args: {
     }
 
     return {kind: 'after', blockPath: endBlockPath}
-  }
-
-  if (isExpandedRange(at)) {
-    return {kind: 'delete-then-insert', range: at, startBlockPath}
   }
 
   const collapsedPoint = rangeStart(at, editor.snapshot.context)
@@ -340,18 +342,6 @@ function dispatchInsert(args: {
         endBlockPath: target.endBlockPath,
         select,
         wasCrossBlock,
-      })
-      return
-    }
-
-    case 'delete-then-insert': {
-      executeDeleteThenInsert({
-        editor,
-        context,
-        block,
-        range: target.range,
-        select,
-        selectionAtEntry,
       })
       return
     }
@@ -554,155 +544,6 @@ function applyPostInsertSelection(
       : editorStart(editor, insertedBlockPath)
 
   applySelect(editor, point)
-}
-
-// ---------------------------------------------------------------------------
-// delete-then-insert: delete the range, re-resolve, recurse into dispatcher
-// ---------------------------------------------------------------------------
-
-/**
- * Delete an expanded range, re-resolve the insertion target against the
- * post-delete (collapsed) state, then recurse into the dispatcher. The
- * cross-block status of the original range is threaded through so that the
- * fragment pseudo-behavior can restore the caret correctly.
- */
-function executeDeleteThenInsert(args: {
-  editor: PortableTextEditorEngine
-  context: OperationSnapshot['context']
-  block: Node
-  range: Range
-  select: 'start' | 'end' | 'none'
-  selectionAtEntry: EditorSelection
-}): void {
-  const {editor, context, block, range, select, selectionAtEntry} = args
-
-  const rangeStartPoint = rangeStart(range, editor.snapshot.context)
-  const rangeEndPoint = rangeEnd(range, editor.snapshot.context)
-
-  const startBlockEntry = getEnclosingBlock(
-    editor.snapshot,
-    rangeStartPoint.path,
-  )
-  const endBlockEntry = getEnclosingBlock(editor.snapshot, rangeEndPoint.path)
-  const wasCrossBlock =
-    startBlockEntry !== undefined &&
-    endBlockEntry !== undefined &&
-    !pathEquals(startBlockEntry.path, endBlockEntry.path)
-
-  const startBlockPath = startBlockEntry?.path
-  const startOfStartBlock = startBlockPath
-    ? editorStart(editor, startBlockPath)
-    : undefined
-  const isAtStartOfBlock = startOfStartBlock
-    ? pointEquals(rangeStartPoint, startOfStartBlock)
-    : false
-
-  const collapsedRangeRef = rangeRef(editor, range, {affinity: 'inward'})
-
-  deleteRange(editor, range, {
-    selection: 'preserve',
-    removeEmptyStartBlock: false,
-  })
-
-  const collapsedRange =
-    collapsedRangeRef.unref() ?? editor.snapshot.context.selection
-  const collapsedPoint = collapsedRange
-    ? rangeStart(collapsedRange, editor.snapshot.context)
-    : undefined
-
-  if (!collapsedPoint) {
-    return
-  }
-
-  const resolvedBlock = getParent(editor.snapshot, collapsedPoint.path, {
-    match: (node) => isTextBlock(editor.snapshot.context, node),
-  })
-  const blockIsText = isTextBlock(editor.snapshot.context, block)
-
-  // For `select: 'none'`, the desired restored selection is the collapsed
-  // post-delete range (not the original expanded range). Track it through
-  // the subsequent insert so paths/offsets remain valid.
-  const postDeleteSelection: EditorSelection =
-    select === 'none' ? collapsedRange : selectionAtEntry
-
-  if (blockIsText && resolvedBlock) {
-    // Only treat the block as "empty target to replace" when the range was
-    // within a single block (i.e. the delete emptied it). Cross-block
-    // deletes always merge into a fragment even if the result looks empty
-    // at this instant.
-    if (!wasCrossBlock && isEmptyTextBlock(context, resolvedBlock.node)) {
-      dispatchInsert({
-        editor,
-        context,
-        block,
-        target: {kind: 'replace', blockPath: resolvedBlock.path},
-        select,
-        selectionAtEntry: postDeleteSelection,
-      })
-      return
-    }
-
-    dispatchInsert({
-      editor,
-      context,
-      block,
-      target: {
-        kind: 'fragment',
-        at: collapsedPoint,
-        endBlockPath: resolvedBlock.path,
-      },
-      select,
-      selectionAtEntry: postDeleteSelection,
-      wasCrossBlock,
-    })
-    return
-  }
-
-  const containingBlockEntry =
-    resolvedBlock ?? getEnclosingBlock(editor.snapshot, collapsedPoint.path)
-
-  if (!containingBlockEntry) {
-    return
-  }
-
-  const insertedPath = insertSiblingBlock(
-    editor,
-    block,
-    containingBlockEntry.path,
-    isAtStartOfBlock ? 'before' : 'after',
-  )
-
-  applyPostInsertSelection(editor, insertedPath, select, postDeleteSelection)
-
-  // If inserting an object block next to a text block that is now empty,
-  // remove the empty text block.
-  if (!blockIsText) {
-    removeAdjacentEmptyTextBlock({
-      editor,
-      context,
-      insertedPath,
-    })
-  }
-}
-
-/**
- * After inserting a non-text block, remove the adjacent empty text block
- * if one is left behind.
- */
-function removeAdjacentEmptyTextBlock(args: {
-  editor: PortableTextEditorEngine
-  context: OperationSnapshot['context']
-  insertedPath: Path
-}): void {
-  const {editor, context, insertedPath} = args
-
-  for (const direction of ['next', 'previous'] as const) {
-    const sibling = getSibling(editor.snapshot, insertedPath, {direction})
-    if (sibling && isEmptyTextBlock(context, sibling.node)) {
-      editor.apply({type: 'unset', path: sibling.path})
-      return
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------

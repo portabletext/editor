@@ -1,0 +1,123 @@
+// @ts-nocheck
+import {createTestKeyGenerator} from '@portabletext/test'
+import {defineSchema} from '@portabletext/schema'
+import {expect, test, vi} from 'vitest'
+import {userEvent, commands} from 'vitest/browser'
+import {createTestEditor} from '../src/test/vitest'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
+import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {execute, raise, forward} from '../src/behaviors/behavior.types.action'
+import {resolveSelection} from '../src/internal-utils/apply-selection'
+import {rangeRef} from '../src/engine/editor/range-ref'
+import {isCollapsedRange} from '../src/engine/range/is-collapsed-range'
+import {useEngineStatic} from '../src/engine/react/hooks/use-engine-static'
+import {converterPortableText} from '../src/converters/converter.portable-text'
+
+const rows = [{"depth": "root", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "root/blockImage/startPartial/2/none/default/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockImage/startPartial/2/none/none/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "root/blockImage/backwardStartPartial/2/none/default/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockImage/backwardStartPartial/2/none/none/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "root/blockImage/endComplete/2/none/default/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockImage/endComplete/2/none/none/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "root/blockImage/backwardEndComplete/2/none/default/implicit"}, {"depth": "root", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockImage/backwardEndComplete/2/none/none/implicit"}, {"depth": "root", "route": "blockText", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockText/startPartial/2/none/none/implicit"}, {"depth": "root", "route": "blockText", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockText/backwardStartPartial/2/none/none/implicit"}, {"depth": "root", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "root/blockText/endComplete/2/none/default/implicit"}, {"depth": "root", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockText/endComplete/2/none/none/implicit"}, {"depth": "root", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "root/blockText/backwardEndComplete/2/none/default/implicit"}, {"depth": "root", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "root/blockText/backwardEndComplete/2/none/none/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "callout/blockImage/startPartial/2/none/default/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockImage/startPartial/2/none/none/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "callout/blockImage/backwardStartPartial/2/none/default/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockImage/backwardStartPartial/2/none/none/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "callout/blockImage/endComplete/2/none/default/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockImage/endComplete/2/none/none/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "callout/blockImage/backwardEndComplete/2/none/default/implicit"}, {"depth": "callout", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockImage/backwardEndComplete/2/none/none/implicit"}, {"depth": "callout", "route": "blockText", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockText/startPartial/2/none/none/implicit"}, {"depth": "callout", "route": "blockText", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockText/backwardStartPartial/2/none/none/implicit"}, {"depth": "callout", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "callout/blockText/endComplete/2/none/default/implicit"}, {"depth": "callout", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockText/endComplete/2/none/none/implicit"}, {"depth": "callout", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "callout/blockText/backwardEndComplete/2/none/default/implicit"}, {"depth": "callout", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "callout/blockText/backwardEndComplete/2/none/none/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "cell/blockImage/startPartial/2/none/default/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockImage/startPartial/2/none/none/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "cell/blockImage/backwardStartPartial/2/none/default/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockImage/backwardStartPartial/2/none/none/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "cell/blockImage/endComplete/2/none/default/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockImage/endComplete/2/none/none/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "cell/blockImage/backwardEndComplete/2/none/default/implicit"}, {"depth": "cell", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockImage/backwardEndComplete/2/none/none/implicit"}, {"depth": "cell", "route": "blockText", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockText/startPartial/2/none/none/implicit"}, {"depth": "cell", "route": "blockText", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockText/backwardStartPartial/2/none/none/implicit"}, {"depth": "cell", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "cell/blockText/endComplete/2/none/default/implicit"}, {"depth": "cell", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockText/endComplete/2/none/none/implicit"}, {"depth": "cell", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "cell/blockText/backwardEndComplete/2/none/default/implicit"}, {"depth": "cell", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "cell/blockText/backwardEndComplete/2/none/none/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "nested/blockImage/startPartial/2/none/default/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockImage/startPartial/2/none/none/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "nested/blockImage/backwardStartPartial/2/none/default/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockImage/backwardStartPartial/2/none/none/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "nested/blockImage/endComplete/2/none/default/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockImage/endComplete/2/none/none/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "nested/blockImage/backwardEndComplete/2/none/default/implicit"}, {"depth": "nested", "route": "blockImage", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockImage/backwardEndComplete/2/none/none/implicit"}, {"depth": "nested", "route": "blockText", "geometry": "startPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockText/startPartial/2/none/none/implicit"}, {"depth": "nested", "route": "blockText", "geometry": "backwardStartPartial", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockText/backwardStartPartial/2/none/none/implicit"}, {"depth": "nested", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "nested/blockText/endComplete/2/none/default/implicit"}, {"depth": "nested", "route": "blockText", "geometry": "endComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockText/endComplete/2/none/none/implicit"}, {"depth": "nested", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "default", "address": "implicit", "id": "nested/blockText/backwardEndComplete/2/none/default/implicit"}, {"depth": "nested", "route": "blockText", "geometry": "backwardEndComplete", "position": 2, "host": "none", "select": "none", "address": "implicit", "id": "nested/blockText/backwardEndComplete/2/none/none/implicit"}]
+for (const row of rows) {
+ test(`Scenario: insert comparison ${row.id}`, async () => {
+  const keyGenerator=createTestKeyGenerator()
+  const block=(text:string) => ({_key:keyGenerator(),_type:'block',style:'normal',markDefs:[],children:[{_key:keyGenerator(),_type:'span',text,marks:[]}]})
+  const content=[block('foo'),block('bar'),block('baz'),block('foo'),block('bar'),block('baz')]
+  if(row.geometry==='spans') content[row.position].children.push({_key:keyGenerator(),_type:'span',text:'bar',marks:['strong']})
+  if(row.geometry==='empty')content[row.position].children[0].text=''
+  if(row.geometry.startsWith('object'))content[row.position]={_key:keyGenerator(),_type:'image'}
+  const callout={_key:keyGenerator(),_type:'callout',content}
+  const cell={_key:keyGenerator(),_type:'cell',content:row.depth==='nested'?[callout]:content}
+  const tableRow={_key:keyGenerator(),_type:'row',cells:[cell]}
+  const table={_key:keyGenerator(),_type:'table',rows:[tableRow]}
+  const outer=[block('foo'),block('bar')]
+  const prefix=row.depth==='root'?[]:row.depth==='callout'?[{_key:callout._key},'content']:[{_key:table._key},'rows',{_key:tableRow._key},'cells',{_key:cell._key},'content',...(row.depth==='nested'?[{_key:callout._key},'content']:[])]
+  const sourceImages=row.rejectDrag?[{_key:keyGenerator(),_type:'image'},{_key:keyGenerator(),_type:'image'}]:[]
+  const initialValue=[...sourceImages,...(row.depth==='root'?content:[outer[0],row.depth==='callout'?callout:table,outer[1]])]
+  const point=(index:number,offset:number,span=0)=>({path:[...prefix,{_key:content[index]._key},'children',{_key:content[index].children[span]._key}],offset})
+  const position=row.position
+  if(row.geometry.startsWith('object'))content[position].children=[{_key:keyGenerator(),_type:'span',text:'',marks:[]}]
+  let at={anchor:point(position,1),focus:point(position,2)}
+  if(row.geometry==='spans')at={anchor:point(position,1),focus:point(position,2,1)}
+  if(row.geometry==='forward')at={anchor:point(position,1),focus:point(position+1,2)}
+  if(row.geometry==='backward')at={anchor:point(position+1,2),focus:point(position,1)}
+  if(row.geometry==='hanging')at={anchor:point(position,0),focus:point(position+1,0)}
+  if(row.geometry==='whole')at={anchor:point(position,0),focus:point(position+1,3)}
+  if(row.geometry==='all')at={anchor:point(0,0),focus:point(5,3)}
+  if(['caret','start','end','empty'].includes(row.geometry)){const caret=point(position,row.geometry==='caret'?1:row.geometry==='end'?3:0);at={anchor:caret,focus:caret}}
+  if(row.geometry==='bar')at={anchor:point(position,1),focus:point(position,2)}
+  if(row.geometry.startsWith('object')){at={anchor:{path:[...prefix,{_key:content[position]._key}],offset:0},focus:point(position+1,2)};if(row.geometry==='objectWhole')at.focus=point(position+1,0);if(row.geometry==='objectAll')at.focus=point(5,3);if(row.geometry==='objectBackward')at={anchor:at.focus,focus:at.anchor};delete content[position].children}
+  if(['startPartial','backwardStartPartial'].includes(row.geometry))at={anchor:point(position,0),focus:point(position+1,2)};if(['endComplete','backwardEndComplete'].includes(row.geometry))at={anchor:point(position,1),focus:point(position+1,3)};if(['backwardStartPartial','backwardEndComplete'].includes(row.geometry))at={anchor:at.focus,focus:at.anchor}
+  const elsewhere=row.depth==='root'?point(5,2):{path:[{_key:outer[1]._key},'children',{_key:outer[1].children[0]._key}],offset:2}
+  const live=row.address==='elsewhere'?{anchor:elsewhere,focus:elsewhere}:at
+  const target=row.address==='gone'?{anchor:{path:[{_key:keyGenerator()}],offset:0},focus:{path:[{_key:keyGenerator()}],offset:0}}:at
+  const blocks=row.route==='blocks0'?[]:['blockImage','blockObject','executeImage'].includes(row.route)?[{_key:keyGenerator(),_type:row.host==='reject'?'unknown':'image'}]:row.host==='reject'?[{_key:keyGenerator(),_type:'unknown'},{_key:keyGenerator(),_type:'unknown'}]:['blocks1','blockText','executeText'].includes(row.route)?[block('bar')]:[block('bar'),block('baz')]
+  const schemaDefinition=defineSchema({decorators:[{name:'strong'}],inlineObjects:[{name:'mention'}],blockObjects:[{name:'image'},{name:'callout',fields:[{name:'content',type:'array',of:[{type:'block'},{type:'image'}]}]},{name:'table',fields:[{name:'rows',type:'array',of:[{name:'row',type:'object',fields:[{name:'cells',type:'array',of:[{name:'cell',type:'object',fields:[{name:'content',type:'array',of:[{type:'block'},{type:'image'},{type:'callout'}]}]}]}]}]}]}]})
+  if(row.host==='reject') {
+    if(!row.rejectDrag)schemaDefinition.blockObjects=schemaDefinition.blockObjects.filter((definition:any)=>definition.name!=='image')
+    const removeImage=(value:any)=>{if(!value||typeof value!=='object')return;for(const key in value){if(key==='of' && Array.isArray(value[key]))value[key]=value[key].filter((member:any)=>member.type!=='image');removeImage(value[key])}}
+    removeImage(schemaDefinition)
+  }
+  const events:any[]=[], errors:any[]=[], resolutions:any[]=[]
+  const consoleError=vi.spyOn(console,'error').mockImplementation((...args)=>errors.push(args.map(value=>String(value))))
+  let engine:any
+  function CaptureEngine(){engine=useEngineStatic();return null}
+  const {editor,locator}=await createTestEditor({keyGenerator,initialValue,schemaDefinition,editableProps:row.route==='onPaste'?{onPaste:()=>({insert:blocks})}:{},children:<><CaptureEngine/><NodePlugin nodes={['callout','table','row','cell'].map(type=>defineContainer({type,arrayField:type==='table'?'rows':type==='row'?'cells':'content'}))}/></>})
+  await userEvent.click(locator)
+  editor.send({type:'select',at:live})
+  await vi.waitFor(()=>expect(editor.getSnapshot().context.selection).toEqual({...live,backward:['backward','objectBackward','backwardStartPartial','backwardEndComplete'].includes(row.geometry)&&row.address!=='elsewhere'}))
+  const copy=(value:any)=>JSON.parse(JSON.stringify(value))
+  const before=copy(editor.getSnapshot().context.value),beforeSelection=copy(editor.getSnapshot().context.selection)
+  if(row.host==='swallow')editor.registerBehavior({behavior:defineBehavior({on:'delete',actions:[()=>[]]})})
+  if(row.host==='replace')editor.registerBehavior({behavior:defineBehavior({on:'delete',actions:[()=>[raise({type:'insert.text',text:'baz',at:at.anchor.path,offset:at.anchor.offset})]]})})
+  if(row.host==='transform')editor.registerBehavior({behavior:defineBehavior({on:'insert.blocks',actions:[({event})=>[forward({...event,blocks:event.blocks.map((item:any)=>item._type==='block'?{...item,children:item.children.map((child:any)=>child._type==='span'?{...child,text:child.text+'!'}:child)}:item)})]]})})
+  editor.registerBehavior({behavior:defineBehavior({on:'*',actions:[({event,snapshot})=>{events.push(copy(event));if(event.type==='insert.block')resolutions.push({event:copy(event),resolved:event.at?copy(resolveSelection(engine,event.at)):null,value:copy(snapshot.context.value),selection:copy(snapshot.context.selection)});return [forward(event)]}]})})
+  let insertion:any=row.route==='text'?{type:'insert.text',text:'bar'}:row.route==='soft'?{type:'insert.soft break'}:row.route==='break'?{type:'insert.break'}:row.route==='inline'?{type:'insert.inline object',inlineObject:{name:row.host==='reject'?'unknown':'mention'}}:row.route==='span'?{type:'insert.span',text:'bar'}:row.route==='child'?{type:'insert.child',child:row.host==='reject'?{_type:'unknown'}:{_type:'span',text:'bar',marks:[]}}:row.route==='blockText'||['blockImage','blockObject','executeImage'].includes(row.route)?{type:'insert.block',block:blocks[0],placement:'auto'}:{type:'insert.blocks',blocks,placement:'auto'}
+  if(row.route==='blockObject')insertion={type:'insert.block object',blockObject:{name:'image'},placement:'auto'}
+  if(row.route.startsWith('execute'))editor.registerBehavior({behavior:defineBehavior({on:'insert.block',actions:[({event})=>[execute(event)]]})})
+  if(row.select!=='default')insertion.select=row.select
+  if(row.address!=='implicit')insertion.at=target
+  if(row.geometry==='goneSpan'){insertion.at={anchor:{path:[...prefix,{_key:content[position]._key},'children',{_key:keyGenerator()}],offset:0},focus:{path:[...prefix,{_key:content[position]._key},'children',{_key:keyGenerator()}],offset:0}}}
+  if(row.geometry==='goneBlock'){const missing={path:[...prefix,{_key:keyGenerator()}],offset:0};insertion.at={anchor:missing,focus:missing}}
+  let oracleStopped=false
+  if(false && row.address!=='gone' && row.route!=='drag') {
+    const original=rangeRef(engine,live,{affinity:'inward'})
+    editor.send({type:'select',at:target})
+    editor.send({type:'delete',at:target})
+    const collapsed=editor.getSnapshot().context.selection
+    oracleStopped=!!collapsed && !isCollapsedRange(collapsed)
+    const originalSelection=original.unref()
+    if(!oracleStopped && collapsed) {
+      if(insertion.type==='insert.block'||insertion.type==='insert.blocks') {
+        insertion.at=collapsed
+        if(row.address==='elsewhere' && originalSelection)editor.send({type:'select',at:originalSelection})
+      }
+    }
+  }
+  let dragSerializedBlocks:any[]|undefined
+  const dataTransfer=new DataTransfer()
+  if(row.route==='html') {dataTransfer.setData('text/html',row.host==='reject'?'<img src="https://example.com/foo.png">':'<p>bar</p><p>baz</p>');if(row.host!=='reject')dataTransfer.setData('text/plain','bar\nbaz')}
+  else dataTransfer.setData('application/x-portable-text',JSON.stringify(blocks))
+  if(oracleStopped) {}
+  else if(['pt','html','onPaste'].includes(row.route)) {
+    locator.element().dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:dataTransfer}))
+
+  } else if(row.route==='input')editor.send({type:'input.*',originEvent:{dataTransfer}} as any)
+  else if(row.route==='drag') {
+    const dragOrigin={selection:row.rejectDrag?{anchor:{path:[{_key:sourceImages[0]._key}],offset:0},focus:{path:[{_key:sourceImages[1]._key}],offset:0}}:{anchor:point(0,1),focus:point(1,2)}}
+    const serialized=converterPortableText.serialize({snapshot:{...editor.getSnapshot(),context:{...editor.getSnapshot().context,selection:dragOrigin.selection}},event:{type:'serialize',originEvent:'drag.dragstart'}})
+    if(serialized.type!=='serialization.success')throw Error('serialization failed')
+    dragSerializedBlocks=JSON.parse(serialized.data)
+    if(row.rejectDrag)expect(dragSerializedBlocks.length).toEqual(2)
+    dataTransfer.setData(serialized.mimeType,serialized.data)
+    editor.send({type:'drag.drop',originEvent:{dataTransfer},dragOrigin,position:{block:'start',isEditor:false,isContainer:false,selection:at}})
+  } else editor.send(insertion)
+  editor.send({type:'custom.matrix.flush'})
+  await vi.waitFor(()=>expect(events.at(-1)?.type).toEqual('custom.matrix.flush'))
+  const value=copy(editor.getSnapshot().context.value),selection=copy(editor.getSnapshot().context.selection)
+  const observed=copy(events)
+  editor.send({type:'history.undo'})
+  const undo=copy(editor.getSnapshot().context.value),undoSelection=copy(editor.getSnapshot().context.selection)
+  editor.send({type:'history.redo'})
+  const redo=copy(editor.getSnapshot().context.value),redoSelection=copy(editor.getSnapshot().context.selection)
+  consoleError.mockRestore()
+  await commands.recordDiscovery({...row,blocks,target,dragSerializedBlocks,oracleStopped,before,beforeSelection,value,selection,events:observed,resolutions,errors,guard:errors.some(error=>error.join(' ').includes('depth of 100')),undo,undoSelection,redo,redoSelection})
+ })
+}

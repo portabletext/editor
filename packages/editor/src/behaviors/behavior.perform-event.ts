@@ -1,3 +1,6 @@
+import {normalize} from '../engine/editor/normalize'
+import {isNormalizing} from '../engine/editor/is-normalizing'
+import {setNormalizing} from '../engine/editor/set-normalizing'
 import type {Converter} from '../converters/converter.types'
 import {createEditorDom} from '../editor/editor-dom'
 import type {EditorSchema} from '../editor/editor-schema'
@@ -352,12 +355,19 @@ export function performEvent({
             }
 
             if (action.type === 'raise') {
+              if (action.resolveEvent) {
+                const wasNormalizing = isNormalizing(editor)
+                setNormalizing(editor, true)
+                try { normalize(editor) } finally { setNormalizing(editor, wasNormalizing) }
+              }
               performEvent({
                 mode: mode === 'execute' ? 'execute' : 'raise',
                 behaviors,
                 remainingEventBehaviors:
                   mode === 'execute' ? remainingEventBehaviors : behaviors,
-                event: action.event,
+                event: action.resolveEvent ? action.resolveEvent({snapshot: createEditorSnapshot({
+                  converters, editor, keyGenerator, readOnly, schema,
+                })}) : action.event,
                 editor,
                 converters,
                 keyGenerator,

@@ -23,6 +23,8 @@ export type BehaviorAction =
   | {
       type: 'raise'
       event: SyntheticBehaviorEvent | CustomBehaviorEvent
+      /** Normalize pending edits, then resolve the raised event immediately before dispatch using the current snapshot. */
+      resolveEvent?: (payload: {snapshot: EditorSnapshot}) => SyntheticBehaviorEvent | CustomBehaviorEvent
     }
   | {
       type: 'effect'
@@ -160,8 +162,9 @@ export function forward(
  */
 export function raise(
   event: SyntheticBehaviorEvent | CustomBehaviorEvent,
+  resolveEvent?: (payload: {snapshot: EditorSnapshot}) => SyntheticBehaviorEvent | CustomBehaviorEvent,
 ): PickFromUnion<BehaviorAction, 'type', 'raise'> {
-  return {type: 'raise', event}
+  return resolveEvent ? {type: 'raise', event, resolveEvent} : {type: 'raise', event}
 }
 
 /**

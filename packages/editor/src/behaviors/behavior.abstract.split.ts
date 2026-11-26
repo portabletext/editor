@@ -14,6 +14,7 @@ import {getSelectionStartPoint} from '../utils/util.get-selection-start-point'
 import {isSelectionCollapsed} from '../utils/util.is-selection-collapsed'
 import {sliceTextBlock} from '../utils/util.slice-text-block'
 import {raise} from './behavior.types.action'
+import {moveTailActions} from './behavior.move-tail'
 import {defineBehavior} from './behavior.types.behavior'
 
 export const abstractSplitBehaviors = [
@@ -86,7 +87,15 @@ export const abstractSplitBehaviors = [
 
       return false
     },
-    actions: [() => [raise({type: 'delete'}), raise({type: 'split'})]],
+    actions: [() => [
+      raise({type: 'delete'}),
+      raise({type: 'select', at: null}, ({snapshot}) => {
+        const selection = snapshot.context.selection
+        const point = selection && getSelectionStartPoint(selection)
+        return {type: 'select', at: point ? {anchor: point, focus: point} : null}
+      }),
+      raise({type: 'split'}),
+    ]],
   }),
 
   defineBehavior({
@@ -146,7 +155,7 @@ export const abstractSplitBehaviors = [
       }
     },
     actions: [
-      (_, {newTextBlock, newTextBlockSelection}) =>
+      ({snapshot}, {newTextBlock, newTextBlockSelection}) =>
         isSelectionCollapsed(newTextBlockSelection)
           ? [
               raise({
@@ -157,7 +166,7 @@ export const abstractSplitBehaviors = [
               }),
             ]
           : [
-              raise({type: 'delete', at: newTextBlockSelection}),
+              ...moveTailActions(snapshot, newTextBlockSelection.anchor),
               raise({
                 type: 'insert.block',
                 block: newTextBlock,
