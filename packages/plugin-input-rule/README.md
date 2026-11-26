@@ -327,7 +327,7 @@ const stockTickerRule = defineInputRule({
           at: {
             anchor: {
               path: [
-                {_key: event.focusBlock.node._key},
+                ...event.focusBlock.path,
                 'children',
                 {_key: stockTickerKey},
               ],
@@ -335,7 +335,7 @@ const stockTickerRule = defineInputRule({
             },
             focus: {
               path: [
-                {_key: event.focusBlock.node._key},
+                ...event.focusBlock.path,
                 'children',
                 {_key: stockTickerKey},
               ],
