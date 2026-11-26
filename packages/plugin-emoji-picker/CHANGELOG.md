@@ -1,5 +1,12 @@
 # @portabletext/plugin-emoji-picker
 
+## 8.0.31
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.31
+
 ## 8.0.30
 
 ### Patch Changes

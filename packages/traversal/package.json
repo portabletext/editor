@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/traversal",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Find, compare and walk the nodes of any Portable Text document",
   "keywords": [
     "path",

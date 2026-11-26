@@ -161,6 +161,52 @@ function useToolbarSchema(props: {
 }): ToolbarSchema
 ```
 
+### `useApplicableSchema`
+
+Returns the names of the schema members that are applicable at the current selection, grouped by category. It subscribes to the `getApplicableSchema` selector from `@portabletext/editor/selectors` and returns the same reference across editor ticks while the applicable names are unchanged.
+
+```typescript nocheck
+function useApplicableSchema(): ApplicableSchema
+
+type ApplicableSchema = {
+  decorators: ReadonlySet<string>
+  annotations: ReadonlySet<string>
+  lists: ReadonlySet<string>
+  styles: ReadonlySet<string>
+  blockObjects: ReadonlySet<string>
+  inlineObjects: ReadonlySet<string>
+}
+```
+
+A decorator, annotation, list or style name is applicable when at least one text block in the selection declares it. Block object and inline object names come from the sub-schema of the focus block, including when the selection is on a block object. All sets are empty when there is no selection, and the text categories are empty when the selection covers no text blocks.
+
+Use it with `useToolbarSchema` to render every button in the schema and disable the ones that don't apply at the current selection:
+
+```tsx
+import {
+  useApplicableSchema,
+  useDecoratorButton,
+  type ToolbarDecoratorSchemaType,
+} from '@portabletext/toolbar'
+
+function DecoratorButton(props: {schemaType: ToolbarDecoratorSchemaType}) {
+  const decoratorButton = useDecoratorButton(props)
+  const applicable = useApplicableSchema()
+
+  return (
+    <button
+      onClick={() => decoratorButton.send({type: 'toggle'})}
+      disabled={
+        !applicable.decorators.has(props.schemaType.name) ||
+        decoratorButton.snapshot.matches('disabled')
+      }
+    >
+      {props.schemaType.title}
+    </button>
+  )
+}
+```
+
 ### `useDecoratorButton`
 
 Manages the state and behavior of decorator toggle buttons (bold, italic, etc.) with keyboard shortcut support.

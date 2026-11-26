@@ -6,6 +6,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -2642,18 +2643,25 @@ describe('the workflow', () => {
     })
   })
 
-  test('restores the uiautomator2 server jar before its fetch and saves it after a fetch on a miss, from any ref, none of which can fail the job', () => {
+  test('restores the uiautomator2 server jar after the install and before its fetch and saves it after a fetch on a miss, from any ref, none of which can fail the job', () => {
     const names = [...workflow.matchAll(/^ {6}- (?:name|uses): (.*)$/gm)].map(
       (match) => match[1],
     )
     const step = (name: string) =>
       workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0] ?? ''
     const key =
-      "u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}"
+      "u2-jar-${{ hashFiles('packages/editor/node_modules/thumbjar/package.json') }}"
+    const installedThumbjar = new URL(
+      '../../packages/editor/node_modules/thumbjar/',
+      import.meta.url,
+    )
+    const installedManifest = JSON.parse(
+      readFileSync(new URL('package.json', installedThumbjar), 'utf8'),
+    )
     const path = 'packages/editor/node_modules/.cache/thumbjar/u2.jar'
     expect({
       order: names.slice(
-        names.indexOf('Restore the uiautomator2 server jar'),
+        names.indexOf('Install project dependencies'),
         names.indexOf('Look up the SDK cache key') + 1,
       ),
       restore: {
@@ -2702,25 +2710,30 @@ describe('the workflow', () => {
         )?.[1],
       },
       keyedFile: {
-        exists: existsSync(
-          new URL(
-            '../../packages/thumbjar/src/device/u2-jar.json',
-            import.meta.url,
+        editorDependency: JSON.parse(
+          readFileSync(
+            new URL('../../packages/editor/package.json', import.meta.url),
+            'utf8',
           ),
-        ),
-        importedByJarModule:
-          /^import jar from '\.\/u2-jar\.json' with \{type: 'json'\}$/m.test(
-            readFileSync(
-              new URL(
-                '../../packages/thumbjar/src/device/u2-jar.ts',
-                import.meta.url,
-              ),
-              'utf8',
-            ),
+        ).devDependencies.thumbjar,
+        name: installedManifest.name,
+        bin: installedManifest.bin,
+        pinsJar: readdirSync(new URL('dist/', installedThumbjar))
+          .filter((file) => file.endsWith('.js'))
+          .map((file) =>
+            readFileSync(new URL(`dist/${file}`, installedThumbjar), 'utf8'),
+          )
+          .some(
+            (source) =>
+              /"https:\/\/github\.com\/openatx\/android-uiautomator-server-jar\/releases\/download\/[^"]+\/u2\.jar"/.test(
+                source,
+              ) && /"[0-9a-f]{64}"/.test(source),
           ),
       },
     }).toEqual({
       order: [
+        'Install project dependencies',
+        'Build the test page',
         'Restore the uiautomator2 server jar',
         'Fetch the uiautomator2 server jar',
         'Save the uiautomator2 server jar',
@@ -2747,7 +2760,12 @@ describe('the workflow', () => {
         key,
         path,
       },
-      keyedFile: {exists: true, importedByJarModule: true},
+      keyedFile: {
+        editorDependency: '^1.0.0',
+        name: 'thumbjar',
+        bin: {thumbjar: './bin/thumbjar.js'},
+        pinsJar: true,
+      },
     })
   })
 

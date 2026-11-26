@@ -14,7 +14,6 @@ on:
       - packages/editor/android/**
       - .github/scripts/**
       - packages/editor/vitest.android.config.ts
-      - packages/thumbjar/**
       - .github/workflows/android-ime.yml
       - packages/editor/vitest.ios.config.ts
       - .github/workflows/thumbjar-ios.yml

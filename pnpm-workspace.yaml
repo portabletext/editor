@@ -52,6 +52,7 @@ minimumReleaseAge: 4320
 
 minimumReleaseAgeExclude:
   - "@portabletext/*"
+  - thumbjar
   - "@sanity/*"
   - "@textspec/*"
   - "@types/*"
