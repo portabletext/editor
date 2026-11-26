@@ -35,6 +35,9 @@ description: How to write changesets in the Portable Text Editor monorepo. Use w
 - Fix changesets show the case they fix, so a consumer recognizes their own code in it. When the bug depends on something the consumer writes (a schema, a document), a runnable fenced block right after the sentence stating the fix shows a minimal version of it and the public call that failed, with the old outcome in a comment (`// Previously threw: TypeError: ...`). Input alone is not enough: the reader must see which call to look for in their own code. Run the snippet against the old and new code before committing it. When the bug depends on an action (a keystroke, a paste), the changeset names the exact steps and content.
 - Secondary behavioral changes shipping in the same release are named explicitly, in a plain sentence that belongs to the paragraph ("Removing a decorator from part of a selection made left to right also no longer marks the selection as backward."). Never behind a label such as "One additional change:" or "Also changed:": a label tacked onto every changeset reads as boilerplate.
 - Banned vocabulary in changeset prose (and any artifact prose): "delta" (write "change") and "rides along"/"ride along" (name the change in a plain sentence instead).
+- No em dashes and no semicolons in artifact prose. Use commas, colons, parentheses or separate sentences.
+- No bold run-in labels ("**Verified**: ..."). The changelog reads as prose, so the point goes in a plain sentence.
+- Never "save", "saved" or "stored" for what the editor sends. The editor emits patches and events, and the host app decides what to persist. Name the mechanism: "emits an `unset` patch", "the `change` event carries".
 - Small self-explanatory changes can be **subject-only**.
 
 ## Exemplars (real, from the repo history)

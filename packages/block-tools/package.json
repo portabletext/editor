@@ -1,10 +1,12 @@
 {
   "name": "@portabletext/block-tools",
-  "version": "6.0.8",
+  "version": "6.0.9",
   "description": "Sanity-flavored HTML to Portable Text conversion (wraps @portabletext/html)",
   "keywords": [
     "block-tools",
-    "portable-text"
+    "html",
+    "portable-text",
+    "sanity"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {

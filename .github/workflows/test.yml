@@ -3,9 +3,16 @@ name: Unit tests
 on:
   # Build on pushes branches that have a PR (including drafts)
   pull_request:
+    # `edited` covers base-branch retargets, which change the commit set
+    # without firing `synchronize`.
+    types: [opened, synchronize, reopened, edited]
   # Build on commits pushed to branches without a PR if it's in the allowlist
   push:
     branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:

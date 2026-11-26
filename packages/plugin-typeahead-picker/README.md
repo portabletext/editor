@@ -248,17 +248,17 @@ Creates a picker definition to pass to `useTypeaheadPicker`.
 
 **Config:**
 
-| Property     | Type                                   | Description                                                                                                                             |
-| ------------ | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `trigger`    | `RegExp`                               | Pattern that activates the picker. Can include `^` for start-of-block triggers. Must be single-character (e.g., `/:/`, `/@/`, `/^\//`). |
-| `keyword`    | `RegExp`                               | Pattern matching characters after the trigger (e.g., `/\S*/`, `/\w*/`).                                                                 |
-| `delimiter`  | `string?`                              | Optional delimiter that triggers auto-completion (e.g., `':'` for `:joy:`)                                                              |
-| `guard`      | `TypeaheadTriggerGuard?`               | Optional guard that runs at trigger time to conditionally prevent activation                                                            |
-| `mode`       | `'sync' \| 'async'`                    | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                             |
-| `debounceMs` | `number?`                              | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)      |
-| `getMatches` | `(ctx: {keyword: string}) => TMatch[]` | Function that returns matches for the keyword                                                                                           |
-| `onSelect`   | `TypeaheadSelectActionSet[]`           | Action sets to execute when a match is selected                                                                                         |
-| `onDismiss`  | `TypeaheadDismissActionSet[]?`         | Optional action sets to execute when the picker is dismissed                                                                            |
+| Property     | Type                                                                                  | Description                                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger`    | `RegExp`                                                                              | Pattern that activates the picker. Can include `^` for start-of-block triggers. Must be single-character (e.g., `/:/`, `/@/`, `/^\//`). |
+| `keyword`    | `RegExp`                                                                              | Pattern matching characters after the trigger (e.g., `/\S*/`, `/\w*/`).                                                                 |
+| `delimiter`  | `string?`                                                                             | Optional delimiter that triggers auto-completion (e.g., `':'` for `:joy:`)                                                              |
+| `guard`      | `TypeaheadTriggerGuard?`                                                              | Optional guard that runs at trigger time to conditionally prevent activation                                                            |
+| `mode`       | `'sync' \| 'async'`                                                                   | Whether `getMatches` returns synchronously or a Promise (default: `'sync'`)                                                             |
+| `debounceMs` | `number?`                                                                             | Delay in ms before calling `getMatches`. Useful for both async (API calls) and sync (expensive local search) modes. (default: `0`)      |
+| `getMatches` | `(ctx: {keyword: string}) => ReadonlyArray<TMatch> \| Promise<ReadonlyArray<TMatch>>` | Function that returns matches for the keyword                                                                                           |
+| `onSelect`   | `TypeaheadSelectActionSet[]`                                                          | Action sets to execute when a match is selected                                                                                         |
+| `onDismiss`  | `TypeaheadDismissActionSet[]?`                                                        | Optional action sets to execute when the picker is dismissed                                                                            |
 
 **Trigger pattern rules:**
 
@@ -553,7 +553,7 @@ The following keyboard shortcuts are handled automatically by the picker:
 - **Check `delimiter`**: Must be set (e.g., `delimiter: ':'`)
 - **Check match type**: Matches must include `type: 'exact' | 'partial'`
 - **Check for exact match**: Auto-completion only triggers when at least one match has `type: 'exact'`
-- **Check keyword pattern**: The keyword pattern must allow the delimiter character at the boundary. Use `\S*` (matches any non-whitespace) when `delimiter: ':'`
+- **Check keyword pattern**: The keyword pattern doesn't need to include the delimiter, so both `\S*` and `\w*` work with `delimiter: ':'`
 
 ### Stale matches appear
 

@@ -1,10 +1,11 @@
 {
   "name": "@portabletext/plugin-typography",
-  "version": "9.0.29",
+  "version": "9.0.30",
   "description": "Automatically transform text to typographic variants",
   "keywords": [
     "plugin",
-    "portabletext",
+    "portable-text",
+    "portable-text-editor",
     "typography"
   ],
   "homepage": "https://www.portabletext.org",

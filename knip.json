@@ -127,6 +127,7 @@
         "@portabletext/test",
         "@portabletext/to-html",
         "@portabletext/toolbar",
+        "@portabletext/traversal",
         "@sanity/asset-utils",
         "@sanity/image-url",
         "@sanity/schema",

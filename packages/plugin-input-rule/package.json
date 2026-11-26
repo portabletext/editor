@@ -1,11 +1,12 @@
 {
   "name": "@portabletext/plugin-input-rule",
-  "version": "7.0.29",
+  "version": "7.0.30",
   "description": "Easily configure Input Rules in the Portable Text Editor",
   "keywords": [
     "input-rule",
     "plugin",
-    "portabletext"
+    "portable-text",
+    "portable-text-editor"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {

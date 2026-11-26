@@ -1,6 +1,5 @@
 import type {KeyedSegment, Path} from '@portabletext/patches'
-import {pathContains} from './lib/path-contains'
-import {pathEquals} from './lib/path-equals'
+import {pathContains, pathEquals} from '@portabletext/traversal'
 
 /**
  * A node address uses a unique non-empty key when available, otherwise its

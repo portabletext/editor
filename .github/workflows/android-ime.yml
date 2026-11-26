@@ -16,6 +16,9 @@ name: Android IME
 
 on:
   pull_request:
+    # `edited` covers base-branch retargets, which change the commit set
+    # without firing `synchronize`.
+    types: [opened, synchronize, reopened, edited]
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:

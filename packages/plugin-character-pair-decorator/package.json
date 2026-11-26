@@ -1,13 +1,14 @@
 {
   "name": "@portabletext/plugin-character-pair-decorator",
-  "version": "9.0.29",
+  "version": "9.0.30",
   "description": "Automatically match a pair of characters and decorate the text in between",
   "keywords": [
     "behaviors",
     "decorator",
     "pair",
     "plugin",
-    "portabletext"
+    "portable-text",
+    "portable-text-editor"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {

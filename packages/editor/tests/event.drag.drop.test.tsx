@@ -3566,3 +3566,1184 @@ describe('event.drag.drop', () => {
     })
   })
 })
+
+describe('native whole-block release', () => {
+  test('Scenario: whole-block dragover in the middle of a paragraph is not cancelled at root or inside a callout', async () => {
+    const cancelled: Array<boolean> = []
+    for (const insideCallout of [false, true]) {
+      const keyGenerator = createTestKeyGenerator()
+      const originKey = keyGenerator()
+      const textKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const calloutKey = keyGenerator()
+      const blocks = [
+        {_key: originKey, _type: 'card'},
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_key: spanKey, _type: 'span', text: 'foo bar baz', marks: []},
+          ],
+        },
+      ]
+      const card = defineBlockObject({
+        type: 'card',
+        render: ({attributes, children}) => (
+          <div {...attributes}>
+            {children}
+            <div contentEditable={false} draggable data-testid="origin">
+              foo
+            </div>
+          </div>
+        ),
+      })
+      const callout = defineContainer({type: 'callout', arrayField: 'content'})
+      const {locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({
+          blockObjects: [
+            {name: 'card'},
+            {
+              name: 'callout',
+              fields: [
+                {
+                  name: 'content',
+                  type: 'array',
+                  of: [{type: 'block'}, {type: 'card'}],
+                },
+              ],
+            },
+          ],
+        }),
+        initialValue: insideCallout
+          ? [{_key: calloutKey, _type: 'callout', content: blocks}]
+          : blocks,
+        children: <NodePlugin nodes={[card, callout]} />,
+      })
+      await expect.element(locator).toBeVisible()
+      const origin = locator.element().querySelector('[data-testid="origin"]')
+      const text = locator.element().querySelector('[data-pt-text]')
+      assert(origin)
+      assert(text)
+      const dataTransfer = new DataTransfer()
+      origin.dispatchEvent(
+        new DragEvent('dragstart', {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer,
+        }),
+      )
+      expect(
+        safeParse(dataTransfer.getData('application/x-portable-text')),
+      ).toEqual([{_key: 'k0', _type: 'card'}])
+      const rect = text.getBoundingClientRect()
+      const event = new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2,
+      })
+      text.dispatchEvent(event)
+      cancelled.push(event.defaultPrevented)
+      origin.dispatchEvent(
+        new DragEvent('dragend', {bubbles: true, dataTransfer}),
+      )
+    }
+    expect(cancelled).toEqual([false, false])
+  })
+
+  test('Scenario: releasing a whole block object over another block object moves it next to that block at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'card'}],
+      }),
+      initialValue: [
+        {_key: originKey, _type: 'card'},
+        {_key: middleKey, _type: 'card'},
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: targetKey, _type: 'card'},
+      ],
+      children: <NodePlugin nodes={[card]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    assert(origin)
+    assert(target)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+    await userEvent.dragAndDrop(origin, target)
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k1', _type: 'card'},
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: 'k4', _type: 'card'},
+        {_key: 'k0', _type: 'card'},
+      ])
+    })
+  })
+
+  test('Scenario: releasing a whole text block over a block object moves it next to that block at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'card'}],
+      }),
+      initialValue: [
+        {_key: originKey, _type: 'card'},
+        {_key: middleKey, _type: 'card'},
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: targetKey, _type: 'card'},
+      ],
+      children: <NodePlugin nodes={[card]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    const text = locator.element().querySelector('[data-pt-text]')
+    assert(origin)
+    assert(target)
+    assert(text)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+
+    await userEvent.click(text)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: textKey}, 'children', {_key: spanKey}],
+          offset: 0,
+        },
+        focus: {
+          path: [{_key: textKey}, 'children', {_key: spanKey}],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.toString()).toEqual('foo')
+    })
+    await userEvent.dragAndDrop(text, target)
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([
+      {
+        _key: 'k2',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+      },
+    ])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k0', _type: 'card'},
+        {_key: 'k1', _type: 'card'},
+        {_key: 'k4', _type: 'card'},
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: releasing a block object over itself leaves it in place at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'card'}],
+      }),
+      initialValue: [
+        {_key: originKey, _type: 'card'},
+        {_key: middleKey, _type: 'card'},
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: targetKey, _type: 'card'},
+      ],
+      children: <NodePlugin nodes={[card]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    const text = locator.element().querySelector('[data-pt-text]')
+    assert(origin)
+    assert(target)
+    assert(text)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+    await userEvent.dragAndDrop(origin, origin, {
+      sourcePosition: {x: 20, y: 30},
+      targetPosition: {x: 150, y: 30},
+    })
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k0', _type: 'card'},
+        {_key: 'k1', _type: 'card'},
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: 'k4', _type: 'card'},
+      ])
+    })
+  })
+
+  test('Scenario: releasing a block object over the middle of text splits the text at root', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'card'}],
+      }),
+      initialValue: [
+        {_key: originKey, _type: 'card'},
+        {_key: middleKey, _type: 'card'},
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: targetKey, _type: 'card'},
+      ],
+      children: <NodePlugin nodes={[card]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    const text = locator.element().querySelector('[data-pt-text]')
+    assert(origin)
+    assert(target)
+    assert(text)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+    const textRect = text.getBoundingClientRect()
+    await userEvent.dragAndDrop(origin, text, {
+      targetPosition: {x: (textRect.width * 2) / 3, y: textRect.height / 2},
+    })
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k1', _type: 'card'},
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k3', _type: 'span', text: 'fo', marks: []}],
+        },
+        {_key: 'k0', _type: 'card'},
+        {
+          _key: 'k8',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k7', _type: 'span', text: 'o', marks: []}],
+        },
+        {_key: 'k4', _type: 'card'},
+      ])
+    })
+  })
+
+  test('Scenario: releasing a root block object over a nested block object with the same _key moves it next to that block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = originKey
+    const calloutKey = keyGenerator()
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const callout = defineContainer({type: 'callout', arrayField: 'content'})
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'card'},
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'card'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {_key: originKey, _type: 'card'},
+        {_key: middleKey, _type: 'card'},
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [{_key: targetKey, _type: 'card'}],
+        },
+      ],
+      children: <NodePlugin nodes={[card, callout]} />,
+    })
+    const origin = locator.element().querySelectorAll('[data-testid="k0"]')[0]
+    const target = locator.element().querySelectorAll('[data-testid="k0"]')[1]
+    assert(origin)
+    assert(target)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    origin.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      origin.removeEventListener('dragend', recordEnd)
+    })
+    await userEvent.dragAndDrop(origin, target)
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k1', _type: 'card'},
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+        },
+        {
+          _key: 'k4',
+          _type: 'callout',
+          content: [
+            {_key: 'k0', _type: 'card'},
+            {_key: 'k7', _type: 'card'},
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: releasing a nested block object over a root block object with the same _key moves it next to that block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = originKey
+    const calloutKey = keyGenerator()
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const callout = defineContainer({type: 'callout', arrayField: 'content'})
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'card'},
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'card'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [
+            {_key: originKey, _type: 'card'},
+            {_key: middleKey, _type: 'card'},
+          ],
+        },
+        {
+          _key: textKey,
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: spanKey, _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: targetKey, _type: 'card'},
+      ],
+      children: <NodePlugin nodes={[card, callout]} />,
+    })
+    const origin = locator.element().querySelectorAll('[data-testid="k0"]')[0]
+    const target = locator.element().querySelectorAll('[data-testid="k0"]')[1]
+    assert(origin)
+    assert(target)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    origin.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      origin.removeEventListener('dragend', recordEnd)
+    })
+    await userEvent.dragAndDrop(origin, target)
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {_key: 'k4', _type: 'callout', content: [{_key: 'k1', _type: 'card'}]},
+        {
+          _key: 'k2',
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+        },
+        {_key: 'k0', _type: 'card'},
+        {_key: 'k7', _type: 'card'},
+      ])
+    })
+  })
+
+  test('Scenario: releasing a whole block object over another block object moves it next to that block inside a callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const callout = defineContainer({type: 'callout', arrayField: 'content'})
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'card'},
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'card'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [
+            {_key: originKey, _type: 'card'},
+            {_key: middleKey, _type: 'card'},
+            {
+              _key: textKey,
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_key: spanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+            },
+            {_key: targetKey, _type: 'card'},
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[card, callout]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    assert(origin)
+    assert(target)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+    await userEvent.dragAndDrop(origin, target)
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k5',
+          _type: 'callout',
+          content: [
+            {_key: 'k1', _type: 'card'},
+            {
+              _key: 'k2',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+            },
+            {_key: 'k4', _type: 'card'},
+            {_key: 'k0', _type: 'card'},
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: releasing a whole text block over a block object moves it next to that block inside a callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const callout = defineContainer({type: 'callout', arrayField: 'content'})
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'card'},
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'card'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [
+            {_key: originKey, _type: 'card'},
+            {_key: middleKey, _type: 'card'},
+            {
+              _key: textKey,
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_key: spanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+            },
+            {_key: targetKey, _type: 'card'},
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[card, callout]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    const text = locator.element().querySelector('[data-pt-text]')
+    assert(origin)
+    assert(target)
+    assert(text)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+
+    await userEvent.click(text)
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: textKey},
+            'children',
+            {_key: spanKey},
+          ],
+          offset: 0,
+        },
+        focus: {
+          path: [
+            {_key: calloutKey},
+            'content',
+            {_key: textKey},
+            'children',
+            {_key: spanKey},
+          ],
+          offset: 3,
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(window.getSelection()?.toString()).toEqual('foo')
+    })
+    await userEvent.dragAndDrop(text, target)
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([
+      {
+        _key: 'k2',
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+      },
+    ])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k5',
+          _type: 'callout',
+          content: [
+            {_key: 'k0', _type: 'card'},
+            {_key: 'k1', _type: 'card'},
+            {_key: 'k4', _type: 'card'},
+            {
+              _key: 'k2',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+            },
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: releasing a block object over itself leaves it in place inside a callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const callout = defineContainer({type: 'callout', arrayField: 'content'})
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'card'},
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'card'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [
+            {_key: originKey, _type: 'card'},
+            {_key: middleKey, _type: 'card'},
+            {
+              _key: textKey,
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_key: spanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+            },
+            {_key: targetKey, _type: 'card'},
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[card, callout]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    const text = locator.element().querySelector('[data-pt-text]')
+    assert(origin)
+    assert(target)
+    assert(text)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+    await userEvent.dragAndDrop(origin, origin, {
+      sourcePosition: {x: 20, y: 30},
+      targetPosition: {x: 150, y: 30},
+    })
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k5',
+          _type: 'callout',
+          content: [
+            {_key: 'k0', _type: 'card'},
+            {_key: 'k1', _type: 'card'},
+            {
+              _key: 'k2',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k3', _type: 'span', text: 'foo', marks: []}],
+            },
+            {_key: 'k4', _type: 'card'},
+          ],
+        },
+      ])
+    })
+  })
+
+  test('Scenario: releasing a block object over the middle of text splits the text inside a callout', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const originKey = keyGenerator()
+    const middleKey = keyGenerator()
+    const textKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const targetKey = keyGenerator()
+    const calloutKey = keyGenerator()
+    const card = defineBlockObject({
+      type: 'card',
+      render: ({attributes, children, node}) => (
+        <div {...attributes}>
+          {children}
+          <div
+            contentEditable={false}
+            draggable
+            data-testid={node._key}
+            style={{height: 60, width: 300}}
+          >
+            foo
+          </div>
+        </div>
+      ),
+    })
+    const callout = defineContainer({type: 'callout', arrayField: 'content'})
+    const {editor, locator} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'card'},
+          {
+            name: 'callout',
+            fields: [
+              {
+                name: 'content',
+                type: 'array',
+                of: [{type: 'block'}, {type: 'card'}],
+              },
+            ],
+          },
+        ],
+      }),
+      initialValue: [
+        {
+          _key: calloutKey,
+          _type: 'callout',
+          content: [
+            {_key: originKey, _type: 'card'},
+            {_key: middleKey, _type: 'card'},
+            {
+              _key: textKey,
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_key: spanKey, _type: 'span', text: 'foo', marks: []},
+              ],
+            },
+            {_key: targetKey, _type: 'card'},
+          ],
+        },
+      ],
+      children: <NodePlugin nodes={[card, callout]} />,
+    })
+    const origin = locator.element().querySelector('[data-testid="k0"]')
+    const target = locator.element().querySelector('[data-testid="k4"]')
+    const text = locator.element().querySelector('[data-pt-text]')
+    assert(origin)
+    assert(target)
+    assert(text)
+    let ended = false
+    let serialized: unknown
+    const recordStart = (event: DragEvent) => {
+      serialized = safeParse(
+        event.dataTransfer?.getData('application/x-portable-text') ?? '',
+      )
+    }
+    const recordEnd = () => {
+      ended = true
+    }
+    window.addEventListener('dragstart', recordStart)
+    window.addEventListener('dragend', recordEnd)
+    onTestFinished(() => {
+      window.removeEventListener('dragstart', recordStart)
+      window.removeEventListener('dragend', recordEnd)
+    })
+    const textRect = text.getBoundingClientRect()
+    await userEvent.dragAndDrop(origin, text, {
+      targetPosition: {x: (textRect.width * 2) / 3, y: textRect.height / 2},
+    })
+    await vi.waitFor(() => {
+      expect(ended).toEqual(true)
+    })
+    expect(serialized).toEqual([{_key: 'k0', _type: 'card'}])
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _key: 'k5',
+          _type: 'callout',
+          content: [
+            {_key: 'k1', _type: 'card'},
+            {
+              _key: 'k2',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k3', _type: 'span', text: 'fo', marks: []}],
+            },
+            {_key: 'k0', _type: 'card'},
+            {
+              _key: 'k9',
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_key: 'k8', _type: 'span', text: 'o', marks: []}],
+            },
+            {_key: 'k4', _type: 'card'},
+          ],
+        },
+      ])
+    })
+  })
+})
