@@ -162,6 +162,66 @@ import {createParameterType} from 'racejar'
 const parameterTypes = [createParameterType(/* ... */)]
 ```
 
+## Before and After hooks
+
+`Before` and `After` are exported from `racejar`. Each takes a callback and returns a `Hook`. Pass the hooks to `Feature` or `compileFeature` through the `hooks` option:
+
+```ts nocheck
+import {After, Before} from 'racejar'
+import {Feature} from 'racejar/vitest'
+
+type Context = {
+  log: Array<string>
+}
+
+Feature({
+  featureText: featureFile,
+  hooks: [
+    Before((context: Context) => {
+      context.log = []
+    }),
+    After(async (context: Context) => {
+      // ...
+    }),
+  ],
+  stepDefinitions,
+})
+```
+
+```ts nocheck
+type Hook<TContext extends Record<string, any> = object> = {
+  type: 'Before' | 'After'
+  callback: HookCallback<TContext>
+}
+
+type HookCallback<TContext extends Record<string, any> = object> = (
+  context: TContext,
+) => Promise<void> | void
+```
+
+A hook callback gets the same `context` object as the steps. The context is reset to an empty object before each scenario, before the `Before` hooks run. `Before` hooks run before each scenario and `After` hooks run after it. `racejar/vitest` registers them with `beforeEach` and `afterEach`.
+
+`compileFeature` returns the hooks as `beforeHooks` and `afterHooks`. `beforeHooks` starts with the context reset, followed by the `Before` hooks. Call every function in `beforeHooks` before each scenario and every function in `afterHooks` after it, also when a step fails:
+
+```ts nocheck
+const feature = compileFeature({featureText, hooks, stepDefinitions})
+
+for (const scenario of feature.scenarios) {
+  try {
+    for (const before of feature.beforeHooks) {
+      await before()
+    }
+    for (const step of scenario.steps) {
+      await step()
+    }
+  } finally {
+    for (const after of feature.afterHooks) {
+      await after()
+    }
+  }
+}
+```
+
 ## Basic example
 
 ```ts
