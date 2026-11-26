@@ -56,6 +56,11 @@ Converts HTML to Portable Text blocks using a Sanity block content schema type.
 
 Internally delegates to `@portabletext/html` after converting the Sanity schema. Supports the same `parseHtml`, `rules`, and `keyGenerator` options. See the [`@portabletext/html` README](../html/README.md) for full documentation on rules, whitespace handling, image matchers, and paste source support.
 
+Whitespace handling and image matchers use different option names here than in `@portabletext/html`:
+
+- `unstable_whitespaceOnPasteMode` (`'preserve' | 'remove' | 'normalize'`) instead of `whitespaceMode`.
+- `matchers.image` for block-level images and `matchers.inlineImage` for inline images, instead of a single `types.image`. Both are called with `{context, props}`, where `props` holds the `<img>` element's attributes (including `src` and `alt`), instead of `{context, value, isInline}`.
+
 **NOTE:** To use in Node.js, you need to provide a `parseHtml` option - generally using `JSDOM`:
 
 ```ts nocheck
