@@ -46,6 +46,17 @@ const blocks = parseTersePt(
 // [{_key: 'k0', _type: 'block', children: [...], style: 'h1'}, ...]
 ```
 
+### Splitting a Terse PT string
+
+`parseTersePtString(text: string): Array<string>` splits a single `|`-delimited string into Terse PT entries and turns each literal `\n` into a newline. It does not need a schema and does not create blocks. Pass its result to `parseTersePt` to get Portable Text.
+
+```ts
+import {parseTersePtString} from '@portabletext/test'
+
+parseTersePtString('h1:Title|foo\\nbar')
+// ['h1:Title', 'foo\nbar']
+```
+
 ### Producing Terse PT
 
 ```ts
@@ -94,6 +105,46 @@ const {blocks, selection} = fromTextspec(
 ```
 
 Pass an optional `containers` map (see `TextspecContainers`) to resolve container schemas. `selectionFromTextspec` resolves a pattern's selection markers against an existing Portable Text value, for placing a selection in an editor that already has content.
+
+### Registering containers
+
+`TextspecContainers` is a `ReadonlyMap<string, TextspecContainerRegistration>` keyed by `_type`. A `TextspecContainerRegistration` is `{kind: 'container', type, field, of?}`. `field` is the schema's array field that holds the container's children. `of` holds optional positional registrations for types nested inside this container. Its entries are other container registrations or `{kind: 'span' | 'blockObject' | 'inlineObject', type}`. A matching entry there takes precedence over the top-level map, and a non-container entry stops that type from resolving as a container. A container's notation type is its `_type` in uppercase.
+
+```ts
+import {compileSchema, defineSchema} from '@portabletext/schema'
+import {
+  createTestKeyGenerator,
+  fromTextspec,
+  type TextspecContainerRegistration,
+  type TextspecContainers,
+} from '@portabletext/test'
+
+const content: TextspecContainerRegistration['field'] = {
+  name: 'content',
+  type: 'array',
+  of: [{type: 'block'}],
+}
+
+const containers: TextspecContainers = new Map([
+  ['callout', {kind: 'container', type: 'callout', field: content}],
+])
+
+const {blocks} = fromTextspec(
+  {
+    schema: compileSchema(
+      defineSchema({blockObjects: [{name: 'callout', fields: [content]}]}),
+    ),
+    keyGenerator: createTestKeyGenerator(),
+    containers,
+  },
+  'CALLOUT:\n  B: foo',
+)
+// blocks: one callout whose `content` holds a text block with the span 'foo'
+```
+
+### Selection types
+
+`selectionFromTextspec` returns a `TextspecSelection`, and `fromTextspec` returns it as `selection` alongside `blocks`. A `TextspecSelection` is `{anchor: TextspecSelectionPoint, focus: TextspecSelectionPoint, backward?: boolean} | null`. A `TextspecSelectionPoint` is `{path: Path, offset: number}`, where `path` is a keyed path such as `[{_key: 'k0'}, 'children', {_key: 'k1'}]`.
 
 ### Producing textspec notation
 
