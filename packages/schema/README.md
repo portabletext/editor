@@ -166,9 +166,9 @@ Compiled schema types, returned by `compileSchema`:
 | type                     | shape                                                                                                         |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | `Schema`                 | `{block: {name, fields?}, span: {name}, styles, lists, decorators, annotations, blockObjects, inlineObjects}` |
-| `StyleSchemaType`        | `BaseDefinition & {value}` (`value` is deprecated, use `name`)                                                |
-| `ListSchemaType`         | `BaseDefinition & {value}` (`value` is deprecated, use `name`)                                                |
-| `DecoratorSchemaType`    | `BaseDefinition & {value}` (`value` is deprecated, use `name`)                                                |
+| `StyleSchemaType`        | `BaseDefinition`                                                                                              |
+| `ListSchemaType`         | `BaseDefinition`                                                                                              |
+| `DecoratorSchemaType`    | `BaseDefinition`                                                                                              |
 | `AnnotationSchemaType`   | `BaseDefinition & {fields}`                                                                                   |
 | `BlockObjectSchemaType`  | `BaseDefinition & {fields}`                                                                                   |
 | `InlineObjectSchemaType` | `BaseDefinition & {fields}`                                                                                   |
