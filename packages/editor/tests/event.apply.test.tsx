@@ -1,7 +1,7 @@
-import {diffMatchPatch} from '@portabletext/patches'
+import {diffMatchPatch, set, unset} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {ChangeEvent, Editor} from '../src'
 import {createTestEditor} from '../src/test/vitest'
 
@@ -69,6 +69,83 @@ describe('event.apply', () => {
 
     expect(editor.getSnapshot().context.value).toEqual([
       block(blockKey, spanKey, 'foo'),
+    ])
+  })
+
+  test('Scenario: Undo after a remote patch that fails to apply undoes the local edit', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [block(blockKey, spanKey, 'foobar')],
+    })
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const textPath = [...spanPath, 'text']
+    const end = {path: spanPath, offset: 6}
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: {anchor: end, focus: end}})
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        block(blockKey, spanKey, 'foobarx'),
+      ])
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [diffMatchPatch('bazbazbaz', 'qbazbazbaz', textPath)],
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      block(blockKey, spanKey, 'foobarx'),
+    ])
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        block(blockKey, spanKey, 'foobar'),
+      ])
+    })
+  })
+
+  test('Scenario: A remote whole-value `unset` clears the undo stack', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [block(blockKey, spanKey, 'foo')],
+    })
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const end = {path: spanPath, offset: 3}
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: {anchor: end, focus: end}})
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        block(blockKey, spanKey, 'foox'),
+      ])
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [unset([]), set([block(blockKey, spanKey, 'foox')], [])],
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      block(blockKey, spanKey, 'foox'),
+    ])
+
+    editor.send({type: 'history.undo'})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      block(blockKey, spanKey, 'foox'),
     ])
   })
 })
