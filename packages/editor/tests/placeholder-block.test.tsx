@@ -24,6 +24,7 @@ import {createPlaceholderBlock} from '../src/internal-utils/create-placeholder-b
 import {EventListenerPlugin, EditorRefPlugin, NodePlugin} from '../src/plugins'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor} from '../src/test/vitest'
+import {getTextBlock} from '../src/traversal/get-text-block'
 
 describe(createPlaceholderBlock.name, () => {
   test('Scenario: Initial value resembling placeholder block', async () => {
@@ -5466,4 +5467,138 @@ test('Scenario: An empty nested block stays in the host document', async () => {
     },
   ])
   expect(values).toEqual([])
+})
+
+test('Scenario: Patched edits materialize the empty paragraph only once before typing', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  let hostValue: Array<PortableTextBlock> | undefined
+  const changes: Array<unknown> = []
+  const {editor} = await createTestEditor({keyGenerator})
+
+  const blockKey = editor.getSnapshot().context.value[0]!._key
+  const spanKey = getTextBlock(editor.getSnapshot(), [{_key: blockKey}])!.node
+    .children[0]!._key
+
+  editor.on('change', (event) => {
+    changes.push(structuredClone(event))
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  editor.send({type: 'set', at: [{_key: blockKey}, 'style'], value: 'normal'})
+  editor.send({
+    type: 'set',
+    at: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+    value: [],
+  })
+
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'style'],
+            value: 'normal',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'style'],
+              value: 'normal',
+            },
+          },
+        ],
+        patches: [
+          {...setIfMissing([], []), origin: 'local'},
+          {
+            ...insert(
+              [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+                },
+              ],
+              'before',
+              [0],
+            ),
+            origin: 'local',
+          },
+          {...set('normal', [{_key: 'k0'}, 'style']), origin: 'local'},
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
+            value: [],
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
+              value: [],
+            },
+          },
+        ],
+        patches: [
+          {
+            ...set([], [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks']),
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+      },
+    ])
+  })
+
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: blockKey}, 'children', {_key: spanKey}],
+    offset: 0,
+    text: 'foo',
+  })
+  await vi.waitFor(() => {
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+    expect(editor.getSnapshot().context.value).toEqual(hostValue)
+  })
 })

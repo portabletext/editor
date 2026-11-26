@@ -59,7 +59,7 @@ export function addFieldLifecyclePatches(
     isEqualToEmptyEditor(initialValue, afterValue, schema) &&
     !isEqualValues({schema}, lastSyncedValue, afterValue)
 
-  if (wasPlaceholder && !isPlaceholder && operation.type !== 'set.selection') {
+  if (wasPlaceholder && patches.length > 0) {
     patches = [insert(beforeValue, 'before', [0]), ...patches]
   }
 
@@ -124,6 +124,14 @@ export function addFieldLifecyclePatches(
     // a deleted placeholder, say) looks like the local placeholder, but
     // the host now holds it. Without the record, the next edit would
     // insert it a second time.
+    lastSyncedValue = afterValue
+  }
+
+  if (
+    wasPlaceholder &&
+    edit.patches.length > 0 &&
+    isEqualToEmptyEditor(initialValue, afterValue, schema)
+  ) {
     lastSyncedValue = afterValue
   }
 

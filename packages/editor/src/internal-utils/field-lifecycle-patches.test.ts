@@ -1000,6 +1000,78 @@ describe(addFieldLifecyclePatches.name, () => {
       state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
     })
   })
+  test('a patched edit over a stale empty echo records the inserted paragraph before typing', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const first = addFieldLifecyclePatches(
+      {
+        lastSyncedValue: [textBlock(blockKey, spanKey, '')],
+        valueUnsetEmitted: true,
+      },
+      {
+        operation: {
+          type: 'set',
+          path: [{_key: blockKey}, 'style'],
+          value: 'normal',
+        },
+        beforeValue: [textBlock(blockKey, spanKey, '')],
+        afterValue: [textBlock(blockKey, spanKey, '')],
+        patches: [set('normal', [{_key: blockKey}, 'style'])],
+      },
+      {schema, initialValue: undefined},
+    )
+
+    expect(first).toEqual({
+      patches: [
+        setIfMissing([], []),
+        insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
+        set('normal', [{_key: blockKey}, 'style']),
+      ],
+      state: {
+        lastSyncedValue: [textBlock(blockKey, spanKey, '')],
+        valueUnsetEmitted: false,
+      },
+    })
+
+    expect(
+      addFieldLifecyclePatches(
+        first.state,
+        {
+          operation: {
+            type: 'insert.text',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
+            text: 'foo',
+          },
+          beforeValue: [textBlock(blockKey, spanKey, '')],
+          afterValue: [textBlock(blockKey, spanKey, 'foo')],
+          patches: [
+            diffMatchPatch('', 'foo', [
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ]),
+          ],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [
+        diffMatchPatch('', 'foo', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ],
+      state: {
+        lastSyncedValue: [textBlock(blockKey, spanKey, '')],
+        valueUnsetEmitted: false,
+      },
+    })
+  })
 })
 
 function textBlock(
