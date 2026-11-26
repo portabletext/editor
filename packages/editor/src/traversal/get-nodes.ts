@@ -12,7 +12,7 @@ import {isNonArrayObject} from '../utils/is-non-array-object'
 import {getChildren, getNodeChildren} from './get-children'
 import {resolveChildEntryIndex} from './resolve-child-entry-index'
 import type {TraversalSnapshot} from './traversal-snapshot'
-import {walkPath} from './walk-path'
+import {walkedNode, walkPath} from './walk-path'
 
 /**
  * Get the descendant nodes of the node at a given path.
@@ -180,10 +180,8 @@ function comparePathsInTree(
       continue
     }
 
-    const indexA =
-      snapshot.blockIndexMap.get(serializePath([...prefix, segA])) ?? -1
-    const indexB =
-      snapshot.blockIndexMap.get(serializePath([...prefix, segB])) ?? -1
+    const indexA = siblingIndex(snapshot, [...prefix, segA])
+    const indexB = siblingIndex(snapshot, [...prefix, segB])
     if (indexA < indexB) {
       return -1
     }
@@ -203,6 +201,14 @@ function comparePathsInTree(
   }
 
   return 0
+}
+
+function siblingIndex(snapshot: TraversalSnapshot, path: Path): number {
+  return (
+    snapshot.blockIndexMap.get(serializePath(path)) ??
+    walkedNode(walkPath(snapshot, path))?.index ??
+    -1
+  )
 }
 
 /**
