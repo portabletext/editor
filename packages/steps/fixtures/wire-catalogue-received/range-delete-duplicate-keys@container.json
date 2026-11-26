@@ -1,0 +1,225 @@
+{
+  "scenario": "range-delete-duplicate-keys",
+  "depth": "container",
+  "source": "SquashingBuffer from @sanity/mutator 6.24.0, with the field-root setIfMissing envelope.",
+  "envelope": 1,
+  "patches": [
+    {
+      "type": "setIfMissing",
+      "path": [],
+      "value": []
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        },
+        "text"
+      ],
+      "value": "@@ -1,3 +0,0 @@\n-bar\n"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "e0-k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1 @@\n-foo\n  \n"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "e0-k1"
+        },
+        "_key"
+      ],
+      "value": "@@ -1,5 +1,2 @@\n-e0-k1\n+k2\n"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        },
+        "_key"
+      ],
+      "value": "@@ -1,5 +1,2 @@\n-e0-k2\n+k3\n"
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": []
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k2",
+          "text": " ",
+          "marks": []
+        }
+      ]
+    },
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children"
+      ],
+      "value": []
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "span",
+          "_key": "k3",
+          "text": "bar",
+          "marks": ["strong"]
+        }
+      ]
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kB"
+        }
+      ]
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k2"
+        }
+      ]
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "e0-k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,5 @@\n foo \n+ \n"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "c0"
+        },
+        "content",
+        {
+          "_key": "kA"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ]
+    }
+  ]
+}

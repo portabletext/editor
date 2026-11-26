@@ -72,7 +72,6 @@ export function createEditorEngine(
 
   editor.selectorChannelsPending = {registrations: false}
   editor.verifiedUniqueChildGroups = new Set<string>()
-  editor.remotePatches = []
   editor.undoStepId = undefined
 
   editor.lastSyncedValue = undefined

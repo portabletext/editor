@@ -1,6 +1,7 @@
-import {applyAll, type Patch} from '@portabletext/patches'
-import {defineSchema} from '@portabletext/schema'
+import {applyAll, diffMatchPatch, type Patch} from '@portabletext/patches'
+import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {
@@ -13,9 +14,91 @@ import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
 import {IS_MAC} from '../src/internal-utils/is-hotkey'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
+import {NodePlugin} from '../src/plugins/plugin.node'
+import {defineContainer} from '../src/renderers/renderer.types'
 import {getFirstBlock, getFocusBlock} from '../src/selectors'
 import {createTestEditor} from '../src/test/vitest'
 import type {EditorSelection} from '../src/types/editor'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
+
+const nestedSchemaDefinition = defineSchema({
+  blockObjects: [
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              type: 'object',
+              name: 'row',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      type: 'object',
+                      name: 'cell',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [
+                            {type: 'block'},
+                            {
+                              type: 'object',
+                              name: 'callout',
+                              fields: [
+                                {
+                                  name: 'content',
+                                  type: 'array',
+                                  of: [{type: 'block'}],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+
+const tableContainer = defineContainer({
+  type: 'table',
+  arrayField: 'rows',
+  render: ({children}) => <>{children}</>,
+  of: [
+    defineContainer({
+      type: 'row',
+      arrayField: 'cells',
+      render: ({children}) => <>{children}</>,
+      of: [
+        defineContainer({
+          type: 'cell',
+          arrayField: 'content',
+          render: ({children}) => <>{children}</>,
+        }),
+      ],
+    }),
+  ],
+})
+
+const calloutContainer = defineContainer({
+  type: 'callout',
+  arrayField: 'content',
+  render: ({children}) => <>{children}</>,
+})
 
 const childrenFieldSchemaDefinition = defineSchema({
   blockObjects: [
@@ -1252,7 +1335,1509 @@ describe('event.history.undo', () => {
       ])
     })
   })
+
+  describe('Undoing a text deletion after a remote text change', () => {
+    test('Scenario: A remote insert before the deleted text in the same span', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo bar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 7},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'xfoo', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoo')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoo bar')
+      })
+    })
+
+    test('Scenario: A remote insert before the deleted text that is longer than the text in front of it', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo bar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 7},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'baz foo', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: baz foo')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: baz foo bar',
+        )
+      })
+    })
+
+    test('Scenario: A remote delete before the deleted text in the same span', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo bar baz', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 4},
+          focus: {path: spanPath, offset: 8},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo baz')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo baz', 'fo baz', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fo baz')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: fo bar baz',
+        )
+      })
+    })
+
+    test('Scenario: A remote insert after the deleted text in the same span', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo bar baz', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 0},
+          focus: {path: spanPath, offset: 4},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bar baz')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('bar baz', 'bar xbaz', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: bar xbaz')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: foo bar xbaz',
+        )
+      })
+    })
+
+    test('Scenario: A remote delete before the deleted text behind multi-byte characters', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'éééééfoox bar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 8},
+          focus: {path: spanPath, offset: 9},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: éééééfoo bar',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('éééééfoo bar', 'ééééé bar', [
+              ...spanPath,
+              'text',
+            ]),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: ééééé bar')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: éééééx bar',
+        )
+      })
+    })
+
+    test('Scenario: A remote delete before the deleted text behind surrogate pairs', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: '😀😀😀foox bar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 9},
+          focus: {path: spanPath, offset: 10},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: 😀😀😀foo bar',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('😀😀😀foo bar', '😀😀😀 bar', [
+              ...spanPath,
+              'text',
+            ]),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: 😀😀😀 bar',
+        )
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: 😀😀😀x bar',
+        )
+      })
+    })
+
+    test('Scenario: A remote insert where the deleted text was', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foo bar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 7},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'foox', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foox')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo barx')
+      })
+    })
+
+    test('Scenario: A remote insert in another span of the same block', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: fooSpanKey, text: 'foo', marks: ['strong']},
+              {_type: 'span', _key: barSpanKey, text: ' bar baz', marks: []},
+            ],
+          },
+        ],
+      })
+      const fooSpanPath = [{_key: blockKey}, 'children', {_key: fooSpanKey}]
+      const barSpanPath = [{_key: blockKey}, 'children', {_key: barSpanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: barSpanPath, offset: 1},
+          focus: {path: barSpanPath, offset: 5},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:foo] baz',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'xfoo', [...fooSpanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:xfoo] baz',
+        )
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:xfoo] bar baz',
+        )
+      })
+    })
+
+    test('Scenario: A remote insert in another span before the offset of the deleted text', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: fooSpanKey, text: 'foo', marks: ['strong']},
+              {_type: 'span', _key: barSpanKey, text: ' barx baz', marks: []},
+            ],
+          },
+        ],
+      })
+      const fooSpanPath = [{_key: blockKey}, 'children', {_key: fooSpanKey}]
+      const barSpanPath = [{_key: blockKey}, 'children', {_key: barSpanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: barSpanPath, offset: 4},
+          focus: {path: barSpanPath, offset: 5},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:foo] bar baz',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'xfoo', [...fooSpanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:xfoo] bar baz',
+        )
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:xfoo] barx baz',
+        )
+      })
+    })
+    test('Scenario: A remote insert at the deleted text, then a remote multi-byte replacement before it', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {
+                _type: 'span',
+                _key: spanKey,
+                text: 'abcdefghijklmnopqrstuvwxyzx baz',
+                marks: [],
+              },
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 26},
+          focus: {path: spanPath, offset: 27},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: abcdefghijklmnopqrstuvwxyz baz',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch(
+              'abcdefghijklmnopqrstuvwxyz baz',
+              'abcdefghijklmnopqrstuvwxyzbar baz',
+              [...spanPath, 'text'],
+            ),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: abcdefghijklmnopqrstuvwxyzbar baz',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch(
+              'abcdefghijklmnopqrstuvwxyzbar baz',
+              'ébcdefghijklmnopqrstuvwxyzbar baz',
+              [...spanPath, 'text'],
+            ),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: ébcdefghijklmnopqrstuvwxyzbar baz',
+        )
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: ébcdefghijklmnopqrstuvwxyzxbar baz',
+        )
+      })
+
+      editor.send({type: 'history.redo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: ébcdefghijklmnopqrstuvwxyzbar baz',
+        )
+      })
+    })
+    test('Scenario: Typing that merges into a step after a remote insert before it', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 3},
+        },
+      })
+      editor.send({type: 'insert.text', text: 'b'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foob|')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foob', 'xfoob', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoob|')
+      })
+
+      editor.send({type: 'insert.text', text: 'a'})
+      editor.send({type: 'insert.text', text: 'r'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoobar|')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoo')
+      })
+
+      editor.send({type: 'history.redo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoobar|')
+      })
+    })
+  })
+
+  describe('Undoing a text deletion after a remote text change in a container', () => {
+    test('Scenario: A remote insert before the deleted text in the same span in a table cell', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const keys = nestedKeys(keyGenerator)
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: nestedSchemaDefinition,
+        initialValue: [tableWithText(keys, 'foo bar')],
+        children: <NodePlugin nodes={[tableContainer]} />,
+      })
+      const spanPath = [
+        {_key: keys.table},
+        'rows',
+        {_key: keys.row},
+        'cells',
+        {_key: keys.cell},
+        'content',
+        {_key: keys.block},
+        'children',
+        {_key: keys.span},
+      ]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 7},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          tableWithText(keys, 'foo'),
+        ])
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'xfoo', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          tableWithText(keys, 'xfoo'),
+        ])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          tableWithText(keys, 'xfoo bar'),
+        ])
+      })
+    })
+
+    test('Scenario: A remote insert before the deleted text in the same span in a callout in a table cell', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const keys = nestedKeys(keyGenerator)
+      const calloutKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: nestedSchemaDefinition,
+        initialValue: [tableWithCallout(keys, calloutKey, 'foo bar')],
+        children: <NodePlugin nodes={[tableContainer, calloutContainer]} />,
+      })
+      const spanPath = [
+        {_key: keys.table},
+        'rows',
+        {_key: keys.row},
+        'cells',
+        {_key: keys.cell},
+        'content',
+        {_key: calloutKey},
+        'content',
+        {_key: keys.block},
+        'children',
+        {_key: keys.span},
+      ]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 7},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          tableWithCallout(keys, calloutKey, 'foo'),
+        ])
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'xfoo', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          tableWithCallout(keys, calloutKey, 'xfoo'),
+        ])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          tableWithCallout(keys, calloutKey, 'xfoo bar'),
+        ])
+      })
+    })
+  })
+
+  describe('Undoing a merged step after a remote text change', () => {
+    test('Scenario: A remote insert after a merged backward deletion', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foobar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 5},
+          focus: {path: spanPath, offset: 6},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba')
+      })
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 4},
+          focus: {path: spanPath, offset: 5},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foob')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foob', 'foobx', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobx')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobarx')
+      })
+    })
+
+    test('Scenario: A remote insert after a merged backward deletion of a surrogate pair', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'fooé😀', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 4},
+          focus: {path: spanPath, offset: 6},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooé')
+      })
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 3},
+          focus: {path: spanPath, offset: 4},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foo', 'foox', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foox')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooé😀x')
+      })
+    })
+
+    test('Scenario: A remote insert after two separate deletions', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foobar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 5},
+          focus: {path: spanPath, offset: 6},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fooba')
+      })
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: spanPath, offset: 1},
+          focus: {path: spanPath, offset: 2},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foba')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foba', 'fobax', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: fobax')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobax')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobarx')
+      })
+    })
+
+    test('Scenario: A remote insert after merged backspaces restores the saved selection', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const {editor, locator} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'foobar', marks: []},
+            ],
+          },
+        ],
+      })
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+
+      await userEvent.click(locator)
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: spanPath, offset: 6},
+          focus: {path: spanPath, offset: 6},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|')
+      })
+
+      await userEvent.keyboard('{Backspace}{Backspace}')
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foob|')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foob', 'foobx', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobx|')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar|x')
+      })
+    })
+
+    test('Scenario: A remote insert after typing and deleting in the same step', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: spanKey, text: 'abfoo', marks: []},
+            ],
+          },
+        ],
+        children: (
+          <BehaviorPlugin
+            behaviors={[
+              defineBehavior({
+                on: 'insert.text',
+                guard: ({event}) => event.text === 'b',
+                actions: [
+                  ({event}) => [
+                    execute(event),
+                    execute({
+                      type: 'delete',
+                      at: {
+                        anchor: {path: spanPath, offset: 0},
+                        focus: {path: spanPath, offset: 2},
+                      },
+                    }),
+                  ],
+                ],
+              }),
+            ]}
+          />
+        ),
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {path: spanPath, offset: 5},
+          focus: {path: spanPath, offset: 5},
+        },
+      })
+      editor.send({type: 'insert.text', text: 'b'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foob|')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foob', 'foobx', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobx|')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: abfoo|x')
+      })
+    })
+
+    test('Scenario: A remote insert inside locally inserted text', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+          },
+        ],
+      })
+
+      editor.send({
+        type: 'insert.text',
+        at: spanPath,
+        offset: 3,
+        text: 'bar',
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...diffMatchPatch('foobar', 'foobxar', [...spanPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobxar')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foox')
+      })
+    })
+  })
+
+  describe('Undoing after a remote span removal emptied a step', () => {
+    test('Scenario: Undo passes a step emptied by a remote span removal', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooKey = keyGenerator()
+      const barKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: fooKey, text: 'foo', marks: []},
+              {_type: 'span', _key: barKey, text: 'bar', marks: ['strong']},
+            ],
+          },
+        ],
+      })
+      const fooPath = [{_key: blockKey}, 'children', {_key: fooKey}]
+      const barPath = [{_key: blockKey}, 'children', {_key: barKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: barPath, offset: 0},
+          focus: {path: barPath, offset: 1},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: foo[strong:ar]',
+        )
+      })
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: fooPath, offset: 0},
+          focus: {path: fooPath, offset: 1},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: oo[strong:ar]',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [{type: 'unset', path: fooPath, origin: 'remote'}],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:ar]',
+        )
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:bar]',
+        )
+      })
+
+      editor.send({type: 'history.redo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: [strong:ar]',
+        )
+      })
+    })
+
+    test('Scenario: A deletion after a remote span removal emptied the last step', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const fooKey = keyGenerator()
+      const bazKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        schemaDefinition: defineSchema({decorators: [{name: 'strong'}]}),
+        initialValue: [
+          {
+            _type: 'block',
+            _key: blockKey,
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: fooKey, text: 'foobar', marks: []},
+              {_type: 'span', _key: bazKey, text: 'baz', marks: ['strong']},
+            ],
+          },
+        ],
+      })
+      const fooPath = [{_key: blockKey}, 'children', {_key: fooKey}]
+      const bazPath = [{_key: blockKey}, 'children', {_key: bazKey}]
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: fooPath, offset: 5},
+          focus: {path: fooPath, offset: 6},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: fooba[strong:baz]',
+        )
+      })
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: bazPath, offset: 2},
+          focus: {path: bazPath, offset: 3},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual(
+          'B: fooba[strong:ba]',
+        )
+      })
+
+      editor.send({
+        type: 'apply',
+        patches: [
+          {type: 'unset', path: bazPath, origin: 'remote'},
+          {
+            ...diffMatchPatch('fooba', 'xfooba', [...fooPath, 'text']),
+            origin: 'remote',
+          },
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfooba')
+      })
+
+      editor.send({
+        type: 'delete',
+        at: {
+          anchor: {path: fooPath, offset: 4},
+          focus: {path: fooPath, offset: 5},
+        },
+      })
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfooa')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfooba')
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(toTextspec(editor.getSnapshot().context)).toEqual('B: xfoobar')
+      })
+    })
+  })
+
+  test('Scenario: History keeps no remote operations once its steps are rebased', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const engineRef = React.createRef<PortableTextEditorEngine>()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({}),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foobar', marks: []}],
+        },
+      ],
+      children: <InternalEditorEngineRefPlugin ref={engineRef} />,
+    })
+
+    editor.send({
+      type: 'delete',
+      at: {
+        anchor: {path: spanPath, offset: 3},
+        focus: {path: spanPath, offset: 6},
+      },
+    })
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foo')
+    })
+
+    for (let index = 0; index < 20; index++) {
+      editor.send({
+        type: 'apply',
+        patches: [
+          {
+            ...(index % 2 === 0
+              ? diffMatchPatch('foo', 'xfoo', [...spanPath, 'text'])
+              : diffMatchPatch('xfoo', 'foo', [...spanPath, 'text'])),
+            origin: 'remote',
+          },
+        ],
+      })
+    }
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: foobar')
+    })
+
+    expect(engineRef.current!.history).toEqual({
+      undos: [],
+      redos: [
+        {
+          operations: [
+            {type: 'remove.text', path: spanPath, offset: 3, text: 'bar'},
+          ],
+        },
+      ],
+    })
+  })
 })
+
+function nestedKeys(keyGenerator: () => string) {
+  return {
+    table: keyGenerator(),
+    row: keyGenerator(),
+    cell: keyGenerator(),
+    block: keyGenerator(),
+    span: keyGenerator(),
+  }
+}
+
+function tableWithText(
+  keys: ReturnType<typeof nestedKeys>,
+  text: string,
+): PortableTextBlock {
+  return table(keys, [nestedTextBlock(keys, text)])
+}
+
+function tableWithCallout(
+  keys: ReturnType<typeof nestedKeys>,
+  calloutKey: string,
+  text: string,
+): PortableTextBlock {
+  return table(keys, [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [nestedTextBlock(keys, text)],
+    },
+  ])
+}
+
+function table(
+  keys: ReturnType<typeof nestedKeys>,
+  content: Array<Record<string, unknown>>,
+): PortableTextBlock {
+  return {
+    _type: 'table',
+    _key: keys.table,
+    rows: [
+      {
+        _type: 'row',
+        _key: keys.row,
+        cells: [{_type: 'cell', _key: keys.cell, content}],
+      },
+    ],
+  }
+}
+
+function nestedTextBlock(keys: ReturnType<typeof nestedKeys>, text: string) {
+  return {
+    _type: 'block',
+    _key: keys.block,
+    style: 'normal',
+    markDefs: [],
+    children: [{_type: 'span', _key: keys.span, text, marks: []}],
+  }
+}
 
 function textBlock(blockKey: string, spanKey: string, text: string) {
   return {

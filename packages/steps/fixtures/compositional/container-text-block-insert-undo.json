@@ -1,0 +1,149 @@
+{
+  "before": [
+    {
+      "_type": "callout",
+      "_key": "k7",
+      "content": [
+        {
+          "_key": "k0",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "marks": [],
+              "text": "foo"
+            }
+          ]
+        },
+        {
+          "_type": "block",
+          "_key": "k10",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k11",
+              "text": "baz",
+              "marks": []
+            }
+          ],
+          "markDefs": [],
+          "style": "normal"
+        },
+        {
+          "_key": "k3",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k4",
+              "_type": "span",
+              "marks": [],
+              "text": "bar"
+            }
+          ]
+        },
+        {
+          "_key": "k5",
+          "_type": "block",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k6",
+              "_type": "span",
+              "marks": [],
+              "text": "baz"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k10"
+        },
+        "style"
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k10"
+        },
+        "markDefs"
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k10"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "styles": [
+      {
+        "name": "normal"
+      },
+      {
+        "name": "h1"
+      }
+    ],
+    "lists": [
+      {
+        "name": "bullet"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "image"
+      },
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "image"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

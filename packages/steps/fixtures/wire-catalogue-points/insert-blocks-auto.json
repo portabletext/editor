@@ -1,0 +1,25 @@
+{
+  "scenario": "insert-blocks-auto",
+  "seed": "B: foo",
+  "result": "B: foobar\nB: baz|",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b1@3",
+      "todayWrong": "b0@3",
+      "reason": "`foo|` and insert.blocks `bar`, `baz`: forward affinity carries a point past content inserted at it (as `type-text` sends b0@11 to b0@15), so it ends after the inserted content, `baz|` = b1@3, where the editor puts its own selection. Today leaves it at b0@3: the inserted `bar` arrives as a `move.text` from a temporary span, which does not push a point already at the destination."
+    }
+  ]
+}

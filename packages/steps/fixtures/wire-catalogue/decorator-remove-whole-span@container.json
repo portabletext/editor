@@ -1,0 +1,672 @@
+{
+  "scenario": "decorator-remove-whole-span",
+  "depth": "container",
+  "schema": {
+    "decorators": [
+      {
+        "name": "strong"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "aside",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "seed": "CALLOUT:\n  B: foo [strong:bar] baz",
+  "seedValue": [
+    {
+      "_type": "callout",
+      "_key": "k4",
+      "content": [
+        {
+          "style": "normal",
+          "markDefs": [],
+          "_type": "block",
+          "_key": "k0",
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "text": "foo ",
+              "marks": []
+            },
+            {
+              "_key": "k2",
+              "_type": "span",
+              "text": "bar",
+              "marks": ["strong"]
+            },
+            {
+              "_key": "k3",
+              "_type": "span",
+              "text": " baz",
+              "marks": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": ["send {type: 'decorator.remove', decorator: 'strong'}"],
+  "patches": [
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        },
+        "marks"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,4 +1,7 @@\n foo \n+bar\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "diffMatchPatch",
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        },
+        "text"
+      ],
+      "value": "@@ -1,7 +1,11 @@\n foo bar\n+ baz\n",
+      "origin": "local"
+    },
+    {
+      "type": "unset",
+      "path": [
+        {
+          "_key": "k4"
+        },
+        "content",
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "origin": "local"
+    }
+  ],
+  "mutationSizes": [5],
+  "result": "CALLOUT:\n  B: foo ^bar| baz",
+  "resultValue": [
+    {
+      "_type": "callout",
+      "_key": "k4",
+      "content": [
+        {
+          "style": "normal",
+          "markDefs": [],
+          "_type": "block",
+          "_key": "k0",
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "text": "foo bar baz",
+              "marks": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "editorPoints": [
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 0
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 1
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 2
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 3
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 4
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 4
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k2"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 4
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k2"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 5
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k2"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 6
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k2"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 7
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 0
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 7
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 1
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 8
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 2
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 9
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 3
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 10
+      }
+    },
+    {
+      "point": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k3"
+          }
+        ],
+        "offset": 4
+      },
+      "editor": {
+        "path": [
+          {
+            "_key": "k4"
+          },
+          "content",
+          {
+            "_key": "k0"
+          },
+          "children",
+          {
+            "_key": "k1"
+          }
+        ],
+        "offset": 11
+      }
+    }
+  ]
+}

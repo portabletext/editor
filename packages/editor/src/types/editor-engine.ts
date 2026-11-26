@@ -1,4 +1,3 @@
-import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
@@ -16,18 +15,16 @@ import type {
 import type {ResolvedContainers} from '../schema/resolve-containers'
 
 type HistoryItem = {
+  /**
+   * In the document's current coordinates: every remote patch rebases the
+   * stacks as it is applied.
+   */
   operations: EngineOperation[]
-  timestamp: Date
 }
 
 interface History {
   redos: HistoryItem[]
   undos: HistoryItem[]
-}
-
-export type RemotePatch = {
-  patch: Patch
-  time: Date
 }
 
 export interface PortableTextEditorEngine extends DOMEditor {
@@ -74,7 +71,6 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * with the empty path.
    */
   verifiedUniqueChildGroups: Set<string>
-  remotePatches: Array<RemotePatch>
   undoStepId: string | undefined
 
   /**

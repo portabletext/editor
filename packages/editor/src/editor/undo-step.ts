@@ -4,7 +4,6 @@ import {pathEquals} from '../engine/path/path-equals'
 
 type UndoStep = {
   operations: Array<EngineOperation>
-  timestamp: Date
 }
 
 export function createUndoSteps({
@@ -160,10 +159,7 @@ function createNewStep(
           op,
         ]
 
-  steps.push({
-    operations,
-    timestamp: new Date(),
-  })
+  steps.push({operations})
 
   return steps
 }

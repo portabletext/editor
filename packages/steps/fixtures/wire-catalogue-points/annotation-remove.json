@@ -1,0 +1,63 @@
+{
+  "scenario": "annotation-remove",
+  "seed": "B: foo [@link href=\"https://example.com\":bar] baz",
+  "result": "B: foo ^bar| baz",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@3"
+    },
+    {
+      "point": "b0.c0@4",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c1@0",
+      "expected": "b0@4"
+    },
+    {
+      "point": "b0.c1@1",
+      "expected": "b0@5"
+    },
+    {
+      "point": "b0.c1@2",
+      "expected": "b0@6"
+    },
+    {
+      "point": "b0.c1@3",
+      "expected": "b0@7"
+    },
+    {
+      "point": "b0.c2@0",
+      "expected": "b0@7"
+    },
+    {
+      "point": "b0.c2@1",
+      "expected": "b0@8"
+    },
+    {
+      "point": "b0.c2@2",
+      "expected": "b0@9"
+    },
+    {
+      "point": "b0.c2@3",
+      "expected": "b0@10"
+    },
+    {
+      "point": "b0.c2@4",
+      "expected": "b0@11"
+    }
+  ]
+}

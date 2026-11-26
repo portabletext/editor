@@ -1,6 +1,8 @@
+import {wholeNodeGuardState} from '../internal-utils/whole-node-guard-state'
+import {getValue} from '../internal-utils/get-value'
 /**
  * Makes the editor support undo/redo on the local state only. The undo/redo
- * steps are rebased against incoming patches since the step occurred.
+ * steps are rebased past each operation a remote patch applies.
  */
 
 import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
@@ -27,25 +29,16 @@ export function subscribeHistory({
 
   subscriptions.push(() => {
     const subscription = editorActor.on('internal.apply', ({patches}) => {
-      let reset = false
-
       for (const patch of patches) {
-        if (reset) {
+        if (patch.origin === 'local') {
           continue
         }
 
         if (patch.type === 'unset' && patch.path.length === 0) {
           editor.history = {undos: [], redos: []}
-          editor.remotePatches.splice(0, editor.remotePatches.length)
           editor.withHistory = true
-          reset = true
           return
         }
-
-        editor.remotePatches.push({
-          patch,
-          time: new Date(),
-        })
       }
     })
 
@@ -55,11 +48,11 @@ export function subscribeHistory({
   })
 
   return subscribeToOperations(editor, (event) => {
-    if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
+    if (hasRemoteFrame(event.context)) {
       return
     }
 
-    if (hasRemoteFrame(event.context)) {
+    if (editorActor.getSnapshot().matches({'edit mode': 'read only'})) {
       return
     }
 
@@ -99,6 +92,15 @@ export function subscribeHistory({
       }
     }
 
+    if ((import.meta.env.VITE_HISTORY_CHECK === '1' || wholeNodeGuardState.enabled) && operation.type !== 'set.selection') {
+      const targetPath = operation.type === 'insert' && operation.inverse ? operation.inverse.path : operation.path
+      const before = getValue(event.beforeValue, targetPath as never)
+      const after = getValue(editor.snapshot.context.value, targetPath as never)
+      Object.assign(operation, {historyExpected: {
+        before: operation.type === 'insert.text' || operation.type === 'remove.text' ? (before as any)?.text : before,
+        after: operation.type === 'insert.text' || operation.type === 'remove.text' ? (after as any)?.text : after,
+      }})
+    }
     editor.history.undos = createUndoSteps({
       steps: editor.history.undos,
       op: operation,

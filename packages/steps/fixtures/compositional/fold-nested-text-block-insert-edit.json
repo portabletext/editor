@@ -1,0 +1,185 @@
+{
+  "before": [
+    {
+      "_type": "callout",
+      "_key": "k8",
+      "content": [
+        {
+          "_key": "k7",
+          "_type": "callout",
+          "content": [
+            {
+              "_key": "k0",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "k1",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "foo"
+                }
+              ]
+            },
+            {
+              "_key": "k3",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "k4",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "bar"
+                }
+              ]
+            },
+            {
+              "_key": "k5",
+              "_type": "block",
+              "style": "normal",
+              "markDefs": [],
+              "children": [
+                {
+                  "_key": "k6",
+                  "_type": "span",
+                  "marks": [],
+                  "text": "baz"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "patches": [
+    {
+      "type": "setIfMissing",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "content",
+        {
+          "_key": "k7"
+        },
+        "content"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "insert",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "content",
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k0"
+        }
+      ],
+      "position": "after",
+      "items": [
+        {
+          "_type": "block",
+          "_key": "k11",
+          "children": [
+            {
+              "_type": "span",
+              "_key": "k12",
+              "text": "baz",
+              "marks": []
+            }
+          ]
+        }
+      ],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "content",
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k11"
+        },
+        "markDefs"
+      ],
+      "value": [],
+      "origin": "local"
+    },
+    {
+      "type": "set",
+      "path": [
+        {
+          "_key": "k8"
+        },
+        "content",
+        {
+          "_key": "k7"
+        },
+        "content",
+        {
+          "_key": "k11"
+        },
+        "style"
+      ],
+      "value": "normal",
+      "origin": "local"
+    }
+  ],
+  "schemaDefinition": {
+    "styles": [
+      {
+        "name": "normal"
+      },
+      {
+        "name": "h1"
+      }
+    ],
+    "lists": [
+      {
+        "name": "bullet"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "image"
+      },
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "image"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

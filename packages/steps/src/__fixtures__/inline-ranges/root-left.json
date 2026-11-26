@@ -1,0 +1,166 @@
+{
+  "before": [
+    {
+      "_type": "block",
+      "_key": "k0",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "marks": [],
+          "text": "foo"
+        },
+        {
+          "_type": "stock",
+          "_key": "k2"
+        },
+        {
+          "_key": "k3",
+          "_type": "span",
+          "marks": [],
+          "text": "bar"
+        }
+      ]
+    }
+  ],
+  "after": [
+    {
+      "_type": "block",
+      "_key": "k0",
+      "style": "normal",
+      "markDefs": [],
+      "children": [
+        {
+          "_key": "k1",
+          "_type": "span",
+          "marks": [],
+          "text": "foox"
+        },
+        {
+          "_type": "stock",
+          "_key": "k2"
+        },
+        {
+          "_key": "k3",
+          "_type": "span",
+          "marks": [],
+          "text": "bar"
+        }
+      ]
+    }
+  ],
+  "mutations": [
+    {
+      "type": "mutation",
+      "patches": [
+        {
+          "type": "diffMatchPatch",
+          "path": [
+            {
+              "_key": "k0"
+            },
+            "children",
+            {
+              "_key": "k1"
+            },
+            "text"
+          ],
+          "value": "@@ -1,3 +1,4 @@\n foo\n+x\n",
+          "origin": "local"
+        }
+      ],
+      "value": [
+        {
+          "_type": "block",
+          "_key": "k0",
+          "style": "normal",
+          "markDefs": [],
+          "children": [
+            {
+              "_key": "k1",
+              "_type": "span",
+              "marks": [],
+              "text": "foox"
+            },
+            {
+              "_type": "stock",
+              "_key": "k2"
+            },
+            {
+              "_key": "k3",
+              "_type": "span",
+              "marks": [],
+              "text": "bar"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "schemaDefinition": {
+    "inlineObjects": [
+      {
+        "name": "stock"
+      }
+    ],
+    "blockObjects": [
+      {
+        "name": "callout",
+        "fields": [
+          {
+            "name": "content",
+            "type": "array",
+            "of": [
+              {
+                "type": "block"
+              },
+              {
+                "type": "callout"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "points": {
+    "left": {
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k1"
+        }
+      ],
+      "offset": 3
+    },
+    "inline": {
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k2"
+        }
+      ],
+      "offset": 0
+    },
+    "right": {
+      "path": [
+        {
+          "_key": "k0"
+        },
+        "children",
+        {
+          "_key": "k3"
+        }
+      ],
+      "offset": 0
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "scenario": "range-delete-across-three-blocks",
+  "seed": "B: foo\nB: bar\nB: baz",
+  "result": "B: fo|z",
+  "rows": [
+    {
+      "point": "b0.c0@0",
+      "expected": "b0@0"
+    },
+    {
+      "point": "b0.c0@1",
+      "expected": "b0@1"
+    },
+    {
+      "point": "b0.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b0.c0@3",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b1.c0@0",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b1.c0@1",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b1.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b1.c0@3",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b2.c0@0",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b2.c0@1",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b2.c0@2",
+      "expected": "b0@2"
+    },
+    {
+      "point": "b2.c0@3",
+      "expected": "b0@3"
+    }
+  ]
+}

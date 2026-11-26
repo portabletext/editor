@@ -22,6 +22,7 @@ const TEST_COMPILED_SOURCES = [
 
 export default defineConfig({
   test: {
+    silent: false,
     coverage: {
       provider: 'istanbul',
       reporter: ['html', 'json', 'json-summary'],
