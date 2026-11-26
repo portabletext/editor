@@ -189,7 +189,7 @@ function useAnnotationButton(props: {
 **Returns:** An object with:
 
 - `snapshot`: Current state snapshot with `matches()` method
-- `send`: Function to dispatch events like `{type: 'add'}`, `{type: 'remove'}`, `{type: 'open dialog'}`, `{type: 'close dialog'}`
+- `send`: Function to dispatch events like `{type: 'add', annotation: {value}}`, `{type: 'remove'}`, `{type: 'open dialog'}`, `{type: 'close dialog'}`
 
 ### `useAnnotationPopover`
 
@@ -204,7 +204,7 @@ function useAnnotationPopover(props: {
 **Returns:** An object with:
 
 - `snapshot`: Current state snapshot with `matches()` method and `context` containing active annotations
-- `send`: Function to dispatch events like `{type: 'remove'}`, `{type: 'edit'}`, `{type: 'close'}`
+- `send`: Function to dispatch events like `{type: 'remove', schemaType}`, `{type: 'edit', at, props}`, `{type: 'close'}`
 
 ### `useStyleSelector`
 
@@ -247,7 +247,7 @@ function useBlockObjectButton(props: {
 **Returns:** An object with:
 
 - `snapshot`: Current state snapshot with `matches()` method
-- `send`: Function to dispatch events like `{type: 'open dialog'}`, `{type: 'insert'}`
+- `send`: Function to dispatch events like `{type: 'open dialog'}`, `{type: 'insert', value, placement}`
 
 ### `useBlockObjectPopover`
 
@@ -277,7 +277,7 @@ function useInlineObjectButton(props: {
 **Returns:** An object with:
 
 - `snapshot`: Current state snapshot with `matches()` method
-- `send`: Function to dispatch events like `{type: 'open dialog'}`, `{type: 'insert'}`
+- `send`: Function to dispatch events like `{type: 'open dialog'}`, `{type: 'insert', value}`
 
 ### `useInlineObjectPopover`
 
