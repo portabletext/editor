@@ -1644,6 +1644,9 @@ importers:
       '@portabletext/schema':
         specifier: workspace:^
         version: link:../schema
+      '@portabletext/traversal':
+        specifier: workspace:^
+        version: link:../traversal
       '@sanity/diff-match-patch':
         specifier: 'catalog:'
         version: 3.2.1

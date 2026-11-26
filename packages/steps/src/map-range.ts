@@ -1,4 +1,4 @@
-import {pathEquals} from './lib/path-equals'
+import {pathEquals} from '@portabletext/traversal'
 import {
   mapPoint,
   mapPointThroughStep,
