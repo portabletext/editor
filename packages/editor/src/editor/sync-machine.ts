@@ -43,7 +43,6 @@ import {
   isEqualChild,
   isEqualValues,
 } from '../internal-utils/equality'
-import {reconcileValue} from '../internal-utils/reconcile-value'
 import {
   getNonObjectRemovalPatches,
   removeNonObjects,
@@ -788,12 +787,7 @@ function resyncValue({
                   )
                   ? []
                   : [{type: 'set', path: [], value: []}]
-                : reconcileValue({
-                    schema: context.schema,
-                    containers: editorEngine.snapshot.context.containers,
-                    current: editorEngine.snapshot.context.value,
-                    next,
-                  })
+                : [{type: 'set', path: [], value: next}]
 
             for (const operation of operations) {
               editorEngine.apply(operation)
