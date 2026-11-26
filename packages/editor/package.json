@@ -123,11 +123,12 @@
     "racejar": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "thumbjar": "workspace:*",
+    "thumbjar": "^1.0.0",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling",
-    "vitest-browser-react": "catalog:tooling"
+    "vitest-browser-react": "catalog:tooling",
+    "webdriverio": "catalog:tooling"
   },
   "peerDependencies": {
     "react": "^19.3.1"
