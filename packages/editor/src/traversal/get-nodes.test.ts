@@ -4,6 +4,7 @@ import {
   isSpan,
   isTextBlock,
 } from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {
@@ -18,6 +19,12 @@ import {
   resolveTestbedContainers,
   tableContainers,
 } from './node-traversal-testbed'
+
+const annotationSchema = compileSchema(
+  defineSchema({
+    annotations: [{name: 'link', fields: [{name: 'href', type: 'string'}]}],
+  }),
+)
 
 describe(getNodes.name, () => {
   const testbed = createNodeTraversalTestbed()
@@ -576,6 +583,111 @@ describe(getNodes.name, () => {
         testbed.stockTicker1,
         testbed.span2,
         testbed.image,
+      ])
+    })
+  })
+
+  describe('from/to by index', () => {
+    test('a negative `from` counts once from the end', () => {
+      expect([
+        ...getNodes(testbed.snapshot, {
+          from: [-3, 'children', -1],
+          to: [-3, 'children', -1],
+        }),
+      ]).toEqual([
+        {node: testbed.textBlock2, path: [{_key: 'k6'}]},
+        {node: testbed.span3, path: [{_key: 'k6'}, 'children', {_key: 'k5'}]},
+      ])
+    })
+
+    test('a negative `to` counts once from the end', () => {
+      expect([
+        ...getNodes(testbed.snapshot, {
+          from: [-4],
+          to: [-4],
+        }),
+      ]).toEqual([{node: testbed.image, path: [{_key: 'k4'}]}])
+    })
+
+    test('a negative index past the start names nothing, so the range yields nothing', () => {
+      expect([...getNodes(testbed.snapshot, {from: [-6]})]).toEqual([])
+      expect([...getNodes(testbed.snapshot, {to: [-6]})]).toEqual([])
+    })
+
+    test('an index past the end names nothing, so the range yields nothing', () => {
+      expect([...getNodes(testbed.snapshot, {from: [5]})]).toEqual([])
+      expect([...getNodes(testbed.snapshot, {to: [5]})]).toEqual([])
+    })
+
+    test('a missing keyed bound names nothing, so the range yields nothing', () => {
+      expect([
+        ...getNodes(testbed.snapshot, {from: [{_key: 'missing'}]}),
+      ]).toEqual([])
+      expect([
+        ...getNodes(testbed.snapshot, {to: [{_key: 'missing'}]}),
+      ]).toEqual([])
+    })
+  })
+
+  describe('from/to at an annotation', () => {
+    test('an annotation `from` starts the range at the block that owns it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const spanFoo = {_type: 'span', _key: keyGenerator(), text: 'foo'}
+      const spanBar = {_type: 'span', _key: keyGenerator(), text: 'bar'}
+      const block = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [spanFoo, spanBar],
+        markDefs: [{_type: 'link', _key: spanBar._key, href: 'https://a'}],
+      }
+      const spanBaz = {_type: 'span', _key: keyGenerator(), text: 'baz'}
+      const after = {_type: 'block', _key: keyGenerator(), children: [spanBaz]}
+      const snapshot = createTestSnapshot({
+        context: {schema: annotationSchema, value: [block, after]},
+      })
+
+      expect([
+        ...getNodes(snapshot, {
+          from: [{_key: 'k2'}, 'markDefs', {_key: 'k1'}],
+          to: [{_key: 'k4'}],
+        }),
+      ]).toEqual([
+        {node: block, path: [{_key: 'k2'}]},
+        {node: spanFoo, path: [{_key: 'k2'}, 'children', {_key: 'k0'}]},
+        {node: spanBar, path: [{_key: 'k2'}, 'children', {_key: 'k1'}]},
+        {node: after, path: [{_key: 'k4'}]},
+      ])
+    })
+
+    test('an annotation `to` ends the range at the block that owns it', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const spanBaz = {_type: 'span', _key: keyGenerator(), text: 'baz'}
+      const before = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [spanBaz],
+      }
+      const spanFoo = {_type: 'span', _key: keyGenerator(), text: 'foo'}
+      const spanBar = {_type: 'span', _key: keyGenerator(), text: 'bar'}
+      const block = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [spanFoo, spanBar],
+        markDefs: [{_type: 'link', _key: spanBar._key, href: 'https://a'}],
+      }
+      const snapshot = createTestSnapshot({
+        context: {schema: annotationSchema, value: [before, block]},
+      })
+
+      expect([
+        ...getNodes(snapshot, {
+          from: [{_key: 'k1'}],
+          to: [{_key: 'k4'}, 'markDefs', {_key: 'k3'}],
+        }),
+      ]).toEqual([
+        {node: before, path: [{_key: 'k1'}]},
+        {node: spanBaz, path: [{_key: 'k1'}, 'children', {_key: 'k0'}]},
+        {node: block, path: [{_key: 'k4'}]},
       ])
     })
   })
