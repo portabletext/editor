@@ -75,6 +75,7 @@ export function createEditorEngine(
   editor.remotePatches = []
   editor.undoStepId = undefined
 
+  editor.placeholderKey = placeholderBlock._key
   editor.lastSyncedValue = undefined
   editor.valueUnsetEmitted = false
   editor.isPatching = true

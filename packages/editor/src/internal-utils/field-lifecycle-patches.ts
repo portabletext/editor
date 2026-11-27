@@ -6,6 +6,7 @@ import {isEqualValues} from './equality'
 import {isEqualToEmptyEditor} from './values'
 
 type FieldLifecycleState = {
+  placeholderKey: string | undefined
   lastSyncedValue: Array<PortableTextBlock> | undefined
   valueUnsetEmitted: boolean
 }
@@ -30,48 +31,56 @@ export function addFieldLifecyclePatches(
 
   const {operation, beforeValue, afterValue} = edit
   const {schema, initialValue} = context
+  let placeholderKey = state.placeholderKey
   let lastSyncedValue = state.lastSyncedValue
   let valueUnsetEmitted = state.valueUnsetEmitted
   let patches = edit.patches
 
-  const wasPlaceholder =
-    beforeValue.length === 1 &&
-    isEqualToEmptyEditor(initialValue, beforeValue, schema) &&
-    // After this editor emits `unset([])`, its own stream must
-    // re-materialize the field before targeting it again, even when the
-    // placeholder has the same value as the loaded content.
-    (valueUnsetEmitted ||
-      !isEqualValues({schema}, lastSyncedValue, beforeValue))
+  const placeholderIndex =
+    placeholderKey === undefined
+      ? -1
+      : beforeValue.findIndex((block) => block._key === placeholderKey)
+  const placeholder = beforeValue[placeholderIndex]
 
-  const isPlaceholder =
-    afterValue.length === 1 &&
-    isEqualToEmptyEditor(initialValue, afterValue, schema) &&
-    !isEqualValues({schema}, lastSyncedValue, afterValue)
+  if (placeholder && patches.length > 0) {
+    const previousBlock = beforeValue[placeholderIndex - 1]
+    patches = [
+      setIfMissing([], []),
+      previousBlock
+        ? insert([placeholder], 'after', [{_key: previousBlock._key}])
+        : insert([placeholder], 'before', [0]),
+      ...patches,
+    ]
+    placeholderKey = undefined
 
-  if (wasPlaceholder && !isPlaceholder && operation.type !== 'set.selection') {
-    patches = [insert(beforeValue, 'before', [0]), ...patches]
+    if (isEqualToEmptyEditor(initialValue, afterValue, schema)) {
+      // `insertPatch` in `applyPatch.ts` tells the placeholder from a block
+      // the host holds by this record. The host now holds this one.
+      lastSyncedValue = afterValue
+    } else if (isEqualValues({schema}, lastSyncedValue, beforeValue)) {
+      lastSyncedValue = undefined
+    }
   }
 
   const isInsertIntoEmptyValue =
     operation.type === 'insert' && beforeValue.length === 0
   const isRootUnset = operation.type === 'unset' && operation.path.length === 0
-  const becamePlaceholder =
-    isPlaceholder && !wasPlaceholder && !isInsertIntoEmptyValue
+  const becameEmptyParagraph =
+    !isInsertIntoEmptyValue &&
+    isEqualToEmptyEditor(initialValue, afterValue, schema) &&
+    !isEqualToEmptyEditor(initialValue, beforeValue, schema) &&
+    !isEqualValues({schema}, lastSyncedValue, afterValue)
   const becameEmpty =
     beforeValue.length > 0 && afterValue.length === 0 && !isRootUnset
 
-  if (becamePlaceholder || becameEmpty) {
+  if (becameEmptyParagraph || becameEmpty) {
     patches = [...patches, unset([])]
   }
 
-  if (wasPlaceholder && patches.length > 0) {
-    patches = [setIfMissing([], []), ...patches]
-    if (isEqualValues({schema}, lastSyncedValue, beforeValue)) {
-      // Rebuilding right over the recorded value proves the recording
-      // was a stale echo of the cleared state; keeping it would make the
-      // next became-empty transition skip its `unset([])`.
-      lastSyncedValue = undefined
-    }
+  if (becameEmptyParagraph) {
+    // The `unset([])` takes the remaining paragraph out of the host's value,
+    // so from here on it is this editor's placeholder.
+    placeholderKey = afterValue[0]?._key
   }
 
   const [firstPatch] = patches
@@ -107,14 +116,12 @@ export function addFieldLifecyclePatches(
     operation.type === 'insert' &&
     operation.path.length === 1 &&
     beforeValue.length === 0 &&
-    isPlaceholder
+    isEqualToEmptyEditor(initialValue, afterValue, schema)
   ) {
-    // The block this `insert` puts into the empty field (an undo restoring
-    // a deleted placeholder, say) looks like the local placeholder, but
-    // the host now holds it. Without the record, the next edit would
-    // insert it a second time.
+    // The `insert` hands the block to the host. Without the record,
+    // `insertPatch` would take it for the placeholder.
     lastSyncedValue = afterValue
   }
 
-  return {patches, state: {lastSyncedValue, valueUnsetEmitted}}
+  return {patches, state: {placeholderKey, lastSyncedValue, valueUnsetEmitted}}
 }

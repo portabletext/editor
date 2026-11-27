@@ -574,6 +574,19 @@ describe('event.block.unset', () => {
 
       expect(patches).toEqual([
         setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: 'k0',
+              _type: 'block',
+              children: [{_key: 'k1', _type: 'span', text: '', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
         set('k2', [{_key: 'k0'}, '_key']),
       ])
     })
