@@ -1,5 +1,25 @@
 # Changelog
 
+## 8.3.0
+
+### Minor Changes
+
+- [#3795](https://github.com/portabletext/editor/pull/3795) [`c894c8f`](https://github.com/portabletext/editor/commit/c894c8f5703bfccd9a44e97792e8cc7c734a4832) Thanks [@christianhg](https://github.com/christianhg)! - feat: add `indexMap` to the editor snapshot and deprecate `blockIndexMap`
+  
+  `EditorSnapshot.indexMap` maps the serialized path of every keyed node, at any depth, to that node's index among its siblings. `blockIndexMap` holds the same map under a name that suggests it only covers blocks. It is now deprecated, and the editor fills both fields with the same `Map` instance, so code reading `blockIndexMap` keeps working. Switch reads to `indexMap`:
+  
+  ```ts
+  const index = snapshot.indexMap.get('[_key=="b0"].children[_key=="s0"]')
+  ```
+  
+  Code that builds `EditorSnapshot` objects by hand (for example in tests) needs to set `indexMap` as well.
+
+### Patch Changes
+
+- [#3791](https://github.com/portabletext/editor/pull/3791) [`52acd4b`](https://github.com/portabletext/editor/commit/52acd4b6ea3ee184c41408b98678c70e9ffa5d75) Thanks [@christianhg](https://github.com/christianhg)! - fix: scan siblings when `blockIndexMap` has no entry in `getNodes` and insert key checks
+  
+  Range walks over a snapshot whose `blockIndexMap` has no entry for the nodes being compared no longer treat different siblings as the same position, so they no longer return nodes that lie outside the range. Inserting blocks whose `_key` already exists in the document now gives them fresh keys even when the snapshot's `blockIndexMap` has no entry for that key, instead of keeping the duplicate.
+
 ## 8.2.17
 
 ### Patch Changes
