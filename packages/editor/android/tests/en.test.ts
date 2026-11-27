@@ -18,7 +18,7 @@ test('Scenario: Typing kyou twice into a plain contenteditable', async (context)
 })
 
 // On iOS the editor leaves the first word of an empty block lowercase (`kyou kyou `). Drop `test.fails` once it capitalises.
-;(inject('thumbjarDevice') === 'ios' ? test.fails : test)(
+;test(
   'Scenario: Typing kyou twice into an empty block',
   async (context) => {
     const run = await runOnDevice(context, {

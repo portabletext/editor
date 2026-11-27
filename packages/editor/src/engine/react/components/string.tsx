@@ -7,7 +7,7 @@ import {
 } from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
 import {getNodes} from '../../../traversal/get-nodes'
-import {IS_ANDROID} from '../../dom/utils/environment'
+import {IS_ANDROID, IS_IOS} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
@@ -258,7 +258,7 @@ const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
   // depends on.
   return (
     <span {...attributes}>
-      {!IS_ANDROID || !isLineBreak ? '\uFEFF' : null}
+      {!(IS_ANDROID || IS_IOS) || !isLineBreak ? '\uFEFF' : null}
       {isLineBreak ? <br /> : null}
     </span>
   )
