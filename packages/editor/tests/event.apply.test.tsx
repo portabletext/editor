@@ -1,5 +1,5 @@
-import {diffMatchPatch, set, unset} from '@portabletext/patches'
-import type {PortableTextBlock} from '@portabletext/schema'
+import {diffMatchPatch, set, unset, type Patch} from '@portabletext/patches'
+import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
 import type {ChangeEvent, Editor} from '../src'
@@ -146,6 +146,93 @@ describe('event.apply', () => {
 
     expect(editor.getSnapshot().context.value).toEqual([
       block(blockKey, spanKey, 'foox'),
+    ])
+  })
+
+  test('Scenario: A remote `inc` increments a number field on a block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const before: Array<PortableTextBlock> = [
+      {_type: 'image', _key: imageKey, count: 1},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'count', type: 'number'}]},
+        ],
+      }),
+      initialValue: structuredClone(before),
+    })
+    const patches: Array<Patch> = [
+      {type: 'inc', path: [{_key: imageKey}, 'count'], value: 2},
+    ]
+
+    editor.send({type: 'apply', patches})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'image', _key: imageKey, count: 3},
+    ])
+  })
+
+  test('Scenario: A remote `dec` decrements a number field on a block object', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const before: Array<PortableTextBlock> = [
+      {_type: 'image', _key: imageKey, count: 3},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {name: 'image', fields: [{name: 'count', type: 'number'}]},
+        ],
+      }),
+      initialValue: structuredClone(before),
+    })
+    const patches: Array<Patch> = [
+      {type: 'dec', path: [{_key: imageKey}, 'count'], value: 1},
+    ]
+
+    editor.send({type: 'apply', patches})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'image', _key: imageKey, count: 2},
+    ])
+  })
+
+  test('Scenario: A remote `inc` on a field that is not a number or is absent changes nothing', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const before: Array<PortableTextBlock> = [
+      {_type: 'image', _key: imageKey, title: 'foo'},
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [
+          {
+            name: 'image',
+            fields: [
+              {name: 'title', type: 'string'},
+              {name: 'count', type: 'number'},
+            ],
+          },
+        ],
+      }),
+      initialValue: structuredClone(before),
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {type: 'inc', path: [{_key: imageKey}, 'title'], value: 2},
+        {type: 'inc', path: [{_key: imageKey}, 'count'], value: 2},
+      ],
+    })
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {_type: 'image', _key: imageKey, title: 'foo'},
     ])
   })
 })
