@@ -78,6 +78,16 @@ export interface PortableTextEditorEngine extends DOMEditor {
   undoStepId: string | undefined
 
   /**
+   * The `_key` of the empty block this editor shows in an empty field, while
+   * the host does not hold it yet. Set where the editor creates that block
+   * (engine init, and normalization of an empty value), and when this
+   * editor's `unset([])` takes a lone empty paragraph out of the host.
+   * Cleared when this editor emits the patches that insert the block into
+   * the host, when the block leaves the value, when a load or remote root
+   * `set` replaces the value, and when a remote patch addresses the block.
+   */
+  placeholderKey: string | undefined
+  /**
    * The initial host value recorded when it changes the engine. A pristine
    * block equal to it is persisted content. Patch generation also records
    * the value when this editor's own `insert` puts a pristine block into

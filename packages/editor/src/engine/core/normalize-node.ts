@@ -77,13 +77,11 @@ export const normalizeNode: WithEditorFirstArg<Editor['normalizeNode']> = (
   if (isEditor(node) && node.snapshot.context.value.length === 0) {
     editor.applyContext.push(Object.freeze({kind: 'placeholder'}))
     try {
+      const placeholder = createPlaceholderBlock(editor.snapshot)
       withoutPatching(editor, () => {
-        applyInsertNodeAtPath(
-          editor,
-          createPlaceholderBlock(editor.snapshot),
-          [0],
-        )
+        applyInsertNodeAtPath(editor, placeholder, [0])
       })
+      editor.placeholderKey = placeholder._key
     } finally {
       editor.applyContext.pop()
     }

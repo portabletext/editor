@@ -748,6 +748,309 @@ describe(createPlaceholderBlock.name, () => {
     })
   })
 
+  test('Scenario: Setting properties on the placeholder to their pristine values and typing', async () => {
+    let foreignValue: Array<PortableTextBlock> | undefined
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }
+          }}
+        />
+      ),
+    })
+
+    const placeholder = {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'set', at: [{_key: 'k0'}, 'style'], value: 'normal'})
+    editor.send({type: 'set', at: [{_key: 'k0'}, 'markDefs'], value: []})
+    editor.send({
+      type: 'set',
+      at: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks'],
+      value: [],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([placeholder])
+      expect(foreignValue).toEqual([placeholder])
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert([placeholder], 'before', [0]),
+        set('normal', [{_key: 'k0'}, 'style']),
+        set([], [{_key: 'k0'}, 'markDefs']),
+        set([], [{_key: 'k0'}, 'children', {_key: 'k1'}, 'marks']),
+      ])
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+      offset: 0,
+      text: 'f',
+    })
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _type: 'block',
+          _key: 'k0',
+          children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches.slice(5)).toEqual([
+        diffMatchPatch('', 'f', [
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+          'text',
+        ]),
+      ])
+    })
+  })
+
+  test('Scenario: A remote root insert after setting a property on the placeholder to its pristine value', async () => {
+    let foreignValue: Array<PortableTextBlock> | undefined
+    const patches: Array<Patch> = []
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }
+          }}
+        />
+      ),
+    })
+
+    const placeholder = {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    editor.send({type: 'set', at: [{_key: 'k0'}, 'style'], value: 'normal'})
+
+    await vi.waitFor(() => {
+      expect(foreignValue).toEqual([placeholder])
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert([placeholder], 'before', [0]),
+        set('normal', [{_key: 'k0'}, 'style']),
+      ])
+    })
+
+    const fooBlock = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const remoteInsert = insert([fooBlock], 'after', [0])
+    foreignValue = applyAll(foreignValue, [remoteInsert])
+    editor.send({
+      type: 'apply',
+      patches: [{...remoteInsert, origin: 'remote'}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        placeholder,
+        fooBlock,
+      ])
+    })
+    expect(foreignValue).toEqual([placeholder, fooBlock])
+    expect(patches).toEqual([
+      setIfMissing([], []),
+      insert([placeholder], 'before', [0]),
+      set('normal', [{_key: 'k0'}, 'style']),
+    ])
+  })
+
+  test("Scenario: Typing into a collaborator's empty paragraph in an empty field", async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    let foreignValue: Array<PortableTextBlock> | undefined
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }
+          }}
+        />
+      ),
+    })
+
+    const emptyParagraph = {
+      _type: 'block',
+      _key: blockKey,
+      children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const remotePatches = [
+      setIfMissing([], []),
+      insert([emptyParagraph], 'before', [0]),
+    ]
+    foreignValue = applyAll(foreignValue, remotePatches)
+    editor.send({
+      type: 'apply',
+      patches: remotePatches.map((patch) => ({...patch, origin: 'remote'})),
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([emptyParagraph])
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockKey}, 'children', {_key: spanKey}],
+      offset: 0,
+      text: 'f',
+    })
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches).toEqual([
+        diffMatchPatch('', 'f', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ])
+    })
+  })
+
+  test('Scenario: Typing into an empty paragraph a remote `set` replaced the value with', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    let foreignValue: Array<PortableTextBlock> | undefined = [
+      {
+        _type: 'block',
+        _key: fooBlockKey,
+        children: [{_type: 'span', _key: fooSpanKey, text: 'foo', marks: []}],
+        markDefs: [],
+        style: 'normal',
+      },
+    ]
+    const patches: Array<Patch> = []
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: foreignValue,
+      children: (
+        <EventListenerPlugin
+          on={(event) => {
+            if (event.type === 'change' && event.origin === 'local') {
+              for (const changePatch of event.patches) {
+                const {origin: _, ...patch} = changePatch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }
+          }}
+        />
+      ),
+    })
+
+    const emptyParagraph = {
+      _type: 'block',
+      _key: blockKey,
+      children: [{_type: 'span', _key: spanKey, text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const setPatch = set([emptyParagraph], [])
+    foreignValue = applyAll(foreignValue, [setPatch])
+    editor.send({
+      type: 'apply',
+      patches: [{...setPatch, origin: 'remote'}],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([emptyParagraph])
+    })
+
+    editor.send({
+      type: 'insert.text',
+      at: [{_key: blockKey}, 'children', {_key: spanKey}],
+      offset: 0,
+      text: 'f',
+    })
+
+    await vi.waitFor(() => {
+      const expectedValue = [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'f', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ]
+      expect(editor.getSnapshot().context.value).toEqual(expectedValue)
+      expect(foreignValue).toEqual(expectedValue)
+      expect(patches).toEqual([
+        diffMatchPatch('', 'f', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ])
+    })
+  })
+
   test('Scenario: Deleting the placeholder block and typing', async () => {
     let foreignValue: Array<PortableTextBlock> | undefined
     const patches: Array<Patch> = []
@@ -906,8 +1209,6 @@ describe(createPlaceholderBlock.name, () => {
         unset([{_key: imageKeyA}]),
         unset([]),
         setIfMissing([], []),
-        set([], [{_key: 'k4'}, 'markDefs']),
-        setIfMissing([], []),
         insert(
           [
             {
@@ -921,6 +1222,7 @@ describe(createPlaceholderBlock.name, () => {
           'before',
           [0],
         ),
+        set([], [{_key: 'k4'}, 'markDefs']),
         setIfMissing([], [{_key: 'k4'}, 'children']),
         insert([{_type: 'span', _key: 'k8', text: 'foo', marks: []}], 'after', [
           {_key: 'k4'},

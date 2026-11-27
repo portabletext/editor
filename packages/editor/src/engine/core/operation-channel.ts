@@ -45,6 +45,10 @@ export type OperationEvent = {
    */
   beforeSelection: EditorSelection
   /**
+   * `editor.placeholderKey` captured at apply entry.
+   */
+  placeholderKeyBefore: string | undefined
+  /**
    * Whether `editor.operations` already held unflushed operations at apply
    * entry.
    */
@@ -111,6 +115,7 @@ export function createOperationEvent(
     operation,
     beforeValue: editor.snapshot.context.value,
     beforeSelection: editor.snapshot.context.selection,
+    placeholderKeyBefore: editor.placeholderKey,
     operationsInProgress: editor.operations.length > 0,
     isPatching: Boolean(editor.isPatching),
     withHistory: Boolean(editor.withHistory),

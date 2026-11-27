@@ -9,16 +9,20 @@ import {
 import {type PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator, toTextspec} from '@portabletext/test'
 import {makeDiff, makePatches, stringifyPatches} from '@sanity/diff-match-patch'
+import React from 'react'
 import {describe, expect, onTestFinished, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {defineSchema, type EditorEmittedEvent} from '../src'
 import {raise} from '../src/behaviors/behavior.types.action'
 import {defineBehavior} from '../src/behaviors/behavior.types.behavior'
+import {withChange} from '../src/engine/core/change'
 import {BehaviorPlugin} from '../src/plugins/plugin.behavior'
 import {EventListenerPlugin} from '../src/plugins/plugin.event-listener'
+import {InternalEditorEngineRefPlugin} from '../src/plugins/plugin.internal.editor-engine-ref'
 import {NodePlugin} from '../src/plugins/plugin.node'
 import {defineContainer} from '../src/renderers/renderer.types'
 import {createTestEditor, createTestEditors} from '../src/test/vitest'
+import type {PortableTextEditorEngine} from '../src/types/editor-engine'
 import {
   textBlockDepthsContainers,
   textBlockDepthsSchemaDefinition,
@@ -6471,6 +6475,58 @@ describe('event.patches', () => {
     expect(applyAll([] as Array<PortableTextBlock>, patches)).toEqual(
       editor.getSnapshot().context.value,
     )
+  })
+
+  test('Scenario: an engine `unset` on the placeholder whose normalization fix applies inside it sends the placeholder once', async () => {
+    let foreignValue: Array<PortableTextBlock> | undefined
+    const patches: Array<Patch> = []
+    const editorEngineRef = React.createRef<PortableTextEditorEngine>()
+
+    const {editor} = await createTestEditor({
+      keyGenerator: createTestKeyGenerator(),
+      children: (
+        <>
+          <InternalEditorEngineRefPlugin ref={editorEngineRef} />
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'change' && event.origin === 'local') {
+                for (const changePatch of event.patches) {
+                  const {origin: _, ...patch} = changePatch
+                  patches.push(patch)
+                  foreignValue = applyAll(foreignValue, [patch])
+                }
+              }
+            }}
+          />
+        </>
+      ),
+    })
+
+    withChange(editorEngineRef.current!, {type: 'behavior event'}, () => {
+      editorEngineRef.current!.apply({
+        type: 'unset',
+        path: [{_key: 'k0'}, 'markDefs'],
+      })
+    })
+
+    const placeholder = {
+      _type: 'block',
+      _key: 'k0',
+      children: [{_type: 'span', _key: 'k1', text: '', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+
+    await vi.waitFor(() => {
+      expect(patches).toEqual([
+        setIfMissing([], []),
+        insert([placeholder], 'before', [0]),
+        unset([{_key: 'k0'}, 'markDefs']),
+        set([], [{_key: 'k0'}, 'markDefs']),
+      ])
+    })
+    expect(editor.getSnapshot().context.value).toEqual([placeholder])
+    expect(foreignValue).toEqual([placeholder])
   })
 
   test('Scenario: `history.redo` replays a behavior-raised root `unset` then `insert.block` as an applicable patch stream', async () => {

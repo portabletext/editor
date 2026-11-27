@@ -30,7 +30,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'insert.text',
@@ -62,7 +66,11 @@ describe(addFieldLifecyclePatches.name, () => {
           'text',
         ]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -73,7 +81,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'remove.text',
@@ -104,7 +116,11 @@ describe(addFieldLifecyclePatches.name, () => {
         ]),
         unset([]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: blockKey,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -115,7 +131,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {
             type: 'insert.text',
@@ -147,7 +167,11 @@ describe(addFieldLifecyclePatches.name, () => {
           'text',
         ]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -159,6 +183,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: undefined,
           lastSyncedValue: [textBlock(blockKey, spanKey, '')],
           valueUnsetEmitted: false,
         },
@@ -192,6 +217,7 @@ describe(addFieldLifecyclePatches.name, () => {
         ]),
       ],
       state: {
+        placeholderKey: undefined,
         lastSyncedValue: [textBlock(blockKey, spanKey, '')],
         valueUnsetEmitted: false,
       },
@@ -206,6 +232,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: undefined,
           lastSyncedValue: [textBlock(blockKey, spanKey, '')],
           valueUnsetEmitted: false,
         },
@@ -239,6 +266,7 @@ describe(addFieldLifecyclePatches.name, () => {
         ]),
       ],
       state: {
+        placeholderKey: undefined,
         lastSyncedValue: [textBlock(blockKey, spanKey, '')],
         valueUnsetEmitted: false,
       },
@@ -252,7 +280,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'insert.text',
@@ -282,7 +314,11 @@ describe(addFieldLifecyclePatches.name, () => {
           'text',
         ]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -293,7 +329,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'remove.text',
@@ -323,7 +363,11 @@ describe(addFieldLifecyclePatches.name, () => {
           'text',
         ]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -335,6 +379,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: blockKey,
           lastSyncedValue: [textBlock(blockKey, spanKey, '')],
           valueUnsetEmitted: true,
         },
@@ -369,7 +414,11 @@ describe(addFieldLifecyclePatches.name, () => {
           'text',
         ]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -381,6 +430,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: blockKey,
           lastSyncedValue: [textBlock(blockKey, spanKey, 'foo')],
           valueUnsetEmitted: true,
         },
@@ -416,6 +466,7 @@ describe(addFieldLifecyclePatches.name, () => {
         ]),
       ],
       state: {
+        placeholderKey: undefined,
         lastSyncedValue: [textBlock(blockKey, spanKey, 'foo')],
         valueUnsetEmitted: false,
       },
@@ -429,7 +480,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'set',
@@ -448,18 +503,26 @@ describe(addFieldLifecyclePatches.name, () => {
         insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
         set('h1', [{_key: blockKey}, 'style']),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
-  test('setting the default style on the placeholder does not unset the field', () => {
+  test('setting the default style on the placeholder inserts the placeholder into a new field and records it as synced', () => {
     const keyGenerator = createTestKeyGenerator()
     const blockKey = keyGenerator()
     const spanKey = keyGenerator()
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'set',
@@ -475,9 +538,152 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [
         setIfMissing([], []),
+        insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
         set('normal', [{_key: blockKey}, 'style']),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: [textBlock(blockKey, spanKey, '')],
+        valueUnsetEmitted: false,
+      },
+    })
+  })
+
+  test('typing into a pristine block that is not the placeholder patches the text only', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const placeholderKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {placeholderKey, lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          operation: {
+            type: 'insert.text',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
+            text: 'f',
+          },
+          beforeValue: [textBlock(blockKey, spanKey, '')],
+          afterValue: [textBlock(blockKey, spanKey, 'f')],
+          patches: [
+            diffMatchPatch('', 'f', [
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ]),
+          ],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [
+        diffMatchPatch('', 'f', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ],
+      state: {
+        placeholderKey,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
+    })
+  })
+
+  test('typing into the placeholder after a block the host holds inserts the placeholder after that block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
+        {
+          operation: {
+            type: 'insert.text',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}],
+            offset: 0,
+            text: 'f',
+          },
+          beforeValue: [image(imageKey), textBlock(blockKey, spanKey, '')],
+          afterValue: [image(imageKey), textBlock(blockKey, spanKey, 'f')],
+          patches: [
+            diffMatchPatch('', 'f', [
+              {_key: blockKey},
+              'children',
+              {_key: spanKey},
+              'text',
+            ]),
+          ],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [
+        setIfMissing([], []),
+        insert([textBlock(blockKey, spanKey, '')], 'after', [{_key: imageKey}]),
+        diffMatchPatch('', 'f', [
+          {_key: blockKey},
+          'children',
+          {_key: spanKey},
+          'text',
+        ]),
+      ],
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
+    })
+  })
+
+  test('setting the marks of the placeholder span to their pristine value inserts the placeholder into a new field', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    expect(
+      addFieldLifecyclePatches(
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
+        {
+          operation: {
+            type: 'set',
+            path: [{_key: blockKey}, 'children', {_key: spanKey}, 'marks'],
+            value: [],
+          },
+          beforeValue: [textBlock(blockKey, spanKey, '')],
+          afterValue: [textBlock(blockKey, spanKey, '')],
+          patches: [
+            set([], [{_key: blockKey}, 'children', {_key: spanKey}, 'marks']),
+          ],
+        },
+        {schema, initialValue: undefined},
+      ),
+    ).toEqual({
+      patches: [
+        setIfMissing([], []),
+        insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
+        set([], [{_key: blockKey}, 'children', {_key: spanKey}, 'marks']),
+      ],
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: [textBlock(blockKey, spanKey, '')],
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -488,7 +694,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'set',
@@ -503,7 +713,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [set('normal', [{_key: blockKey}, 'style']), unset([])],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: blockKey,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -514,7 +728,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'insert',
@@ -553,7 +771,11 @@ describe(addFieldLifecyclePatches.name, () => {
         ),
         unset([]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: blockKey,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -563,7 +785,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: [image(imageKey)],
+          valueUnsetEmitted: false,
+        },
         {
           operation: {type: 'unset', path: [{_key: imageKey}]},
           beforeValue: [image(imageKey)],
@@ -574,7 +800,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [unset([{_key: imageKey}]), unset([])],
-      state: {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: [image(imageKey)],
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -585,7 +815,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {type: 'unset', path: [{_key: blockKey}]},
           beforeValue: [textBlock(blockKey, spanKey, '')],
@@ -601,7 +835,11 @@ describe(addFieldLifecyclePatches.name, () => {
         unset([{_key: blockKey}]),
         unset([]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -612,7 +850,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {type: 'unset', path: [{_key: blockKey}]},
           beforeValue: [textBlock(blockKey, spanKey, '')],
@@ -628,7 +870,11 @@ describe(addFieldLifecyclePatches.name, () => {
         unset([{_key: blockKey}]),
         unset([]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -638,7 +884,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: true},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: [image(imageKey)],
+          valueUnsetEmitted: true,
+        },
         {
           operation: {type: 'unset', path: [{_key: imageKey}]},
           beforeValue: [image(imageKey)],
@@ -649,7 +899,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [unset([{_key: imageKey}]), unset([])],
-      state: {lastSyncedValue: [image(imageKey)], valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: [image(imageKey)],
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -660,7 +914,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'insert',
@@ -677,6 +935,7 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [insert([textBlock(blockKey, spanKey, '')], 'before', [0])],
       state: {
+        placeholderKey: undefined,
         lastSyncedValue: [textBlock(blockKey, spanKey, '')],
         valueUnsetEmitted: false,
       },
@@ -689,7 +948,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {
             type: 'insert',
@@ -705,7 +968,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [setIfMissing([], []), insert([image(imageKey)], 'before', [0])],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -717,6 +984,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: undefined,
           lastSyncedValue: [textBlock(blockKey, spanKey, 'foo')],
           valueUnsetEmitted: false,
         },
@@ -744,6 +1012,7 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [],
       state: {
+        placeholderKey: undefined,
         lastSyncedValue: [textBlock(blockKey, spanKey, 'foo')],
         valueUnsetEmitted: false,
       },
@@ -757,7 +1026,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {
             type: 'set.selection',
@@ -781,7 +1054,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: blockKey,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -793,6 +1070,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: blockKey,
           lastSyncedValue: [textBlock(blockKey, spanKey, '')],
           valueUnsetEmitted: true,
         },
@@ -820,6 +1098,7 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [],
       state: {
+        placeholderKey: blockKey,
         lastSyncedValue: [textBlock(blockKey, spanKey, '')],
         valueUnsetEmitted: true,
       },
@@ -829,7 +1108,11 @@ describe(addFieldLifecyclePatches.name, () => {
   test('a selection change in an unset empty value emits nothing', () => {
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {
             type: 'set.selection',
@@ -844,7 +1127,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -857,6 +1144,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: undefined,
           lastSyncedValue: [textBlock(blockKey, spanKey, ''), image(imageKey)],
           valueUnsetEmitted: false,
         },
@@ -871,6 +1159,7 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [unset([{_key: imageKey}]), unset([])],
       state: {
+        placeholderKey: blockKey,
         lastSyncedValue: [textBlock(blockKey, spanKey, ''), image(imageKey)],
         valueUnsetEmitted: true,
       },
@@ -885,6 +1174,7 @@ describe(addFieldLifecyclePatches.name, () => {
     expect(
       addFieldLifecyclePatches(
         {
+          placeholderKey: undefined,
           lastSyncedValue: [textBlock(blockKey, spanKey, 'foo')],
           valueUnsetEmitted: false,
         },
@@ -899,6 +1189,7 @@ describe(addFieldLifecyclePatches.name, () => {
     ).toEqual({
       patches: [unset([])],
       state: {
+        placeholderKey: undefined,
         lastSyncedValue: [textBlock(blockKey, spanKey, 'foo')],
         valueUnsetEmitted: true,
       },
@@ -912,7 +1203,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: false},
+        {
+          placeholderKey: blockKey,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: false,
+        },
         {
           operation: {type: 'unset', path: []},
           beforeValue: [textBlock(blockKey, spanKey, '')],
@@ -927,14 +1222,22 @@ describe(addFieldLifecyclePatches.name, () => {
         insert([textBlock(blockKey, spanKey, '')], 'before', [0]),
         unset([]),
       ],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
   test('a root `unset` of an unset empty value is not preceded by `setIfMissing`', () => {
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {type: 'unset', path: []},
           beforeValue: [],
@@ -945,7 +1248,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [unset([])],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 
@@ -956,7 +1263,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {
             type: 'set',
@@ -971,7 +1282,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [set([textBlock(blockKey, spanKey, 'foo')], [])],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: false},
+      state: {
+        placeholderKey: undefined,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: false,
+      },
     })
   })
 
@@ -982,7 +1297,11 @@ describe(addFieldLifecyclePatches.name, () => {
 
     expect(
       addFieldLifecyclePatches(
-        {lastSyncedValue: undefined, valueUnsetEmitted: true},
+        {
+          placeholderKey: undefined,
+          lastSyncedValue: undefined,
+          valueUnsetEmitted: true,
+        },
         {
           operation: {
             type: 'set',
@@ -997,7 +1316,11 @@ describe(addFieldLifecyclePatches.name, () => {
       ),
     ).toEqual({
       patches: [set([textBlock(blockKey, spanKey, '')], []), unset([])],
-      state: {lastSyncedValue: undefined, valueUnsetEmitted: true},
+      state: {
+        placeholderKey: blockKey,
+        lastSyncedValue: undefined,
+        valueUnsetEmitted: true,
+      },
     })
   })
 })

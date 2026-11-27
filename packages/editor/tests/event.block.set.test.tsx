@@ -515,6 +515,25 @@ describe('event.block.set', () => {
         unset([{_key: 'k0'}]),
         unset([]),
         setIfMissing([], []),
+        insert(
+          [
+            {
+              _key: textBlockKey,
+              _type: 'block',
+              children: [
+                {
+                  _key: 'k3',
+                  _type: 'span',
+                  text: '',
+                  marks: [],
+                },
+              ],
+              style: 'normal',
+            },
+          ],
+          'before',
+          [0],
+        ),
         set([], [{_key: textBlockKey}, 'markDefs']),
       ])
     })
@@ -538,28 +557,7 @@ describe('event.block.set', () => {
         },
       ])
 
-      expect(patches.slice(7)).toEqual([
-        setIfMissing([], []),
-        insert(
-          [
-            {
-              _key: textBlockKey,
-              _type: 'block',
-              children: [
-                {
-                  _key: 'k3',
-                  _type: 'span',
-                  text: '',
-                  marks: [],
-                },
-              ],
-              markDefs: [],
-              style: 'normal',
-            },
-          ],
-          'before',
-          [0],
-        ),
+      expect(patches.slice(8)).toEqual([
         set('h1', [{_key: textBlockKey}, 'style']),
       ])
     })

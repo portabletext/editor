@@ -384,30 +384,6 @@ describe('event.child.unset', () => {
           type: 'unset',
           path: [],
         },
-        // Prepending a setIfMissing patch to ensure the editor is not empty
-        {
-          origin: 'local',
-          type: 'setIfMissing',
-          path: [],
-          value: [],
-        },
-        // This patch goes nowhere, but that's okay
-        {
-          origin: 'local',
-          type: 'set',
-          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
-          value: [],
-        },
-      ])
-    })
-
-    // Typing again to test the patch sequence when the editor goes from an
-    // empty state to a non-empty state
-    await userEvent.type(locator, 'f')
-
-    await vi.waitFor(() => {
-      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
-      expect(patches.slice(8)).toEqual([
         {
           origin: 'local',
           type: 'setIfMissing',
@@ -423,19 +399,26 @@ describe('event.child.unset', () => {
             {
               _key: blockKey,
               _type: 'block',
-              children: [
-                {
-                  _type: 'span',
-                  _key: 'k4',
-                  text: '',
-                  marks: [],
-                },
-              ],
+              children: [{_type: 'span', _key: 'k4', text: ''}],
               style: 'normal',
               markDefs: [],
             },
           ],
         },
+        {
+          origin: 'local',
+          type: 'set',
+          path: [{_key: blockKey}, 'children', {_key: 'k4'}, 'marks'],
+          value: [],
+        },
+      ])
+    })
+
+    await userEvent.type(locator, 'f')
+
+    await vi.waitFor(() => {
+      expect(toTextspec(editor.getSnapshot().context)).toEqual('B: f|')
+      expect(patches.slice(9)).toEqual([
         {
           origin: 'local',
           type: 'diffMatchPatch',
