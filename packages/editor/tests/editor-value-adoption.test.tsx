@@ -1,5 +1,6 @@
 import type {PortableTextBlock} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import type {EditorSelection} from '../src'
 import {EventListenerPlugin} from '../src/plugins'
 import {createTestEditor} from '../src/test/vitest'
@@ -25,6 +26,39 @@ describe('initialization', () => {
     await vi.waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({type: 'ready'})
       expect(locator.getByText('Jot something down here')).toBeInTheDocument()
+    })
+  })
+
+  test('Scenario: the placeholder is not text before the caret in an empty editor', async () => {
+    const {locator} = await createTestEditor({
+      editableProps: {renderPlaceholder},
+    })
+
+    await userEvent.click(locator)
+
+    await vi.waitFor(() => {
+      const selection = window.getSelection()
+      expect(selection?.rangeCount).toEqual(1)
+      const textBeforeCaret = document.createRange()
+      textBeforeCaret.setStart(locator.element(), 0)
+      textBeforeCaret.setEnd(selection!.anchorNode!, selection!.anchorOffset)
+      expect(textBeforeCaret.toString()).toEqual('\uFEFF')
+    })
+    expect(locator.getByText('Jot something down here')).toBeInTheDocument()
+  })
+
+  test('Scenario: the placeholder sits on the empty line', async () => {
+    const {locator} = await createTestEditor({
+      editableProps: {renderPlaceholder},
+    })
+
+    await vi.waitFor(() => {
+      const placeholder = locator.getByText('Jot something down here').element()
+      const block = locator.element().firstElementChild!
+      expect(placeholder.getBoundingClientRect().top).toBeCloseTo(
+        block.getBoundingClientRect().top,
+        0,
+      )
     })
   })
 
