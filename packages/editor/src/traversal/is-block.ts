@@ -2,7 +2,7 @@ import type {PortableTextBlock} from '@portabletext/schema'
 import type {Path} from '../engine/interfaces/path'
 import {getNode} from './get-node'
 import type {TraversalSnapshot} from './traversal-snapshot'
-import {ancestorNodes, walkPath} from './walk-path'
+import {ancestorNodes, walkedNode, walkPath} from './walk-path'
 
 /**
  * Determine if a node at the given path is a block.
@@ -14,7 +14,7 @@ import {ancestorNodes, walkPath} from './walk-path'
 export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
   const walk = walkPath(snapshot, path)
 
-  if (walk.status === 'invalid') {
+  if (!walkedNode(walk)) {
     return false
   }
 

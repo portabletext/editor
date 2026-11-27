@@ -1,4 +1,4 @@
-import {compileSchema} from '@portabletext/schema'
+import {compileSchema, defineSchema} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
@@ -335,5 +335,85 @@ describe(isBlock.name, () => {
     expect(getNode(snapshot, [0, 'children', 0, 'markDefs', 0])).toEqual(
       undefined,
     )
+  })
+})
+
+describe(`${isBlock.name} at a path that names no node`, () => {
+  test('a missing top-level node is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        value: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [{_type: 'span', _key: keyGenerator(), text: 'foo'}],
+          },
+        ],
+      },
+    })
+
+    expect(isBlock(snapshot, [{_key: 'missing'}])).toEqual(false)
+  })
+
+  test('a missing node in a callout is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [{_type: 'callout', _key: calloutKey, content: []}],
+      },
+    })
+
+    expect(
+      isBlock(snapshot, [{_key: calloutKey}, 'content', {_key: 'missing'}]),
+    ).toEqual(false)
+  })
+
+  test('the empty path is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        value: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [{_type: 'span', _key: keyGenerator(), text: 'foo'}],
+          },
+        ],
+      },
+    })
+
+    expect(isBlock(snapshot, [])).toEqual(false)
+  })
+
+  test('an index into a block object field is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
+        value: [{_type: 'image', _key: imageKey, caption: ['foo']}],
+      },
+    })
+
+    expect(isBlock(snapshot, [{_key: imageKey}, 'caption', 0])).toEqual(false)
+  })
+
+  test('a missing key in a block object field is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const imageKey = keyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: compileSchema(defineSchema({blockObjects: [{name: 'image'}]})),
+        value: [{_type: 'image', _key: imageKey, markDefs: []}],
+      },
+    })
+
+    expect(
+      isBlock(snapshot, [{_key: imageKey}, 'markDefs', {_key: 'missing'}]),
+    ).toEqual(false)
   })
 })
