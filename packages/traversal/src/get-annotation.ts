@@ -27,12 +27,13 @@ export function getAnnotation(
   }
 
   const block = walk.nodes.at(-1)
-  const [fieldSegment, annotationSegment] = walk.rest
+  const [fieldSegment, annotationSegment, ...fieldPath] = walk.rest
 
   if (
     !block ||
     fieldSegment !== 'markDefs' ||
     !isKeyedSegment(annotationSegment) ||
+    fieldPath.some((segment) => typeof segment !== 'string') ||
     !isBlock(snapshot, block.path) ||
     !isTextBlock({schema: snapshot.context.schema}, block.node)
   ) {

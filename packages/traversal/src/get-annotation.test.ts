@@ -142,6 +142,57 @@ describe(getAnnotation.name, () => {
     ])
   })
 
+  test('annotation with trailing field segments', () => {
+    expect(
+      getAnnotation(testbed.snapshot, [
+        {_key: testbed.textBlock._key},
+        'markDefs',
+        {_key: 'mark1'},
+        'href',
+        'length',
+      ]),
+    ).toEqual({
+      node: testbed.link1,
+      path: [{_key: testbed.textBlock._key}, 'markDefs', {_key: 'mark1'}],
+    })
+  })
+
+  test('a keyed segment after the annotation key returns no annotation', () => {
+    expect(
+      getAnnotation(testbed.snapshot, [
+        {_key: testbed.textBlock._key},
+        'markDefs',
+        {_key: 'mark1'},
+        'items',
+        {_key: 'item1'},
+      ]),
+    ).toEqual(undefined)
+  })
+
+  test('an index after the annotation key returns no annotation', () => {
+    expect(
+      getAnnotation(testbed.snapshot, [
+        {_key: testbed.textBlock._key},
+        'markDefs',
+        {_key: 'mark1'},
+        'items',
+        0,
+      ]),
+    ).toEqual(undefined)
+  })
+
+  test('a range after the annotation key returns no annotation', () => {
+    expect(
+      getAnnotation(testbed.snapshot, [
+        {_key: testbed.textBlock._key},
+        'markDefs',
+        {_key: 'mark1'},
+        'items',
+        [0, 1],
+      ]),
+    ).toEqual(undefined)
+  })
+
   test('annotation key not found', () => {
     expect(
       getAnnotation(testbed.snapshot, [
