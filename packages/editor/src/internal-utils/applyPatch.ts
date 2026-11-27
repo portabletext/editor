@@ -21,7 +21,9 @@ import type {Node} from '../engine/interfaces/node'
 import {hasUsableKey, isAddressableByKey} from '../paths/node-segment'
 import {getSpan} from '../traversal/get-span'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
-import type {Path} from '../types/paths'
+import type {KeyedSegment, Path} from '../types/paths'
+import {isRecord} from '../utils/asserters'
+import {isKeyedSegment} from '../utils/util.is-keyed-segment'
 import {applyDeselect} from './apply-selection'
 import {isEqualValues} from './equality'
 import {getValue} from './get-value'
@@ -92,7 +94,10 @@ function resolveNegativeIndexes(
   if (
     patch.type !== 'set' &&
     patch.type !== 'unset' &&
-    !(patch.type === 'insert' && patch.items.length === 1)
+    !(
+      patch.type === 'insert' &&
+      (patch.items.length === 1 || patch.position === 'replace')
+    )
   ) {
     return patch
   }
@@ -143,10 +148,6 @@ function resolveNegativeIndexes(
       path.push(segment)
       current = getValue(current, [segment])
     }
-  }
-
-  if (patch.type === 'insert' && patch.position === 'replace') {
-    return patch
   }
 
   return {...patch, path}
@@ -259,6 +260,11 @@ function insertPatch(
       ))
 
   const arrayFieldPath = patch.path.slice(0, -1)
+  const replacedItemSegment =
+    position === 'replace'
+      ? getReplacedItemSegment(editor.snapshot.context.value, patch)
+      : undefined
+
   let changed = false
 
   for (let index = 0; index < items.length; index++) {
@@ -306,6 +312,15 @@ function insertPatch(
     }
   }
 
+  if (replacedItemSegment !== undefined && (changed || items.length === 0)) {
+    return (
+      editor.apply({
+        type: 'unset',
+        path: [...arrayFieldPath, replacedItemSegment],
+      }) || changed
+    )
+  }
+
   if (changed && editorWasEmptyBefore && addressedByRootIndex) {
     const removeIdx = position === 'before' ? items.length : 0
     const removeNode = editor.snapshot.context.value[removeIdx]
@@ -318,6 +333,47 @@ function insertPatch(
   }
 
   return changed
+}
+
+/**
+ * The segment that addresses the item a `replace` insert replaces once the
+ * items are inserted before it. An item key also carried by an inserted
+ * item would address the inserted item, so the shifted index addresses it
+ * instead.
+ */
+function getReplacedItemSegment(
+  value: Array<PortableTextBlock>,
+  patch: InsertPatch,
+): KeyedSegment | number | undefined {
+  const siblings = getValue(value, patch.path.slice(0, -1))
+  const lastSegment = patch.path.at(-1)
+
+  if (!Array.isArray(siblings)) {
+    return undefined
+  }
+
+  const index =
+    typeof lastSegment === 'number'
+      ? lastSegment
+      : isKeyedSegment(lastSegment)
+        ? siblings.findIndex(
+            (sibling) =>
+              isRecord(sibling) && sibling['_key'] === lastSegment._key,
+          )
+        : -1
+
+  if (index < 0 || index >= siblings.length) {
+    return undefined
+  }
+
+  const replacedItem: unknown = siblings[index]
+  const key = isRecord(replacedItem) ? replacedItem['_key'] : undefined
+
+  return hasUsableKey(key) &&
+    isAddressableByKey(siblings, key) &&
+    !patch.items.some((item) => isRecord(item) && item['_key'] === key)
+    ? {_key: key}
+    : index + patch.items.length
 }
 
 function setPatch(
