@@ -258,6 +258,10 @@ function insertPatch(
         editor.snapshot.context.value,
       ))
 
+  const placeholderKey = editorWasEmptyBefore
+    ? editor.snapshot.context.value.at(0)?._key
+    : undefined
+
   const arrayFieldPath = patch.path.slice(0, -1)
   let changed = false
 
@@ -306,15 +310,18 @@ function insertPatch(
     }
   }
 
-  if (changed && editorWasEmptyBefore && addressedByRootIndex) {
-    const removeIdx = position === 'before' ? items.length : 0
-    const removeNode = editor.snapshot.context.value[removeIdx]
-    if (removeNode) {
-      editor.apply({
-        type: 'unset',
-        path: [{_key: removeNode._key}],
-      })
-    }
+  if (
+    changed &&
+    placeholderKey !== undefined &&
+    addressedByRootIndex &&
+    editor.snapshot.context.value.some(
+      (block) => block?._key === placeholderKey,
+    )
+  ) {
+    editor.apply({
+      type: 'unset',
+      path: [{_key: placeholderKey}],
+    })
   }
 
   return changed
