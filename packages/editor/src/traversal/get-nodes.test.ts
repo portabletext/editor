@@ -763,6 +763,58 @@ describe(getNodes.name, () => {
     })
   })
 
+  describe('from/to range when `blockIndexMap` has no entries', () => {
+    test('a root block after the range yields nothing', () => {
+      const snapshot = {
+        context: testbed.snapshot.context,
+        blockIndexMap: new Map<string, number>(),
+      }
+
+      const nodes = [
+        ...getNodes(snapshot, {
+          at: [{_key: 'k6'}],
+          from: [{_key: 'k3'}, 'children', {_key: 'k0'}],
+          to: [{_key: 'k4'}],
+        }),
+      ]
+
+      expect(nodes).toEqual([])
+    })
+
+    test('a table cell after the range yields nothing', () => {
+      const snapshot = {
+        context: testbed.snapshot.context,
+        blockIndexMap: new Map<string, number>(),
+      }
+
+      const nodes = [
+        ...getNodes(snapshot, {
+          at: [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k20'}],
+          from: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k14'},
+          ],
+          to: [
+            {_key: 'k26'},
+            'rows',
+            {_key: 'k21'},
+            'cells',
+            {_key: 'k17'},
+            'content',
+            {_key: 'k16'},
+          ],
+        }),
+      ]
+
+      expect(nodes).toEqual([])
+    })
+  })
+
   describe(getNodeDescendants.name, () => {
     test('container with value field includes field name in paths', () => {
       const accordionSpan = {_key: 's1', _type: 'span', text: 'details'}
