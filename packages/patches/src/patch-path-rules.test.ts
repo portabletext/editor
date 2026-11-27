@@ -46,6 +46,8 @@ const knownDifferences = new Set<PatchPathRule['id']>([
   'primitive-[]-deep-dec',
   'null-0-setIfMissing',
   'null-1-setIfMissing',
+  // Sanity duplicates the items between the bounds of a reversed range.
+  'range-3-1-unset',
 ])
 
 const depths: Array<{

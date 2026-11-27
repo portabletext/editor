@@ -553,6 +553,30 @@ describe(applyPatch.name, () => {
       })
     })
 
+    test('range path', () => {
+      expect(
+        applyPatch([image1, image2, gallery, block], {
+          type: 'unset',
+          path: [[1, 3]],
+        }),
+      ).toEqual([image1, block])
+    })
+
+    test('set two fields below a range leaves the array unchanged', () => {
+      const items = [
+        {_key: 'a', child: {v: 1}},
+        {_key: 'b', child: {v: 2}},
+      ]
+
+      expect(
+        applyPatch(items, {
+          type: 'set',
+          path: [[0, 1], 'child', 'v'],
+          value: 9,
+        }),
+      ).toEqual(items)
+    })
+
     describe('block object property', () => {
       test('indexed path', () => {
         expect(
