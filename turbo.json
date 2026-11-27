@@ -9,7 +9,7 @@
       "outputLogs": "new-only"
     },
     "check:types": {
-      "outputs": [""],
+      "outputs": [],
       "dependsOn": ["^build"],
       "outputLogs": "errors-only"
     },
