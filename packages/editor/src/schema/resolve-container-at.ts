@@ -64,9 +64,11 @@ export function resolveContainerAt(
     return undefined
   }
 
-  // The target is the node at the last keyed segment, and every node above
+  // The target is the node at the last node segment, and every node above
   // it must resolve as a registered container at its position.
-  const targetSegmentIndex = path.findLastIndex(isKeyedSegment)
+  const targetSegmentIndex = path.findLastIndex(
+    (segment) => isKeyedSegment(segment) || typeof segment === 'number',
+  )
   const targetNodeIndex = walk.nodes.findIndex(
     (node) => node.segmentIndex === targetSegmentIndex,
   )
