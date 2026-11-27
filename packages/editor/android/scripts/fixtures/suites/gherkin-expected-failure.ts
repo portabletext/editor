@@ -1,5 +1,9 @@
+import {readFileSync} from 'node:fs'
+import type {Scenario} from 'racejar'
+import {Feature} from 'racejar/vitest'
 import type {Run} from 'thumbjar'
 import {afterAll, expect, vi} from 'vitest'
+import {deviceDefinitions} from '../../gherkin.ts'
 import {editorState} from '../editor-state.ts'
 
 const device = vi.hoisted(() => ({calls: 0}))
@@ -68,4 +72,27 @@ afterAll(() => {
   expect(device.calls).toEqual(1)
 })
 
-await import('../../../tests/en.insert.break.test.ts')
+const knownDifferences = [
+  {
+    scenario: 'Pressing Enter when selecting the entire content',
+    boundary: 4,
+    actual: 'B:\nB: |',
+  },
+  {
+    scenario: 'Pressing Enter when selecting the entire content',
+    boundary: 5,
+    actual: 'B: |',
+  },
+]
+
+Feature({
+  featureText: readFileSync(
+    new URL('../../../../gherkin-spec/insert.break.feature', import.meta.url),
+    'utf8',
+  ),
+  ...deviceDefinitions(undefined, knownDifferences),
+  expectFail: (scenario: Scenario) =>
+    knownDifferences.some(
+      (difference) => difference.scenario === scenario.name,
+    ),
+})
