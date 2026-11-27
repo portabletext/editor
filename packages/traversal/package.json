@@ -50,7 +50,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@portabletext/patches": "workspace:^"
+    "@portabletext/patches": "workspace:^",
+    "@portabletext/schema": "workspace:^"
   },
   "devDependencies": {
     "@portabletext/test": "workspace:^",
