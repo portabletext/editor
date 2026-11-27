@@ -9,31 +9,31 @@ import {serializePath} from '../paths/serialize-path'
 import type {RegisteredContainer} from '../schema/container-types'
 import {getNodeChildren} from '../traversal/get-children'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
-import type {BlockIndexMap} from './block-index-map'
 import {buildIndexMaps, collectDescendantIndexes} from './build-index-maps'
 import {getValue} from './get-value'
+import type {IndexMap} from './index-map'
 
 /**
- * Context needed by the pure `transformBlockIndexMap` function. Pure
+ * Context needed by the pure `transformIndexMap` function. Pure
  * w.r.t. value: value is passed explicitly as `beforeValue`/`afterValue`.
  */
 type PureTransformContext = Pick<EditorContext, 'schema' | 'containers'>
 
 /**
- * Apply an editor operation's structural effect to a `blockIndexMap`.
+ * Apply an editor operation's structural effect to a `indexMap`.
  *
  * Pure function. Given a map built from `beforeValue` and an operation
  * that produced `afterValue`, mutates the map so it equals one built
  * fresh from `afterValue`. The oracle invariant is exercised in
- * `transform-block-index-map.test.ts`. Called once per operation by the
+ * `transform-index-map.test.ts`. Called once per operation by the
  * update-value plugin, after the value tree has settled.
  *
  * Text and selection ops have no structural effect. Insert/unset/set
  * shift, remove, and add entries scoped to the affected siblings and
  * subtree only; the whole map is never walked.
  */
-export function transformBlockIndexMap(
-  map: BlockIndexMap,
+export function transformIndexMap(
+  map: IndexMap,
   op: EngineOperation,
   beforeValue: ReadonlyArray<Node>,
   afterValue: ReadonlyArray<Node>,
@@ -112,7 +112,7 @@ export function transformBlockIndexMap(
             value: afterValue as unknown as PortableTextBlock[],
             containers: context.containers,
           },
-          {blockIndexMap: map},
+          {indexMap: map},
         )
         return
       }
@@ -166,7 +166,7 @@ export function transformBlockIndexMap(
  */
 /**
  * Resolve a child index for `path`'s last segment. Numeric last segments are
- * the index directly; for keyed segments the block-index map holds it, and the
+ * the index directly; for keyed segments the index map holds it, and the
  * map reflects `beforeValue` at the call sites (before this operation mutates
  * the map), so it is an O(1) lookup instead of the linear scan in
  * `resolveChildIndexInValue`. A numeric path segment can't form the map's keyed
@@ -297,7 +297,7 @@ function resolveSiblingContext(
  * doesn't change), so only the sibling level needs touching.
  */
 function reindexSiblings(
-  map: BlockIndexMap,
+  map: IndexMap,
   siblingContext: {
     children: ReadonlyArray<Node>
     serializedPrefix: string
@@ -326,7 +326,7 @@ function reindexSiblings(
  * keyed descendants. Cost is bounded by the subtree size.
  */
 function pruneSubtreeAtPath(
-  map: BlockIndexMap,
+  map: IndexMap,
   beforeValue: ReadonlyArray<Node>,
   nodePath: Path,
   keepSelf: boolean = false,
@@ -383,7 +383,7 @@ export function walkKeyedChildrenInValue(
  * (e.g. `markDefs` entries) never gain entries.
  */
 function addSubtree(
-  map: BlockIndexMap,
+  map: IndexMap,
   context: PureTransformContext,
   afterValue: ReadonlyArray<Node>,
   opPath: Path,
@@ -475,7 +475,7 @@ function resolveIndexableNode(
  * re-walk it in `afterValue`. Bounded by the owner's subtree size.
  */
 function reconcileOwnerSubtree(
-  map: BlockIndexMap,
+  map: IndexMap,
   context: PureTransformContext,
   beforeValue: ReadonlyArray<Node>,
   afterValue: ReadonlyArray<Node>,
@@ -548,7 +548,7 @@ function toKeyedPath(value: ReadonlyArray<Node>, path: Path): Path | undefined {
 }
 
 function handleKeyChange(
-  map: BlockIndexMap,
+  map: IndexMap,
   beforeValue: ReadonlyArray<Node>,
   afterValue: ReadonlyArray<Node>,
   nodePath: Path,

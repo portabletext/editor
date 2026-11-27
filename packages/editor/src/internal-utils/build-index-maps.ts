@@ -7,19 +7,19 @@ import {getNodeChildren} from '../traversal/get-children'
 import type {KeyedSegment} from '../types/paths'
 
 /**
- * Mutates `blockIndexMap` in place. Used for initial engine population and
+ * Mutates `indexMap` in place. Used for initial engine population and
  * tests. During operation application the map is maintained incrementally
- * by `transform-block-index-map` helpers.
+ * by `transform-index-map` helpers.
  */
 export function buildIndexMaps(
   context: Pick<EditorContext, 'schema' | 'value' | 'containers'>,
   {
-    blockIndexMap,
+    indexMap,
   }: {
-    blockIndexMap: Map<string, number>
+    indexMap: Map<string, number>
   },
 ): void {
-  blockIndexMap.clear()
+  indexMap.clear()
   for (let blockIndex = 0; blockIndex < context.value.length; blockIndex++) {
     const block = context.value.at(blockIndex)
     if (block === undefined || block._key === undefined) {
@@ -31,16 +31,10 @@ export function buildIndexMaps(
     const blockSegment: KeyedSegment = {_key: block._key}
     const blockPath: Path = [blockSegment]
     const blockKey = serializePath(blockPath)
-    if (!blockIndexMap.has(blockKey)) {
-      blockIndexMap.set(blockKey, blockIndex)
+    if (!indexMap.has(blockKey)) {
+      indexMap.set(blockKey, blockIndex)
     }
-    collectDescendantIndexes(
-      context,
-      block,
-      blockPath,
-      undefined,
-      blockIndexMap,
-    )
+    collectDescendantIndexes(context, block, blockPath, undefined, indexMap)
   }
 }
 
@@ -49,7 +43,7 @@ export function collectDescendantIndexes(
   node: Node,
   nodePath: Path,
   parent: RegisteredContainer | undefined,
-  blockIndexMap: Map<string, number>,
+  indexMap: Map<string, number>,
 ): void {
   const result = getNodeChildren(context, node, parent)
   if (!result) {
@@ -65,16 +59,10 @@ export function collectDescendantIndexes(
     const childSegment: KeyedSegment = {_key: child._key}
     const childPath: Path = [...nodePath, result.fieldName, childSegment]
     const childKey = serializePath(childPath)
-    if (!blockIndexMap.has(childKey)) {
-      blockIndexMap.set(childKey, i)
+    if (!indexMap.has(childKey)) {
+      indexMap.set(childKey, i)
     }
 
-    collectDescendantIndexes(
-      context,
-      child,
-      childPath,
-      result.parent,
-      blockIndexMap,
-    )
+    collectDescendantIndexes(context, child, childPath, result.parent, indexMap)
   }
 }

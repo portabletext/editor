@@ -16,18 +16,19 @@ export function createTestSnapshot(snapshot: {
     value: snapshot.context?.value ?? [],
     selection: snapshot.context?.selection ?? null,
   }
-  const blockIndexMap = new Map<string, number>()
+  const indexMap = new Map<string, number>()
   buildIndexMaps(
     {
       schema: context.schema,
       value: context.value,
       containers: context.containers,
     },
-    {blockIndexMap},
+    {indexMap},
   )
 
   return {
-    blockIndexMap,
+    indexMap,
+    blockIndexMap: indexMap,
     context,
     decoratorState: snapshot?.decoratorState ?? {},
   }

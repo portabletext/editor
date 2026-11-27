@@ -144,14 +144,15 @@ function createBareEditor(
 ): Editor {
   const editor = createEditor()
   const containers = resolveContainers(schema, publicContainers)
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, containers, value}, {blockIndexMap})
+  const indexMap = new Map<string, number>()
+  buildIndexMaps({schema, containers, value}, {indexMap})
 
   editor.containers = resolveContainersRich(schema, publicContainers)
-  editor.blockIndexMap = blockIndexMap
+  editor.indexMap = indexMap
   editor.verifiedUniqueChildGroups = new Set()
   editor.snapshot = {
-    blockIndexMap,
+    indexMap,
+    blockIndexMap: indexMap,
     context: {
       containers,
       converters: [],

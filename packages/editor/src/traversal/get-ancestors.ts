@@ -45,7 +45,7 @@ export function getAncestors(
     return []
   }
 
-  const {context, blockIndexMap} = snapshot
+  const {context, indexMap} = snapshot
   let currentChildren: Array<Node> = context.value
   let currentParent: RegisteredContainer | undefined
 
@@ -69,7 +69,7 @@ export function getAncestors(
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
       resolvedPath.push(segment)
-      const index = blockIndexMap.get(serializePath(resolvedPath))
+      const index = indexMap.get(serializePath(resolvedPath))
       if (
         index !== undefined &&
         currentChildren[index]?._key === segment._key

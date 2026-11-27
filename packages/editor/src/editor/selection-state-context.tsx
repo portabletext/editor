@@ -126,7 +126,7 @@ export function SelectionStateProvider({
             containers: editorEngine.snapshot.context.containers,
             value: snapshot.context.value,
           },
-          blockIndexMap: editorEngine.blockIndexMap,
+          indexMap: editorEngine.indexMap,
         },
         selection,
       )

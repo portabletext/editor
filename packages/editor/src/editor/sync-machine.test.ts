@@ -20,10 +20,10 @@ function createTestEngine(keyGenerator: () => string) {
   const schema = compileSchema(defineSchema({}))
   const e: any = createEditor()
   e.containers = new Map()
-  e.blockIndexMap = new Map()
+  e.indexMap = new Map()
   e.verifiedUniqueChildGroups = new Set()
   e.snapshot = {
-    blockIndexMap: e.blockIndexMap,
+    indexMap: e.indexMap,
     context: {
       containers: new Map(),
       converters: [],
@@ -107,8 +107,8 @@ describe('sync machine', () => {
       children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
     }))
     const containers = new Map()
-    const blockIndexMap = new Map<string, number>()
-    buildIndexMaps({schema, containers, value}, {blockIndexMap})
+    const indexMap = new Map<string, number>()
+    buildIndexMaps({schema, containers, value}, {indexMap})
 
     const readIndexes: Array<number> = []
     const observedValue = new Proxy(value, {
@@ -123,7 +123,7 @@ describe('sync machine', () => {
     const result = findOldBlock({
       snapshot: {
         context: {schema, containers, value: observedValue},
-        blockIndexMap,
+        indexMap,
       },
       blockKey: value[4]!._key,
       index: 0,

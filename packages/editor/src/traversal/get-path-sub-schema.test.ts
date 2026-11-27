@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers'
 import {getPathSubSchema} from './get-path-sub-schema'
@@ -23,7 +23,7 @@ describe(getPathSubSchema.name, () => {
         containers: new Map(),
         value: [{_type: 'block', _key: 'b0', children: []}],
       },
-      blockIndexMap: new Map(),
+      indexMap: new Map(),
     }
 
     const subSchema = getPathSubSchema(context, [{_key: 'b0'}])
@@ -122,7 +122,7 @@ describe(getPathSubSchema.name, () => {
     ]
     const context = {
       context: {schema, containers, value},
-      blockIndexMap: buildBlockIndexMap(schema, containers, value),
+      indexMap: buildIndexMap(schema, containers, value),
     }
 
     const subSchema = getPathSubSchema(context, [
@@ -154,7 +154,7 @@ describe(getPathSubSchema.name, () => {
     const value = recursiveSectionValue()
     const context = {
       context: {schema, containers, value},
-      blockIndexMap: buildBlockIndexMap(schema, containers, value),
+      indexMap: buildIndexMap(schema, containers, value),
     }
 
     const subSchema = getPathSubSchema(context, [
@@ -207,7 +207,7 @@ describe(getPathSubSchema.name, () => {
     const value = recursiveSectionValue()
     const context = {
       context: {schema, containers, value},
-      blockIndexMap: buildBlockIndexMap(schema, containers, value),
+      indexMap: buildIndexMap(schema, containers, value),
     }
 
     const subSchema = getPathSubSchema(context, [
@@ -285,7 +285,7 @@ describe(getPathSubSchema.name, () => {
     ]
     const context = {
       context: {schema, containers, value},
-      blockIndexMap: buildBlockIndexMap(schema, containers, value),
+      indexMap: buildIndexMap(schema, containers, value),
     }
 
     const subSchema = getPathSubSchema(context, [
@@ -438,7 +438,7 @@ describe(getPathSubSchema.name, () => {
     ]
     const context = {
       context: {schema, containers, value},
-      blockIndexMap: buildBlockIndexMap(schema, containers, value),
+      indexMap: buildIndexMap(schema, containers, value),
     }
 
     const subSchema = getPathSubSchema(context, [

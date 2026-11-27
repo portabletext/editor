@@ -13,7 +13,7 @@ type Context = {
     containers: Containers
     value: Array<Node>
   }
-  blockIndexMap: ReadonlyMap<string, number>
+  indexMap: ReadonlyMap<string, number>
 }
 
 /**

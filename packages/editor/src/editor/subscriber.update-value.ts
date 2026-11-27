@@ -6,9 +6,9 @@ import type {Path} from '../engine/interfaces/path'
 import {debug} from '../internal-utils/debug'
 import {safeStringify} from '../internal-utils/safe-json'
 import {
-  transformBlockIndexMap,
+  transformIndexMap,
   walkKeyedChildrenInValue,
-} from '../internal-utils/transform-block-index-map'
+} from '../internal-utils/transform-index-map'
 import {serializePath} from '../paths/serialize-path'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import {isKeyedSegment} from '../utils/util.is-keyed-segment'
@@ -157,7 +157,7 @@ export function invalidateVerifiedGroups(
 }
 
 /**
- * Keeps `blockIndexMap` in sync with the value, transforming it
+ * Keeps `indexMap` in sync with the value, transforming it
  * incrementally per operation so the operation pipeline (which resolves
  * keyed paths through it) never observes a stale map.
  *
@@ -199,8 +199,8 @@ export function subscribeUpdateValue(
       return
     }
 
-    transformBlockIndexMap(
-      editor.blockIndexMap,
+    transformIndexMap(
+      editor.indexMap,
       operation,
       event.beforeValue,
       editor.snapshot.context.value,

@@ -213,12 +213,12 @@ function createObjectRunSnapshot(): TraversalSnapshot {
       children: [{_key: 'span2', _type: 'span', text: 'after', marks: []}],
     },
   ]
-  const blockIndexMap = new Map<string, number>()
+  const indexMap = new Map<string, number>()
   const containers = new Map()
 
-  buildIndexMaps({schema, value, containers}, {blockIndexMap})
+  buildIndexMaps({schema, value, containers}, {indexMap})
 
-  return {context: {schema, containers, value}, blockIndexMap}
+  return {context: {schema, containers, value}, indexMap}
 }
 
 function createSpanlessSnapshot(): TraversalSnapshot {
@@ -228,10 +228,10 @@ function createSpanlessSnapshot(): TraversalSnapshot {
     {_key: 'image2', _type: 'image'},
     {_key: 'image3', _type: 'image'},
   ]
-  const blockIndexMap = new Map<string, number>()
+  const indexMap = new Map<string, number>()
   const containers = new Map()
 
-  buildIndexMaps({schema, value, containers}, {blockIndexMap})
+  buildIndexMaps({schema, value, containers}, {indexMap})
 
-  return {context: {schema, containers, value}, blockIndexMap}
+  return {context: {schema, containers, value}, indexMap}
 }

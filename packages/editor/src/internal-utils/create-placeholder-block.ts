@@ -11,7 +11,7 @@ type PlaceholderSnapshot = {
     value: Array<Node>
     keyGenerator: () => string
   }
-  blockIndexMap: ReadonlyMap<string, number>
+  indexMap: ReadonlyMap<string, number>
 }
 
 /**

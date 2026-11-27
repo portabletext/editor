@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import type {Node} from '../engine/interfaces/node'
 import {
   defineContainer,
@@ -135,11 +135,11 @@ describe('getAncestors with same _type under different parents', () => {
   const diagramNode = {_key: 'd1', _type: 'diagram', shapes: [diagramCell]}
 
   const value: Array<Node> = [tableNode as Node, diagramNode as Node]
-  const blockIndexMap = buildBlockIndexMap(schema, containers, value)
+  const indexMap = buildIndexMap(schema, containers, value)
 
   const snapshot: TraversalSnapshot = {
     context: {schema, containers, value},
-    blockIndexMap,
+    indexMap,
   }
 
   test('span path inside table.cell.content resolves all three ancestors', () => {

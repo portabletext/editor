@@ -7,13 +7,13 @@ import {describe, expect, test} from 'vitest'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers-batch'
-import {BlockIndexMap} from './block-index-map'
 import {buildIndexMaps} from './build-index-maps'
-import {transformBlockIndexMap} from './transform-block-index-map'
+import {IndexMap} from './index-map'
+import {transformIndexMap} from './transform-index-map'
 
 /**
  * Oracle equivalence: applying `op` to `beforeValue` to produce `afterValue`,
- * then calling `transformBlockIndexMap` on a map built from `beforeValue`,
+ * then calling `transformIndexMap` on a map built from `beforeValue`,
  * must produce a map identical to one built fresh from `afterValue`.
  */
 function assertEquivalent({
@@ -29,20 +29,20 @@ function assertEquivalent({
   afterValue: ReadonlyArray<PortableTextBlock>
   op: EngineOperation
 }) {
-  const incrementalMap = new BlockIndexMap()
+  const incrementalMap = new IndexMap()
   buildIndexMaps(
     {schema, value: beforeValue as PortableTextBlock[], containers},
-    {blockIndexMap: incrementalMap},
+    {indexMap: incrementalMap},
   )
-  transformBlockIndexMap(incrementalMap, op, beforeValue, afterValue, {
+  transformIndexMap(incrementalMap, op, beforeValue, afterValue, {
     schema,
     containers,
   })
 
-  const oracleMap = new BlockIndexMap()
+  const oracleMap = new IndexMap()
   buildIndexMaps(
     {schema, value: afterValue as PortableTextBlock[], containers},
-    {blockIndexMap: oracleMap},
+    {indexMap: oracleMap},
   )
 
   expect(Object.fromEntries([...incrementalMap].sort())).toEqual(
@@ -104,7 +104,7 @@ const tableContainers = resolveContainers(tableSchema, [
   }),
 ])
 
-describe(transformBlockIndexMap.name, () => {
+describe(transformIndexMap.name, () => {
   test('insert root block at end', () => {
     const before: ReadonlyArray<PortableTextBlock> = []
     const after = [

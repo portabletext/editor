@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import {defineContainer, type Container} from '../renderers/renderer.types'
 import {getBlockObjectSchema} from './get-block-object-schema'
 import {resolveContainers} from './resolve-containers'
@@ -21,7 +21,7 @@ describe(getBlockObjectSchema.name, () => {
     )
     const context = {
       context: {schema, containers: new Map(), value: []},
-      blockIndexMap: buildBlockIndexMap(schema, new Map(), []),
+      indexMap: buildIndexMap(schema, new Map(), []),
     }
     const node = {_type: 'image', _key: 'i0', src: 'foo.png'}
 
@@ -60,7 +60,7 @@ describe(getBlockObjectSchema.name, () => {
 
     const context = {
       context: {schema, containers, value: []},
-      blockIndexMap: buildBlockIndexMap(schema, containers, []),
+      indexMap: buildIndexMap(schema, containers, []),
     }
     // `image` is in root `blockObjects` but not inline-declared inside callout.
     // Looking it up at a callout-internal position falls back to root.
@@ -83,7 +83,7 @@ describe(getBlockObjectSchema.name, () => {
     )
     const context = {
       context: {schema, containers: new Map(), value: []},
-      blockIndexMap: buildBlockIndexMap(schema, new Map(), []),
+      indexMap: buildIndexMap(schema, new Map(), []),
     }
     const node = {_type: 'unknown', _key: 'u0'}
 

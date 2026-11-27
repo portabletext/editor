@@ -123,7 +123,7 @@ function* getNodesSimple(
  * Compare two keyed paths in DFS pre-order. Returns -1, 0, or 1.
  *
  * Walks both paths in parallel; at the first divergence, consults
- * `blockIndexMap` for the sibling indices and compares them.
+ * `indexMap` for the sibling indices and compares them.
  *
  * Deliberately not `comparePaths` (`engine/path/compare-paths.ts`):
  * that compare treats an ancestor/descendant pair as equal (0), while
@@ -137,7 +137,7 @@ function comparePathsInTree(
   pathB: Path,
 ): -1 | 0 | 1 {
   // Walk both full paths in parallel; at the first divergent keyed
-  // segment, consult blockIndexMap for the sibling indices. The map is
+  // segment, consult indexMap for the sibling indices. The map is
   // keyed by serialized paths that include both keyed and field-name
   // segments, so we keep the full path prefix as we descend.
   const minLength = Math.min(pathA.length, pathB.length)
@@ -188,7 +188,7 @@ function comparePathsInTree(
 }
 
 function siblingIndex(snapshot: TraversalSnapshot, path: Path): number {
-  const index = snapshot.blockIndexMap.get(serializePath(path))
+  const index = snapshot.indexMap.get(serializePath(path))
   if (index !== undefined) {
     return index
   }
@@ -220,7 +220,7 @@ function* getNodesInRange(
 
   // Seek instead of scan: only the children between the boundaries'
   // branches at this level can intersect [from, to], so resolve those
-  // positions (O(1) through `blockIndexMap`) and iterate the window
+  // positions (O(1) through `indexMap`) and iterate the window
   // between them. The per-entry checks below stay the semantic source
   // of truth; an unresolvable boundary just leaves its side of the
   // window open, degrading to the previous full scan.
@@ -281,7 +281,7 @@ function boundaryChildIndex(
   }
 
   const resolvedIndex = resolveChildEntryIndex(
-    snapshot.blockIndexMap,
+    snapshot.indexMap,
     children,
     boundary.slice(0, childPathLength),
   )

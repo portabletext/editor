@@ -91,7 +91,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
 
         if (isKeyedSegment(lastSegment)) {
           const siblingIndex = resolveChildIndex(
-            editor.blockIndexMap,
+            editor.indexMap,
             path.slice(0, -1),
             lastSegment,
             children,
@@ -321,7 +321,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
       if (isKeyedSegment(lastSegment) || typeof lastSegment === 'number') {
         // Transform the selection BEFORE removing the node from the tree.
         // `findNearestSpans` anchors on the removed node's position, so the
-        // node must still be in the tree (and in `blockIndexMap`) to resolve
+        // node must still be in the tree (and in `indexMap`) to resolve
         // document order for keyed segments.
         if (editor.snapshot.context.selection) {
           let selection: EditorSelection = {
@@ -393,7 +393,7 @@ export function applyOperation(editor: Editor, op: EngineOperation): void {
 
           if (isKeyedSegment(lastSegment)) {
             index = resolveChildIndex(
-              editor.blockIndexMap,
+              editor.indexMap,
               path.slice(0, -1),
               lastSegment,
               children,
@@ -656,7 +656,7 @@ function replaceLastSegment(path: Path, segment: Path[number]): Path {
 }
 
 /**
- * Resolve a child index by keyed segment via `blockIndexMap`, falling
+ * Resolve a child index by keyed segment via `indexMap`, falling
  * back to a linear scan when the map misses or disagrees with the tree
  * (e.g. unkeyed transient nodes, or paths outside registered container
  * fields such as `markDefs`).
@@ -667,12 +667,12 @@ function replaceLastSegment(path: Path, segment: Path[number]): Path {
  * arrays, where no `{node, path}` entries exist to share the helper.
  */
 function resolveChildIndex(
-  blockIndexMap: ReadonlyMap<string, number>,
+  indexMap: ReadonlyMap<string, number>,
   parentSegments: Path,
   segment: KeyedSegment,
   children: Array<Node>,
 ): number {
-  const index = blockIndexMap.get(serializePath([...parentSegments, segment]))
+  const index = indexMap.get(serializePath([...parentSegments, segment]))
   if (index !== undefined && children[index]?._key === segment._key) {
     return index
   }
@@ -692,7 +692,7 @@ function findBlockSegment(path: Path): KeyedSegment | number | undefined {
 }
 
 /**
- * Resolve a root block's index via `blockIndexMap`, falling back to a
+ * Resolve a root block's index via `indexMap`, falling back to a
  * linear scan when the map misses or disagrees with the tree.
  */
 function resolveBlockIndex(
@@ -703,7 +703,7 @@ function resolveBlockIndex(
   if (typeof segment === 'number') {
     return segment < value.length ? segment : -1
   }
-  const index = editor.blockIndexMap.get(serializePath([segment]))
+  const index = editor.indexMap.get(serializePath([segment]))
   if (index !== undefined && value[index]?._key === segment._key) {
     return index
   }

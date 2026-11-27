@@ -14,7 +14,7 @@ import {
 import {createTestKeyGenerator} from '@portabletext/test'
 import {beforeEach, describe, expect, it, test} from 'vitest'
 import {createActor} from 'xstate'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {editorMachine} from '../editor/editor-machine'
 import {plugins} from '../engine-plugins/engine-plugins'
@@ -41,9 +41,9 @@ const editorActor = createActor(editorMachine, {
 })
 const e = createEditor()
 e.containers = new Map()
-e.blockIndexMap = new Map()
+e.indexMap = new Map()
 e.snapshot = {
-  blockIndexMap: e.blockIndexMap,
+  indexMap: e.indexMap,
   context: {
     containers: new Map(),
     converters: [],
@@ -238,7 +238,7 @@ describe(textPatch.name, () => {
         value: editor.snapshot.context.value as Array<PortableTextBlock>,
       },
       {
-        blockIndexMap: editor.snapshot.blockIndexMap as Map<string, number>,
+        indexMap: editor.snapshot.indexMap as Map<string, number>,
       },
     )
     editor.onChange()
@@ -306,7 +306,7 @@ describe(textPatch.name, () => {
             containers: new Map(),
             value: blockObjectChildren,
           },
-          blockIndexMap: buildBlockIndexMap(
+          indexMap: buildIndexMap(
             blockObjectSchema,
             new Map(),
             blockObjectChildren,

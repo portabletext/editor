@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import type {
   ChildArrayField,
   RegisteredContainer,
@@ -221,7 +221,7 @@ describe(isLeafObject.name, () => {
 
     const context = {
       context: {schema, containers, value: [table]},
-      blockIndexMap: buildBlockIndexMap(schema, containers, [table]),
+      indexMap: buildIndexMap(schema, containers, [table]),
     }
 
     test('image inside cell is void', () => {
@@ -293,7 +293,7 @@ describe(isLeafObject.name, () => {
 
     const context = {
       context: {schema, containers, value: [gallery]},
-      blockIndexMap: buildBlockIndexMap(schema, containers, [gallery]),
+      indexMap: buildIndexMap(schema, containers, [gallery]),
     }
 
     test('gallery is not void', () => {

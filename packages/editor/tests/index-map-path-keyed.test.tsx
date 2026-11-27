@@ -3,7 +3,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {createTestEditor} from '../src/test/vitest'
 
-describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
+describe('indexMap is keyed by path with bare-_key read fallback', () => {
   test('Scenario: initial build populates the path-keyed view', async () => {
     const {editor} = await createTestEditor({
       initialValue: [
@@ -20,7 +20,7 @@ describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
       ],
     })
 
-    expect([...editor.getSnapshot().blockIndexMap]).toEqual([
+    expect([...editor.getSnapshot().indexMap]).toEqual([
       ['[_key=="b0"]', 0],
       ['[_key=="b0"].children[_key=="s0"]', 0],
       ['[_key=="b1"]', 1],
@@ -50,7 +50,7 @@ describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
     // Map insertion order follows normalization visits; with defaults
     // deferred to local edits, `b0`'s child entry is re-registered by the
     // split and iterates last. The entries and indexes are what matter.
-    expect(new Map(editor.getSnapshot().blockIndexMap)).toEqual(
+    expect(new Map(editor.getSnapshot().indexMap)).toEqual(
       new Map([
         ['[_key=="b0"]', 0],
         ['[_key=="b0"].children[_key=="s0"]', 0],
@@ -82,7 +82,7 @@ describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
       expect(editor.getSnapshot().context.value).toHaveLength(1)
     })
 
-    expect([...editor.getSnapshot().blockIndexMap]).toEqual([
+    expect([...editor.getSnapshot().indexMap]).toEqual([
       ['[_key=="b1"]', 0],
       ['[_key=="b1"].children[_key=="s1"]', 0],
     ])
@@ -104,14 +104,32 @@ describe('blockIndexMap is keyed by path with bare-_key read fallback', () => {
       ],
     })
 
-    const blockIndexMap = editor.getSnapshot().blockIndexMap
+    const indexMap = editor.getSnapshot().indexMap
 
-    expect(blockIndexMap.get('b0')).toBe(0)
-    expect(blockIndexMap.get('b1')).toBe(1)
-    expect(blockIndexMap.get('[_key=="b0"]')).toBe(0)
-    expect(blockIndexMap.get('[_key=="b1"]')).toBe(1)
-    expect(blockIndexMap.has('b0')).toBe(true)
-    expect(blockIndexMap.has('b1')).toBe(true)
-    expect(blockIndexMap.has('missing')).toBe(false)
+    expect(indexMap.get('b0')).toBe(0)
+    expect(indexMap.get('b1')).toBe(1)
+    expect(indexMap.get('[_key=="b0"]')).toBe(0)
+    expect(indexMap.get('[_key=="b1"]')).toBe(1)
+    expect(indexMap.has('b0')).toBe(true)
+    expect(indexMap.has('b1')).toBe(true)
+    expect(indexMap.has('missing')).toBe(false)
+  })
+
+  test('Scenario: deprecated `blockIndexMap` is the same map as `indexMap`', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _key: keyGenerator(),
+          _type: 'block',
+          children: [{_key: keyGenerator(), _type: 'span', text: 'foo'}],
+        },
+      ],
+    })
+
+    const snapshot = editor.getSnapshot()
+
+    expect(snapshot.blockIndexMap).toBe(snapshot.indexMap)
   })
 })

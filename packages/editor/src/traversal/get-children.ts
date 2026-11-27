@@ -34,13 +34,13 @@ export function getChildren(
 
     let node: Node | undefined
     if (isKeyedSegment(segment)) {
-      // Resolve via `blockIndexMap` (O(1)) and fall back to a linear scan on a
+      // Resolve via `indexMap` (O(1)) and fall back to a linear scan on a
       // miss or when the snapshot's map disagrees with the value, mirroring
       // `getNode`. The candidate path is this segment's full keyed path.
       const candidatePath: Path = isRoot
         ? [{_key: segment._key}]
         : [...currentPath, currentFieldName, {_key: segment._key}]
-      const index = snapshot.blockIndexMap.get(serializePath(candidatePath))
+      const index = snapshot.indexMap.get(serializePath(candidatePath))
       node =
         index !== undefined && currentChildren[index]?._key === segment._key
           ? currentChildren[index]

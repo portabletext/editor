@@ -4,12 +4,12 @@ import {buildIndexMaps} from '../src/internal-utils/build-index-maps'
 import {boundaryEquivalentSelections} from './boundary-equivalent'
 
 function snapshotFor(schema: any, value: any, containers: any): any {
-  const blockIndexMap = new Map<string, number>()
+  const indexMap = new Map<string, number>()
   buildIndexMaps(
     {schema, value, containers},
-    {blockIndexMap, listIndexMap: new Map<string, number>()},
+    {indexMap, listIndexMap: new Map<string, number>()},
   )
-  return {context: {schema, value, containers}, blockIndexMap}
+  return {context: {schema, value, containers}, indexMap}
 }
 
 const schema = compileSchema(defineSchema({}))

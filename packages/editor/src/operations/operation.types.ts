@@ -10,7 +10,7 @@ export type OperationSnapshot = {
   context: TraversalSnapshot['context'] & {
     keyGenerator: () => string
   }
-  blockIndexMap: TraversalSnapshot['blockIndexMap']
+  indexMap: TraversalSnapshot['indexMap']
 }
 
 export type OperationImplementation<

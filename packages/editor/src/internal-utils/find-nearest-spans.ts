@@ -22,7 +22,7 @@ export type SpanEntry = {
  * Anchored replacement for scanning the whole document with `getNodes`
  * from the start: walks outward from `path` level by level (siblings
  * through `getChildren`, the position within them through
- * `blockIndexMap`), descending only into sibling subtrees between
+ * `indexMap`), descending only into sibling subtrees between
  * `path` and the answer. Equivalence with the document scan is pinned
  * by the oracle test in `find-nearest-spans.test.ts`.
  */
@@ -55,7 +55,7 @@ function findNextSpan(
     const parentPath = nodeParentPath(currentPath)
     const siblings = getChildren(snapshot, parentPath)
     const index = resolveChildEntryIndex(
-      snapshot.blockIndexMap,
+      snapshot.indexMap,
       siblings,
       currentPath,
     )
@@ -95,7 +95,7 @@ function findPreviousSpan(
     const parentPath = nodeParentPath(currentPath)
     const siblings = getChildren(snapshot, parentPath)
     const index = resolveChildEntryIndex(
-      snapshot.blockIndexMap,
+      snapshot.indexMap,
       siblings,
       currentPath,
     )

@@ -1,10 +1,10 @@
 import {plugins} from '../engine-plugins/engine-plugins'
 import {createEditor} from '../engine/create-editor'
 import {withDOM} from '../engine/dom/plugin/with-dom'
-import {BlockIndexMap} from '../internal-utils/block-index-map'
 import {buildIndexMaps} from '../internal-utils/build-index-maps'
 import {createPlaceholderBlock} from '../internal-utils/create-placeholder-block'
 import {debug} from '../internal-utils/debug'
+import {IndexMap} from '../internal-utils/index-map'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
 import {setupRemotePatches} from './remote-patches'
@@ -24,7 +24,7 @@ export function createEditorEngine(
 
   const context = config.editorActor.getSnapshot().context
 
-  const blockIndexMap = new BlockIndexMap()
+  const indexMap = new IndexMap()
 
   const placeholderBlock = createPlaceholderBlock({
     context: {
@@ -35,7 +35,7 @@ export function createEditorEngine(
       value: [],
       keyGenerator: context.keyGenerator,
     },
-    blockIndexMap,
+    indexMap,
   })
 
   const editor = createEditor()
@@ -45,7 +45,8 @@ export function createEditorEngine(
   // identity) when the editor settles; inner mutable values
   // (selection, value, etc) are mutated in place by operations.
   editor.snapshot = {
-    blockIndexMap,
+    indexMap,
+    blockIndexMap: indexMap,
     context: {
       containers: new Map(),
       converters: context.initialConverters,
@@ -67,7 +68,7 @@ export function createEditorEngine(
   editor.textBlocks = new Map()
 
   editor.decoratedRanges = []
-  editor.blockIndexMap = blockIndexMap
+  editor.indexMap = indexMap
   editor.history = {undos: [], redos: []}
 
   editor.selectorChannelsPending = {registrations: false}
@@ -109,7 +110,7 @@ export function createEditorEngine(
       containers: editorEngine.snapshot.context.containers,
     },
     {
-      blockIndexMap: editorEngine.blockIndexMap,
+      indexMap: editorEngine.indexMap,
     },
   )
 

@@ -41,6 +41,10 @@ export type EditorContext = {
  */
 export type EditorSnapshot = {
   context: EditorContext
+  indexMap: ReadonlyMap<string, number>
+  /**
+   * @deprecated Use `indexMap`
+   */
   blockIndexMap: ReadonlyMap<string, number>
   /**
    * @beta
@@ -75,7 +79,8 @@ export function createEditorSnapshot({
   } satisfies EditorContext
 
   return {
-    blockIndexMap: editor.blockIndexMap,
+    indexMap: editor.indexMap,
+    blockIndexMap: editor.indexMap,
     context,
     decoratorState: editor.snapshot.decoratorState,
   } satisfies EditorSnapshot
