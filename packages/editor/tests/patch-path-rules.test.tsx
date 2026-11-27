@@ -19,17 +19,9 @@ import {isKeyedSegment} from '../src/utils/util.is-keyed-segment'
 
 const knownDifferences = new Set<PatchPathRule['id']>([
   'index--1-insert-replace',
-  'index--1-inc',
-  'index--1-dec',
   'index--2-insert-replace',
-  'index--2-inc',
-  'index--2-dec',
   'index-0-insert-replace',
-  'index-0-inc',
-  'index-0-dec',
   'index-2-insert-replace',
-  'index-2-inc',
-  'index-2-dec',
   'index-3-insert-before',
   'index-3-insert-after',
   'index-3-insert-replace',

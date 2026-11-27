@@ -1,5 +1,7 @@
 import type {
+  DecPatch,
   DiffMatchPatch,
+  IncPatch,
   InsertPatch,
   Patch,
   SetIfMissingPatch,
@@ -70,6 +72,10 @@ export function createApplyPatch(
         case 'diffMatchPatch':
           changed = diffMatchPatch(editor, patch)
           break
+        case 'inc':
+        case 'dec':
+          changed = incDecPatch(editor, patch)
+          break
       }
     } catch (err) {
       console.error(err)
@@ -92,6 +98,8 @@ function resolveNegativeIndexes(
   if (
     patch.type !== 'set' &&
     patch.type !== 'unset' &&
+    patch.type !== 'inc' &&
+    patch.type !== 'dec' &&
     !(patch.type === 'insert' && patch.items.length === 1)
   ) {
     return patch
@@ -339,6 +347,27 @@ function setPatch(
     type: 'set',
     path: patch.path,
     value: patch.value,
+  })
+}
+
+function incDecPatch(
+  editor: PortableTextEditorEngine,
+  patch: IncPatch | DecPatch,
+) {
+  const currentValue = getValue(editor.snapshot.context.value, patch.path)
+
+  if (typeof currentValue !== 'number' || typeof patch.value !== 'number') {
+    // Like Sanity, `inc` and `dec` only apply to a number that is present.
+    return false
+  }
+
+  return editor.apply({
+    type: 'set',
+    path: patch.path,
+    value:
+      patch.type === 'inc'
+        ? currentValue + patch.value
+        : currentValue - patch.value,
   })
 }
 
