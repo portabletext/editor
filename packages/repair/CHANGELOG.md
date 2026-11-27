@@ -1,5 +1,30 @@
 # @portabletext/repair
 
+## 2.0.0-next.0
+
+### Major Changes
+
+- [#3675](https://github.com/portabletext/editor/pull/3675) [`9b432f7`](https://github.com/portabletext/editor/commit/9b432f73f98c295d3946bc223ed383c02ecff785) Thanks [@christianhg](https://github.com/christianhg)! - feat!: remove non-object array entries
+  
+  A string, number, boolean, null or array entry in an array of objects is removed with one `unset` correction.
+  
+  A correction can now contain an `unset` patch. Code that applies corrections must handle `unset` as well as `set`. `StructuralRule` gains `'non-object'`, so an exhaustive switch over correction types needs a new case.
+
+- [#3720](https://github.com/portabletext/editor/pull/3720) [`28b16ee`](https://github.com/portabletext/editor/commit/28b16eebb14eec3d42ce2cbfa38f66758ac2b950) Thanks [@christianhg](https://github.com/christianhg)! - fix!: stop setting span `text` outside a text block and text block `children` inside one
+  
+  `getStructuralCorrection` no longer returns a `span-text` correction for a span whose parent is missing or is not a text block, such as a span at the root or in a container field. It no longer returns a `missing-children` correction for a text block inside another text block. The `non-object`, `missing-type`, `missing-key` and `duplicate-key` rules are unchanged. Code that relied on those two corrections must apply them itself.
+  
+  ```ts
+  getStructuralCorrection(context, {
+    node: {_type: 'block', _key: 'b2'},
+    path: [{_key: 'b1'}, 'children', {_key: 'b2'}],
+    parent: {node: {_type: 'block', _key: 'b1', children: []}, path: [{_key: 'b1'}]},
+    siblings: () => [],
+  })
+  // Previously: {type: 'missing-children', patches: [{type: 'set', path: [..., 'children'], value: []}]}
+  // Now: undefined
+  ```
+
 ## 1.0.4
 
 ### Patch Changes
