@@ -184,6 +184,158 @@ describe(createPlaceholderBlock.name, () => {
       })
     })
 
+    test('Scenario: Placeholder removed by incoming `insert` after the last index', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const patches: Array<Patch> = []
+      let foreignValue: Array<PortableTextBlock> | undefined
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: foreignValue,
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }}
+          />
+        ),
+      })
+      const fooBlock = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+      const barBlock = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+      const insertPatch = insert([fooBlock, barBlock], 'after', [-1])
+      foreignValue = applyAll(foreignValue, [setIfMissing([], []), insertPatch])
+
+      editor.send({
+        type: 'patches',
+        patches: [{...insertPatch, origin: 'remote'}],
+        snapshot: foreignValue,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock, barBlock])
+      })
+
+      editor.send({type: 'delete.block', at: [{_key: barBlock._key}]})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock])
+        expect(foreignValue).toEqual([fooBlock])
+        expect(patches).toEqual([unset([{_key: barBlock._key}])])
+      })
+    })
+
+    test('Scenario: Placeholder removed by incoming `insert` before the first index', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const patches: Array<Patch> = []
+      let foreignValue: Array<PortableTextBlock> | undefined
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: foreignValue,
+        children: (
+          <EventListenerPlugin
+            on={(event) => {
+              if (event.type === 'patch') {
+                const {origin: _, ...patch} = event.patch
+                patches.push(patch)
+                foreignValue = applyAll(foreignValue, [patch])
+              }
+            }}
+          />
+        ),
+      })
+      const fooBlock = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+      const barBlock = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+      const insertPatch = insert([fooBlock, barBlock], 'before', [0])
+      foreignValue = applyAll(foreignValue, [setIfMissing([], []), insertPatch])
+
+      editor.send({
+        type: 'patches',
+        patches: [{...insertPatch, origin: 'remote'}],
+        snapshot: foreignValue,
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock, barBlock])
+      })
+
+      editor.send({type: 'delete.block', at: [{_key: barBlock._key}]})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock])
+        expect(foreignValue).toEqual([fooBlock])
+        expect(patches).toEqual([unset([{_key: barBlock._key}])])
+      })
+    })
+
+    test('Scenario: Placeholder removed by incoming `replace` on the first index', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const {editor} = await createTestEditor({keyGenerator})
+      const fooBlock = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+      const barBlock = {
+        _type: 'block',
+        _key: keyGenerator(),
+        children: [
+          {_type: 'span', _key: keyGenerator(), text: 'bar', marks: []},
+        ],
+        markDefs: [],
+        style: 'normal',
+      }
+      const replacePatch = insert([fooBlock, barBlock], 'replace', [0])
+
+      editor.send({
+        type: 'patches',
+        patches: [{...replacePatch, origin: 'remote'}],
+        snapshot: [fooBlock, barBlock],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([fooBlock, barBlock])
+      })
+    })
+
     test('Scenario: Placeholder removed by incoming patch with a foreign value', async () => {
       const keyGenerator = createTestKeyGenerator()
       const blockKey = keyGenerator()
