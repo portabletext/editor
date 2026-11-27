@@ -1,5 +1,6 @@
 import type {Patch} from '@portabletext/patches'
 import {compileSchema, defineSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
 import type {EngineOperation} from '../engine/interfaces/operation'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
@@ -61,6 +62,241 @@ describe(transformOperation.name, () => {
           path: [{_key: 'block1'}, 'children', {_key: 'span1'}],
           offset: 0,
           text: 'hello',
+        },
+      ])
+    })
+  })
+
+  describe('insert patch with `replace` position', () => {
+    test('drops an operation inside the replaced item when the new item reuses its key', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const editor = createMockEditor([{_key: blockKey, _type: 'block'}])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        items: [{_key: spanKey, _type: 'span', text: 'barbaz'}],
+        position: 'replace',
+      }
+
+      const insertTextOperation: EngineOperation = {
+        type: 'insert.text',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+        text: 'x',
+      }
+
+      const result = transformOperation(
+        editor,
+        insertPatch,
+        insertTextOperation,
+      )
+
+      expect(result).toEqual([])
+    })
+
+    test('drops an operation inside the replaced item when the new item has a new key', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const newSpanKey = keyGenerator()
+      const editor = createMockEditor([{_key: blockKey, _type: 'block'}])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        items: [{_key: newSpanKey, _type: 'span', text: 'barbaz'}],
+        position: 'replace',
+      }
+
+      const insertTextOperation: EngineOperation = {
+        type: 'insert.text',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+        text: 'x',
+      }
+
+      const result = transformOperation(
+        editor,
+        insertPatch,
+        insertTextOperation,
+      )
+
+      expect(result).toEqual([])
+    })
+
+    test('drops an operation inside the replaced block', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const spanKey = keyGenerator()
+      const newBlockKey = keyGenerator()
+      const editor = createMockEditor([{_key: newBlockKey, _type: 'block'}])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: blockKey}],
+        items: [{_key: newBlockKey, _type: 'block'}],
+        position: 'replace',
+      }
+
+      const insertTextOperation: EngineOperation = {
+        type: 'insert.text',
+        path: [{_key: blockKey}, 'children', {_key: spanKey}],
+        offset: 3,
+        text: 'x',
+      }
+
+      const result = transformOperation(
+        editor,
+        insertPatch,
+        insertTextOperation,
+      )
+
+      expect(result).toEqual([])
+    })
+
+    test('returns an operation outside the replaced item unchanged', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const replacedSpanKey = keyGenerator()
+      const editedSpanKey = keyGenerator()
+      const newSpanKey = keyGenerator()
+      const editor = createMockEditor([{_key: blockKey, _type: 'block'}])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: blockKey}, 'children', {_key: replacedSpanKey}],
+        items: [{_key: newSpanKey, _type: 'span', text: 'barbaz'}],
+        position: 'replace',
+      }
+
+      const insertTextOperation: EngineOperation = {
+        type: 'insert.text',
+        path: [{_key: blockKey}, 'children', {_key: editedSpanKey}],
+        offset: 3,
+        text: 'x',
+      }
+
+      const result = transformOperation(
+        editor,
+        insertPatch,
+        insertTextOperation,
+      )
+
+      expect(result).toEqual([
+        {
+          type: 'insert.text',
+          path: [{_key: blockKey}, 'children', {_key: editedSpanKey}],
+          offset: 3,
+          text: 'x',
+        },
+      ])
+    })
+
+    test('returns an insert operation unchanged when only its sibling anchor is replaced', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const anchorBlockKey = keyGenerator()
+      const insertedBlockKey = keyGenerator()
+      const newBlockKey = keyGenerator()
+      const editor = createMockEditor([
+        {_key: newBlockKey, _type: 'block'},
+        {_key: insertedBlockKey, _type: 'block'},
+      ])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: anchorBlockKey}],
+        items: [{_key: newBlockKey, _type: 'block'}],
+        position: 'replace',
+      }
+
+      const insertOperation: EngineOperation = {
+        type: 'insert',
+        path: [{_key: anchorBlockKey}],
+        node: {_key: insertedBlockKey, _type: 'block'},
+        position: 'after',
+        inverse: {type: 'unset', path: [{_key: insertedBlockKey}]},
+      }
+
+      const result = transformOperation(editor, insertPatch, insertOperation)
+
+      expect(result).toEqual([
+        {
+          type: 'insert',
+          path: [{_key: anchorBlockKey}],
+          node: {_key: insertedBlockKey, _type: 'block'},
+          position: 'after',
+          inverse: {type: 'unset', path: [{_key: insertedBlockKey}]},
+        },
+      ])
+    })
+
+    test('drops an insert operation whose inserted node is replaced', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const anchorBlockKey = keyGenerator()
+      const insertedBlockKey = keyGenerator()
+      const editor = createMockEditor([
+        {_key: anchorBlockKey, _type: 'block'},
+        {_key: insertedBlockKey, _type: 'block'},
+      ])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: insertedBlockKey}],
+        items: [{_key: insertedBlockKey, _type: 'block'}],
+        position: 'replace',
+      }
+
+      const insertOperation: EngineOperation = {
+        type: 'insert',
+        path: [{_key: anchorBlockKey}],
+        node: {_key: insertedBlockKey, _type: 'block'},
+        position: 'after',
+        inverse: {type: 'unset', path: [{_key: insertedBlockKey}]},
+      }
+
+      const result = transformOperation(editor, insertPatch, insertOperation)
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('`after` insert patch with an item reusing a key', () => {
+    test('returns the operation unchanged (the editor gives the inserted copy a new key)', () => {
+      const keyGenerator = createTestKeyGenerator()
+      const blockKey = keyGenerator()
+      const anchorSpanKey = keyGenerator()
+      const editedSpanKey = keyGenerator()
+      const editor = createMockEditor([{_key: blockKey, _type: 'block'}])
+
+      const insertPatch: Patch = {
+        type: 'insert',
+        path: [{_key: blockKey}, 'children', {_key: anchorSpanKey}],
+        items: [{_key: editedSpanKey, _type: 'span', text: 'barbaz'}],
+        position: 'after',
+      }
+
+      const insertTextOperation: EngineOperation = {
+        type: 'insert.text',
+        path: [{_key: blockKey}, 'children', {_key: editedSpanKey}],
+        offset: 3,
+        text: 'x',
+      }
+
+      const result = transformOperation(
+        editor,
+        insertPatch,
+        insertTextOperation,
+      )
+
+      expect(result).toEqual([
+        {
+          type: 'insert.text',
+          path: [{_key: blockKey}, 'children', {_key: editedSpanKey}],
+          offset: 3,
+          text: 'x',
         },
       ])
     })

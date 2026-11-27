@@ -1137,6 +1137,244 @@ describe('event.history.undo', () => {
     expect(editor.getSnapshot().context.value).toEqual(repairedValue)
   })
 
+  test('Scenario: Undo after a collaborator replaces the edited span with one reusing its key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    })
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const end = {path: spanPath, offset: 3}
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: {anchor: end, focus: end}})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: end,
+        focus: end,
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(getFirstBlock(editor.getSnapshot())?.node).toEqual({
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+      })
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: spanPath,
+          position: 'replace',
+          items: [{_type: 'span', _key: spanKey, text: 'barbaz', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    editor.send({type: 'history.undo'})
+
+    const children = editor
+      .getSnapshot()
+      .context.value.flatMap((block) =>
+        'children' in block && Array.isArray(block.children)
+          ? block.children
+          : [],
+      )
+    expect(children.filter((child) => child._key === spanKey)).toEqual([
+      {_type: 'span', _key: spanKey, text: 'barbaz', marks: []},
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: spanPath, offset: 3},
+      focus: {path: spanPath, offset: 3},
+      backward: false,
+    })
+  })
+
+  test('Scenario: Undo after a collaborator inserts a span after the edited one reusing its key', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    })
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const end = {path: spanPath, offset: 3}
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: {anchor: end, focus: end}})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: end,
+        focus: end,
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(getFirstBlock(editor.getSnapshot())?.node).toEqual({
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+      })
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: spanPath,
+          position: 'after',
+          items: [{_type: 'span', _key: spanKey, text: 'barbaz', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: spanKey, text: 'foox', marks: []},
+            {_type: 'span', _key: 'k4', text: 'barbaz', marks: []},
+          ],
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    expect(editor.getSnapshot().context.value).toEqual([
+      {
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: spanKey, text: 'foobarbaz', marks: []},
+        ],
+      },
+    ])
+    expect(editor.getSnapshot().context.selection).toEqual({
+      anchor: {path: spanPath, offset: 3},
+      focus: {path: spanPath, offset: 3},
+      backward: false,
+    })
+  })
+
+  test('Scenario: Undo after a collaborator replaces the edited span with a new one', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+    const newSpanKey = keyGenerator()
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+        },
+      ],
+    })
+    const spanPath = [{_key: blockKey}, 'children', {_key: spanKey}]
+    const end = {path: spanPath, offset: 3}
+
+    editor.send({type: 'focus'})
+    editor.send({type: 'select', at: {anchor: end, focus: end}})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.selection).toEqual({
+        anchor: end,
+        focus: end,
+        backward: false,
+      })
+    })
+
+    editor.send({type: 'insert.text', text: 'x'})
+
+    await vi.waitFor(() => {
+      expect(getFirstBlock(editor.getSnapshot())?.node).toEqual({
+        _type: 'block',
+        _key: blockKey,
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: spanKey, text: 'foox', marks: []}],
+      })
+    })
+
+    editor.send({
+      type: 'apply',
+      patches: [
+        {
+          type: 'insert',
+          path: spanPath,
+          position: 'replace',
+          items: [{_type: 'span', _key: newSpanKey, text: 'barbaz', marks: []}],
+          origin: 'remote',
+        },
+      ],
+    })
+
+    const consoleError = vi.spyOn(console, 'error')
+
+    editor.send({type: 'history.undo'})
+
+    const children = editor
+      .getSnapshot()
+      .context.value.flatMap((block) =>
+        'children' in block && Array.isArray(block.children)
+          ? block.children
+          : [],
+      )
+    expect(children.filter((child) => child._key === newSpanKey)).toEqual([
+      {_type: 'span', _key: newSpanKey, text: 'barbaz', marks: []},
+    ])
+    expect(consoleError.mock.calls).toEqual([])
+    consoleError.mockRestore()
+  })
+
   test('Scenario: Undoing gallery deletion restores its children', async () => {
     const keyGenerator = createTestKeyGenerator()
     const fooKey = keyGenerator()
