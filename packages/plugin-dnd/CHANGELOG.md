@@ -1,5 +1,15 @@
 # @portabletext/plugin-dnd
 
+## 2.0.31-next.0
+
+### Patch Changes
+
+- [#3702](https://github.com/portabletext/editor/pull/3702) [`ff692fc`](https://github.com/portabletext/editor/commit/ff692fc8d56a59f4b655b3c38a6ddf9725bb2c2f) Thanks [@christianhg](https://github.com/christianhg)! - fix(plugin-dnd): write drop position keys in the editor's path format
+  
+  `useDropPosition` finds the drop position for a block by a string built from its path. That string now follows the editor's path format. An array index is written as `[2]` instead of `.2`, so it can no longer match a field named `"2"`, and a nested field named `true`, `false` or `null` is written as `["null"]`. Drop positions for keyed paths are found as before.
+- Updated dependencies [[`216fb52`](https://github.com/portabletext/editor/commit/216fb5210eec66f79e6c070b218be1e23aa05f59), [`91d91a4`](https://github.com/portabletext/editor/commit/91d91a4af5e4a4c7f97eb340981a84afe43770c8), [`a8e5f6b`](https://github.com/portabletext/editor/commit/a8e5f6bef83793ed7885d5f61221eead8d79e90a), [`77b4cda`](https://github.com/portabletext/editor/commit/77b4cda5764d7b392d710c6578060d623b9e5507), [`be03281`](https://github.com/portabletext/editor/commit/be03281252910647eb369d18092bcfaa164cdea7), [`9758101`](https://github.com/portabletext/editor/commit/97581019a8024c583ea12e4ee4f998ec2aff2197), [`c822e68`](https://github.com/portabletext/editor/commit/c822e68640ec33342bb790909193300bbc3a330a), [`b560b03`](https://github.com/portabletext/editor/commit/b560b031bd8549d254f1c200518df22447646546), [`e4e4d1b`](https://github.com/portabletext/editor/commit/e4e4d1bc8cff842e5e4176979479a4bafc5061a8), [`0bab687`](https://github.com/portabletext/editor/commit/0bab6879efdd0443bb5d9295130927e64799190c), [`5824234`](https://github.com/portabletext/editor/commit/5824234bd36536248d2ef9082b6eb7cee65ad0dc), [`b3125b6`](https://github.com/portabletext/editor/commit/b3125b657a0b1d186b0a22f9224cea3db93c385c), [`e99d949`](https://github.com/portabletext/editor/commit/e99d9493249eb80078033527e523b7339340b2d4), [`b993cec`](https://github.com/portabletext/editor/commit/b993cec04e90ffaf0c44292a2671f6d6f026d5c9), [`0b3524c`](https://github.com/portabletext/editor/commit/0b3524c6aeb6bb0705de1d7b742708056b5c9509), [`6477db8`](https://github.com/portabletext/editor/commit/6477db834da51a6bcbf92fa228f36e68d2fed08e)]:
+  - @portabletext/editor@9.0.0-next.0
+
 ## 2.0.30
 
 ### Patch Changes
