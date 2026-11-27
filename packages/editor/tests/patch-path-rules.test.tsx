@@ -67,6 +67,12 @@ const knownDifferences = new Set<PatchPathRule['id']>([
   'nested-array-insert-before',
   'nested-array-insert-after',
   'nested-array-insert-replace',
+  'range-3-1-unset',
+  'range-1-3-set',
+  'range-1-3-property-set',
+  'range-1-3-insert-before',
+  'range-1-3-insert-after',
+  'range-1-3-insert-replace',
 ])
 
 const knownConsoleErrors: Partial<
@@ -83,6 +89,9 @@ const knownConsoleErrors: Partial<
   'absent-insert-before': siblingNotFound,
   'absent-insert-after': siblingNotFound,
   'absent-insert-replace': siblingNotFound,
+  'range-1-3-insert-before': lastSegmentIsAField,
+  'range-1-3-insert-after': lastSegmentIsAField,
+  'range-1-3-insert-replace': lastSegmentIsAField,
 }
 
 const editorRows = patchPathRules
@@ -314,4 +323,8 @@ function pastTheEnd(path: string) {
 
 function siblingNotFound(path: string) {
   return `Cannot apply an "insert" operation at path ${path} because the sibling was not found.`
+}
+
+function lastSegmentIsAField(path: string) {
+  return `Cannot apply an "insert" operation at path ${path} because the last segment is a field name.`
 }

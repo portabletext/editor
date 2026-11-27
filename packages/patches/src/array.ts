@@ -1,5 +1,11 @@
 import insert from './arrayInsert'
-import type {JSONValue, KeyedSegment, Patch, PathSegment} from './types'
+import type {
+  IndexTuple,
+  JSONValue,
+  KeyedSegment,
+  Patch,
+  PathSegment,
+} from './types'
 
 function isKeyedSegment(segment: unknown): segment is KeyedSegment {
   return typeof segment === 'object' && segment !== null && '_key' in segment
@@ -71,6 +77,15 @@ export function applyPatchToArray(
     return insert(value, patch.position, 0, patch.items)
   }
 
+  if (isIndexTuple(head)) {
+    return applyPatchToRange(
+      nextValue,
+      head,
+      {...patch, path: tail},
+      applyPatch,
+    )
+  }
+
   const index = findTargetIndex(value, head)
 
   // If the given selector could not be found, return as-is
@@ -100,4 +115,71 @@ export function applyPatchToArray(
   }) as JSONValue
 
   return nextValue
+}
+
+function applyPatchToRange(
+  array: Array<JSONValue>,
+  range: IndexTuple,
+  patch: Patch,
+  applyPatch: (value: unknown, patch: Patch) => unknown,
+): Array<JSONValue> {
+  const [start, end] = resolveRange(range, array.length)
+
+  if (start === end) {
+    // A reversed range such as `[3, 1]` lands here too: Sanity duplicates
+    // items for it, which is a defect this package does not copy.
+    return array
+  }
+
+  // Sanity was measured for `set` at the range itself and at one field
+  // below it; deeper paths keep their old behaviour.
+  if (patch.type === 'set' && patch.path.length <= 1) {
+    for (let index = start; index < end; index++) {
+      array[index] = applyPatch(array[index], patch) as JSONValue
+    }
+    return array
+  }
+
+  if (patch.path.length > 0) {
+    return array
+  }
+
+  if (patch.type === 'unset') {
+    array.splice(start, end - start)
+    return array
+  }
+
+  if (patch.type === 'insert') {
+    if (patch.position === 'before') {
+      array.splice(start, 0, ...patch.items)
+    } else if (patch.position === 'after') {
+      array.splice(end, 0, ...patch.items)
+    } else {
+      array.splice(start, end - start, ...patch.items)
+    }
+  }
+
+  return array
+}
+
+function isIndexTuple(segment: PathSegment | undefined): segment is IndexTuple {
+  return (
+    Array.isArray(segment) &&
+    segment.length === 2 &&
+    segment.every((bound) => bound === '' || Number.isInteger(bound))
+  )
+}
+
+function resolveRange(
+  [start, end]: IndexTuple,
+  length: number,
+): [start: number, end: number] {
+  const first = clampBound(start === '' ? 0 : start, length)
+  const last = clampBound(end === '' ? length : end, length)
+
+  return [first, Math.max(first, last)]
+}
+
+function clampBound(bound: number, length: number) {
+  return Math.min(length, Math.max(0, bound < 0 ? length + bound : bound))
 }

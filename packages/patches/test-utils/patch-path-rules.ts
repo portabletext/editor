@@ -7,6 +7,7 @@ import type {Patch} from '../src/types'
  * and either the array Sanity produced or the message it rejected the
  * mutation with. Sanity's outcome is the same with the array at the root, in
  * a container, in a container in a container and in a block object's field.
+ * The `range` rows were measured on 2026-11-27 with the same API version.
  */
 export const patchPathRules: Array<PatchPathRule> = [
   {
@@ -2627,6 +2628,139 @@ export const patchPathRules: Array<PatchPathRule> = [
     patch: {type: 'set', path: [{_key: 'block-z'}, 'style'], value: 'baz'},
     sanity: {result: [block('block-a'), 4]},
   },
+  {
+    id: 'range-1-3-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[1, 3]]},
+    sanity: {result: [block('a'), block('d')]},
+  },
+  {
+    id: 'range-1-open-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[1, '']]},
+    sanity: {result: [block('a')]},
+  },
+  {
+    id: 'range-open-2-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [['', 2]]},
+    sanity: {result: [block('c'), block('d')]},
+  },
+  {
+    id: 'range--2-open-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[-2, '']]},
+    sanity: {result: [block('a'), block('b')]},
+  },
+  {
+    id: 'range-1--1-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[1, -1]]},
+    sanity: {result: [block('a'), block('d')]},
+  },
+  {
+    id: 'range-2-2-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[2, 2]]},
+    sanity: {result: [block('a'), block('b'), block('c'), block('d')]},
+  },
+  {
+    id: 'range-3-1-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[3, 1]]},
+    sanity: {
+      result: [
+        block('a'),
+        block('b'),
+        block('c'),
+        block('b'),
+        block('c'),
+        block('d'),
+      ],
+    },
+  },
+  {
+    id: 'range-2-10-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[2, 10]]},
+    sanity: {result: [block('a'), block('b')]},
+  },
+  {
+    id: 'range-5-7-unset',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'unset', path: [[5, 7]]},
+    sanity: {result: [block('a'), block('b'), block('c'), block('d')]},
+  },
+  {
+    id: 'range-1-3-property-set',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'set', path: [[1, 3], 'count'], value: 9},
+    sanity: {
+      result: [
+        block('a'),
+        block('b', 'foo', {count: 9}),
+        block('c', 'foo', {count: 9}),
+        block('d'),
+      ],
+    },
+  },
+  {
+    id: 'range-1-3-set',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {type: 'set', path: [[1, 3]], value: block('z')},
+    sanity: {result: [block('a'), block('z'), block('z'), block('d')]},
+  },
+  {
+    id: 'range-1-3-insert-before',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {
+      type: 'insert',
+      path: [[1, 3]],
+      position: 'before',
+      items: [block('z')],
+    },
+    sanity: {
+      result: [block('a'), block('z'), block('b'), block('c'), block('d')],
+    },
+  },
+  {
+    id: 'range-1-3-insert-after',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {
+      type: 'insert',
+      path: [[1, 3]],
+      position: 'after',
+      items: [block('z')],
+    },
+    sanity: {
+      result: [block('a'), block('b'), block('c'), block('z'), block('d')],
+    },
+  },
+  {
+    id: 'range-1-3-insert-replace',
+    rule: 'range',
+    start: [block('a'), block('b'), block('c'), block('d')],
+    patch: {
+      type: 'insert',
+      path: [[1, 3]],
+      position: 'replace',
+      items: [block('z')],
+    },
+    sanity: {result: [block('a'), block('z'), block('d')]},
+  },
 ]
 
 export type PatchPathRule = {
@@ -2645,6 +2779,7 @@ export type PatchPathRule = {
     | 'nested-array'
     | 'null-array-items'
     | 'non-object-array-items'
+    | 'range'
   start: Array<Value>
   patch: Patch
   sanity: {result: Array<Value>} | {rejected: string}
