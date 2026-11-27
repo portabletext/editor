@@ -39,14 +39,11 @@ export function* getNodes(
     reverse?: boolean
   } = {},
 ): Generator<{node: Node; path: Path}, void, undefined> {
-  const {at = [], from, to, match, reverse = false} = options
+  const {at = [], match, reverse = false} = options
+  const from = resolveBound(snapshot, options.from)
+  const to = resolveBound(snapshot, options.to)
 
-  if (
-    [from, to].some(
-      (bound) =>
-        bound !== undefined && walkPath(snapshot, bound).status === 'invalid',
-    )
-  ) {
+  if (from === null || to === null) {
     return
   }
 
@@ -56,6 +53,24 @@ export function* getNodes(
   }
 
   yield* getNodesInRange(snapshot, at, {from, to, match, reverse})
+}
+
+// `null` when the bound names nothing, which empties the range.
+function resolveBound(
+  snapshot: TraversalSnapshot,
+  bound: Path | undefined,
+): Path | undefined | null {
+  if (bound === undefined) {
+    return undefined
+  }
+
+  const walk = walkPath(snapshot, bound)
+
+  if (walk.status !== 'found') {
+    return null
+  }
+
+  return walk.nodes.at(-1)?.path ?? null
 }
 
 /**
