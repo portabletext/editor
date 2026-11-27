@@ -12,6 +12,7 @@ const PLACEHOLDER_STYLE: CSSProperties = {
   pointerEvents: 'none',
   left: 0,
   right: 0,
+  marginTop: '-1lh',
 }
 
 export function RenderLeaf(
@@ -38,12 +39,16 @@ export function RenderLeaf(
     props.leaf.placeholder &&
     props.text.text === ''
   ) {
+    // The placeholder goes after the span. Before it, Chrome counts its text
+    // as text before the caret and reports that offset to the IME, so
+    // Gboard on Android reads the empty block as mid-sentence and turns
+    // Shift off for the first word.
     return (
       <>
+        {renderedSpan}
         <span style={PLACEHOLDER_STYLE} contentEditable={false}>
           {props.renderPlaceholder()}
         </span>
-        {renderedSpan}
       </>
     )
   }
@@ -64,14 +69,14 @@ export function RenderLeaf(
     }
   }
 
-  // Same shape as the placeholder branch above, with an empty first slot, so
+  // Same shape as the placeholder branch above, with an empty last slot, so
   // the first character typed into an empty block updates the span in place
   // instead of remounting it. On Android a remount takes away the text node
   // the IME composes in.
   return (
     <>
-      {null}
       {renderedSpan}
+      {null}
     </>
   )
 }

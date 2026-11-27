@@ -1,4 +1,4 @@
-// thumbjar-test-count: 3
+// thumbjar-test-count: 4
 import {runOnDevice} from 'thumbjar'
 import {expect, inject, test} from 'vitest'
 
@@ -24,6 +24,24 @@ test('Scenario: Typing kyou twice into a plain contenteditable', async (context)
     const run = await runOnDevice(context, {
       keyboard: 'en',
       url: 'http://localhost:8765/editor.html',
+      prefix: '',
+      steps: [
+        {type: 'compose', letters: 'kyou', commit: 'space'},
+        {type: 'compose', letters: 'kyou', commit: 'space'},
+      ],
+    })
+
+    expect(run.text).toEqual('Kyou kyou ')
+  },
+)
+
+// The placeholder must not count as text before the caret, or Gboard reads the empty block as mid-sentence and leaves the first word lowercase.
+;(inject('thumbjarDevice') === 'ios' ? test.fails : test)(
+  'Scenario: Typing kyou twice into an empty block with a placeholder',
+  async (context) => {
+    const run = await runOnDevice(context, {
+      keyboard: 'en',
+      url: 'http://localhost:8765/editor.html?placeholder=Type%20something',
       prefix: '',
       steps: [
         {type: 'compose', letters: 'kyou', commit: 'space'},
