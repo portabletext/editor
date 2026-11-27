@@ -1,4 +1,4 @@
-import type {Patch} from '@portabletext/patches'
+import type {InsertPatch, Patch} from '@portabletext/patches'
 import {
   DIFF_DELETE,
   DIFF_EQUAL,
@@ -11,6 +11,7 @@ import {getEnclosingBlock} from '../traversal/get-enclosing-block'
 import {pathContains} from '../traversal/path-contains'
 import type {TraversalSnapshot} from '../traversal/traversal-snapshot'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
+import type {Path} from '../types/paths'
 import {debug} from './debug'
 
 /**
@@ -30,8 +31,25 @@ export function transformOperation(
   const transformedOperation = {...operation}
 
   if (patch.type === 'insert') {
-    // With keyed paths, block insertions don't affect other operations' paths.
-    // Keys are stable - no path adjustment needed.
+    // An `insert` operation's path is the sibling it was placed next to; the
+    // node it created, which undo removes, is at its inverse path.
+    const affectedPath =
+      transformedOperation.type === 'insert'
+        ? transformedOperation.inverse?.path
+        : 'path' in transformedOperation &&
+            Array.isArray(transformedOperation.path)
+          ? transformedOperation.path
+          : undefined
+
+    if (
+      affectedPath !== undefined &&
+      insertPatchReplacesTarget(patch, affectedPath)
+    ) {
+      debug.history(
+        `Skipping '${transformedOperation.type}' operation that targeted a node the '${patch.position}' insert removed or reused the key of`,
+      )
+      return []
+    }
     debug.history(
       `No path adjustment needed for '${transformedOperation.type}' operation and patch '${patch.type}' (keyed paths)`,
     )
@@ -150,6 +168,32 @@ export function transformOperation(
     return [transformedOperation]
   }
   return [transformedOperation]
+}
+
+function insertPatchReplacesTarget(
+  patch: InsertPatch,
+  operationPath: Path,
+): boolean {
+  if (patch.position !== 'replace') {
+    return false
+  }
+
+  if (pathContains(patch.path, operationPath)) {
+    return true
+  }
+
+  // A replace addressed by index can't be matched against a keyed path, but
+  // an item that reuses the removed node's key now answers to that path.
+  const arrayFieldPath = patch.path.slice(0, -1)
+
+  return patch.items.some(
+    (item) =>
+      typeof item === 'object' &&
+      item !== null &&
+      !Array.isArray(item) &&
+      typeof item['_key'] === 'string' &&
+      pathContains([...arrayFieldPath, {_key: item['_key']}], operationPath),
+  )
 }
 
 function findOperationTargetBlock(
