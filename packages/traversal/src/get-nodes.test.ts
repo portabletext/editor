@@ -810,6 +810,28 @@ describe(getNodes.name, () => {
     })
   })
 
+  describe('from/to range when `indexMap` disagrees with the value', () => {
+    test('a stale entry does not reorder the range', () => {
+      const snapshot = {
+        context: testbed.snapshot.context,
+        indexMap: new Map([
+          ['[_key=="k3"]', 4],
+          ['[_key=="k4"]', 3],
+          ['[_key=="k6"]', 2],
+          ['[_key=="k11"]', 1],
+          ['[_key=="k26"]', 0],
+        ]),
+      }
+
+      expect([
+        ...getNodes(snapshot, {from: [{_key: 'k4'}], to: [{_key: 'k6'}]}),
+      ]).toEqual([
+        {node: testbed.image, path: [{_key: 'k4'}]},
+        {node: testbed.textBlock2, path: [{_key: 'k6'}]},
+      ])
+    })
+  })
+
   describe('from/to range when `indexMap` has no entries', () => {
     test('a root block after the range yields nothing', () => {
       const snapshot = {

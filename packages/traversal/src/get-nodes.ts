@@ -3,7 +3,6 @@ import {getChildren} from './get-children'
 import {isAncestorPath} from './is-ancestor-path'
 import type {Node} from './node'
 import {resolveChildEntryIndex} from './resolve-child-entry-index'
-import {serializePath} from './serialize-path'
 import type {TraversalSnapshot} from './traversal-snapshot'
 import {walkedNode, walkPath} from './walk-path'
 
@@ -104,8 +103,8 @@ function* getNodesSimple(
 /**
  * Compare two keyed paths in DFS pre-order. Returns -1, 0, or 1.
  *
- * Walks both paths in parallel; at the first divergence, consults
- * `indexMap` for the sibling indices and compares them.
+ * Walks both paths in parallel; at the first divergence, walks each
+ * path to its node for the sibling indices and compares them.
  *
  * Deliberately not `comparePaths` (`engine/path/compare-paths.ts`):
  * that compare treats an ancestor/descendant pair as equal (0), while
@@ -119,9 +118,8 @@ function comparePathsInTree(
   pathB: Path,
 ): -1 | 0 | 1 {
   // Walk both full paths in parallel; at the first divergent keyed
-  // segment, consult indexMap for the sibling indices. The map is
-  // keyed by serialized paths that include both keyed and field-name
-  // segments, so we keep the full path prefix as we descend.
+  // segment, walk each prefix to its node for the sibling indices, so
+  // we keep the full path prefix as we descend.
   const minLength = Math.min(pathA.length, pathB.length)
   const prefix: Path = []
 
@@ -170,11 +168,7 @@ function comparePathsInTree(
 }
 
 function siblingIndex(snapshot: TraversalSnapshot, path: Path): number {
-  return (
-    snapshot.indexMap?.get(serializePath(path)) ??
-    walkedNode(walkPath(snapshot, path))?.index ??
-    -1
-  )
+  return walkedNode(walkPath(snapshot, path))?.index ?? -1
 }
 
 /**
