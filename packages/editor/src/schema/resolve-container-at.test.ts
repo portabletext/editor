@@ -1,9 +1,12 @@
 import {compileSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test} from 'vitest'
+import {createTestSnapshot} from '../../test-utils/create-test-snapshot'
 import {
   textBlockDepthsContainers,
   textBlockDepthsSchemaDefinition,
 } from '../../test-utils/text-block-depths'
+import {getContainer} from '../traversal/get-container'
 import {resolveTestbedContainers} from '../traversal/node-traversal-testbed'
 import {resolveContainerAt} from './resolve-container-at'
 
@@ -88,6 +91,47 @@ describe(`${resolveContainerAt.name} with a compact path to a text block`, () =>
     ]
 
     expect(resolveContainerAt(containers, value, [{_key: 'n0'}, 0])).toEqual(
+      undefined,
+    )
+  })
+})
+
+describe(`${getContainer.name} with a node addressed by index`, () => {
+  const schema = compileSchema(textBlockDepthsSchemaDefinition)
+  const containers = resolveTestbedContainers(schema, textBlockDepthsContainers)
+
+  test('a container without a key is found at its index', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block = {
+      _type: 'block',
+      _key: keyGenerator(),
+      children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const callout = {_type: 'callout', content: [block]}
+    const snapshot = createTestSnapshot({
+      context: {schema, containers, value: [callout] as never},
+    })
+
+    expect(getContainer(snapshot, [0])).toEqual({node: callout, path: [0]})
+  })
+
+  test('a text block without a key inside a keyed container is not a container', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const block = {
+      _type: 'block',
+      children: [{_type: 'span', _key: keyGenerator(), text: 'foo', marks: []}],
+      markDefs: [],
+      style: 'normal',
+    }
+    const calloutKey = keyGenerator()
+    const callout = {_type: 'callout', _key: calloutKey, content: [block]}
+    const snapshot = createTestSnapshot({
+      context: {schema, containers, value: [callout] as never},
+    })
+
+    expect(getContainer(snapshot, [{_key: calloutKey}, 'content', 0])).toEqual(
       undefined,
     )
   })
