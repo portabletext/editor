@@ -11,7 +11,7 @@ import {walkPath} from './walk-path'
  * @public
  */
 export function isInline(snapshot: TraversalSnapshot, path: Path): boolean {
-  if (walkPath(snapshot, path).status === 'invalid') {
+  if (walkPath(snapshot, path).status !== 'found') {
     return false
   }
 

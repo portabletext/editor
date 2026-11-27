@@ -14,7 +14,7 @@ import {ancestorNodes, walkPath} from './walk-path'
 export function isBlock(snapshot: TraversalSnapshot, path: Path): boolean {
   const walk = walkPath(snapshot, path)
 
-  if (walk.status === 'invalid') {
+  if (walk.status !== 'found') {
     return false
   }
 

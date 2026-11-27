@@ -337,3 +337,41 @@ describe(isBlock.name, () => {
     )
   })
 })
+
+describe(`${isBlock.name} at a missing node`, () => {
+  test('a missing top-level node is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [
+          {
+            _type: 'block',
+            _key: keyGenerator(),
+            children: [{_type: 'span', _key: keyGenerator(), text: 'foo'}],
+          },
+        ],
+      },
+    })
+
+    expect(isBlock(snapshot, [{_key: 'missing'}])).toEqual(false)
+    expect(isBlock(snapshot, [5])).toEqual(false)
+  })
+
+  test('a missing node in a callout is not a block', () => {
+    const keyGenerator = createTestKeyGenerator()
+    const calloutKey = keyGenerator()
+    const snapshot = createTestSnapshot({
+      context: {
+        schema: depthsSchema,
+        containers: depthsContainers,
+        value: [{_type: 'callout', _key: calloutKey, content: []}],
+      },
+    })
+
+    expect(
+      isBlock(snapshot, [{_key: calloutKey}, 'content', {_key: 'missing'}]),
+    ).toEqual(false)
+  })
+})
