@@ -1055,6 +1055,22 @@ describe('event.insert.text with a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1160,6 +1176,30 @@ describe('event.insert.text with a compact path inside a callout', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1302,6 +1342,38 @@ describe('event.insert.text with a compact path inside a callout inside a callou
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1438,6 +1510,30 @@ describe('event.insert.text with a compact path inside a field with its own sub-
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [

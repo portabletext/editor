@@ -25,6 +25,17 @@ export function addFieldLifecyclePatches(
   },
 ): {patches: Array<Patch>; state: FieldLifecycleState} {
   if (context.isInitialSync) {
+    if (
+      edit.operation.type === 'unset' &&
+      edit.operation.path.length > 0 &&
+      edit.beforeValue.length > 0 &&
+      edit.afterValue.length === 0
+    ) {
+      return {
+        patches: [...edit.patches, unset([])],
+        state: {...state, valueUnsetEmitted: true},
+      }
+    }
     return {patches: edit.patches, state}
   }
 

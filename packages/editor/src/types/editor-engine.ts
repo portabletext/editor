@@ -2,9 +2,9 @@ import type {Patch} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import type {EditorSnapshot} from '../editor/editor-snapshot'
 import type {DecoratedRange} from '../editor/range-decorations-machine'
+import type {HistoryOperation} from '../editor/undo-step'
 import type {ApplyContextFrame} from '../engine/core/apply-context'
 import type {DOMEditor} from '../engine/dom/plugin/dom-editor'
-import type {EngineOperation} from '../engine/interfaces/operation'
 import type {
   AnnotationConfig,
   BlockObjectConfig,
@@ -16,7 +16,7 @@ import type {
 import type {ResolvedContainers} from '../schema/resolve-containers'
 
 type HistoryItem = {
-  operations: EngineOperation[]
+  operations: HistoryOperation[]
   timestamp: Date
 }
 
@@ -84,6 +84,8 @@ export interface PortableTextEditorEngine extends DOMEditor {
    * an empty field, since the host then holds that block.
    */
   lastSyncedValue: Array<PortableTextBlock> | undefined
+  /** The host document after the last committed change, once initialized. */
+  hostValue: {value: Array<PortableTextBlock> | undefined} | undefined
   /**
    * True while this editor's own emitted patch stream has destroyed the
    * field (a root `unset([])` went out) and not yet re-materialized it (a

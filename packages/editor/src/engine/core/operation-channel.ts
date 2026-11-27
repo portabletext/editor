@@ -39,6 +39,7 @@ export type OperationEvent = {
    * pointing at the pre-apply value.
    */
   beforeValue: Array<PortableTextBlock>
+  afterValue: Array<PortableTextBlock>
   /**
    * `editor.snapshot.context.selection` captured at apply entry. Selections
    * are replaced, not mutated, so this reference stays pre-apply.
@@ -109,6 +110,7 @@ export function createOperationEvent(
 ): OperationEvent {
   return {
     operation,
+    afterValue: editor.snapshot.context.value,
     beforeValue: editor.snapshot.context.value,
     beforeSelection: editor.snapshot.context.selection,
     operationsInProgress: editor.operations.length > 0,

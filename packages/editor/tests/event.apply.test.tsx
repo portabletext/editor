@@ -27,6 +27,15 @@ describe('event.apply', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'fool', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [

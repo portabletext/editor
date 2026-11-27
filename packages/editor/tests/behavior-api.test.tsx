@@ -1724,6 +1724,15 @@ describe('Behavior API with a compact path at the root', () => {
     ])
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1853,6 +1862,23 @@ describe('Behavior API with a compact path inside a callout', () => {
     ])
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2027,6 +2053,29 @@ describe('Behavior API with a compact path inside a callout inside a callout', (
     ])
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2173,6 +2222,23 @@ describe('Behavior API with a compact path inside a field with its own sub-schem
     ])
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2280,6 +2346,22 @@ describe('Behavior API with a compact address on a native or synthetic event at 
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2408,6 +2490,30 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2573,6 +2679,38 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2740,6 +2878,30 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2888,6 +3050,22 @@ describe('Behavior API with a compact address on a native or synthetic event at 
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -3023,6 +3201,30 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -3195,6 +3397,38 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -3369,6 +3603,30 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -3526,6 +3784,22 @@ describe('Behavior API with a compact address on a native or synthetic event at 
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -3688,6 +3962,30 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -3891,6 +4189,38 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -4092,6 +4422,30 @@ describe('Behavior API with a compact address on a native or synthetic event ins
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -4258,6 +4612,15 @@ describe('Behavior API with a compact native origin at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foobaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -4440,6 +4803,23 @@ describe('Behavior API with a compact native origin inside a callout', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -4701,6 +5081,29 @@ describe('Behavior API with a compact native origin inside a callout inside a ca
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -4954,6 +5357,23 @@ describe('Behavior API with a compact native origin inside a field with its own 
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foobaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5116,6 +5536,22 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5238,6 +5674,30 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5391,6 +5851,38 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5544,6 +6036,30 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5669,6 +6185,22 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5787,6 +6319,30 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -5939,6 +6495,38 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6088,6 +6676,30 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6223,6 +6835,22 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6351,6 +6979,30 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6510,6 +7162,38 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6669,6 +7353,30 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6799,6 +7507,22 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -6922,6 +7646,30 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -7076,6 +7824,38 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -7230,6 +8010,30 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -7360,6 +8164,22 @@ describe('Behavior API executing an edit at a compact path at the root', () => {
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'b1',
+            children: [{_type: 'span', _key: 's1', text: 'barbaz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -7483,6 +8303,30 @@ describe('Behavior API executing an edit at a compact path inside a callout', ()
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -7637,6 +8481,38 @@ describe('Behavior API executing an edit at a compact path inside a callout insi
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'c0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'c1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'b0',
+                    children: [
+                      {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'b1',
+                    children: [
+                      {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -7791,6 +8667,30 @@ describe('Behavior API executing an edit at a compact path inside a field with i
 
     expect(events).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'n0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [{_type: 'span', _key: 's0', text: 'foo', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+              {
+                _type: 'block',
+                _key: 'b1',
+                children: [
+                  {_type: 'span', _key: 's1', text: 'barbaz', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [

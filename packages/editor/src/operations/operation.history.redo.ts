@@ -1,5 +1,6 @@
 import {pluginRedoing} from '../engine-plugins/engine-plugin.redoing'
 import {pluginWithoutHistory} from '../engine-plugins/engine-plugin.without-history'
+import {withoutPatching} from '../engine-plugins/engine-plugin.without-patching'
 import {withoutNormalizing} from '../engine/editor/normalize'
 import {applyDeselect} from '../internal-utils/apply-selection'
 import {transformOperation} from '../internal-utils/transform-operation'
@@ -29,7 +30,25 @@ export const historyRedoOperationImplementation: OperationImplementation<
           pluginRedoing(editor, () => {
             pluginWithoutHistory(editor, () => {
               transformedOperations.forEach((op) => {
-                editor.apply(op)
+                const replayOperation = {...op}
+                if (replayOperation.type === 'insert') {
+                  delete replayOperation.patching
+                }
+                if (
+                  op.type === 'insert' &&
+                  op.patching === false &&
+                  op.path.length === 1 &&
+                  editor.snapshot.context.value.length === 0
+                ) {
+                  editor.applyContext.push(Object.freeze({kind: 'placeholder'}))
+                  try {
+                    withoutPatching(editor, () => editor.apply(replayOperation))
+                  } finally {
+                    editor.applyContext.pop()
+                  }
+                } else {
+                  editor.apply(replayOperation)
+                }
               })
             })
           })

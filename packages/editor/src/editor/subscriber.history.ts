@@ -3,7 +3,11 @@
  * steps are rebased against incoming patches since the step occurred.
  */
 
-import {hasRemoteFrame, isInNormalization} from '../engine/core/apply-context'
+import {
+  hasRemoteFrame,
+  isInNormalization,
+  isPlaceholder,
+} from '../engine/core/apply-context'
 import {subscribeToOperations} from '../engine/core/operation-channel'
 import type {PortableTextEditorEngine} from '../types/editor-engine'
 import type {EditorActor} from './editor-machine'
@@ -46,7 +50,10 @@ export function subscribeHistory({
       return
     }
 
-    const operation = event.operation
+    const operation =
+      event.operation.type === 'insert' && isPlaceholder(event.context)
+        ? {...event.operation, patching: false as const}
+        : event.operation
 
     const isNoOp =
       ((operation.type === 'set' ||

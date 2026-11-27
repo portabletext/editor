@@ -1517,6 +1517,15 @@ describe('Collaborative editing', () => {
           origin: 'local',
         },
         {
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: 'fooa', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
           type: 'change',
           origin: 'local',
           operations: [
@@ -1536,6 +1545,15 @@ describe('Collaborative editing', () => {
           origin: 'local',
         },
         {
+          value: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              children: [{_type: 'span', _key: 'k1', text: 'fooab', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
           type: 'change',
           origin: 'local',
           operations: [

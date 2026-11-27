@@ -8025,6 +8025,33 @@ describe('normalization', () => {
       ])
       expect(events).toEqual([
         {
+          value: [
+            {
+              _type: 'callout',
+              _key: 'k5',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                  ],
+                },
+                {_type: 'span', _key: 'k10'},
+                {
+                  _type: 'block',
+                  _key: 'k3',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k4', text: 'baz', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
           type: 'change',
           origin: 'local',
           operations: [
@@ -8257,6 +8284,39 @@ describe('normalization', () => {
       ])
       expect(events).toEqual([
         {
+          value: [
+            {
+              _type: 'callout',
+              _key: 'k5',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                      ],
+                    },
+                    {_type: 'span', _key: 'k10'},
+                    {
+                      _type: 'block',
+                      _key: 'k3',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k4', text: 'baz', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
           type: 'change',
           origin: 'local',
           operations: [
@@ -8532,6 +8592,45 @@ describe('normalization', () => {
       ])
       expect(events).toEqual([
         {
+          value: [
+            {
+              _type: 'table',
+              _key: 'k5',
+              rows: [
+                {
+                  _type: 'row',
+                  _key: 'k6',
+                  cells: [
+                    {
+                      _type: 'cell',
+                      _key: 'k7',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                          ],
+                        },
+                        {_type: 'span', _key: 'k10'},
+                        {
+                          _type: 'block',
+                          _key: 'k3',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k4', text: 'baz', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
           type: 'change',
           origin: 'local',
           operations: [

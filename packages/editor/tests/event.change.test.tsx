@@ -5,6 +5,7 @@ import {
   set,
   setIfMissing,
   unset,
+  type JSONValue,
   type Patch,
 } from '@portabletext/patches'
 import {defineSchema, type PortableTextBlock} from '@portabletext/schema'
@@ -346,6 +347,15 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'f', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -356,6 +366,15 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'fo', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -369,6 +388,15 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -406,6 +434,15 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo!', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -455,6 +492,22 @@ describe('event.change', () => {
     expect(editor.getSnapshot().context.value).toEqual([barBlock, bazBlock])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k4',
+            children: [{_type: 'span', _key: 'k5', text: 'bar', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: 'k6',
+            children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -531,6 +584,15 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -612,6 +674,15 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -635,6 +706,15 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'barfoo', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -707,6 +787,18 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foobar', marks: ['strong']},
+              {_type: 'span', _key: 'k3', text: 'baz!', marks: []},
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -803,6 +895,18 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foobar', marks: ['strong']},
+              {_type: 'span', _key: 'k3', text: 'baz!?', marks: []},
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -873,6 +977,15 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'set', path: textPath, value: 'bar'}],
@@ -917,6 +1030,18 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+              {_type: 'span', _key: 'k1', text: 'bar', marks: ['strong']},
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [
@@ -929,6 +1054,18 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+              {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -971,6 +1108,14 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'unset', path: markDefsPath}],
@@ -1003,6 +1148,15 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'set', path: textPath, value: 'bar'}],
@@ -1041,6 +1195,15 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'foo', marks: [], _key: 'k3'}],
+          },
+        ],
         operations: [
           {
             inverse: {
@@ -1118,6 +1281,15 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: '', marks: [], _key: 'k3'}],
+          },
+        ],
         operations: [
           {
             inverse: {
@@ -1204,6 +1376,21 @@ describe('event.change', () => {
 
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k0',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', text: '', marks: [], _key: 'k4'}],
+              },
+            ],
+          },
+        ],
         operations: [
           {
             inverse: {
@@ -1522,6 +1709,15 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'set', path: textPath, value: 'bar'}],
@@ -1637,6 +1833,15 @@ describe('event.change', () => {
         type: 'operation',
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo!', marks: []}],
+          },
+        ],
         operations: [
           {
             offset: 3,
@@ -1795,6 +2000,18 @@ describe('event.change', () => {
         type: 'operation',
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+              {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+            ],
+          },
+        ],
         operations: [
           {
             inverse: {
@@ -1878,6 +2095,28 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'callout',
+            _key: 'k2',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k5',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -1928,6 +2167,28 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'callout',
+            _key: 'k2',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k5',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2000,6 +2261,15 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foobar', marks: []}],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2215,6 +2485,18 @@ describe('event.change', () => {
         type: 'operation',
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+              {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+            ],
+          },
+        ],
         operations: [
           {
             inverse: {
@@ -2279,6 +2561,17 @@ describe('event.change', () => {
         type: 'operation',
       },
       {
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+            ],
+          },
+        ],
         operations: [
           {
             path: [
@@ -2344,6 +2637,23 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo!', marks: []},
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2357,6 +2667,30 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo!', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2380,6 +2714,30 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo!', marks: []},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2457,6 +2815,29 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'k1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'foo!', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2470,6 +2851,38 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'k1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'foo!', marks: []},
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k6',
+                    children: [
+                      {_type: 'span', _key: 'k7', text: '', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2493,6 +2906,38 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'k1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'foo!', marks: []},
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k6',
+                    children: [
+                      {_type: 'span', _key: 'k7', text: 'bar', marks: []},
+                    ],
+                    markDefs: [],
+                    style: 'normal',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2558,6 +3003,23 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'k0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo!', marks: ['em']},
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2571,6 +3033,30 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'k0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo!', marks: ['em']},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2594,6 +3080,30 @@ describe('event.change', () => {
         ],
       },
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'k0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                markDefs: [],
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo!', marks: ['em']},
+                ],
+              },
+              {
+                _type: 'block',
+                _key: 'k5',
+                children: [{_type: 'span', _key: 'k6', text: 'bar', marks: []}],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'local',
         operations: [
@@ -2654,6 +3164,20 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                children: [{_type: 'span', _key: 'k2', text: 'foo', marks: []}],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'unset', path: markDefsPath}],
@@ -2712,6 +3236,28 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'callout',
+                _key: 'k1',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'foo', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'unset', path: markDefsPath}],
@@ -2758,6 +3304,22 @@ describe('event.change', () => {
     ])
     expect(changes).toEqual([
       {
+        value: [
+          {
+            _type: 'note',
+            _key: 'k0',
+            body: [
+              {
+                _type: 'block',
+                _key: 'k1',
+                style: 'normal',
+                children: [
+                  {_type: 'span', _key: 'k2', text: 'foo', marks: ['em']},
+                ],
+              },
+            ],
+          },
+        ],
         type: 'change',
         origin: 'remote',
         operations: [{type: 'unset', path: markDefsPath}],
@@ -3010,6 +3572,18 @@ test('Scenario: A `change` listener that edits on a remote `change` gets the loc
 
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+            {_type: 'span', _key: 'k1', text: 'bar', marks: ['strong']},
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -3022,6 +3596,18 @@ test('Scenario: A `change` listener that edits on a remote `change` gets the loc
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+            {_type: 'span', _key: 'k4', text: 'bar', marks: ['strong']},
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -3035,6 +3621,7 @@ test('Scenario: A `change` listener that edits on a remote `change` gets the loc
       patches: [{...set('k4', duplicateKeyPath), origin: 'local'}],
     },
     {
+      value: undefined,
       type: 'change',
       origin: 'local',
       operations: [
@@ -3111,6 +3698,15 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
 
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -3145,6 +3741,22 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -3399,6 +4011,16 @@ test('Scenario: A container registered by an `operation` listener during an `app
 
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+        {_type: 'callout', _key: 'k2'},
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -3433,6 +4055,28 @@ test('Scenario: A container registered by an `operation` listener during an `app
       ],
     },
     {
+      value: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'callout',
+          _key: 'k2',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k5',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k6', text: '', marks: []}],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -3596,6 +4240,21 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
 
   expect(changes).toEqual([
     {
+      value: [
+        {
+          _type: 'callout',
+          _key: 'k0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'remote',
       operations: [
@@ -3627,6 +4286,28 @@ test('Scenario: A Behavior event sent by an `operation` listener during an `appl
       ],
     },
     {
+      value: [
+        {
+          _type: 'callout',
+          _key: 'k0',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k1',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k2', text: 'bar', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k5',
+              children: [{_type: 'span', _key: 'k6', text: 'baz', marks: []}],
+              markDefs: [],
+              style: 'normal',
+            },
+          ],
+        },
+      ],
       type: 'change',
       origin: 'local',
       operations: [
@@ -4149,3 +4830,8226 @@ function RemovedEventListeners(props: {events: Array<EditorEmittedEvent>}) {
   }, [editor, props.events])
   return null
 }
+
+test('Scenario: A remote root unset carries an absent value on both changes', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = undefined
+  editor.send({type: 'apply', patches: [{type: 'unset', path: []}]})
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        operations: [{type: 'unset', path: []}],
+        value: undefined,
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+
+  expect(Object.hasOwn(changes[0] ?? {}, 'value')).toEqual(true)
+  expect(Object.hasOwn(changes[1] ?? {}, 'value')).toEqual(true)
+})
+
+test('Scenario: A remote root empty array carries an empty value on both changes', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = []
+  editor.send({type: 'apply', patches: [{type: 'set', path: [], value: []}]})
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [],
+        operations: [{type: 'set', path: [], value: []}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [],
+        operations: [
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [],
+      },
+    ])
+    expect(hostValue).toEqual([])
+  })
+})
+
+test('Scenario: Removing the only block remotely carries an empty array on both changes', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = []
+  editor.send({type: 'apply', patches: [{type: 'unset', path: [{_key: 'k0'}]}]})
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [],
+        operations: [{type: 'unset', path: [{_key: 'k0'}]}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [],
+        operations: [
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [],
+      },
+    ])
+    expect(hostValue).toEqual([])
+  })
+})
+
+test('Scenario: A keyed whole block set to null alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [null]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {type: 'set', path: [{_key: 'k0'}], value: null as unknown as JSONValue},
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [null],
+        operations: [{type: 'set', path: [{_key: 'k0'}], value: null}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [0]},
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+          {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            items: [null],
+            origin: 'local',
+          },
+          {type: 'unset', path: [0], origin: 'local'},
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: A keyed whole block set to string alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = ['foo']
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [{_key: 'k0'}], value: 'foo'}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: ['foo'],
+        operations: [{type: 'set', path: [{_key: 'k0'}], value: 'foo'}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [0]},
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'unset', path: [0], origin: 'local'},
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: A keyed whole block set to a block without children alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [{_type: 'block', _key: 'k0', style: 'normal', markDefs: []}]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}],
+        value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [{_type: 'block', _key: 'k0', style: 'normal', markDefs: []}],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}],
+            value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'children']},
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k4', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            origin: 'local',
+          },
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: A keyed whole span set to null alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [null],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [null],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: null,
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0]},
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k4', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            origin: 'local',
+          },
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: A keyed whole span set to string alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: ['foo'],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: 'foo',
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: ['foo'],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: 'foo',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0]},
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k4', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            origin: 'local',
+          },
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: A keyed children array with a keyless span alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children'],
+        value: [{_type: 'span', text: 'bar', marks: []}],
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [{_type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: [], _key: 'k4'}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k4',
+            inverse: {
+              type: 'unset',
+              path: [{_key: 'k0'}, 'children', 0, '_key'],
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k4',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', text: 'bar', marks: [], _key: 'k4'}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole span set to a keyless span alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: {_type: 'span', text: 'bar', marks: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: {_type: 'span', text: 'bar', marks: []},
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', text: 'bar', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole block set to null alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [null]
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [0], value: null as unknown as JSONValue}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [null],
+        operations: [{type: 'set', path: [0], value: null}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [0]},
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'setIfMissing', path: [], value: [], origin: 'local'},
+          {
+            type: 'insert',
+            path: [0],
+            position: 'before',
+            items: [null],
+            origin: 'local',
+          },
+          {type: 'unset', path: [0], origin: 'local'},
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: An indexed whole block set to string alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = ['foo']
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [0], value: 'foo'}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: ['foo'],
+        operations: [{type: 'set', path: [0], value: 'foo'}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [0]},
+          {
+            type: 'insert',
+            path: [0],
+            node: {
+              _type: 'block',
+              _key: 'k4',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k5', text: '', marks: []}],
+            },
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'unset', path: [0], origin: 'local'},
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: An indexed whole block set to a block without children alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [{_type: 'block', _key: 'k0', style: 'normal', markDefs: []}]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0],
+        value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [{_type: 'block', _key: 'k0', style: 'normal', markDefs: []}],
+        operations: [
+          {
+            type: 'set',
+            path: [0],
+            value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'children']},
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k4', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            origin: 'local',
+          },
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: An indexed whole span set to null alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [null],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0, 'children', 0],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [null],
+          },
+        ],
+        operations: [{type: 'set', path: [0, 'children', 0], value: null}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0]},
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k4', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            origin: 'local',
+          },
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: An indexed whole span set to string alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: ['foo'],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [0, 'children', 0], value: 'foo'}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: ['foo'],
+          },
+        ],
+        operations: [{type: 'set', path: [0, 'children', 0], value: 'foo'}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        operations: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0]},
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k4', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+            origin: 'local',
+          },
+          {type: 'unset', path: [], origin: 'local'},
+        ],
+        value: undefined,
+      },
+    ])
+    expect(hostValue).toEqual(undefined)
+  })
+})
+
+test('Scenario: An indexed children array with a keyless span alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0, 'children'],
+        value: [{_type: 'span', text: 'bar', marks: []}],
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [0, 'children'],
+            value: [{_type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: [], _key: 'k4'}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k4',
+            inverse: {
+              type: 'unset',
+              path: [{_key: 'k0'}, 'children', 0, '_key'],
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k4',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', text: 'bar', marks: [], _key: 'k4'}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole span set to a keyless span alone carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0, 'children', 0],
+        value: {_type: 'span', text: 'bar', marks: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [0, 'children', 0],
+            value: {_type: 'span', text: 'bar', marks: []},
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', text: 'bar', marks: [], _key: 'k4'}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k4',
+            inverse: {
+              type: 'unset',
+              path: [{_key: 'k0'}, 'children', 0, '_key'],
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k4',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', text: 'bar', marks: [], _key: 'k4'}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole block set to null among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    null,
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {type: 'set', path: [{_key: 'k0'}], value: null as unknown as JSONValue},
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          null,
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'set', path: [{_key: 'k0'}], value: null}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [0]}],
+        patches: [{type: 'unset', path: [0], origin: 'local'}],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole block set to string among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    'foo',
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [{_key: 'k0'}], value: 'foo'}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          'foo',
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'set', path: [{_key: 'k0'}], value: 'foo'}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [0]}],
+        patches: [{type: 'unset', path: [0], origin: 'local'}],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole block set to a block without children among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}],
+        value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}],
+            value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'children']},
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k8', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole span set to null among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        null,
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              null,
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: null,
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [{_key: 'k0'}, 'children', 0]}],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole span set to string among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        'foo',
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: 'foo',
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              'foo',
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: 'foo',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [{_key: 'k0'}, 'children', 0]}],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed children array with a keyless span among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', text: 'bar', marks: []},
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children'],
+        value: [
+          {_type: 'span', text: 'bar', marks: []},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: []},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [
+              {_type: 'span', text: 'bar', marks: []},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k10',
+            inverse: {
+              type: 'unset',
+              path: [{_key: 'k0'}, 'children', 0, '_key'],
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k10',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole span set to a keyless span among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', text: 'bar', marks: []},
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: {_type: 'span', text: 'bar', marks: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: []},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: {_type: 'span', text: 'bar', marks: []},
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', text: 'bar', marks: []},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole block set to null among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    null,
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [0], value: null as unknown as JSONValue}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          null,
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'set', path: [0], value: null}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [0]}],
+        patches: [{type: 'unset', path: [0], origin: 'local'}],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole block set to string among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    'foo',
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [0], value: 'foo'}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          'foo',
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'set', path: [0], value: 'foo'}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [0]}],
+        patches: [{type: 'unset', path: [0], origin: 'local'}],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole block set to a block without children among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0],
+        value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [0],
+            value: {_type: 'block', _key: 'k0', style: 'normal', markDefs: []},
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'children']},
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            node: {_type: 'span', _key: 'k8', text: '', marks: []},
+            position: 'before',
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'setIfMissing',
+            path: [{_key: 'k0'}, 'children'],
+            value: [],
+            origin: 'local',
+          },
+          {
+            type: 'insert',
+            path: [{_key: 'k0'}, 'children', 0],
+            position: 'before',
+            items: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k8', text: '', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole span set to null among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        null,
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0, 'children', 0],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              null,
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'set', path: [0, 'children', 0], value: null}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [{_key: 'k0'}, 'children', 0]}],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole span set to string among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        'foo',
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [{type: 'set', path: [0, 'children', 0], value: 'foo'}],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              'foo',
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'set', path: [0, 'children', 0], value: 'foo'}],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [{_key: 'k0'}, 'children', 0]}],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed children array with a keyless span among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', text: 'bar', marks: []},
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0, 'children'],
+        value: [
+          {_type: 'span', text: 'bar', marks: []},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: []},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [0, 'children'],
+            value: [
+              {_type: 'span', text: 'bar', marks: []},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k10',
+            inverse: {
+              type: 'unset',
+              path: [{_key: 'k0'}, 'children', 0, '_key'],
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k10',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole span set to a keyless span among siblings carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', text: 'bar', marks: []},
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [0, 'children', 0],
+        value: {_type: 'span', text: 'bar', marks: []},
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: []},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [0, 'children', 0],
+            value: {_type: 'span', text: 'bar', marks: []},
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k10',
+            inverse: {
+              type: 'unset',
+              path: [{_key: 'k0'}, 'children', 0, '_key'],
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', 0, '_key'],
+            value: 'k10',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', text: 'bar', marks: [], _key: 'k10'},
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole span set to null among siblings while read-only carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const strongSpanKey = keyGenerator()
+  const emSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [
+        {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+        {_type: 'span', _key: strongSpanKey, text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: emSpanKey, text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [
+        null,
+        {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+        {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+      ],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              null,
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+            value: null,
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [
+              {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+              {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+            ],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [{type: 'unset', path: [{_key: 'k0'}, 'children', 0]}],
+        patches: [
+          {type: 'unset', path: [{_key: 'k0'}, 'children', 0], origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [
+          {_type: 'span', _key: 'k6', text: 'bar', marks: ['strong']},
+          {_type: 'span', _key: 'k7', text: 'baz', marks: ['em']},
+        ],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole block set to null among siblings in a callout carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const calloutKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'callout',
+      _key: calloutKey,
+      content: [
+        {
+          _type: 'block',
+          _key: firstBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: secondBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: secondSpanKey, text: 'foo', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: thirdBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []},
+          ],
+        },
+      ],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'callout',
+      _key: 'k6',
+      content: [
+        null,
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+        },
+      ],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k6'}, 'content', {_key: 'k0'}],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k6',
+            content: [
+              null,
+              {
+                _type: 'block',
+                _key: 'k2',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'k4',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+              },
+            ],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k6'}, 'content', {_key: 'k0'}],
+            value: null,
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k6',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k2',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+              },
+              {
+                _type: 'block',
+                _key: 'k4',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+              },
+            ],
+          },
+        ],
+        operations: [{type: 'unset', path: [{_key: 'k6'}, 'content', 0]}],
+        patches: [
+          {type: 'unset', path: [{_key: 'k6'}, 'content', 0], origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k6',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k4',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k5', text: 'foo', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole block set to null among siblings in a table cell carries each host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  const tableKey = keyGenerator()
+  const rowKey = keyGenerator()
+  const cellKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'table',
+      _key: tableKey,
+      rows: [
+        {
+          _type: 'row',
+          _key: rowKey,
+          cells: [
+            {
+              _type: 'cell',
+              _key: cellKey,
+              content: [
+                {
+                  _type: 'block',
+                  _key: firstBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: secondBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: secondSpanKey,
+                      text: 'foo',
+                      marks: [],
+                    },
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: thirdBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: thirdSpanKey, text: 'foo', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    {
+      _type: 'table',
+      _key: 'k6',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k7',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k8',
+              content: [
+                null,
+                {
+                  _type: 'block',
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k4',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k5', text: 'foo', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [
+          {_key: 'k6'},
+          'rows',
+          {_key: 'k7'},
+          'cells',
+          {_key: 'k8'},
+          'content',
+          {_key: 'k0'},
+        ],
+        value: null as unknown as JSONValue,
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'table',
+            _key: 'k6',
+            rows: [
+              {
+                _type: 'row',
+                _key: 'k7',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k8',
+                    content: [
+                      null,
+                      {
+                        _type: 'block',
+                        _key: 'k2',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k3', text: 'foo', marks: []},
+                        ],
+                      },
+                      {
+                        _type: 'block',
+                        _key: 'k4',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k5', text: 'foo', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [
+              {_key: 'k6'},
+              'rows',
+              {_key: 'k7'},
+              'cells',
+              {_key: 'k8'},
+              'content',
+              {_key: 'k0'},
+            ],
+            value: null,
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'table',
+            _key: 'k6',
+            rows: [
+              {
+                _type: 'row',
+                _key: 'k7',
+                cells: [
+                  {
+                    _type: 'cell',
+                    _key: 'k8',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k2',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k3', text: 'foo', marks: []},
+                        ],
+                      },
+                      {
+                        _type: 'block',
+                        _key: 'k4',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k5', text: 'foo', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        operations: [
+          {
+            type: 'unset',
+            path: [
+              {_key: 'k6'},
+              'rows',
+              {_key: 'k7'},
+              'cells',
+              {_key: 'k8'},
+              'content',
+              0,
+            ],
+          },
+        ],
+        patches: [
+          {
+            type: 'unset',
+            path: [
+              {_key: 'k6'},
+              'rows',
+              {_key: 'k7'},
+              'cells',
+              {_key: 'k8'},
+              'content',
+              0,
+            ],
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k6',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k7',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k8',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'foo', marks: []},
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k4',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k5', text: 'foo', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: Document values follow local edits, history and remote corrections at root', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const initialValue: Array<PortableTextBlock> = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'bar', marks: []}],
+    },
+  ]
+  const unchangedBlock = initialValue[1]
+  let hostValue: unknown = initialValue
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: 'k0'}, 'children', {_key: 'k1'}],
+    offset: 3,
+    text: 'x',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+  const retainedValue = values[0]
+  expect(values[0]?.[1]).toBe(unchangedBlock)
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foox', 'foo', [
+        ...[{_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  hostValue = [
+    null,
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [set(null as unknown as JSONValue, [...[], {_key: 'k0'}])],
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([...[], 0])])
+    expect(values).toEqual([
+      [
+        null,
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+      [
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+    ])
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+  patches.length = 0
+  values.length = 0
+  hostValue = undefined
+  editor.send({type: 'apply', patches: [unset([])]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([])
+    expect(values).toEqual([undefined, undefined])
+    expect(hostValue).toEqual(undefined)
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+  ])
+})
+
+test('Scenario: Document values follow local edits, history and remote corrections at callout', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const outerContainerKey = keyGenerator()
+  const initialValue: Array<PortableTextBlock> = [
+    {
+      _type: 'callout',
+      _key: outerContainerKey,
+      content: [
+        {
+          _type: 'block',
+          _key: firstBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: secondBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: secondSpanKey, text: 'bar', marks: []},
+          ],
+        },
+      ],
+    },
+  ]
+
+  let hostValue: unknown = initialValue
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+    offset: 3,
+    text: 'x',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  const retainedValue = values[0]
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foox', 'foo', [
+        ...[{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  hostValue = [
+    {
+      _type: 'callout',
+      _key: 'k4',
+      content: [
+        null,
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(null as unknown as JSONValue, [
+        ...[{_key: 'k4'}, 'content'],
+        {_key: 'k0'},
+      ]),
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([...[{_key: 'k4'}, 'content'], 0])])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            null,
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k4',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    },
+  ])
+  patches.length = 0
+  values.length = 0
+  hostValue = undefined
+  editor.send({type: 'apply', patches: [unset([])]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([])
+    expect(values).toEqual([undefined, undefined])
+    expect(hostValue).toEqual(undefined)
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k4',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    },
+  ])
+})
+
+test('Scenario: Document values follow local edits, history and remote corrections at table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const outerContainerKey = keyGenerator()
+  const nestedContainerKey = keyGenerator()
+  const cellKey = keyGenerator()
+  const initialValue: Array<PortableTextBlock> = [
+    {
+      _type: 'table',
+      _key: outerContainerKey,
+      rows: [
+        {
+          _type: 'row',
+          _key: nestedContainerKey,
+          cells: [
+            {
+              _type: 'cell',
+              _key: cellKey,
+              content: [
+                {
+                  _type: 'block',
+                  _key: firstBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: secondBlockKey,
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {
+                      _type: 'span',
+                      _key: secondSpanKey,
+                      text: 'bar',
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+
+  let hostValue: unknown = initialValue
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [
+      {_key: 'k4'},
+      'rows',
+      {_key: 'k5'},
+      'cells',
+      {_key: 'k6'},
+      'content',
+      {_key: 'k0'},
+      'children',
+      {_key: 'k1'},
+    ],
+    offset: 3,
+    text: 'x',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+        ],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k0',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+  const retainedValue = values[0]
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foox', 'foo', [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+        ],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k0',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+        ],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k0',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                    ],
+                  },
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  hostValue = [
+    {
+      _type: 'table',
+      _key: 'k4',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k5',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k6',
+              content: [
+                null,
+                {
+                  _type: 'block',
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(null as unknown as JSONValue, [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+        ],
+        {_key: 'k0'},
+      ]),
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      unset([
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+        ],
+        0,
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    null,
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'block',
+                    _key: 'k2',
+                    style: 'normal',
+                    markDefs: [],
+                    children: [
+                      {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'table',
+      _key: 'k4',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k5',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+  patches.length = 0
+  values.length = 0
+  hostValue = undefined
+  editor.send({type: 'apply', patches: [unset([])]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([])
+    expect(values).toEqual([undefined, undefined])
+    expect(hostValue).toEqual(undefined)
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'table',
+      _key: 'k4',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k5',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'block',
+                  _key: 'k0',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                  ],
+                },
+                {
+                  _type: 'block',
+                  _key: 'k2',
+                  style: 'normal',
+                  markDefs: [],
+                  children: [
+                    {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+})
+
+test('Scenario: Document values follow local edits, history and remote corrections at callout in a table cell', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const outerContainerKey = keyGenerator()
+  const nestedContainerKey = keyGenerator()
+  const cellKey = keyGenerator()
+  const innerContainerKey = keyGenerator()
+  const initialValue: Array<PortableTextBlock> = [
+    {
+      _type: 'table',
+      _key: outerContainerKey,
+      rows: [
+        {
+          _type: 'row',
+          _key: nestedContainerKey,
+          cells: [
+            {
+              _type: 'cell',
+              _key: cellKey,
+              content: [
+                {
+                  _type: 'callout',
+                  _key: innerContainerKey,
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: firstBlockKey,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: firstSpanKey,
+                          text: 'foo',
+                          marks: [],
+                        },
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: secondBlockKey,
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {
+                          _type: 'span',
+                          _key: secondSpanKey,
+                          text: 'bar',
+                          marks: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+
+  let hostValue: unknown = initialValue
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [
+      {_key: 'k4'},
+      'rows',
+      {_key: 'k5'},
+      'cells',
+      {_key: 'k6'},
+      'content',
+      {_key: 'k7'},
+      'content',
+      {_key: 'k0'},
+      'children',
+      {_key: 'k1'},
+    ],
+    offset: 3,
+    text: 'x',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k7'},
+          'content',
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+        ],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'k7',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foox',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {
+                          _type: 'block',
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'callout',
+                    _key: 'k7',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                        ],
+                      },
+                      {
+                        _type: 'block',
+                        _key: 'k2',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+  const retainedValue = values[0]
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foox', 'foo', [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k7'},
+          'content',
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+        ],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'k7',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                          ],
+                        },
+                        {
+                          _type: 'block',
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'callout',
+                    _key: 'k7',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k1', text: 'foo', marks: []},
+                        ],
+                      },
+                      {
+                        _type: 'block',
+                        _key: 'k2',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k7'},
+          'content',
+          {_key: 'k0'},
+          'children',
+          {_key: 'k1'},
+        ],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'k7',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k0',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {
+                              _type: 'span',
+                              _key: 'k1',
+                              text: 'foox',
+                              marks: [],
+                            },
+                          ],
+                        },
+                        {
+                          _type: 'block',
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'callout',
+                    _key: 'k7',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k0',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                        ],
+                      },
+                      {
+                        _type: 'block',
+                        _key: 'k2',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  hostValue = [
+    {
+      _type: 'table',
+      _key: 'k4',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k5',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'k7',
+                  content: [
+                    null,
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(null as unknown as JSONValue, [
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k7'},
+          'content',
+        ],
+        {_key: 'k0'},
+      ]),
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      unset([
+        ...[
+          {_key: 'k4'},
+          'rows',
+          {_key: 'k5'},
+          'cells',
+          {_key: 'k6'},
+          'content',
+          {_key: 'k7'},
+          'content',
+        ],
+        0,
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'k7',
+                      content: [
+                        null,
+                        {
+                          _type: 'block',
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          _type: 'table',
+          _key: 'k4',
+          rows: [
+            {
+              _type: 'row',
+              _key: 'k5',
+              cells: [
+                {
+                  _type: 'cell',
+                  _key: 'k6',
+                  content: [
+                    {
+                      _type: 'callout',
+                      _key: 'k7',
+                      content: [
+                        {
+                          _type: 'block',
+                          _key: 'k2',
+                          style: 'normal',
+                          markDefs: [],
+                          children: [
+                            {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'table',
+        _key: 'k4',
+        rows: [
+          {
+            _type: 'row',
+            _key: 'k5',
+            cells: [
+              {
+                _type: 'cell',
+                _key: 'k6',
+                content: [
+                  {
+                    _type: 'callout',
+                    _key: 'k7',
+                    content: [
+                      {
+                        _type: 'block',
+                        _key: 'k2',
+                        style: 'normal',
+                        markDefs: [],
+                        children: [
+                          {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'table',
+      _key: 'k4',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k5',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'k7',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+  patches.length = 0
+  values.length = 0
+  hostValue = undefined
+  editor.send({type: 'apply', patches: [unset([])]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([])
+    expect(values).toEqual([undefined, undefined])
+    expect(hostValue).toEqual(undefined)
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'table',
+      _key: 'k4',
+      rows: [
+        {
+          _type: 'row',
+          _key: 'k5',
+          cells: [
+            {
+              _type: 'cell',
+              _key: 'k6',
+              content: [
+                {
+                  _type: 'callout',
+                  _key: 'k7',
+                  content: [
+                    {
+                      _type: 'block',
+                      _key: 'k0',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k1', text: 'foox', marks: []},
+                      ],
+                    },
+                    {
+                      _type: 'block',
+                      _key: 'k2',
+                      style: 'normal',
+                      markDefs: [],
+                      children: [
+                        {_type: 'span', _key: 'k3', text: 'bar', marks: []},
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ])
+})
+
+test('Scenario: Document values follow local edits, history and remote corrections at sibling containers', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const outerContainerKey = keyGenerator()
+  const nestedContainerKey = keyGenerator()
+  const cellKey = keyGenerator()
+  const innerContainerKey = keyGenerator()
+  const initialValue: Array<PortableTextBlock> = [
+    {
+      _type: 'callout',
+      _key: outerContainerKey,
+      content: [
+        {
+          _type: 'block',
+          _key: firstBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: firstSpanKey, text: 'foo', marks: []},
+          ],
+        },
+        {
+          _type: 'block',
+          _key: secondBlockKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: secondSpanKey, text: 'bar', marks: []},
+          ],
+        },
+      ],
+    },
+    {
+      _type: 'callout',
+      _key: nestedContainerKey,
+      content: [
+        {
+          _type: 'block',
+          _key: cellKey,
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {_type: 'span', _key: innerContainerKey, text: 'baz', marks: []},
+          ],
+        },
+      ],
+    },
+  ]
+
+  let hostValue: unknown = initialValue
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue,
+    schemaDefinition: documentValueSchemaDefinition,
+    children: <NodePlugin nodes={documentValueContainers} />,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({
+    type: 'insert.text',
+    at: [{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+    offset: 3,
+    text: 'x',
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: 'k5',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k6',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+      {
+        _type: 'callout',
+        _key: 'k5',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k6',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  const retainedValue = values[0]
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.undo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foox', 'foo', [
+        ...[{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: 'k5',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k6',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+      {
+        _type: 'callout',
+        _key: 'k5',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k6',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  editor.send({type: 'history.redo'})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([
+      diffMatchPatch('foo', 'foox', [
+        ...[{_key: 'k4'}, 'content', {_key: 'k0'}, 'children', {_key: 'k1'}],
+        'text',
+      ]),
+    ])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k0',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+            },
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: 'k5',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k6',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+          },
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+      {
+        _type: 'callout',
+        _key: 'k5',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k6',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+
+  patches.length = 0
+  values.length = 0
+  hostValue = [
+    {
+      _type: 'callout',
+      _key: 'k4',
+      content: [
+        null,
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    },
+    {
+      _type: 'callout',
+      _key: 'k5',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+        },
+      ],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(null as unknown as JSONValue, [
+        ...[{_key: 'k4'}, 'content'],
+        {_key: 'k0'},
+      ]),
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(patches).toEqual([unset([...[{_key: 'k4'}, 'content'], 0])])
+    expect(values).toEqual([
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            null,
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: 'k5',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k6',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          _type: 'callout',
+          _key: 'k4',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k2',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+            },
+          ],
+        },
+        {
+          _type: 'callout',
+          _key: 'k5',
+          content: [
+            {
+              _type: 'block',
+              _key: 'k6',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+            },
+          ],
+        },
+      ],
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k4',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k2',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+          },
+        ],
+      },
+      {
+        _type: 'callout',
+        _key: 'k5',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k6',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k4',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    },
+    {
+      _type: 'callout',
+      _key: 'k5',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+        },
+      ],
+    },
+  ])
+  patches.length = 0
+  values.length = 0
+  hostValue = undefined
+  editor.send({type: 'apply', patches: [unset([])]})
+  await vi.waitFor(() => {
+    expect(patches).toEqual([])
+    expect(values).toEqual([undefined, undefined])
+    expect(hostValue).toEqual(undefined)
+  })
+  expect(retainedValue).toEqual([
+    {
+      _type: 'callout',
+      _key: 'k4',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'foox', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+      ],
+    },
+    {
+      _type: 'callout',
+      _key: 'k5',
+      content: [
+        {
+          _type: 'block',
+          _key: 'k6',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k7', text: 'baz', marks: []}],
+        },
+      ],
+    },
+  ])
+})
+
+test('Scenario: Several synchronous sends retain each value in a batched listener', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const blockKey = keyGenerator()
+  const spanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: blockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: spanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const batched: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  editor.on(
+    'change',
+    (events) => {
+      batched.push(...events)
+    },
+    {batch: true},
+  )
+  editor.send({
+    type: 'set',
+    at: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+    value: 'bar',
+  })
+  editor.send({
+    type: 'set',
+    at: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+    value: 'baz',
+  })
+  editor.send({
+    type: 'set',
+    at: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+    value: 'foo',
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'bar',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: 'foo',
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'bar',
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'baz', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'baz',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: 'bar',
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'baz',
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'foo',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: 'baz',
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'foo',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(batched).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'bar',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: 'foo',
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'bar',
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'baz', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'baz',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: 'bar',
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'baz',
+            origin: 'local',
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            _key: 'k0',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'foo',
+            inverse: {
+              type: 'set',
+              path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+              value: 'baz',
+            },
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+            value: 'foo',
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'foo', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Registering a container carries the corrected host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  let hostValue: unknown = [{_type: 'callout', _key: calloutKey}]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  editor.registerNode({
+    node: defineContainer({type: 'callout', arrayField: 'content'}),
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'content'],
+            value: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'content']},
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'content'],
+            value: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: Registering a container while read-only carries the corrected host value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const calloutKey = keyGenerator()
+  let hostValue: unknown = [{_type: 'callout', _key: calloutKey}]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+    schemaDefinition: documentValueSchemaDefinition,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  editor.send({type: 'update readOnly', readOnly: true})
+  editor.registerNode({
+    node: defineContainer({type: 'callout', arrayField: 'content'}),
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'callout',
+            _key: 'k0',
+            content: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'content'],
+            value: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+            inverse: {type: 'unset', path: [{_key: 'k0'}, 'content']},
+          },
+        ],
+        patches: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}, 'content'],
+            value: [
+              {
+                _type: 'block',
+                _key: 'k3',
+                style: 'normal',
+                markDefs: [],
+                children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+              },
+            ],
+            origin: 'local',
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'callout',
+        _key: 'k0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'k3',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k4', text: '', marks: []}],
+          },
+        ],
+      },
+    ])
+  })
+})
+
+test('Scenario: A keyed whole block without a key carries the received value without a correction', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  hostValue = [
+    {
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+        [{_key: 'k0'}],
+      ),
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [{_key: 'k0'}],
+            value: {
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+            },
+          },
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: An indexed whole block without a key carries the received and corrected values', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const changes: Array<ChangeEvent> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+  })
+  editor.on('change', (event) => {
+    changes.push(event)
+    if (event.origin === 'local') {
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  hostValue = [
+    {
+      _type: 'block',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      set(
+        {
+          _type: 'block',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+        [0],
+      ),
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(changes).toEqual([
+      {
+        type: 'change',
+        origin: 'remote',
+        value: [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+          },
+        ],
+        operations: [
+          {
+            type: 'set',
+            path: [0],
+            value: {
+              _type: 'block',
+              style: 'normal',
+              markDefs: [],
+              children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+            },
+          },
+        ],
+      },
+      {
+        type: 'change',
+        origin: 'local',
+        value: [
+          {
+            _type: 'block',
+            style: 'normal',
+            markDefs: [],
+            children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+            _key: 'k4',
+          },
+        ],
+        operations: [
+          {
+            inverse: {type: 'unset', path: [0, '_key']},
+            type: 'set',
+            path: [0, '_key'],
+            value: 'k4',
+          },
+        ],
+        patches: [
+          {type: 'set', path: [0, '_key'], value: 'k4', origin: 'local'},
+        ],
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        _key: 'k4',
+      },
+    ])
+  })
+})
+
+test('Scenario: A reentrant change listener retains the value before its own edit', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+  ]
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  editor.on('change', (event) => {
+    if (event.origin === 'remote') {
+      editor.send({
+        type: 'set',
+        at: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: 'baz',
+      })
+    }
+  })
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k0',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: 'bar',
+      },
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(values).toEqual([
+      [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'bar', marks: []}],
+        },
+      ],
+      [
+        {
+          _type: 'block',
+          _key: 'k0',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k1', text: 'baz', marks: []}],
+        },
+      ],
+    ])
+    expect(patches).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'k0'}, 'children', {_key: 'k1'}, 'text'],
+        value: 'baz',
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k0',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k1', text: 'baz', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: Several incoming patches needing corrections retain the complete received value', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'bar', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'baz', marks: []}],
+    },
+  ]
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+
+  hostValue = [
+    null,
+    'foo',
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {type: 'set', path: [{_key: 'k0'}], value: null as unknown as JSONValue},
+      {type: 'set', path: [{_key: 'k2'}], value: 'foo'},
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(values).toEqual([
+      [
+        null,
+        'foo',
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
+      [
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
+    ])
+    expect(patches).toEqual([
+      {type: 'unset', path: [1]},
+      {type: 'unset', path: [0]},
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+      },
+    ])
+  })
+})
+
+test('Scenario: A later patch removes an earlier broken entry while an operation listener sends an edit', async () => {
+  const keyGenerator = createTestKeyGenerator()
+  const firstBlockKey = keyGenerator()
+  const firstSpanKey = keyGenerator()
+  const secondBlockKey = keyGenerator()
+  const secondSpanKey = keyGenerator()
+  const thirdBlockKey = keyGenerator()
+  const thirdSpanKey = keyGenerator()
+  let hostValue: unknown = [
+    {
+      _type: 'block',
+      _key: firstBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: firstSpanKey, text: 'foo', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: secondBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: secondSpanKey, text: 'bar', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: thirdBlockKey,
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: thirdSpanKey, text: 'baz', marks: []}],
+    },
+  ]
+  const values: Array<ChangeEvent['value']> = []
+  const patches: Array<Patch> = []
+  const {editor} = await createTestEditor({
+    keyGenerator,
+    initialValue: structuredClone(hostValue) as Array<PortableTextBlock>,
+  })
+  editor.on('change', (event) => {
+    values.push(event.value)
+    if (event.origin === 'local') {
+      for (const {origin: _, ...patch} of event.patches) {
+        patches.push(patch)
+      }
+      hostValue = applyAll(hostValue, event.patches)
+    }
+  })
+  editor.on('operation', (event) => {
+    if (event.origin === 'remote' && event.operation.type === 'set') {
+      editor.send({
+        type: 'set',
+        at: [{_key: 'k4'}, 'children', {_key: 'k5'}, 'text'],
+        value: 'bazx',
+      })
+    }
+  })
+  hostValue = [
+    {
+      _type: 'block',
+      _key: 'k2',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+    },
+    {
+      _type: 'block',
+      _key: 'k4',
+      style: 'normal',
+      markDefs: [],
+      children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+    },
+  ]
+  editor.send({
+    type: 'apply',
+    patches: [
+      {type: 'set', path: [{_key: 'k0'}], value: null as unknown as JSONValue},
+      {type: 'unset', path: [0]},
+    ],
+  })
+  await vi.waitFor(() => {
+    expect(values).toEqual([
+      [
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'baz', marks: []}],
+        },
+      ],
+      [
+        {
+          _type: 'block',
+          _key: 'k2',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+        },
+        {
+          _type: 'block',
+          _key: 'k4',
+          style: 'normal',
+          markDefs: [],
+          children: [{_type: 'span', _key: 'k5', text: 'bazx', marks: []}],
+        },
+      ],
+    ])
+    expect(patches).toEqual([
+      {
+        type: 'set',
+        path: [{_key: 'k4'}, 'children', {_key: 'k5'}, 'text'],
+        value: 'bazx',
+      },
+    ])
+    expect(hostValue).toEqual([
+      {
+        _type: 'block',
+        _key: 'k2',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k3', text: 'bar', marks: []}],
+      },
+      {
+        _type: 'block',
+        _key: 'k4',
+        style: 'normal',
+        markDefs: [],
+        children: [{_type: 'span', _key: 'k5', text: 'bazx', marks: []}],
+      },
+    ])
+  })
+})
+const documentValueSchemaDefinition = defineSchema({
+  decorators: [{name: 'strong'}, {name: 'em'}],
+  blockObjects: [
+    {
+      name: 'callout',
+      fields: [
+        {
+          name: 'content',
+          type: 'array',
+          of: [{type: 'block'}, {type: 'callout'}],
+        },
+      ],
+    },
+    {
+      name: 'table',
+      fields: [
+        {
+          name: 'rows',
+          type: 'array',
+          of: [
+            {
+              name: 'row',
+              type: 'object',
+              fields: [
+                {
+                  name: 'cells',
+                  type: 'array',
+                  of: [
+                    {
+                      name: 'cell',
+                      type: 'object',
+                      fields: [
+                        {
+                          name: 'content',
+                          type: 'array',
+                          of: [{type: 'block'}, {type: 'callout'}],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+})
+const documentValueContainers = [
+  defineContainer({type: 'callout', arrayField: 'content'}),
+  defineContainer({type: 'table', arrayField: 'rows'}),
+  defineContainer({type: 'row', arrayField: 'cells'}),
+  defineContainer({type: 'cell', arrayField: 'content'}),
+]
