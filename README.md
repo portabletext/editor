@@ -56,7 +56,7 @@ For documentation and guides, visit [portabletext.org](https://www.portabletext.
 | [`@portabletext/sanity-bridge`](./packages/sanity-bridge/)           | Convert between Sanity schemas and Portable Text schemas               |
 | [`@portabletext/patches`](./packages/patches/)                       | Apply Sanity patches to a value                                        |
 | [`@portabletext/steps`](./packages/steps/)                           | Keep carets, selections and comments in place while a document changes |
-| [`@portabletext/traversal`](./packages/traversal/)                   | Compare Portable Text paths without an editor                          |
+| [`@portabletext/traversal`](./packages/traversal/)                   | Look up and compare Portable Text nodes by path without an editor      |
 | [`@portabletext/test`](./packages/test/)                             | Testing utilities for the Portable Text Editor                         |
 | [`racejar`](./packages/racejar/)                                     | A testing framework agnostic Gherkin driver                            |
 

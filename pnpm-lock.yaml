@@ -1761,6 +1761,9 @@ importers:
       '@portabletext/patches':
         specifier: workspace:*
         version: link:../patches
+      '@portabletext/schema':
+        specifier: workspace:^
+        version: link:../schema
     devDependencies:
       '@portabletext/test':
         specifier: workspace:^

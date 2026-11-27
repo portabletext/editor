@@ -1,0 +1,344 @@
+import type {Path} from '@portabletext/patches'
+import {getChildren} from './get-children'
+import {isAncestorPath} from './is-ancestor-path'
+import type {Node} from './node'
+import {resolveChildEntryIndex} from './resolve-child-entry-index'
+import type {TraversalSnapshot} from './traversal-snapshot'
+import {walkedNode, walkPath} from './walk-path'
+
+/**
+ * Get the descendant nodes of the node at a given path.
+ *
+ * When `from` and `to` are provided, performs a range-bounded DFS traversal,
+ * yielding only nodes between `from` and `to` (inclusive). Both paths are
+ * always in document order: `from` is the earlier path, `to` is the later
+ * path. The `reverse` flag controls iteration direction within that range.
+ *
+ * When `match` is provided, only yields nodes where the predicate returns true.
+ * The traversal still visits all nodes in range - `match` is a filter, not a
+ * traversal control.
+ *
+ * When `at` is provided, traverses descendants of the node at that path
+ * instead of the root.
+ *
+ * @public
+ */
+export function* getNodes(
+  snapshot: TraversalSnapshot,
+  options: {
+    at?: Path
+    from?: Path
+    to?: Path
+    match?: (node: Node, path: Path) => boolean
+    reverse?: boolean
+  } = {},
+): Generator<{node: Node; path: Path}, void, undefined> {
+  const {at = [], match, reverse = false} = options
+  const from = resolveBound(snapshot, options.from)
+  const to = resolveBound(snapshot, options.to)
+
+  if (from === null || to === null) {
+    return
+  }
+
+  if (from === undefined && to === undefined) {
+    yield* getNodesSimple(snapshot, at, {match, reverse})
+    return
+  }
+
+  yield* getNodesInRange(snapshot, at, {from, to, match, reverse})
+}
+
+/**
+ * The path range traversal compares for `bound`: the path of the node it
+ * reaches, so indexes (negative ones included) compare like keys. `null`
+ * when the bound names nothing, which empties the range. A bound that
+ * reaches past a node into its data (an annotation in `markDefs`) is kept
+ * as written.
+ */
+function resolveBound(
+  snapshot: TraversalSnapshot,
+  bound: Path | undefined,
+): Path | undefined | null {
+  if (bound === undefined) {
+    return undefined
+  }
+
+  const walk = walkPath(snapshot, bound)
+
+  if (walk.status !== 'found') {
+    return null
+  }
+
+  return walkedNode(walk)?.path ?? bound
+}
+
+/**
+ * Simple recursive DFS - the original behavior.
+ * Yields all descendants of the node at `path`.
+ */
+function* getNodesSimple(
+  snapshot: TraversalSnapshot,
+  path: Path,
+  options: {
+    match?: (node: Node, path: Path) => boolean
+    reverse?: boolean
+  },
+): Generator<{node: Node; path: Path}, void, undefined> {
+  const {match, reverse = false} = options
+
+  const children = getChildren(snapshot, path)
+
+  const entries = reverse ? [...children].reverse() : children
+
+  for (const entry of entries) {
+    if (!match || match(entry.node, entry.path)) {
+      yield entry
+    }
+
+    yield* getNodesSimple(snapshot, entry.path, options)
+  }
+}
+
+/**
+ * Compare two keyed paths in DFS pre-order. Returns -1, 0, or 1.
+ *
+ * Walks both paths in parallel; at the first divergence, walks each
+ * path to its node for the sibling indices and compares them.
+ *
+ * Deliberately not `comparePaths` (`engine/path/compare-paths.ts`):
+ * that compare treats an ancestor/descendant pair as equal (0), while
+ * range traversal needs the ancestor ordered first (-1/1), it is what
+ * excludes `to`'s descendants from a range. The two compares answer
+ * different questions and must not be merged.
+ */
+function comparePathsInTree(
+  snapshot: TraversalSnapshot,
+  pathA: Path,
+  pathB: Path,
+): -1 | 0 | 1 {
+  // Walk both full paths in parallel; at the first divergent keyed
+  // segment, walk each prefix to its node for the sibling indices, so
+  // we keep the full path prefix as we descend.
+  const minLength = Math.min(pathA.length, pathB.length)
+  const prefix: Path = []
+
+  for (let i = 0; i < minLength; i++) {
+    const segA = pathA[i]!
+    const segB = pathB[i]!
+
+    if (
+      typeof segA === 'string' ||
+      typeof segB === 'string' ||
+      typeof segA === 'number' ||
+      typeof segB === 'number' ||
+      Array.isArray(segA) ||
+      Array.isArray(segB)
+    ) {
+      prefix.push(segA as never)
+      continue
+    }
+
+    if (segA._key === segB._key) {
+      prefix.push(segA)
+      continue
+    }
+
+    const indexA = siblingIndex(snapshot, [...prefix, segA])
+    const indexB = siblingIndex(snapshot, [...prefix, segB])
+    if (indexA < indexB) {
+      return -1
+    }
+    if (indexA > indexB) {
+      return 1
+    }
+    return 0
+  }
+
+  // One path is a prefix of the other (ancestor relationship).
+  // In DFS order, shorter path (ancestor) comes first.
+  if (pathA.length < pathB.length) {
+    return -1
+  }
+  if (pathA.length > pathB.length) {
+    return 1
+  }
+
+  return 0
+}
+
+function siblingIndex(snapshot: TraversalSnapshot, path: Path): number {
+  return walkedNode(walkPath(snapshot, path))?.index ?? -1
+}
+
+/**
+ * Range-bounded recursive DFS traversal.
+ *
+ * `from` and `to` are always in document order (from is earlier, to is
+ * later), regardless of traversal direction.
+ */
+function* getNodesInRange(
+  snapshot: TraversalSnapshot,
+  path: Path,
+  options: {
+    from?: Path
+    to?: Path
+    match?: (node: Node, path: Path) => boolean
+    reverse?: boolean
+  },
+): Generator<{node: Node; path: Path}, void, undefined> {
+  const {from, to, match, reverse = false} = options
+
+  const children = getChildren(snapshot, path)
+
+  // Seek instead of scan: only the children between the boundaries'
+  // branches at this level can intersect [from, to], so resolve those
+  // positions (O(1) through `indexMap`) and iterate the window
+  // between them. The per-entry checks below stay the semantic source
+  // of truth; an unresolvable boundary just leaves its side of the
+  // window open, degrading to the previous full scan.
+  const startIndex =
+    from === undefined ? 0 : (boundaryChildIndex(snapshot, children, from) ?? 0)
+  const endIndex =
+    to === undefined
+      ? children.length - 1
+      : (boundaryChildIndex(snapshot, children, to) ?? children.length - 1)
+  const window = children.slice(startIndex, endIndex + 1)
+  const entries = reverse ? window.reverse() : window
+
+  for (const entry of entries) {
+    if (canStopTraversal(snapshot, entry.path, from, to, reverse)) {
+      return
+    }
+
+    if (!couldContainInRangeNodes(snapshot, entry.path, from, to)) {
+      continue
+    }
+
+    if (isInRange(snapshot, entry.path, from, to)) {
+      if (!match || match(entry.node, entry.path)) {
+        yield entry
+      }
+    }
+
+    yield* getNodesInRange(snapshot, entry.path, options)
+  }
+}
+
+/**
+ * The index of the child whose subtree `boundary` passes through, at
+ * the level `children` was resolved for. `undefined` when the boundary
+ * does not pass through this level or cannot be resolved, in which
+ * case the caller must not narrow the window on that side.
+ */
+function boundaryChildIndex(
+  snapshot: TraversalSnapshot,
+  children: Array<{node: Node; path: Path}>,
+  boundary: Path,
+): number | undefined {
+  const firstChild = children[0]
+  if (!firstChild) {
+    return undefined
+  }
+  const childPathLength = firstChild.path.length
+  if (boundary.length < childPathLength) {
+    return undefined
+  }
+
+  // The children share every path segment but the last; the boundary
+  // passes through this level only when that shared prefix is an
+  // ancestor of it.
+  const sharedPrefix = firstChild.path.slice(0, -1)
+  if (sharedPrefix.length > 0 && !isAncestorPath(sharedPrefix, boundary)) {
+    return undefined
+  }
+
+  const resolvedIndex = resolveChildEntryIndex(
+    snapshot,
+    children,
+    boundary.slice(0, childPathLength),
+  )
+  return resolvedIndex === -1 ? undefined : resolvedIndex
+}
+
+/**
+ * Check if a node is within the [from, to] range in document order.
+ * Both bounds are inclusive. Ancestor nodes of from or to are also
+ * considered in range since they contain the range boundary.
+ */
+function isInRange(
+  snapshot: TraversalSnapshot,
+  nodePath: Path,
+  from: Path | undefined,
+  to: Path | undefined,
+): boolean {
+  if (
+    from !== undefined &&
+    comparePathsInTree(snapshot, nodePath, from) === -1
+  ) {
+    if (!isAncestorPath(nodePath, from)) {
+      return false
+    }
+  }
+
+  if (to !== undefined && comparePathsInTree(snapshot, nodePath, to) === 1) {
+    if (!isAncestorPath(nodePath, to)) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Check if a subtree rooted at `nodePath` could contain any nodes in the
+ * [from, to] range.
+ */
+function couldContainInRangeNodes(
+  snapshot: TraversalSnapshot,
+  nodePath: Path,
+  from: Path | undefined,
+  to: Path | undefined,
+): boolean {
+  if (isInRange(snapshot, nodePath, from, to)) {
+    return true
+  }
+
+  if (from !== undefined && isAncestorPath(nodePath, from)) {
+    return true
+  }
+
+  if (to !== undefined && isAncestorPath(nodePath, to)) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Check if all remaining nodes in iteration order will be outside the range.
+ */
+function canStopTraversal(
+  snapshot: TraversalSnapshot,
+  nodePath: Path,
+  from: Path | undefined,
+  to: Path | undefined,
+  reverse: boolean,
+): boolean {
+  if (reverse) {
+    if (from === undefined) {
+      return false
+    }
+
+    return (
+      comparePathsInTree(snapshot, nodePath, from) === -1 &&
+      !isAncestorPath(nodePath, from)
+    )
+  }
+
+  if (to === undefined) {
+    return false
+  }
+
+  return comparePathsInTree(snapshot, nodePath, to) === 1
+}

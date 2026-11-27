@@ -1,0 +1,341 @@
+import {compileSchema} from '@portabletext/schema'
+import {createTestKeyGenerator} from '@portabletext/test'
+import {describe, expect, test} from 'vitest'
+import {createTestSnapshot} from '../test-utils/create-test-snapshot'
+import {
+  textBlockDepthsContainers,
+  textBlockDepthsSchemaDefinition,
+} from '../test-utils/text-block-depths'
+import {getChildren} from './get-children'
+import {
+  codeBlockContainer,
+  createNodeTraversalTestbed,
+  resolveTestbedContainers,
+  tableContainers,
+} from './node-traversal-testbed'
+import {serializePath} from './serialize-path'
+
+describe(getChildren.name, () => {
+  const testbed = createNodeTraversalTestbed()
+
+  test('root children', () => {
+    expect(getChildren(testbed.snapshot, [])).toEqual([
+      {node: testbed.textBlock1, path: [{_key: 'k3'}]},
+      {node: testbed.image, path: [{_key: 'k4'}]},
+      {node: testbed.textBlock2, path: [{_key: 'k6'}]},
+      {node: testbed.codeBlock, path: [{_key: 'k11'}]},
+      {node: testbed.table, path: [{_key: 'k26'}]},
+    ])
+  })
+
+  test('text block children', () => {
+    expect(getChildren(testbed.snapshot, [{_key: 'k3'}])).toEqual([
+      {node: testbed.span1, path: [{_key: 'k3'}, 'children', {_key: 'k0'}]},
+      {
+        node: testbed.stockTicker1,
+        path: [{_key: 'k3'}, 'children', {_key: 'k1'}],
+      },
+      {node: testbed.span2, path: [{_key: 'k3'}, 'children', {_key: 'k2'}]},
+    ])
+  })
+
+  test('code block children (code lines)', () => {
+    expect(getChildren(testbed.snapshot, [{_key: 'k11'}])).toEqual([
+      {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
+      {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
+    ])
+  })
+
+  test('code line children', () => {
+    expect(
+      getChildren(testbed.snapshot, [{_key: 'k11'}, 'code', {_key: 'k8'}]),
+    ).toEqual([
+      {
+        node: testbed.codeSpan1,
+        path: [{_key: 'k11'}, 'code', {_key: 'k8'}, 'children', {_key: 'k7'}],
+      },
+    ])
+  })
+
+  test('table children (rows)', () => {
+    expect(getChildren(testbed.snapshot, [{_key: 'k26'}])).toEqual([
+      {node: testbed.row1, path: [{_key: 'k26'}, 'rows', {_key: 'k21'}]},
+      {node: testbed.row2, path: [{_key: 'k26'}, 'rows', {_key: 'k25'}]},
+    ])
+  })
+
+  test('row children (cells)', () => {
+    expect(
+      getChildren(testbed.snapshot, [{_key: 'k26'}, 'rows', {_key: 'k21'}]),
+    ).toEqual([
+      {
+        node: testbed.cell1,
+        path: [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k17'}],
+      },
+      {
+        node: testbed.cell2,
+        path: [{_key: 'k26'}, 'rows', {_key: 'k21'}, 'cells', {_key: 'k20'}],
+      },
+    ])
+  })
+
+  test('cell with multiple blocks', () => {
+    expect(
+      getChildren(testbed.snapshot, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+      ]),
+    ).toEqual([
+      {
+        node: testbed.cellBlock1,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k14'},
+        ],
+      },
+      {
+        node: testbed.cellBlock2,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k16'},
+        ],
+      },
+    ])
+  })
+
+  test('block inside cell children', () => {
+    expect(
+      getChildren(testbed.snapshot, [
+        {_key: 'k26'},
+        'rows',
+        {_key: 'k21'},
+        'cells',
+        {_key: 'k17'},
+        'content',
+        {_key: 'k14'},
+      ]),
+    ).toEqual([
+      {
+        node: testbed.cellSpan1,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k14'},
+          'children',
+          {_key: 'k12'},
+        ],
+      },
+      {
+        node: testbed.stockTicker2,
+        path: [
+          {_key: 'k26'},
+          'rows',
+          {_key: 'k21'},
+          'cells',
+          {_key: 'k17'},
+          'content',
+          {_key: 'k14'},
+          'children',
+          {_key: 'k13'},
+        ],
+      },
+    ])
+  })
+
+  test('leaf node returns empty array', () => {
+    expect(
+      getChildren(testbed.snapshot, [{_key: 'k3'}, 'children', {_key: 'k0'}]),
+    ).toEqual([])
+  })
+
+  test('block object without children returns empty array', () => {
+    expect(getChildren(testbed.snapshot, [{_key: 'k4'}])).toEqual([])
+  })
+
+  test('invalid path returns empty array', () => {
+    expect(getChildren(testbed.snapshot, [{_key: 'nonexistent'}])).toEqual([])
+  })
+
+  test('non-editable code block returns empty array', () => {
+    const tableOnly = resolveTestbedContainers(
+      testbed.context.schema,
+      tableContainers,
+    )
+    expect(
+      getChildren(
+        {
+          ...testbed.snapshot,
+          context: {...testbed.snapshot.context, containers: tableOnly},
+        },
+        [{_key: 'k11'}],
+      ),
+    ).toEqual([])
+  })
+
+  test('non-editable table returns empty array', () => {
+    const codeOnly = resolveTestbedContainers(testbed.context.schema, [
+      codeBlockContainer,
+    ])
+    expect(
+      getChildren(
+        {
+          ...testbed.snapshot,
+          context: {...testbed.snapshot.context, containers: codeOnly},
+        },
+        [{_key: 'k26'}],
+      ),
+    ).toEqual([])
+  })
+
+  test('resolves correctly when indexMap is empty (fallback)', () => {
+    const snapshot = {
+      ...testbed.snapshot,
+      indexMap: new Map<string, number>(),
+    }
+    expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
+      {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
+      {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
+    ])
+  })
+
+  test('resolves correctly when indexMap disagrees with the value (fallback)', () => {
+    // Point the `k11` lookup at the wrong sibling; the `_key` check rejects it
+    // and rescans, so the result is unchanged.
+    const staleMap = new Map(testbed.snapshot.indexMap)
+    staleMap.set(serializePath([{_key: 'k11'}]), 0)
+    const snapshot = {...testbed.snapshot, indexMap: staleMap}
+    expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
+      {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
+      {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},
+    ])
+  })
+})
+
+describe(`${getChildren.name} with a compact path to a text block`, () => {
+  const schema = compileSchema(textBlockDepthsSchemaDefinition)
+  const containers = resolveTestbedContainers(schema, textBlockDepthsContainers)
+
+  test('inside a callout, a compact block path (indexed) returns no children', () => {
+    const value = [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getChildren(snapshot, [0, 0])).toEqual([])
+  })
+
+  test('inside a callout inside a callout, a compact block path (indexed) returns no children', () => {
+    const value = [
+      {
+        _type: 'callout',
+        _key: 'c0',
+        content: [
+          {
+            _type: 'callout',
+            _key: 'c1',
+            content: [
+              {
+                _type: 'block',
+                _key: 'b0',
+                children: [
+                  {_type: 'span', _key: 's0', text: 'foo', marks: []},
+                  {_type: 'span', _key: 's1', text: 'bar', marks: []},
+                ],
+                markDefs: [],
+                style: 'normal',
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getChildren(snapshot, [0, 0, 0])).toEqual([])
+  })
+
+  test('inside a field with its own sub-schema, a compact block path (indexed) returns no children', () => {
+    const value = [
+      {
+        _type: 'note',
+        _key: 'n0',
+        body: [
+          {
+            _type: 'block',
+            _key: 'b0',
+            children: [
+              {_type: 'span', _key: 's0', text: 'foo', marks: []},
+              {_type: 'span', _key: 's1', text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ],
+      },
+    ]
+    const snapshot = createTestSnapshot({context: {schema, containers, value}})
+
+    expect(getChildren(snapshot, [0, 0])).toEqual([])
+  })
+})
+
+test('a text block in text block children has no editable children', () => {
+  const keyGenerator = createTestKeyGenerator()
+  const snapshot = createTestSnapshot({
+    context: {
+      value: [
+        {
+          _type: 'block',
+          _key: keyGenerator(),
+          style: 'normal',
+          markDefs: [],
+          children: [
+            {
+              _type: 'block',
+              _key: keyGenerator(),
+              style: 'normal',
+              markDefs: [],
+              children: [
+                {_type: 'span', _key: keyGenerator(), text: 'foo', marks: []},
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  })
+
+  expect(getChildren(snapshot, [0, 'children', 0])).toEqual([])
+})

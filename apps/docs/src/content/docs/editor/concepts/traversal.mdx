@@ -35,7 +35,7 @@ const cellPath = [{_key: 't1'}, 'rows', {_key: 'r1'}, 'cells', {_key: 'c1'}]
 
 `getNode` and the other lookups also accept numeric indexes in place of a keyed segment, but the path on the returned result is always fully keyed: an index like `0` resolves to whatever node currently sits there, and the answer comes back addressed by that node's `_key`, not by the index you passed in.
 
-To compare paths outside the editor, in a backend or a headless tool, use [`@portabletext/traversal`](https://github.com/portabletext/editor/tree/main/packages/traversal). Its `pathContains` and `pathEquals` take the same paths and need no snapshot.
+To look up nodes or compare paths outside the editor, in a backend or a headless tool, use [`@portabletext/traversal`](https://github.com/portabletext/editor/tree/main/packages/traversal). Its `getNode`, `getChildren`, `getNodes` and the other lookups take the same paths, with a snapshot you build from a document, its schema and `compileContainers`. Its `pathContains` and `pathEquals` need no snapshot.
 
 ## Entries
 
