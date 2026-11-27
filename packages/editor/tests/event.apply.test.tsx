@@ -1,4 +1,10 @@
-import {diffMatchPatch, set, unset} from '@portabletext/patches'
+import {
+  applyAll,
+  diffMatchPatch,
+  insert,
+  set,
+  unset,
+} from '@portabletext/patches'
 import type {PortableTextBlock} from '@portabletext/schema'
 import {createTestKeyGenerator} from '@portabletext/test'
 import {describe, expect, test, vi} from 'vitest'
@@ -147,6 +153,90 @@ describe('event.apply', () => {
     expect(editor.getSnapshot().context.value).toEqual([
       block(blockKey, spanKey, 'foox'),
     ])
+  })
+
+  test('Scenario: A remote `insert` with position `replace` replaces a span', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const before = [block(blockKey, fooSpanKey, 'foo')]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: structuredClone(before),
+    })
+    const patches = [
+      insert(
+        [{_type: 'span', _key: barSpanKey, text: 'bar', marks: []}],
+        'replace',
+        [{_key: blockKey}, 'children', {_key: fooSpanKey}],
+      ),
+    ]
+
+    editor.send({type: 'apply', patches})
+
+    expect(editor.getSnapshot().context.value).toEqual(
+      applyAll(before, patches),
+    )
+  })
+
+  test('Scenario: A remote `insert` with position `replace` at a negative index replaces the block with every item', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const bazBlockKey = keyGenerator()
+    const bazSpanKey = keyGenerator()
+    const quxBlockKey = keyGenerator()
+    const quxSpanKey = keyGenerator()
+    const before = [
+      block(fooBlockKey, fooSpanKey, 'foo'),
+      block(barBlockKey, barSpanKey, 'bar'),
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: structuredClone(before),
+    })
+    const patches = [
+      insert(
+        [
+          block(bazBlockKey, bazSpanKey, 'baz'),
+          block(quxBlockKey, quxSpanKey, 'qux'),
+        ],
+        'replace',
+        [-1],
+      ),
+    ]
+
+    editor.send({type: 'apply', patches})
+
+    expect(editor.getSnapshot().context.value).toEqual(
+      applyAll(before, patches),
+    )
+  })
+
+  test('Scenario: A remote `insert` with position `replace` and no items removes the block', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const fooBlockKey = keyGenerator()
+    const fooSpanKey = keyGenerator()
+    const barBlockKey = keyGenerator()
+    const barSpanKey = keyGenerator()
+    const before = [
+      block(fooBlockKey, fooSpanKey, 'foo'),
+      block(barBlockKey, barSpanKey, 'bar'),
+    ]
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      initialValue: structuredClone(before),
+    })
+    const patches = [insert([], 'replace', [{_key: barBlockKey}])]
+
+    editor.send({type: 'apply', patches})
+
+    expect(editor.getSnapshot().context.value).toEqual(
+      applyAll(before, patches),
+    )
   })
 })
 
