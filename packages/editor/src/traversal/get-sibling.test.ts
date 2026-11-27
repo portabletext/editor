@@ -305,13 +305,13 @@ describe(getSibling.name, () => {
     ).toBeUndefined()
   })
 
-  test('resolves the anchor when `blockIndexMap` misses', () => {
+  test('resolves the anchor when `indexMap` misses', () => {
     // An unmaintained map (e.g. a bare engine) must not hide siblings
     // that exist in the tree. Mirrors the `getNode`/`getChildren`
     // fallback.
     const snapshot = {
       context: testbed.snapshot.context,
-      blockIndexMap: new Map<string, number>(),
+      indexMap: new Map<string, number>(),
     }
 
     const entry = getSibling(snapshot, [{_key: 'k3'}], {direction: 'next'})
@@ -319,13 +319,13 @@ describe(getSibling.name, () => {
     expect(entry?.path).toEqual([{_key: 'k4'}])
   })
 
-  test('resolves the anchor when `blockIndexMap` disagrees with the tree', () => {
+  test('resolves the anchor when `indexMap` disagrees with the tree', () => {
     // A stale map (snapshots pairing a live map with a pre-apply
     // value) previously returned the wrong sibling without
     // verification.
     const snapshot = {
       context: testbed.snapshot.context,
-      blockIndexMap: new Map<string, number>([['[_key=="k3"]', 2]]),
+      indexMap: new Map<string, number>([['[_key=="k3"]', 2]]),
     }
 
     const entry = getSibling(snapshot, [{_key: 'k3'}], {direction: 'next'})
@@ -336,7 +336,7 @@ describe(getSibling.name, () => {
   test('`match` still applies under a map miss', () => {
     const snapshot = {
       context: testbed.snapshot.context,
-      blockIndexMap: new Map<string, number>(),
+      indexMap: new Map<string, number>(),
     }
 
     const entry = getSibling(snapshot, [{_key: 'k3'}], {

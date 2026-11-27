@@ -6,7 +6,7 @@ import type {Containers} from '../schema/resolve-containers'
  * Snapshot-shaped input for traversal utilities.
  *
  * Mirrors the shape of `EditorSnapshot`: ambient state lives under
- * `context`, the `blockIndexMap` perf cache sits as a sibling.
+ * `context`, the `indexMap` perf cache sits as a sibling.
  */
 export type TraversalSnapshot = {
   context: {
@@ -14,5 +14,5 @@ export type TraversalSnapshot = {
     containers: Containers
     value: Array<Node>
   }
-  blockIndexMap: ReadonlyMap<string, number>
+  indexMap: ReadonlyMap<string, number>
 }

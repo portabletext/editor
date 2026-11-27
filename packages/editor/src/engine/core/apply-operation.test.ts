@@ -814,7 +814,7 @@ describe(applyOperation.name, () => {
           ],
         },
       ])
-      editor.blockIndexMap.set(
+      editor.indexMap.set(
         serializePath([{_key: blockKey}, 'children', {_key: spanKey}]),
         0,
       )
@@ -943,7 +943,7 @@ describe(applyOperation.name, () => {
         {_key: imageKey, _type: 'image'},
         textBlock({blockKey, spanKey, markDefKey, href: 'foo'}),
       ])
-      editor.blockIndexMap.set(serializePath([{_key: blockKey}]), 0)
+      editor.indexMap.set(serializePath([{_key: blockKey}]), 0)
 
       editor.apply({
         type: 'set',
@@ -993,14 +993,15 @@ function createBareEditor(
   )
   const editor = createEditor() as PortableTextEditorEngine
   const containers = resolveContainers(schema, [])
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, containers, value}, {blockIndexMap})
+  const indexMap = new Map<string, number>()
+  buildIndexMaps({schema, containers, value}, {indexMap})
 
   editor.containers = new Map()
-  editor.blockIndexMap = blockIndexMap
+  editor.indexMap = indexMap
   editor.verifiedUniqueChildGroups = new Set()
   editor.snapshot = {
-    blockIndexMap,
+    indexMap,
+    blockIndexMap: indexMap,
     context: {
       containers,
       converters: [],

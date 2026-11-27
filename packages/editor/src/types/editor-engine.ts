@@ -53,7 +53,7 @@ export interface PortableTextEditorEngine extends DOMEditor {
   textBlocks: Map<string, TextBlockConfig>
 
   decoratedRanges: Array<DecoratedRange>
-  blockIndexMap: Map<string, number>
+  indexMap: Map<string, number>
   history: History
   /**
    * Per-notify pending flags for the segmented selector channels

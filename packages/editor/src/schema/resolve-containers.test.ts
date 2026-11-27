@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test, vi} from 'vitest'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import {
   defineBlockObject,
   defineContainer,
@@ -52,7 +52,7 @@ function makeSnapshot(args: {
       containers,
       value: args.value as never,
     },
-    blockIndexMap: buildBlockIndexMap(args.schema, args.containers, args.value),
+    indexMap: buildIndexMap(args.schema, args.containers, args.value),
   }
 }
 

@@ -262,19 +262,19 @@ export function createNodeTraversalTestbed() {
     codeBlockContainer,
     ...tableContainers,
   ])
-  const blockIndexMap = new Map<string, number>()
-  buildIndexMaps({schema, containers, value}, {blockIndexMap})
+  const indexMap = new Map<string, number>()
+  buildIndexMaps({schema, containers, value}, {indexMap})
 
   const context = {
     schema,
     containers,
     value,
-    blockIndexMap,
+    indexMap,
   }
 
   const snapshot = {
     context: {schema, containers, value},
-    blockIndexMap,
+    indexMap,
   }
 
   return {

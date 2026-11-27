@@ -950,7 +950,7 @@ function syncBlock({
 /**
  * Find the editor block an incoming block reconciles against: the block at
  * `index` when the value is synced by index, otherwise the block with the
- * same key. The keyed lookup goes through `blockIndexMap` so a reorder does
+ * same key. The keyed lookup goes through `indexMap` so a reorder does
  * not scan the value once per block.
  */
 export function findOldBlock({

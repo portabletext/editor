@@ -28,11 +28,11 @@ const schema = compileSchema(
 )
 
 describe(buildIndexMaps.name, () => {
-  const blockIndexMap = new Map<string, number>()
+  const indexMap = new Map<string, number>()
 
   test('empty', () => {
-    buildIndexMaps({schema, containers: new Map(), value: []}, {blockIndexMap})
-    expect(blockIndexMap).toEqual(new Map())
+    buildIndexMaps({schema, containers: new Map(), value: []}, {indexMap})
+    expect(indexMap).toEqual(new Map())
   })
 
   test('text blocks with children', () => {
@@ -42,9 +42,9 @@ describe(buildIndexMaps.name, () => {
         containers: new Map(),
         value: [textBlock('k0'), textBlock('k1')],
       },
-      {blockIndexMap},
+      {indexMap},
     )
-    expect(blockIndexMap).toEqual(
+    expect(indexMap).toEqual(
       new Map([
         ['[_key=="k0"]', 0],
         ['[_key=="k0"].children[_key=="k0-s0"]', 0],
@@ -61,9 +61,9 @@ describe(buildIndexMaps.name, () => {
         containers: new Map(),
         value: [textBlock('k0'), {_key: 'k1', _type: 'image'}, textBlock('k2')],
       },
-      {blockIndexMap},
+      {indexMap},
     )
-    expect(blockIndexMap).toEqual(
+    expect(indexMap).toEqual(
       new Map([
         ['[_key=="k0"]', 0],
         ['[_key=="k0"].children[_key=="k0-s0"]', 0],

@@ -363,7 +363,7 @@ describe(`${getNode.name} strips trailing field-name segments`, () => {
           ],
         ]),
       },
-      blockIndexMap: new Map([['[_key=="b0"]', 0]]),
+      indexMap: new Map([['[_key=="b0"]', 0]]),
     }
     const entry = getNode(snapshot, [{_key: 'b0'}, 'markDefs', {_key: 'm0'}])
     expect(entry?.node).toBe(child)
@@ -390,7 +390,7 @@ describe(`${getNode.name} keeps numeric segments for keyless nodes`, () => {
       ...testbed.snapshot.context,
       value: [keylessBlock1, keylessBlock2] as never,
     },
-    blockIndexMap: new Map<string, number>(),
+    indexMap: new Map<string, number>(),
   }
 
   test('numeric input resolves and stays numeric', () => {
@@ -416,7 +416,7 @@ describe(`${getNode.name} keeps numeric segments for keyless nodes`, () => {
         ...testbed.snapshot.context,
         value: [{_type: 'block', children: [keyedSpan], markDefs: []}] as never,
       },
-      blockIndexMap: new Map<string, number>(),
+      indexMap: new Map<string, number>(),
     }
     const entry = getNode(mixedSnapshot, [0, 'children', {_key: 'k100'}])
     expect(entry?.node).toBe(keyedSpan)

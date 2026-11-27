@@ -1,6 +1,6 @@
 import {compileSchema, defineSchema} from '@portabletext/schema'
 import {describe, expect, test} from 'vitest'
-import {buildBlockIndexMap} from '../../test-utils/build-block-index-map'
+import {buildIndexMap} from '../../test-utils/build-index-map'
 import type {Node} from '../engine/interfaces/node'
 import {
   defineContainer,
@@ -148,7 +148,7 @@ describe('getChildren with same _type registered under different parents', () =>
 
   const value: Array<Node> = [tableNode as Node, diagramNode as Node]
 
-  const blockIndexMap = buildBlockIndexMap(schema, containers, value)
+  const indexMap = buildIndexMap(schema, containers, value)
 
   const snapshot: TraversalSnapshot = {
     context: {
@@ -156,7 +156,7 @@ describe('getChildren with same _type registered under different parents', () =>
       containers,
       value,
     },
-    blockIndexMap,
+    indexMap,
   }
 
   test('getChildren of cell inside table resolves content array', () => {

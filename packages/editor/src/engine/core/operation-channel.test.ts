@@ -30,10 +30,11 @@ function createBareEditor(value: Array<PortableTextBlock>): Editor {
   const editor = createEditor()
 
   editor.containers = new Map()
-  editor.blockIndexMap = new Map()
+  editor.indexMap = new Map()
   editor.verifiedUniqueChildGroups = new Set()
   editor.snapshot = {
-    blockIndexMap: editor.blockIndexMap,
+    indexMap: editor.indexMap,
+    blockIndexMap: editor.indexMap,
     context: {
       containers: new Map(),
       converters: [],
@@ -438,10 +439,7 @@ describe('operation channel', () => {
     ]
     const editor = createBareEditor(value)
     const containers = resolveContainers(schema, publicContainers)
-    buildIndexMaps(
-      {schema, containers, value},
-      {blockIndexMap: editor.blockIndexMap},
-    )
+    buildIndexMaps({schema, containers, value}, {indexMap: editor.indexMap})
     editor.containers = resolveContainersRich(schema, publicContainers)
     editor.snapshot.context.schema = schema
     editor.snapshot.context.containers = containers

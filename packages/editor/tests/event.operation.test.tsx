@@ -328,11 +328,11 @@ describe('event.operation', () => {
     const {editor} = await createTestEditor({
       initialValue: [block('b1', 'one'), block('b2', 'two')],
     })
-    const blockIndexMap = new Map<string, number>()
+    const blockIndexes = new Map<string, number>()
     function rebuild() {
-      blockIndexMap.clear()
+      blockIndexes.clear()
       editor.getSnapshot().context.value.forEach((valueBlock, index) => {
-        blockIndexMap.set(valueBlock._key, index)
+        blockIndexes.set(valueBlock._key, index)
       })
     }
     rebuild()
@@ -344,7 +344,7 @@ describe('event.operation', () => {
       placement: 'after',
     })
     await vi.waitFor(() => {
-      expect([...blockIndexMap.entries()]).toEqual([
+      expect([...blockIndexes.entries()]).toEqual([
         ['b1', 0],
         ['b2', 1],
         ['b3', 2],
@@ -353,7 +353,7 @@ describe('event.operation', () => {
 
     editor.send({type: 'delete.block', at: [{_key: 'b2'}]})
     await vi.waitFor(() => {
-      expect([...blockIndexMap.entries()]).toEqual([
+      expect([...blockIndexes.entries()]).toEqual([
         ['b1', 0],
         ['b3', 1],
       ])

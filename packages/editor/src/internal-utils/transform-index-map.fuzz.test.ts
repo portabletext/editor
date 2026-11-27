@@ -9,10 +9,10 @@ import type {Path} from '../engine/interfaces/path'
 import {defineContainer} from '../renderers/renderer.types'
 import {resolveContainers} from '../schema/resolve-containers-batch'
 import type {KeyedSegment} from '../types/paths'
-import {BlockIndexMap} from './block-index-map'
 import {buildIndexMaps} from './build-index-maps'
+import {IndexMap} from './index-map'
 import {safeStringify} from './safe-json'
-import {transformBlockIndexMap} from './transform-block-index-map'
+import {transformIndexMap} from './transform-index-map'
 
 /**
  * Property-based check of the oracle invariant: a map maintained
@@ -83,7 +83,7 @@ type Mutation = {
   afterValue: ReadonlyArray<FuzzNode>
 }
 
-describe('transformBlockIndexMap fuzz', () => {
+describe('transformIndexMap fuzz', () => {
   for (const seed of [1, 2, 3, 4]) {
     test(`random op sequence stays equivalent to a fresh rebuild (seed ${seed})`, () => {
       const random = mulberry32(seed)
@@ -96,19 +96,19 @@ describe('transformBlockIndexMap fuzz', () => {
         createTextBlock(nextKey, 1),
       ]
 
-      const incrementalMap = new BlockIndexMap()
+      const incrementalMap = new IndexMap()
       buildIndexMaps(
         {
           schema: fuzzSchema,
           value: value as unknown as PortableTextBlock[],
           containers: fuzzContainers,
         },
-        {blockIndexMap: incrementalMap},
+        {indexMap: incrementalMap},
       )
 
       for (let step = 0; step < 150; step++) {
         const mutation = generateMutation(value, random, nextKey)
-        transformBlockIndexMap(
+        transformIndexMap(
           incrementalMap,
           mutation.op,
           value as never,
@@ -117,14 +117,14 @@ describe('transformBlockIndexMap fuzz', () => {
         )
         value = mutation.afterValue
 
-        const oracleMap = new BlockIndexMap()
+        const oracleMap = new IndexMap()
         buildIndexMaps(
           {
             schema: fuzzSchema,
             value: value as unknown as PortableTextBlock[],
             containers: fuzzContainers,
           },
-          {blockIndexMap: oracleMap},
+          {indexMap: oracleMap},
         )
 
         expect(

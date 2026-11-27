@@ -28,7 +28,7 @@ function getUniqueBlockKey(
   }
 
   if (
-    snapshot.blockIndexMap.has(serializePath([{_key: blockKey}])) ||
+    snapshot.indexMap.has(serializePath([{_key: blockKey}])) ||
     snapshot.context.value.some((block) => block._key === blockKey)
   ) {
     return snapshot.context.keyGenerator()

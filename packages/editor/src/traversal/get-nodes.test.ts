@@ -763,11 +763,11 @@ describe(getNodes.name, () => {
     })
   })
 
-  describe('from/to range when `blockIndexMap` has no entries', () => {
+  describe('from/to range when `indexMap` has no entries', () => {
     test('a root block after the range yields nothing', () => {
       const snapshot = {
         context: testbed.snapshot.context,
-        blockIndexMap: new Map<string, number>(),
+        indexMap: new Map<string, number>(),
       }
 
       const nodes = [
@@ -784,7 +784,7 @@ describe(getNodes.name, () => {
     test('a table cell after the range yields nothing', () => {
       const snapshot = {
         context: testbed.snapshot.context,
-        blockIndexMap: new Map<string, number>(),
+        indexMap: new Map<string, number>(),
       }
 
       const nodes = [

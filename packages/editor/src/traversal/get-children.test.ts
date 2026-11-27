@@ -197,12 +197,12 @@ describe(getChildren.name, () => {
     ).toEqual([])
   })
 
-  // The existing cases above run with a populated `blockIndexMap`, so they
+  // The existing cases above run with a populated `indexMap`, so they
   // exercise the O(1) fast path. These pin the linear-scan fallback.
-  test('resolves correctly when blockIndexMap is empty (fallback)', () => {
+  test('resolves correctly when indexMap is empty (fallback)', () => {
     const snapshot = {
       ...testbed.snapshot,
-      blockIndexMap: new Map<string, number>(),
+      indexMap: new Map<string, number>(),
     }
     expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
       {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
@@ -210,12 +210,12 @@ describe(getChildren.name, () => {
     ])
   })
 
-  test('resolves correctly when blockIndexMap disagrees with the value (fallback)', () => {
+  test('resolves correctly when indexMap disagrees with the value (fallback)', () => {
     // Point the `k11` lookup at the wrong sibling; the `_key` check rejects it
     // and rescans, so the result is unchanged.
-    const staleMap = new Map(testbed.snapshot.blockIndexMap)
+    const staleMap = new Map(testbed.snapshot.indexMap)
     staleMap.set(serializePath([{_key: 'k11'}]), 0)
-    const snapshot = {...testbed.snapshot, blockIndexMap: staleMap}
+    const snapshot = {...testbed.snapshot, indexMap: staleMap}
     expect(getChildren(snapshot, [{_key: 'k11'}])).toEqual([
       {node: testbed.codeLine1, path: [{_key: 'k11'}, 'code', {_key: 'k8'}]},
       {node: testbed.codeLine2, path: [{_key: 'k11'}, 'code', {_key: 'k10'}]},

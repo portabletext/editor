@@ -65,7 +65,7 @@ export function resolveNode(
     return {status: 'missing'}
   }
 
-  const {context, blockIndexMap} = snapshot
+  const {context, indexMap} = snapshot
   let currentChildren: Array<Node> = context.value
   let currentFieldName: string | undefined
   let node: Node | undefined
@@ -101,7 +101,7 @@ export function resolveNode(
 
     if (isKeyedSegment(segment)) {
       resolvedPath.push(segment)
-      const index = blockIndexMap.get(serializePath(resolvedPath))
+      const index = indexMap.get(serializePath(resolvedPath))
       if (
         index !== undefined &&
         currentChildren[index]?._key === segment._key

@@ -90,7 +90,7 @@ function resolveSelectionPoint(
       containers: editor.snapshot.context.containers,
       value: editor.snapshot.context.value,
     },
-    blockIndexMap: editor.snapshot.blockIndexMap,
+    indexMap: editor.snapshot.indexMap,
   }
 
   const entry = getNode(snapshot, selectionPoint.path)

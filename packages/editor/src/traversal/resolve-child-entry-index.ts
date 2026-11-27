@@ -7,7 +7,7 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * The index of the child addressed by `childPath`'s last segment within
  * `children` (entries as resolved by `getChildren`). Numeric last
  * segments are literal, bounds-checked indices. Keyed segments resolve
- * through `blockIndexMap` when the path is fully keyed (the map's id
+ * through `indexMap` when the path is fully keyed (the map's id
  * space), verified against the entry at the mapped position, with a
  * linear scan fallback for misses, disagreements, and paths the map
  * cannot key, mirroring `getNode`/`getChildren`. Returns `-1` when the
@@ -17,11 +17,11 @@ import {isKeyedSegment} from '../utils/util.is-keyed-segment'
  * deliberately resolve against pre-operation map state. The engine
  * keeps raw-array siblings of this helper (`resolveChildIndex` in
  * `apply-operation.ts`, `childIndexFromMap` in
- * `transform-block-index-map.ts`) for call sites that hold plain node
+ * `transform-index-map.ts`) for call sites that hold plain node
  * arrays mid-mutation, where no entries exist.
  */
 export function resolveChildEntryIndex(
-  blockIndexMap: ReadonlyMap<string, number>,
+  indexMap: ReadonlyMap<string, number>,
   children: ReadonlyArray<{node: Node; path: Path}>,
   childPath: Path,
 ): number {
@@ -49,7 +49,7 @@ export function resolveChildEntryIndex(
   }
 
   if (fullyKeyed) {
-    const mappedIndex = blockIndexMap.get(serializePath(childPath))
+    const mappedIndex = indexMap.get(serializePath(childPath))
     if (
       mappedIndex !== undefined &&
       children[mappedIndex]?.node._key === lastSegment._key

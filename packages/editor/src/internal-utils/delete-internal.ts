@@ -644,7 +644,7 @@ function removeLeadingChildrenOf(
  * `endBlockPath`. Both paths must share the same parent.
  *
  * Removes from the end of the range backward. Each removal reindexes the
- * block-index map for the removed node's following siblings; taking the
+ * index map for the removed node's following siblings; taking the
  * last in-range block first leaves nothing after it to reindex, so the
  * whole range is O(n) instead of the O(n^2) a front-to-back walk incurs
  * (every removal there shifts, and reserializes, all later siblings).
