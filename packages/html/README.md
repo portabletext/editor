@@ -96,6 +96,31 @@ const schema = compileSchema(
 const blocks = htmlToPortableText(html, {schema})
 ```
 
+### Default schema
+
+The schema `htmlToPortableText` uses when no `schema` is passed is exported as `defaultSchema`. It is a compiled schema with:
+
+- Styles: `normal`, `h1` to `h6` and `blockquote`
+- Lists: `number` and `bullet`
+- Decorators: `strong`, `em`, `code` and `strike-through`
+- Annotations: `link` (`href`, `title`)
+- Block objects: `code` (`language`, `code`), `horizontal-rule`, `image` (`src`, `alt`, `title`), `html` (`html`) and `table` (`headerRows`, `rows`)
+- Inline objects: `image` (`src`, `alt`, `title`)
+
+Pass it on to other code that needs the same schema, or spread it into `compileSchema` to extend it:
+
+```ts nocheck
+import {defaultSchema, htmlToPortableText} from '@portabletext/html'
+import {compileSchema} from '@portabletext/schema'
+
+const schema = compileSchema({
+  ...defaultSchema,
+  decorators: [...defaultSchema.decorators, {name: 'underline'}],
+})
+
+const blocks = htmlToPortableText(html, {schema})
+```
+
 ### Custom rules
 
 Rules give you full control over how HTML elements are converted to Portable Text. Custom rules are checked before the built-in rules - the first rule that returns a value wins.
@@ -203,6 +228,35 @@ const blocks = htmlToPortableText(html, {
 ```
 
 The matcher is called with `isInline: false` for block-level images and `isInline: true` for inline images. Return `undefined` to skip the image.
+
+#### `buildObjectMatcher`
+
+```ts nocheck
+function buildObjectMatcher<TDefinition extends {name: string}>(
+  definition: TDefinition,
+): ObjectMatcher<ExtractValue<TDefinition>>
+```
+
+`buildObjectMatcher` builds an `ObjectMatcher` from an object definition. The matcher looks up `definition.name` in `context.schema.inlineObjects` when `isInline` is `true` and in `context.schema.blockObjects` otherwise, and returns `undefined` when the schema has no such object. Otherwise it returns an object with a `_key` from `context.keyGenerator()`, the schema object's name as `_type`, and only the values for fields the schema object declares. Undefined values are left out.
+
+```ts nocheck
+import {buildObjectMatcher, htmlToPortableText} from '@portabletext/html'
+
+const imageMatcher = buildObjectMatcher({
+  name: 'image',
+  fields: [
+    {name: 'src', type: 'string'},
+    {name: 'alt', type: 'string'},
+  ],
+})
+
+const blocks = htmlToPortableText(html, {
+  schema,
+  types: {image: imageMatcher},
+})
+```
+
+With the schema above, which declares only `src` on `image`, the `alt` value is dropped.
 
 ### Code block handling
 

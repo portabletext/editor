@@ -1,5 +1,22 @@
 # @portabletext/plugin-typography
 
+## 9.0.31
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @portabletext/plugin-input-rule@7.0.31
+
+## 9.0.30
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`6441f4a`](https://github.com/portabletext/editor/commit/6441f4a9d56a212ad1af9ae522c9faa7b612ee54) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-typography
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+- Updated dependencies [[`45ad6ee`](https://github.com/portabletext/editor/commit/45ad6ee71dc254de4a090acea6de4283c9176103)]:
+  - @portabletext/plugin-input-rule@7.0.30
+
 ## 9.0.29
 
 ### Patch Changes

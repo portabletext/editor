@@ -1,10 +1,10 @@
 {
   "name": "@portabletext/keyboard-shortcuts",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Create platform-aware keyboard shortcuts with automatic detection of Apple vs non-Apple platforms",
   "keywords": [
     "keyboard-shortcuts",
-    "portabletext"
+    "portable-text"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {

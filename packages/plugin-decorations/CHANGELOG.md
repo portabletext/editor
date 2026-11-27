@@ -1,5 +1,19 @@
 # @portabletext/plugin-decorations
 
+## 1.0.18
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.17`
+
+## 1.0.17
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`b349421`](https://github.com/portabletext/editor/commit/b349421ef3a79935fed71edf32ce8b8dbc47da31) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-decorations
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+
 ## 1.0.16
 
 ### Patch Changes

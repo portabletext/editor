@@ -1,10 +1,11 @@
 {
   "name": "@portabletext/test",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Testing utilities for the Portable Text Editor",
   "keywords": [
     "editor",
     "portable-text",
+    "portable-text-editor",
     "test"
   ],
   "homepage": "https://www.portabletext.org",

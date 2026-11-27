@@ -1,5 +1,23 @@
 # @portabletext/repair
 
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies [[`fe227d2`](https://github.com/portabletext/editor/commit/fe227d2fc048822f02543cae1201a05e2fe3a568)]:
+  - @portabletext/patches@4.0.0
+
+## 1.0.5
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`0e4c76b`](https://github.com/portabletext/editor/commit/0e4c76bd8fb9065755b6cf2d641134642afd436c) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` in the npm keywords of @portabletext/repair
+  
+  npm search and keyword filters now find it under `portable-text`. It no longer lists `portabletext`.
+- Updated dependencies [[`99979cf`](https://github.com/portabletext/editor/commit/99979cf5dc3c124ae210625363849418cce0ad8e), [`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a)]:
+  - @portabletext/patches@3.0.7
+  - @portabletext/schema@3.1.2
+
 ## 1.0.4
 
 ### Patch Changes

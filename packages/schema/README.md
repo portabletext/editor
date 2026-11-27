@@ -100,3 +100,90 @@ cell's text inherits the document). A nested block never blends multiple
 ancestors; it takes exactly one inherited value. When the `of` has no
 `{type: 'block'}` member at all, the container allows objects only, with no
 text formatting.
+
+## Reference
+
+### Guards
+
+| guard                             | narrows to                                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| `isTypedObject(object)`           | `TypedObject`, when `object` is a non-null object or function with a string `_type`     |
+| `isTextBlock({schema}, block)`    | `PortableTextTextBlock`, when `_type` is `schema.block.name` and `children` is an array |
+| `isTextBlockNode({schema}, node)` | a text block shape, when `_type` is `schema.block.name`                                 |
+| `isSpan({schema}, child)`         | `PortableTextSpan`, when `_type` is `schema.span.name` and `text` is a string           |
+| `isSpanNode({schema}, node)`      | a span shape, when `_type` is `schema.span.name`                                        |
+
+`isTypedObject` takes no schema. The other guards take a `{schema}` context
+with a compiled `Schema`.
+
+`isTextBlockNode` and `isSpanNode` check `_type` only, so they also match
+structurally incomplete nodes, such as a text block without `children` or a
+span without `text`. Their narrowed types mark `children` and `text` as
+optional, but `_key` and the remaining fields are not checked. Verify them
+before relying on them in a value that may be malformed.
+
+```ts
+import {
+  compileSchema,
+  defineSchema,
+  isSpan,
+  isSpanNode,
+} from '@portabletext/schema'
+
+const schema = compileSchema(defineSchema({}))
+
+isSpan({schema}, {_type: 'span', _key: 'k0'}) // false, `text` is missing
+isSpanNode({schema}, {_type: 'span', _key: 'k0'}) // true
+```
+
+### Types
+
+Definition types, passed to `defineSchema`:
+
+| type                       | shape                                                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `SchemaDefinition`         | `{block?, styles?, lists?, decorators?, annotations?, blockObjects?, inlineObjects?}`                                |
+| `BaseDefinition`           | `{name, title?}`                                                                                                     |
+| `StyleDefinition`          | `BaseDefinition`                                                                                                     |
+| `ListDefinition`           | `BaseDefinition`                                                                                                     |
+| `DecoratorDefinition`      | `BaseDefinition`                                                                                                     |
+| `AnnotationDefinition`     | `BaseDefinition & {fields?}`                                                                                         |
+| `BlockObjectDefinition`    | `BaseDefinition & {fields?}`                                                                                         |
+| `InlineObjectDefinition`   | `BaseDefinition & {fields?}`                                                                                         |
+| `FieldDefinition`          | `BaseDefinition & {type: 'array', of?}`, or `BaseDefinition & {type: 'string' \| 'number' \| 'boolean' \| 'object'}` |
+| `OfDefinition`             | `BlockOfDefinition \| InlineObjectOfDefinition \| ReferenceOfDefinition`                                             |
+| `BlockOfDefinition`        | `{type: 'block', name?, title?, styles?, decorators?, annotations?, lists?, inlineObjects?}`                         |
+| `InlineObjectOfDefinition` | `{type: 'object', name, title?, fields}`                                                                             |
+| `ReferenceOfDefinition`    | `{type, name?, title?}`, where `type` names a declared type                                                          |
+
+`StyleDefinition`, `ListDefinition`, `DecoratorDefinition`,
+`AnnotationDefinition`, `BlockObjectDefinition` and `InlineObjectDefinition`
+take an optional type parameter that extends `BaseDefinition` and defaults to
+it.
+
+Compiled schema types, returned by `compileSchema`:
+
+| type                     | shape                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `Schema`                 | `{block: {name, fields?}, span: {name}, styles, lists, decorators, annotations, blockObjects, inlineObjects}` |
+| `StyleSchemaType`        | `BaseDefinition`                                                                                              |
+| `ListSchemaType`         | `BaseDefinition`                                                                                              |
+| `DecoratorSchemaType`    | `BaseDefinition`                                                                                              |
+| `AnnotationSchemaType`   | `BaseDefinition & {fields}`                                                                                   |
+| `BlockObjectSchemaType`  | `BaseDefinition & {fields}`                                                                                   |
+| `InlineObjectSchemaType` | `BaseDefinition & {fields}`                                                                                   |
+
+Portable Text node types:
+
+| type                    | shape                                                           |
+| ----------------------- | --------------------------------------------------------------- |
+| `TypedObject`           | `{_type, [key: string]: unknown}`                               |
+| `PortableTextBlock`     | `PortableTextTextBlock \| PortableTextObject`                   |
+| `PortableTextTextBlock` | `{_type, _key, children, markDefs?, listItem?, style?, level?}` |
+| `PortableTextListBlock` | `PortableTextTextBlock` with required `listItem` and `level`    |
+| `PortableTextSpan`      | `{_type: 'span', _key, text, marks?}`                           |
+| `PortableTextObject`    | `{_type, _key, [other: string]: unknown}`                       |
+| `PortableTextChild`     | `PortableTextSpan \| PortableTextObject`                        |
+
+`PortableTextTextBlock` takes an optional `TChild` type parameter for its
+`children`, defaulting to `PortableTextSpan | PortableTextObject`.

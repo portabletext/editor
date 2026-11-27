@@ -1,11 +1,12 @@
 {
   "name": "@portabletext/patches",
-  "version": "3.0.6",
+  "version": "4.0.0",
   "description": "Apply Sanity patches to a value",
   "keywords": [
     "patches",
     "portable-text",
-    "portable-text-editor"
+    "portable-text-editor",
+    "sanity"
   ],
   "homepage": "https://www.portabletext.org",
   "bugs": {

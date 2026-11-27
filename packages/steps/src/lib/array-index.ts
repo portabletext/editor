@@ -1,5 +1,5 @@
 import type {KeyedSegment, PathSegment} from '@portabletext/patches'
-import {isKeyedSegment} from './is-keyed-segment'
+import {isKeyedSegment} from '@portabletext/traversal'
 import {isRecord} from './is-record'
 
 export function arrayIndex(

@@ -16,6 +16,9 @@ name: Android IME
 
 on:
   pull_request:
+    # `edited` covers base-branch retargets, which change the commit set
+    # without firing `synchronize`.
+    types: [opened, synchronize, reopened, edited]
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
@@ -55,7 +58,6 @@ jobs:
               - packages/editor/android/**
               - .github/scripts/**
               - packages/editor/vitest.android.config.ts
-              - packages/thumbjar/**
               - .github/workflows/android-ime.yml
 
   emulator:
@@ -127,15 +129,16 @@ jobs:
           node -e "console.log('EDITOR_VERSION', require('./packages/editor/package.json').version)"
 
       # The jar comes from the actions cache when an earlier run saved it, under the editor package's cache
-      # directory and a key that changes with its URL and hash, see the jar cache in
-      # `packages/editor/android/README.md`. A failed restore or save is a miss, which downloads as before.
+      # directory and a key that changes with the installed thumbjar, which pins the jar's URL and hash, so
+      # the key needs the install above. See the jar cache in `packages/editor/android/README.md`. A failed
+      # restore or save is a miss, which downloads as before.
       - name: Restore the uiautomator2 server jar
         id: u2-jar-restore
         continue-on-error: true
         timeout-minutes: 1
         uses: actions/cache/restore@v6
         with:
-          key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
+          key: u2-jar-${{ hashFiles('packages/editor/node_modules/thumbjar/package.json') }}
           path: packages/editor/node_modules/.cache/thumbjar/u2.jar
 
       # A restored jar whose hash differs is downloaded again.
@@ -151,7 +154,7 @@ jobs:
         timeout-minutes: 1
         uses: actions/cache/save@v6
         with:
-          key: u2-jar-${{ hashFiles('packages/thumbjar/src/device/u2-jar.json') }}
+          key: u2-jar-${{ hashFiles('packages/editor/node_modules/thumbjar/package.json') }}
           path: packages/editor/node_modules/.cache/thumbjar/u2.jar
 
       # The pinned emulator and the available system image come from the actions cache, see the SDK cache

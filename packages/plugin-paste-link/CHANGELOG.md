@@ -1,5 +1,19 @@
 # @portabletext/plugin-paste-link
 
+## 5.0.30
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.17`
+
+## 5.0.29
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`cf3a8e1`](https://github.com/portabletext/editor/commit/cf3a8e10297b837727564019aac3ff7897a89cbb) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-paste-link
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+
 ## 5.0.28
 
 ### Patch Changes

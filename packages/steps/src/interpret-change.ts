@@ -5,6 +5,7 @@ import {
   type PortableTextBlock,
   type Schema,
 } from '@portabletext/schema'
+import {isKeyedSegment, pathContains, pathEquals} from '@portabletext/traversal'
 import {
   adjustIndiciesToUcs2,
   applyPatches,
@@ -13,10 +14,7 @@ import {
 } from '@sanity/diff-match-patch'
 import {arraySegments, nearestSpans, walkNodes} from './lib/document'
 import {getValue} from './lib/get-value'
-import {isKeyedSegment} from './lib/is-keyed-segment'
 import {isRecord} from './lib/is-record'
-import {pathContains} from './lib/path-contains'
-import {pathEquals} from './lib/path-equals'
 import {defaultSchema, isTextSpan, schemaAtPath} from './lib/span'
 import type {Point, Step, StepPath} from './step-mapper'
 

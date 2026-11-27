@@ -1,5 +1,19 @@
 # @portabletext/plugin-input-rule
 
+## 7.0.31
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.17`
+
+## 7.0.30
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`45ad6ee`](https://github.com/portabletext/editor/commit/45ad6ee71dc254de4a090acea6de4283c9176103) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-input-rule
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+
 ## 7.0.29
 
 ### Patch Changes

@@ -1,12 +1,13 @@
 {
   "name": "@portabletext/plugin-decorations",
-  "version": "1.0.16",
+  "version": "1.0.18",
   "description": "Compose independent decoration layers (highlights, comments, presence) for the Portable Text Editor",
   "keywords": [
     "decorations",
     "highlights",
     "plugin",
-    "portabletext",
+    "portable-text",
+    "portable-text-editor",
     "presence",
     "range"
   ],

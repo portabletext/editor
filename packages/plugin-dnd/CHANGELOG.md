@@ -1,5 +1,19 @@
 # @portabletext/plugin-dnd
 
+## 2.0.32
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.17`
+
+## 2.0.31
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`6ce3e6c`](https://github.com/portabletext/editor/commit/6ce3e6ccd853a516d2b55b339e2fa010fe00ccc3) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/plugin-dnd
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+
 ## 2.0.30
 
 ### Patch Changes

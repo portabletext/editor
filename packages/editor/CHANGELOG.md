@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.2.17
+
+### Patch Changes
+
+- Updated dependencies [[`fe227d2`](https://github.com/portabletext/editor/commit/fe227d2fc048822f02543cae1201a05e2fe3a568)]:
+  - @portabletext/patches@4.0.0
+  - @portabletext/repair@1.0.6
+
+## 8.2.16
+
+### Patch Changes
+
+- [#3754](https://github.com/portabletext/editor/pull/3754) [`becba06`](https://github.com/portabletext/editor/commit/becba065ccbea1602a6de4495398d5a8c9e1d4be) Thanks [@christianhg](https://github.com/christianhg)! - fix: drop a dragged block onto another block object
+  
+  Since 8.0.0, releasing a dragged block over another block object has done nothing. It now lands next to that block again.
+- Updated dependencies [[`6d007ac`](https://github.com/portabletext/editor/commit/6d007acbe2429d462f2f031b4e1b6879fd266f48), [`f5ac5a0`](https://github.com/portabletext/editor/commit/f5ac5a0cc8ad6ce18f54147a90e7be898868aa5e), [`99979cf`](https://github.com/portabletext/editor/commit/99979cf5dc3c124ae210625363849418cce0ad8e), [`0e4c76b`](https://github.com/portabletext/editor/commit/0e4c76bd8fb9065755b6cf2d641134642afd436c), [`10d944b`](https://github.com/portabletext/editor/commit/10d944b9aca118ba71423a4fb990b5cf58513b7a)]:
+  - @portabletext/html@2.0.4
+  - @portabletext/keyboard-shortcuts@3.0.2
+  - @portabletext/patches@3.0.7
+  - @portabletext/repair@1.0.5
+  - @portabletext/schema@3.1.2
+
 ## 8.2.15
 
 ### Patch Changes

@@ -1,5 +1,21 @@
 # Changelog
 
+## 9.0.31
+
+### Patch Changes
+
+- fix(deps): require `@portabletext/editor@^8.2.17`
+
+## 9.0.30
+
+### Patch Changes
+
+- [#3743](https://github.com/portabletext/editor/pull/3743) [`ce3f7b6`](https://github.com/portabletext/editor/commit/ce3f7b631616106fa85ab7967f364b471011519d) Thanks [@christianhg](https://github.com/christianhg)! - fix: list `portable-text` and `portable-text-editor` in the npm keywords of @portabletext/toolbar
+  
+  npm search and keyword filters now find it under `portable-text` and `portable-text-editor`. It no longer lists `portabletext`.
+- Updated dependencies [[`f5ac5a0`](https://github.com/portabletext/editor/commit/f5ac5a0cc8ad6ce18f54147a90e7be898868aa5e)]:
+  - @portabletext/keyboard-shortcuts@3.0.2
+
 ## 9.0.29
 
 ### Patch Changes

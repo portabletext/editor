@@ -1,6 +1,6 @@
 {
   "name": "@portabletext/steps",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Keep carets, selections and comments in place while a Portable Text document changes under them",
   "keywords": [
     "patches",
@@ -52,6 +52,7 @@
   "dependencies": {
     "@portabletext/patches": "workspace:^",
     "@portabletext/schema": "workspace:^",
+    "@portabletext/traversal": "workspace:^",
     "@sanity/diff-match-patch": "catalog:"
   },
   "devDependencies": {

@@ -130,8 +130,8 @@ below.
 >
 > One semantic note worth flagging: a memoized expansion is computed under the ancestor chain of wherever it was first reached. [...] No existing test pins a case where the difference is observable.
 
-The merged PR body ends with a generated-by footer; that's the one part not
-to copy — the anti-patterns below ban it.
+The merged PR body ends with a generated-by footer, and it predates the ban
+on em dashes. Copy neither: the anti-patterns below ban both.
 
 Why it's canonical: opens with the lived symptom, diagnoses with the actual
 growth mechanism, states the fix as an insight about the platform
@@ -169,6 +169,13 @@ and nothing else.
 - The words "delta" (write "change") and "rides along"/"ride along", and
   labels such as "One additional change:", anywhere in artifact prose. Name
   a secondary change in a plain sentence instead.
+- Em dashes and semicolons anywhere in artifact prose. Use commas, colons,
+  parentheses or separate sentences.
+- Bold run-in labels ("**Verified**: ...", "**Root cause**: ..."). Write a
+  plain sentence, or a plain list for genuinely parallel items.
+- "Save", "saved" or "stored" for what the editor sends. The editor emits
+  patches and events, and the host app decides what to persist. Name the
+  mechanism: "emits an `unset` patch", "the `change` event carries".
 - The investigation narrative leaking into the body: how the bug was found
   belongs wherever the work is tracked; the body describes the change.
 - Appending paragraphs as the PR evolves instead of rewriting the body.

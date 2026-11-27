@@ -67,6 +67,8 @@ The plugin includes the following typographic transformation rules:
 | `servicemark`         | `(sm)` → `℠` |
 | `registeredTrademark` | `(r)` → `®`  |
 
+The four quote rules are also exported together as `smartQuotesRules`, an `Array<InputRule>` of `openingDoubleQuoteRule`, `closingDoubleQuoteRule`, `openingSingleQuoteRule` and `closingSingleQuoteRule`.
+
 **Optional rules:**
 
 | Name               | Conversion                       |
@@ -197,4 +199,13 @@ import {InputRulePlugin} from '@portabletext/plugin-input-rule'
 import {ellipsisRule, emDashRule} from '@portabletext/plugin-typography'
 
 return <InputRulePlugin rules={[emDashRule, ellipsisRule]} />
+```
+
+Use `smartQuotesRules` to add all four quote rules at once:
+
+```tsx nocheck
+import {InputRulePlugin} from '@portabletext/plugin-input-rule'
+import {emDashRule, smartQuotesRules} from '@portabletext/plugin-typography'
+
+return <InputRulePlugin rules={[emDashRule, ...smartQuotesRules]} />
 ```

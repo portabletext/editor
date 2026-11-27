@@ -327,7 +327,7 @@ const stockTickerRule = defineInputRule({
           at: {
             anchor: {
               path: [
-                {_key: event.focusBlock.node._key},
+                ...event.focusBlock.path,
                 'children',
                 {_key: stockTickerKey},
               ],
@@ -335,7 +335,7 @@ const stockTickerRule = defineInputRule({
             },
             focus: {
               path: [
-                {_key: event.focusBlock.node._key},
+                ...event.focusBlock.path,
                 'children',
                 {_key: stockTickerKey},
               ],
@@ -374,3 +374,59 @@ The match survives when every inline object inside it sits within a listed group
 The [`@portabletext/plugin-character-pair-decorator`](../plugin-character-pair-decorator/) package is built exactly this way: `inlineObjects: {allow: ['content']}` lets `**bo`⟨inline object⟩`ld**` decorate across the object, while a match with an inline object between the marker characters stays literal.
 
 To allow inline objects anywhere in the match, capture the whole pattern in a named group and list it.
+
+## Registering rules without the plugin
+
+`defineInputRuleBehavior` turns an array of rules into a single Behavior that you register yourself with `editor.registerBehavior`:
+
+```ts nocheck
+function defineInputRuleBehavior(config: {
+  rules: Array<InputRule<any>>
+  onApply?: ({
+    endOffsets,
+    endSelection,
+  }: {
+    endOffsets: {start: BlockOffset; end: BlockOffset} | undefined
+    endSelection: EditorSelection
+  }) => void
+}): Behavior
+```
+
+The returned Behavior listens for `insert.text`. It skips events that carry both `at` and `offset`, and only fires when the selection is collapsed inside a block and at least one rule produces actions. When it fires, it forwards the `insert.text` event, performs the rules' actions and finally calls `onApply`.
+
+`onApply` runs once each time the Behavior fires, after the insertion and the rules' actions have applied. `endSelection` is the editor selection at that point, and `endOffsets` is the start and end of that selection as block offsets, or `undefined` when they can't be resolved.
+
+This is the Behavior `InputRulePlugin` registers internally. The plugin adds the undo handling on top, so registering the Behavior on its own does not give you smart undo with <kbd>Backspace</kbd>.
+
+```tsx
+import {useEditor} from '@portabletext/editor'
+import {
+  defineInputRuleBehavior,
+  defineTextTransformRule,
+} from '@portabletext/plugin-input-rule'
+import {useEffect} from 'react'
+
+const copyrightRule = defineTextTransformRule({
+  on: /\(c\)/,
+  transform: () => '©',
+})
+
+export function CopyrightPlugin() {
+  const editor = useEditor()
+
+  useEffect(() => {
+    const unregister = editor.registerBehavior({
+      behavior: defineInputRuleBehavior({
+        rules: [copyrightRule],
+        onApply: ({endOffsets, endSelection}) => {
+          console.log(endOffsets, endSelection)
+        },
+      }),
+    })
+
+    return unregister
+  }, [editor])
+
+  return null
+}
+```
