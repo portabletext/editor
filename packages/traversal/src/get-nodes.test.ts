@@ -573,6 +573,55 @@ describe(getNodes.name, () => {
     })
   })
 
+  describe('from/to by index', () => {
+    test('a negative `from` counts once from the end', () => {
+      expect([
+        ...getNodes(testbed.snapshot, {
+          from: [-3, 'children', -1],
+          to: [-3, 'children', -1],
+        }),
+      ]).toEqual([
+        {node: testbed.textBlock2, path: [{_key: testbed.textBlock2._key}]},
+        {
+          node: testbed.span3,
+          path: [
+            {_key: testbed.textBlock2._key},
+            'children',
+            {_key: testbed.span3._key},
+          ],
+        },
+      ])
+    })
+
+    test('a negative `to` counts once from the end', () => {
+      expect([
+        ...getNodes(testbed.snapshot, {
+          from: [-4],
+          to: [-4],
+        }),
+      ]).toEqual([{node: testbed.image, path: [{_key: testbed.image._key}]}])
+    })
+
+    test('a negative index past the start names nothing, so the range yields nothing', () => {
+      expect([...getNodes(testbed.snapshot, {from: [-6]})]).toEqual([])
+      expect([...getNodes(testbed.snapshot, {to: [-6]})]).toEqual([])
+    })
+
+    test('an index past the end names nothing, so the range yields nothing', () => {
+      expect([...getNodes(testbed.snapshot, {from: [5]})]).toEqual([])
+      expect([...getNodes(testbed.snapshot, {to: [5]})]).toEqual([])
+    })
+
+    test('a missing keyed bound names nothing, so the range yields nothing', () => {
+      expect([
+        ...getNodes(testbed.snapshot, {from: [{_key: 'missing'}]}),
+      ]).toEqual([])
+      expect([
+        ...getNodes(testbed.snapshot, {to: [{_key: 'missing'}]}),
+      ]).toEqual([])
+    })
+  })
+
   describe('from/to with match', () => {
     test('range with span filter', () => {
       const nodes = [
