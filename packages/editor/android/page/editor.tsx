@@ -27,13 +27,39 @@ const initialValue = [
   },
 ]
 
+const probeErrors: Array<Record<string, unknown>> = []
+window.addEventListener('error', (event) => {
+  probeErrors.push({
+    message: event.message,
+    stack: event.error instanceof Error ? event.error.stack : undefined,
+  })
+})
+document.addEventListener(
+  'beforeinput',
+  (event) => {
+    if ((event as InputEvent).inputType !== 'insertFromComposition') return
+    const [range] = (event as InputEvent).getTargetRanges()
+    const describe = (node: Node | undefined) =>
+      node
+        ? `${node.nodeName}${node.nodeType === 3 ? `(${JSON.stringify(node.textContent)})` : ''} in ${(node.parentElement?.outerHTML ?? '').slice(0, 300)}`
+        : null
+    probeErrors.push({
+      at: 'insertFromComposition',
+      html: document.querySelector('[contenteditable="true"]')?.innerHTML.slice(0, 800),
+      start: range ? [describe(range.startContainer), range.startOffset] : null,
+      end: range ? [describe(range.endContainer), range.endOffset] : null,
+    })
+  },
+  true,
+)
+
 function Probe() {
   const editor = useEditor()
   useEffect(() => {
     recordInput({
       getState: () => {
         const {context} = editor.getSnapshot()
-        return {value: context.value, selection: context.selection}
+        return {value: context.value, selection: context.selection, probe: probeErrors}
       },
       getText: () => {
         const {context} = editor.getSnapshot()
