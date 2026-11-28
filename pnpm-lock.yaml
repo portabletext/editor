@@ -47,8 +47,8 @@ catalogs:
       version: 5.33.2
   tooling:
     '@portabletext/react':
-      specifier: ^8.0.1
-      version: 8.0.1
+      specifier: ^8.0.2
+      version: 8.0.2
     '@sanity/pkg-utils':
       specifier: ^12.3.0
       version: 12.3.0
@@ -265,7 +265,7 @@ importers:
         version: link:../../packages/plugin-typography
       '@portabletext/react':
         specifier: catalog:tooling
-        version: 8.0.1(react@19.3.1)
+        version: 8.0.2(react@19.3.1)
       '@portabletext/repair':
         specifier: workspace:*
         version: link:../../packages/repair
@@ -361,7 +361,7 @@ importers:
         version: link:../../packages/plugin-typography
       '@portabletext/react':
         specifier: catalog:tooling
-        version: 8.0.1(react@19.3.1)
+        version: 8.0.2(react@19.3.1)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -503,7 +503,7 @@ importers:
         version: link:../../packages/plugin-typography
       '@portabletext/react':
         specifier: catalog:tooling
-        version: 8.0.1(react@19.3.1)
+        version: 8.0.2(react@19.3.1)
       '@portabletext/toolbar':
         specifier: workspace:*
         version: link:../../packages/toolbar
@@ -4776,6 +4776,12 @@ packages:
     peerDependencies:
       react: ^19
 
+  '@portabletext/react@8.0.2':
+    resolution: {integrity: sha512-D825eu342QAQ379bzUXcSR1XGfwRtORsVZaAA86JCKLlShKjELUedzyd0r2B+FBsD4iJsJELKLwTQFglGdL+tw==}
+    engines: {node: '>=22.12'}
+    peerDependencies:
+      react: ^19
+
   '@portabletext/sanity-bridge@4.1.5':
     resolution: {integrity: sha512-6SL23FqPqoX90fc6jITEB3eYm3VYnZ6oERkQM++apTemi5KVuM7TdMPxWtnc7i9wmIYysdN6QDzVI1Vl/DVzkw==}
     engines: {node: '>=22.12'}
@@ -4788,8 +4794,16 @@ packages:
     resolution: {integrity: sha512-+qSqe0KnefuZfNLUhzQRTpbSKxslZof+3pNwxg0DC8dfZ1yLKyyBUw6iR7EpDL+SJlrnpiBfEcfmEuFitK1NSQ==}
     engines: {node: '>=22.12'}
 
+  '@portabletext/toolkit@6.1.1':
+    resolution: {integrity: sha512-W04MbBkgcbRVNW3/01rs6hKbpwiDgKw8w1AGouVwG/If4gW6yrPMeYVQ0K5UfOnZztMJ3DQJQZ5CUWZ+GsuOCQ==}
+    engines: {node: '>=22.12'}
+
   '@portabletext/types@4.0.2':
     resolution: {integrity: sha512-djfIGU9n6DRrunlvj2nIDAp17URo/nA4jSXGvf+Gupx8NLLy9fmJBZ3GL8yhqn9lSVc+cKCharjOa3aOBnWbRw==}
+    engines: {node: '>=20.19 <22 || >=22.12'}
+
+  '@portabletext/types@4.0.3':
+    resolution: {integrity: sha512-jSCKrutPWitTg6gC9uf4qBbVjPZflFvZl2rSzqtMlypmP7AChg5ZJ2u4sDf2C9d9YyeTotqfT3sHZOoX1LlZIg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
   '@promptbook/utils@0.69.5':
@@ -12027,12 +12041,15 @@ packages:
 
   yuku-ast@0.8.7:
     resolution: {integrity: sha512-h6+4bDfyootiMB9vckk5uKo5r5j0GHrkr17FQTDNfEsFT3DWlN9uu1HJwQwc64pgmLCI945fWM3lbTIqxjT3GQ==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.8.3:
     resolution: {integrity: sha512-okdo5bb+TfebQa4JOjz9QxeT34D6CcBxu8dxaPUdFEKRdLkp+D2Fah2OanepK+XTyPXdmAJzAo9iXvYvZ/5rmg==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.8.7:
     resolution: {integrity: sha512-vRD9nwt4L3aYpxNqeSC4WqLv58xrXef0Ong1Mc45CTXTIpvLafx7JO05sczmQZwdLEZvywrLOGdNC5+Rp5N1BQ==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   zip-stream@7.0.5:
     resolution: {integrity: sha512-dSvYKdvLsAHCDqPOhIwk/q5CvuWtTB3Dgpoe0uVEFjTzIOAmsQpprX25InCvrvJsirEbu1OHyy67n/kAj1Sw/w==}
@@ -15159,6 +15176,12 @@ snapshots:
       '@portabletext/types': 4.0.2
       react: 19.3.1
 
+  '@portabletext/react@8.0.2(react@19.3.1)':
+    dependencies:
+      '@portabletext/toolkit': 6.1.1
+      '@portabletext/types': 4.0.3
+      react: 19.3.1
+
   '@portabletext/sanity-bridge@4.1.5(@types/react@19.3.0)(vitest@5.0.5)':
     dependencies:
       '@portabletext/schema': link:packages/schema
@@ -15177,7 +15200,13 @@ snapshots:
     dependencies:
       '@portabletext/types': 4.0.2
 
+  '@portabletext/toolkit@6.1.1':
+    dependencies:
+      '@portabletext/types': 4.0.3
+
   '@portabletext/types@4.0.2': {}
+
+  '@portabletext/types@4.0.3': {}
 
   '@promptbook/utils@0.69.5':
     dependencies:
