@@ -1,6 +1,6 @@
 // thumbjar-test-count: 3
 import {runOnDevice} from 'thumbjar'
-import {expect, inject, test} from 'vitest'
+import {expect, test} from 'vitest'
 
 test('Scenario: Typing kyou twice into a plain contenteditable', async (context) => {
   const run = await runOnDevice(context, {
@@ -17,8 +17,7 @@ test('Scenario: Typing kyou twice into a plain contenteditable', async (context)
   expect(run.text).toBeOneOf(['Kyou kyou ', 'Kyou kyou'])
 })
 
-// On iOS the editor leaves the first word of an empty block lowercase (`kyou kyou `). Drop `test.fails` once it capitalises.
-;(inject('thumbjarDevice') === 'ios' ? test.fails : test)(
+test(
   'Scenario: Typing kyou twice into an empty block',
   async (context) => {
     const run = await runOnDevice(context, {

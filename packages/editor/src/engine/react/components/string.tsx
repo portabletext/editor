@@ -7,7 +7,7 @@ import {
 } from '@portabletext/schema'
 import {forwardRef, memo, useRef, useState} from 'react'
 import {getNodes} from '../../../traversal/get-nodes'
-import {IS_ANDROID} from '../../dom/utils/environment'
+import {IS_ANDROID, IS_IOS} from '../../dom/utils/environment'
 import {end as editorEnd} from '../../editor/end'
 import {start as editorStart} from '../../editor/start'
 import type {Editor} from '../../interfaces/editor'
@@ -248,17 +248,14 @@ const ZeroWidthString = (props: {isLineBreak?: boolean}) => {
     ...(isLineBreak ? {'data-pt-line-break': true as const} : {}),
   }
 
-  // FIXME: Inserting the \uFEFF on iOS breaks capitalization at the start of an
-  // empty editor.
-  //
-  // However, not inserting the \uFEFF on iOS causes the editor to crash when
-  // inserting any text using an IME at the start of a block. This appears to
-  // be because accepting an IME suggestion when at the start of a block (no
-  // preceding \uFEFF) removes one or more DOM elements that `toEditorSelection`
-  // depends on.
+  // Android and iOS leave the \uFEFF out of an empty line. Their keyboards
+  // read it as text before the caret and turn off first-word capitalisation.
+  // IME input can then delete this span's markup, so `RestoreDOM` puts it back
+  // before React commits, and `toSelectionPoint` maps a bare block to its
+  // empty span.
   return (
     <span {...attributes}>
-      {!IS_ANDROID || !isLineBreak ? '\uFEFF' : null}
+      {!(IS_ANDROID || IS_IOS) || !isLineBreak ? '\uFEFF' : null}
       {isLineBreak ? <br /> : null}
     </span>
   )
