@@ -123,7 +123,7 @@
     "racejar": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "thumbjar": "^1.0.0",
+    "thumbjar": "^1.1.0",
     "typescript": "catalog:tooling",
     "vite": "catalog:tooling",
     "vitest": "catalog:tooling",

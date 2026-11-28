@@ -43,7 +43,7 @@
     "test:browser:chromium": "turbo test:browser:chromium",
     "test:browser:firefox": "turbo test:browser:firefox",
     "test:browser:webkit": "turbo test:browser:webkit",
-    "test:unit": "turbo test:unit && node --test .changeset/annotate-lockstep-releases.test.mjs && vitest run",
+    "test:unit": "turbo test:unit && node --test .changeset/annotate-lockstep-releases.test.mjs",
     "test:unit:watch": "turbo test:unit:watch",
     "test:watch": "turbo test:watch"
   },
@@ -69,8 +69,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-gherkin": "^3.1.4",
     "turbo": "^2.6.3",
-    "typescript": "catalog:tooling",
-    "vitest": "catalog:tooling"
+    "typescript": "catalog:tooling"
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern",

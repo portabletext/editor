@@ -125,7 +125,7 @@
     },
     "examples/*": {},
     ".": {
-      "entry": ["bundle-stats.config.ts", ".github/scripts/*.test.ts"],
+      "entry": ["bundle-stats.config.ts"],
       "ignoreDependencies": ["@playwright/test"],
       "project": ["**", ".github/scripts/**"]
     }
