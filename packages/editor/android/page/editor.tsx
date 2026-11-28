@@ -14,6 +14,7 @@ const schemaDefinition = defineSchema({styles: [{name: 'normal'}]})
 
 const params = new URLSearchParams(location.search)
 const prefix = params.get('prefix') ?? ''
+const placeholder = params.get('placeholder')
 
 const keyGenerator = createTestKeyGenerator()
 
@@ -55,6 +56,7 @@ function App() {
     >
       <Probe />
       <PortableTextEditable
+        renderPlaceholder={placeholder ? () => placeholder : undefined}
         style={{border: '1px solid #888', minHeight: '3em', fontSize: 20}}
       />
     </EditorProvider>
