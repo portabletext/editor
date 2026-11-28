@@ -33,7 +33,7 @@ import {
   type DOMSelection,
   type DOMStaticRange,
 } from '../utils/dom'
-import {IS_ANDROID, IS_CHROME, IS_FIREFOX} from '../utils/environment'
+import {IS_ANDROID, IS_CHROME, IS_FIREFOX, IS_IOS} from '../utils/environment'
 
 export type Action = {at?: Point | Range; run: () => void}
 
@@ -669,7 +669,7 @@ export const DOMEditor: DOMEditorInterface = {
       }
     }
 
-    if (IS_ANDROID && !textNode && !exactMatch) {
+    if ((IS_ANDROID || IS_IOS) && !textNode && !exactMatch) {
       const node =
         parentNode.hasAttribute('data-pt-block') ||
         parentNode.getAttribute('data-pt-inline') === 'span'
