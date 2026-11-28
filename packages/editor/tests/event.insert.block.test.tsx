@@ -1771,13 +1771,20 @@ describe('event.insert.block', () => {
         {
           _type: 'block',
           _key: blockKey,
-          children: [{_type: 'span', _key: spanKey, text: 'foar', marks: []}],
+          children: [{_type: 'span', _key: spanKey, text: 'fo', marks: []}],
           markDefs: [],
           style: 'normal',
         },
         {
           _type: 'image',
           _key: 'k4',
+        },
+        {
+          _type: 'block',
+          _key: 'k6',
+          children: [{_type: 'span', _key: 'k5', text: 'ar', marks: []}],
+          markDefs: [],
+          style: 'normal',
         },
       ])
 
@@ -1859,13 +1866,20 @@ describe('event.insert.block', () => {
         {
           _type: 'block',
           _key: blockAKey,
-          children: [{_type: 'span', _key: spanAKey, text: 'fr', marks: []}],
+          children: [{_type: 'span', _key: spanAKey, text: 'f', marks: []}],
           markDefs: [],
           style: 'normal',
         },
         {
           _type: 'image',
           _key: 'k6',
+        },
+        {
+          _type: 'block',
+          _key: 'k7',
+          children: [{_type: 'span', _key: spanBKey, text: 'r', marks: []}],
+          markDefs: [],
+          style: 'normal',
         },
       ])
 
@@ -1874,6 +1888,85 @@ describe('event.insert.block', () => {
         focus: {path: [{_key: 'k6'}], offset: 0},
         backward: false,
       })
+    })
+  })
+
+  test('Scenario: Inserting block object with placement=auto over an expanded selection splits the block like a paste', async () => {
+    const keyGenerator = createTestKeyGenerator()
+    const blockKey = keyGenerator()
+    const spanKey = keyGenerator()
+
+    const {editor} = await createTestEditor({
+      keyGenerator,
+      schemaDefinition: defineSchema({
+        blockObjects: [{name: 'image'}],
+      }),
+      initialValue: [
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ],
+    })
+
+    editor.send({
+      type: 'select',
+      at: {
+        anchor: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 1,
+        },
+        focus: {
+          path: [{_key: blockKey}, 'children', {_key: spanKey}],
+          offset: 2,
+        },
+      },
+    })
+
+    editor.send({
+      type: 'insert.block',
+      block: {_type: 'image'},
+      placement: 'auto',
+    })
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'b', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+        {
+          _type: 'image',
+          _key: 'k4',
+        },
+        {
+          _type: 'block',
+          _key: 'k6',
+          children: [{_type: 'span', _key: 'k5', text: 'r', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
+    })
+
+    editor.send({type: 'history.undo'})
+
+    await vi.waitFor(() => {
+      expect(editor.getSnapshot().context.value).toEqual([
+        {
+          _type: 'block',
+          _key: blockKey,
+          children: [{_type: 'span', _key: spanKey, text: 'bar', marks: []}],
+          markDefs: [],
+          style: 'normal',
+        },
+      ])
     })
   })
 
