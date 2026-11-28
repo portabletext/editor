@@ -1,10 +1,6 @@
 import {readdirSync, readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
-import {
-  countDeviceTests,
-  EMULATOR_BOOT_SECONDS,
-  runStepWorstSeconds,
-} from 'thumbjar/vitest'
+import {countDeviceTests, runStepWorstSeconds} from 'thumbjar/vitest'
 import {describe, expect, test} from 'vitest'
 import {createVitest} from 'vitest/node'
 
@@ -72,17 +68,48 @@ describe('the workflow', () => {
       lang: row.lang as 'ja' | 'en',
       file: row.file as string,
       runMinutes: Number(row.runMinutes),
+      actionMinutes: Number(row.actionMinutes),
     }
   })
 
   test('runs each editor device suite in a job prepared for its language', () => {
     expect(rows).toEqual([
-      {lang: 'ja', file: 'tests/ja.test.ts', runMinutes: 90},
-      {lang: 'en', file: 'tests/en.test.ts', runMinutes: 90},
-      {lang: 'ja', file: 'tests/ja.enter.test.ts', runMinutes: 90},
-      {lang: 'en', file: 'tests/en.enter.test.ts', runMinutes: 90},
-      {lang: 'en', file: 'tests/en.insert.break.test.ts', runMinutes: 124},
-      {lang: 'en', file: 'tests/en.insert.text.test.ts', runMinutes: 90},
+      {
+        lang: 'ja',
+        file: 'tests/ja.test.ts',
+        runMinutes: 90,
+        actionMinutes: 190,
+      },
+      {
+        lang: 'en',
+        file: 'tests/en.test.ts',
+        runMinutes: 90,
+        actionMinutes: 190,
+      },
+      {
+        lang: 'ja',
+        file: 'tests/ja.enter.test.ts',
+        runMinutes: 90,
+        actionMinutes: 190,
+      },
+      {
+        lang: 'en',
+        file: 'tests/en.enter.test.ts',
+        runMinutes: 90,
+        actionMinutes: 190,
+      },
+      {
+        lang: 'en',
+        file: 'tests/en.insert.break.test.ts',
+        runMinutes: 124,
+        actionMinutes: 258,
+      },
+      {
+        lang: 'en',
+        file: 'tests/en.insert.text.test.ts',
+        runMinutes: 90,
+        actionMinutes: 190,
+      },
     ])
   })
 
@@ -101,25 +128,24 @@ describe('the workflow', () => {
     }
   })
 
-  test('boots the emulator within the time the run step budget counts', () => {
-    expect(
-      [...workflow.matchAll(/^ {10}emulator-boot-timeout: (\d+)$/gm)].map(
-        (match) => Number(match[1]),
-      ),
-    ).toEqual([EMULATOR_BOOT_SECONDS, EMULATOR_BOOT_SECONDS])
-  })
-
-  test('gives both run steps the cap of the matrix row they run', () => {
+  // thumbjar's `docs/ci.md`: the step that uses the action covers two runs, 4 minutes for the jar, 5 for
+  // the upload and 1 for the rest.
+  test('gives the action step two runs of its row plus the jar, the upload and the rest', () => {
     const steps = workflow
       .split(/^ {4}steps:$/m)[1]!
       .split(/^ {6}- /m)
       .slice(1)
-    const runSteps = steps.filter((step) => /^ {8}id: run[12]$/m.test(step))
+    const actionSteps = steps.filter((step) =>
+      /^ {8}uses: portabletext\/thumbjar\/android@/m.test(step),
+    )
 
-    expect(runSteps).toHaveLength(2)
-    for (const step of runSteps) {
-      expect(step).toMatch(
-        /^ {8}timeout-minutes: \$\{\{ matrix.suite.runMinutes \}\}$/m,
+    expect(actionSteps).toHaveLength(1)
+    expect(actionSteps[0]).toMatch(
+      /^ {8}timeout-minutes: \$\{\{ matrix.suite.actionMinutes \}\}$/m,
+    )
+    for (const row of rows) {
+      expect(row.actionMinutes, row.file).toEqual(
+        2 * row.runMinutes + 4 + 5 + 1,
       )
     }
   })
@@ -131,8 +157,10 @@ describe('the workflow', () => {
       .split(/^ {6}- /m)
       .slice(1)
     const stepCaps = steps.map((step) =>
-      /^ {8}timeout-minutes: \$\{\{ matrix.suite.runMinutes \}\}$/m.test(step)
-        ? Math.max(...rows.map((row) => row.runMinutes))
+      /^ {8}timeout-minutes: \$\{\{ matrix.suite.actionMinutes \}\}$/m.test(
+        step,
+      )
+        ? Math.max(...rows.map((row) => row.actionMinutes))
         : Number(/^ {8}timeout-minutes: (\d+)$/m.exec(step)?.[1]),
     )
 
@@ -146,22 +174,27 @@ describe('the workflow', () => {
     expect({
       job: /^ {4}name: (.*)$/m.exec(workflow)?.[1],
       suiteName: /^ {8}run: (echo "name=.*)$/m.exec(workflow)?.[1],
-      artifact: /^ {10}name: (android-ime-.*)$/m.exec(workflow)?.[1],
-      scripts: [...workflow.matchAll(/^ {10}script: (.*)$/gm)].map(
-        (match) => match[1],
+      inputs: [...workflow.matchAll(/^ {10}([a-z-]+): (.*)$/gm)].map(
+        (match) => [match[1], match[2]],
       ),
-      // The keyboard goes to `thumbjar run` as a flag, nothing reads an environment variable for it.
-      keyboardEnvironment: workflow.includes('IME_LANG'),
     }).toEqual({
       job: 'Android IME (${{ matrix.suite.file }})',
       suiteName: `echo "name=$(basename '\${{ matrix.suite.file }}' .test.ts)" >> "$GITHUB_OUTPUT"`,
-      artifact:
-        'android-ime-${{ steps.suite.outputs.name }}-api${{ matrix.api }}-${{ github.run_attempt }}',
-      scripts: [
-        'pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out',
-        'pnpm exec thumbjar run ${{ matrix.suite.file }} --keyboard ${{ matrix.suite.lang }} --page-dir android/dist --config vitest.android.config.ts --project device --out-dir android/out',
+      inputs: [
+        ['node-version', '24'],
+        ['test', '${{ matrix.suite.file }}'],
+        ['keyboard', '${{ matrix.suite.lang }}'],
+        ['working-directory', 'packages/editor/android'],
+        ['page-dir', 'dist'],
+        ['config', '../vitest.android.config.ts'],
+        ['project', 'device'],
+        ['out-dir', 'out'],
+        [
+          'artifact-name',
+          'android-ime-${{ steps.suite.outputs.name }}-api${{ matrix.api }}-${{ github.run_attempt }}',
+        ],
+        ['api-level', '${{ matrix.api }}'],
       ],
-      keyboardEnvironment: false,
     })
   })
 })

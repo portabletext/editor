@@ -203,9 +203,6 @@ importers:
       typescript:
         specifier: catalog:tooling
         version: 7.0.2
-      vitest:
-        specifier: catalog:tooling
-        version: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
 
   apps/doc-examples:
     devDependencies:
@@ -826,8 +823,8 @@ importers:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
       thumbjar:
-        specifier: ^1.0.0
-        version: 1.0.0(vitest@5.0.5)(webdriverio@9.33.1)
+        specifier: ^1.1.0
+        version: 1.1.0(vitest@5.0.5)(webdriverio@9.33.1)
       typescript:
         specifier: catalog:tooling
         version: 7.0.2
@@ -11047,6 +11044,17 @@ packages:
 
   thumbjar@1.0.0:
     resolution: {integrity: sha512-Tbo5L2LCgIMi/mvSARjaPyh1pcTXKoGK4wnvSgs8y+K3llVdxuVt3Ov9X5ydQOANSxXOQCowThq27XMzkunZxA==}
+    engines: {node: '>=24'}
+    hasBin: true
+    peerDependencies:
+      vitest: ^5.0.5
+      webdriverio: ^9.27.1
+    peerDependenciesMeta:
+      webdriverio:
+        optional: true
+
+  thumbjar@1.1.0:
+    resolution: {integrity: sha512-2VJc7Rp5tBIWMsWAbgO+ayxx7YPLFlw5WtfIibxod8i8Ob5q6nJdifzDaHJ8p9DQArPymIjUDm2yyoHvKKvr0g==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -22761,6 +22769,13 @@ snapshots:
       readable-stream: 3.6.2
 
   thumbjar@1.0.0(vitest@5.0.5)(webdriverio@9.33.1):
+    dependencies:
+      find-cache-directory: 6.0.0
+      vitest: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
+    optionalDependencies:
+      webdriverio: 9.33.1
+
+  thumbjar@1.1.0(vitest@5.0.5)(webdriverio@9.33.1):
     dependencies:
       find-cache-directory: 6.0.0
       vitest: 5.0.5(@types/node@24.12.2)(@vitest/browser-playwright@5.0.5)(@vitest/coverage-istanbul@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(jsdom@27.2.0)(vite@8.3.8(@types/node@24.12.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.44.1)(tsx@4.23.12)(yaml@2.9.1))
