@@ -2373,4 +2373,364 @@ describe('event.insert.blocks', () => {
       )
     })
   })
+
+  describe('Inserting blocks with placement auto over an expanded selection', () => {
+    test('Scenario: A backward selection from the second block into the first is replaced by the blocks', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const quxBlockKey = keyGenerator()
+      const quxSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          textBlock(fooBlockKey, fooSpanKey, 'foo'),
+          textBlock(barBlockKey, barSpanKey, 'bar'),
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 2,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          backward: true,
+        },
+      })
+
+      editor.send({
+        type: 'insert.blocks',
+        placement: 'auto',
+        blocks: [
+          textBlock(bazBlockKey, bazSpanKey, 'baz'),
+          textBlock(quxBlockKey, quxSpanKey, 'qux'),
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [
+              {_type: 'span', _key: fooSpanKey, text: 'fbaz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: quxBlockKey,
+            children: [
+              {_type: 'span', _key: quxSpanKey, text: 'quxr', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+
+    test('Scenario: A selection of the whole first block is replaced by the blocks', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const quxBlockKey = keyGenerator()
+      const quxSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          textBlock(fooBlockKey, fooSpanKey, 'foo'),
+          textBlock(barBlockKey, barSpanKey, 'bar'),
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 0,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 3,
+          },
+        },
+      })
+
+      editor.send({
+        type: 'insert.blocks',
+        placement: 'auto',
+        blocks: [
+          textBlock(bazBlockKey, bazSpanKey, 'baz'),
+          textBlock(quxBlockKey, quxSpanKey, 'qux'),
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: bazBlockKey,
+            children: [
+              {_type: 'span', _key: bazSpanKey, text: 'baz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: quxBlockKey,
+            children: [
+              {_type: 'span', _key: quxSpanKey, text: 'qux', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: barBlockKey,
+            children: [
+              {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+
+    test('Scenario: Inserting no blocks leaves the selected text in place', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [textBlock(barBlockKey, barSpanKey, 'bar')],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 3,
+          },
+        },
+      })
+
+      editor.send({
+        type: 'insert.blocks',
+        placement: 'auto',
+        blocks: [],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: barBlockKey,
+            children: [
+              {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+
+    test('Scenario: A collapsed selection in the middle of a block splits it around the blocks', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const quxBlockKey = keyGenerator()
+      const quxSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          textBlock(fooBlockKey, fooSpanKey, 'foo'),
+          textBlock(barBlockKey, barSpanKey, 'bar'),
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+        },
+      })
+
+      editor.send({
+        type: 'insert.blocks',
+        placement: 'auto',
+        blocks: [
+          textBlock(bazBlockKey, bazSpanKey, 'baz'),
+          textBlock(quxBlockKey, quxSpanKey, 'qux'),
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [
+              {_type: 'span', _key: fooSpanKey, text: 'fbaz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: quxBlockKey,
+            children: [
+              {_type: 'span', _key: quxSpanKey, text: 'quxoo', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: barBlockKey,
+            children: [
+              {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+
+    test('Scenario: Undoing once restores the value from before the blocks replaced the selection', async () => {
+      const keyGenerator = createTestKeyGenerator()
+      const fooBlockKey = keyGenerator()
+      const fooSpanKey = keyGenerator()
+      const barBlockKey = keyGenerator()
+      const barSpanKey = keyGenerator()
+      const bazBlockKey = keyGenerator()
+      const bazSpanKey = keyGenerator()
+      const quxBlockKey = keyGenerator()
+      const quxSpanKey = keyGenerator()
+      const {editor} = await createTestEditor({
+        keyGenerator,
+        initialValue: [
+          textBlock(fooBlockKey, fooSpanKey, 'foo'),
+          textBlock(barBlockKey, barSpanKey, 'bar'),
+        ],
+      })
+
+      editor.send({
+        type: 'select',
+        at: {
+          anchor: {
+            path: [{_key: fooBlockKey}, 'children', {_key: fooSpanKey}],
+            offset: 1,
+          },
+          focus: {
+            path: [{_key: barBlockKey}, 'children', {_key: barSpanKey}],
+            offset: 2,
+          },
+        },
+      })
+
+      editor.send({
+        type: 'insert.blocks',
+        placement: 'auto',
+        blocks: [
+          textBlock(bazBlockKey, bazSpanKey, 'baz'),
+          textBlock(quxBlockKey, quxSpanKey, 'qux'),
+        ],
+      })
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [
+              {_type: 'span', _key: fooSpanKey, text: 'fbaz', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: quxBlockKey,
+            children: [
+              {_type: 'span', _key: quxSpanKey, text: 'quxr', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+
+      editor.send({type: 'history.undo'})
+
+      await vi.waitFor(() => {
+        expect(editor.getSnapshot().context.value).toEqual([
+          {
+            _type: 'block',
+            _key: fooBlockKey,
+            children: [
+              {_type: 'span', _key: fooSpanKey, text: 'foo', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+          {
+            _type: 'block',
+            _key: barBlockKey,
+            children: [
+              {_type: 'span', _key: barSpanKey, text: 'bar', marks: []},
+            ],
+            markDefs: [],
+            style: 'normal',
+          },
+        ])
+      })
+    })
+  })
 })
+
+function textBlock(blockKey: string, spanKey: string, text: string) {
+  return {
+    _type: 'block',
+    _key: blockKey,
+    children: [{_type: 'span', _key: spanKey, text, marks: []}],
+    markDefs: [],
+    style: 'normal',
+  }
+}

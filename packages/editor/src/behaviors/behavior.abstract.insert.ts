@@ -63,6 +63,25 @@ function newBlockPath(referencePath: Path, key: string): Path {
 
 export const abstractInsertBehaviors = [
   defineBehavior({
+    on: 'insert.block',
+    guard: ({snapshot, event}) =>
+      event.placement === 'auto' &&
+      event.at === undefined &&
+      isSelectionExpanded(snapshot),
+    actions: [({event}) => [raise({type: 'delete'}), raise(event)]],
+  }),
+
+  defineBehavior({
+    on: 'insert.blocks',
+    guard: ({snapshot, event}) =>
+      event.blocks.length > 0 &&
+      event.placement === 'auto' &&
+      event.at === undefined &&
+      isSelectionExpanded(snapshot),
+    actions: [({event}) => [raise({type: 'delete'}), raise(event)]],
+  }),
+
+  defineBehavior({
     on: 'insert.blocks',
     guard: ({event}) => {
       const onlyBlock =
